@@ -201,6 +201,24 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'audits',
+        title: 'Audits · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAudits)],
+        loadComponent: () =>
+          import('./features/audits/audits-list/audits-list.component').then(
+            (m) => m.AuditsListComponent,
+          ),
+      },
+      {
+        path: 'audits/:id',
+        title: 'Audit · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAudit)],
+        loadComponent: () =>
+          import('./features/audits/audit-detail/audit-detail.component').then(
+            (m) => m.AuditDetailComponent,
+          ),
+      },
+      {
         path: 'admin/maker-checker',
         title: 'Maker-Checker · AuditX',
         canActivate: [

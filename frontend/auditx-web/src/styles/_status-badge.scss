@@ -147,6 +147,29 @@
   color: #e65100;
 }
 
+// M4 — Audit lifecycle states (draft / planned / in_progress / completed
+// reuse the M3 palette above; the rest are defined here).
+.status-badge[data-status='under_review'] {
+  background: color-mix(in srgb, #6a1b9a 16%, transparent);
+  color: #4a148c;
+}
+
+.status-badge[data-status='cancelled'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
+// M4 — Checklist item states (not_started / in_progress reuse above).
+.status-badge[data-status='not_started'] {
+  background: color-mix(in srgb, #616161 16%, transparent);
+  color: #424242;
+}
+
+.status-badge[data-status='responded'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
 .muted {
   color: var(--mat-sys-on-surface-variant);
 }

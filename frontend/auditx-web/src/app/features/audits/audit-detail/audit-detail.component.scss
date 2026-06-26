@@ -1,0 +1,169 @@
+.detail__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.detail__status-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.detail__notice {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid var(--mat-sys-error);
+}
+
+.detail__card {
+  margin-bottom: 1.25rem;
+  padding: 1.25rem;
+}
+
+.detail__card-title {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+}
+
+.detail__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.detail__card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.detail__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin: 0.75rem 0 0;
+}
+
+.detail__grid dt,
+.detail__scope dt {
+  margin: 0;
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.detail__grid dd,
+.detail__scope dd {
+  margin: 0.15rem 0 0;
+}
+
+.detail__scope {
+  margin-top: 1rem;
+}
+
+.detail__members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail__member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container-low);
+}
+
+.detail__member-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.detail__member-name {
+  font-weight: 500;
+}
+
+.detail__role {
+  text-transform: capitalize;
+}
+
+.detail__section {
+  margin-top: 1rem;
+}
+
+.detail__section-title {
+  margin: 0 0 0.5rem;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.detail__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
+.detail__item-main {
+  flex: 1;
+}
+
+.detail__item-prompt {
+  margin: 0;
+  font-weight: 500;
+}
+
+.detail__required {
+  margin-left: 0.5rem;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-error);
+}
+
+.detail__item-notes {
+  margin: 0.25rem 0 0;
+}
+
+.detail__item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.detail__item-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.detail__empty {
+  padding: 0.5rem 0;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}

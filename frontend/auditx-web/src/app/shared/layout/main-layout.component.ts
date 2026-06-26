@@ -96,6 +96,12 @@ export class MainLayoutComponent {
       permissions: [Permissions.ViewPlan],
     },
     {
+      label: 'Audits',
+      icon: 'assignment',
+      route: '/audits',
+      permissions: [Permissions.ViewAudits],
+    },
+    {
       label: 'Coverage',
       icon: 'grid_view',
       route: '/coverage',

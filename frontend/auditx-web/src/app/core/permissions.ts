@@ -36,6 +36,12 @@ export const Permissions = {
   ManagePlan: 'ManagePlan',
   ManageConfiguration: 'ManageConfiguration',
   ACChair: 'ACChair',
+
+  // M4 — Audit Lifecycle
+  ViewAudits: 'ViewAudits',
+  ViewAudit: 'ViewAudit',
+  CreateAudit: 'CreateAudit',
+  ManageAudit: 'ManageAudit',
 } as const;
 
 export type PermissionKey = (typeof Permissions)[keyof typeof Permissions];

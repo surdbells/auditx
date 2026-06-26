@@ -1,0 +1,48 @@
+.audits__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.audits__count {
+  text-transform: capitalize;
+}
+
+.audits__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.audits__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.audits__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.audits__table {
+  width: 100%;
+}
+
+.audits__row {
+  cursor: pointer;
+}
+
+.audits__row:hover {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.audits__name {
+  font-weight: 500;
+}
+
+.audits__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}

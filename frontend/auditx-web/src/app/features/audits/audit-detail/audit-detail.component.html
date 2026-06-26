@@ -1,0 +1,233 @@
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading audit…" />
+  }
+  @case ('error') {
+    <app-error-state message="We couldn't load this audit." (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (audit(); as a) {
+      <app-page-header [title]="a.name" [subtitle]="a.auditType">
+        @if (canManage()) {
+          <div actions class="detail__actions">
+            @if (isDraft()) {
+              <button
+                matButton="filled"
+                type="button"
+                (click)="plan()"
+                [disabled]="!canPlan()"
+                [matTooltip]="planHint()"
+                [matTooltipDisabled]="canPlan()"
+              >
+                <mat-icon>event_available</mat-icon>
+                Plan
+              </button>
+            }
+            @if (isPlanned()) {
+              <button matButton="filled" type="button" (click)="start()">
+                <mat-icon>play_arrow</mat-icon>
+                Start
+              </button>
+              <button matButton type="button" (click)="reopen()">
+                <mat-icon>undo</mat-icon>
+                Reopen
+              </button>
+            }
+            @if (isInProgress()) {
+              <button matButton="filled" type="button" (click)="sendToReview()">
+                <mat-icon>rate_review</mat-icon>
+                Send to review
+              </button>
+            }
+            @if (isUnderReview()) {
+              <button matButton="filled" type="button" (click)="complete()">
+                <mat-icon>task_alt</mat-icon>
+                Complete
+              </button>
+              <button matButton type="button" (click)="returnToInProgress()">
+                <mat-icon>reply</mat-icon>
+                Return to in progress
+              </button>
+            }
+            @if (canCancel()) {
+              <button matButton type="button" (click)="cancel()">
+                <mat-icon>cancel</mat-icon>
+                Cancel
+              </button>
+            }
+          </div>
+        }
+      </app-page-header>
+
+      <div class="detail__status-row">
+        <span class="status-badge" [attr.data-status]="a.status">
+          {{ a.status.replace('_', ' ') }}
+        </span>
+        @if (a.actualEndDate) {
+          <span class="muted">Ended {{ a.actualEndDate | date: 'mediumDate' }}</span>
+        }
+      </div>
+
+      @if (isCancelled() && a.cancellationReason) {
+        <mat-card appearance="outlined" class="detail__notice">
+          <strong>Cancelled.</strong> {{ a.cancellationReason }}
+        </mat-card>
+      }
+
+      <!-- Overview -->
+      <mat-card appearance="outlined" class="detail__card">
+        <h3 class="detail__card-title">Overview</h3>
+        <dl class="detail__grid">
+          <div>
+            <dt>Window</dt>
+            <dd>
+              {{ a.startDate | date: 'mediumDate' }} –
+              {{ a.targetEndDate ? (a.targetEndDate | date: 'mediumDate') : '—' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Lead</dt>
+            <dd>{{ leadName() }}</dd>
+          </div>
+          <div>
+            <dt>Auditee</dt>
+            <dd>{{ auditeeName() }}</dd>
+          </div>
+          <div>
+            <dt>Template</dt>
+            <dd>
+              @if (a.templateId) {
+                {{ a.templateId }}@if (a.templateVersion) { (v{{ a.templateVersion }}) }
+              } @else {
+                —
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Linked plan item</dt>
+            <dd>{{ a.planItemId || '—' }}</dd>
+          </div>
+        </dl>
+        @if (a.scopeDescription) {
+          <div class="detail__scope">
+            <dt>Scope</dt>
+            <dd>{{ a.scopeDescription }}</dd>
+          </div>
+        }
+      </mat-card>
+
+      <!-- Team -->
+      <mat-card appearance="outlined" class="detail__card">
+        <div class="detail__card-head">
+          <h3 class="detail__card-title">Team</h3>
+          @if (canManageTeam()) {
+            <div class="detail__card-actions">
+              <button matButton type="button" (click)="transferLead()">
+                <mat-icon>swap_horiz</mat-icon>
+                Transfer lead
+              </button>
+              <button matButton="filled" type="button" (click)="addMember()">
+                <mat-icon>person_add</mat-icon>
+                Add member
+              </button>
+            </div>
+          }
+        </div>
+
+        @if (!activeMembers().length) {
+          <p class="muted detail__empty">No team members yet.</p>
+        } @else {
+          <ul class="detail__members">
+            @for (m of activeMembers(); track m.id) {
+              <li class="detail__member">
+                <div class="detail__member-info">
+                  <span class="detail__member-name">{{ nameOf(m.userId) }}</span>
+                  <span class="status-badge detail__role">{{ m.teamRole }}</span>
+                </div>
+                @if (canManageTeam() && m.teamRole !== 'lead') {
+                  <button
+                    matIconButton
+                    type="button"
+                    (click)="removeMember(m)"
+                    [attr.aria-label]="'Remove ' + nameOf(m.userId)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </mat-card>
+
+      <!-- Checklist -->
+      <mat-card appearance="outlined" class="detail__card">
+        <div class="detail__card-head">
+          <h3 class="detail__card-title">
+            Checklist ({{ a.checklistItems.length }})
+          </h3>
+          @if (canAddChecklistItem()) {
+            <button matButton="filled" type="button" (click)="addChecklistItem()">
+              <mat-icon>add</mat-icon>
+              Add item
+            </button>
+          }
+        </div>
+
+        @if (!a.checklistItems.length) {
+          <p class="muted detail__empty">No checklist items yet.</p>
+        } @else {
+          @for (group of checklistGroups(); track group.name) {
+            <div class="detail__section">
+              <h4 class="detail__section-title">{{ group.name }}</h4>
+              <ul class="detail__items">
+                @for (item of group.items; track item.id) {
+                  <li class="detail__item">
+                    <div class="detail__item-main">
+                      <p class="detail__item-prompt">
+                        {{ item.prompt }}
+                        @if (item.isRequired) {
+                          <span class="detail__required">Required</span>
+                        }
+                      </p>
+                      @if (item.referenceNotes) {
+                        <p class="muted detail__item-notes">{{ item.referenceNotes }}</p>
+                      }
+                      <div class="detail__item-meta">
+                        <span class="status-badge" [attr.data-status]="item.itemState">
+                          {{ item.itemState.replace('_', ' ') }}
+                        </span>
+                        <span class="muted">{{ item.responseType.replace('_', '/') }}</span>
+                        <span class="muted">Assignee: {{ nameOf(item.assignedUserId) }}</span>
+                      </div>
+                    </div>
+                    @if (canEditChecklist()) {
+                      <div class="detail__item-actions">
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="editChecklistItem(item)"
+                          aria-label="Edit item"
+                        >
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="removeChecklistItem(item)"
+                          aria-label="Remove item"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        }
+      </mat-card>
+    }
+  }
+}
