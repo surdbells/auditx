@@ -116,7 +116,8 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
 
         var submitted = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/exceptions/{exId}/map", new
         {
-            actions = new[] { new { description = "Implement dual control", ownerUserId = owner, targetDate = "2027-02-01", expectedEvidenceType = "screenshot" } },
+            // Must be on/before the severity-derived exception target date (medium → today + 45 days).
+            actions = new[] { new { description = "Implement dual control", ownerUserId = owner, targetDate = "2026-07-01", expectedEvidenceType = "screenshot" } },
             version,
         }));
         Assert.Equal("map_submitted", submitted.GetProperty("status").GetString());

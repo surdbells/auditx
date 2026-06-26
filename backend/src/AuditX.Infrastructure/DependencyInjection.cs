@@ -87,7 +87,16 @@ public static class DependencyInjection
 
         // Cross-cutting
         services.AddSingleton<IClock, SystemClock>();
-        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            // Resolve the connection string lazily from options (not the value captured at registration time)
+            // so late-bound configuration sources are honoured. AbortOnConnectFail=false so a transient Redis
+            // blip at connect time doesn't permanently break the singleton multiplexer — it keeps retrying.
+            var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<RedisOptions>>().Value;
+            var redisConfig = ConfigurationOptions.Parse(options.ConnectionString);
+            redisConfig.AbortOnConnectFail = false;
+            return ConnectionMultiplexer.Connect(redisConfig);
+        });
         services.AddScoped<ITokenDenylist, RedisTokenDenylist>();
         services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddSingleton<ISessionTokenService, SessionTokenService>();

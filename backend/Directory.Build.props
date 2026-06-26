@@ -14,7 +14,9 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Deterministic>true</Deterministic>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Must stay false: Microsoft.Data.SqlClient does not support globalization-invariant mode and
+         throws on connection-open, which would break every SQL Server interaction (API and tests). -->
+    <InvariantGlobalization>false</InvariantGlobalization>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- Pin transitive dependencies centrally so we can override vulnerable transitive packages
          (e.g. the old Newtonsoft.Json pulled in by Hangfire). -->

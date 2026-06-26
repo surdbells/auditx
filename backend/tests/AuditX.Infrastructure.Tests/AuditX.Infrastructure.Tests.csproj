@@ -13,6 +13,13 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- AuditX.Infrastructure uses the ASP.NET Core shared framework (DataProtection, IHttpClientFactory).
+       The test host must reference it too, or assembly-scanning (ApplyConfigurationsFromAssembly) fails to
+       resolve those types at runtime. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\AuditX.Infrastructure\AuditX.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\AuditX.Application\AuditX.Application.csproj" />

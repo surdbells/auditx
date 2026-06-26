@@ -87,9 +87,9 @@ public sealed class UniversePlanningFlowTests(ApiFactory factory) : IClassFixtur
         var planId = plan.GetProperty("id").GetGuid();
         Assert.Equal("draft", plan.GetProperty("status").GetString());
 
-        // Submit before items → 409.
+        // Submit before items → 422 (business rule: a plan needs at least one item).
         var earlySubmit = await admin.PostAsync($"/api/v1/annual-plans/{planId}/submit", null);
-        Assert.Equal(HttpStatusCode.Conflict, earlySubmit.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableContent, earlySubmit.StatusCode);
 
         await admin.PostAsJsonAsync($"/api/v1/annual-plans/{planId}/items", new
         {

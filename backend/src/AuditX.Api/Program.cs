@@ -68,25 +68,31 @@ app.UseMiddleware<SessionSlidingMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 
+// Ensure the database + schema exist BEFORE registering recurring jobs: Hangfire's SQL storage connects
+// (and provisions its own schema) the moment a job is registered, so the database must already be there.
+await InitialiseDatabaseAsync(app);
+
+// Register recurring jobs through the DI-resolved manager (not the static RecurringJob facade, which
+// depends on JobStorage.Current and is not initialised under the test host / before the server starts).
+var recurringJobs = app.Services.GetRequiredService<IRecurringJobManager>();
+
 // Hourly delegation expiry (US-M1-028).
-RecurringJob.AddOrUpdate<DelegationExpiryJob>(
+recurringJobs.AddOrUpdate<DelegationExpiryJob>(
     DelegationExpiryJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Hourly);
 
 // Webhook retry sweep every 5 minutes (US-M14-010).
-RecurringJob.AddOrUpdate<WebhookRetryJob>(
+recurringJobs.AddOrUpdate<WebhookRetryJob>(
     WebhookRetryJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     "*/5 * * * *");
 
 // Hourly auto-start of planned audits whose start date has arrived (US-M4-011).
-RecurringJob.AddOrUpdate<AuditAutoStartJob>(
+recurringJobs.AddOrUpdate<AuditAutoStartJob>(
     AuditAutoStartJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Hourly);
-
-await InitialiseDatabaseAsync(app);
 
 app.Run();
 return;
