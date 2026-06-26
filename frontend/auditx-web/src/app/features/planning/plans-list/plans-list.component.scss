@@ -1,0 +1,37 @@
+.plans__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.plans__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.plans__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.plans__table {
+  width: 100%;
+}
+
+.plans__row {
+  cursor: pointer;
+}
+
+.plans__row:hover {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.plans__label {
+  font-weight: 500;
+}
+
+.plans__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}

@@ -1,0 +1,23 @@
+.dims__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.dims__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dims__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.dims__table {
+  width: 100%;
+}
+
+.dims__name {
+  font-weight: 500;
+}

@@ -1,0 +1,66 @@
+.cov__card {
+  margin-bottom: 1.25rem;
+  padding: 1.25rem;
+}
+
+.cov__title {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.cov__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.cov__table {
+  width: 100%;
+}
+
+.cov__error {
+  color: var(--mat-sys-error);
+}
+
+/* Coverage matrix grid. */
+.cov__matrix {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.cov__matrix th,
+.cov__matrix td {
+  border: 1px solid var(--mat-sys-outline-variant);
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+}
+
+.cov__matrix thead th {
+  background: var(--mat-sys-surface-container-high);
+  font-weight: 600;
+}
+
+.cov__matrix-corner {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.cov__matrix-rowhead {
+  background: var(--mat-sys-surface-container-high);
+  font-weight: 600;
+  text-align: left;
+}
+
+.cov__matrix-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+.cov__matrix-cell--zero {
+  color: var(--mat-sys-on-surface-variant);
+  background: color-mix(in srgb, var(--mat-sys-error) 8%, transparent);
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}

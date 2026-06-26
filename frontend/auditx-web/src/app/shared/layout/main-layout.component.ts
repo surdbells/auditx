@@ -84,6 +84,24 @@ export class MainLayoutComponent {
       permissions: [Permissions.ViewTemplates],
     },
     {
+      label: 'Audit Universe',
+      icon: 'account_tree',
+      route: '/audit-universe',
+      permissions: [Permissions.ViewUniverse],
+    },
+    {
+      label: 'Planning',
+      icon: 'event_note',
+      route: '/planning',
+      permissions: [Permissions.ViewPlan],
+    },
+    {
+      label: 'Coverage',
+      icon: 'grid_view',
+      route: '/coverage',
+      permissions: [Permissions.ViewCoverage],
+    },
+    {
       label: 'Maker-Checker',
       icon: 'fact_check',
       route: '/admin/maker-checker',

@@ -1,0 +1,176 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit entity' : 'New entity' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="editor__form">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" autocomplete="off" />
+      @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+        <mat-error>A name is required.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Entity type</mat-label>
+      <mat-select formControlName="entityType">
+        @for (t of data.entityTypes; track t) {
+          <mat-option [value]="t">{{ t }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.entityType.hasError('required') && form.controls.entityType.touched) {
+        <mat-error>Select an entity type.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description" rows="2"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Parent entity</mat-label>
+      <mat-select formControlName="parentEntityId">
+        <mat-option [value]="''">None</mat-option>
+        @for (p of data.parentCandidates; track p.id) {
+          <mat-option [value]="p.id">{{ p.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Owner (user id)</mat-label>
+      <input matInput formControlName="ownerUserId" autocomplete="off" />
+    </mat-form-field>
+  </form>
+
+  @if (canManage()) {
+    <div class="editor__meta-actions">
+      <button
+        matButton="filled"
+        type="button"
+        (click)="saveMeta()"
+        [disabled]="form.invalid || savingMeta()"
+      >
+        {{ savingMeta() ? 'Saving…' : isEdit ? 'Save details' : 'Create entity' }}
+      </button>
+    </div>
+  }
+
+  @if (isEdit) {
+    <section class="editor__section">
+      <header class="editor__section-head">
+        <h3>Risk scoring</h3>
+        <div class="editor__composite">
+          <span class="editor__composite-chip">
+            Inherent:
+            <strong>{{ composite().inherent ?? '—' }}</strong>
+          </span>
+          <span class="editor__composite-chip">
+            Residual:
+            <strong>{{ composite().residual ?? '—' }}</strong>
+          </span>
+        </div>
+      </header>
+
+      @if (scoresLoading()) {
+        <div class="editor__spinner">
+          <mat-spinner [diameter]="32" />
+        </div>
+      } @else if (!scoreRows().length) {
+        <p class="muted">
+          No active risk dimensions configured. Add dimensions before scoring.
+        </p>
+      } @else {
+        <table mat-table [dataSource]="scoreRows()" class="editor__score-table">
+          <ng-container matColumnDef="dimension">
+            <th mat-header-cell *matHeaderCellDef>Dimension</th>
+            <td mat-cell *matCellDef="let r">
+              {{ r.dimension.name }}
+              <span class="muted">(w{{ r.dimension.weight }})</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="scale">
+            <th mat-header-cell *matHeaderCellDef>Scale</th>
+            <td mat-cell *matCellDef="let r" class="muted">
+              {{ r.dimension.scaleMin }}–{{ r.dimension.scaleMax }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="inherent">
+            <th mat-header-cell *matHeaderCellDef>Inherent</th>
+            <td mat-cell *matCellDef="let r; let i = index">
+              <input
+                class="editor__score-input"
+                type="number"
+                [min]="r.dimension.scaleMin"
+                [max]="r.dimension.scaleMax"
+                [value]="r.inherent ?? ''"
+                [disabled]="!canScore()"
+                (input)="setScore(i, 'inherent', $any($event.target).value)"
+                [attr.aria-label]="'Inherent score for ' + r.dimension.name"
+              />
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="residual">
+            <th mat-header-cell *matHeaderCellDef>Residual</th>
+            <td mat-cell *matCellDef="let r; let i = index">
+              <input
+                class="editor__score-input"
+                type="number"
+                [min]="r.dimension.scaleMin"
+                [max]="r.dimension.scaleMax"
+                [value]="r.residual ?? ''"
+                [disabled]="!canScore()"
+                (input)="setScore(i, 'residual', $any($event.target).value)"
+                [attr.aria-label]="'Residual score for ' + r.dimension.name"
+              />
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="scoreColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: scoreColumns"></tr>
+        </table>
+
+        @if (canScore()) {
+          <div class="editor__score-actions">
+            <p class="muted editor__score-hint">
+              Fill every dimension on a side to submit it, or clear it entirely.
+            </p>
+            <button
+              matButton="filled"
+              type="button"
+              (click)="saveScores()"
+              [disabled]="savingScores()"
+            >
+              {{ savingScores() ? 'Saving…' : 'Save scores' }}
+            </button>
+          </div>
+        }
+      }
+    </section>
+
+    <mat-expansion-panel class="editor__history" (opened)="loadHistory()">
+      <mat-expansion-panel-header>
+        <mat-panel-title>Risk-score history</mat-panel-title>
+      </mat-expansion-panel-header>
+      @if (historyLoading()) {
+        <div class="editor__spinner">
+          <mat-spinner [diameter]="28" />
+        </div>
+      } @else if (!history().length) {
+        <p class="muted">No risk-score changes recorded yet.</p>
+      } @else {
+        <ul class="editor__history-list">
+          @for (h of history(); track h.id) {
+            <li>
+              <span class="editor__history-event">{{ h.eventType }}</span>
+              <span class="muted">{{ h.occurredAtUtc | date: 'short' }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </mat-expansion-panel>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="close()">Close</button>
+</mat-dialog-actions>

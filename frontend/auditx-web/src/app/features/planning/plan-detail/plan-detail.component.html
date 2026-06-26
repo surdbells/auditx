@@ -1,0 +1,198 @@
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading plan…" />
+  }
+  @case ('error') {
+    <app-error-state message="We couldn't load this plan." (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (plan(); as p) {
+      <app-page-header
+        [title]="p.periodLabel"
+        [subtitle]="
+          (p.periodStart | date: 'mediumDate') +
+          ' – ' +
+          (p.periodEnd | date: 'mediumDate')
+        "
+      >
+        <div actions class="detail__actions">
+          @if (canSubmit()) {
+            <button matButton="filled" type="button" (click)="submit()">
+              <mat-icon>send</mat-icon>
+              Submit
+            </button>
+          }
+          @if (canSubmitRevision()) {
+            <button matButton type="button" (click)="submitRevision()">
+              <mat-icon>edit_calendar</mat-icon>
+              Submit revision
+            </button>
+          }
+          @if (canDecideNow()) {
+            <button matButton="filled" type="button" (click)="decide()">
+              <mat-icon>gavel</mat-icon>
+              Decision
+            </button>
+          }
+          @if (canClose()) {
+            <button matButton type="button" (click)="close()">
+              <mat-icon>lock</mat-icon>
+              Close
+            </button>
+          }
+        </div>
+      </app-page-header>
+
+      <div class="detail__status-row">
+        <span class="status-badge" [attr.data-status]="p.status">
+          {{ p.status.replace('_', ' ') }}
+        </span>
+        @if (p.submittedAt) {
+          <span class="muted">
+            Submitted {{ p.submittedAt | date: 'short' }}
+          </span>
+        }
+        @if (p.approvedAt) {
+          <span class="muted">Approved {{ p.approvedAt | date: 'short' }}</span>
+        }
+      </div>
+
+      @if (p.approvalDecision; as decision) {
+        <mat-card appearance="outlined" class="detail__decision-card">
+          <h3 class="detail__card-title">
+            Latest decision: {{ decision.decision.replace('_', ' ') }}
+          </h3>
+          @if (decision.detail) {
+            <p>{{ decision.detail }}</p>
+          }
+          @if (decision.comments.length) {
+            <ul class="detail__comments">
+              @for (c of decision.comments; track $index) {
+                <li>{{ c }}</li>
+              }
+            </ul>
+          }
+          @if (decision.decidedAt) {
+            <p class="muted">
+              Decided {{ decision.decidedAt | date: 'short' }}
+            </p>
+          }
+        </mat-card>
+      }
+
+      <!-- Execution panel -->
+      @if (execution(); as exec) {
+        <mat-card appearance="outlined" class="detail__exec-card">
+          <h3 class="detail__card-title">Execution</h3>
+          <div class="detail__exec-progress">
+            <div class="detail__exec-progress-label">
+              <span>{{ exec.percentComplete }}% complete</span>
+              <span class="muted">{{ exec.totalItems }} item(s)</span>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="exec.percentComplete"
+            />
+          </div>
+
+          @if (statusCounts().length) {
+            <div class="detail__exec-counts">
+              @for (c of statusCounts(); track c.status) {
+                <span class="detail__count-chip">
+                  {{ c.status.replace('_', ' ') }}:
+                  <strong>{{ c.count }}</strong>
+                </span>
+              }
+            </div>
+          }
+
+          @if (exec.behindSchedule.length) {
+            <div class="detail__behind">
+              <h4 class="detail__behind-title">
+                <mat-icon class="detail__behind-icon">warning</mat-icon>
+                Behind schedule ({{ exec.behindSchedule.length }})
+              </h4>
+              <ul class="detail__behind-list">
+                @for (i of exec.behindSchedule; track i.id) {
+                  <li>
+                    {{ i.auditType }} — due
+                    {{ i.plannedEndDate | date: 'mediumDate' }}
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </mat-card>
+      }
+
+      <!-- Items -->
+      <mat-card appearance="outlined" class="detail__items-card">
+        <div class="detail__items-head">
+          <h3 class="detail__card-title">Plan items</h3>
+          @if (canManage() && isEditable()) {
+            <button matButton="filled" type="button" (click)="addItem()">
+              <mat-icon>add</mat-icon>
+              Add item
+            </button>
+          }
+        </div>
+
+        @if (!p.items.length) {
+          <p class="muted detail__empty">No items have been added yet.</p>
+        } @else {
+          <div class="table-scroll">
+            <table mat-table [dataSource]="p.items" class="detail__items-table">
+              <ng-container matColumnDef="auditType">
+                <th mat-header-cell *matHeaderCellDef>Audit type</th>
+                <td mat-cell *matCellDef="let i">{{ i.auditType }}</td>
+              </ng-container>
+              <ng-container matColumnDef="planned">
+                <th mat-header-cell *matHeaderCellDef>Planned</th>
+                <td mat-cell *matCellDef="let i">
+                  {{ i.plannedStartDate | date: 'mediumDate' }} –
+                  {{ i.plannedEndDate | date: 'mediumDate' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="effort">
+                <th mat-header-cell *matHeaderCellDef>Effort</th>
+                <td mat-cell *matCellDef="let i">
+                  {{ i.estimatedEffortDays !== null ? i.estimatedEffortDays + 'd' : '—' }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="lead">
+                <th mat-header-cell *matHeaderCellDef>Lead</th>
+                <td mat-cell *matCellDef="let i">{{ i.assignedLeadUserId || '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let i">
+                  <span class="status-badge" [attr.data-status]="i.status">
+                    {{ i.status.replace('_', ' ') }}
+                  </span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+                <td mat-cell *matCellDef="let i">
+                  @if (canManage() && isEditable()) {
+                    <button
+                      matIconButton
+                      type="button"
+                      (click)="removeItem(i)"
+                      [attr.aria-label]="'Remove ' + i.auditType"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="itemColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: itemColumns"></tr>
+            </table>
+          </div>
+        }
+      </mat-card>
+    }
+  }
+}

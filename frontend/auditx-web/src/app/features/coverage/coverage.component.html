@@ -1,0 +1,187 @@
+<app-page-header
+  title="Coverage Analytics"
+  subtitle="Audit-coverage gaps, high-risk blind spots and a coverage matrix."
+/>
+
+<!-- Not audited since -->
+<mat-card appearance="outlined" class="cov__card">
+  <h3 class="cov__title">Not audited since</h3>
+  <form [formGroup]="notAuditedForm" class="cov__form" (ngSubmit)="runNotAudited()">
+    <mat-form-field appearance="outline">
+      <mat-label>Months</mat-label>
+      <input matInput type="number" formControlName="months" min="1" />
+      @if (notAuditedForm.controls.months.invalid && notAuditedForm.controls.months.touched) {
+        <mat-error>Enter a number of months.</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Entity type (optional)</mat-label>
+      <input matInput formControlName="entityType" autocomplete="off" />
+    </mat-form-field>
+    <button matButton="filled" type="submit" [disabled]="notAuditedState() === 'loading'">
+      <mat-icon>search</mat-icon>
+      Run
+    </button>
+  </form>
+
+  @switch (notAuditedState()) {
+    @case ('loading') {
+      <p class="muted">Running…</p>
+    }
+    @case ('error') {
+      <p class="cov__error">We couldn't run this report.</p>
+    }
+    @case ('ready') {
+      @if (!notAuditedRows().length) {
+        <p class="muted">No entities match — full coverage for this window.</p>
+      } @else {
+        <div class="table-scroll">
+          <table mat-table [dataSource]="notAuditedRows()" class="cov__table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let r">{{ r.name }}</td>
+            </ng-container>
+            <ng-container matColumnDef="entityType">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let r">{{ r.entityType }}</td>
+            </ng-container>
+            <ng-container matColumnDef="lastAudited">
+              <th mat-header-cell *matHeaderCellDef>Last audited</th>
+              <td mat-cell *matCellDef="let r">
+                {{ r.lastAuditedAt ? (r.lastAuditedAt | date: 'mediumDate') : 'Never' }}
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="notAuditedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: notAuditedColumns"></tr>
+          </table>
+        </div>
+      }
+    }
+  }
+</mat-card>
+
+<!-- High-risk gaps -->
+<mat-card appearance="outlined" class="cov__card">
+  <h3 class="cov__title">High-risk coverage gaps</h3>
+  <form [formGroup]="highRiskForm" class="cov__form" (ngSubmit)="runHighRisk()">
+    <mat-form-field appearance="outline">
+      <mat-label>Months</mat-label>
+      <input matInput type="number" formControlName="months" min="1" />
+      @if (highRiskForm.controls.months.invalid && highRiskForm.controls.months.touched) {
+        <mat-error>Enter a number of months.</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Entity type (optional)</mat-label>
+      <input matInput formControlName="entityType" autocomplete="off" />
+    </mat-form-field>
+    <button matButton="filled" type="submit" [disabled]="highRiskState() === 'loading'">
+      <mat-icon>search</mat-icon>
+      Run
+    </button>
+  </form>
+
+  @switch (highRiskState()) {
+    @case ('loading') {
+      <p class="muted">Running…</p>
+    }
+    @case ('error') {
+      <p class="cov__error">We couldn't run this report.</p>
+    }
+    @case ('ready') {
+      @if (!highRiskRows().length) {
+        <p class="muted">No high-risk gaps for this window.</p>
+      } @else {
+        <div class="table-scroll">
+          <table mat-table [dataSource]="highRiskRows()" class="cov__table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let r">{{ r.name }}</td>
+            </ng-container>
+            <ng-container matColumnDef="entityType">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let r">{{ r.entityType }}</td>
+            </ng-container>
+            <ng-container matColumnDef="residual">
+              <th mat-header-cell *matHeaderCellDef>Residual</th>
+              <td mat-cell *matCellDef="let r">
+                {{
+                  r.compositeResidualScore !== null
+                    ? (r.compositeResidualScore | number: '1.0-2')
+                    : '—'
+                }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="lastAudited">
+              <th mat-header-cell *matHeaderCellDef>Last audited</th>
+              <td mat-cell *matCellDef="let r">
+                {{ r.lastAuditedAt ? (r.lastAuditedAt | date: 'mediumDate') : 'Never' }}
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="highRiskColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: highRiskColumns"></tr>
+          </table>
+        </div>
+      }
+    }
+  }
+</mat-card>
+
+<!-- Coverage matrix -->
+<mat-card appearance="outlined" class="cov__card">
+  <h3 class="cov__title">Coverage matrix</h3>
+  <form [formGroup]="matrixForm" class="cov__form" (ngSubmit)="runMatrix()">
+    <mat-form-field appearance="outline">
+      <mat-label>Window (optional)</mat-label>
+      <input matInput formControlName="window" placeholder="e.g. 36m" autocomplete="off" />
+    </mat-form-field>
+    <button matButton="filled" type="submit" [disabled]="matrixState() === 'loading'">
+      <mat-icon>grid_on</mat-icon>
+      Run
+    </button>
+  </form>
+
+  @switch (matrixState()) {
+    @case ('loading') {
+      <p class="muted">Running…</p>
+    }
+    @case ('error') {
+      <p class="cov__error">We couldn't run this report.</p>
+    }
+    @case ('ready') {
+      @if (matrix(); as m) {
+        @if (!m.rows.length || !m.columns.length) {
+          <p class="muted">No coverage data for this window.</p>
+        } @else {
+          <div class="table-scroll">
+            <table class="cov__matrix">
+              <thead>
+                <tr>
+                  <th class="cov__matrix-corner"></th>
+                  @for (col of m.columns; track col) {
+                    <th>{{ col }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of m.rows; track row; let ri = $index) {
+                  <tr>
+                    <th class="cov__matrix-rowhead">{{ row }}</th>
+                    @for (col of m.columns; track col; let ci = $index) {
+                      <td
+                        class="cov__matrix-cell"
+                        [class.cov__matrix-cell--zero]="m.cells[ri][ci] === 0"
+                      >
+                        {{ m.cells[ri][ci] }}
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    }
+  }
+</mat-card>

@@ -104,6 +104,49 @@
   color: #0d47a1;
 }
 
+// M3 — Annual plan lifecycle states.
+.status-badge[data-status='submitted'],
+.status-badge[data-status='revision_submitted'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
+.status-badge[data-status='revisions_requested'] {
+  background: color-mix(in srgb, #ef6c00 18%, transparent);
+  color: #e65100;
+}
+
+.status-badge[data-status='approved'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='closed'] {
+  background: color-mix(in srgb, #616161 16%, transparent);
+  color: #424242;
+}
+
+// M3 — Plan item statuses.
+.status-badge[data-status='planned'] {
+  background: color-mix(in srgb, #616161 16%, transparent);
+  color: #424242;
+}
+
+.status-badge[data-status='in_progress'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
+.status-badge[data-status='completed'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='deferred'] {
+  background: color-mix(in srgb, #ef6c00 18%, transparent);
+  color: #e65100;
+}
+
 .muted {
   color: var(--mat-sys-on-surface-variant);
 }

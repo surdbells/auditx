@@ -26,6 +26,16 @@ export const Permissions = {
   InstallReleases: 'InstallReleases',
   ManageRetention: 'ManageRetention',
   ExecRestore: 'ExecRestore',
+
+  // M3 — Audit Universe & Planning
+  ViewUniverse: 'ViewUniverse',
+  ViewPlan: 'ViewPlan',
+  ViewCoverage: 'ViewCoverage',
+  ManageUniverse: 'ManageUniverse',
+  ScoreRisk: 'ScoreRisk',
+  ManagePlan: 'ManagePlan',
+  ManageConfiguration: 'ManageConfiguration',
+  ACChair: 'ACChair',
 } as const;
 
 export type PermissionKey = (typeof Permissions)[keyof typeof Permissions];

@@ -156,6 +156,51 @@ export const routes: Routes = [
           ).then((m) => m.AdministrationComponent),
       },
       {
+        path: 'audit-universe',
+        title: 'Audit Universe · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewUniverse)],
+        loadComponent: () =>
+          import(
+            './features/audit-universe/entities-list/entities-list.component'
+          ).then((m) => m.EntitiesListComponent),
+      },
+      {
+        path: 'audit-universe/risk-dimensions',
+        title: 'Risk Dimensions · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewUniverse)],
+        loadComponent: () =>
+          import(
+            './features/audit-universe/risk-dimensions/risk-dimensions.component'
+          ).then((m) => m.RiskDimensionsComponent),
+      },
+      {
+        path: 'planning',
+        title: 'Annual Plans · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewPlan)],
+        loadComponent: () =>
+          import(
+            './features/planning/plans-list/plans-list.component'
+          ).then((m) => m.PlansListComponent),
+      },
+      {
+        path: 'planning/:id',
+        title: 'Plan · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewPlan)],
+        loadComponent: () =>
+          import(
+            './features/planning/plan-detail/plan-detail.component'
+          ).then((m) => m.PlanDetailComponent),
+      },
+      {
+        path: 'coverage',
+        title: 'Coverage · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewCoverage)],
+        loadComponent: () =>
+          import('./features/coverage/coverage.component').then(
+            (m) => m.CoverageComponent,
+          ),
+      },
+      {
         path: 'admin/maker-checker',
         title: 'Maker-Checker · AuditX',
         canActivate: [
