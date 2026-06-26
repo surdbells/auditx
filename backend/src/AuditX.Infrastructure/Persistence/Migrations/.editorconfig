@@ -1,0 +1,7 @@
+# EF Core generates migration files; exclude them from style-as-error enforcement.
+[*.cs]
+generated_code = true
+dotnet_diagnostic.IDE0161.severity = none
+dotnet_diagnostic.IDE0005.severity = none
+dotnet_diagnostic.SA1633.severity = none
+dotnet_analyzer_diagnostic.severity = none

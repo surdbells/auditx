@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Testcontainers.MsSql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AuditX.Infrastructure\AuditX.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\AuditX.Application\AuditX.Application.csproj" />
+    <ProjectReference Include="..\..\src\AuditX.Domain\AuditX.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

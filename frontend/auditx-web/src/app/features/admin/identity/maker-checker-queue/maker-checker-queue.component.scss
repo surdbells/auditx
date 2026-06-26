@@ -1,0 +1,44 @@
+.mc__filter-card {
+  margin-bottom: 1.25rem;
+}
+
+.mc__filter {
+  width: 280px;
+  max-width: 100%;
+}
+
+.mc__card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.mc__table {
+  width: 100%;
+}
+
+.mc__target-type {
+  font-weight: 500;
+}
+
+.mc__target-id {
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.mono {
+  font-family: 'Roboto Mono', monospace;
+  word-break: break-all;
+}
+
+.mc__actions-col {
+  white-space: nowrap;
+}
+
+.mc__actions-col .mat-mdc-button-base {
+  margin-left: 0.5rem;
+}
+
+.mc__approve {
+  --mat-filled-button-container-color: #2e7d32;
+  --mat-filled-button-label-text-color: #ffffff;
+}

@@ -1,0 +1,92 @@
+<div class="login">
+  <mat-card class="login__card" appearance="outlined">
+    @if (submitting() || ssoBusy()) {
+      <mat-progress-bar mode="indeterminate" class="login__progress" />
+    }
+    <mat-card-header class="login__header">
+      <div class="login__brand">
+        <mat-icon class="login__brand-icon" aria-hidden="true">verified_user</mat-icon>
+        <div>
+          <div class="login__brand-name">AuditX Enterprise</div>
+          <div class="login__brand-sub">Internal Audit Platform</div>
+        </div>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <h1 class="login__title">Sign in</h1>
+      <p class="login__subtitle">Use your corporate credentials to continue.</p>
+
+      @if (errorMessage(); as msg) {
+        <div class="login__error" role="alert">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <span>{{ msg }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="login__form">
+        <mat-form-field appearance="outline" class="login__field">
+          <mat-label>Username</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            autocapitalize="off"
+            spellcheck="false"
+          />
+          <mat-icon matPrefix>person</mat-icon>
+          @if (form.controls.username.hasError('required') && form.controls.username.touched) {
+            <mat-error>Username is required.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="login__field">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            [type]="hidePassword() ? 'password' : 'text'"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button
+            matIconButton
+            matSuffix
+            type="button"
+            (click)="togglePassword()"
+            [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'"
+            [attr.aria-pressed]="!hidePassword()"
+          >
+            <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+          @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+            <mat-error>Password is required.</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          matButton="filled"
+          type="submit"
+          class="login__submit"
+          [disabled]="submitting() || ssoBusy()"
+        >
+          {{ submitting() ? 'Signing in…' : 'Sign in' }}
+        </button>
+      </form>
+
+      <div class="login__divider"><span>or</span></div>
+
+      <button
+        matButton="outlined"
+        type="button"
+        class="login__sso"
+        (click)="useSso()"
+        [disabled]="submitting() || ssoBusy()"
+      >
+        <mat-icon>desktop_windows</mat-icon>
+        {{ ssoBusy() ? 'Contacting directory…' : 'Use Windows SSO' }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+</div>

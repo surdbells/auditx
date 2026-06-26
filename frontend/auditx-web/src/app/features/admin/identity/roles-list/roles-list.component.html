@@ -1,0 +1,119 @@
+<app-page-header
+  title="Roles"
+  subtitle="Define roles, compose permissions and manage inheritance."
+>
+  <button actions matButton="filled" type="button" (click)="createRole()">
+    <mat-icon>add</mat-icon>
+    New role
+  </button>
+</app-page-header>
+
+<div class="roles__toolbar">
+  <mat-slide-toggle
+    [checked]="includeArchived()"
+    (change)="toggleArchived($event.checked)"
+  >
+    Show archived roles
+  </mat-slide-toggle>
+</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading roles…" />
+  }
+  @case ('error') {
+    <app-error-state message="We couldn't load the roles." (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="admin_panel_settings"
+        title="No roles yet"
+        message="Create your first role to start assigning permissions."
+        actionLabel="New role"
+        (action)="createRole()"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="roles__card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="roles()" class="roles__table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let role">
+                <span class="roles__name">{{ role.name }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="description">
+              <th mat-header-cell *matHeaderCellDef>Description</th>
+              <td mat-cell *matCellDef="let role" class="roles__desc">
+                {{ role.description || '—' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="permissions">
+              <th mat-header-cell *matHeaderCellDef>Permissions</th>
+              <td mat-cell *matCellDef="let role">{{ role.permissions.length }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="flags">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let role">
+                <mat-chip-set>
+                  @if (role.isBuiltIn) {
+                    <mat-chip class="chip-builtin" highlighted>Built-in</mat-chip>
+                  }
+                  @if (role.isArchived) {
+                    <mat-chip class="chip-archived">Archived</mat-chip>
+                  }
+                  @if (role.parentRoleIds.length) {
+                    <mat-chip matTooltip="Inherits from parent roles">
+                      Inherits {{ role.parentRoleIds.length }}
+                    </mat-chip>
+                  }
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let role" (click)="$event.stopPropagation()">
+                <button
+                  matIconButton
+                  type="button"
+                  [matMenuTriggerFor]="rowMenu"
+                  [attr.aria-label]="'Actions for ' + role.name"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #rowMenu="matMenu">
+                  <a mat-menu-item [routerLink]="['/admin/roles', role.id]">
+                    <mat-icon>edit</mat-icon>
+                    <span>{{ role.isBuiltIn ? 'View' : 'Edit' }}</span>
+                  </a>
+                  <button
+                    mat-menu-item
+                    type="button"
+                    [disabled]="role.isBuiltIn || role.isArchived"
+                    (click)="archive(role, $event)"
+                  >
+                    <mat-icon>archive</mat-icon>
+                    <span>Archive</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns"
+              class="roles__row"
+              (click)="editRole(row)"
+            ></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

@@ -1,0 +1,36 @@
+// Reusable status pill styling, driven by a [data-status] attribute.
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font: var(--mat-sys-label-medium);
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status-badge[data-status='active'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='deactivated'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
+.status-badge[data-status='locked'] {
+  background: color-mix(in srgb, #ef6c00 18%, transparent);
+  color: #e65100;
+}
+
+.status-badge[data-status='awaiting_role_assignment'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}

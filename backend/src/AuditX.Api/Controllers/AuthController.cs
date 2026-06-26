@@ -1,0 +1,56 @@
+using AuditX.Api.Authentication;
+using AuditX.Api.Contracts;
+using AuditX.Application.Common.Exceptions;
+using AuditX.Application.Common.Messaging;
+using AuditX.Application.Identity.Authentication;
+using AuditX.Application.Identity.Dtos;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AuditX.Api.Controllers;
+
+[Route("api/v1/auth")]
+public sealed class AuthController(IDispatcher dispatcher) : ApiControllerBase
+{
+    /// <summary>Forms-fallback login: AD credentials validated by an LDAP bind. Sets the session cookie.</summary>
+    [AllowAnonymous]
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
+    {
+        var result = await dispatcher.Send(new LoginCommand(request.Username, request.Password), cancellationToken);
+        WriteSession(result);
+        return Envelope(result.Session);
+    }
+
+    /// <summary>Kerberos/IWA SSO. Requires Windows authentication; sets the session cookie on success.</summary>
+    [Authorize(AuthenticationSchemes = AuthenticationSetup.NegotiateScheme)]
+    [HttpGet("sso")]
+    public async Task<IActionResult> Sso(CancellationToken cancellationToken)
+    {
+        var accountName = User.Identity?.Name
+            ?? throw new UnauthorizedException("sso_unresolved", "Windows identity was not provided.");
+        var result = await dispatcher.Send(new SsoLoginCommand(accountName), cancellationToken);
+        WriteSession(result);
+        return Envelope(result.Session);
+    }
+
+    /// <summary>Logout: revokes the current token and clears the cookie.</summary>
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new LogoutCommand(), cancellationToken);
+        SessionCookie.Clear(HttpContext);
+        return NoContent();
+    }
+
+    /// <summary>Current session, re-verifying AD account status on each call.</summary>
+    [Authorize]
+    [HttpGet("session")]
+    public async Task<IActionResult> Session(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetSessionQuery(), cancellationToken));
+
+    private void WriteSession(AuthResultDto result)
+        => SessionCookie.Write(HttpContext, result.Token, result.AbsoluteExpiresAt);
+}

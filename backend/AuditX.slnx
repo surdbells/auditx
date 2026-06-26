@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AuditX.Api/AuditX.Api.csproj" />
+    <Project Path="src/AuditX.Application/AuditX.Application.csproj" />
+    <Project Path="src/AuditX.Domain/AuditX.Domain.csproj" />
+    <Project Path="src/AuditX.Infrastructure/AuditX.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AuditX.Api.IntegrationTests/AuditX.Api.IntegrationTests.csproj" />
+    <Project Path="tests/AuditX.Application.Tests/AuditX.Application.Tests.csproj" />
+    <Project Path="tests/AuditX.Domain.Tests/AuditX.Domain.Tests.csproj" />
+    <Project Path="tests/AuditX.Infrastructure.Tests/AuditX.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

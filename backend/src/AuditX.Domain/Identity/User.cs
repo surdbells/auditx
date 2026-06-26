@@ -1,0 +1,135 @@
+using AuditX.Domain.Common;
+using AuditX.Domain.Enums;
+using AuditX.Domain.Identity.Events;
+
+namespace AuditX.Domain.Identity;
+
+/// <summary>
+/// An AuditX user. Identity is sourced from the bank's Active Directory; AuditX stores no password.
+/// A user authenticated for the first time is provisioned just-in-time with no roles
+/// (<see cref="UserStatus.AwaitingRoleAssignment"/>) and cannot perform business actions until an
+/// administrator grants at least one role.
+/// </summary>
+public sealed class User : AggregateRoot, ISoftDeletable
+{
+    private User()
+    {
+    }
+
+    public string AdSamAccountName { get; private set; } = null!;
+
+    public string AdUserPrincipalName { get; private set; } = null!;
+
+    public string AdObjectSid { get; private set; } = null!;
+
+    public string Email { get; private set; } = null!;
+
+    public string FirstName { get; private set; } = null!;
+
+    public string LastName { get; private set; } = null!;
+
+    public string DisplayName { get; private set; } = null!;
+
+    public UserStatus Status { get; private set; }
+
+    public string Timezone { get; private set; } = "UTC";
+
+    public string Locale { get; private set; } = "en-GB";
+
+    public DateTimeOffset? LastLoginAt { get; private set; }
+
+    /// <summary>Free-form JSON of per-user notification preferences (US-M15-006).</summary>
+    public string? NotificationPreferencesJson { get; private set; }
+
+    public bool IsDeleted { get; private set; }
+
+    public DateTimeOffset? DeletedAt { get; private set; }
+
+    public Guid? DeletedBy { get; private set; }
+
+    /// <summary>Just-in-time provisioning from AD-asserted attributes (US-M1-005).</summary>
+    public static User ProvisionFromDirectory(
+        string adSamAccountName,
+        string adUserPrincipalName,
+        string adObjectSid,
+        string email,
+        string firstName,
+        string lastName,
+        string? displayName = null)
+    {
+        var user = new User
+        {
+            AdSamAccountName = Guard.NotNullOrWhiteSpace(adSamAccountName, "user.sam_required", "AD sAMAccountName is required."),
+            AdUserPrincipalName = Guard.NotNullOrWhiteSpace(adUserPrincipalName, "user.upn_required", "AD userPrincipalName is required."),
+            AdObjectSid = Guard.NotNullOrWhiteSpace(adObjectSid, "user.sid_required", "AD objectSid is required."),
+            Email = Guard.NotNullOrWhiteSpace(email, "user.email_required", "Email is required."),
+            FirstName = firstName?.Trim() ?? string.Empty,
+            LastName = lastName?.Trim() ?? string.Empty,
+            DisplayName = string.IsNullOrWhiteSpace(displayName) ? $"{firstName} {lastName}".Trim() : displayName.Trim(),
+            Status = UserStatus.AwaitingRoleAssignment,
+        };
+
+        user.RaiseDomainEvent(new UserProvisionedEvent(user.Id, user.AdSamAccountName, user.Email));
+        return user;
+    }
+
+    /// <summary>Refresh AD-sourced profile attributes on a subsequent authentication.</summary>
+    public void RefreshDirectoryAttributes(string email, string firstName, string lastName, string? displayName)
+    {
+        Email = Guard.NotNullOrWhiteSpace(email, "user.email_required", "Email is required.");
+        FirstName = firstName?.Trim() ?? FirstName;
+        LastName = lastName?.Trim() ?? LastName;
+        DisplayName = string.IsNullOrWhiteSpace(displayName) ? $"{FirstName} {LastName}".Trim() : displayName.Trim();
+    }
+
+    public void RecordLogin(DateTimeOffset atUtc, AuthenticationMethod method)
+    {
+        if (Status == UserStatus.Deactivated)
+        {
+            throw new DomainException("user.deactivated", "Account is deactivated.");
+        }
+
+        LastLoginAt = atUtc;
+        RaiseDomainEvent(new UserLoggedInEvent(Id, method));
+    }
+
+    /// <summary>
+    /// Promote an awaiting-role user to active once they hold at least one role. Idempotent for
+    /// users already active.
+    /// </summary>
+    public void MarkActiveOnFirstRole()
+    {
+        if (Status == UserStatus.AwaitingRoleAssignment)
+        {
+            Status = UserStatus.Active;
+        }
+    }
+
+    public void Deactivate(Guid? by)
+    {
+        if (Status == UserStatus.Deactivated)
+        {
+            return;
+        }
+
+        Status = UserStatus.Deactivated;
+        RaiseDomainEvent(new UserDeactivatedEvent(Id, by));
+    }
+
+    public void Reactivate()
+    {
+        if (Status == UserStatus.Deactivated)
+        {
+            Status = UserStatus.AwaitingRoleAssignment;
+        }
+    }
+
+    public void UpdateNotificationPreferences(string? preferencesJson) => NotificationPreferencesJson = preferencesJson;
+
+    public void SoftDelete(Guid? deletedBy, DateTimeOffset deletedAtUtc)
+    {
+        IsDeleted = true;
+        DeletedBy = deletedBy;
+        DeletedAt = deletedAtUtc;
+    }
+}

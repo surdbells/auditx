@@ -1,0 +1,42 @@
+# ---------- .NET ----------
+bin/
+obj/
+*.user
+*.suo
+.vs/
+artifacts/
+TestResults/
+*.trx
+coverage*.json
+coverage*.xml
+*.received.*
+
+# ---------- Node / Angular ----------
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+
+# ---------- Env / secrets ----------
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+secrets.json
+*.pfx
+*.key
+
+# ---------- IDE / OS ----------
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# ---------- Docker ----------
+docker/.data/
+
+# ---------- Logs ----------
+logs/
+*.log

@@ -1,0 +1,99 @@
+<app-page-header
+  title="Maker-Checker Queue"
+  subtitle="Review and authorise sensitive changes raised by other administrators."
+>
+  <button actions matButton="outlined" type="button" (click)="fetch()">
+    <mat-icon>refresh</mat-icon>
+    Refresh
+  </button>
+</app-page-header>
+
+<mat-card appearance="outlined" class="mc__filter-card">
+  <mat-form-field appearance="outline" class="mc__filter">
+    <mat-label>Action type</mat-label>
+    <mat-select [formControl]="actionTypeFilter" (selectionChange)="onFilterChange()">
+      @for (type of actionTypes; track type.value) {
+        <mat-option [value]="type.value">{{ type.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</mat-card>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading pending actions…" />
+  }
+  @case ('error') {
+    <app-error-state message="We couldn't load the approval queue." (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="task_alt"
+        title="Nothing to review"
+        message="There are no pending changes awaiting your approval."
+      />
+    } @else {
+      <mat-card appearance="outlined" class="mc__card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="actions()" class="mc__table">
+            <ng-container matColumnDef="actionType">
+              <th mat-header-cell *matHeaderCellDef>Action</th>
+              <td mat-cell *matCellDef="let a">
+                <mat-chip-set>
+                  <mat-chip highlighted>{{ a.actionType }}</mat-chip>
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="target">
+              <th mat-header-cell *matHeaderCellDef>Target</th>
+              <td mat-cell *matCellDef="let a">
+                <div class="mc__target-type">{{ a.targetObjectType }}</div>
+                <div class="mc__target-id mono">{{ a.targetObjectId }}</div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="maker">
+              <th mat-header-cell *matHeaderCellDef>Raised by</th>
+              <td mat-cell *matCellDef="let a">{{ a.makerName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="createdAt">
+              <th mat-header-cell *matHeaderCellDef>Raised</th>
+              <td mat-cell *matCellDef="let a">{{ a.createdAt | date: 'medium' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="mc__actions-col">Decision</th>
+              <td mat-cell *matCellDef="let a" class="mc__actions-col">
+                <button
+                  matButton="filled"
+                  type="button"
+                  class="mc__approve"
+                  [disabled]="processingId() === a.id"
+                  (click)="approve(a)"
+                >
+                  <mat-icon>check</mat-icon>
+                  Approve
+                </button>
+                <button
+                  matButton="outlined"
+                  type="button"
+                  [disabled]="processingId() === a.id"
+                  (click)="reject(a)"
+                >
+                  <mat-icon>close</mat-icon>
+                  Reject
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

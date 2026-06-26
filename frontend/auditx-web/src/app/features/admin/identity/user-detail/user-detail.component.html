@@ -1,0 +1,158 @@
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading user…" />
+  }
+  @case ('error') {
+    <app-error-state
+      title="Couldn't load user"
+      message="The user could not be loaded. They may not exist or you may lack access."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (user(); as u) {
+      <app-page-header [title]="u.displayName" [subtitle]="u.email">
+        <button actions matButton="outlined" type="button" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Back to users
+        </button>
+      </app-page-header>
+
+      <div class="detail__grid">
+        <mat-card appearance="outlined" class="detail__profile">
+          <mat-card-header>
+            <mat-card-title>Profile</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <dl class="profile">
+              <dt>Status</dt>
+              <dd>
+                <span class="status-badge" [attr.data-status]="u.status">
+                  {{ u.status | userStatusLabel }}
+                </span>
+              </dd>
+              <dt>First name</dt>
+              <dd>{{ u.firstName }}</dd>
+              <dt>Last name</dt>
+              <dd>{{ u.lastName }}</dd>
+              <dt>Email</dt>
+              <dd>{{ u.email }}</dd>
+              <dt>Last login</dt>
+              <dd>
+                @if (u.lastLoginAt) {
+                  {{ u.lastLoginAt | date: 'medium' }}
+                } @else {
+                  <span class="muted">Never</span>
+                }
+              </dd>
+              <dt>User ID</dt>
+              <dd class="mono">{{ u.id }}</dd>
+            </dl>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card appearance="outlined" class="detail__roles">
+          <mat-card-header class="detail__card-header">
+            <mat-card-title>Roles</mat-card-title>
+            <button matButton="filled" type="button" (click)="openGrantRole()">
+              <mat-icon>add</mat-icon>
+              Grant role
+            </button>
+          </mat-card-header>
+          <mat-card-content>
+            @if (directRoles().length) {
+              <mat-list>
+                @for (role of directRoles(); track role.id) {
+                  <mat-list-item class="role-row">
+                    <mat-icon matListItemIcon>badge</mat-icon>
+                    <span matListItemTitle>{{ role.roleName }}</span>
+                    <span matListItemLine>
+                      @if (role.scopeValue) {
+                        Scope: {{ role.scopeValue }}
+                      } @else {
+                        Global scope
+                      }
+                      @if (!role.isActive) {
+                        · inactive
+                      }
+                    </span>
+                    <button
+                      matIconButton
+                      matListItemMeta
+                      type="button"
+                      matTooltip="Revoke role"
+                      [attr.aria-label]="'Revoke ' + role.roleName"
+                      (click)="revokeRole(role)"
+                    >
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </mat-list-item>
+                }
+              </mat-list>
+            } @else {
+              <p class="muted">No roles assigned directly to this user.</p>
+            }
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card appearance="outlined" class="detail__delegations">
+          <mat-card-header class="detail__card-header">
+            <mat-card-title>Delegations</mat-card-title>
+            <button matButton="filled" type="button" (click)="openCreateDelegation()">
+              <mat-icon>add</mat-icon>
+              New delegation
+            </button>
+          </mat-card-header>
+          <mat-card-content>
+            @if (delegations().length) {
+              <div class="table-scroll">
+                <table mat-table [dataSource]="delegations()" class="detail__table">
+                  <ng-container matColumnDef="roleName">
+                    <th mat-header-cell *matHeaderCellDef>Role</th>
+                    <td mat-cell *matCellDef="let d">{{ d.roleName }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="period">
+                    <th mat-header-cell *matHeaderCellDef>Period</th>
+                    <td mat-cell *matCellDef="let d">
+                      {{ d.startDate | date: 'mediumDate' }} –
+                      {{ d.endDate | date: 'mediumDate' }}
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let d">
+                      <span
+                        class="status-badge"
+                        [attr.data-status]="d.isActive ? 'active' : 'deactivated'"
+                      >
+                        {{ d.isActive ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let d">
+                      <button
+                        matIconButton
+                        type="button"
+                        matTooltip="Revoke delegation"
+                        aria-label="Revoke delegation"
+                        (click)="revokeDelegation(d)"
+                      >
+                        <mat-icon>delete_outline</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="delegationColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: delegationColumns"></tr>
+                </table>
+              </div>
+            } @else {
+              <p class="muted">No delegations for this user.</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
+  }
+}

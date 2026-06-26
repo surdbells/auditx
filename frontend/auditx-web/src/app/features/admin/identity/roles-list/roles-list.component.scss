@@ -1,0 +1,33 @@
+.roles__toolbar {
+  margin-bottom: 1rem;
+}
+
+.roles__card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.roles__table {
+  width: 100%;
+}
+
+.roles__row {
+  cursor: pointer;
+}
+
+.roles__row:hover {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.roles__name {
+  font-weight: 500;
+}
+
+.roles__desc {
+  max-width: 360px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.chip-archived {
+  --mdc-chip-label-text-color: var(--mat-sys-on-surface-variant);
+}

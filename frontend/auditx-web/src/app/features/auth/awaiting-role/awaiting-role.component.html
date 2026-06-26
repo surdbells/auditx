@@ -1,0 +1,27 @@
+<div class="awaiting">
+  <mat-card class="awaiting__card" appearance="outlined">
+    <mat-card-content class="awaiting__content">
+      <mat-icon class="awaiting__icon" aria-hidden="true">hourglass_top</mat-icon>
+      <h1 class="awaiting__title">Access pending</h1>
+      <p class="awaiting__lead">
+        Welcome{{ session()?.firstName ? ', ' + session()?.firstName : '' }}. Your account is
+        active but no roles have been assigned yet.
+      </p>
+      <p class="awaiting__detail">
+        An administrator must grant you a role before you can use AuditX. You will gain
+        access automatically once that happens.
+      </p>
+
+      <div class="awaiting__actions">
+        <button matButton="filled" type="button" (click)="refresh()">
+          <mat-icon>refresh</mat-icon>
+          Check again
+        </button>
+        <button matButton type="button" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          Sign out
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

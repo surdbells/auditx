@@ -1,0 +1,75 @@
+<mat-sidenav-container class="layout">
+  <mat-sidenav
+    class="layout__sidenav"
+    [mode]="isHandset() ? 'over' : 'side'"
+    [opened]="isHandset() ? sidenavOpened() : true"
+    [fixedInViewport]="isHandset()"
+    (closedStart)="sidenavOpened.set(false)"
+  >
+    <div class="layout__brand">
+      <mat-icon class="layout__brand-icon" aria-hidden="true">verified_user</mat-icon>
+      <div class="layout__brand-text">
+        <span class="layout__brand-name">AuditX</span>
+        <span class="layout__brand-sub">Enterprise</span>
+      </div>
+    </div>
+
+    <mat-nav-list>
+      @for (item of navItems(); track item.route) {
+        <a
+          mat-list-item
+          [routerLink]="item.route"
+          routerLinkActive="active-link"
+          (click)="onNavigate()"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="layout__content">
+    <mat-toolbar class="layout__toolbar">
+      @if (isHandset()) {
+        <button
+          matIconButton
+          type="button"
+          aria-label="Toggle navigation"
+          (click)="toggleSidenav()"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
+      <span class="layout__toolbar-title">Internal Audit Platform</span>
+      <span class="layout__spacer"></span>
+
+      <button
+        matButton
+        type="button"
+        [matMenuTriggerFor]="userMenu"
+        class="layout__user-btn"
+        aria-label="Account menu"
+      >
+        <span class="layout__avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="layout__user-name">{{ displayName() }}</span>
+        <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+
+      <mat-menu #userMenu="matMenu">
+        <div class="layout__menu-header" mat-menu-item disabled>
+          <div class="layout__menu-name">{{ displayName() }}</div>
+          <div class="layout__menu-email">{{ session()?.email }}</div>
+        </div>
+        <button mat-menu-item type="button" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <main class="layout__main">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

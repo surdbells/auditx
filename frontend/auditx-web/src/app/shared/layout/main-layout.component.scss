@@ -1,0 +1,129 @@
+.layout {
+  height: 100vh;
+}
+
+.layout__sidenav {
+  width: 248px;
+  border-right: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-low);
+}
+
+.layout__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.25rem 1rem;
+}
+
+.layout__brand-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: var(--mat-sys-primary);
+}
+
+.layout__brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.layout__brand-name {
+  font: var(--mat-sys-title-large);
+  font-weight: 600;
+}
+
+.layout__brand-sub {
+  font: var(--mat-sys-label-small);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.layout__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.layout__toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--mat-sys-surface);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.layout__toolbar-title {
+  font: var(--mat-sys-title-medium);
+}
+
+.layout__spacer {
+  flex: 1 1 auto;
+}
+
+.layout__user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.layout__user-name {
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layout__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+}
+
+.layout__main {
+  flex: 1 1 auto;
+  padding: 1.5rem;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.layout__menu-header {
+  display: flex;
+  flex-direction: column;
+  opacity: 1 !important;
+}
+
+.layout__menu-name {
+  font-weight: 600;
+}
+
+.layout__menu-email {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.active-link {
+  --mat-list-list-item-leading-icon-color: var(--mat-sys-primary);
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  border-radius: 0 24px 24px 0;
+  margin-right: 0.5rem;
+}
+
+@media (max-width: 599px) {
+  .layout__main {
+    padding: 1rem;
+  }
+  .layout__user-name {
+    display: none;
+  }
+}
