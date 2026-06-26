@@ -1,0 +1,221 @@
+<!-- Progress + review summary -->
+<mat-card appearance="outlined" class="exec__card">
+  <h3 class="exec__card-title">Fieldwork progress</h3>
+
+  @if (progress(); as p) {
+    <div class="exec__progress">
+      <div class="exec__progress-head">
+        <span>{{ p.respondedItems }} / {{ p.totalItems }} responded</span>
+        <span class="muted">{{ progressPct() }}%</span>
+      </div>
+      <mat-progress-bar mode="determinate" [value]="progressPct()" />
+      <div class="exec__progress-meta muted">
+        {{ p.inProgressItems }} in progress · {{ p.notStartedItems }} not started
+      </div>
+    </div>
+  } @else {
+    <p class="muted">Loading progress…</p>
+  }
+
+  @if (summary(); as s) {
+    <mat-chip-set class="exec__summary" aria-label="Review summary">
+      <mat-chip disableRipple>Pass {{ s.pass }}</mat-chip>
+      <mat-chip disableRipple>Fail {{ s.fail }}</mat-chip>
+      <mat-chip disableRipple>N/A {{ s.na }}</mat-chip>
+      <mat-chip disableRipple>Exceptions {{ s.exceptions }}</mat-chip>
+    </mat-chip-set>
+  }
+</mat-card>
+
+<!-- Reviewer: failures lacking an exception -->
+@if (showReviewPanel()) {
+  <mat-card appearance="outlined" class="exec__card">
+    <h3 class="exec__card-title">Review · failures without exception</h3>
+    @if (!failItems().length) {
+      <p class="muted">No outstanding failures need judgement.</p>
+    } @else {
+      <ul class="exec__fail-list">
+        @for (item of failItems(); track item.itemId) {
+          <li class="exec__fail">
+            <div class="exec__fail-main">
+              <p class="exec__fail-prompt">{{ item.prompt }}</p>
+              <span class="muted">Assignee: {{ nameOf(item.assignedUserId) }}</span>
+            </div>
+            <button matButton="filled" type="button" (click)="recordJudgement(item)">
+              <mat-icon>gavel</mat-icon>
+              Record judgement
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </mat-card>
+}
+
+<!-- Checklist execution -->
+<mat-card appearance="outlined" class="exec__card">
+  <h3 class="exec__card-title">Checklist execution</h3>
+
+  @if (!progressGroups().length) {
+    <p class="muted">No checklist items to work on.</p>
+  } @else {
+    @for (group of progressGroups(); track group.name) {
+      <div class="exec__section">
+        <h4 class="exec__section-title">{{ group.name }}</h4>
+        <mat-accordion multi>
+          @for (item of group.items; track item.itemId) {
+            <mat-expansion-panel (opened)="loadResponse(item)">
+              <mat-expansion-panel-header>
+                <mat-panel-title class="exec__item-title">
+                  {{ item.prompt }}
+                  @if (item.isRequired) {
+                    <span class="exec__required">Required</span>
+                  }
+                </mat-panel-title>
+                <mat-panel-description class="exec__item-desc">
+                  <span class="status-badge" [attr.data-status]="item.itemState">
+                    {{ item.itemState.replace('_', ' ') }}
+                  </span>
+                  @if (item.verdict) {
+                    <span
+                      class="verdict-chip"
+                      [attr.data-verdict]="item.verdict"
+                    >
+                      {{ verdictLabel(item.verdict) }}
+                    </span>
+                  }
+                  @if (item.hasException) {
+                    <mat-icon
+                      class="exec__exception"
+                      matTooltip="Has exception"
+                      aria-label="Has exception"
+                    >
+                      report_problem
+                    </mat-icon>
+                  }
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <div class="exec__item-body">
+                <div class="exec__item-meta muted">
+                  <span>Assignee: {{ nameOf(item.assignedUserId) }}</span>
+                  @if (responseFor(item.itemId); as r) {
+                    <span>· Verdict: {{ verdictLabel(r.verdict) }}</span>
+                    @if (r.isDraft) {
+                      <span class="exec__draft-tag">Draft</span>
+                    }
+                  }
+                </div>
+
+                @if (responseFor(item.itemId)?.comment; as comment) {
+                  <p class="exec__comment">{{ comment }}</p>
+                }
+
+                <!-- Response actions -->
+                <div class="exec__item-actions">
+                  @if (canRespond()) {
+                    <button matButton="filled" type="button" (click)="respond(item)">
+                      <mat-icon>edit_note</mat-icon>
+                      Respond
+                    </button>
+                    @if (hasDraft(item.itemId)) {
+                      <button matButton type="button" (click)="discardDraft(item)">
+                        <mat-icon>delete_sweep</mat-icon>
+                        Discard draft
+                      </button>
+                    }
+                  }
+                  @if (canManage() && !isReadOnly()) {
+                    <button matButton type="button" (click)="assign(item)">
+                      <mat-icon>person</mat-icon>
+                      Assign
+                    </button>
+                  }
+                  <button matButton type="button" (click)="showHistory(item)">
+                    <mat-icon>history</mat-icon>
+                    History
+                  </button>
+                </div>
+
+                <!-- Evidence -->
+                @if (canViewEvidence()) {
+                  @let response = responseFor(item.itemId);
+                  @if (response) {
+                    <div class="exec__evidence">
+                      <div class="exec__evidence-head">
+                        <span class="exec__evidence-title">Evidence</span>
+                        @if (canUploadEvidence() && canRespond()) {
+                          <button
+                            matButton
+                            type="button"
+                            (click)="fileInput.click()"
+                          >
+                            <mat-icon>upload_file</mat-icon>
+                            Upload
+                          </button>
+                          <input
+                            #fileInput
+                            type="file"
+                            hidden
+                            (change)="uploadEvidence(response.id, fileInput)"
+                          />
+                        }
+                      </div>
+                      @if (!evidenceFor(response.id).length) {
+                        <p class="muted exec__evidence-empty">No evidence yet.</p>
+                      } @else {
+                        <ul class="exec__files">
+                          @for (file of evidenceFor(response.id); track file.id) {
+                            <li class="exec__file">
+                              <div class="exec__file-info">
+                                <span class="exec__file-name">
+                                  {{ file.originalFilename }}
+                                </span>
+                                <span class="muted exec__file-meta">
+                                  {{ formatSize(file.sizeBytes) }} ·
+                                  {{ nameOf(file.uploadedBy) }} ·
+                                  {{ file.uploadedAt | date: 'short' }}
+                                </span>
+                                @if (file.isFlagged) {
+                                  <span class="exec__flagged">Flagged</span>
+                                }
+                              </div>
+                              <div class="exec__file-actions">
+                                <button
+                                  matIconButton
+                                  type="button"
+                                  (click)="downloadEvidence(file)"
+                                  aria-label="Download evidence"
+                                >
+                                  <mat-icon>download</mat-icon>
+                                </button>
+                                @if (canManageEvidence()) {
+                                  <button
+                                    matIconButton
+                                    type="button"
+                                    (click)="deleteEvidence(response.id, file)"
+                                    aria-label="Delete evidence"
+                                  >
+                                    <mat-icon>delete</mat-icon>
+                                  </button>
+                                }
+                              </div>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  } @else {
+                    <p class="muted exec__evidence-empty">
+                      Respond to attach evidence.
+                    </p>
+                  }
+                }
+              </div>
+            </mat-expansion-panel>
+          }
+        </mat-accordion>
+      </div>
+    }
+  }
+</mat-card>

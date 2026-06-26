@@ -138,9 +138,50 @@ describe('AuditDetailComponent', () => {
         },
       });
     fixture.detectChanges();
+    await fixture.whenStable();
+    // When the audit is past Draft the execution child mounts and loads its
+    // progress + review summary. Absorb those so existing assertions stay clean.
+    drainExecution();
+    fixture.detectChanges();
   }
 
-  afterEach(() => http.verify());
+  /** Flushes any progress / review-summary / fail-list requests the execution child issued. */
+  function drainExecution(): void {
+    for (const req of http.match(
+      (r) => r.url === `${BASE}/audits/a-1/checklist/progress`,
+    )) {
+      req.flush({
+        data: {
+          totalItems: 0,
+          respondedItems: 0,
+          inProgressItems: 0,
+          notStartedItems: 0,
+          items: [],
+        },
+      });
+    }
+    for (const req of http.match(
+      (r) => r.url === `${BASE}/audits/a-1/review/summary`,
+    )) {
+      req.flush({
+        data: { totalItems: 0, responded: 0, pass: 0, fail: 0, na: 0, exceptions: 0 },
+      });
+    }
+    for (const req of http.match(
+      (r) => r.url === `${BASE}/audits/a-1/review/fail-without-exception`,
+    )) {
+      req.flush({ data: { count: 0, items: [] } });
+    }
+  }
+
+  afterEach(() => {
+    // A status transition can mount the execution child mid-test; flush change
+    // detection so its effect runs, then drain the progress/summary fetches it
+    // issued before verifying there are no unexpected outstanding requests.
+    fixture?.detectChanges();
+    drainExecution();
+    http.verify();
+  });
 
   it('loads the audit and resolves lead / auditee display names', async () => {
     await setup(['ManageAudit'], audit('draft'));

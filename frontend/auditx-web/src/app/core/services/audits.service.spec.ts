@@ -197,4 +197,176 @@ describe('AuditsService', () => {
     req.flush(null, { status: 204, statusText: 'No Content' });
     expect(done).toBe(true);
   });
+
+  /* ===================== M5 — Execution / Fieldwork ===================== */
+
+  it('submits a response carrying the audit version, unwrapping the ChecklistResponse', () => {
+    let result: { id: string } | undefined;
+    service
+      .submitResponse('a-1', 'i-1', {
+        verdict: 'fail',
+        comment: 'Missing control',
+        isDraft: false,
+        version: 'v1',
+      })
+      .subscribe((r) => (result = r));
+    const req = http.expectOne(`${BASE}/audits/a-1/items/i-1/responses`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.verdict).toBe('fail');
+    expect(req.request.body.isDraft).toBe(false);
+    expect(req.request.body.version).toBe('v1');
+    req.flush({ data: { id: 'r-1', checklistItemId: 'i-1' } });
+    expect(result?.id).toBe('r-1');
+  });
+
+  it('gets the current response for an item', () => {
+    let result: { id: string } | null | undefined;
+    service.getResponse('a-1', 'i-1').subscribe((r) => (result = r));
+    const req = http.expectOne(`${BASE}/audits/a-1/items/i-1/responses`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ data: { id: 'r-1' } });
+    expect(result?.id).toBe('r-1');
+  });
+
+  it('discards a draft via a void DELETE with version in the query string', () => {
+    let done = false;
+    service.discardDraft('a-1', 'i-1', 'v 1').subscribe(() => (done = true));
+    const req = http.expectOne(
+      `${BASE}/audits/a-1/items/i-1/responses/draft?version=v%201`,
+    );
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+    expect(done).toBe(true);
+  });
+
+  it('fetches the response history', () => {
+    let result: unknown[] | undefined;
+    service
+      .getResponseHistory('a-1', 'i-1')
+      .subscribe((h) => (result = h));
+    const req = http.expectOne(
+      `${BASE}/audits/a-1/items/i-1/responses/history`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush({ data: [{ id: 'h-1', eventType: 'submitted' }] });
+    expect(result?.length).toBe(1);
+  });
+
+  it('fetches the checklist progress', () => {
+    let result: { totalItems: number } | undefined;
+    service.getChecklistProgress('a-1').subscribe((p) => (result = p));
+    const req = http.expectOne(`${BASE}/audits/a-1/checklist/progress`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ data: { totalItems: 3, respondedItems: 1, items: [] } });
+    expect(result?.totalItems).toBe(3);
+  });
+
+  it('assigns an item carrying the version', () => {
+    service
+      .assignItem('a-1', 'i-1', { assignedUserId: 'u-2', version: 'v1' })
+      .subscribe();
+    const req = http.expectOne(`${BASE}/audits/a-1/items/i-1/assignment`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body.assignedUserId).toBe('u-2');
+    expect(req.request.body.version).toBe('v1');
+    req.flush({ data: audit() });
+  });
+
+  it('bulk-reassigns items carrying the version', () => {
+    service
+      .bulkReassign('a-1', {
+        assignments: [{ itemId: 'i-1', assigneeUserId: 'u-2' }],
+        version: 'v1',
+      })
+      .subscribe();
+    const req = http.expectOne(`${BASE}/audits/a-1/items/bulk-reassign`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.assignments[0].itemId).toBe('i-1');
+    expect(req.request.body.version).toBe('v1');
+    req.flush({ data: audit() });
+  });
+
+  it('fetches the fail-without-exception review list', () => {
+    let result: { count: number } | undefined;
+    service.getFailWithoutException('a-1').subscribe((r) => (result = r));
+    const req = http.expectOne(
+      `${BASE}/audits/a-1/review/fail-without-exception`,
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush({ data: { count: 1, items: [{ itemId: 'i-1', prompt: 'P' }] } });
+    expect(result?.count).toBe(1);
+  });
+
+  it('fetches the review summary', () => {
+    let result: { fail: number } | undefined;
+    service.getReviewSummary('a-1').subscribe((s) => (result = s));
+    const req = http.expectOne(`${BASE}/audits/a-1/review/summary`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      data: { totalItems: 3, responded: 3, pass: 1, fail: 1, na: 1, exceptions: 0 },
+    });
+    expect(result?.fail).toBe(1);
+  });
+
+  it('records a fail judgement carrying the version', () => {
+    service
+      .recordFailJudgement('a-1', 'i-1', {
+        justification: 'Accepted risk',
+        version: 'v1',
+      })
+      .subscribe();
+    const req = http.expectOne(`${BASE}/audits/a-1/items/i-1/fail-judgement`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.justification).toBe('Accepted risk');
+    expect(req.request.body.version).toBe('v1');
+    req.flush({ data: audit() });
+  });
+
+  it('uploads evidence as multipart form data (no version) and unwraps', () => {
+    let result: { id: string } | undefined;
+    const file = new File(['hello'], 'proof.txt', { type: 'text/plain' });
+    service
+      .uploadEvidence('a-1', 'r-1', file)
+      .subscribe((e) => (result = e));
+    const req = http.expectOne(`${BASE}/audits/a-1/responses/r-1/evidence`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    expect((req.request.body as FormData).get('file')).toBe(file);
+    expect(req.request.withCredentials).toBe(true);
+    req.flush({ data: { id: 'e-1', originalFilename: 'proof.txt' } });
+    expect(result?.id).toBe('e-1');
+  });
+
+  it('lists evidence for a response', () => {
+    let result: unknown[] | undefined;
+    service.listEvidence('a-1', 'r-1').subscribe((e) => (result = e));
+    const req = http.expectOne(`${BASE}/audits/a-1/responses/r-1/evidence`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ data: [{ id: 'e-1' }] });
+    expect(result?.length).toBe(1);
+  });
+
+  it('downloads evidence as a blob', () => {
+    let result: Blob | undefined;
+    service.downloadEvidence('a-1', 'e-1').subscribe((b) => (result = b));
+    const req = http.expectOne(`${BASE}/audits/a-1/evidence/e-1`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    expect(req.request.withCredentials).toBe(true);
+    req.flush(new Blob(['data']));
+    expect(result instanceof Blob).toBe(true);
+  });
+
+  it('deletes evidence via a void DELETE with the reason in the query string', () => {
+    let done = false;
+    service
+      .deleteEvidence('a-1', 'e-1', 'wrong file')
+      .subscribe(() => (done = true));
+    const req = http.expectOne(
+      `${BASE}/audits/a-1/evidence/e-1?reason=wrong%20file`,
+    );
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+    expect(done).toBe(true);
+  });
 });

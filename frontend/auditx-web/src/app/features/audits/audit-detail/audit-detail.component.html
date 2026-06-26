@@ -228,6 +228,15 @@
           }
         }
       </mat-card>
+
+      <!-- Execution / fieldwork (M5) — shown once the audit is past Draft -->
+      @if (showExecution()) {
+        <app-audit-execution
+          [audit]="a"
+          [userNames]="userNames()"
+          (reloadRequested)="reload()"
+        />
+      }
     }
   }
 }

@@ -42,6 +42,12 @@ export const Permissions = {
   ViewAudit: 'ViewAudit',
   CreateAudit: 'CreateAudit',
   ManageAudit: 'ManageAudit',
+
+  // M5 — Audit Execution / Fieldwork
+  RespondItem: 'RespondItem',
+  UploadEvidence: 'UploadEvidence',
+  ViewEvidence: 'ViewEvidence',
+  ManageEvidence: 'ManageEvidence',
 } as const;
 
 export type PermissionKey = (typeof Permissions)[keyof typeof Permissions];

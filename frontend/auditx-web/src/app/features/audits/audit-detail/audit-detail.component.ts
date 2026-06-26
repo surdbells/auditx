@@ -56,6 +56,7 @@ import {
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { AuditExecutionComponent } from '../audit-execution/audit-execution.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -80,6 +81,7 @@ const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    AuditExecutionComponent,
   ],
   templateUrl: './audit-detail.component.html',
   styleUrl: './audit-detail.component.scss',
@@ -176,6 +178,11 @@ export class AuditDetailComponent {
 
   readonly isDraft = computed(() => this.status() === 'draft');
   readonly isPlanned = computed(() => this.status() === 'planned');
+
+  /** Execution / fieldwork is shown once the audit has moved past Draft. */
+  readonly showExecution = computed(
+    () => this.status() !== null && this.status() !== 'draft',
+  );
   readonly isInProgress = computed(() => this.status() === 'in_progress');
   readonly isUnderReview = computed(() => this.status() === 'under_review');
   readonly isCompleted = computed(() => this.status() === 'completed');
@@ -218,7 +225,11 @@ export class AuditDetailComponent {
     });
   }
 
-  private reload(): void {
+  /**
+   * Reloads the audit aggregate (and thus its fresh `version`). Public so the
+   * execution child can request it after a version-bearing mutation.
+   */
+  reload(): void {
     this.service.getById(this.id()).subscribe({
       next: (audit) => {
         this.audit.set(audit);
