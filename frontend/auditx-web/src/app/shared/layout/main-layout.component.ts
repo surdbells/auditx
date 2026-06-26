@@ -78,6 +78,12 @@ export class MainLayoutComponent {
       permissions: [Permissions.ManageRoles],
     },
     {
+      label: 'Templates',
+      icon: 'description',
+      route: '/admin/templates',
+      permissions: [Permissions.ViewTemplates],
+    },
+    {
       label: 'Maker-Checker',
       icon: 'fact_check',
       route: '/admin/maker-checker',

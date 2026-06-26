@@ -1,0 +1,46 @@
+.templates__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.templates__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.templates__search {
+  flex: 1 1 280px;
+}
+
+.templates__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.templates__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.templates__table {
+  width: 100%;
+}
+
+.templates__row {
+  cursor: pointer;
+}
+
+.templates__row:hover {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.templates__name {
+  font-weight: 500;
+}
+
+.templates__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}

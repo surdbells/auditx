@@ -1,0 +1,245 @@
+<app-page-header
+  [title]="isNew() ? 'New template' : (template()?.name ?? 'Template')"
+  [subtitle]="isNew() ? 'Create a draft audit checklist template.' : 'Manage sections, items and versions.'"
+>
+  <div actions class="editor__header-actions">
+    <button matButton type="button" (click)="cancel()">Back to list</button>
+  </div>
+</app-page-header>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading template…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load this template."
+      (retry)="cancel()"
+      retryLabel="Back to list"
+    />
+  }
+  @case ('ready') {
+    @if (!isNew() && !isDraft()) {
+      <div class="editor__banner" [attr.data-status]="template()?.status">
+        <mat-icon aria-hidden="true">lock</mat-icon>
+        <span>
+          @if (isPublished()) {
+            This template is published (v{{ template()?.currentVersion }}) and read-only.
+            Create a new draft to make changes.
+          } @else {
+            This template is archived and read-only.
+          }
+        </span>
+      </div>
+    }
+
+    <!-- Metadata -->
+    <mat-card appearance="outlined" class="editor__card">
+      <mat-card-header>
+        <mat-card-title>Details</mat-card-title>
+        @if (template()) {
+          <span class="status-badge" [attr.data-status]="template()?.status">
+            {{ template()?.status }}
+          </span>
+        }
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form" class="editor__form">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" autocomplete="off" />
+            @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+              <mat-error>A name is required.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Audit type</mat-label>
+            <input matInput formControlName="auditType" autocomplete="off" />
+            @if (form.controls.auditType.hasError('required') && form.controls.auditType.touched) {
+              <mat-error>An audit type is required.</mat-error>
+            }
+            @if (!isNew()) {
+              <mat-hint>Audit type cannot be changed after creation.</mat-hint>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="3"></textarea>
+          </mat-form-field>
+
+          @if (canEditMetadata()) {
+            <div class="editor__actions">
+              <button
+                matButton="filled"
+                type="button"
+                (click)="saveMetadata()"
+                [disabled]="saving()"
+              >
+                {{ isNew() ? 'Create template' : 'Save details' }}
+              </button>
+            </div>
+          }
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    @if (!isNew() && template()) {
+      <!-- Sections & items -->
+      <mat-card appearance="outlined" class="editor__card">
+        <mat-card-header>
+          <mat-card-title>Checklist items</mat-card-title>
+          @if (canEditStructure()) {
+            <div class="editor__card-actions">
+              <button matButton type="button" (click)="addSection()">
+                <mat-icon>create_new_folder</mat-icon>
+                Add section
+              </button>
+              <button matButton="filled" type="button" (click)="addItem()">
+                <mat-icon>add</mat-icon>
+                Add item
+              </button>
+            </div>
+          }
+        </mat-card-header>
+        <mat-card-content>
+          @if (sectionGroups().length === 0) {
+            <p class="editor__muted">No items yet.</p>
+          }
+          @for (group of sectionGroups(); track group.name) {
+            <div class="editor__section">
+              <div class="editor__section-head">
+                <h3 class="editor__section-title">
+                  {{ group.name || 'Unsectioned' }}
+                </h3>
+                @if (canEditStructure() && group.name) {
+                  <div class="editor__section-tools">
+                    <button
+                      matIconButton
+                      type="button"
+                      aria-label="Rename section"
+                      (click)="renameSection(group.name)"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button
+                      matIconButton
+                      type="button"
+                      aria-label="Remove section"
+                      (click)="removeSection(group.name)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+
+              @if (group.items.length === 0) {
+                <p class="editor__muted">No items in this section.</p>
+              }
+              @for (item of group.items; track item.id) {
+                <div class="editor__item">
+                  @if (canEditStructure()) {
+                    <div class="editor__item-move">
+                      <button
+                        matIconButton
+                        type="button"
+                        aria-label="Move up"
+                        [disabled]="item.orderIndex === orderedItems()[0].orderIndex"
+                        (click)="moveItem(item, -1)"
+                      >
+                        <mat-icon>arrow_upward</mat-icon>
+                      </button>
+                      <button
+                        matIconButton
+                        type="button"
+                        aria-label="Move down"
+                        [disabled]="item.orderIndex === orderedItems()[orderedItems().length - 1].orderIndex"
+                        (click)="moveItem(item, 1)"
+                      >
+                        <mat-icon>arrow_downward</mat-icon>
+                      </button>
+                    </div>
+                  }
+                  <div class="editor__item-body">
+                    <div class="editor__item-prompt">
+                      {{ item.prompt }}
+                      @if (item.isRequired) {
+                        <span class="editor__required" matTooltip="Required">*</span>
+                      }
+                    </div>
+                    @if (item.referenceNotes) {
+                      <div class="editor__item-notes">{{ item.referenceNotes }}</div>
+                    }
+                    <div class="editor__item-meta">
+                      <span class="editor__chip">{{ item.responseType }}</span>
+                    </div>
+                  </div>
+                  @if (canEditStructure()) {
+                    <div class="editor__item-tools">
+                      <button
+                        matIconButton
+                        type="button"
+                        aria-label="Edit item"
+                        (click)="editItem(item)"
+                      >
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button
+                        matIconButton
+                        type="button"
+                        aria-label="Remove item"
+                        (click)="removeItem(item)"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Lifecycle -->
+      @if (canManage()) {
+        <mat-card appearance="outlined" class="editor__card">
+          <mat-card-header>
+            <mat-card-title>Lifecycle</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="editor__lifecycle">
+              @if (isDraft()) {
+                <button
+                  matButton="filled"
+                  type="button"
+                  (click)="publish()"
+                  [disabled]="saving()"
+                >
+                  <mat-icon>publish</mat-icon>
+                  Publish
+                </button>
+              }
+              @if (isPublished()) {
+                <button
+                  matButton="outlined"
+                  type="button"
+                  (click)="newDraft()"
+                  [disabled]="saving()"
+                >
+                  <mat-icon>edit_note</mat-icon>
+                  New draft version
+                </button>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      <!-- Versions -->
+      <app-template-versions [templateId]="id()" />
+    }
+  }
+}

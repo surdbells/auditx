@@ -85,6 +85,33 @@ export const routes: Routes = [
           ).then((m) => m.RoleEditorComponent),
       },
       {
+        path: 'admin/templates',
+        title: 'Templates · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewTemplates)],
+        loadComponent: () =>
+          import(
+            './features/admin/templates/templates-list/templates-list.component'
+          ).then((m) => m.TemplatesListComponent),
+      },
+      {
+        path: 'admin/templates/new',
+        title: 'New template · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewTemplates)],
+        loadComponent: () =>
+          import(
+            './features/admin/templates/template-editor/template-editor.component'
+          ).then((m) => m.TemplateEditorComponent),
+      },
+      {
+        path: 'admin/templates/:id',
+        title: 'Template · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewTemplates)],
+        loadComponent: () =>
+          import(
+            './features/admin/templates/template-editor/template-editor.component'
+          ).then((m) => m.TemplateEditorComponent),
+      },
+      {
         path: 'admin/maker-checker',
         title: 'Maker-Checker · AuditX',
         canActivate: [

@@ -1,0 +1,143 @@
+<mat-card appearance="outlined" class="versions__card">
+  <mat-card-header>
+    <mat-card-title>Version history</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @switch (state()) {
+      @case ('loading') {
+        <app-loading message="Loading versions…" [diameter]="32" />
+      }
+      @case ('error') {
+        <p class="versions__muted">Couldn't load version history.</p>
+      }
+      @case ('ready') {
+        @if (!hasVersions()) {
+          <app-empty-state
+            icon="history"
+            title="No published versions yet"
+            message="Publish this template to create its first version."
+          />
+        } @else {
+          <ul class="versions__list">
+            @for (v of versions(); track v.id) {
+              <li class="versions__row">
+                <div class="versions__row-main">
+                  <span class="versions__num">v{{ v.versionNumber }}</span>
+                  <span class="versions__date">
+                    {{ v.publishedAt | date: 'medium' }}
+                  </span>
+                </div>
+                <button matButton type="button" (click)="viewVersion(v.versionNumber)">
+                  {{ selectedDetail()?.versionNumber === v.versionNumber ? 'Hide' : 'View items' }}
+                </button>
+              </li>
+              @if (selectedDetail()?.versionNumber === v.versionNumber) {
+                <li class="versions__detail">
+                  @if (detailLoading()) {
+                    <app-loading message="Loading…" [diameter]="28" />
+                  } @else {
+                    <ol class="versions__items">
+                      @for (item of selectedDetail()?.items ?? []; track $index) {
+                        <li>
+                          <span class="versions__item-prompt">{{ item.prompt }}</span>
+                          @if (item.sectionName) {
+                            <span class="versions__item-section">{{ item.sectionName }}</span>
+                          }
+                          @if (item.isRequired) {
+                            <span class="versions__required">required</span>
+                          }
+                        </li>
+                      }
+                    </ol>
+                  }
+                </li>
+              }
+            }
+          </ul>
+
+          @if (canDiff()) {
+            <div class="versions__diff">
+              <h4 class="versions__diff-title">Compare versions</h4>
+              <div class="versions__diff-controls">
+                <mat-form-field appearance="outline">
+                  <mat-label>From</mat-label>
+                  <mat-select
+                    [value]="diffFrom()"
+                    (valueChange)="diffFrom.set($event)"
+                  >
+                    @for (v of versions(); track v.id) {
+                      <mat-option [value]="v.versionNumber">v{{ v.versionNumber }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>To</mat-label>
+                  <mat-select
+                    [value]="diffTo()"
+                    (valueChange)="diffTo.set($event)"
+                  >
+                    @for (v of versions(); track v.id) {
+                      <mat-option [value]="v.versionNumber">v{{ v.versionNumber }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <button
+                  matButton="filled"
+                  type="button"
+                  (click)="compare()"
+                  [disabled]="diffLoading() || diffFrom() === diffTo()"
+                >
+                  Compare
+                </button>
+              </div>
+
+              @if (diffLoading()) {
+                <app-loading message="Computing diff…" [diameter]="28" />
+              }
+              @if (diff(); as d) {
+                <div class="versions__diff-result">
+                  <p class="versions__muted">
+                    Changes from v{{ d.fromVersion }} to v{{ d.toVersion }}
+                  </p>
+
+                  <div class="versions__diff-group">
+                    <h5 class="versions__diff-heading added">Added ({{ d.added.length }})</h5>
+                    @for (item of d.added; track $index) {
+                      <div class="versions__diff-item added">+ {{ item.prompt }}</div>
+                    } @empty {
+                      <p class="versions__muted">None.</p>
+                    }
+                  </div>
+
+                  <div class="versions__diff-group">
+                    <h5 class="versions__diff-heading removed">Removed ({{ d.removed.length }})</h5>
+                    @for (item of d.removed; track $index) {
+                      <div class="versions__diff-item removed">− {{ item.prompt }}</div>
+                    } @empty {
+                      <p class="versions__muted">None.</p>
+                    }
+                  </div>
+
+                  <div class="versions__diff-group">
+                    <h5 class="versions__diff-heading modified">Modified ({{ d.modified.length }})</h5>
+                    @for (mod of d.modified; track $index) {
+                      <div class="versions__diff-mod">
+                        <div class="versions__diff-item modified">~ {{ mod.prompt }}</div>
+                        <div class="versions__diff-before">before: {{ mod.before.prompt }}</div>
+                        <div class="versions__diff-after">after: {{ mod.after.prompt }}</div>
+                      </div>
+                    } @empty {
+                      <p class="versions__muted">None.</p>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+      }
+    }
+  </mat-card-content>
+</mat-card>

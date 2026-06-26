@@ -31,6 +31,22 @@
   color: #0d47a1;
 }
 
+// Template lifecycle states.
+.status-badge[data-status='draft'] {
+  background: color-mix(in srgb, #616161 16%, transparent);
+  color: #424242;
+}
+
+.status-badge[data-status='published'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='archived'] {
+  background: color-mix(in srgb, #ef6c00 18%, transparent);
+  color: #e65100;
+}
+
 .muted {
   color: var(--mat-sys-on-surface-variant);
 }

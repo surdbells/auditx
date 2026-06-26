@@ -1,0 +1,122 @@
+.versions__card {
+  margin-bottom: 1.25rem;
+}
+
+.versions__muted {
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0.25rem 0;
+}
+
+.versions__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.versions__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.versions__row-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.versions__num {
+  font-weight: 600;
+}
+
+.versions__date {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.versions__detail {
+  padding: 0.5rem 0 1rem 1rem;
+}
+
+.versions__items {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.versions__items li {
+  margin-bottom: 0.35rem;
+}
+
+.versions__item-prompt {
+  font-weight: 500;
+}
+
+.versions__item-section,
+.versions__required {
+  margin-left: 0.5rem;
+  font: var(--mat-sys-label-small);
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.versions__diff {
+  margin-top: 1.5rem;
+}
+
+.versions__diff-title {
+  margin: 0 0 0.5rem;
+  font: var(--mat-sys-title-small);
+}
+
+.versions__diff-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.versions__diff-group {
+  margin-top: 0.75rem;
+}
+
+.versions__diff-heading {
+  margin: 0 0 0.25rem;
+  font: var(--mat-sys-label-large);
+}
+
+.versions__diff-heading.added,
+.versions__diff-item.added {
+  color: #1b5e20;
+}
+
+.versions__diff-heading.removed,
+.versions__diff-item.removed {
+  color: #b71c1c;
+}
+
+.versions__diff-heading.modified,
+.versions__diff-item.modified {
+  color: #e65100;
+}
+
+.versions__diff-item {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.85rem;
+  padding: 0.1rem 0;
+}
+
+.versions__diff-mod {
+  margin-bottom: 0.5rem;
+}
+
+.versions__diff-before,
+.versions__diff-after {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  padding-left: 1rem;
+}

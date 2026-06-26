@@ -1,0 +1,134 @@
+.editor__card {
+  margin-bottom: 1.25rem;
+}
+
+.editor__card mat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.editor__card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.editor__header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editor__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.full {
+  width: 100%;
+}
+
+.editor__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.editor__banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.editor__muted {
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0.5rem 0;
+}
+
+.editor__section {
+  margin-bottom: 1.5rem;
+}
+
+.editor__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.editor__section-title {
+  margin: 0;
+  font: var(--mat-sys-title-small);
+}
+
+.editor__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.editor__item:last-child {
+  border-bottom: none;
+}
+
+.editor__item-move {
+  display: flex;
+  flex-direction: column;
+}
+
+.editor__item-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.editor__item-prompt {
+  font-weight: 500;
+}
+
+.editor__required {
+  color: var(--mat-sys-error);
+  margin-left: 0.25rem;
+}
+
+.editor__item-notes {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  margin-top: 0.25rem;
+}
+
+.editor__item-meta {
+  margin-top: 0.25rem;
+}
+
+.editor__chip {
+  display: inline-flex;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font: var(--mat-sys-label-small);
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.editor__item-tools {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.editor__lifecycle {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

@@ -7,6 +7,8 @@ export const Permissions = {
   ManageUsers: 'ManageUsers',
   ManageRoles: 'ManageRoles',
   ApproveMakerChecker: 'ApproveMakerChecker',
+  ViewTemplates: 'ViewTemplates',
+  ManageTemplates: 'ManageTemplates',
 } as const;
 
 export type PermissionKey = (typeof Permissions)[keyof typeof Permissions];
