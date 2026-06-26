@@ -14,6 +14,7 @@ public sealed class Audit : AggregateRoot
 {
     private readonly List<AuditTeamMember> _teamMembers = [];
     private readonly List<AuditChecklistItem> _checklistItems = [];
+    private readonly List<ChecklistResponse> _responses = [];
 
     private Audit()
     {
@@ -54,6 +55,8 @@ public sealed class Audit : AggregateRoot
     public IReadOnlyList<AuditTeamMember> TeamMembers => _teamMembers.AsReadOnly();
 
     public IReadOnlyList<AuditChecklistItem> ChecklistItems => _checklistItems.AsReadOnly();
+
+    public IReadOnlyList<ChecklistResponse> Responses => _responses.AsReadOnly();
 
     private IEnumerable<AuditTeamMember> ActiveTeam => _teamMembers.Where(m => m.IsActive);
 
@@ -286,6 +289,89 @@ public sealed class Audit : AggregateRoot
         Status = AuditStatus.Cancelled;
         RaiseDomainEvent(new AuditCancelledEvent(Id, reason));
     }
+
+    // ---- Execution / fieldwork (M5) ----
+
+    /// <summary>
+    /// Create-or-update the response to a checklist item (US-M5-001/002/003). Flips the item state and,
+    /// when the last item is finalised, auto-transitions the audit to Under Review (US-M4-009) in the same
+    /// aggregate mutation. Authorisation (assignee / manager override) is enforced in the application layer.
+    /// </summary>
+    public ResponseMutation RecordResponse(Guid itemId, ResponseVerdict? verdict, string? comment, bool isDraft, Guid actorUserId, bool requireCommentOnPass, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("audit.responses_locked", AuditStatus.InProgress);
+        var item = FindItem(itemId);
+
+        var response = _responses.FirstOrDefault(r => r.ChecklistItemId == itemId);
+        var before = response?.ToState();
+        if (response is null)
+        {
+            response = new ChecklistResponse(Id, itemId, actorUserId);
+            _responses.Add(response);
+        }
+
+        response.Apply(verdict, comment, isDraft, actorUserId, requireCommentOnPass, nowUtc);
+        item.SetState(isDraft ? ChecklistItemState.InProgress : ChecklistItemState.Responded);
+        RaiseDomainEvent(new ItemRespondedEvent(Id, itemId, response.Id, verdict, isDraft));
+
+        var autoTransitioned = false;
+        if (!isDraft && _checklistItems.All(i => i.ItemState == ChecklistItemState.Responded))
+        {
+            SendToReview(reason: null);
+            autoTransitioned = true;
+        }
+
+        return new ResponseMutation(response, before, response.ToState(), autoTransitioned);
+    }
+
+    /// <summary>Discard a draft response (US-M5-003); the item returns to Not Started. Author/manager check is in the app layer.</summary>
+    public Guid DiscardDraft(Guid itemId)
+    {
+        EnsureStatus("audit.responses_locked", AuditStatus.InProgress);
+        var response = _responses.FirstOrDefault(r => r.ChecklistItemId == itemId)
+            ?? throw new DomainException("response.not_found", "There is no response to discard.");
+        if (!response.IsDraft)
+        {
+            throw new DomainException("response.not_draft", "Only a draft response may be discarded.");
+        }
+
+        var responseId = response.Id;
+        _responses.Remove(response);
+        FindItem(itemId).SetState(ChecklistItemState.NotStarted);
+        RaiseDomainEvent(new DraftDiscardedEvent(Id, itemId, responseId));
+        return responseId;
+    }
+
+    /// <summary>Assign (or clear) a checklist item's owner (US-M5-012). Manager-only is enforced in the app layer.</summary>
+    public void AssignItem(Guid itemId, Guid? assigneeUserId)
+    {
+        EnsureStatus("audit.assignment_locked", AuditStatus.InProgress, AuditStatus.UnderReview);
+        var item = FindItem(itemId);
+        if (assigneeUserId is { } uid && !ActiveTeam.Any(m => m.UserId == uid))
+        {
+            throw new DomainException("audit.assignee_not_team_member", "An item can only be assigned to an active team member.");
+        }
+
+        item.Assign(assigneeUserId);
+        RaiseDomainEvent(new ItemAssignedEvent(Id, itemId, assigneeUserId));
+    }
+
+    /// <summary>Record a manager's judgement that a failed item does not warrant an exception (FR-M5-011).</summary>
+    public void RecordFailJudgement(Guid itemId, string justification, Guid judgedBy, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("audit.invalid_transition", AuditStatus.InProgress, AuditStatus.UnderReview);
+        var item = FindItem(itemId);
+        var hasFail = _responses.Any(r => r.ChecklistItemId == itemId && r.Verdict == ResponseVerdict.Fail && !r.IsDraft);
+        if (!hasFail)
+        {
+            throw new DomainException("audit.no_fail_response", "Only an item with a Fail response can carry a fail judgement.");
+        }
+
+        item.RecordFailJudgement(justification, judgedBy, nowUtc);
+    }
+
+    /// <summary>Set/clear the item-level exception flag (M6 hook).</summary>
+    public void SetItemException(Guid itemId, bool hasException) => FindItem(itemId).MarkHasException(hasException);
 
     private void Transition(AuditStatus to, string? reason, params AuditStatus[] from)
     {

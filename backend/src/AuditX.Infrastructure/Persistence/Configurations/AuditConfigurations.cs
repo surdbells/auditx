@@ -34,8 +34,32 @@ public sealed class AuditConfiguration : IEntityTypeConfiguration<Audit>
 
         builder.HasMany(a => a.TeamMembers).WithOne().HasForeignKey(m => m.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(a => a.ChecklistItems).WithOne().HasForeignKey(i => i.AuditId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(a => a.Responses).WithOne().HasForeignKey(r => r.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(a => a.TeamMembers).HasField("_teamMembers").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.ChecklistItems).HasField("_checklistItems").UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(a => a.Responses).HasField("_responses").UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+public sealed class ChecklistResponseConfiguration : IEntityTypeConfiguration<ChecklistResponse>
+{
+    public void Configure(EntityTypeBuilder<ChecklistResponse> builder)
+    {
+        builder.ToTable("checklist_responses");
+        builder.HasKey(r => r.Id);
+        builder.Property(r => r.Id).ValueGeneratedNever();
+
+        builder.Property(r => r.Verdict)
+            .HasConversion(new SnakeCaseEnumConverter<ResponseVerdict>())
+            .HasMaxLength(10);
+        builder.Property(r => r.Comment);
+
+        // Referential integrity to the owning checklist item (Restrict avoids multiple cascade paths from audits).
+        builder.HasOne<AuditChecklistItem>().WithMany().HasForeignKey(r => r.ChecklistItemId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(r => new { r.AuditId, r.ChecklistItemId }).IsUnique();
+        builder.HasIndex(r => r.AuditId);
+        builder.HasIndex(r => r.ChecklistItemId);
     }
 }
 
@@ -75,6 +99,9 @@ public sealed class AuditChecklistItemConfiguration : IEntityTypeConfiguration<A
             .HasConversion(new SnakeCaseEnumConverter<ChecklistItemState>())
             .HasMaxLength(30)
             .IsRequired();
+
+        builder.Property(i => i.HasException).HasDefaultValue(false);
+        builder.Property(i => i.FailJustification);
 
         builder.HasIndex(i => new { i.AuditId, i.OrderIndex });
         builder.HasIndex(i => i.AssignedUserId);

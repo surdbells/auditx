@@ -3,6 +3,8 @@ using AuditX.Api.Contracts;
 using AuditX.Application.Audits.Commands;
 using AuditX.Application.Audits.Queries;
 using AuditX.Application.Common.Messaging;
+using AuditX.Application.Execution.Commands;
+using AuditX.Application.Execution.Queries;
 using AuditX.Domain.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -104,4 +106,60 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
         await dispatcher.Send(new RemoveAuditChecklistItemCommand(id, itemId, version), cancellationToken);
         return NoContent();
     }
+
+    // ---- M5 execution / fieldwork ----
+
+    [RequirePermission(PermissionKeys.RespondItem)]
+    [HttpPost("{id:guid}/items/{itemId:guid}/responses")]
+    public async Task<IActionResult> SubmitResponse(Guid id, Guid itemId, [FromBody] SubmitResponseRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SubmitResponseCommand(id, itemId, request.Verdict, request.Comment, request.IsDraft, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/items/{itemId:guid}/responses")]
+    public async Task<IActionResult> GetResponse(Guid id, Guid itemId, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetChecklistResponseQuery(id, itemId), cancellationToken));
+
+    [RequirePermission(PermissionKeys.RespondItem)]
+    [HttpDelete("{id:guid}/items/{itemId:guid}/responses/draft")]
+    public async Task<IActionResult> DiscardDraft(Guid id, Guid itemId, [FromQuery] string version, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new DiscardDraftCommand(id, itemId, version), cancellationToken);
+        return NoContent();
+    }
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/items/{itemId:guid}/responses/history")]
+    public async Task<IActionResult> ResponseHistory(Guid id, Guid itemId, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetResponseHistoryQuery(id, itemId), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/checklist/progress")]
+    public async Task<IActionResult> ChecklistProgress(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetChecklistProgressQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPatch("{id:guid}/items/{itemId:guid}/assignment")]
+    public async Task<IActionResult> AssignItem(Guid id, Guid itemId, [FromBody] AssignItemRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new AssignItemCommand(id, itemId, request.AssigneeUserId, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/items/bulk-reassign")]
+    public async Task<IActionResult> BulkReassign(Guid id, [FromBody] BulkReassignRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new BulkReassignItemsCommand(id,
+            request.Assignments.Select(a => new AuditItemAssignment(a.ItemId, a.AssigneeUserId)).ToArray(), request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/review/fail-without-exception")]
+    public async Task<IActionResult> FailWithoutException(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListFailWithoutExceptionQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/review/summary")]
+    public async Task<IActionResult> ReviewSummary(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetReviewSummaryQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/items/{itemId:guid}/fail-judgement")]
+    public async Task<IActionResult> RecordFailJudgement(Guid id, Guid itemId, [FromBody] FailJudgementRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new RecordFailJudgementCommand(id, itemId, request.Justification, request.Version), cancellationToken));
 }

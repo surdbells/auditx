@@ -13,6 +13,7 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
         => db.Audits
             .Include(a => a.TeamMembers)
             .Include(a => a.ChecklistItems)
+            .Include(a => a.Responses)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
     public async Task<CursorPage<Audit>> SearchAsync(

@@ -34,6 +34,16 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
 
     public ChecklistItemState ItemState { get; private set; } = ChecklistItemState.NotStarted;
 
+    /// <summary>Item-level flag (PRD Screen 4): set by the M6 hook when an exception is raised for this item.</summary>
+    public bool HasException { get; private set; }
+
+    /// <summary>Manager's recorded justification for accepting a Fail without raising an exception (FR-M5-011).</summary>
+    public string? FailJustification { get; private set; }
+
+    public Guid? FailJudgedBy { get; private set; }
+
+    public DateTimeOffset? FailJudgedAt { get; private set; }
+
     internal AuditChecklistItem(
         Guid auditId, string prompt, string? referenceNotes, ResponseType responseType,
         string? sectionName, int orderIndex, bool isRequired, Guid? assignedUserId)
@@ -63,4 +73,14 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
 
     /// <summary>Set by M5 when a response is recorded/cleared.</summary>
     public void SetState(ChecklistItemState state) => ItemState = state;
+
+    /// <summary>Set/cleared by the M6 exception hook.</summary>
+    internal void MarkHasException(bool value) => HasException = value;
+
+    internal void RecordFailJudgement(string justification, Guid judgedBy, DateTimeOffset judgedAt)
+    {
+        FailJustification = Guard.NotNullOrWhiteSpace(justification, "audit.fail_justification_required", "A justification is required.");
+        FailJudgedBy = judgedBy;
+        FailJudgedAt = judgedAt;
+    }
 }

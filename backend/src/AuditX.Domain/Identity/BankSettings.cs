@@ -31,6 +31,9 @@ public sealed class BankSettings : Entity
     /// <summary>Maximum total evidence storage per audit, in gigabytes.</summary>
     public int MaxAuditEvidenceGb { get; private set; } = 5;
 
+    /// <summary>When true, a Pass verdict also requires a comment (BR-M5-002 bank policy).</summary>
+    public bool RequireCommentOnPass { get; private set; }
+
     public static BankSettings CreateDefault(string bankDisplayName) => new()
     {
         BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
@@ -50,6 +53,8 @@ public sealed class BankSettings : Entity
         AdProvisioningFilterOuDn = string.IsNullOrWhiteSpace(ouDn) ? null : ouDn.Trim();
         AdProvisioningFilterGroupSid = string.IsNullOrWhiteSpace(groupSid) ? null : groupSid.Trim();
     }
+
+    public void SetRequireCommentOnPass(bool value) => RequireCommentOnPass = value;
 
     public void SetResourceLimits(int maxEvidenceFileMb, int maxAuditEvidenceGb)
     {

@@ -21,3 +21,11 @@ public sealed record AuditTeamMemberAddedEvent(Guid AuditId, Guid UserId, TeamRo
 public sealed record AuditTeamMemberRemovedEvent(Guid AuditId, Guid UserId) : AuditEvent;
 
 public sealed record AuditLeadTransferredEvent(Guid AuditId, Guid OutgoingLeadUserId, Guid IncomingLeadUserId) : AuditEvent;
+
+// ---- M5 Execution ----
+
+public sealed record ItemRespondedEvent(Guid AuditId, Guid ItemId, Guid ResponseId, ResponseVerdict? Verdict, bool IsDraft) : AuditEvent;
+
+public sealed record DraftDiscardedEvent(Guid AuditId, Guid ItemId, Guid ResponseId) : AuditEvent;
+
+public sealed record ItemAssignedEvent(Guid AuditId, Guid ItemId, Guid? AssigneeUserId) : AuditEvent;

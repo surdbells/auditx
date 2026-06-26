@@ -4,6 +4,7 @@ using AuditX.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuditX.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260626191921_AddAuditExecution")]
+    partial class AddAuditExecution
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -639,8 +642,6 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AuditId");
-
-                    b.HasIndex("ChecklistItemId");
 
                     b.HasIndex("AuditId", "ChecklistItemId")
                         .IsUnique();
@@ -2097,12 +2098,6 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .WithMany("Responses")
                         .HasForeignKey("AuditId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AuditX.Domain.Audits.AuditChecklistItem", null)
-                        .WithMany()
-                        .HasForeignKey("ChecklistItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

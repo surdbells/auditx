@@ -105,6 +105,18 @@ public static class AuditEventTypes
     public const string AuditChecklistItemAdded = "audit_checklist_item_added";
     public const string AuditChecklistItemEdited = "audit_checklist_item_edited";
     public const string AuditChecklistItemRemoved = "audit_checklist_item_removed";
+
+    // M5 execution / evidence
+    public const string ItemResponded = "item_responded";
+    public const string ItemResponseOverridden = "item_response_overridden";
+    public const string DraftDiscarded = "draft_discarded";
+    public const string ItemAssigned = "item_assigned";
+    public const string ItemsBulkReassigned = "items_bulk_reassigned";
+    public const string FailJudgementRecorded = "fail_judgement_recorded";
+    public const string EvidenceUploaded = "evidence_uploaded";
+    public const string EvidenceSoftDeleted = "evidence_soft_deleted";
+    public const string EvidenceHashMismatch = "evidence_hash_mismatch";
+    public const string EvidenceLocked = "evidence_locked";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -132,4 +144,6 @@ public static class AuditTargetTypes
     public const string Audit = "audit";
     public const string AuditTeamMember = "audit_team_member";
     public const string AuditChecklistItem = "audit_checklist_item";
+    public const string ChecklistResponse = "checklist_response";
+    public const string EvidenceFile = "evidence_file";
 }

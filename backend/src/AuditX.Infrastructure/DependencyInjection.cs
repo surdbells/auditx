@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.Configure<IdentityOptions>(configuration.GetSection(IdentityOptions.SectionName));
         services.Configure<ActiveDirectoryOptions>(configuration.GetSection(ActiveDirectoryOptions.SectionName));
         services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
+        services.Configure<StorageOptions>(configuration.GetSection(StorageOptions.SectionName));
 
         var identityOptions = configuration.GetSection(IdentityOptions.SectionName).Get<IdentityOptions>() ?? new IdentityOptions();
         var redisOptions = configuration.GetSection(RedisOptions.SectionName).Get<RedisOptions>() ?? new RedisOptions();
@@ -62,6 +63,9 @@ public static class DependencyInjection
         services.AddScoped<IEntityTypeTaxonomyRepository, EntityTypeTaxonomyRepository>();
         services.AddScoped<IAnnualPlanRepository, AnnualPlanRepository>();
         services.AddScoped<IAuditRepository, AuditRepository>();
+        services.AddScoped<IEvidenceRepository, EvidenceRepository>();
+        services.AddSingleton<Application.Abstractions.Storage.IFileStorage, Storage.LocalDiskFileStorage>();
+        services.AddSingleton<Application.Abstractions.Storage.IFileSignatureInspector, Storage.EvidenceFileSignatureInspector>();
         services.AddScoped<Application.Abstractions.Universe.ITaxonomyProvider, Universe.TaxonomyProvider>();
         services.AddScoped<Application.Abstractions.Universe.ICoverageQueryService, Universe.CoverageQueryService>();
         services.AddScoped<IAuditTrailReader, Universe.AuditTrailReader>();
