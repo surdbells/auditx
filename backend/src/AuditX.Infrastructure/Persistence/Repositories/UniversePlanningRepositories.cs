@@ -125,6 +125,9 @@ public sealed class AnnualPlanRepository(AppDbContext db) : IAnnualPlanRepositor
     public Task<AnnualPlan?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.AnnualPlans.Include(p => p.Items).FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
+    public Task<AnnualPlan?> GetByPlanItemIdAsync(Guid planItemId, CancellationToken cancellationToken = default)
+        => db.AnnualPlans.Include(p => p.Items).FirstOrDefaultAsync(p => p.Items.Any(i => i.Id == planItemId), cancellationToken);
+
     public async Task<CursorPage<AnnualPlan>> SearchAsync(string? status, PageRequest page, CancellationToken cancellationToken = default)
     {
         var query = db.AnnualPlans.AsNoTracking().Include(p => p.Items).AsQueryable();

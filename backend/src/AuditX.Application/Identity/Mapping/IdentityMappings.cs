@@ -1,3 +1,4 @@
+using AuditX.Application.Common.Enums;
 using AuditX.Application.Identity.Dtos;
 using AuditX.Domain.Authorization;
 using AuditX.Domain.Identity;
@@ -13,7 +14,7 @@ public static class IdentityMappings
 {
     public static UserDto ToDto(this User user) => new(
         user.Id, user.Email, user.FirstName, user.LastName, user.DisplayName,
-        user.Status.ToString(), user.LastLoginAt);
+        user.Status.ToSnake(), user.LastLoginAt);
 
     public static RoleDto ToDto(this Role role) => new(
         role.Id,
@@ -35,7 +36,7 @@ public static class IdentityMappings
         action.TargetObjectType,
         action.TargetObjectId,
         action.MakerUserId,
-        action.Status.ToString(),
+        action.Status.ToSnake(),
         action.CreatedAt,
         action.ResolvedAt,
         action.ResolutionComment);

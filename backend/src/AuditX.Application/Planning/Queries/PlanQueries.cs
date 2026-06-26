@@ -47,7 +47,7 @@ public sealed class PlanExecutionQueryHandler(IAnnualPlanRepository plans, ICloc
         var total = items.Count;
 
         var countsByStatus = items
-            .GroupBy(i => i.Status.ToString())
+            .GroupBy(i => Common.Enums.EnumExtensions.ToSnake(i.Status))
             .ToDictionary(g => g.Key, g => g.Count());
 
         var completed = items.Count(i => i.Status == PlanItemStatus.Completed);

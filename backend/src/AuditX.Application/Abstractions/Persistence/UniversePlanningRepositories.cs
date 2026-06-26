@@ -52,6 +52,9 @@ public interface IAnnualPlanRepository
 {
     Task<AnnualPlan?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>Load the plan that owns a given plan item (M4 completion wiring → M3).</summary>
+    Task<AnnualPlan?> GetByPlanItemIdAsync(Guid planItemId, CancellationToken cancellationToken = default);
+
     Task<CursorPage<AnnualPlan>> SearchAsync(string? status, PageRequest page, CancellationToken cancellationToken = default);
 
     Task<bool> AnyOverlappingAsync(DateOnly periodStart, DateOnly periodEnd, Guid? excludePlanId, CancellationToken cancellationToken = default);

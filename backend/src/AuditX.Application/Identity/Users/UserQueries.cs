@@ -80,7 +80,7 @@ public sealed class GetUserQueryHandler(
             .ToArray();
 
         return new UserDetailDto(
-            user.Id, user.Email, user.FirstName, user.LastName, user.DisplayName, user.Status.ToString(),
+            user.Id, user.Email, user.FirstName, user.LastName, user.DisplayName, Common.Enums.EnumExtensions.ToSnake(user.Status),
             user.LastLoginAt, roleDtos, delegationDtos);
     }
 }

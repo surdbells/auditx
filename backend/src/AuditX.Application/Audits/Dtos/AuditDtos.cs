@@ -1,0 +1,32 @@
+namespace AuditX.Application.Audits.Dtos;
+
+public sealed record AuditTeamMemberDto(Guid Id, Guid UserId, string TeamRole, bool IsActive, DateTimeOffset AddedAt, DateTimeOffset? RemovedAt);
+
+public sealed record AuditChecklistItemDto(
+    Guid Id, string? SectionName, int OrderIndex, string Prompt, string? ReferenceNotes,
+    string ResponseType, Guid? AssignedUserId, bool IsRequired, string ItemState);
+
+public sealed record AuditDto(
+    Guid Id,
+    string Name,
+    string? ScopeDescription,
+    string AuditType,
+    string Status,
+    DateOnly StartDate,
+    DateOnly TargetEndDate,
+    DateOnly? ActualEndDate,
+    Guid? TemplateId,
+    int? TemplateVersion,
+    Guid? PlanItemId,
+    Guid LeadUserId,
+    Guid AuditeeUserId,
+    string? CancellationReason,
+    string Version,
+    IReadOnlyList<AuditTeamMemberDto> TeamMembers,
+    IReadOnlyList<AuditChecklistItemDto> ChecklistItems);
+
+public sealed record AuditListItemDto(
+    Guid Id, string Name, string AuditType, string Status, DateOnly StartDate, DateOnly TargetEndDate,
+    Guid LeadUserId, int ChecklistItemCount, int RespondedItemCount);
+
+public sealed record AuditCountsDto(IReadOnlyDictionary<string, int> ByStatus);

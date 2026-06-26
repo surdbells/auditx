@@ -92,6 +92,19 @@ public static class AuditEventTypes
     public const string PlanDecisionRecorded = "plan_decision_recorded";
     public const string PlanClosed = "plan_closed";
     public const string PlanItemLinkedToAudit = "plan_item_linked_to_audit";
+
+    // M4 audits — lifecycle & team
+    public const string AuditCreated = "audit_created";
+    public const string AuditMetadataUpdated = "audit_metadata_updated";
+    public const string AuditTransitioned = "audit_transitioned";
+    public const string AuditCompleted = "audit_completed";
+    public const string AuditCancelled = "audit_cancelled";
+    public const string AuditTeamMemberAdded = "audit_team_member_added";
+    public const string AuditTeamMemberRemoved = "audit_team_member_removed";
+    public const string AuditLeadTransferred = "audit_lead_transferred";
+    public const string AuditChecklistItemAdded = "audit_checklist_item_added";
+    public const string AuditChecklistItemEdited = "audit_checklist_item_edited";
+    public const string AuditChecklistItemRemoved = "audit_checklist_item_removed";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -116,4 +129,7 @@ public static class AuditTargetTypes
     public const string EntityTypeTaxonomy = "entity_type_taxonomy";
     public const string AnnualPlan = "annual_plan";
     public const string PlanItem = "plan_item";
+    public const string Audit = "audit";
+    public const string AuditTeamMember = "audit_team_member";
+    public const string AuditChecklistItem = "audit_checklist_item";
 }

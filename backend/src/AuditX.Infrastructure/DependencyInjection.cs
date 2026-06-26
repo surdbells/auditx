@@ -61,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<IRiskDimensionRepository, RiskDimensionRepository>();
         services.AddScoped<IEntityTypeTaxonomyRepository, EntityTypeTaxonomyRepository>();
         services.AddScoped<IAnnualPlanRepository, AnnualPlanRepository>();
+        services.AddScoped<IAuditRepository, AuditRepository>();
         services.AddScoped<Application.Abstractions.Universe.ITaxonomyProvider, Universe.TaxonomyProvider>();
         services.AddScoped<Application.Abstractions.Universe.ICoverageQueryService, Universe.CoverageQueryService>();
         services.AddScoped<IAuditTrailReader, Universe.AuditTrailReader>();

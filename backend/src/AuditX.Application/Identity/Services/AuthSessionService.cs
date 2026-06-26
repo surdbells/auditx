@@ -90,7 +90,7 @@ public sealed class AuthSessionService(
 
         return new SessionDto(
             user.Id, user.Email, user.FirstName, user.LastName, user.DisplayName,
-            user.Status.ToString(), roleNames, permissionKeys, expiresAt, absoluteExpiresAt);
+            Common.Enums.EnumExtensions.ToSnake(user.Status), roleNames, permissionKeys, expiresAt, absoluteExpiresAt);
     }
 
     public async Task<IReadOnlyList<string>> GetActiveRoleNamesAsync(Guid userId, CancellationToken cancellationToken)

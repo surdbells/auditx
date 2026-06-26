@@ -161,6 +161,12 @@ public sealed class AnnualPlan : AggregateRoot
         RaiseDomainEvent(new PlanItemLinkedToAuditEvent(item.Id, auditId));
     }
 
+    /// <summary>Mark a plan item completed when its linked audit completes (M4 → M3, US-M3-019).</summary>
+    public void MarkPlanItemCompleted(Guid itemId) => FindItem(itemId).MarkCompleted();
+
+    /// <summary>Mark a plan item deferred when its linked audit is cancelled/deferred (M4 → M3).</summary>
+    public void MarkPlanItemDeferred(Guid itemId) => FindItem(itemId).MarkDeferred();
+
     private void EnsureWithinPeriod(DateOnly start, DateOnly end)
     {
         if (end < start)

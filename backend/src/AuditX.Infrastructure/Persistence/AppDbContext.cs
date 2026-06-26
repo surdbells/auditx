@@ -1,4 +1,5 @@
 using AuditX.Domain.Administration;
+using AuditX.Domain.Audits;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Identity;
 using AuditX.Domain.Integrations;
@@ -65,6 +66,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<AnnualPlan> AnnualPlans => Set<AnnualPlan>();
 
     public DbSet<PlanItem> PlanItems => Set<PlanItem>();
+
+    public DbSet<Audit> Audits => Set<Audit>();
+
+    public DbSet<AuditTeamMember> AuditTeamMembers => Set<AuditTeamMember>();
+
+    public DbSet<AuditChecklistItem> AuditChecklistItems => Set<AuditChecklistItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

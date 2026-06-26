@@ -49,6 +49,7 @@ builder.Services.AddHangfire(config => config
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<DelegationExpiryJob>();
 builder.Services.AddScoped<WebhookRetryJob>();
+builder.Services.AddScoped<AuditAutoStartJob>();
 
 var app = builder.Build();
 
@@ -78,6 +79,12 @@ RecurringJob.AddOrUpdate<WebhookRetryJob>(
     WebhookRetryJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     "*/5 * * * *");
+
+// Hourly auto-start of planned audits whose start date has arrived (US-M4-011).
+RecurringJob.AddOrUpdate<AuditAutoStartJob>(
+    AuditAutoStartJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Hourly);
 
 await InitialiseDatabaseAsync(app);
 
