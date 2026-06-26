@@ -117,6 +117,20 @@ public static class AuditEventTypes
     public const string EvidenceSoftDeleted = "evidence_soft_deleted";
     public const string EvidenceHashMismatch = "evidence_hash_mismatch";
     public const string EvidenceLocked = "evidence_locked";
+
+    // M6 exceptions & MAP
+    public const string ExceptionRaised = "exception_raised";
+    public const string ExceptionSeverityChanged = "exception_severity_changed";
+    public const string ExceptionOwnerReassigned = "exception_owner_reassigned";
+    public const string MapSubmitted = "map_submitted";
+    public const string MapApproved = "map_approved";
+    public const string MapRejected = "map_rejected";
+    public const string MapReturnedForEvidence = "map_returned_for_evidence";
+    public const string MapActionCompleted = "map_action_completed";
+    public const string MapCompleted = "map_completed";
+    public const string ExceptionPendingCia = "exception_pending_cia";
+    public const string ExceptionClosed = "exception_closed";
+    public const string ExceptionCancelled = "exception_cancelled";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -146,4 +160,6 @@ public static class AuditTargetTypes
     public const string AuditChecklistItem = "audit_checklist_item";
     public const string ChecklistResponse = "checklist_response";
     public const string EvidenceFile = "evidence_file";
+    public const string Exception = "exception";
+    public const string MapAction = "map_action";
 }

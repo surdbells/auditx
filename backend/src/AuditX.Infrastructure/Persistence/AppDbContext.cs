@@ -2,6 +2,7 @@ using AuditX.Domain.Administration;
 using AuditX.Domain.Audits;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Evidence;
+using AuditX.Domain.Exceptions;
 using AuditX.Domain.Identity;
 using AuditX.Domain.Integrations;
 using AuditX.Domain.Planning;
@@ -77,6 +78,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<ChecklistResponse> ChecklistResponses => Set<ChecklistResponse>();
 
     public DbSet<EvidenceFile> EvidenceFiles => Set<EvidenceFile>();
+
+    public DbSet<AuditException> Exceptions => Set<AuditException>();
+
+    public DbSet<MapAction> MapActions => Set<MapAction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

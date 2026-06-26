@@ -58,6 +58,8 @@ public static class BuiltInRoles
             PermissionKeys.ManagePlan, PermissionKeys.ViewPlan, PermissionKeys.ViewCoverage,
             PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.CreateAudit, PermissionKeys.ManageAudit,
             PermissionKeys.RespondItem, PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ManageEvidence,
+            PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException, PermissionKeys.SubmitMap,
+            PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException, PermissionKeys.Cia,
             PermissionKeys.ConfigureNotifications, PermissionKeys.ConfigureReports, PermissionKeys.ConfigureExceptionWorkflow,
             PermissionKeys.ManageGrid, PermissionKeys.ViewGrid,
             PermissionKeys.ConfigureDashboards, PermissionKeys.ConfigurePredictive,
