@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<IMakerCheckerRepository, MakerCheckerRepository>();
         services.AddScoped<IMakerCheckerGateRepository, MakerCheckerGateRepository>();
         services.AddScoped<IBankSettingsRepository, BankSettingsRepository>();
+        services.AddScoped<ITemplateRepository, TemplateRepository>();
         services.AddScoped<DbSeeder>();
 
         // Cross-cutting

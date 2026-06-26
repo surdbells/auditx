@@ -22,6 +22,7 @@ public static class DependencyInjection
 
         // Maker-checker action replay executors.
         services.AddScoped<IPendingActionExecutor, RolePermissionChangeExecutor>();
+        services.AddScoped<IPendingActionExecutor, Templates.Commands.TemplatePublishExecutor>();
 
         var assembly = typeof(DependencyInjection).Assembly;
         RegisterHandlers(services, assembly);

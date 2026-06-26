@@ -32,6 +32,22 @@ public static class AuditEventTypes
     public const string MakerCheckerSubmitted = "maker_checker_submitted";
     public const string MakerCheckerApproved = "maker_checker_approved";
     public const string MakerCheckerRejected = "maker_checker_rejected";
+
+    // M2 templates
+    public const string TemplateCreated = "template_created";
+    public const string TemplateUpdated = "template_updated";
+    public const string TemplateItemAdded = "template_item_added";
+    public const string TemplateItemEdited = "template_item_edited";
+    public const string TemplateItemRemoved = "template_item_removed";
+    public const string TemplateItemsReordered = "template_items_reordered";
+    public const string TemplateSectionAdded = "template_section_added";
+    public const string TemplateSectionRenamed = "template_section_renamed";
+    public const string TemplateSectionRemoved = "template_section_removed";
+    public const string TemplatePublished = "template_published";
+    public const string TemplateDraftCreated = "template_draft_created";
+    public const string TemplateArchived = "template_archived";
+    public const string TemplateUnarchived = "template_unarchived";
+    public const string TemplateCloned = "template_cloned";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -43,4 +59,5 @@ public static class AuditTargetTypes
     public const string MakerCheckerAction = "maker_checker_action";
     public const string Session = "session";
     public const string BankSettings = "bank_settings";
+    public const string Template = "template";
 }

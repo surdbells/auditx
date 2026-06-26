@@ -1,5 +1,6 @@
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Identity;
+using AuditX.Domain.Templates;
 using AuditX.Infrastructure.Persistence.Naming;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,6 +27,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<BankSettings> BankSettings => Set<BankSettings>();
 
     public DbSet<AuditTrailEntry> AuditTrail => Set<AuditTrailEntry>();
+
+    public DbSet<Template> Templates => Set<Template>();
+
+    public DbSet<TemplateItem> TemplateItems => Set<TemplateItem>();
+
+    public DbSet<TemplateSection> TemplateSections => Set<TemplateSection>();
+
+    public DbSet<TemplateVersion> TemplateVersions => Set<TemplateVersion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
