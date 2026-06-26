@@ -1,0 +1,81 @@
+.restore__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+  margin-bottom: 1.5rem;
+}
+
+.restore__card,
+.restore__history-card {
+  padding: 1.5rem;
+}
+
+.restore__title {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.restore__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.full {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.restore__form mat-form-field:not(.full) {
+  flex: 1 1 160px;
+}
+
+.restore__actions {
+  flex: 1 1 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.restore__request {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.restore__request p {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.restore__decision {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.restore__decision-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.restore__reject {
+  --mat-text-button-label-text-color: var(--mat-sys-error);
+}
+
+.restore__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.restore__table {
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .restore__grid {
+    grid-template-columns: 1fr;
+  }
+}

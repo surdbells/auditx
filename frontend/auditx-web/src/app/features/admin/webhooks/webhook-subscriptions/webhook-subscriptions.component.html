@@ -1,0 +1,80 @@
+<div class="subs__header">
+  <p class="subs__intro">
+    Outbound notifications to internal endpoints. External URLs are rejected by the server.
+  </p>
+  @if (canManage()) {
+    <button matButton="filled" type="button" (click)="create()">
+      <mat-icon>add</mat-icon>
+      New subscription
+    </button>
+  }
+</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading subscriptions…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the webhook subscriptions."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="webhook"
+        title="No subscriptions"
+        message="Create a subscription to start delivering events."
+      />
+    } @else {
+      <mat-card appearance="outlined" class="subs__table-card">
+        <div class="subs__table-wrapper">
+          <table mat-table [dataSource]="subscriptions()" class="subs__table">
+            <ng-container matColumnDef="destinationUrl">
+              <th mat-header-cell *matHeaderCellDef>Destination</th>
+              <td mat-cell *matCellDef="let s">
+                <span class="subs__url">{{ s.destinationUrl }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="events">
+              <th mat-header-cell *matHeaderCellDef>Event types</th>
+              <td mat-cell *matCellDef="let s">
+                {{ s.subscribedEventTypes.join(', ') }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let s">
+                <span class="status-badge" [attr.data-status]="s.isActive ? 'active' : 'deactivated'">
+                  {{ s.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <td mat-cell *matCellDef="let s">
+                @if (canManage()) {
+                  <button
+                    matIconButton
+                    type="button"
+                    (click)="remove(s)"
+                    [attr.aria-label]="'Delete ' + s.destinationUrl"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

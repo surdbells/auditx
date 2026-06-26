@@ -1,0 +1,146 @@
+<div class="restore__grid">
+  <mat-card appearance="outlined" class="restore__card">
+    <h2 class="restore__title">Record restore drill</h2>
+    @if (canManageRetention()) {
+      <form [formGroup]="drillForm" class="restore__form">
+        <mat-form-field appearance="outline">
+          <mat-label>Outcome</mat-label>
+          <mat-select formControlName="outcome">
+            @for (o of outcomes; track o) {
+              <mat-option [value]="o">{{ o }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Details</mat-label>
+          <textarea matInput rows="3" formControlName="details"></textarea>
+        </mat-form-field>
+        <div class="restore__actions">
+          <button
+            matButton="filled"
+            type="button"
+            (click)="recordDrill()"
+            [disabled]="drillForm.invalid || recording()"
+          >
+            {{ recording() ? 'Saving…' : 'Record drill' }}
+          </button>
+        </div>
+      </form>
+    } @else {
+      <p class="muted">You do not have permission to record restore drills.</p>
+    }
+  </mat-card>
+
+  <mat-card appearance="outlined" class="restore__card">
+    <h2 class="restore__title">Object restore</h2>
+    @if (canExecRestore()) {
+      <form [formGroup]="restoreForm" class="restore__form">
+        <mat-form-field appearance="outline">
+          <mat-label>Object type</mat-label>
+          <input matInput formControlName="objectType" autocomplete="off" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Object ID</mat-label>
+          <input matInput formControlName="objectId" autocomplete="off" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Snapshot date</mat-label>
+          <input matInput type="date" formControlName="snapshotDate" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Justification</mat-label>
+          <textarea matInput rows="2" formControlName="justification"></textarea>
+        </mat-form-field>
+        <div class="restore__actions">
+          <button
+            matButton="filled"
+            type="button"
+            (click)="requestRestore()"
+            [disabled]="restoreForm.invalid || requesting()"
+          >
+            {{ requesting() ? 'Requesting…' : 'Request restore' }}
+          </button>
+        </div>
+      </form>
+
+      @if (lastRequest(); as req) {
+        <div class="restore__request">
+          <p>
+            Request <strong>{{ req.objectType }}/{{ req.objectId }}</strong>
+            <span class="status-badge" [attr.data-status]="req.status">{{ req.status }}</span>
+          </p>
+          @if (req.status === 'Requested') {
+            <form [formGroup]="decisionForm" class="restore__decision">
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>Decision comment</mat-label>
+                <input matInput formControlName="comment" autocomplete="off" />
+              </mat-form-field>
+              <div class="restore__decision-actions">
+                <button
+                  matButton
+                  type="button"
+                  class="restore__reject"
+                  (click)="decide(false)"
+                  [disabled]="deciding()"
+                >
+                  Reject
+                </button>
+                <button
+                  matButton="filled"
+                  type="button"
+                  (click)="decide(true)"
+                  [disabled]="deciding()"
+                >
+                  Approve
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+      }
+    } @else {
+      <p class="muted">You do not have permission to request object restores.</p>
+    }
+  </mat-card>
+</div>
+
+<mat-card appearance="outlined" class="restore__history-card">
+  <h2 class="restore__title">Restore drill history</h2>
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading message="Loading drills…" />
+    }
+    @case ('error') {
+      <app-error-state
+        message="We couldn't load the restore drills."
+        (retry)="fetch()"
+      />
+    }
+    @case ('ready') {
+      @if (drills().length === 0) {
+        <p class="muted">No restore drills recorded yet.</p>
+      } @else {
+        <div class="restore__table-wrapper">
+          <table mat-table [dataSource]="drills()" class="restore__table">
+            <ng-container matColumnDef="executedAt">
+              <th mat-header-cell *matHeaderCellDef>Executed</th>
+              <td mat-cell *matCellDef="let d">{{ d.executedAt | date: 'medium' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="outcome">
+              <th mat-header-cell *matHeaderCellDef>Outcome</th>
+              <td mat-cell *matCellDef="let d">
+                <span class="status-badge" [attr.data-status]="d.outcome">{{ d.outcome }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="details">
+              <th mat-header-cell *matHeaderCellDef>Details</th>
+              <td mat-cell *matCellDef="let d">{{ d.details ?? '—' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="drillColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: drillColumns"></tr>
+          </table>
+        </div>
+      }
+    }
+  }
+</mat-card>

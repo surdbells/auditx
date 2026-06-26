@@ -1,0 +1,76 @@
+<h2 mat-dialog-title>New webhook subscription</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" class="form">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Destination URL</mat-label>
+      <input matInput formControlName="destinationUrl" autocomplete="off" />
+      @if (form.controls.destinationUrl.hasError('required') && form.controls.destinationUrl.touched) {
+        <mat-error>A destination URL is required.</mat-error>
+      } @else if (form.controls.destinationUrl.hasError('pattern')) {
+        <mat-error>Enter a valid http(s) URL.</mat-error>
+      } @else {
+        <mat-hint>Internal endpoints only — external URLs are rejected.</mat-hint>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Subscribed event types</mat-label>
+      <mat-chip-grid #chipGrid aria-label="Event types">
+        @for (type of eventTypes(); track type) {
+          <mat-chip-row (removed)="removeEventType(type)">
+            {{ type }}
+            <button matChipRemove [attr.aria-label]="'Remove ' + type">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        }
+        <input
+          placeholder="e.g. audit.created"
+          [matChipInputFor]="chipGrid"
+          (matChipInputTokenEnd)="addEventType($event)"
+        />
+      </mat-chip-grid>
+      <mat-hint>Press Enter to add an event type.</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>HMAC secret</mat-label>
+      <input
+        matInput
+        type="password"
+        formControlName="hmacSecret"
+        autocomplete="new-password"
+      />
+      @if (form.controls.hmacSecret.hasError('required') && form.controls.hmacSecret.touched) {
+        <mat-error>An HMAC secret is required.</mat-error>
+      } @else {
+        <mat-hint>Write-only signing secret for delivery payloads.</mat-hint>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Retry policy (JSON)</mat-label>
+      <textarea
+        matInput
+        rows="3"
+        formControlName="retryPolicyJson"
+        spellcheck="false"
+        placeholder='{ "maxAttempts": 5 }'
+      ></textarea>
+      @if (form.controls.retryPolicyJson.hasError('json')) {
+        <mat-error>Must be valid JSON.</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="cancel()">Cancel</button>
+  <button
+    matButton="filled"
+    type="button"
+    (click)="submit()"
+    [disabled]="form.invalid || eventTypes().length === 0"
+  >
+    Create
+  </button>
+</mat-dialog-actions>

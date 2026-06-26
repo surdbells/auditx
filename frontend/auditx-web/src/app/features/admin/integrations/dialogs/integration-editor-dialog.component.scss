@@ -1,0 +1,39 @@
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  min-width: 480px;
+  padding-top: 0.5rem;
+}
+
+.full {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.form mat-form-field:not(.full) {
+  flex: 1 1 200px;
+}
+
+.credentials__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+}
+
+.credentials__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 600px) {
+  .form {
+    min-width: auto;
+  }
+}

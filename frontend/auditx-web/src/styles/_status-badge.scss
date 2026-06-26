@@ -47,6 +47,63 @@
   color: #e65100;
 }
 
+// Integration health states.
+.status-badge[data-status='Healthy'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='Degraded'] {
+  background: color-mix(in srgb, #ef6c00 18%, transparent);
+  color: #e65100;
+}
+
+.status-badge[data-status='Failing'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
+// Webhook delivery statuses.
+.status-badge[data-status='Delivered'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='Pending'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
+.status-badge[data-status='Failed'] {
+  background: color-mix(in srgb, #ef6c00 18%, transparent);
+  color: #e65100;
+}
+
+.status-badge[data-status='DeadLetter'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
+// Release install + restore outcome statuses.
+.status-badge[data-status='Verified'],
+.status-badge[data-status='Installed'],
+.status-badge[data-status='Success'],
+.status-badge[data-status='Approved'],
+.status-badge[data-status='Executed'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='Rejected'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
+.status-badge[data-status='Requested'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
 .muted {
   color: var(--mat-sys-on-surface-variant);
 }

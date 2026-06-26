@@ -1,0 +1,52 @@
+.releases__card {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.releases__title {
+  margin: 0 0 0.25rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.releases__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.full {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.releases__form mat-form-field:not(.full) {
+  flex: 1 1 200px;
+}
+
+.releases__actions {
+  flex: 1 1 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.releases__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.releases__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.releases__table {
+  width: 100%;
+}
+
+.releases__detail {
+  max-width: 240px;
+  white-space: normal;
+  word-break: break-word;
+  color: var(--mat-sys-on-surface-variant);
+}

@@ -1,0 +1,84 @@
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading support channel…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the support channel status."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    <div class="support__grid">
+      <mat-card appearance="outlined" class="support__card">
+        <h2 class="support__title">Status</h2>
+        @if (status(); as s) {
+          <p>
+            <span class="status-badge" [attr.data-status]="s.active ? 'active' : 'deactivated'">
+              {{ s.active ? 'Active' : 'Inactive' }}
+            </span>
+          </p>
+          @if (s.active) {
+            <dl class="support__meta">
+              <dt>Engineers</dt>
+              <dd>{{ s.engineerIdentifiers.join(', ') || '—' }}</dd>
+              <dt>Enabled</dt>
+              <dd>{{ s.enabledAt ? (s.enabledAt | date: 'medium') : '—' }}</dd>
+              <dt>Expires</dt>
+              <dd>{{ s.expiresAt ? (s.expiresAt | date: 'medium') : '—' }}</dd>
+            </dl>
+            <div class="support__actions">
+              <button matButton type="button" class="support__revoke" (click)="revoke()">
+                <mat-icon>block</mat-icon>
+                Revoke access
+              </button>
+            </div>
+          } @else if (s.revokedAt) {
+            <p class="muted">Last revoked {{ s.revokedAt | date: 'medium' }}.</p>
+          }
+        }
+      </mat-card>
+
+      <mat-card appearance="outlined" class="support__card">
+        <h2 class="support__title">Enable support access</h2>
+        <form [formGroup]="form" class="support__form">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Engineer identifiers</mat-label>
+            <mat-chip-grid #chipGrid aria-label="Engineers">
+              @for (id of engineers(); track id) {
+                <mat-chip-row (removed)="removeEngineer(id)">
+                  {{ id }}
+                  <button matChipRemove [attr.aria-label]="'Remove ' + id">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip-row>
+              }
+              <input
+                placeholder="engineer@vendor.com"
+                [matChipInputFor]="chipGrid"
+                (matChipInputTokenEnd)="addEngineer($event)"
+              />
+            </mat-chip-grid>
+            <mat-hint>Press Enter to add an engineer.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Duration (minutes)</mat-label>
+            <input matInput type="number" formControlName="durationMinutes" />
+          </mat-form-field>
+
+          <div class="support__actions">
+            <button
+              matButton="filled"
+              type="button"
+              (click)="enable()"
+              [disabled]="form.invalid || engineers().length === 0 || submitting()"
+            >
+              {{ submitting() ? 'Enabling…' : 'Enable access' }}
+            </button>
+          </div>
+        </form>
+      </mat-card>
+    </div>
+  }
+}

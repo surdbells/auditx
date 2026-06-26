@@ -1,0 +1,113 @@
+<div class="bulk__grid">
+  <mat-card appearance="outlined" class="bulk__card">
+    <h2 class="bulk__title">Bulk deactivate</h2>
+    <p class="muted">Paste user IDs separated by spaces, commas or new lines.</p>
+    <form [formGroup]="deactivateForm" class="bulk__form">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>User IDs</mat-label>
+        <textarea
+          matInput
+          rows="5"
+          formControlName="userIds"
+          spellcheck="false"
+        ></textarea>
+      </mat-form-field>
+      <div class="bulk__actions">
+        <button
+          matButton="filled"
+          type="button"
+          (click)="bulkDeactivate()"
+          [disabled]="deactivateForm.invalid || deactivating()"
+        >
+          {{ deactivating() ? 'Working…' : 'Deactivate users' }}
+        </button>
+      </div>
+    </form>
+
+    @if (deactivateResult(); as r) {
+      <div class="bulk__result">
+        <p class="bulk__success">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          {{ r.successCount }} succeeded, {{ r.errors.length }} failed.
+        </p>
+        @if (r.errors.length) {
+          <table mat-table [dataSource]="r.errors" class="bulk__error-table">
+            <ng-container matColumnDef="identifier">
+              <th mat-header-cell *matHeaderCellDef>Identifier</th>
+              <td mat-cell *matCellDef="let e">{{ e.identifier }}</td>
+            </ng-container>
+            <ng-container matColumnDef="message">
+              <th mat-header-cell *matHeaderCellDef>Error</th>
+              <td mat-cell *matCellDef="let e">{{ e.message }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: errorColumns"></tr>
+          </table>
+        }
+      </div>
+    }
+  </mat-card>
+
+  <mat-card appearance="outlined" class="bulk__card">
+    <h2 class="bulk__title">CSV import</h2>
+    <p class="muted">Upload a CSV file or paste its contents below.</p>
+    <form [formGroup]="importForm" class="bulk__form">
+      <div class="bulk__upload">
+        <button matButton type="button" (click)="fileInput.click()">
+          <mat-icon>upload_file</mat-icon>
+          Choose file
+        </button>
+        <input
+          #fileInput
+          type="file"
+          accept=".csv,text/csv"
+          hidden
+          (change)="onFileSelected($event)"
+        />
+      </div>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>CSV content</mat-label>
+        <textarea
+          matInput
+          rows="6"
+          formControlName="csvContent"
+          spellcheck="false"
+          placeholder="email,firstName,lastName,role"
+        ></textarea>
+      </mat-form-field>
+      <div class="bulk__actions">
+        <button
+          matButton="filled"
+          type="button"
+          (click)="bulkImport()"
+          [disabled]="importForm.invalid || importing()"
+        >
+          {{ importing() ? 'Importing…' : 'Import users' }}
+        </button>
+      </div>
+    </form>
+
+    @if (importResult(); as r) {
+      <div class="bulk__result">
+        <p class="bulk__success">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          {{ r.successCount }} imported, {{ r.errors.length }} failed.
+        </p>
+        @if (r.errors.length) {
+          <table mat-table [dataSource]="r.errors" class="bulk__error-table">
+            <ng-container matColumnDef="identifier">
+              <th mat-header-cell *matHeaderCellDef>Identifier</th>
+              <td mat-cell *matCellDef="let e">{{ e.identifier }}</td>
+            </ng-container>
+            <ng-container matColumnDef="message">
+              <th mat-header-cell *matHeaderCellDef>Error</th>
+              <td mat-cell *matCellDef="let e">{{ e.message }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: errorColumns"></tr>
+          </table>
+        }
+      </div>
+    }
+  </mat-card>
+</div>

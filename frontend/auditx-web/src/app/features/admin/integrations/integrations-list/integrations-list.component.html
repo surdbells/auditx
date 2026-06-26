@@ -1,0 +1,114 @@
+<app-page-header
+  title="Integrations"
+  subtitle="External systems AuditX connects to: directory, mail, storage, SIEM and more."
+>
+  @if (canManage()) {
+    <button actions matButton="filled" type="button" (click)="create()">
+      <mat-icon>add</mat-icon>
+      New integration
+    </button>
+  }
+</app-page-header>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading integrations…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the integrations."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="hub"
+        title="No integrations configured"
+        message="Connect AuditX to an external system to get started."
+      />
+    } @else {
+      <mat-card appearance="outlined" class="integrations__table-card">
+        <div class="integrations__table-wrapper">
+          <table mat-table [dataSource]="integrations()" class="integrations__table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let i">
+                <span class="integrations__name">{{ i.name }}</span>
+                @if (i.isPrimary) {
+                  <span class="integrations__primary">Primary</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let i">{{ i.type }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="health">
+              <th mat-header-cell *matHeaderCellDef>Health</th>
+              <td mat-cell *matCellDef="let i">
+                @if (canViewHealth() && healthState(i.id)) {
+                  <span class="status-badge" [attr.data-status]="healthState(i.id)">
+                    {{ healthState(i.id) }}
+                  </span>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let i">
+                <span class="status-badge" [attr.data-status]="i.isActive ? 'active' : 'deactivated'">
+                  {{ i.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <td mat-cell *matCellDef="let i">
+                <button
+                  matIconButton
+                  type="button"
+                  [matMenuTriggerFor]="rowMenu"
+                  [attr.aria-label]="'Actions for ' + i.name"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #rowMenu="matMenu">
+                  @if (canManage()) {
+                    <button mat-menu-item type="button" (click)="test(i)">
+                      <mat-icon>network_check</mat-icon>
+                      <span>Test</span>
+                    </button>
+                    <button mat-menu-item type="button" (click)="edit(i)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Edit</span>
+                    </button>
+                    @if (i.isActive) {
+                      <button mat-menu-item type="button" (click)="deactivate(i)">
+                        <mat-icon>power_settings_new</mat-icon>
+                        <span>Deactivate</span>
+                      </button>
+                    }
+                  } @else {
+                    <button mat-menu-item type="button" disabled>
+                      <span>No actions available</span>
+                    </button>
+                  }
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

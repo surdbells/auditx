@@ -1,0 +1,31 @@
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading system health…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the system health metrics."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    <div class="health__status">
+      <span class="status-badge" [attr.data-status]="health()?.status">
+        {{ health()?.status }}
+      </span>
+      <span class="muted">
+        Generated {{ health()?.generatedAt | date: 'medium' }}
+      </span>
+    </div>
+
+    <div class="health__grid">
+      @for (m of metrics(); track m.label) {
+        <mat-card appearance="outlined" class="health__card">
+          <mat-icon class="health__icon" aria-hidden="true">{{ m.icon }}</mat-icon>
+          <div class="health__value">{{ m.value }}</div>
+          <div class="health__label">{{ m.label }}</div>
+        </mat-card>
+      }
+    </div>
+  }
+}

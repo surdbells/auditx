@@ -112,6 +112,50 @@ export const routes: Routes = [
           ).then((m) => m.TemplateEditorComponent),
       },
       {
+        path: 'admin/integrations',
+        title: 'Integrations · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewIntegrations)],
+        loadComponent: () =>
+          import(
+            './features/admin/integrations/integrations-list/integrations-list.component'
+          ).then((m) => m.IntegrationsListComponent),
+      },
+      {
+        path: 'admin/webhooks',
+        title: 'Webhooks · AuditX',
+        canActivate: [
+          permissionGuard(
+            Permissions.ConfigureWebhooks,
+            Permissions.AdminOps,
+          ),
+        ],
+        loadComponent: () =>
+          import('./features/admin/webhooks/webhooks.component').then(
+            (m) => m.WebhooksComponent,
+          ),
+      },
+      {
+        path: 'admin/administration',
+        title: 'Administration · AuditX',
+        canActivate: [
+          permissionGuard(
+            Permissions.ViewBankSettings,
+            Permissions.ViewSystemHealth,
+            Permissions.ManageBankSettings,
+            Permissions.ConfigureLimits,
+            Permissions.ManageUsers,
+            Permissions.ManageSupportChannel,
+            Permissions.InstallReleases,
+            Permissions.ManageRetention,
+            Permissions.ExecRestore,
+          ),
+        ],
+        loadComponent: () =>
+          import(
+            './features/admin/administration/administration.component'
+          ).then((m) => m.AdministrationComponent),
+      },
+      {
         path: 'admin/maker-checker',
         title: 'Maker-Checker · AuditX',
         canActivate: [

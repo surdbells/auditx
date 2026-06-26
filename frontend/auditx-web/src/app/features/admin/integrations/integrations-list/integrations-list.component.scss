@@ -1,0 +1,26 @@
+.integrations__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.integrations__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.integrations__table {
+  width: 100%;
+}
+
+.integrations__name {
+  font-weight: 500;
+}
+
+.integrations__primary {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font: var(--mat-sys-label-small);
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface-variant);
+}

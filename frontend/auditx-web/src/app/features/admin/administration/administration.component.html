@@ -1,0 +1,49 @@
+<app-page-header
+  title="Administration"
+  subtitle="Bank-wide settings, bulk operations, support access, releases and recovery."
+/>
+
+<mat-tab-group>
+  @if (canViewSettings()) {
+    <mat-tab label="Bank settings">
+      <div class="tab-body">
+        <app-bank-settings />
+      </div>
+    </mat-tab>
+  }
+  @if (canManageUsers()) {
+    <mat-tab label="Bulk users">
+      <div class="tab-body">
+        <app-bulk-users />
+      </div>
+    </mat-tab>
+  }
+  @if (canManageSupport()) {
+    <mat-tab label="Support channel">
+      <div class="tab-body">
+        <app-support-channel />
+      </div>
+    </mat-tab>
+  }
+  @if (canInstallReleases()) {
+    <mat-tab label="Releases">
+      <div class="tab-body">
+        <app-releases />
+      </div>
+    </mat-tab>
+  }
+  @if (canBackupRestore()) {
+    <mat-tab label="Backup &amp; restore">
+      <div class="tab-body">
+        <app-backup-restore />
+      </div>
+    </mat-tab>
+  }
+  @if (canViewHealth()) {
+    <mat-tab label="System health">
+      <div class="tab-body">
+        <app-system-health />
+      </div>
+    </mat-tab>
+  }
+</mat-tab-group>

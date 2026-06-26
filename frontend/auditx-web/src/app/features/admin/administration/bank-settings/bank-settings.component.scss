@@ -1,0 +1,42 @@
+.settings__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.settings__card {
+  padding: 1.5rem;
+}
+
+.settings__title {
+  margin: 0 0 1rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.settings__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.full {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
+.settings__form mat-form-field:not(.full) {
+  flex: 1 1 160px;
+}
+
+.settings__actions {
+  flex: 1 1 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .settings__grid {
+    grid-template-columns: 1fr;
+  }
+}

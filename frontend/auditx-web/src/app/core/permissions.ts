@@ -9,6 +9,23 @@ export const Permissions = {
   ApproveMakerChecker: 'ApproveMakerChecker',
   ViewTemplates: 'ViewTemplates',
   ManageTemplates: 'ManageTemplates',
+
+  // M14 — Integrations & Webhooks
+  ViewIntegrations: 'ViewIntegrations',
+  ViewIntegrationHealth: 'ViewIntegrationHealth',
+  ConfigureIntegrations: 'ConfigureIntegrations',
+  ConfigureWebhooks: 'ConfigureWebhooks',
+  AdminOps: 'AdminOps',
+
+  // M15 — Administration
+  ViewBankSettings: 'ViewBankSettings',
+  ViewSystemHealth: 'ViewSystemHealth',
+  ManageBankSettings: 'ManageBankSettings',
+  ConfigureLimits: 'ConfigureLimits',
+  ManageSupportChannel: 'ManageSupportChannel',
+  InstallReleases: 'InstallReleases',
+  ManageRetention: 'ManageRetention',
+  ExecRestore: 'ExecRestore',
 } as const;
 
 export type PermissionKey = (typeof Permissions)[keyof typeof Permissions];

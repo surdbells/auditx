@@ -93,6 +93,34 @@ export class MainLayoutComponent {
         Permissions.ApproveMakerChecker,
       ],
     },
+    {
+      label: 'Integrations',
+      icon: 'hub',
+      route: '/admin/integrations',
+      permissions: [Permissions.ViewIntegrations],
+    },
+    {
+      label: 'Webhooks',
+      icon: 'webhook',
+      route: '/admin/webhooks',
+      permissions: [Permissions.ConfigureWebhooks, Permissions.AdminOps],
+    },
+    {
+      label: 'Administration',
+      icon: 'settings',
+      route: '/admin/administration',
+      permissions: [
+        Permissions.ViewBankSettings,
+        Permissions.ViewSystemHealth,
+        Permissions.ManageBankSettings,
+        Permissions.ConfigureLimits,
+        Permissions.ManageUsers,
+        Permissions.ManageSupportChannel,
+        Permissions.InstallReleases,
+        Permissions.ManageRetention,
+        Permissions.ExecRestore,
+      ],
+    },
   ];
 
   readonly navItems = computed(() =>

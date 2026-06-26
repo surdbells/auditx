@@ -1,0 +1,85 @@
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading settings…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the bank settings."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    <div class="settings__grid">
+      <mat-card appearance="outlined" class="settings__card">
+        <h2 class="settings__title">Bank settings</h2>
+        <form [formGroup]="settingsForm" class="settings__form">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Bank display name</mat-label>
+            <input matInput formControlName="bankDisplayName" autocomplete="off" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Timezone</mat-label>
+            <input matInput formControlName="timezone" placeholder="UTC" autocomplete="off" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Default locale</mat-label>
+            <input matInput formControlName="localeDefault" placeholder="en-GB" autocomplete="off" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>AD provisioning OU DN</mat-label>
+            <input matInput formControlName="adProvisioningFilterOuDn" autocomplete="off" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>AD provisioning group SID</mat-label>
+            <input matInput formControlName="adProvisioningFilterGroupSid" autocomplete="off" />
+          </mat-form-field>
+
+          @if (canManageSettings()) {
+            <div class="settings__actions">
+              <button
+                matButton="filled"
+                type="button"
+                (click)="saveSettings()"
+                [disabled]="settingsForm.invalid || saving()"
+              >
+                {{ saving() ? 'Saving…' : 'Save settings' }}
+              </button>
+            </div>
+          }
+        </form>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="settings__card">
+        <h2 class="settings__title">Resource limits</h2>
+        <form [formGroup]="limitsForm" class="settings__form">
+          <mat-form-field appearance="outline">
+            <mat-label>Max evidence file (MB)</mat-label>
+            <input matInput type="number" formControlName="maxEvidenceFileMb" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Max audit evidence (GB)</mat-label>
+            <input matInput type="number" formControlName="maxAuditEvidenceGb" />
+          </mat-form-field>
+
+          @if (canConfigureLimits()) {
+            <div class="settings__actions">
+              <button
+                matButton="filled"
+                type="button"
+                (click)="saveLimits()"
+                [disabled]="limitsForm.invalid || savingLimits()"
+              >
+                {{ savingLimits() ? 'Saving…' : 'Save limits' }}
+              </button>
+            </div>
+          }
+        </form>
+      </mat-card>
+    </div>
+  }
+}

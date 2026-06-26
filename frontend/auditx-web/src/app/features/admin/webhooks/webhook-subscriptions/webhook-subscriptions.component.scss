@@ -1,0 +1,32 @@
+.subs__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.subs__intro {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.subs__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.subs__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.subs__table {
+  width: 100%;
+}
+
+.subs__url {
+  font-weight: 500;
+  word-break: break-all;
+}
