@@ -72,6 +72,26 @@ public static class AuditEventTypes
     public const string RestoreDrillRecorded = "restore_drill_recorded";
     public const string ObjectRestoreRequested = "object_restore_requested";
     public const string ObjectRestoreDecided = "object_restore_decided";
+
+    // M3 universe & planning
+    public const string EntityCreated = "universe_entity_created";
+    public const string EntityUpdated = "universe_entity_updated";
+    public const string EntityArchived = "universe_entity_archived";
+    public const string EntityBulkImported = "universe_entities_bulk_imported";
+    public const string RiskScoreUpdated = "risk_score_updated";
+    public const string EntityLastAuditedUpdated = "entity_last_audited_updated";
+    public const string EntityTypeAdded = "universe_entity_type_added";
+    public const string EntityTypeRemoved = "universe_entity_type_removed";
+    public const string RiskDimensionConfigured = "risk_dimension_configured";
+    public const string PlanCreated = "plan_created";
+    public const string PlanUpdated = "plan_updated";
+    public const string PlanItemAdded = "plan_item_added";
+    public const string PlanItemRemoved = "plan_item_removed";
+    public const string PlanSubmitted = "plan_submitted";
+    public const string PlanRevisionSubmitted = "plan_revision_submitted";
+    public const string PlanDecisionRecorded = "plan_decision_recorded";
+    public const string PlanClosed = "plan_closed";
+    public const string PlanItemLinkedToAudit = "plan_item_linked_to_audit";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -91,4 +111,9 @@ public static class AuditTargetTypes
     public const string Release = "release";
     public const string RestoreDrill = "restore_drill";
     public const string ObjectRestore = "object_restore";
+    public const string AuditUniverseEntity = "audit_universe_entity";
+    public const string RiskDimension = "risk_dimension";
+    public const string EntityTypeTaxonomy = "entity_type_taxonomy";
+    public const string AnnualPlan = "annual_plan";
+    public const string PlanItem = "plan_item";
 }

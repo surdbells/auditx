@@ -19,6 +19,8 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         await SeedBankSettingsAsync(cancellationToken);
         var rolesByName = await SeedBuiltInRolesAsync(cancellationToken);
         await SeedMakerCheckerGatesAsync(cancellationToken);
+        await SeedRiskDimensionsAsync(cancellationToken);
+        await SeedEntityTypesAsync(cancellationToken);
 
         if (seedDevelopmentUsers)
         {
@@ -27,6 +29,31 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
 
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Database seed completed (development users: {Dev}).", seedDevelopmentUsers);
+    }
+
+    private async Task SeedRiskDimensionsAsync(CancellationToken cancellationToken)
+    {
+        if (await db.RiskDimensions.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        foreach (var name in new[] { "Financial", "Operational", "Regulatory", "Reputational" })
+        {
+            db.RiskDimensions.Add(Domain.Universe.RiskDimension.Create(name, weight: 1.00m, scaleMin: 1, scaleMax: 5, scaleLabelOverridesJson: null));
+        }
+    }
+
+    private async Task SeedEntityTypesAsync(CancellationToken cancellationToken)
+    {
+        var existing = await db.EntityTypeTaxonomy.Select(t => t.Name).ToListAsync(cancellationToken);
+        foreach (var name in new[] { "branch", "process", "system", "vendor", "product" })
+        {
+            if (!existing.Contains(name, StringComparer.OrdinalIgnoreCase))
+            {
+                db.EntityTypeTaxonomy.Add(Domain.Universe.EntityTypeTaxonomy.Create(name));
+            }
+        }
     }
 
     private async Task SeedBankSettingsAsync(CancellationToken cancellationToken)

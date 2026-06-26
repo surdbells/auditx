@@ -57,6 +57,13 @@ public static class DependencyInjection
         services.AddScoped<IIntegrationRepository, IntegrationRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<IAdministrationRepository, AdministrationRepository>();
+        services.AddScoped<IAuditUniverseRepository, AuditUniverseRepository>();
+        services.AddScoped<IRiskDimensionRepository, RiskDimensionRepository>();
+        services.AddScoped<IEntityTypeTaxonomyRepository, EntityTypeTaxonomyRepository>();
+        services.AddScoped<IAnnualPlanRepository, AnnualPlanRepository>();
+        services.AddScoped<Application.Abstractions.Universe.ITaxonomyProvider, Universe.TaxonomyProvider>();
+        services.AddScoped<Application.Abstractions.Universe.ICoverageQueryService, Universe.CoverageQueryService>();
+        services.AddScoped<IAuditTrailReader, Universe.AuditTrailReader>();
         services.AddScoped<DbSeeder>();
 
         // M14 integrations + M15 administration adapters.

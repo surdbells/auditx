@@ -27,6 +27,23 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
     public Task<bool> ExistsByObjectSidAsync(string objectSid, CancellationToken cancellationToken = default)
         => db.Users.IgnoreQueryFilters().AnyAsync(u => u.AdObjectSid == objectSid, cancellationToken);
 
+    public async Task<IReadOnlyDictionary<string, Guid>> GetIdsByEmailsAsync(IReadOnlyCollection<string> emails, CancellationToken cancellationToken = default)
+    {
+        if (emails.Count == 0)
+        {
+            return new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var matches = await db.Users.Where(u => emails.Contains(u.Email)).Select(u => new { u.Email, u.Id }).ToListAsync(cancellationToken);
+        var result = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        foreach (var match in matches)
+        {
+            result[match.Email] = match.Id;
+        }
+
+        return result;
+    }
+
     public async Task<CursorPage<User>> SearchAsync(
         string? search,
         string? roleName,

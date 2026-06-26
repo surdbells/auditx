@@ -19,6 +19,9 @@ public interface IUserRepository
 
     Task<bool> ExistsByObjectSidAsync(string objectSid, CancellationToken cancellationToken = default);
 
+    /// <summary>Resolve email addresses to user ids (case-insensitive) for bulk import (US-M3-006).</summary>
+    Task<IReadOnlyDictionary<string, Guid>> GetIdsByEmailsAsync(IReadOnlyCollection<string> emails, CancellationToken cancellationToken = default);
+
     /// <summary>Keyset-paginated search over users (US-M1/US-M15-004).</summary>
     Task<CursorPage<User>> SearchAsync(
         string? search,

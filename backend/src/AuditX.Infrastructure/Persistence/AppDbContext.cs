@@ -2,7 +2,9 @@ using AuditX.Domain.Administration;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Identity;
 using AuditX.Domain.Integrations;
+using AuditX.Domain.Planning;
 using AuditX.Domain.Templates;
+using AuditX.Domain.Universe;
 using AuditX.Infrastructure.Persistence.Naming;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,6 +55,16 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<RestoreDrill> RestoreDrills => Set<RestoreDrill>();
 
     public DbSet<ObjectRestoreRequest> ObjectRestoreRequests => Set<ObjectRestoreRequest>();
+
+    public DbSet<AuditableEntity> AuditUniverseEntities => Set<AuditableEntity>();
+
+    public DbSet<RiskDimension> RiskDimensions => Set<RiskDimension>();
+
+    public DbSet<EntityTypeTaxonomy> EntityTypeTaxonomy => Set<EntityTypeTaxonomy>();
+
+    public DbSet<AnnualPlan> AnnualPlans => Set<AnnualPlan>();
+
+    public DbSet<PlanItem> PlanItems => Set<PlanItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
