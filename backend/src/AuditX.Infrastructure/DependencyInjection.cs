@@ -1,10 +1,14 @@
 using AuditX.Application.Abstractions;
+using AuditX.Application.Abstractions.Administration;
 using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Abstractions.Identity;
+using AuditX.Application.Abstractions.Integrations;
 using AuditX.Application.Abstractions.MakerChecker;
 using AuditX.Application.Abstractions.Persistence;
+using AuditX.Infrastructure.Administration;
 using AuditX.Infrastructure.Authorization;
 using AuditX.Infrastructure.Identity;
+using AuditX.Infrastructure.Integrations;
 using AuditX.Infrastructure.Messaging;
 using AuditX.Infrastructure.Options;
 using AuditX.Infrastructure.Persistence;
@@ -50,7 +54,22 @@ public static class DependencyInjection
         services.AddScoped<IMakerCheckerGateRepository, MakerCheckerGateRepository>();
         services.AddScoped<IBankSettingsRepository, BankSettingsRepository>();
         services.AddScoped<ITemplateRepository, TemplateRepository>();
+        services.AddScoped<IIntegrationRepository, IntegrationRepository>();
+        services.AddScoped<IWebhookRepository, WebhookRepository>();
+        services.AddScoped<IAdministrationRepository, AdministrationRepository>();
         services.AddScoped<DbSeeder>();
+
+        // M14 integrations + M15 administration adapters.
+        services.Configure<ReleaseSigningOptions>(configuration.GetSection(ReleaseSigningOptions.SectionName));
+        services.AddDataProtection();
+        services.AddHttpClient("webhooks");
+        services.AddSingleton<ICredentialProtector, DataProtectionCredentialProtector>();
+        services.AddSingleton<IWebhookSender, HttpWebhookSender>();
+        services.AddSingleton<IInternalNetworkPolicy, InternalNetworkPolicy>();
+        services.AddSingleton<IIntegrationTester, DefaultIntegrationTester>();
+        services.AddSingleton<ISiemExporter, LoggingSiemExporter>();
+        services.AddSingleton<IReleasePackageVerifier, RsaReleasePackageVerifier>();
+        services.AddScoped<ISystemMetricsProvider, SystemMetricsProvider>();
 
         // Cross-cutting
         services.AddSingleton<IClock, SystemClock>();

@@ -48,6 +48,7 @@ builder.Services.AddHangfire(config => config
     .UseSqlServerStorage(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<DelegationExpiryJob>();
+builder.Services.AddScoped<WebhookRetryJob>();
 
 var app = builder.Build();
 
@@ -71,6 +72,12 @@ RecurringJob.AddOrUpdate<DelegationExpiryJob>(
     DelegationExpiryJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Hourly);
+
+// Webhook retry sweep every 5 minutes (US-M14-010).
+RecurringJob.AddOrUpdate<WebhookRetryJob>(
+    WebhookRetryJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    "*/5 * * * *");
 
 await InitialiseDatabaseAsync(app);
 

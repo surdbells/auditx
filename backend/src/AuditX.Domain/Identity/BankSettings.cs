@@ -25,6 +25,12 @@ public sealed class BankSettings : Entity
     /// <summary>Optional AD group objectSid that first-login users must be a member of.</summary>
     public string? AdProvisioningFilterGroupSid { get; private set; }
 
+    /// <summary>Maximum size of a single evidence file, in megabytes (US-M15; configurable limit).</summary>
+    public int MaxEvidenceFileMb { get; private set; } = 50;
+
+    /// <summary>Maximum total evidence storage per audit, in gigabytes.</summary>
+    public int MaxAuditEvidenceGb { get; private set; } = 5;
+
     public static BankSettings CreateDefault(string bankDisplayName) => new()
     {
         BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
@@ -43,5 +49,11 @@ public sealed class BankSettings : Entity
     {
         AdProvisioningFilterOuDn = string.IsNullOrWhiteSpace(ouDn) ? null : ouDn.Trim();
         AdProvisioningFilterGroupSid = string.IsNullOrWhiteSpace(groupSid) ? null : groupSid.Trim();
+    }
+
+    public void SetResourceLimits(int maxEvidenceFileMb, int maxAuditEvidenceGb)
+    {
+        MaxEvidenceFileMb = maxEvidenceFileMb is <= 0 or > 1024 ? MaxEvidenceFileMb : maxEvidenceFileMb;
+        MaxAuditEvidenceGb = maxAuditEvidenceGb is <= 0 or > 1024 ? MaxAuditEvidenceGb : maxAuditEvidenceGb;
     }
 }

@@ -15,6 +15,10 @@ public interface IUserRepository
 
     Task<bool> HasAnyRoleAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
+
+    Task<bool> ExistsByObjectSidAsync(string objectSid, CancellationToken cancellationToken = default);
+
     /// <summary>Keyset-paginated search over users (US-M1/US-M15-004).</summary>
     Task<CursorPage<User>> SearchAsync(
         string? search,

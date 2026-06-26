@@ -1,5 +1,7 @@
+using AuditX.Domain.Administration;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Identity;
+using AuditX.Domain.Integrations;
 using AuditX.Domain.Templates;
 using AuditX.Infrastructure.Persistence.Naming;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +37,22 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<TemplateSection> TemplateSections => Set<TemplateSection>();
 
     public DbSet<TemplateVersion> TemplateVersions => Set<TemplateVersion>();
+
+    public DbSet<IntegrationConfiguration> Integrations => Set<IntegrationConfiguration>();
+
+    public DbSet<IntegrationHealthStatus> IntegrationHealth => Set<IntegrationHealthStatus>();
+
+    public DbSet<WebhookSubscription> WebhookSubscriptions => Set<WebhookSubscription>();
+
+    public DbSet<WebhookDelivery> WebhookDeliveries => Set<WebhookDelivery>();
+
+    public DbSet<SupportChannelSession> SupportChannelSessions => Set<SupportChannelSession>();
+
+    public DbSet<ReleaseInstall> ReleaseInstalls => Set<ReleaseInstall>();
+
+    public DbSet<RestoreDrill> RestoreDrills => Set<RestoreDrill>();
+
+    public DbSet<ObjectRestoreRequest> ObjectRestoreRequests => Set<ObjectRestoreRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

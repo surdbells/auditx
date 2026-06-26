@@ -48,6 +48,30 @@ public static class AuditEventTypes
     public const string TemplateArchived = "template_archived";
     public const string TemplateUnarchived = "template_unarchived";
     public const string TemplateCloned = "template_cloned";
+
+    // M14 integrations
+    public const string IntegrationConfigured = "integration_configured";
+    public const string IntegrationUpdated = "integration_updated";
+    public const string IntegrationDeactivated = "integration_deactivated";
+    public const string IntegrationTested = "integration_tested";
+    public const string IntegrationHealthDegraded = "integration_health_failing";
+    public const string WebhookSubscribed = "webhook_subscribed";
+    public const string WebhookUnsubscribed = "webhook_unsubscribed";
+    public const string WebhookDeadLettered = "webhook_dead_lettered";
+    public const string WebhookRetried = "webhook_retried";
+
+    // M15 administration
+    public const string BankSettingsUpdated = "bank_settings_updated";
+    public const string ResourceLimitsUpdated = "resource_limits_updated";
+    public const string UsersBulkDeactivated = "users_bulk_deactivated";
+    public const string UsersBulkImported = "users_bulk_imported";
+    public const string SupportChannelEnabled = "support_channel_enabled";
+    public const string SupportChannelRevoked = "support_channel_revoked";
+    public const string ReleaseInstalled = "release_installed";
+    public const string ReleaseRejected = "release_rejected";
+    public const string RestoreDrillRecorded = "restore_drill_recorded";
+    public const string ObjectRestoreRequested = "object_restore_requested";
+    public const string ObjectRestoreDecided = "object_restore_decided";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -60,4 +84,11 @@ public static class AuditTargetTypes
     public const string Session = "session";
     public const string BankSettings = "bank_settings";
     public const string Template = "template";
+    public const string Integration = "integration";
+    public const string WebhookSubscription = "webhook_subscription";
+    public const string WebhookDelivery = "webhook_delivery";
+    public const string SupportChannel = "support_channel";
+    public const string Release = "release";
+    public const string RestoreDrill = "restore_drill";
+    public const string ObjectRestore = "object_restore";
 }

@@ -21,6 +21,12 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
     public Task<bool> HasAnyRoleAsync(Guid userId, CancellationToken cancellationToken = default)
         => db.UserRoles.AnyAsync(ur => ur.UserId == userId, cancellationToken);
 
+    public async Task<IReadOnlyList<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+        => await db.Users.Where(u => ids.Contains(u.Id)).ToListAsync(cancellationToken);
+
+    public Task<bool> ExistsByObjectSidAsync(string objectSid, CancellationToken cancellationToken = default)
+        => db.Users.IgnoreQueryFilters().AnyAsync(u => u.AdObjectSid == objectSid, cancellationToken);
+
     public async Task<CursorPage<User>> SearchAsync(
         string? search,
         string? roleName,
