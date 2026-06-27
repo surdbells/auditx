@@ -285,6 +285,23 @@
   color: #b71c1c;
 }
 
+// M8 — Report generation: `running` reuses the in-progress blue.
+.status-badge[data-status='running'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
+// M8 — Report hash-verification badge (stored vs recomputed).
+.status-badge[data-status='match'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='mismatch'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
 .muted {
   color: var(--mat-sys-on-surface-variant);
 }

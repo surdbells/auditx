@@ -1,0 +1,90 @@
+<app-page-header
+  title="Report Templates"
+  subtitle="Define and activate the templates used to generate audit reports."
+>
+  @if (canConfigure()) {
+    <div actions class="templates__actions">
+      <button matButton="filled" type="button" (click)="create()">
+        <mat-icon>add</mat-icon>
+        New template
+      </button>
+      <button matButton type="button" (click)="fetch()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  }
+</app-page-header>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading templates…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the report templates."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="description"
+        title="No templates"
+        message="No report templates have been defined yet."
+      />
+    } @else {
+      <mat-card appearance="outlined" class="templates__table-card">
+        <div class="templates__table-wrapper">
+          <table mat-table [dataSource]="templates()" class="templates__table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let t" class="templates__name">
+                {{ t.name }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="version">
+              <th mat-header-cell *matHeaderCellDef>Version</th>
+              <td mat-cell *matCellDef="let t">v{{ t.versionNumber }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="state">
+              <th mat-header-cell *matHeaderCellDef>State</th>
+              <td mat-cell *matCellDef="let t">
+                <span
+                  class="status-badge"
+                  [attr.data-status]="t.isActive ? 'active' : 'inactive'"
+                >
+                  {{ t.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="createdAt">
+              <th mat-header-cell *matHeaderCellDef>Created</th>
+              <td mat-cell *matCellDef="let t">
+                {{ t.createdAtUtc | date: 'medium' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <td mat-cell *matCellDef="let t" class="templates__row-actions">
+                @if (canConfigure() && !t.isActive) {
+                  <button matButton type="button" (click)="activate(t)">
+                    <mat-icon>play_circle</mat-icon>
+                    Activate
+                  </button>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

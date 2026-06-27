@@ -119,6 +119,10 @@ export class AuditDetailComponent {
     this.auth.hasPermission(Permissions.ViewExceptions),
   );
 
+  readonly canViewReports = computed(() =>
+    this.auth.hasPermission(Permissions.ViewReport),
+  );
+
   readonly status = computed(() => this.audit()?.status ?? null);
 
   readonly leadName = computed(() => this.nameOf(this.audit()?.leadUserId));

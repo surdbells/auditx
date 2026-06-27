@@ -11,3 +11,4 @@ export * from './audit.models';
 export * from './exception.models';
 export * from './audit-trail.models';
 export * from './sanctions.models';
+export * from './report.models';

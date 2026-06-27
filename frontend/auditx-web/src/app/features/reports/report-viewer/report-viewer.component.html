@@ -1,0 +1,180 @@
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading report…" />
+  }
+  @case ('error') {
+    <app-error-state message="We couldn't load this report." (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (report(); as r) {
+      <app-page-header
+        [title]="'Report v' + r.versionNumber"
+        [subtitle]="'Audit ' + r.auditId"
+      >
+        <div actions class="viewer__actions">
+          @if (canDistribute() && isCompleted()) {
+            <button matButton="filled" type="button" (click)="distribute()">
+              <mat-icon>send</mat-icon>
+              Distribute
+            </button>
+          }
+        </div>
+      </app-page-header>
+
+      <!-- Metadata -->
+      <mat-card appearance="outlined" class="viewer__card">
+        <h3 class="viewer__card-title">Overview</h3>
+        <dl class="viewer__grid">
+          <div>
+            <dt>Version</dt>
+            <dd>v{{ r.versionNumber }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>
+              <span class="status-badge" [attr.data-status]="r.status">
+                {{ humanise(r.status) }}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt>SHA-256</dt>
+            <dd>
+              <code class="viewer__hash" [matTooltip]="r.sha256Hash ?? ''">
+                {{ shortHash(r.sha256Hash) }}
+              </code>
+            </dd>
+          </div>
+          <div>
+            <dt>Requested</dt>
+            <dd>{{ r.requestedAt | date: 'medium' }}</dd>
+          </div>
+          <div>
+            <dt>Completed</dt>
+            <dd>
+              {{ r.completedAt ? (r.completedAt | date: 'medium') : '—' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Template version</dt>
+            <dd>v{{ r.templateVersionSnapshot }}</dd>
+          </div>
+        </dl>
+
+        @if (r.status === 'failed' && r.failureReason) {
+          <div class="viewer__notice">
+            <strong>Generation failed.</strong> {{ r.failureReason }}
+          </div>
+        }
+      </mat-card>
+
+      <!-- Artefacts / downloads -->
+      @if (isCompleted()) {
+        <mat-card appearance="outlined" class="viewer__card">
+          <div class="viewer__card-head">
+            <h3 class="viewer__card-title">Artefacts</h3>
+            <button
+              matButton
+              type="button"
+              (click)="verifyHash()"
+              [disabled]="verifying()"
+            >
+              <mat-icon>verified</mat-icon>
+              Verify hash
+            </button>
+          </div>
+
+          @if (verification(); as v) {
+            <div class="viewer__verify">
+              <span
+                class="status-badge"
+                [attr.data-status]="v.match ? 'match' : 'mismatch'"
+              >
+                {{ v.match ? 'Hash matches' : 'Hash mismatch' }}
+              </span>
+              <span class="muted">
+                Stored {{ shortHash(v.storedHash) }} · recomputed
+                {{ shortHash(v.recomputedHash) }}
+              </span>
+            </div>
+          }
+
+          @if (!artefacts().length) {
+            <p class="muted viewer__empty">No artefacts were produced.</p>
+          } @else {
+            <div class="viewer__downloads">
+              @for (a of artefacts(); track a.format) {
+                <button matButton type="button" (click)="download(a)">
+                  <mat-icon>download</mat-icon>
+                  {{ a.format | uppercase }}
+                </button>
+              }
+            </div>
+          }
+        </mat-card>
+      }
+
+      <!-- Distribution log -->
+      <mat-card appearance="outlined" class="viewer__card viewer__table-card">
+        <h3 class="viewer__card-title viewer__table-title">
+          Distribution log
+        </h3>
+        @if (!distributions().length) {
+          <p class="muted viewer__empty">No distributions recorded yet.</p>
+        } @else {
+          <div class="viewer__table-wrapper">
+            <table
+              mat-table
+              [dataSource]="distributions()"
+              class="viewer__table"
+            >
+              <ng-container matColumnDef="recipient">
+                <th mat-header-cell *matHeaderCellDef>Recipient</th>
+                <td mat-cell *matCellDef="let d">{{ recipientLabel(d) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="version">
+                <th mat-header-cell *matHeaderCellDef>Version</th>
+                <td mat-cell *matCellDef="let d">
+                  v{{ d.reportVersionNumber }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="dispatchedAt">
+                <th mat-header-cell *matHeaderCellDef>Dispatched</th>
+                <td mat-cell *matCellDef="let d">
+                  {{ d.dispatchedAt | date: 'medium' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="outcome">
+                <th mat-header-cell *matHeaderCellDef>Outcome</th>
+                <td mat-cell *matCellDef="let d">
+                  <span class="status-badge" [attr.data-status]="d.outcome">
+                    {{ humanise(d.outcome) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="distributionColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: distributionColumns"></tr>
+            </table>
+          </div>
+
+          @if (hasMore()) {
+            <div class="viewer__load-more">
+              <button
+                matButton
+                type="button"
+                (click)="loadMore()"
+                [disabled]="loadingMore()"
+              >
+                {{ loadingMore() ? 'Loading…' : 'Load more' }}
+              </button>
+            </div>
+          }
+        }
+      </mat-card>
+    }
+  }
+}

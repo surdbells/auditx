@@ -142,6 +142,12 @@ export class MainLayoutComponent {
       permissions: [Permissions.ConfigureNotifications],
     },
     {
+      label: 'Report Templates',
+      icon: 'summarize',
+      route: '/admin/report-templates',
+      permissions: [Permissions.ConfigureReports],
+    },
+    {
       label: 'Sanctions',
       icon: 'gavel',
       route: '/admin/sanctions',

@@ -68,7 +68,20 @@ public static class DependencyInjection
         services.AddScoped<ISanctionsCaseRepository, SanctionsCaseRepository>();
         services.AddScoped<ISanctionsGridRepository, SanctionsGridRepository>();
         services.AddScoped<ISanctionsAppealRepository, SanctionsAppealRepository>();
+        services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddScoped<IReportTemplateRepository, ReportTemplateRepository>();
         services.AddScoped<Application.Abstractions.Sanctions.IDossierGenerator, Sanctions.HtmlDossierGenerator>();
+
+        // M8 reports: assembler + generation service + format-dispatching renderer (HTML always + DOCX via OpenXml).
+        // The concrete renderers are registered under their OWN types and the composite is the sole IReportRenderer,
+        // built from them explicitly — registering the composite into the IReportRenderer set it consumes would make
+        // IEnumerable<IReportRenderer> circular and fail resolution of the whole generation path.
+        services.AddScoped<Application.Reports.Generation.ReportContentAssembler>();
+        services.AddScoped<Application.Reports.Generation.ReportGenerationService>();
+        services.AddScoped<Reports.HtmlReportRenderer>();
+        services.AddScoped<Reports.OpenXmlReportRenderer>();
+        services.AddScoped<Application.Abstractions.Reports.IReportRenderer>(sp => new Reports.CompositeReportRenderer(
+            [sp.GetRequiredService<Reports.HtmlReportRenderer>(), sp.GetRequiredService<Reports.OpenXmlReportRenderer>()]));
         services.AddScoped<Application.Abstractions.IExceptionDefaults, Exceptions.ConfigBackedExceptionDefaults>();
         services.AddSingleton<Application.Abstractions.Storage.IFileStorage, Storage.LocalDiskFileStorage>();
         services.AddSingleton<Application.Abstractions.Storage.IFileSignatureInspector, Storage.EvidenceFileSignatureInspector>();

@@ -49,5 +49,7 @@ public static class NotificationEvents
         "map_completed", "exception_pending_cia", "exception_closed", "exception_cancelled",
         // M3 planning
         "plan_submitted",
+        // M8 reports
+        "report_generated", "report_distributed", "report_hash_mismatch",
     ];
 }

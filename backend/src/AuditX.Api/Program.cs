@@ -51,6 +51,8 @@ builder.Services.AddScoped<DelegationExpiryJob>();
 builder.Services.AddScoped<WebhookRetryJob>();
 builder.Services.AddScoped<AuditAutoStartJob>();
 builder.Services.AddScoped<NotificationRetryJob>();
+builder.Services.AddScoped<ReportGenerationJob>();
+builder.Services.AddScoped<AuditX.Application.Abstractions.Reports.IReportGenerationQueue, HangfireReportGenerationQueue>();
 
 var app = builder.Build();
 

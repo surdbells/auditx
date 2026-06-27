@@ -156,6 +156,15 @@ public static class AuditEventTypes
     public const string GridVersionCreated = "grid_version_created";
     public const string GridVersionActivated = "grid_version_activated";
     public const string SubjectIdentityExposed = "subject_identity_exposed";
+
+    // M8 reports
+    public const string ReportGenerationRequested = "report_generation_requested";
+    public const string ReportGenerated = "report_generated";
+    public const string ReportGenerationFailed = "report_generation_failed";
+    public const string ReportDistributed = "report_distributed";
+    public const string ReportHashMismatch = "report_hash_mismatch";
+    public const string ReportTemplateCreated = "report_template_created";
+    public const string ReportTemplateActivated = "report_template_activated";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -194,4 +203,6 @@ public static class AuditTargetTypes
     public const string SanctionsCase = "sanctions_case";
     public const string SanctionsAppeal = "sanctions_appeal";
     public const string SanctionsGridVersion = "sanctions_grid_version";
+    public const string Report = "report";
+    public const string ReportTemplate = "report_template";
 }

@@ -1,0 +1,27 @@
+.templates__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.templates__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.templates__table-wrapper {
+  overflow-x: auto;
+}
+
+.templates__table {
+  width: 100%;
+}
+
+.templates__name {
+  font-weight: 500;
+}
+
+.templates__row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}

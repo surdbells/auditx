@@ -25,6 +25,7 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         await SeedEntityTypesAsync(cancellationToken);
         await SeedSanctionsRolesAsync(cancellationToken);
         await SeedSanctionsGridAsync(cancellationToken);
+        await SeedReportTemplateAsync(cancellationToken);
         await SeedNotificationDefaultsAsync(cancellationToken);
 
         if (seedDevelopmentUsers)
@@ -80,6 +81,14 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
                 "An appeal has been filed", "An appeal has been filed for sanctions case {{ SanctionsCaseId }} and routed to you for decision."),
             (Domain.AuditTrail.AuditEventTypes.AppealOutcomeRecorded, "appeal_outcome_recorded", "payload_derived", "AppellantUserId", "[\"email\"]",
                 "Your appeal has been decided", "Your appeal for sanctions case {{ SanctionsCaseId }} has been decided ({{ outcome }})."),
+
+            // M8 reports. report_generated → the requesting Audit Manager (the single user on GeneratedBy).
+            (Domain.AuditTrail.AuditEventTypes.ReportGenerated, "report_generated", "payload_derived", "GeneratedBy", "[\"email\"]",
+                "Your audit report is ready", "Report version {{ VersionNumber }} for audit {{ AuditId }} has been generated and is ready to view."),
+            // report_hash_mismatch → Security/Administrator. The event payload carries Severity=Critical so the M10
+            // suppression-override + SMS escalation fires (channel data-driven via the rule; defaults to email).
+            (Domain.AuditTrail.AuditEventTypes.ReportHashMismatch, "report_integrity_alert", "role", BuiltInRoles.AdministratorName, "[\"email\"]",
+                "Report integrity alert", "Report {{ ReportId }} (audit {{ AuditId }}) failed SHA-256 verification. Expected {{ ExpectedHash }}, recomputed {{ RecomputedHash }}. Investigate immediately."),
         };
 
         foreach (var d in defaults)
@@ -176,6 +185,33 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         var grid = Domain.Sanctions.SanctionsGridVersion.CreateDraft(1, gridJson, createdBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
         grid.Activate("Initial bank sanctions grid seeded on deployment.", activatedBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
         db.SanctionsGridVersions.Add(grid);
+    }
+
+    /// <summary>Seed one active default report template (version 1) with the standard section set (US-M8-007). Idempotent.</summary>
+    private async Task SeedReportTemplateAsync(CancellationToken cancellationToken)
+    {
+        if (await db.ReportTemplates.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        // sections[] — each section has a key, a title and an optional FIXED condition flag (evaluated against the
+        // composition's flag bag; unknown flags omit the section). The conditional findings/evidence sections use
+        // the three known flags has_critical_exceptions / has_evidence_files / has_recurrence_flags.
+        const string definitionJson =
+            "{\"title\":\"Audit Report\",\"sections\":[" +
+            "{\"key\":\"executive_summary\",\"title\":\"Executive summary\"}," +
+            "{\"key\":\"scope\",\"title\":\"Scope\"}," +
+            "{\"key\":\"methodology\",\"title\":\"Methodology\"}," +
+            "{\"key\":\"findings\",\"title\":\"Findings\"}," +
+            "{\"key\":\"evidence\",\"title\":\"Evidence references\",\"condition\":\"has_evidence_files\"}," +
+            "{\"key\":\"conclusion\",\"title\":\"Conclusion\"}" +
+            "]}";
+
+        var template = Domain.Reports.ReportTemplate.CreateVersion(
+            "Default audit report", definitionJson, versionNumber: 1, createdBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
+        template.Activate("Default report template seeded on deployment for bank-wide audit reporting.", activatedBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
+        db.ReportTemplates.Add(template);
     }
 
     private async Task SeedBankSettingsAsync(CancellationToken cancellationToken)

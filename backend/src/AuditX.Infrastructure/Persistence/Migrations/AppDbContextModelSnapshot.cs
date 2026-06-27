@@ -2159,6 +2159,280 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.ToTable("plan_items", (string)null);
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Reports.Report", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuditId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("audit_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<string>("DeletionReason")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("deletion_reason");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<Guid>("GeneratedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("generated_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("ProducedArtefactsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("produced_artefacts_json");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("requested_at");
+
+                    b.Property<string>("RequestedFormatsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("requested_formats_json");
+
+                    b.Property<DateTimeOffset?>("RetentionUntil")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("retention_until");
+
+                    b.Property<string>("Sha256Hash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasColumnName("sha256_hash");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("TemplateDefinitionSnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("template_definition_snapshot_json");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("template_id");
+
+                    b.Property<int>("TemplateVersionSnapshot")
+                        .HasColumnType("int")
+                        .HasColumnName("template_version_snapshot");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("version_number");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuditId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("AuditId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("reports", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Reports.ReportDistribution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("DispatchedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("dispatched_at");
+
+                    b.Property<Guid>("DispatchedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("dispatched_by");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("outcome");
+
+                    b.Property<string>("RecipientEmail")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)")
+                        .HasColumnName("recipient_email");
+
+                    b.Property<Guid?>("RecipientUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("recipient_user_id");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("report_id");
+
+                    b.Property<int>("ReportVersionNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("report_version_number");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportId");
+
+                    b.HasIndex("ReportId", "DispatchedAt");
+
+                    b.ToTable("report_distributions", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Reports.ReportTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ActivatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("activated_at");
+
+                    b.Property<Guid?>("ActivatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("activated_by");
+
+                    b.Property<string>("ActivationReason")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("activation_reason");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("TemplateDefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("template_definition_json");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("version_number");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive")
+                        .IsUnique()
+                        .HasFilter("[is_active] = 1");
+
+                    b.HasIndex("VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("report_templates", (string)null);
+                });
+
             modelBuilder.Entity("AuditX.Domain.Sanctions.SanctionsAppeal", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3005,6 +3279,24 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Reports.Report", b =>
+                {
+                    b.HasOne("AuditX.Domain.Audits.Audit", null)
+                        .WithMany()
+                        .HasForeignKey("AuditId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Reports.ReportDistribution", b =>
+                {
+                    b.HasOne("AuditX.Domain.Reports.Report", null)
+                        .WithMany("Distributions")
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AuditX.Domain.Sanctions.SanctionsAppeal", b =>
                 {
                     b.HasOne("AuditX.Domain.Sanctions.SanctionsCase", null)
@@ -3089,6 +3381,11 @@ namespace AuditX.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("AuditX.Domain.Planning.AnnualPlan", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Reports.Report", b =>
+                {
+                    b.Navigation("Distributions");
                 });
 
             modelBuilder.Entity("AuditX.Domain.Sanctions.SanctionsCase", b =>

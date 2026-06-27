@@ -1,0 +1,15 @@
+namespace AuditX.Api.Contracts;
+
+/// <summary>Body for POST /audits/{id}/reports. HTML is always produced; <c>docx</c> additionally requests DOCX.</summary>
+public sealed record GenerateReportRequest(bool? Docx);
+
+/// <summary>
+/// Body for POST /reports/{id}/distribute. Recipients are directory users (by id) and/or ad-hoc email addresses.
+/// NO distribution lists (deferred — A1), NO SMS.
+/// </summary>
+public sealed record DistributeReportRequest(
+    IReadOnlyList<Guid>? RecipientUserIds, IReadOnlyList<string>? RecipientEmailAddresses);
+
+public sealed record CreateReportTemplateRequest(string Name, string TemplateDefinition);
+
+public sealed record ActivateReportTemplateRequest(string Reason);

@@ -290,6 +290,33 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'audits/:auditId/reports',
+        title: 'Reports · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewReport)],
+        loadComponent: () =>
+          import(
+            './features/reports/reports-panel/reports-panel.component'
+          ).then((m) => m.ReportsPanelComponent),
+      },
+      {
+        path: 'reports/:id',
+        title: 'Report · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewReport)],
+        loadComponent: () =>
+          import(
+            './features/reports/report-viewer/report-viewer.component'
+          ).then((m) => m.ReportViewerComponent),
+      },
+      {
+        path: 'admin/report-templates',
+        title: 'Report Templates · AuditX',
+        canActivate: [permissionGuard(Permissions.ConfigureReports)],
+        loadComponent: () =>
+          import(
+            './features/reports/report-templates/report-templates.component'
+          ).then((m) => m.ReportTemplatesComponent),
+      },
+      {
         path: 'exceptions',
         title: 'Exceptions · AuditX',
         canActivate: [permissionGuard(Permissions.ViewExceptions)],

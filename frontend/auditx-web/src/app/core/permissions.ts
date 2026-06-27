@@ -52,6 +52,12 @@ export const Permissions = {
   // M10 — Notifications
   ConfigureNotifications: 'ConfigureNotifications',
 
+  // M8 — Reports
+  GenerateReport: 'GenerateReport',
+  ViewReport: 'ViewReport',
+  DistributeReport: 'DistributeReport',
+  ConfigureReports: 'ConfigureReports',
+
   // M6 — Exceptions & Management Action Plans (MAP)
   ViewExceptions: 'ViewExceptions',
   RaiseException: 'RaiseException',

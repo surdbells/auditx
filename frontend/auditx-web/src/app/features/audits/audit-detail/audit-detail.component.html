@@ -8,8 +8,14 @@
   @case ('ready') {
     @if (audit(); as a) {
       <app-page-header [title]="a.name" [subtitle]="a.auditType">
-        @if (canManage()) {
-          <div actions class="detail__actions">
+        <div actions class="detail__actions">
+          @if (canViewReports()) {
+            <a matButton type="button" [routerLink]="['/audits', a.id, 'reports']">
+              <mat-icon>summarize</mat-icon>
+              Reports
+            </a>
+          }
+          @if (canManage()) {
             @if (isDraft()) {
               <button
                 matButton="filled"
@@ -55,8 +61,8 @@
                 Cancel
               </button>
             }
-          </div>
-        }
+          }
+        </div>
       </app-page-header>
 
       <div class="detail__status-row">
