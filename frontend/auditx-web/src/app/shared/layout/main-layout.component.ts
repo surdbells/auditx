@@ -142,6 +142,18 @@ export class MainLayoutComponent {
       permissions: [Permissions.ConfigureNotifications],
     },
     {
+      label: 'Sanctions',
+      icon: 'gavel',
+      route: '/admin/sanctions',
+      permissions: [Permissions.ViewSanctions],
+    },
+    {
+      label: 'Sanctions Grid',
+      icon: 'grid_on',
+      route: '/admin/sanctions/grid',
+      permissions: [Permissions.ManageGrid],
+    },
+    {
       label: 'Audit Trail',
       icon: 'history',
       route: '/admin/audit-trail',

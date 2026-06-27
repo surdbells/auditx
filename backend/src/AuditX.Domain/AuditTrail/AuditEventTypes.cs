@@ -142,6 +142,20 @@ public static class AuditEventTypes
     public const string TrailQueried = "trail_query";
     public const string TrailExported = "trail_exported";
     public const string EvidenceUnflagged = "evidence_unflagged";
+
+    // M7 sanctions & disciplinary grid
+    public const string SanctionsTriggered = "sanctions_triggered";
+    public const string SanctionsRecommended = "sanctions_recommended";
+    public const string SanctionsRecommendationSubmitted = "sanctions_recommendation_submitted";
+    public const string HrOutcomeRecorded = "hr_outcome_recorded";
+    public const string DcReferral = "dc_referral";
+    public const string DcDecisionRecorded = "dc_decision_recorded";
+    public const string AppealFiled = "appeal_filed";
+    public const string AppealOutcomeRecorded = "appeal_outcome_recorded";
+    public const string SanctionsCaseClosed = "sanctions_case_closed";
+    public const string GridVersionCreated = "grid_version_created";
+    public const string GridVersionActivated = "grid_version_activated";
+    public const string SubjectIdentityExposed = "subject_identity_exposed";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -177,4 +191,7 @@ public static class AuditTargetTypes
     public const string NotificationRule = "notification_rule";
     public const string NotificationTemplate = "notification_template";
     public const string AuditTrail = "audit_trail";
+    public const string SanctionsCase = "sanctions_case";
+    public const string SanctionsAppeal = "sanctions_appeal";
+    public const string SanctionsGridVersion = "sanctions_grid_version";
 }

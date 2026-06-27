@@ -10,3 +10,4 @@ export * from './coverage.models';
 export * from './audit.models';
 export * from './exception.models';
 export * from './audit-trail.models';
+export * from './sanctions.models';

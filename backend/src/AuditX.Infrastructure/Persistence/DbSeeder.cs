@@ -1,4 +1,6 @@
+using AuditX.Application.Sanctions;
 using AuditX.Domain.Authorization;
+using AuditX.Domain.Enums;
 using AuditX.Domain.Identity;
 using AuditX.Infrastructure.Identity;
 using AuditX.Infrastructure.Options;
@@ -21,6 +23,8 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         await SeedMakerCheckerGatesAsync(cancellationToken);
         await SeedRiskDimensionsAsync(cancellationToken);
         await SeedEntityTypesAsync(cancellationToken);
+        await SeedSanctionsRolesAsync(cancellationToken);
+        await SeedSanctionsGridAsync(cancellationToken);
         await SeedNotificationDefaultsAsync(cancellationToken);
 
         if (seedDevelopmentUsers)
@@ -61,6 +65,21 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
                 "An exception was reassigned to you", "Exception {{ ExceptionId }} has been reassigned to you."),
             ("map_submitted", "map_submitted", "role", BuiltInRoles.AuditManagerName, "[\"email\"]",
                 "A management action plan was submitted", "A MAP was submitted for exception {{ ExceptionId }} and awaits your review."),
+
+            // M7 sanctions (pinned event-key/recipient-field names). Multi-party events resolve a single ROLE recipient
+            // set (payload_derived resolves only ONE user, so it is reserved for the appeal-routing event).
+            (Domain.AuditTrail.AuditEventTypes.SanctionsRecommended, "sanctions_recommended", "role", SanctionsRoles.HrRepresentative, "[\"email\"]",
+                "A sanction has been recommended", "A sanction has been recommended for sanctions case {{ SanctionsCaseId }}. Please review."),
+            (Domain.AuditTrail.AuditEventTypes.HrOutcomeRecorded, "hr_outcome_recorded", "role", BuiltInRoles.AuditManagerName, "[\"email\"]",
+                "An HR outcome was recorded", "An HR outcome ({{ outcomeType }}) was recorded for sanctions case {{ SanctionsCaseId }}."),
+            (Domain.AuditTrail.AuditEventTypes.DcReferral, "dc_referral", "role", SanctionsRoles.DisciplinaryCommitteeMember, "[\"email\"]",
+                "A case was referred to the disciplinary committee", "Sanctions case {{ SanctionsCaseId }} has been referred to the disciplinary committee."),
+            (Domain.AuditTrail.AuditEventTypes.DcDecisionRecorded, "dc_decision_recorded", "role", BuiltInRoles.AuditManagerName, "[\"email\"]",
+                "A disciplinary decision was recorded", "A disciplinary decision ({{ decision }}) was recorded for sanctions case {{ SanctionsCaseId }}."),
+            (Domain.AuditTrail.AuditEventTypes.AppealFiled, "appeal_filed", "payload_derived", "RoutedToUserId", "[\"email\"]",
+                "An appeal has been filed", "An appeal has been filed for sanctions case {{ SanctionsCaseId }} and routed to you for decision."),
+            (Domain.AuditTrail.AuditEventTypes.AppealOutcomeRecorded, "appeal_outcome_recorded", "payload_derived", "AppellantUserId", "[\"email\"]",
+                "Your appeal has been decided", "Your appeal for sanctions case {{ SanctionsCaseId }} has been decided ({{ outcome }})."),
         };
 
         foreach (var d in defaults)
@@ -103,6 +122,60 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
                 db.EntityTypeTaxonomy.Add(Domain.Universe.EntityTypeTaxonomy.Create(name));
             }
         }
+    }
+
+    /// <summary>
+    /// Seed the three non-builtin, bank-reconfigurable M7 cohort roles. The cohort permissions (RecordHROutcome,
+    /// ReferToDC, DCMember, DecideAppeal) map to assignable roles, not to the four immutable built-ins.
+    /// </summary>
+    private async Task SeedSanctionsRolesAsync(CancellationToken cancellationToken)
+    {
+        var existing = await db.Roles.Select(r => r.Name).ToListAsync(cancellationToken);
+
+        var roleDefs = new (string Name, string Description, string[] Permissions)[]
+        {
+            (SanctionsRoles.HrRepresentative, "Records HR outcomes on recommended sanctions and refers contested cases to the disciplinary committee.",
+                [PermissionKeys.RecordHrOutcome, PermissionKeys.ReferToDc, PermissionKeys.ViewSanctions]),
+            (SanctionsRoles.DisciplinaryCommitteeMember, "Deliberates and records disciplinary committee decisions on referred sanctions cases.",
+                [PermissionKeys.DcMember, PermissionKeys.ViewSanctions]),
+            (SanctionsRoles.AppealsAuthority, "Decides appeals filed against sanctions decisions.",
+                [PermissionKeys.DecideAppeal, PermissionKeys.ViewSanctions]),
+        };
+
+        foreach (var (name, description, permissions) in roleDefs)
+        {
+            if (existing.Contains(name, StringComparer.Ordinal))
+            {
+                continue;
+            }
+
+            var role = Role.CreateCustom(name, description);
+            role.SetPermissions(permissions.Select(key => (key, PermissionScopeType.Global, (string?)null)));
+            db.Roles.Add(role);
+        }
+    }
+
+    /// <summary>Seed one active default sanctions grid (version 1) with a few representative cells per the E3 schema.</summary>
+    private async Task SeedSanctionsGridAsync(CancellationToken cancellationToken)
+    {
+        if (await db.SanctionsGridVersions.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        // Cell key: "<category>|<severity>|<recurrence true|false>" → { recommended_range }.
+        const string gridJson =
+            "{\"cells\":{" +
+            "\"cash_handling|critical|false\":{\"recommended_range\":\"Final written warning to dismissal\"}," +
+            "\"cash_handling|critical|true\":{\"recommended_range\":\"Dismissal\"}," +
+            "\"cash_handling|high|false\":{\"recommended_range\":\"Written warning to two-week suspension\"}," +
+            "\"process_breach|medium|false\":{\"recommended_range\":\"Verbal warning to written warning\"}," +
+            "\"process_breach|low|false\":{\"recommended_range\":\"Coaching to verbal warning\"}" +
+            "}}";
+
+        var grid = Domain.Sanctions.SanctionsGridVersion.CreateDraft(1, gridJson, createdBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
+        grid.Activate("Initial bank sanctions grid seeded on deployment.", activatedBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
+        db.SanctionsGridVersions.Add(grid);
     }
 
     private async Task SeedBankSettingsAsync(CancellationToken cancellationToken)

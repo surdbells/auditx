@@ -9,18 +9,17 @@ Angular 21 + Material · Clean Architecture monorepo · 15 modules (M1–M15), ~
 
 ## 1. Executive summary
 
-- **10 of 15 modules delivered** end-to-end (Domain → Application → Infrastructure → API → Angular → tests):
-  **M1, M2, M3, M4, M5, M6, M10, M11, M14, M15.**
-- **Phases 1 and 2 are complete.** The core audit lifecycle — universe/planning → engagement → fieldwork →
-  exceptions/MAP → notifications → audit trail — is fully built.
-- **5 modules not yet started (Phases 3–4):** M7 (Sanctions & Disciplinary Grid), M8 (Reports),
-  M9 (Advanced Analytics & Dashboards), M12 (Template & Workflow Configuration), M13 (Audit Committee Workspace).
+- **11 of 15 modules delivered** end-to-end (Domain → Application → Infrastructure → API → Angular → tests):
+  **M1, M2, M3, M4, M5, M6, M7, M10, M11, M14, M15.**
+- **Phases 1 and 2 are complete**, plus **M7 (Sanctions & Disciplinary Grid)** from the findings-to-close phase.
+- **4 modules not yet started:** M8 (Reports), M9 (Advanced Analytics & Dashboards),
+  M12 (Template & Workflow Configuration), M13 (Audit Committee Workspace).
 - **Quality bar:** every module passes a build with **0 warnings** (warnings-as-errors), a multi-agent
   **adversarial review** with all confirmed findings fixed, and **Docker-gated integration tests** against
   real SQL Server + Redis.
 
 ```
-Modules delivered  ██████████████████████████░░░░░░░░░░░  10 / 15  (67%)
+Modules delivered  ████████████████████████████░░░░░░░░░  11 / 15  (73%)
 ```
 
 ---
@@ -35,7 +34,7 @@ Modules delivered  ████████████████████�
 | M4 | Audit Lifecycle | ✅ | ✅ | ✅ | **Done** |
 | M5 | Checklist Execution (Responses & Evidence) | ✅ | ✅ | ✅ | **Done** |
 | M6 | Exceptions & Management Action Plans (MAP) | ✅ | ✅ | ✅ | **Done** |
-| M7 | Sanctions & Disciplinary Grid | ⬜ | ⬜ | ⬜ | Not started |
+| M7 | Sanctions & Disciplinary Grid | ✅ | ✅ | ✅ | **Done** |
 | M8 | Reports | ⬜ | ⬜ | ⬜ | Not started |
 | M9 | Advanced Analytics & Dashboards | ⬜ | ⬜ | ⬜ | Not started |
 | M10 | Notifications (email/SMS) | ✅ | ✅ | ✅ | **Done** |
@@ -80,8 +79,12 @@ trail), Docker stack, CI.
   M5-deferred evidence unflag/integrity admin. _(Retention enforcement, evidence sampling, SIEM streaming,
   PDF/async export deferred to a later operational pass — see `m11_blueprint.md`.)_
 
-### Phases 3–4 — Findings-to-close, reporting & governance _(not started)_
-- **M7 Sanctions & Disciplinary Grid** — disciplinary case lifecycle fed by findings.
+### Phases 3–4 — Findings-to-close, reporting & governance _(in progress — M7 done)_
+- **M7 Sanctions & Disciplinary Grid** — disciplinary-case lifecycle fed by exceptions (decoupled from the
+  exception lifecycle); versioned sanctions grid with maker-checker activation, recommendation/HR-outcome/
+  committee/appeal flow, subject-confidentiality masking, and an evidence dossier. _(HTML dossier — a vetted
+  PDF renderer is a later swap; HRIS transmission, Redis grid cache, and the consistency-analytics surface
+  deferred — see `m7_blueprint.md`.)_
 - **M8 Reports** — automated report generation (PDF/DOCX) from live audit data, versioned.
 - **M9 Advanced Analytics & Dashboards** — configurable dashboards + Audit Committee analytics pack.
 - **M12 Template & Workflow Configuration** — configurable state machines / workflow versioning
@@ -94,15 +97,14 @@ trail), Docker stack, CI.
 
 | Suite | Count | Gate |
 |-------|------:|------|
-| Backend — Domain unit tests | 99 | every build |
-| Backend — Application unit tests | 27 | every build |
+| Backend — Domain unit tests | 112 | every build |
+| Backend — Application unit tests | 31 | every build |
 | Backend — Infrastructure tests | 14 | Docker (Testcontainers SQL Server) |
-| Backend — API integration tests | 31 | Docker (Testcontainers SQL Server + Redis) |
-| Frontend — Angular specs | 227 | CI |
+| Backend — API integration tests | 35 | Docker (Testcontainers SQL Server, collections serialized) |
+| Frontend — Angular specs | 249 | CI |
 | **Build warnings** | **0** | warnings-as-errors |
 
-- **EF migrations:** code-first, snake_case schema, applied + seeded on startup; latest `AddNotifications`
-  (M11 needed no migration — query/command surface over existing columns).
+- **EF migrations:** code-first, snake_case schema, applied + seeded on startup; latest `AddSanctions`.
 - **Review discipline:** each Phase-2 module ran a multi-dimension adversarial-review workflow
   (correctness / persistence / security / wiring) with per-finding verification; M10 alone fixed 18 findings.
 
@@ -139,9 +141,8 @@ trail), Docker stack, CI.
 
 ## 7. Next step
 
-**Phases 1–2 are complete.** The remaining work is Phases 3–4 — the findings-to-close, reporting, and
-governance modules: **M7 Sanctions & Disciplinary Grid**, **M8 Reports**, **M9 Advanced Analytics &
+**Phases 1–2 are complete and M7 is delivered.** Remaining: **M8 Reports**, **M9 Advanced Analytics &
 Dashboards**, **M12 Template & Workflow Configuration**, **M13 Audit Committee Workspace** — plus the
-operational tail deferred from M10/M11 (notification digests/quiet-hours, audit-trail retention enforcement,
-evidence sampling, SIEM streaming transport, PDF/async export). Each module follows the same rhythm:
-spec-extraction → backend slice → adversarial review → tests → Angular feature → commit.
+operational tail deferred from M7/M10/M11 (PDF dossier/report rendering, notification digests/quiet-hours,
+audit-trail retention enforcement, evidence sampling, SIEM streaming transport, HRIS transmission). Each
+module follows the same rhythm: spec-extraction → backend slice → adversarial review → tests → Angular feature → commit.

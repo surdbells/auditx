@@ -1,0 +1,242 @@
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading sanctions case…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load this sanctions case."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (sanctionsCase(); as c) {
+      <app-page-header [title]="subjectLabel()" subtitle="Sanctions case">
+        <div actions class="detail__actions">
+          @if (canGenerateDossier()) {
+            <button matButton type="button" (click)="generateDossier()">
+              <mat-icon>description</mat-icon>
+              Generate dossier
+            </button>
+          }
+        </div>
+      </app-page-header>
+
+      <div class="detail__status-row">
+        <span class="severity-badge" [attr.data-severity]="c.severity">
+          {{ humanise(c.severity) }}
+        </span>
+        <span class="status-badge" [attr.data-status]="c.status">
+          {{ humanise(c.status) }}
+        </span>
+        @if (c.isRecurrence) {
+          <span class="status-badge">Recurrence</span>
+        }
+        @if (c.subjectMasked) {
+          <span class="status-badge" matTooltip="You are not on the case team">
+            Subject redacted
+          </span>
+        }
+      </div>
+
+      <!-- Overview -->
+      <mat-card appearance="outlined" class="detail__card">
+        <h3 class="detail__card-title">Overview</h3>
+        <dl class="detail__grid">
+          <div>
+            <dt>Subject</dt>
+            <dd>{{ subjectLabel() }}</dd>
+          </div>
+          <div>
+            <dt>Category</dt>
+            <dd>{{ c.category || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Linked exception</dt>
+            <dd>
+              <a [routerLink]="['/exceptions', c.exceptionId]">View exception</a>
+            </dd>
+          </div>
+          <div>
+            <dt>Triggered</dt>
+            <dd>{{ c.triggeredAt | date: 'medium' }}</dd>
+          </div>
+          @if (c.submittedAt) {
+            <div>
+              <dt>Submitted</dt>
+              <dd>{{ c.submittedAt | date: 'medium' }}</dd>
+            </div>
+          }
+        </dl>
+      </mat-card>
+
+      <!-- Recommendation vs grid -->
+      <mat-card appearance="outlined" class="detail__card">
+        <div class="detail__card-head">
+          <h3 class="detail__card-title">Recommendation</h3>
+          <div class="detail__card-actions">
+            @if (canEditRecommendation()) {
+              <button matButton type="button" (click)="recordRecommendation()">
+                <mat-icon>edit</mat-icon>
+                {{ c.recommendation ? 'Edit recommendation' : 'Recommend' }}
+              </button>
+            }
+            @if (canSubmit()) {
+              <button matButton="filled" type="button" (click)="submit()">
+                <mat-icon>send</mat-icon>
+                Submit
+              </button>
+            }
+          </div>
+        </div>
+
+        <dl class="detail__grid">
+          <div>
+            <dt>Grid recommended range</dt>
+            <dd>
+              @if (c.gridRecommendedRange) {
+                {{ c.gridRecommendedRange }}
+                <span class="muted">(v{{ c.gridConsultedVersion }})</span>
+              } @else {
+                <span class="muted">No matching grid cell</span>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Within grid range</dt>
+            <dd>{{ c.withinGridRange ? 'Yes' : 'No' }}</dd>
+          </div>
+        </dl>
+
+        @if (c.recommendation) {
+          <div class="detail__scope">
+            <dt>Recorded recommendation</dt>
+            <dd>{{ c.recommendation }}</dd>
+          </div>
+        } @else {
+          <p class="muted detail__empty">No recommendation recorded yet.</p>
+        }
+        @if (c.deviationReason) {
+          <div class="detail__scope">
+            <dt>Deviation reason</dt>
+            <dd>{{ c.deviationReason }}</dd>
+          </div>
+        }
+      </mat-card>
+
+      <!-- HR / DC actions -->
+      @if (
+        canRecordHrOutcomeNow() ||
+        canReferToDcNow() ||
+        canDcDecideNow() ||
+        c.hrOutcomeJson ||
+        c.dcDecisionJson
+      ) {
+        <mat-card appearance="outlined" class="detail__card">
+          <div class="detail__card-head">
+            <h3 class="detail__card-title">HR &amp; committee</h3>
+            <div class="detail__card-actions">
+              @if (canRecordHrOutcomeNow()) {
+                <button
+                  matButton="filled"
+                  type="button"
+                  (click)="recordHrOutcome()"
+                >
+                  <mat-icon>how_to_reg</mat-icon>
+                  Record HR outcome
+                </button>
+              }
+              @if (canReferToDcNow()) {
+                <button matButton type="button" (click)="referToDc()">
+                  <mat-icon>forward</mat-icon>
+                  Refer to DC
+                </button>
+              }
+              @if (canDcDecideNow()) {
+                <button
+                  matButton="filled"
+                  type="button"
+                  (click)="recordDcDecision()"
+                >
+                  <mat-icon>balance</mat-icon>
+                  Record DC decision
+                </button>
+              }
+            </div>
+          </div>
+
+          @if (c.hrOutcomeJson) {
+            <div class="detail__scope">
+              <dt>HR outcome</dt>
+              <dd>
+                <pre class="detail__json">{{ c.hrOutcomeJson }}</pre>
+                @if (c.hrOutcomeAt) {
+                  <span class="muted">
+                    Recorded {{ c.hrOutcomeAt | date: 'medium' }}
+                  </span>
+                }
+              </dd>
+            </div>
+          }
+          @if (c.dcDecisionJson) {
+            <div class="detail__scope">
+              <dt>DC decision</dt>
+              <dd>
+                <pre class="detail__json">{{ c.dcDecisionJson }}</pre>
+                @if (c.dcDecisionAt) {
+                  <span class="muted">
+                    Recorded {{ c.dcDecisionAt | date: 'medium' }}
+                  </span>
+                }
+              </dd>
+            </div>
+          }
+        </mat-card>
+      }
+
+      <!-- Appeals & closure -->
+      @if (canFileAppealNow() || canDecideAppealNow() || canCloseNow()) {
+        <mat-card appearance="outlined" class="detail__card">
+          <div class="detail__card-head">
+            <h3 class="detail__card-title">Appeals &amp; closure</h3>
+            <div class="detail__card-actions">
+              @if (canFileAppealNow()) {
+                <button matButton type="button" (click)="fileAppeal()">
+                  <mat-icon>gavel</mat-icon>
+                  File appeal
+                </button>
+              }
+              @if (canDecideAppealNow()) {
+                <button
+                  matButton="filled"
+                  type="button"
+                  (click)="decideAppeal()"
+                >
+                  <mat-icon>rule</mat-icon>
+                  Decide appeal
+                </button>
+              }
+              @if (canCloseNow()) {
+                <button matButton="filled" type="button" (click)="close()">
+                  <mat-icon>lock</mat-icon>
+                  Close case
+                </button>
+              }
+            </div>
+          </div>
+        </mat-card>
+      }
+
+      @if (c.status === 'closed') {
+        <mat-card appearance="outlined" class="detail__card">
+          <h3 class="detail__card-title">Closed</h3>
+          <dl class="detail__grid">
+            <div>
+              <dt>Closed at</dt>
+              <dd>{{ c.closedAt ? (c.closedAt | date: 'medium') : '—' }}</dd>
+            </div>
+          </dl>
+        </mat-card>
+      }
+    }
+  }
+}

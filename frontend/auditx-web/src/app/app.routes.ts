@@ -153,6 +153,42 @@ export const routes: Routes = [
           ).then((m) => m.AuditTrailComponent),
       },
       {
+        path: 'admin/sanctions/grid',
+        title: 'Sanctions Grid · AuditX',
+        canActivate: [permissionGuard(Permissions.ManageGrid)],
+        loadComponent: () =>
+          import(
+            './features/admin/sanctions/sanctions-grid-admin/sanctions-grid-admin.component'
+          ).then((m) => m.SanctionsGridAdminComponent),
+      },
+      {
+        path: 'admin/sanctions/dc-queue',
+        title: 'DC Queue · AuditX',
+        canActivate: [permissionGuard(Permissions.DcMember)],
+        loadComponent: () =>
+          import(
+            './features/admin/sanctions/dc-queue/dc-queue.component'
+          ).then((m) => m.DcQueueComponent),
+      },
+      {
+        path: 'admin/sanctions',
+        title: 'Sanctions · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewSanctions)],
+        loadComponent: () =>
+          import(
+            './features/admin/sanctions/sanctions-tracker/sanctions-tracker.component'
+          ).then((m) => m.SanctionsTrackerComponent),
+      },
+      {
+        path: 'admin/sanctions/:id',
+        title: 'Sanctions Case · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewSanctions)],
+        loadComponent: () =>
+          import(
+            './features/admin/sanctions/sanctions-case-detail/sanctions-case-detail.component'
+          ).then((m) => m.SanctionsCaseDetailComponent),
+      },
+      {
         path: 'admin/evidence-integrity',
         title: 'Evidence Integrity · AuditX',
         canActivate: [permissionGuard(Permissions.AdminOps)],

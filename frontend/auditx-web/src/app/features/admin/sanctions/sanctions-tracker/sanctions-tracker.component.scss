@@ -1,0 +1,46 @@
+.sanctions__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.sanctions__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.sanctions__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.sanctions__table {
+  width: 100%;
+}
+
+.sanctions__row {
+  cursor: pointer;
+}
+
+.sanctions__row:hover {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.sanctions__masked {
+  font-family: var(--mat-sys-body-medium-font, monospace);
+  letter-spacing: 0.02em;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.sanctions__recurrence {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.sanctions__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}

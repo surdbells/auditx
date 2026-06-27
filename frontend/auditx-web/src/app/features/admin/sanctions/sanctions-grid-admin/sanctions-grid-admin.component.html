@@ -1,0 +1,130 @@
+<app-page-header
+  title="Sanctions grid"
+  subtitle="The disciplinary grid maps category / severity / recurrence to a recommended sanction range."
+/>
+
+@if (pendingBanner(); as banner) {
+  <mat-card appearance="outlined" class="grid__banner">
+    <mat-icon>hourglass_top</mat-icon>
+    <span>{{ banner }}</span>
+  </mat-card>
+}
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading the grid…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the sanctions grid."
+      (retry)="fetch()"
+    />
+  }
+  @default {
+    @if (grid(); as g) {
+      <div class="grid__meta">
+        <span class="status-badge" [attr.data-status]="g.isActive ? 'active' : 'draft'">
+          {{ g.isActive ? 'Active' : 'Draft' }}
+        </span>
+        <span class="muted">Version {{ g.versionNumber }}</span>
+        @if (g.activatedAt) {
+          <span class="muted">· Activated {{ g.activatedAt | date: 'medium' }}</span>
+        }
+      </div>
+    } @else {
+      <app-empty-state
+        icon="grid_on"
+        title="No active grid"
+        message="Add cells below and save a draft to create the first grid version."
+      />
+    }
+
+    <mat-card appearance="outlined" class="grid__card">
+      <div class="table-scroll">
+        <table class="grid__table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Severity</th>
+              <th>Recurrence</th>
+              <th>Recommended range</th>
+              <th aria-label="Remove"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.key) {
+              <tr>
+                <td>{{ row.category }}</td>
+                <td>{{ humanise(row.severity) }}</td>
+                <td>{{ row.isRecurrence ? 'Yes' : 'No' }}</td>
+                <td>
+                  <mat-form-field appearance="outline" class="grid__field">
+                    <input
+                      matInput
+                      [value]="row.recommendedRange"
+                      (input)="updateRange(row.key, $any($event.target).value)"
+                      placeholder="e.g. Verbal–Written warning"
+                    />
+                  </mat-form-field>
+                </td>
+                <td>
+                  <button
+                    matIconButton
+                    type="button"
+                    (click)="removeRow(row.key)"
+                    aria-label="Remove cell"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="grid__empty muted">
+                  No cells yet. Add one below.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid__add">
+        <mat-form-field appearance="outline">
+          <mat-label>Category</mat-label>
+          <input matInput [(ngModel)]="newCategory" name="newCategory" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Severity</mat-label>
+          <input matInput [(ngModel)]="newSeverity" name="newSeverity" />
+        </mat-form-field>
+        <label class="grid__recurrence">
+          <input type="checkbox" [(ngModel)]="newRecurrence" name="newRecurrence" />
+          Recurrence
+        </label>
+        <button matButton="outlined" type="button" (click)="addRow()">
+          <mat-icon>add</mat-icon>
+          Add cell
+        </button>
+      </div>
+
+      <div class="grid__actions">
+        <button
+          matButton="filled"
+          type="button"
+          (click)="saveDraft()"
+          [disabled]="saving()"
+        >
+          <mat-icon>save</mat-icon>
+          {{ saving() ? 'Saving…' : 'Save draft' }}
+        </button>
+        @if (canActivate()) {
+          <button matButton type="button" (click)="activate()">
+            <mat-icon>check_circle</mat-icon>
+            Activate
+          </button>
+        }
+      </div>
+    </mat-card>
+  }
+}

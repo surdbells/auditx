@@ -65,6 +65,10 @@ public static class DependencyInjection
         services.AddScoped<IAuditRepository, AuditRepository>();
         services.AddScoped<IEvidenceRepository, EvidenceRepository>();
         services.AddScoped<IExceptionRepository, ExceptionRepository>();
+        services.AddScoped<ISanctionsCaseRepository, SanctionsCaseRepository>();
+        services.AddScoped<ISanctionsGridRepository, SanctionsGridRepository>();
+        services.AddScoped<ISanctionsAppealRepository, SanctionsAppealRepository>();
+        services.AddScoped<Application.Abstractions.Sanctions.IDossierGenerator, Sanctions.HtmlDossierGenerator>();
         services.AddScoped<Application.Abstractions.IExceptionDefaults, Exceptions.ConfigBackedExceptionDefaults>();
         services.AddSingleton<Application.Abstractions.Storage.IFileStorage, Storage.LocalDiskFileStorage>();
         services.AddSingleton<Application.Abstractions.Storage.IFileSignatureInspector, Storage.EvidenceFileSignatureInspector>();

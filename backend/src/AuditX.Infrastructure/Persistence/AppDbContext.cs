@@ -7,6 +7,7 @@ using AuditX.Domain.Identity;
 using AuditX.Domain.Integrations;
 using AuditX.Domain.Notifications;
 using AuditX.Domain.Planning;
+using AuditX.Domain.Sanctions;
 using AuditX.Domain.Templates;
 using AuditX.Domain.Universe;
 using AuditX.Infrastructure.Persistence.Naming;
@@ -89,6 +90,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
 
     public DbSet<NotificationDispatch> NotificationDispatches => Set<NotificationDispatch>();
+
+    public DbSet<SanctionsCase> SanctionsCases => Set<SanctionsCase>();
+
+    public DbSet<SanctionsGridVersion> SanctionsGridVersions => Set<SanctionsGridVersion>();
+
+    public DbSet<SanctionsAppeal> SanctionsAppeals => Set<SanctionsAppeal>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

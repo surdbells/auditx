@@ -65,6 +65,22 @@ export const Permissions = {
   // M11 — Audit Trail & Evidence Integrity
   ViewAuditTrail: 'ViewAuditTrail',
   ExportAuditTrail: 'ExportAuditTrail',
+
+  // M7 — Sanctions & Disciplinary Grid
+  // NOTE: the constant names mirror the milestone spec, but the VALUES must be the
+  // backend wire strings (PermissionKeys.cs) — `hasPermission` does a case-sensitive
+  // match against the session's permission list. Hence RecordHROutcome / ReferToDC /
+  // DCMember keep the backend casing.
+  ViewSanctions: 'ViewSanctions',
+  TriggerSanctions: 'TriggerSanctions',
+  RecommendSanction: 'RecommendSanction',
+  RecordHrOutcome: 'RecordHROutcome',
+  ReferToDc: 'ReferToDC',
+  DcMember: 'DCMember',
+  FileAppeal: 'FileAppeal',
+  DecideAppeal: 'DecideAppeal',
+  ViewGrid: 'ViewGrid',
+  ManageGrid: 'ManageGrid',
 } as const;
 
 export type PermissionKey = (typeof Permissions)[keyof typeof Permissions];

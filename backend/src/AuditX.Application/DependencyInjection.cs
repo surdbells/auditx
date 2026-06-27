@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IPendingActionExecutor, RolePermissionChangeExecutor>();
         services.AddScoped<IPendingActionExecutor, Templates.Commands.TemplatePublishExecutor>();
         services.AddScoped<IPendingActionExecutor, Exceptions.Commands.MapApprovalExecutor>();
+        services.AddScoped<IPendingActionExecutor, Sanctions.MakerChecker.SanctionsGridEditExecutor>();
 
         var assembly = typeof(DependencyInjection).Assembly;
         RegisterHandlers(services, assembly);

@@ -1,0 +1,74 @@
+.grid__banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.grid__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.grid__card {
+  padding: 1rem 1.25rem;
+}
+
+.grid__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grid__table th,
+.grid__table td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  vertical-align: middle;
+}
+
+.grid__table th {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.grid__field {
+  width: 100%;
+  margin-bottom: -1.25rem;
+}
+
+.grid__empty {
+  text-align: center;
+  padding: 1rem;
+}
+
+.grid__add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.grid__recurrence {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.grid__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}
