@@ -85,6 +85,11 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
     public async Task<IActionResult> RejectMap(Guid id, [FromBody] ReasonVersionRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new RejectMapCommand(id, request.Reason, request.Version), cancellationToken));
 
+    [RequirePermission(PermissionKeys.ViewEvidence)]
+    [HttpGet("api/v1/exceptions/{id:guid}/map/actions/{actionId:guid}/evidence")]
+    public async Task<IActionResult> ListActionEvidence(Guid id, Guid actionId, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListMapActionEvidenceQuery(id, actionId), cancellationToken));
+
     [RequirePermission(PermissionKeys.UploadEvidence)]
     [HttpPost("api/v1/exceptions/{id:guid}/map/actions/{actionId:guid}/evidence")]
     [RequestSizeLimit(6L * 1024 * 1024 * 1024)]

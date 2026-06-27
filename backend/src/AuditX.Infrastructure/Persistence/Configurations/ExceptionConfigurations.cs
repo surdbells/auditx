@@ -32,6 +32,8 @@ public sealed class AuditExceptionConfiguration : IEntityTypeConfiguration<Audit
 
         builder.HasIndex(e => new { e.Status, e.Severity, e.TargetDate });
         builder.HasIndex(e => new { e.AuditableEntityId, e.Category, e.Status });
+        // Serves the recurrence lookup (entity + closed + recent), which seeks on status and ranges/sorts on closed_at.
+        builder.HasIndex(e => new { e.AuditableEntityId, e.Status, e.ClosedAt });
         builder.HasIndex(e => e.AuditId);
         builder.HasIndex(e => e.OwnerUserId);
     }

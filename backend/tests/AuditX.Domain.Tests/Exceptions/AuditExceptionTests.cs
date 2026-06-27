@@ -145,4 +145,35 @@ public sealed class AuditExceptionTests
     [Fact]
     public void Approve_from_wrong_state_is_invalid()
         => Assert.Throws<InvalidStateTransitionException>(() => New().ApproveMap(Actor, Now));
+
+    [Fact]
+    public void Resubmitting_after_rejection_replaces_the_prior_map()
+    {
+        var e = New();
+        e.AddMapAction("First plan", Owner, Target.AddDays(-5), null);
+        e.SubmitMap(Owner, Now);
+        e.RejectMap("Insufficient detail; please specify the control owner.", Actor);
+
+        // Resubmit: clear the stale action, then add the new one (handler responsibility, exercised here).
+        e.ClearMapActions();
+        e.AddMapAction("Revised plan", Owner, Target.AddDays(-3), null);
+        e.SubmitMap(Owner, Now);
+
+        Assert.Single(e.MapActions);
+        Assert.Equal("Revised plan", e.MapActions[0].Description);
+    }
+
+    [Fact]
+    public void Return_for_evidence_clears_critical_closure_hold()
+    {
+        var e = Approved2(ExceptionSeverity.Critical);
+        e.Close("verified", Actor, Now);
+        Assert.True(e.CiaPending);
+
+        e.ReturnForEvidence("Need the signed remediation sign-off attached before closing.", Actor);
+        Assert.Equal(ExceptionStatus.MapApproved, e.Status);
+        Assert.False(e.CiaPending);
+        Assert.Null(e.ClosedBy);
+        Assert.Null(e.ClosureEvidenceNote);
+    }
 }

@@ -160,6 +160,13 @@ public sealed class AuditException : AggregateRoot
         return action;
     }
 
+    /// <summary>Discard the prior MAP before a resubmission so a rejected plan's stale actions don't accumulate.</summary>
+    public void ClearMapActions()
+    {
+        EnsureStatus("exception.map_locked", ExceptionStatus.Open, ExceptionStatus.MapRejected);
+        _mapActions.Clear();
+    }
+
     public void SubmitMap(Guid actorUserId, DateTimeOffset nowUtc)
     {
         if (_mapActions.Count == 0)
@@ -220,6 +227,14 @@ public sealed class AuditException : AggregateRoot
     {
         var trimmed = Guard.MinLength(reason, 20, "exception.return_reason_required", "A reason of at least 20 characters is required.");
         Transition(ExceptionStatus.MapApproved, ExceptionStatus.PendingClosure);
+
+        // Returning to remediation aborts the in-flight closure: clear the closure/CIA fields so the
+        // exception is back to a clean pre-closure state (no stale CiaPending/ClosedBy leaking into the DTO).
+        CiaPending = false;
+        ClosedBy = null;
+        ClosureEvidenceNote = null;
+        CiaCountersignedBy = null;
+        CiaCountersignedAt = null;
         RaiseDomainEvent(new MapReturnedForEvidenceEvent(Id, actorUserId, trimmed));
     }
 

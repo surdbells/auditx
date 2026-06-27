@@ -97,12 +97,15 @@ public sealed class RaiseExceptionCommandHandler(
             auditableEntityId = plan.Items.FirstOrDefault(i => i.Id == planItemId)?.EntityId;
         }
 
+        // Normalise the category the same way the domain persists it, so the recurrence lookup keys match.
+        var normalizedCategory = string.IsNullOrWhiteSpace(command.Category) ? null : command.Category.Trim();
+
         var isRecurrence = false;
         Guid? recurrenceOf = null;
         if (auditableEntityId is { } entityId)
         {
             var sinceUtc = clock.UtcNow.AddMonths(-defaults.RecurrenceWindowMonths);
-            var match = await exceptions.FindClosedForRecurrenceAsync(entityId, command.Category, sinceUtc, cancellationToken);
+            var match = await exceptions.FindClosedForRecurrenceAsync(entityId, normalizedCategory, sinceUtc, cancellationToken);
             if (match is not null)
             {
                 isRecurrence = true;
@@ -112,7 +115,7 @@ public sealed class RaiseExceptionCommandHandler(
 
         var exception = AuditException.Raise(
             command.AuditId, command.ChecklistItemId, auditableEntityId, command.Title, severity, command.RootCause,
-            command.Recommendation, command.Category, command.OwnerUserId, userId, targetDate, overridden,
+            command.Recommendation, normalizedCategory, command.OwnerUserId, userId, targetDate, overridden,
             command.OverrideRationale, isRecurrence, recurrenceOf, "{}", clock.UtcNow);
 
         exceptions.Add(exception);

@@ -44,6 +44,12 @@ public sealed class SubmitMapCommandHandler(
         var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
         exception.EnsureVersion(command.Version);
 
+        // On a resubmission after rejection, replace the prior MAP rather than appending to it.
+        if (exception.Status == ExceptionStatus.MapRejected)
+        {
+            exception.ClearMapActions();
+        }
+
         foreach (var input in command.Actions)
         {
             exception.AddMapAction(input.Description, input.OwnerUserId, input.TargetDate, input.ExpectedEvidenceType);

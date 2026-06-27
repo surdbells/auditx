@@ -51,6 +51,13 @@ public sealed class ListExceptionsForAuditQueryHandler(
             return null;
         }
 
+        // The DTO surfaces a derived 'pending_cia_approval' label (Critical on CIA hold); accept it as a
+        // filter by mapping back to its real persisted status so a client can round-trip the value it received.
+        if (value.Replace("_", string.Empty).Equals("pendingciaapproval", StringComparison.OrdinalIgnoreCase))
+        {
+            return ExceptionStatus.PendingClosure;
+        }
+
         return Enum.TryParse<ExceptionStatus>(value.Replace("_", string.Empty), ignoreCase: true, out var s)
             ? s
             : throw new ConflictException("exception.invalid_status", $"Unknown status '{value}'.");
