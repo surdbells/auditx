@@ -1,0 +1,98 @@
+@if (canManage()) {
+  <div class="templates__toolbar">
+    <button matButton="filled" type="button" (click)="createBankTemplate()">
+      <mat-icon>add</mat-icon>
+      New bank template
+    </button>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+}
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading templates…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the notification templates."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="mail"
+        title="No templates"
+        message="No notification templates are available."
+      />
+    } @else {
+      <mat-card appearance="outlined" class="templates__table-card">
+        <div class="templates__table-wrapper">
+          <table
+            mat-table
+            [dataSource]="templates()"
+            class="templates__table"
+          >
+            <ng-container matColumnDef="templateKey">
+              <th mat-header-cell *matHeaderCellDef>Template key</th>
+              <td mat-cell *matCellDef="let t">
+                <span class="templates__key">{{ t.templateKey }}</span>
+                <span class="templates__version">v{{ t.version }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="channel">
+              <th mat-header-cell *matHeaderCellDef>Channel</th>
+              <td mat-cell *matCellDef="let t" class="templates__channel">
+                {{ t.channel }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="scope">
+              <th mat-header-cell *matHeaderCellDef>Scope</th>
+              <td mat-cell *matCellDef="let t">
+                <span class="status-badge" [attr.data-status]="t.scope">
+                  {{ t.scope === 'bank' ? 'Bank' : 'System' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="subject">
+              <th mat-header-cell *matHeaderCellDef>Subject</th>
+              <td mat-cell *matCellDef="let t" class="templates__subject">
+                {{ t.subjectTemplate ?? '—' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <td mat-cell *matCellDef="let t">
+                @if (canManage()) {
+                  @if (t.scope === 'system') {
+                    <button matButton type="button" (click)="override(t)">
+                      <mat-icon>edit_note</mat-icon>
+                      Override
+                    </button>
+                  } @else {
+                    <button matButton type="button" (click)="override(t)">
+                      <mat-icon>edit</mat-icon>
+                      Edit
+                    </button>
+                  }
+                } @else {
+                  <span class="templates__readonly muted">Read-only</span>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

@@ -136,6 +136,12 @@ export class MainLayoutComponent {
       permissions: [Permissions.ConfigureWebhooks, Permissions.AdminOps],
     },
     {
+      label: 'Notifications',
+      icon: 'notifications',
+      route: '/admin/notifications',
+      permissions: [Permissions.ConfigureNotifications],
+    },
+    {
       label: 'Administration',
       icon: 'settings',
       route: '/admin/administration',

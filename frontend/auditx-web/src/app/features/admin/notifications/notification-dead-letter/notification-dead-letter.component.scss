@@ -1,0 +1,41 @@
+.dead-letter__toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dead-letter__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.dead-letter__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.dead-letter__table {
+  width: 100%;
+}
+
+.dead-letter__event {
+  display: block;
+  font-weight: 500;
+}
+
+.dead-letter__template {
+  display: block;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.dead-letter__channel {
+  text-transform: capitalize;
+}
+
+.dead-letter__error {
+  max-width: 320px;
+  color: var(--mat-sys-on-surface-variant);
+  white-space: normal;
+  word-break: break-word;
+}

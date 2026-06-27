@@ -18,6 +18,10 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> Me(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetMeQuery(), cancellationToken));
 
+    [HttpGet("me/notification-preferences")]
+    public async Task<IActionResult> GetMyNotificationPreferences(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetMyNotificationPreferencesQuery(), cancellationToken));
+
     [HttpPatch("me/notification-preferences")]
     public async Task<IActionResult> UpdateMyNotificationPreferences(
         [FromBody] UpdateNotificationPreferencesRequest request, CancellationToken cancellationToken)

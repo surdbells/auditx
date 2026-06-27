@@ -198,6 +198,46 @@
   color: #e65100;
 }
 
+// M10 — Notification rule active/inactive states.
+.status-badge[data-status='inactive'] {
+  background: color-mix(in srgb, #616161 16%, transparent);
+  color: #424242;
+}
+
+// M10 — Notification template scope.
+.status-badge[data-status='system'] {
+  background: color-mix(in srgb, #616161 16%, transparent);
+  color: #424242;
+}
+
+.status-badge[data-status='bank'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
+// M10 — Notification dispatch statuses (serialized snake_case).
+.status-badge[data-status='delivered'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='pending'],
+.status-badge[data-status='dispatched'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
+.status-badge[data-status='bounced'],
+.status-badge[data-status='failed'] {
+  background: color-mix(in srgb, #ef6c00 18%, transparent);
+  color: #e65100;
+}
+
+.status-badge[data-status='dead_letter'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
 // M6 — Exception severity pills, driven by a [data-severity] attribute.
 .severity-badge {
   display: inline-flex;

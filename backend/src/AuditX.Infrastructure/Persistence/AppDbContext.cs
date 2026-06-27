@@ -5,6 +5,7 @@ using AuditX.Domain.Evidence;
 using AuditX.Domain.Exceptions;
 using AuditX.Domain.Identity;
 using AuditX.Domain.Integrations;
+using AuditX.Domain.Notifications;
 using AuditX.Domain.Planning;
 using AuditX.Domain.Templates;
 using AuditX.Domain.Universe;
@@ -82,6 +83,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<AuditException> Exceptions => Set<AuditException>();
 
     public DbSet<MapAction> MapActions => Set<MapAction>();
+
+    public DbSet<NotificationRule> NotificationRules => Set<NotificationRule>();
+
+    public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
+
+    public DbSet<NotificationDispatch> NotificationDispatches => Set<NotificationDispatch>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

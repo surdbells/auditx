@@ -62,6 +62,27 @@ public sealed class UpdateNotificationPreferencesCommandHandler(
     }
 }
 
+/// <summary>The current user's notification preferences (raw JSON; null when never set).</summary>
+public sealed record NotificationPreferencesDto(string? PreferencesJson);
+
+/// <summary>Read the current user's notification preferences (US-M15-006 / M10).</summary>
+public sealed record GetMyNotificationPreferencesQuery : IQuery<NotificationPreferencesDto>;
+
+public sealed class GetMyNotificationPreferencesQueryHandler(ICurrentUser currentUser, IUserRepository users)
+    : IQueryHandler<GetMyNotificationPreferencesQuery, NotificationPreferencesDto>
+{
+    public async Task<NotificationPreferencesDto> Handle(GetMyNotificationPreferencesQuery query, CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } id)
+        {
+            throw new UnauthorizedException();
+        }
+
+        var user = await users.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("User", id);
+        return new NotificationPreferencesDto(user.NotificationPreferencesJson);
+    }
+}
+
 /// <summary>Grant a role to a user, optionally scoped to a resource (US-M1-017).</summary>
 public sealed record GrantRoleCommand(Guid UserId, Guid RoleId, string? ScopeValue) : ICommand<UserRoleDto>;
 

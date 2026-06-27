@@ -1,0 +1,41 @@
+.prefs__card {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.prefs__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.prefs__row:last-of-type {
+  border-bottom: none;
+}
+
+.prefs__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.prefs__label {
+  font-weight: 500;
+}
+
+.prefs__hint {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  max-width: 44ch;
+}
+
+.prefs__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+}

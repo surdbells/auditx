@@ -1,0 +1,115 @@
+<mat-card appearance="outlined" class="dispatches__filters-card">
+  <mat-form-field appearance="outline" class="dispatches__status">
+    <mat-label>Status</mat-label>
+    <mat-select [formControl]="statusFilter">
+      @for (s of statuses; track s.value) {
+        <mat-option [value]="s.value">{{ s.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="dispatches__event">
+    <mat-label>Event type</mat-label>
+    <input
+      matInput
+      [formControl]="eventTypeFilter"
+      autocomplete="off"
+      placeholder="e.g. audit.created"
+      (keyup.enter)="fetch()"
+    />
+  </mat-form-field>
+
+  <button matButton type="button" (click)="fetch()">
+    <mat-icon>refresh</mat-icon>
+    Apply
+  </button>
+</mat-card>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading dispatches…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the dispatch log."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="outgoing_mail"
+        title="No dispatches"
+        message="No dispatches match the selected filters."
+      />
+    } @else {
+      <mat-card appearance="outlined" class="dispatches__table-card">
+        <div class="dispatches__table-wrapper">
+          <table
+            mat-table
+            [dataSource]="dispatches()"
+            class="dispatches__table"
+          >
+            <ng-container matColumnDef="eventType">
+              <th mat-header-cell *matHeaderCellDef>Event</th>
+              <td mat-cell *matCellDef="let d">
+                <span class="dispatches__event-type">{{ d.eventType }}</span>
+                <span class="dispatches__template">{{ d.templateKey }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="recipient">
+              <th mat-header-cell *matHeaderCellDef>Recipient</th>
+              <td mat-cell *matCellDef="let d">{{ d.recipientAddress }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="channel">
+              <th mat-header-cell *matHeaderCellDef>Channel</th>
+              <td mat-cell *matCellDef="let d" class="dispatches__channel">
+                {{ d.channel }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let d">
+                <span class="status-badge" [attr.data-status]="d.status">
+                  {{ humanise(d.status) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="attempts">
+              <th mat-header-cell *matHeaderCellDef>Attempts</th>
+              <td mat-cell *matCellDef="let d">{{ d.attempts }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="nextRetryAt">
+              <th mat-header-cell *matHeaderCellDef>Next retry</th>
+              <td mat-cell *matCellDef="let d">
+                {{ d.nextRetryAt ? (d.nextRetryAt | date: 'short') : '—' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="deliveredAt">
+              <th mat-header-cell *matHeaderCellDef>Delivered</th>
+              <td mat-cell *matCellDef="let d">
+                {{ d.deliveredAt ? (d.deliveredAt | date: 'short') : '—' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="lastError">
+              <th mat-header-cell *matHeaderCellDef>Last error</th>
+              <td mat-cell *matCellDef="let d" class="dispatches__error">
+                {{ d.lastError ?? '—' }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

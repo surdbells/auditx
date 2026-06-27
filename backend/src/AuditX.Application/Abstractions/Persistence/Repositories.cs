@@ -17,6 +17,9 @@ public interface IUserRepository
 
     Task<IReadOnlyList<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
 
+    /// <summary>Active (non-deactivated) users holding a role with the given name, for notification recipient resolution (M10).</summary>
+    Task<IReadOnlyList<User>> GetActiveByRoleNameAsync(string roleName, CancellationToken cancellationToken = default);
+
     Task<bool> ExistsByObjectSidAsync(string objectSid, CancellationToken cancellationToken = default);
 
     /// <summary>Resolve email addresses to user ids (case-insensitive) for bulk import (US-M3-006).</summary>

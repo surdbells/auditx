@@ -1,0 +1,46 @@
+.templates__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.templates__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.templates__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.templates__table {
+  width: 100%;
+}
+
+.templates__key {
+  display: block;
+  font-weight: 500;
+}
+
+.templates__version {
+  display: block;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.templates__channel {
+  text-transform: capitalize;
+}
+
+.templates__subject {
+  max-width: 280px;
+  white-space: normal;
+  word-break: break-word;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.templates__readonly {
+  font: var(--mat-sys-label-medium);
+}

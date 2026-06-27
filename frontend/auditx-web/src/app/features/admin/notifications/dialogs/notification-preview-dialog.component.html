@@ -1,0 +1,66 @@
+<h2 mat-dialog-title>Preview rule</h2>
+<mat-dialog-content>
+  <p class="preview__meta">
+    <span class="preview__label">Rule</span> {{ data.rule.name }}
+    <span class="preview__label">· Template</span> {{ data.rule.templateKey }}
+  </p>
+
+  <form [formGroup]="form" class="form">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Sample event payload (JSON)</mat-label>
+      <textarea
+        matInput
+        rows="5"
+        formControlName="samplePayloadJson"
+        spellcheck="false"
+      ></textarea>
+      @if (form.controls.samplePayloadJson.hasError('required') && form.controls.samplePayloadJson.touched) {
+        <mat-error>A sample payload is required.</mat-error>
+      } @else if (form.controls.samplePayloadJson.hasError('json')) {
+        <mat-error>Must be valid JSON.</mat-error>
+      }
+    </mat-form-field>
+
+    <button
+      matButton="filled"
+      type="button"
+      (click)="run()"
+      [disabled]="form.invalid || state() === 'loading'"
+    >
+      <mat-icon>visibility</mat-icon>
+      {{ state() === 'loading' ? 'Rendering…' : 'Render preview' }}
+    </button>
+  </form>
+
+  @if (state() === 'error') {
+    <p class="preview__error" role="alert">
+      We couldn't render the preview. Check the recipient resolution and payload.
+    </p>
+  }
+
+  @if (state() === 'ready' && preview(); as result) {
+    <section class="preview__result">
+      <h3>Resolved recipients</h3>
+      @if (result.resolvedRecipientAddresses.length) {
+        <ul class="preview__recipients">
+          @for (addr of result.resolvedRecipientAddresses; track addr) {
+            <li>{{ addr }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="preview__empty">No recipients resolved for this payload.</p>
+      }
+
+      @if (result.renderedSubject) {
+        <h3>Subject</h3>
+        <p class="preview__subject">{{ result.renderedSubject }}</p>
+      }
+
+      <h3>Body</h3>
+      <pre class="preview__body">{{ result.renderedBody }}</pre>
+    </section>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="close()">Close</button>
+</mat-dialog-actions>

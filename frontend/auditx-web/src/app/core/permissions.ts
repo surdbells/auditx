@@ -49,6 +49,9 @@ export const Permissions = {
   ViewEvidence: 'ViewEvidence',
   ManageEvidence: 'ManageEvidence',
 
+  // M10 — Notifications
+  ConfigureNotifications: 'ConfigureNotifications',
+
   // M6 — Exceptions & Management Action Plans (MAP)
   ViewExceptions: 'ViewExceptions',
   RaiseException: 'RaiseException',

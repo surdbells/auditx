@@ -131,6 +131,12 @@ public static class AuditEventTypes
     public const string ExceptionPendingCia = "exception_pending_cia";
     public const string ExceptionClosed = "exception_closed";
     public const string ExceptionCancelled = "exception_cancelled";
+
+    // M10 notifications (NotificationPreferencesUpdated already defined above for M1)
+    public const string NotificationDispatched = "notification_dispatched";
+    public const string NotificationRetried = "notification_retried";
+    public const string NotificationRuleConfigured = "notification_rule_configured";
+    public const string NotificationTemplateOverridden = "notification_template_overridden";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -162,4 +168,7 @@ public static class AuditTargetTypes
     public const string EvidenceFile = "evidence_file";
     public const string Exception = "exception";
     public const string MapAction = "map_action";
+    public const string NotificationDispatch = "notification_dispatch";
+    public const string NotificationRule = "notification_rule";
+    public const string NotificationTemplate = "notification_template";
 }

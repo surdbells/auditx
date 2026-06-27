@@ -1,0 +1,45 @@
+.rules__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rules__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.rules__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.rules__table {
+  width: 100%;
+}
+
+.rules__event {
+  font-weight: 500;
+}
+
+.rules__name {
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.rules__system-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font: var(--mat-sys-label-small);
+  font-weight: 500;
+  white-space: nowrap;
+  background: color-mix(in srgb, #6a1b9a 14%, transparent);
+  color: #4a148c;
+}
+
+.rules__actions {
+  white-space: nowrap;
+}

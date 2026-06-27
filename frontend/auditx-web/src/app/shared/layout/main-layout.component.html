@@ -61,6 +61,14 @@
           <div class="layout__menu-name">{{ displayName() }}</div>
           <div class="layout__menu-email">{{ session()?.email }}</div>
         </div>
+        <a
+          mat-menu-item
+          routerLink="/account/notification-preferences"
+          (click)="onNavigate()"
+        >
+          <mat-icon>notifications_active</mat-icon>
+          <span>Notification preferences</span>
+        </a>
         <button mat-menu-item type="button" (click)="logout()">
           <mat-icon>logout</mat-icon>
           <span>Sign out</span>

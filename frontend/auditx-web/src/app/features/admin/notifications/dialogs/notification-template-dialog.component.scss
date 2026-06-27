@@ -1,0 +1,17 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 460px;
+  padding-top: 0.5rem;
+}
+
+.full {
+  width: 100%;
+}
+
+@media (max-width: 560px) {
+  .form {
+    min-width: auto;
+  }
+}

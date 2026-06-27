@@ -50,6 +50,7 @@ builder.Services.AddHangfireServer();
 builder.Services.AddScoped<DelegationExpiryJob>();
 builder.Services.AddScoped<WebhookRetryJob>();
 builder.Services.AddScoped<AuditAutoStartJob>();
+builder.Services.AddScoped<NotificationRetryJob>();
 
 var app = builder.Build();
 
@@ -93,6 +94,12 @@ recurringJobs.AddOrUpdate<AuditAutoStartJob>(
     AuditAutoStartJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Hourly);
+
+// Notification retry sweep every minute (US-M10-005).
+recurringJobs.AddOrUpdate<NotificationRetryJob>(
+    NotificationRetryJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    "* * * * *");
 
 app.Run();
 return;

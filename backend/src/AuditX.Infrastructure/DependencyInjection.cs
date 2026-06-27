@@ -100,7 +100,29 @@ public static class DependencyInjection
         services.AddScoped<ITokenDenylist, RedisTokenDenylist>();
         services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddSingleton<ISessionTokenService, SessionTokenService>();
-        services.AddSingleton<IDomainEventDispatcher, InProcessDomainEventDispatcher>();
+
+        // M10 notifications: the composite dispatcher logs each event and enqueues the notification pipeline.
+        // Scoped (not singleton): it consumes the scoped ICurrentUser and is only resolved by the scoped
+        // AuditingSaveChangesInterceptor — a singleton here is a captive dependency that fails ValidateScopes.
+        services.AddScoped<IDomainEventDispatcher, Messaging.CompositeDomainEventDispatcher>();
+        services.Configure<NotificationOptions>(configuration.GetSection(NotificationOptions.SectionName));
+        services.AddMemoryCache();
+        services.AddHttpClient();
+        services.AddScoped<INotificationRuleRepository, NotificationRuleRepository>();
+        services.AddScoped<INotificationTemplateRepository, NotificationTemplateRepository>();
+        services.AddScoped<INotificationDispatchRepository, NotificationDispatchRepository>();
+        services.AddScoped<Messaging.NotificationIngestJob>();
+        services.AddSingleton<Application.Abstractions.Notifications.ITemplateRenderer, Notifications.SimpleTemplateRenderer>();
+        if (identityOptions.UseDevelopmentProvider)
+        {
+            services.AddScoped<Application.Abstractions.Notifications.IEmailSender, Notifications.LoggingEmailSender>();
+            services.AddScoped<Application.Abstractions.Notifications.ISmsSender, Notifications.LoggingSmsSender>();
+        }
+        else
+        {
+            services.AddScoped<Application.Abstractions.Notifications.IEmailSender, Notifications.SmtpEmailSender>();
+            services.AddScoped<Application.Abstractions.Notifications.ISmsSender, Notifications.HttpSmsSender>();
+        }
 
         // Identity provider: Active Directory in production, the seeded Development provider locally.
         if (identityOptions.UseDevelopmentProvider)

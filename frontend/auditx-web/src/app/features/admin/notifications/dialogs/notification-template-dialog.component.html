@@ -1,0 +1,59 @@
+<h2 mat-dialog-title>{{ title() }}</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" class="form">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Template key</mat-label>
+      <input
+        matInput
+        formControlName="templateKey"
+        autocomplete="off"
+        [readonly]="isOverride()"
+      />
+      @if (form.controls.templateKey.hasError('required') && form.controls.templateKey.touched) {
+        <mat-error>A template key is required.</mat-error>
+      } @else if (isOverride()) {
+        <mat-hint>Overriding the system default for this key.</mat-hint>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Channel</mat-label>
+      <mat-select formControlName="channel" [disabled]="isOverride()">
+        @for (c of channels; track c.value) {
+          <mat-option [value]="c.value">{{ c.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Subject (optional)</mat-label>
+      <input matInput formControlName="subjectTemplate" autocomplete="off" />
+      <mat-hint>Leave blank for SMS templates.</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Body</mat-label>
+      <textarea
+        matInput
+        rows="6"
+        formControlName="bodyTemplate"
+        spellcheck="false"
+        placeholder="Hello {{ '{{' }} recipientName {{ '}}' }}, ..."
+      ></textarea>
+      @if (form.controls.bodyTemplate.hasError('required') && form.controls.bodyTemplate.touched) {
+        <mat-error>A body template is required.</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="cancel()">Cancel</button>
+  <button
+    matButton="filled"
+    type="button"
+    (click)="submit()"
+    [disabled]="form.invalid"
+  >
+    Save override
+  </button>
+</mat-dialog-actions>

@@ -135,6 +135,23 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'admin/notifications',
+        title: 'Notifications · AuditX',
+        canActivate: [permissionGuard(Permissions.ConfigureNotifications)],
+        loadComponent: () =>
+          import('./features/admin/notifications/notifications.component').then(
+            (m) => m.NotificationsComponent,
+          ),
+      },
+      {
+        path: 'account/notification-preferences',
+        title: 'Notification preferences · AuditX',
+        loadComponent: () =>
+          import(
+            './features/account/notification-preferences/notification-preferences.component'
+          ).then((m) => m.NotificationPreferencesComponent),
+      },
+      {
         path: 'admin/administration',
         title: 'Administration · AuditX',
         canActivate: [

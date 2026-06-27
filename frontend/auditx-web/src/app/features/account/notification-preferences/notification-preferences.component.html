@@ -1,0 +1,58 @@
+<app-page-header
+  title="Notification preferences"
+  subtitle="Control which non-critical notifications you receive."
+/>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading your preferences…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load your notification preferences."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    <mat-card appearance="outlined" class="prefs__card">
+      <div class="prefs__row">
+        <div class="prefs__text">
+          <span class="prefs__label">Receive non-critical SMS</span>
+          <span class="prefs__hint">
+            Critical alerts are always sent by SMS regardless of this setting.
+          </span>
+        </div>
+        <mat-slide-toggle
+          [checked]="smsNonCritical()"
+          (change)="smsNonCritical.set($event.checked)"
+          aria-label="Receive non-critical SMS"
+        />
+      </div>
+
+      <div class="prefs__row">
+        <div class="prefs__text">
+          <span class="prefs__label">Email digests</span>
+          <span class="prefs__hint">
+            Bundle low-priority notifications into a periodic email digest.
+          </span>
+        </div>
+        <mat-slide-toggle
+          [checked]="digests()"
+          (change)="digests.set($event.checked)"
+          aria-label="Email digests"
+        />
+      </div>
+
+      <div class="prefs__actions">
+        <button
+          matButton="filled"
+          type="button"
+          (click)="save()"
+          [disabled]="saving()"
+        >
+          {{ saving() ? 'Saving…' : 'Save preferences' }}
+        </button>
+      </div>
+    </mat-card>
+  }
+}

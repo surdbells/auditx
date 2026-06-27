@@ -1,0 +1,144 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+
+import {
+  CreateNotificationRuleRequest,
+  NotificationRule,
+  UpdateNotificationRuleRequest,
+} from '../../../../core/models';
+
+export interface NotificationRuleDialogData {
+  /** Present when editing; absent for create. */
+  rule?: NotificationRule;
+  /** Event-type keys sourced from `/admin/events/catalogue`. */
+  eventTypes: string[];
+}
+
+/** Result emitted by the dialog: either a create or an update request. */
+export type NotificationRuleDialogResult =
+  | { mode: 'create'; body: CreateNotificationRuleRequest }
+  | { mode: 'update'; id: string; body: UpdateNotificationRuleRequest };
+
+function jsonValidator(control: AbstractControl): ValidationErrors | null {
+  const value = (control.value ?? '').trim();
+  if (!value) {
+    return null;
+  }
+  try {
+    JSON.parse(value);
+    return null;
+  } catch {
+    return { json: true };
+  }
+}
+
+@Component({
+  selector: 'app-notification-rule-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatSlideToggleModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
+  templateUrl: './notification-rule-dialog.component.html',
+  styleUrl: './notification-rule-dialog.component.scss',
+})
+export class NotificationRuleDialogComponent {
+  readonly data = inject<NotificationRuleDialogData>(MAT_DIALOG_DATA);
+  private readonly dialogRef =
+    inject<
+      MatDialogRef<
+        NotificationRuleDialogComponent,
+        NotificationRuleDialogResult
+      >
+    >(MatDialogRef);
+  private readonly fb = inject(FormBuilder);
+
+  readonly isEdit = signal(!!this.data.rule);
+  readonly eventTypes = signal<string[]>(this.data.eventTypes ?? []);
+
+  readonly title = computed(() =>
+    this.isEdit() ? 'Edit notification rule' : 'New notification rule',
+  );
+
+  readonly form = this.fb.nonNullable.group({
+    eventType: [this.data.rule?.eventType ?? '', [Validators.required]],
+    name: [this.data.rule?.name ?? '', [Validators.required]],
+    templateKey: [this.data.rule?.templateKey ?? '', [Validators.required]],
+    recipientResolutionJson: [
+      this.data.rule?.recipientResolutionJson ?? '',
+      [Validators.required, jsonValidator],
+    ],
+    channelsJson: [
+      this.data.rule?.channelsJson ?? '',
+      [Validators.required, jsonValidator],
+    ],
+    isActive: [this.data.rule?.isActive ?? true],
+  });
+
+  submit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    const v = this.form.getRawValue();
+    if (this.isEdit() && this.data.rule) {
+      this.dialogRef.close({
+        mode: 'update',
+        id: this.data.rule.id,
+        body: {
+          name: v.name.trim(),
+          recipientResolutionJson: v.recipientResolutionJson.trim(),
+          channelsJson: v.channelsJson.trim(),
+          templateKey: v.templateKey.trim(),
+          isActive: v.isActive,
+          version: this.data.rule.version,
+        },
+      });
+      return;
+    }
+    this.dialogRef.close({
+      mode: 'create',
+      body: {
+        eventType: v.eventType.trim(),
+        name: v.name.trim(),
+        recipientResolutionJson: v.recipientResolutionJson.trim(),
+        channelsJson: v.channelsJson.trim(),
+        templateKey: v.templateKey.trim(),
+        isActive: v.isActive,
+      },
+    });
+  }
+
+  cancel(): void {
+    this.dialogRef.close();
+  }
+}

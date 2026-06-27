@@ -21,6 +21,7 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         await SeedMakerCheckerGatesAsync(cancellationToken);
         await SeedRiskDimensionsAsync(cancellationToken);
         await SeedEntityTypesAsync(cancellationToken);
+        await SeedNotificationDefaultsAsync(cancellationToken);
 
         if (seedDevelopmentUsers)
         {
@@ -29,6 +30,54 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
 
         await db.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Database seed completed (development users: {Dev}).", seedDevelopmentUsers);
+    }
+
+    private async Task SeedNotificationDefaultsAsync(CancellationToken cancellationToken)
+    {
+        // Guard each template and rule independently (not a single table-level AnyAsync) so a partial state —
+        // e.g. rules removed while System templates remain — re-seeds cleanly instead of hitting the unique index.
+        var existingTemplateKeys = await db.NotificationTemplates
+            .Where(t => t.Scope == Domain.Enums.TemplateScope.System && t.Channel == Domain.Enums.NotificationChannel.Email)
+            .Select(t => t.TemplateKey)
+            .ToListAsync(cancellationToken);
+        var existingDefaultRuleEvents = await db.NotificationRules
+            .Where(r => r.IsSystemDefault)
+            .Select(r => r.EventType)
+            .ToListAsync(cancellationToken);
+
+        // (eventType, templateKey, recipientType, recipientValue, channels, subject, body). Recipients are
+        // mostly payload-derived (the event carries the target user id); map_submitted notifies the role.
+        var defaults = new (string EventType, string TemplateKey, string RecipientType, string RecipientValue, string Channels, string Subject, string Body)[]
+        {
+            ("audit_team_member_added", "team_assignment", "payload_derived", "UserId", "[\"email\"]",
+                "You have been added to an audit", "You have been added to audit {{ AuditId }} as {{ Role }}."),
+            ("audit_lead_transferred", "audit_lead_transferred", "payload_derived", "IncomingLeadUserId", "[\"email\"]",
+                "You are now the audit lead", "You are now the lead for audit {{ AuditId }}."),
+            ("item_assigned", "item_assigned", "payload_derived", "AssigneeUserId", "[\"email\"]",
+                "A checklist item was assigned to you", "Checklist item {{ ItemId }} on audit {{ AuditId }} has been assigned to you."),
+            ("exception_raised", "exception_raised", "payload_derived", "OwnerUserId", "[\"email\"]",
+                "An exception was raised against you", "Exception {{ ExceptionId }} ({{ Severity }}) was raised on audit {{ AuditId }}. Please review."),
+            ("exception_owner_reassigned", "exception_owner_reassigned", "payload_derived", "NewOwnerUserId", "[\"email\"]",
+                "An exception was reassigned to you", "Exception {{ ExceptionId }} has been reassigned to you."),
+            ("map_submitted", "map_submitted", "role", BuiltInRoles.AuditManagerName, "[\"email\"]",
+                "A management action plan was submitted", "A MAP was submitted for exception {{ ExceptionId }} and awaits your review."),
+        };
+
+        foreach (var d in defaults)
+        {
+            if (!existingTemplateKeys.Contains(d.TemplateKey))
+            {
+                db.NotificationTemplates.Add(Domain.Notifications.NotificationTemplate.Create(
+                    d.TemplateKey, Domain.Enums.NotificationChannel.Email, Domain.Enums.TemplateScope.System, d.Subject, d.Body));
+            }
+
+            if (!existingDefaultRuleEvents.Contains(d.EventType))
+            {
+                var recipientJson = $"{{\"type\":\"{d.RecipientType}\",\"value\":\"{d.RecipientValue}\"}}";
+                db.NotificationRules.Add(Domain.Notifications.NotificationRule.Create(
+                    d.EventType, $"Default: {d.EventType}", recipientJson, d.Channels, d.TemplateKey, isActive: true, isSystemDefault: true));
+            }
+        }
     }
 
     private async Task SeedRiskDimensionsAsync(CancellationToken cancellationToken)

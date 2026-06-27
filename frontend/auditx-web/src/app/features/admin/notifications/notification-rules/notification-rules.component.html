@@ -1,0 +1,105 @@
+@if (canManage()) {
+  <div class="rules__toolbar">
+    <button matButton="filled" type="button" (click)="create()">
+      <mat-icon>add</mat-icon>
+      Create rule
+    </button>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+}
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading rules…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the notification rules."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="notifications"
+        title="No rules"
+        message="No notification rules have been configured yet."
+      />
+    } @else {
+      <mat-card appearance="outlined" class="rules__table-card">
+        <div class="rules__table-wrapper">
+          <table mat-table [dataSource]="rules()" class="rules__table">
+            <ng-container matColumnDef="eventType">
+              <th mat-header-cell *matHeaderCellDef>Event</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="rules__event">{{ r.eventType }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="rules__name">{{ r.name }}</span>
+                @if (r.isSystemDefault) {
+                  <span class="rules__system-badge">System default</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="channels">
+              <th mat-header-cell *matHeaderCellDef>Channels</th>
+              <td mat-cell *matCellDef="let r">{{ summarise(r.channelsJson) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="recipients">
+              <th mat-header-cell *matHeaderCellDef>Recipients</th>
+              <td mat-cell *matCellDef="let r">
+                {{ summarise(r.recipientResolutionJson) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef>Active</th>
+              <td mat-cell *matCellDef="let r">
+                <span
+                  class="status-badge"
+                  [attr.data-status]="r.isActive ? 'active' : 'inactive'"
+                >
+                  {{ r.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <td mat-cell *matCellDef="let r" class="rules__actions">
+                <button matButton type="button" (click)="preview(r)">
+                  <mat-icon>visibility</mat-icon>
+                  Preview
+                </button>
+                @if (canManage()) {
+                  <button matButton type="button" (click)="edit(r)">
+                    <mat-icon>edit</mat-icon>
+                    Edit
+                  </button>
+                  @if (r.isActive) {
+                    <button matButton type="button" (click)="deactivate(r)">
+                      <mat-icon>block</mat-icon>
+                      Deactivate
+                    </button>
+                  }
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}
