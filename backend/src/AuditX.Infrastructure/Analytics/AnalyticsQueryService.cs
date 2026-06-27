@@ -1,0 +1,259 @@
+using AuditX.Application.Abstractions;
+using AuditX.Application.Abstractions.Analytics;
+using AuditX.Application.Common.Enums;
+using AuditX.Domain.Enums;
+using AuditX.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace AuditX.Infrastructure.Analytics;
+
+/// <summary>
+/// M9 KPI read model. Efficient aggregate LINQ over the AppDbContext read models. CRITICAL: the sanctions
+/// projection NEVER selects <c>subject_user_id</c> (FR-M7-010 / NFR-SEC-007) — sanctions are aggregated by
+/// business unit (category) only. Read-only: no audit-trail side effects. Computed live (Redis caching deferred).
+/// </summary>
+public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnalyticsQueryService
+{
+    private static readonly ExceptionStatus[] OpenStatuses =
+    [
+        ExceptionStatus.Open, ExceptionStatus.MapSubmitted, ExceptionStatus.MapApproved,
+        ExceptionStatus.MapRejected, ExceptionStatus.PendingClosure,
+    ];
+
+    public async Task<FunctionPerformanceDto> FunctionPerformanceAsync(CancellationToken cancellationToken = default)
+    {
+        var auditsInFlight = await db.Audits.AsNoTracking()
+            .CountAsync(a => a.Status == AuditStatus.Planned || a.Status == AuditStatus.InProgress || a.Status == AuditStatus.UnderReview, cancellationToken);
+        var auditsCompleted = await db.Audits.AsNoTracking().CountAsync(a => a.Status == AuditStatus.Completed, cancellationToken);
+
+        var planItemsTotal = await db.PlanItems.AsNoTracking().CountAsync(cancellationToken);
+        var planItemsCompleted = await db.PlanItems.AsNoTracking().CountAsync(i => i.Status == PlanItemStatus.Completed, cancellationToken);
+
+        var openBacklog = await db.Exceptions.AsNoTracking().CountAsync(e => OpenStatuses.Contains(e.Status), cancellationToken);
+        var closed = await db.Exceptions.AsNoTracking().CountAsync(e => e.Status == ExceptionStatus.Closed, cancellationToken);
+
+        var planExecution = Percent(planItemsCompleted, planItemsTotal);
+        var closureRate = Percent(closed, closed + openBacklog);
+
+        return new FunctionPerformanceDto(
+            auditsInFlight, auditsCompleted, planItemsTotal, planItemsCompleted, planExecution, openBacklog, closed, closureRate);
+    }
+
+    public async Task<ExceptionPortfolioDto> ExceptionPortfolioAsync(CancellationToken cancellationToken = default)
+    {
+        var now = clock.UtcNow;
+
+        var open = await db.Exceptions.AsNoTracking()
+            .Where(e => OpenStatuses.Contains(e.Status))
+            .Select(e => new { e.Id, e.Severity, e.RaisedAt, e.AuditableEntityId })
+            .ToListAsync(cancellationToken);
+
+        var bySeverity = open
+            .GroupBy(e => e.Severity)
+            .Select(g => new ExceptionSeverityCountDto(g.Key.ToSnake(), g.Count()))
+            .OrderBy(s => s.Severity)
+            .ToArray();
+
+        var byAge = BuildAgeBuckets(open.Select(e => (now - e.RaisedAt).TotalDays));
+
+        // Average closure time over CLOSED exceptions (days between raised and closed).
+        var closed = await db.Exceptions.AsNoTracking()
+            .Where(e => e.Status == ExceptionStatus.Closed && e.ClosedAt != null)
+            .Select(e => new { e.AuditableEntityId, e.RaisedAt, ClosedAt = e.ClosedAt!.Value })
+            .ToListAsync(cancellationToken);
+
+        var avgClosure = closed.Count > 0 ? closed.Average(e => (e.ClosedAt - e.RaisedAt).TotalDays) : (double?)null;
+
+        // By entity: open count + average closure days for that entity's closed exceptions. Resolve names.
+        var openByEntity = open.Where(e => e.AuditableEntityId != null)
+            .GroupBy(e => e.AuditableEntityId!.Value)
+            .ToDictionary(g => g.Key, g => g.Count());
+        var closureByEntity = closed.Where(e => e.AuditableEntityId != null)
+            .GroupBy(e => e.AuditableEntityId!.Value)
+            .ToDictionary(g => g.Key, g => g.Average(e => (e.ClosedAt - e.RaisedAt).TotalDays));
+
+        var entityIds = openByEntity.Keys.ToHashSet();
+        var names = await db.AuditUniverseEntities.AsNoTracking()
+            .Where(en => entityIds.Contains(en.Id))
+            .Select(en => new { en.Id, en.Name })
+            .ToDictionaryAsync(en => en.Id, en => en.Name, cancellationToken);
+
+        var byEntity = openByEntity
+            .Select(kvp => new ExceptionByEntityDto(
+                kvp.Key,
+                names.TryGetValue(kvp.Key, out var name) ? name : kvp.Key.ToString(),
+                kvp.Value,
+                closureByEntity.TryGetValue(kvp.Key, out var days) ? days : null))
+            .OrderByDescending(e => e.OpenCount)
+            .ThenBy(e => e.EntityName)
+            .ToArray();
+
+        return new ExceptionPortfolioDto(open.Count, bySeverity, byAge, byEntity, avgClosure);
+    }
+
+    public async Task<SanctionsConsistencyDto> SanctionsConsistencyAsync(CancellationToken cancellationToken = default)
+    {
+        // Project ONLY the non-identifying fields. subject_user_id is never selected (FR-M7-010 / NFR-SEC-007).
+        var cases = await db.SanctionsCases.AsNoTracking()
+            .Select(c => new { c.Id, c.Category, c.WithinGridRange })
+            .ToListAsync(cancellationToken);
+
+        var appealCountByCase = await db.SanctionsAppeals.AsNoTracking()
+            .GroupBy(a => a.SanctionsCaseId)
+            .Select(g => new { CaseId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.CaseId, x => x.Count, cancellationToken);
+
+        var rows = cases
+            .GroupBy(c => string.IsNullOrWhiteSpace(c.Category) ? "uncategorised" : c.Category!.Trim())
+            .Select(g =>
+            {
+                var caseCount = g.Count();
+                var withinGrid = g.Count(c => c.WithinGridRange);
+                var appeals = g.Sum(c => appealCountByCase.TryGetValue(c.Id, out var n) ? n : 0);
+                return new SanctionsConsistencyRowDto(
+                    g.Key,
+                    caseCount,
+                    withinGrid,
+                    Percent(withinGrid, caseCount),
+                    caseCount - withinGrid,
+                    appeals,
+                    Percent(appeals, caseCount));
+            })
+            .OrderBy(r => r.BusinessUnit)
+            .ToArray();
+
+        var totalCases = cases.Count;
+        var totalWithinGrid = cases.Count(c => c.WithinGridRange);
+        var totalAppeals = appealCountByCase.Values.Sum();
+
+        return new SanctionsConsistencyDto(
+            totalCases, Percent(totalWithinGrid, totalCases), Percent(totalAppeals, totalCases), rows);
+    }
+
+    public async Task<IReadOnlyList<PerformanceScorecardDto>> PerformanceScorecardsAsync(CancellationToken cancellationToken = default)
+    {
+        var audits = await db.Audits.AsNoTracking()
+            .Select(a => new { a.Id, a.LeadUserId, a.Status, a.StartDate, a.ActualEndDate })
+            .ToListAsync(cancellationToken);
+
+        if (audits.Count == 0)
+        {
+            return [];
+        }
+
+        var auditIds = audits.Select(a => a.Id).ToHashSet();
+        var auditLeadById = audits.ToDictionary(a => a.Id, a => a.LeadUserId);
+
+        var exceptions = await db.Exceptions.AsNoTracking()
+            .Where(e => auditIds.Contains(e.AuditId))
+            .Select(e => new { e.AuditId, e.Status, e.RaisedAt, e.ClosedAt })
+            .ToListAsync(cancellationToken);
+
+        var exByLead = exceptions
+            .Where(e => auditLeadById.ContainsKey(e.AuditId))
+            .Select(e => new { Lead = auditLeadById[e.AuditId], e.Status, e.RaisedAt, e.ClosedAt })
+            .GroupBy(e => e.Lead)
+            .ToDictionary(g => g.Key, g => g.ToArray());
+
+        return audits
+            .GroupBy(a => a.LeadUserId)
+            .Select(g =>
+            {
+                var completed = g.Where(a => a.Status == AuditStatus.Completed && a.ActualEndDate != null).ToArray();
+                var avgCycle = completed.Length > 0
+                    ? completed.Average(a => a.ActualEndDate!.Value.DayNumber - a.StartDate.DayNumber)
+                    : (double?)null;
+
+                var leadExceptions = exByLead.TryGetValue(g.Key, out var ex) ? ex : [];
+                var closedEx = leadExceptions.Where(e => e.Status == ExceptionStatus.Closed && e.ClosedAt != null).ToArray();
+                var avgExClosure = closedEx.Length > 0
+                    ? closedEx.Average(e => (e.ClosedAt!.Value - e.RaisedAt).TotalDays)
+                    : (double?)null;
+
+                return new PerformanceScorecardDto(
+                    g.Key,
+                    g.Count(),
+                    completed.Length,
+                    avgCycle,
+                    leadExceptions.Length,
+                    closedEx.Length,
+                    avgExClosure);
+            })
+            .OrderByDescending(s => s.AuditsLed)
+            .ThenBy(s => s.AuditLeadUserId)
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<MaterialFindingDto>> MaterialFindingsAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await db.Exceptions.AsNoTracking()
+            .Where(e => OpenStatuses.Contains(e.Status)
+                && (e.Severity == ExceptionSeverity.Critical || e.Severity == ExceptionSeverity.High))
+            .OrderByDescending(e => e.Severity)
+            .ThenBy(e => e.TargetDate)
+            .Select(e => new
+            {
+                e.Id, e.AuditId, e.Title, e.Severity, e.Status, e.AuditableEntityId, e.RaisedAt, e.TargetDate,
+            })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .Select(e => new MaterialFindingDto(
+                e.Id, e.AuditId, e.Title, e.Severity.ToSnake(), e.Status.ToSnake(), e.AuditableEntityId, e.RaisedAt, e.TargetDate))
+            .ToArray();
+    }
+
+    public async Task<PlanStatusDto> PlanStatusAsync(CancellationToken cancellationToken = default)
+    {
+        var totalPlans = await db.AnnualPlans.AsNoTracking().CountAsync(cancellationToken);
+
+        var byStatus = await db.PlanItems.AsNoTracking()
+            .GroupBy(i => i.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var counts = byStatus.ToDictionary(x => x.Status, x => x.Count);
+        var planned = counts.GetValueOrDefault(PlanItemStatus.Planned);
+        var inProgress = counts.GetValueOrDefault(PlanItemStatus.InProgress);
+        var completed = counts.GetValueOrDefault(PlanItemStatus.Completed);
+        var deferred = counts.GetValueOrDefault(PlanItemStatus.Deferred);
+        var total = planned + inProgress + completed + deferred;
+
+        return new PlanStatusDto(totalPlans, total, planned, inProgress, completed, deferred, Percent(completed, total));
+    }
+
+    private static IReadOnlyList<ExceptionAgeBucketDto> BuildAgeBuckets(IEnumerable<double> agesInDays)
+    {
+        int b0 = 0, b1 = 0, b2 = 0, b3 = 0;
+        foreach (var age in agesInDays)
+        {
+            if (age <= 30)
+            {
+                b0++;
+            }
+            else if (age <= 60)
+            {
+                b1++;
+            }
+            else if (age <= 90)
+            {
+                b2++;
+            }
+            else
+            {
+                b3++;
+            }
+        }
+
+        return
+        [
+            new ExceptionAgeBucketDto("0-30", b0),
+            new ExceptionAgeBucketDto("31-60", b1),
+            new ExceptionAgeBucketDto("61-90", b2),
+            new ExceptionAgeBucketDto("90+", b3),
+        ];
+    }
+
+    private static decimal Percent(int numerator, int denominator)
+        => denominator == 0 ? 0m : Math.Round(numerator * 100m / denominator, 2);
+}

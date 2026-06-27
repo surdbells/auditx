@@ -36,7 +36,7 @@ public static class BuiltInRoles
             PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException,
             PermissionKeys.GenerateReport, PermissionKeys.ViewReport, PermissionKeys.DistributeReport,
             PermissionKeys.ViewSanctions, PermissionKeys.TriggerSanctions, PermissionKeys.RecommendSanction, PermissionKeys.ViewGrid,
-            PermissionKeys.ViewAnalytics, PermissionKeys.AdHocQueryUse, PermissionKeys.ViewAuditTrail,
+            PermissionKeys.ViewAnalytics, PermissionKeys.AdHocQueryUse, PermissionKeys.PerformanceAnalyticsView, PermissionKeys.ViewAuditTrail,
         ]);
 
     public static readonly BuiltInRoleDefinition Auditee = new(

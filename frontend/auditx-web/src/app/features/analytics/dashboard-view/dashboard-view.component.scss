@@ -1,0 +1,126 @@
+.widgets__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.widget__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.widget__title {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.widget__type {
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.widget__remove {
+  flex: 0 0 auto;
+}
+
+.widget__body {
+  padding-top: 0.5rem;
+}
+
+.widget__unavailable {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.widget__unavailable mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
+/* ---- single_metric ---- */
+
+.metric__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.metric__value {
+  font: var(--mat-sys-headline-small);
+  color: var(--mat-sys-on-surface);
+}
+
+.metric__label {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+/* ---- chart (inline CSS bars) ---- */
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: minmax(80px, 30%) 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bar__label {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar__track {
+  display: block;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--mat-sys-surface-variant);
+  overflow: hidden;
+}
+
+.bar__fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: 7px;
+  background: var(--mat-sys-primary);
+}
+
+.bar__value {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface);
+  text-align: right;
+  min-width: 2ch;
+}
+
+/* ---- table ---- */
+
+.widget__table-wrapper {
+  overflow-x: auto;
+}
+
+.widget__table {
+  width: 100%;
+}

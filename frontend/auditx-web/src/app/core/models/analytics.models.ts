@@ -1,0 +1,213 @@
+/**
+ * M9 — Advanced Analytics & Dashboards models.
+ *
+ * JSON is camelCase on the wire (camelCase of the backend C# record properties).
+ * Enums (widget type, severity, status) are snake_case strings.
+ *
+ * Dashboard widget `version` is the dashboard's rowversion (echoed on every
+ * widget mutation for optimistic concurrency). CRITICAL: no analytics projection
+ * ever carries a sanctions subject identity — sanctions are aggregated by
+ * business unit / category only.
+ */
+
+/* =========================================================================
+ * Dashboards
+ * ===================================================================== */
+
+/** The kind of visualisation a widget renders. */
+export type WidgetType = 'chart' | 'table' | 'single_metric';
+
+/** A dashboard in the catalogue list (already filtered to what the caller may see). */
+export interface DashboardListItem {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  permissionRequired?: string | null;
+  configurationVersion: number;
+  widgetCount: number;
+}
+
+/**
+ * A widget on a dashboard with its computed data payload. `data` is `null` when
+ * the metric key is unknown OR the caller may not see that widget (a forbidden
+ * widget degrades to null data rather than disappearing).
+ */
+export interface DashboardWidget {
+  id: string;
+  widgetType: WidgetType;
+  metricKey: string;
+  title: string;
+  targetRoleId?: string | null;
+  position: number;
+  configJson?: string | null;
+  /** Shape depends on metricKey; see the KPI DTOs below. */
+  data: unknown;
+  version: string;
+}
+
+/** A fully-assembled dashboard: layout + each visible widget's computed data. */
+export interface DashboardDetail {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  permissionRequired?: string | null;
+  configurationVersion: number;
+  widgets: DashboardWidget[];
+  version: string;
+}
+
+/* ---- Widget CRUD payloads (ConfigureDashboards) ---- */
+
+/** Body for POST /dashboards/{id}/widgets and PATCH …/{widgetId}. */
+export interface SaveDashboardWidgetRequest {
+  widgetType: WidgetType;
+  metricKey: string;
+  title: string;
+  targetRoleId?: string | null;
+  position: number;
+  configJson?: string | null;
+  /** The dashboard rowversion from the detail. */
+  version: string;
+}
+
+/** Body for DELETE /dashboards/{id}/widgets/{widgetId}. */
+export interface DeleteDashboardWidgetRequest {
+  version: string;
+}
+
+/* =========================================================================
+ * Analytics KPI DTOs
+ * ===================================================================== */
+
+/** Function-performance KPIs: plan execution, in-flight work, exception throughput. */
+export interface FunctionPerformance {
+  auditsInFlight: number;
+  auditsCompleted: number;
+  planItemsTotal: number;
+  planItemsCompleted: number;
+  planExecutionPercent: number;
+  openExceptionBacklog: number;
+  closedExceptions: number;
+  closureRatePercent: number;
+}
+
+/** One open-exception count for a severity tier. */
+export interface ExceptionSeverityCount {
+  severity: string;
+  count: number;
+}
+
+/** One open-exception count bucketed by age (days since raised). */
+export interface ExceptionAgeBucket {
+  bucket: string;
+  count: number;
+}
+
+/** Open exceptions and average closure time for one auditable entity. */
+export interface ExceptionByEntity {
+  auditableEntityId: string;
+  entityName: string;
+  openCount: number;
+  averageClosureDays: number | null;
+}
+
+/** Exception-portfolio KPIs: open by severity / age bucket / entity + closure time. */
+export interface ExceptionPortfolio {
+  totalOpen: number;
+  bySeverity: ExceptionSeverityCount[];
+  byAgeBucket: ExceptionAgeBucket[];
+  byEntity: ExceptionByEntity[];
+  averageClosureDays: number | null;
+}
+
+/** Sanctions consistency for one business unit (category). NO subject identity. */
+export interface SanctionsConsistencyRow {
+  businessUnit: string;
+  caseCount: number;
+  withinGridCount: number;
+  gridAdherencePercent: number;
+  deviationCount: number;
+  appealCount: number;
+  appealRatePercent: number;
+}
+
+/** Sanctions consistency KPI. Aggregated by business unit; no subject_user_id. */
+export interface SanctionsConsistency {
+  totalCases: number;
+  overallGridAdherencePercent: number;
+  overallAppealRatePercent: number;
+  byBusinessUnit: SanctionsConsistencyRow[];
+}
+
+/** Per-audit-lead performance scorecard: throughput, cycle time, closure metrics. */
+export interface PerformanceScorecard {
+  auditLeadUserId: string;
+  auditsLed: number;
+  auditsCompleted: number;
+  averageCycleDays: number | null;
+  exceptionsRaised: number;
+  exceptionsClosed: number;
+  averageExceptionClosureDays: number | null;
+}
+
+/** A single Critical/High open exception for the material-findings widget. */
+export interface MaterialFinding {
+  exceptionId: string;
+  auditId: string;
+  title: string;
+  severity: string;
+  status: string;
+  auditableEntityId: string | null;
+  raisedAt: string;
+  targetDate: string;
+}
+
+/**
+ * Annual-plan execution status — counts of plan items by lifecycle state + %.
+ * Named `PlanStatusKpi` to avoid clashing with the M3 plan-lifecycle
+ * `PlanStatus` string-union in planning.models.ts.
+ */
+export interface PlanStatusKpi {
+  totalPlans: number;
+  totalItems: number;
+  planned: number;
+  inProgress: number;
+  completed: number;
+  deferred: number;
+  completionPercent: number;
+}
+
+/* =========================================================================
+ * Recurrence clusters
+ * ===================================================================== */
+
+/** A detected recurrence cluster (list surface). */
+export interface RecurrenceCluster {
+  id: string;
+  auditableEntityId: string;
+  category?: string | null;
+  closedExceptionCount: number;
+  windowMonths: number;
+  firstOccurredAt: string;
+  lastOccurredAt: string;
+  detectedAt: string;
+  notifiedAt?: string | null;
+}
+
+/** One member exception inside a recurrence cluster. */
+export interface RecurrenceClusterMember {
+  exceptionId: string;
+  auditId: string;
+  title: string;
+  severity: string;
+  status: string;
+  raisedAt: string;
+  closedAt?: string | null;
+}
+
+/** A recurrence cluster with its member exceptions (drilldown). */
+export interface RecurrenceClusterDetail extends RecurrenceCluster {
+  members: RecurrenceClusterMember[];
+}

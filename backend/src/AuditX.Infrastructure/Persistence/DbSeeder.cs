@@ -27,6 +27,7 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         await SeedSanctionsGridAsync(cancellationToken);
         await SeedReportTemplateAsync(cancellationToken);
         await SeedNotificationDefaultsAsync(cancellationToken);
+        await SeedDashboardsAsync(cancellationToken);
 
         if (seedDevelopmentUsers)
         {
@@ -89,6 +90,11 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             // suppression-override + SMS escalation fires (channel data-driven via the rule; defaults to email).
             (Domain.AuditTrail.AuditEventTypes.ReportHashMismatch, "report_integrity_alert", "role", BuiltInRoles.AdministratorName, "[\"email\"]",
                 "Report integrity alert", "Report {{ ReportId }} (audit {{ AuditId }}) failed SHA-256 verification. Expected {{ ExpectedHash }}, recomputed {{ RecomputedHash }}. Investigate immediately."),
+
+            // M9 analytics. recurrence_cluster_detected → the Audit Manager role (G6). Raised by the daily scan job
+            // when a (entity, category) group newly reaches the closed-exception recurrence threshold.
+            (Domain.AuditTrail.AuditEventTypes.RecurrenceClusterDetected, "recurrence_cluster_detected", "role", BuiltInRoles.AuditManagerName, "[\"email\"]",
+                "A recurring control weakness was detected", "{{ ClosedExceptionCount }} closed exceptions for entity {{ AuditableEntityId }} (category {{ Category }}) within {{ WindowMonths }} months indicate a recurrence. Please review."),
         };
 
         foreach (var d in defaults)
@@ -105,6 +111,77 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
                 db.NotificationRules.Add(Domain.Notifications.NotificationRule.Create(
                     d.EventType, $"Default: {d.EventType}", recipientJson, d.Channels, d.TemplateKey, isActive: true, isSystemDefault: true));
             }
+        }
+    }
+
+    /// <summary>
+    /// Seed the six system dashboards (M9) with sensible bank-wide default widgets. Idempotent per slug. The
+    /// sanctions-consistency dashboard requires the CIA permission; the function-performance dashboard carries the
+    /// performance-scorecards widget and is therefore gated by PerformanceAnalyticsView. The other four are
+    /// ungated (visible to anyone authenticated; their data endpoints are still ViewAnalytics-gated).
+    /// </summary>
+    private async Task SeedDashboardsAsync(CancellationToken cancellationToken)
+    {
+        var existingSlugs = await db.Dashboards.IgnoreQueryFilters().Select(d => d.Slug).ToListAsync(cancellationToken);
+
+        // (slug, name, description, permissionRequired, widgets[(type, metricKey, title, position)]).
+        var dashboards = new (string Slug, string Name, string? Description, string? Permission, (WidgetType Type, string Metric, string Title)[] Widgets)[]
+        {
+            ("function_performance", "Function performance",
+                "Plan execution, in-flight work, exception throughput and per-lead scorecards.",
+                PermissionKeys.PerformanceAnalyticsView,
+                [
+                    (WidgetType.SingleMetric, Application.Analytics.Queries.DashboardMetricKeys.FunctionPerformance, "Function performance"),
+                    (WidgetType.Table, Application.Analytics.Queries.DashboardMetricKeys.PerformanceScorecards, "Audit-lead scorecards"),
+                ]),
+            ("exception_portfolio", "Exception portfolio",
+                "Open exceptions by severity, age and entity, with closure-time trends.",
+                null,
+                [
+                    (WidgetType.Chart, Application.Analytics.Queries.DashboardMetricKeys.ExceptionPortfolio, "Exception portfolio"),
+                ]),
+            ("coverage", "Audit coverage",
+                "Coverage matrix of completed audits across the universe.",
+                null,
+                [
+                    (WidgetType.Table, Application.Analytics.Queries.DashboardMetricKeys.Coverage, "Coverage matrix"),
+                ]),
+            ("sanctions_consistency", "Sanctions consistency",
+                "Grid adherence, deviation and appeal rates by business unit (subject identity omitted).",
+                PermissionKeys.Cia,
+                [
+                    (WidgetType.Table, Application.Analytics.Queries.DashboardMetricKeys.SanctionsConsistency, "Sanctions consistency"),
+                ]),
+            ("recurrence_cluster", "Recurrence clusters",
+                "Detected recurring control weaknesses (≥3 closed exceptions per entity/category).",
+                null,
+                [
+                    (WidgetType.Table, Application.Analytics.Queries.DashboardMetricKeys.RecurrenceClusters, "Recurrence clusters"),
+                ]),
+            ("audit_committee", "Audit committee",
+                "Material findings and plan status for the audit-committee surface.",
+                null,
+                [
+                    (WidgetType.Table, Application.Analytics.Queries.DashboardMetricKeys.MaterialFindings, "Material findings"),
+                    (WidgetType.SingleMetric, Application.Analytics.Queries.DashboardMetricKeys.PlanStatus, "Plan status"),
+                ]),
+        };
+
+        foreach (var d in dashboards)
+        {
+            if (existingSlugs.Contains(d.Slug, StringComparer.Ordinal))
+            {
+                continue;
+            }
+
+            var dashboard = Domain.Analytics.Dashboard.Create(d.Slug, d.Name, d.Description, d.Permission, isSystemDefault: true);
+            var position = 0;
+            foreach (var w in d.Widgets)
+            {
+                dashboard.AddWidget(w.Type, w.Metric, w.Title, targetRoleId: null, position: position++, configJson: null);
+            }
+
+            db.Dashboards.Add(dashboard);
         }
     }
 

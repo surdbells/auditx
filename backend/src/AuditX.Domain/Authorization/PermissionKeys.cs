@@ -75,6 +75,7 @@ public static class PermissionKeys
     public const string ConfigureDashboards = "ConfigureDashboards";
     public const string ConfigurePredictive = "ConfigurePredictive";
     public const string PerformanceAnalyticsView = "PerformanceAnalyticsView";
+    public const string SensitiveQueryAccess = "SensitiveQueryAccess";
 
     // M10 — Notifications
     public const string ConfigureNotifications = "ConfigureNotifications";

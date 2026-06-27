@@ -165,6 +165,11 @@ public static class AuditEventTypes
     public const string ReportHashMismatch = "report_hash_mismatch";
     public const string ReportTemplateCreated = "report_template_created";
     public const string ReportTemplateActivated = "report_template_activated";
+
+    // M9 analytics & dashboards
+    public const string DashboardRefreshed = "dashboard_refreshed";
+    public const string DashboardWidgetConfigured = "dashboard_widget_configured";
+    public const string RecurrenceClusterDetected = "recurrence_cluster_detected";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -205,4 +210,6 @@ public static class AuditTargetTypes
     public const string SanctionsGridVersion = "sanctions_grid_version";
     public const string Report = "report";
     public const string ReportTemplate = "report_template";
+    public const string Dashboard = "dashboard";
+    public const string RecurrenceCluster = "recurrence_cluster";
 }

@@ -1,0 +1,61 @@
+<app-page-header
+  title="Analytics"
+  subtitle="Dashboards and key-performance indicators for the audit function."
+>
+  <div actions>
+    <a matButton routerLink="/analytics/recurrence-clusters">
+      <mat-icon>repeat</mat-icon>
+      Recurrence clusters
+    </a>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+</app-page-header>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading dashboards…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the analytics dashboards."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="dashboard"
+        title="No dashboards"
+        message="You don't have access to any analytics dashboards yet."
+      />
+    } @else {
+      <div class="dashboards__grid">
+        @for (d of dashboards(); track d.id) {
+          <mat-card
+            appearance="outlined"
+            class="dashboards__card"
+            [routerLink]="['/analytics/dashboards', d.slug]"
+          >
+            <mat-card-header>
+              <mat-card-title>{{ d.name }}</mat-card-title>
+              <mat-card-subtitle>{{ d.slug }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              @if (d.description) {
+                <p class="dashboards__desc">{{ d.description }}</p>
+              }
+              <p class="dashboards__meta">
+                <mat-icon aria-hidden="true">widgets</mat-icon>
+                {{ d.widgetCount }}
+                {{ d.widgetCount === 1 ? 'widget' : 'widgets' }}
+              </p>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    }
+  }
+}

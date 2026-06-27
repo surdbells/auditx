@@ -52,6 +52,11 @@ export const Permissions = {
   // M10 — Notifications
   ConfigureNotifications: 'ConfigureNotifications',
 
+  // M9 — Advanced Analytics & Dashboards
+  ViewAnalytics: 'ViewAnalytics',
+  ConfigureDashboards: 'ConfigureDashboards',
+  PerformanceAnalyticsView: 'PerformanceAnalyticsView',
+
   // M8 — Reports
   GenerateReport: 'GenerateReport',
   ViewReport: 'ViewReport',

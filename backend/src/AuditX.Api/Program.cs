@@ -52,6 +52,7 @@ builder.Services.AddScoped<WebhookRetryJob>();
 builder.Services.AddScoped<AuditAutoStartJob>();
 builder.Services.AddScoped<NotificationRetryJob>();
 builder.Services.AddScoped<ReportGenerationJob>();
+builder.Services.AddScoped<RecurrenceClusterScanJob>();
 builder.Services.AddScoped<AuditX.Application.Abstractions.Reports.IReportGenerationQueue, HangfireReportGenerationQueue>();
 
 var app = builder.Build();
@@ -102,6 +103,12 @@ recurringJobs.AddOrUpdate<NotificationRetryJob>(
     NotificationRetryJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     "* * * * *");
+
+// Daily exception-recurrence detection scan (US-M9 G6).
+recurringJobs.AddOrUpdate<RecurrenceClusterScanJob>(
+    RecurrenceClusterScanJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Daily);
 
 app.Run();
 return;

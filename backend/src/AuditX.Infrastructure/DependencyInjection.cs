@@ -70,6 +70,8 @@ public static class DependencyInjection
         services.AddScoped<ISanctionsAppealRepository, SanctionsAppealRepository>();
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IReportTemplateRepository, ReportTemplateRepository>();
+        services.AddScoped<IDashboardRepository, DashboardRepository>();
+        services.AddScoped<IRecurrenceClusterRepository, RecurrenceClusterRepository>();
         services.AddScoped<Application.Abstractions.Sanctions.IDossierGenerator, Sanctions.HtmlDossierGenerator>();
 
         // M8 reports: assembler + generation service + format-dispatching renderer (HTML always + DOCX via OpenXml).
@@ -87,6 +89,8 @@ public static class DependencyInjection
         services.AddSingleton<Application.Abstractions.Storage.IFileSignatureInspector, Storage.EvidenceFileSignatureInspector>();
         services.AddScoped<Application.Abstractions.Universe.ITaxonomyProvider, Universe.TaxonomyProvider>();
         services.AddScoped<Application.Abstractions.Universe.ICoverageQueryService, Universe.CoverageQueryService>();
+        services.AddScoped<Application.Abstractions.Analytics.IAnalyticsQueryService, Analytics.AnalyticsQueryService>();
+        services.AddScoped<Application.Analytics.Services.RecurrenceClusterService>();
         services.AddScoped<IAuditTrailReader, Universe.AuditTrailReader>();
         services.AddScoped<DbSeeder>();
 

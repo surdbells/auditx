@@ -77,6 +77,7 @@ public static class PermissionCatalogue
         new(PermissionKeys.ConfigureDashboards, "Configure dashboards", "Add/remove/arrange dashboard widgets.", "M9", PermissionScopeType.Global),
         new(PermissionKeys.ConfigurePredictive, "Configure predictive indicators", "Define predictive indicator rules.", "M9", PermissionScopeType.Global),
         new(PermissionKeys.PerformanceAnalyticsView, "View performance scorecards", "View function-performance scorecards (CIA by default).", "M9", PermissionScopeType.Global),
+        new(PermissionKeys.SensitiveQueryAccess, "Sensitive query access", "Run analytics queries that may surface sensitive data (catalogued; ungranted until the ad-hoc slice ships).", "M9", PermissionScopeType.Global),
 
         // M10 — Notifications
         new(PermissionKeys.ConfigureNotifications, "Configure notifications", "Manage notification rules and templates.", "M10", PermissionScopeType.Global),

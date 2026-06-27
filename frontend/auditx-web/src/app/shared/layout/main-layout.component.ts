@@ -114,6 +114,12 @@ export class MainLayoutComponent {
       permissions: [Permissions.ViewExceptions],
     },
     {
+      label: 'Analytics',
+      icon: 'analytics',
+      route: '/analytics',
+      permissions: [Permissions.ViewAnalytics],
+    },
+    {
       label: 'Maker-Checker',
       icon: 'fact_check',
       route: '/admin/maker-checker',

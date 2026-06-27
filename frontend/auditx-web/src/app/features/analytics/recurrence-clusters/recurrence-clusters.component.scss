@@ -1,0 +1,23 @@
+.clusters__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.clusters__table-wrapper {
+  overflow-x: auto;
+}
+
+.clusters__table {
+  width: 100%;
+}
+
+.clusters__entity {
+  font-family: var(--mat-sys-body-medium-font), monospace;
+  font-size: 0.85rem;
+}
+
+.clusters__more {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}

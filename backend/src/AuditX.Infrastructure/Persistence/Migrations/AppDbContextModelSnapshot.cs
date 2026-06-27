@@ -241,6 +241,233 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.ToTable("support_channel_sessions", (string)null);
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Analytics.Dashboard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<int>("ConfigurationVersion")
+                        .HasColumnType("int")
+                        .HasColumnName("configuration_version");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsSystemDefault")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_system_default");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("PermissionRequired")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("permission_required");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("slug");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("dashboards", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Analytics.DashboardWidget", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ConfigJson")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("config_json");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("DashboardId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("dashboard_id");
+
+                    b.Property<string>("MetricKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("metric_key");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("int")
+                        .HasColumnName("position");
+
+                    b.Property<Guid?>("TargetRoleId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("target_role_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.Property<string>("WidgetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("widget_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DashboardId", "Position");
+
+                    b.ToTable("dashboard_widgets", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Analytics.RecurrenceCluster", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuditableEntityId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("auditable_entity_id");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("category");
+
+                    b.Property<int>("ClosedExceptionCount")
+                        .HasColumnType("int")
+                        .HasColumnName("closed_exception_count");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("DetectedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("detected_at");
+
+                    b.Property<DateTimeOffset>("FirstOccurredAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("first_occurred_at");
+
+                    b.Property<DateTimeOffset>("LastOccurredAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("last_occurred_at");
+
+                    b.Property<string>("MemberExceptionIdsJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("[]")
+                        .HasColumnName("member_exception_ids_json");
+
+                    b.Property<DateTimeOffset?>("NotifiedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("notified_at");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.Property<int>("WindowMonths")
+                        .HasColumnType("int")
+                        .HasColumnName("window_months");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuditableEntityId", "Category")
+                        .IsUnique()
+                        .HasFilter("[category] IS NOT NULL");
+
+                    b.ToTable("recurrence_clusters", (string)null);
+                });
+
             modelBuilder.Entity("AuditX.Domain.AuditTrail.AuditTrailEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3195,6 +3422,15 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.ToTable("risk_dimensions", (string)null);
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Analytics.DashboardWidget", b =>
+                {
+                    b.HasOne("AuditX.Domain.Analytics.Dashboard", null)
+                        .WithMany("Widgets")
+                        .HasForeignKey("DashboardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AuditX.Domain.Audits.AuditChecklistItem", b =>
                 {
                     b.HasOne("AuditX.Domain.Audits.Audit", null)
@@ -3357,6 +3593,11 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ParentEntityId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Analytics.Dashboard", b =>
+                {
+                    b.Navigation("Widgets");
                 });
 
             modelBuilder.Entity("AuditX.Domain.Audits.Audit", b =>

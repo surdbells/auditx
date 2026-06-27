@@ -51,5 +51,7 @@ public static class NotificationEvents
         "plan_submitted",
         // M8 reports
         "report_generated", "report_distributed", "report_hash_mismatch",
+        // M9 analytics
+        "recurrence_cluster_detected",
     ];
 }

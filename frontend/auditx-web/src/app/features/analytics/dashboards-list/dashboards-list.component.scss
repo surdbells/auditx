@@ -1,0 +1,33 @@
+.dashboards__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.dashboards__card {
+  cursor: pointer;
+  transition: box-shadow 120ms ease;
+}
+
+.dashboards__card:hover {
+  box-shadow: var(--mat-sys-level2);
+}
+
+.dashboards__desc {
+  margin: 0 0 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.dashboards__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.dashboards__meta mat-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}

@@ -1,0 +1,138 @@
+<app-page-header
+  title="Recurrence cluster"
+  [subtitle]="humanise(cluster()?.category)"
+>
+  <div actions>
+    <a matButton routerLink="/analytics/recurrence-clusters">
+      <mat-icon>arrow_back</mat-icon>
+      All clusters
+    </a>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+</app-page-header>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading cluster…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load this recurrence cluster."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (cluster(); as c) {
+      <mat-card appearance="outlined" class="cluster__summary">
+        <div class="cluster__facts">
+          <div class="fact">
+            <span class="fact__value">{{ c.closedExceptionCount }}</span>
+            <span class="fact__label">Closed findings</span>
+          </div>
+          <div class="fact">
+            <span class="fact__value">{{ c.windowMonths }} mo</span>
+            <span class="fact__label">Window</span>
+          </div>
+          <div class="fact">
+            <span class="fact__value">
+              {{ c.firstOccurredAt | date: 'mediumDate' }}
+            </span>
+            <span class="fact__label">First occurred</span>
+          </div>
+          <div class="fact">
+            <span class="fact__value">
+              {{ c.lastOccurredAt | date: 'mediumDate' }}
+            </span>
+            <span class="fact__label">Last occurred</span>
+          </div>
+          <div class="fact">
+            <span class="fact__value">
+              {{ c.detectedAt | date: 'mediumDate' }}
+            </span>
+            <span class="fact__label">Detected</span>
+          </div>
+          <div class="fact">
+            <span class="fact__value">
+              {{ (c.notifiedAt | date: 'mediumDate') ?? '—' }}
+            </span>
+            <span class="fact__label">Notified</span>
+          </div>
+        </div>
+        <p class="cluster__entity">
+          Auditable entity: <code>{{ c.auditableEntityId }}</code>
+        </p>
+      </mat-card>
+
+      <h2 class="cluster__members-title">Member exceptions</h2>
+
+      @if (isEmpty()) {
+        <app-empty-state
+          icon="report_problem"
+          title="No members"
+          message="This cluster has no member exceptions."
+        />
+      } @else {
+        <mat-card appearance="outlined" class="cluster__table-card">
+          <div class="cluster__table-wrapper">
+            <table mat-table [dataSource]="c.members" class="cluster__table">
+              <ng-container matColumnDef="title">
+                <th mat-header-cell *matHeaderCellDef>Title</th>
+                <td mat-cell *matCellDef="let m" class="cluster__title-cell">
+                  {{ m.title }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="severity">
+                <th mat-header-cell *matHeaderCellDef>Severity</th>
+                <td mat-cell *matCellDef="let m">
+                  <span
+                    class="severity-badge"
+                    [attr.data-severity]="m.severity"
+                  >
+                    {{ humanise(m.severity) }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let m">{{ humanise(m.status) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="raisedAt">
+                <th mat-header-cell *matHeaderCellDef>Raised</th>
+                <td mat-cell *matCellDef="let m">
+                  {{ m.raisedAt | date: 'mediumDate' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="closedAt">
+                <th mat-header-cell *matHeaderCellDef>Closed</th>
+                <td mat-cell *matCellDef="let m">
+                  {{ (m.closedAt | date: 'mediumDate') ?? '—' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+                <td mat-cell *matCellDef="let m">
+                  @if (canViewExceptions()) {
+                    <a matButton [routerLink]="['/exceptions', m.exceptionId]">
+                      Open
+                    </a>
+                  }
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            </table>
+          </div>
+        </mat-card>
+      }
+    }
+  }
+}

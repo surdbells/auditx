@@ -335,6 +335,51 @@ export const routes: Routes = [
           ).then((m) => m.ExceptionDetailComponent),
       },
       {
+        path: 'analytics',
+        title: 'Analytics · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/dashboards-list/dashboards-list.component'
+          ).then((m) => m.DashboardsListComponent),
+      },
+      {
+        path: 'analytics/dashboards/:idOrSlug',
+        title: 'Dashboard · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/dashboard-view/dashboard-view.component'
+          ).then((m) => m.DashboardViewComponent),
+      },
+      {
+        path: 'analytics/recurrence-clusters',
+        title: 'Recurrence Clusters · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/recurrence-clusters/recurrence-clusters.component'
+          ).then((m) => m.RecurrenceClustersComponent),
+      },
+      {
+        path: 'analytics/recurrence-clusters/:id',
+        title: 'Recurrence Cluster · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/recurrence-cluster-detail/recurrence-cluster-detail.component'
+          ).then((m) => m.RecurrenceClusterDetailComponent),
+      },
+      {
+        path: 'analytics/scorecards',
+        title: 'Performance Scorecards · AuditX',
+        canActivate: [permissionGuard(Permissions.PerformanceAnalyticsView)],
+        loadComponent: () =>
+          import(
+            './features/analytics/performance-scorecards/performance-scorecards.component'
+          ).then((m) => m.PerformanceScorecardsComponent),
+      },
+      {
         path: 'admin/maker-checker',
         title: 'Maker-Checker · AuditX',
         canActivate: [
