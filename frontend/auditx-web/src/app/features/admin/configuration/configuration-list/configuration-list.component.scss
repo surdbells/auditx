@@ -1,0 +1,19 @@
+.config-list__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.config-list__card {
+  cursor: pointer;
+  transition: box-shadow 120ms ease;
+}
+
+.config-list__card:hover {
+  box-shadow: var(--mat-sys-level2);
+}
+
+.config-list__desc {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}

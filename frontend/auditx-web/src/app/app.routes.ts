@@ -380,6 +380,24 @@ export const routes: Routes = [
           ).then((m) => m.PerformanceScorecardsComponent),
       },
       {
+        path: 'admin/configuration',
+        title: 'Configuration · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewConfig)],
+        loadComponent: () =>
+          import(
+            './features/admin/configuration/configuration-list/configuration-list.component'
+          ).then((m) => m.ConfigurationListComponent),
+      },
+      {
+        path: 'admin/configuration/:domain',
+        title: 'Configuration domain · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewConfig)],
+        loadComponent: () =>
+          import(
+            './features/admin/configuration/configuration-detail/configuration-detail.component'
+          ).then((m) => m.ConfigurationDetailComponent),
+      },
+      {
         path: 'admin/maker-checker',
         title: 'Maker-Checker · AuditX',
         canActivate: [

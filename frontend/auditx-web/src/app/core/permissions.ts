@@ -35,6 +35,7 @@ export const Permissions = {
   ScoreRisk: 'ScoreRisk',
   ManagePlan: 'ManagePlan',
   ManageConfiguration: 'ManageConfiguration',
+  ViewConfig: 'ViewConfig',
   ACChair: 'ACChair',
 
   // M4 — Audit Lifecycle

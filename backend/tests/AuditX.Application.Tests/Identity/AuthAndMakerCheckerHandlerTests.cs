@@ -54,6 +54,7 @@ public sealed class ApproveActionCommandHandlerTests
 
         var handler = new ApproveActionCommandHandler(
             repo, [executor], currentUser, Substitute.For<IPermissionResolver>(),
+            Substitute.For<IActiveConfigurationProvider>(),
             Substitute.For<IAuditRecorder>(), Substitute.For<IClock>(), Substitute.For<IUnitOfWork>());
 
         await Assert.ThrowsAsync<ForbiddenAccessException>(() =>
@@ -72,6 +73,7 @@ public sealed class ApproveActionCommandHandlerTests
 
         var handler = new ApproveActionCommandHandler(
             repo, [], currentUser, Substitute.For<IPermissionResolver>(),
+            Substitute.For<IActiveConfigurationProvider>(),
             Substitute.For<IAuditRecorder>(), Substitute.For<IClock>(), Substitute.For<IUnitOfWork>());
 
         await Assert.ThrowsAsync<NotFoundException>(() =>

@@ -1,5 +1,7 @@
+using AuditX.Application.Configuration;
 using AuditX.Application.Sanctions;
 using AuditX.Domain.Authorization;
+using AuditX.Domain.Configuration;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Identity;
 using AuditX.Infrastructure.Identity;
@@ -28,6 +30,7 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         await SeedReportTemplateAsync(cancellationToken);
         await SeedNotificationDefaultsAsync(cancellationToken);
         await SeedDashboardsAsync(cancellationToken);
+        await SeedExceptionDefaultsConfigurationAsync(cancellationToken);
 
         if (seedDevelopmentUsers)
         {
@@ -239,6 +242,27 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             role.SetPermissions(permissions.Select(key => (key, PermissionScopeType.Global, (string?)null)));
             db.Roles.Add(role);
         }
+    }
+
+    /// <summary>
+    /// Seed the active v1 <c>exception_defaults</c> configuration (M12) reproducing the pre-M12 hardcoded values
+    /// EXACTLY (Critical 14 / High 30 / Medium 45 / Low 60, recurrence window 24 months, threshold 3). This is the
+    /// critical regression guard: the upgrade must reproduce current behaviour. Idempotent (guarded per-domain).
+    /// </summary>
+    private async Task SeedExceptionDefaultsConfigurationAsync(CancellationToken cancellationToken)
+    {
+        if (await db.BankConfigurations.AnyAsync(c => c.Domain == ConfigurationDomains.ExceptionDefaults, cancellationToken))
+        {
+            return;
+        }
+
+        var definitionJson = ConfigurationDefinitions.SerializeExceptionDefaults(ExceptionDefaultsDefinition.HardcodedFallback);
+        var config = BankConfiguration.CreateDraft(
+            ConfigurationDomains.ExceptionDefaults, versionNumber: 1, definitionJson,
+            changeReason: "Initial exception defaults seeded on deployment (reproduces pre-M12 hardcoded values).",
+            createdBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
+        config.Activate(activatedBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
+        db.BankConfigurations.Add(config);
     }
 
     /// <summary>Seed one active default sanctions grid (version 1) with a few representative cells per the E3 schema.</summary>

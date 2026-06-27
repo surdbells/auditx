@@ -1,0 +1,23 @@
+<app-page-header
+  title="Configuration"
+  subtitle="Manage versioned system configuration domains and their change history."
+/>
+
+<div class="config-list__grid">
+  @for (d of domains; track d.domain) {
+    <mat-card
+      appearance="outlined"
+      class="config-list__card"
+      [routerLink]="['/admin/configuration', d.domain]"
+    >
+      <mat-card-header>
+        <mat-icon mat-card-avatar aria-hidden="true">{{ d.icon }}</mat-icon>
+        <mat-card-title>{{ d.title }}</mat-card-title>
+        <mat-card-subtitle>{{ d.domain }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="config-list__desc">{{ d.description }}</p>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

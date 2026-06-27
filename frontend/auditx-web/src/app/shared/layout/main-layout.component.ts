@@ -166,6 +166,12 @@ export class MainLayoutComponent {
       permissions: [Permissions.ManageGrid],
     },
     {
+      label: 'Configuration',
+      icon: 'tune',
+      route: '/admin/configuration',
+      permissions: [Permissions.ViewConfig, Permissions.ManageConfiguration],
+    },
+    {
       label: 'Audit Trail',
       icon: 'history',
       route: '/admin/audit-trail',

@@ -170,6 +170,11 @@ public static class AuditEventTypes
     public const string DashboardRefreshed = "dashboard_refreshed";
     public const string DashboardWidgetConfigured = "dashboard_widget_configured";
     public const string RecurrenceClusterDetected = "recurrence_cluster_detected";
+
+    // M12 configuration
+    public const string ConfigurationVersionCreated = "configuration_version_created";
+    public const string ConfigurationVersionActivated = "configuration_version_activated";
+    public const string ConfigurationRolledBack = "configuration_rolled_back";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -212,4 +217,5 @@ public static class AuditTargetTypes
     public const string ReportTemplate = "report_template";
     public const string Dashboard = "dashboard";
     public const string RecurrenceCluster = "recurrence_cluster";
+    public const string BankConfiguration = "bank_configuration";
 }

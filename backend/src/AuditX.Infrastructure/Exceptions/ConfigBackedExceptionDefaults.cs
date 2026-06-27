@@ -1,21 +1,23 @@
 using AuditX.Application.Abstractions;
+using AuditX.Domain.Configuration;
 using AuditX.Domain.Enums;
 
 namespace AuditX.Infrastructure.Exceptions;
 
 /// <summary>
-/// v1 hardcoded exception defaults (M6). Severity → remediation target days and the recurrence lookback.
-/// The bank-configurable surface (per-bank/type/severity) lands with M12 behind this same interface.
+/// Exception defaults (M6) backed by the active <c>exception_defaults</c> bank-configuration version (M12). Reads the
+/// active definition via <see cref="IActiveConfigurationProvider"/> on every call (cheaply — it is memory-cached and
+/// invalidated on activation), falling back to <see cref="ExceptionDefaultsDefinition.HardcodedFallback"/>
+/// (Critical 14 / High 30 / Medium 45 / Low 60, window 24) when no active version exists. The interface is unchanged,
+/// so the M6 raise call sites are untouched. Never throws.
 /// </summary>
-public sealed class ConfigBackedExceptionDefaults : IExceptionDefaults
+public sealed class ConfigBackedExceptionDefaults(IActiveConfigurationProvider activeProvider) : IExceptionDefaults
 {
-    public int RecurrenceWindowMonths => 24;
+    private ExceptionDefaultsDefinition Current =>
+        activeProvider.GetActive<ExceptionDefaultsDefinition>(ConfigurationDomains.ExceptionDefaults)
+        ?? ExceptionDefaultsDefinition.HardcodedFallback;
 
-    public int TargetDays(ExceptionSeverity severity) => severity switch
-    {
-        ExceptionSeverity.Critical => 14,
-        ExceptionSeverity.High => 30,
-        ExceptionSeverity.Medium => 45,
-        _ => 60,
-    };
+    public int RecurrenceWindowMonths => Current.RecurrenceWindowMonths;
+
+    public int TargetDays(ExceptionSeverity severity) => Current.TargetDays(severity);
 }

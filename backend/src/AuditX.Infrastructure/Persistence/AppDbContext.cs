@@ -2,6 +2,7 @@ using AuditX.Domain.Administration;
 using AuditX.Domain.Analytics;
 using AuditX.Domain.Audits;
 using AuditX.Domain.AuditTrail;
+using AuditX.Domain.Configuration;
 using AuditX.Domain.Evidence;
 using AuditX.Domain.Exceptions;
 using AuditX.Domain.Identity;
@@ -108,6 +109,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<DashboardWidget> DashboardWidgets => Set<DashboardWidget>();
 
     public DbSet<RecurrenceCluster> RecurrenceClusters => Set<RecurrenceCluster>();
+
+    public DbSet<BankConfiguration> BankConfigurations => Set<BankConfiguration>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

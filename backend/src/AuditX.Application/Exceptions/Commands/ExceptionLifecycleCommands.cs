@@ -8,6 +8,7 @@ using AuditX.Application.Exceptions.Mapping;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Authorization;
 using AuditX.Domain.Common;
+using AuditX.Domain.Configuration;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Exceptions;
 using FluentValidation;
@@ -47,6 +48,7 @@ public sealed class RaiseExceptionCommandHandler(
     IUserRepository users,
     IPermissionResolver permissions,
     IExceptionDefaults defaults,
+    IConfigurationSnapshotter configSnapshotter,
     ICurrentUser currentUser,
     IAuditRecorder audit,
     IClock clock,
@@ -113,10 +115,14 @@ public sealed class RaiseExceptionCommandHandler(
             }
         }
 
+        // Honest snapshot-on-raise (S5): stamp the active exception_defaults version that produced this target date.
+        // SINGLE-STORE only — sanctions_grid / notification_rules are NOT stamped (no integer version there).
+        var configSnapshot = configSnapshotter.Capture(ConfigurationDomains.ExceptionDefaults);
+
         var exception = AuditException.Raise(
             command.AuditId, command.ChecklistItemId, auditableEntityId, command.Title, severity, command.RootCause,
             command.Recommendation, normalizedCategory, command.OwnerUserId, userId, targetDate, overridden,
-            command.OverrideRationale, isRecurrence, recurrenceOf, "{}", clock.UtcNow);
+            command.OverrideRationale, isRecurrence, recurrenceOf, configSnapshot, clock.UtcNow);
 
         exceptions.Add(exception);
         auditEntity.SetItemException(command.ChecklistItemId, true); // M5 write-back (cleared only on cancel)

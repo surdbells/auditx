@@ -72,6 +72,7 @@ public static class DependencyInjection
         services.AddScoped<IReportTemplateRepository, ReportTemplateRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IRecurrenceClusterRepository, RecurrenceClusterRepository>();
+        services.AddScoped<IBankConfigurationRepository, BankConfigurationRepository>();
         services.AddScoped<Application.Abstractions.Sanctions.IDossierGenerator, Sanctions.HtmlDossierGenerator>();
 
         // M8 reports: assembler + generation service + format-dispatching renderer (HTML always + DOCX via OpenXml).
@@ -84,6 +85,11 @@ public static class DependencyInjection
         services.AddScoped<Reports.OpenXmlReportRenderer>();
         services.AddScoped<Application.Abstractions.Reports.IReportRenderer>(sp => new Reports.CompositeReportRenderer(
             [sp.GetRequiredService<Reports.HtmlReportRenderer>(), sp.GetRequiredService<Reports.OpenXmlReportRenderer>()]));
+        // M12 configuration: active-config provider (memory-cached, invalidated on activate/rollback) + the snapshotter
+        // used to stamp exception_defaults provenance at raise. IExceptionDefaults now reads the active config behind
+        // the same (unchanged) interface, falling back to the hardcoded defaults.
+        services.AddScoped<Application.Abstractions.IActiveConfigurationProvider, Configuration.CachedActiveConfigurationProvider>();
+        services.AddScoped<Application.Abstractions.IConfigurationSnapshotter, Configuration.ConfigurationSnapshotter>();
         services.AddScoped<Application.Abstractions.IExceptionDefaults, Exceptions.ConfigBackedExceptionDefaults>();
         services.AddSingleton<Application.Abstractions.Storage.IFileStorage, Storage.LocalDiskFileStorage>();
         services.AddSingleton<Application.Abstractions.Storage.IFileSignatureInspector, Storage.EvidenceFileSignatureInspector>();

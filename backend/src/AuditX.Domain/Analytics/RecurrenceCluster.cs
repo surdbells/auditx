@@ -13,7 +13,11 @@ namespace AuditX.Domain.Analytics;
 /// </summary>
 public sealed class RecurrenceCluster : AggregateRoot
 {
-    /// <summary>Minimum closed exceptions for a cluster to be a recurrence (constant for now; M12-config later).</summary>
+    /// <summary>
+    /// Default minimum closed exceptions for a cluster to be a recurrence. Kept as a domain const for purity and used
+    /// as the fallback; the M9 scan reads the effective threshold from the active <c>exception_defaults</c> config
+    /// (M12) and passes it into <see cref="Create"/> / <see cref="Refresh"/>.
+    /// </summary>
     public const int DetectionThreshold = 3;
 
     private RecurrenceCluster()
@@ -45,12 +49,14 @@ public sealed class RecurrenceCluster : AggregateRoot
         JsonSerializer.Deserialize<List<Guid>>(MemberExceptionIdsJson) ?? [];
 
     /// <summary>
-    /// Create a brand-new cluster. Raises the detected event when it is created at/above threshold (the common
-    /// case — the scan only persists clusters that meet the rule).
+    /// Create a brand-new cluster. Raises the detected event when it is created at/above <paramref name="threshold"/>
+    /// (the common case — the scan only persists clusters that meet the rule). The threshold defaults to
+    /// <see cref="DetectionThreshold"/> when not supplied.
     /// </summary>
     public static RecurrenceCluster Create(
         Guid auditableEntityId, string? category, int windowMonths,
-        IReadOnlyList<Guid> memberExceptionIds, DateTimeOffset firstOccurredAt, DateTimeOffset lastOccurredAt, DateTimeOffset nowUtc)
+        IReadOnlyList<Guid> memberExceptionIds, DateTimeOffset firstOccurredAt, DateTimeOffset lastOccurredAt,
+        int threshold, DateTimeOffset nowUtc)
     {
         var cluster = new RecurrenceCluster
         {
@@ -64,7 +70,7 @@ public sealed class RecurrenceCluster : AggregateRoot
             MemberExceptionIdsJson = Serialize(memberExceptionIds),
         };
 
-        if (cluster.ClosedExceptionCount >= DetectionThreshold)
+        if (cluster.ClosedExceptionCount >= threshold)
         {
             cluster.MarkDetected(nowUtc);
         }
@@ -74,12 +80,14 @@ public sealed class RecurrenceCluster : AggregateRoot
 
     /// <summary>
     /// Refresh an existing cluster with a recomputed member set. Raises the detected event only when the count
-    /// crosses from below the threshold to at/above it (a newly-detected recurrence), so re-runs are idempotent.
+    /// crosses from below <paramref name="threshold"/> to at/above it (a newly-detected recurrence), so re-runs are
+    /// idempotent.
     /// </summary>
     public void Refresh(
-        IReadOnlyList<Guid> memberExceptionIds, DateTimeOffset firstOccurredAt, DateTimeOffset lastOccurredAt, int windowMonths, DateTimeOffset nowUtc)
+        IReadOnlyList<Guid> memberExceptionIds, DateTimeOffset firstOccurredAt, DateTimeOffset lastOccurredAt,
+        int windowMonths, int threshold, DateTimeOffset nowUtc)
     {
-        var wasBelowThreshold = ClosedExceptionCount < DetectionThreshold;
+        var wasBelowThreshold = ClosedExceptionCount < threshold;
 
         WindowMonths = windowMonths;
         FirstOccurredAt = firstOccurredAt;
@@ -87,7 +95,7 @@ public sealed class RecurrenceCluster : AggregateRoot
         ClosedExceptionCount = memberExceptionIds.Count;
         MemberExceptionIdsJson = Serialize(memberExceptionIds);
 
-        if (wasBelowThreshold && ClosedExceptionCount >= DetectionThreshold)
+        if (wasBelowThreshold && ClosedExceptionCount >= threshold)
         {
             MarkDetected(nowUtc);
         }

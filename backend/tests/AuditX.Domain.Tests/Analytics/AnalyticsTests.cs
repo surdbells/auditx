@@ -15,7 +15,7 @@ public sealed class RecurrenceClusterTests
     public void Create_at_or_above_threshold_raises_detected_event()
     {
         var members = Ids(3);
-        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, members, Now.AddMonths(-6), Now, Now);
+        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, members, Now.AddMonths(-6), Now, RecurrenceCluster.DetectionThreshold, Now);
 
         Assert.Equal(3, cluster.ClosedExceptionCount);
         Assert.NotNull(cluster.NotifiedAt);
@@ -25,7 +25,7 @@ public sealed class RecurrenceClusterTests
     [Fact]
     public void Create_below_threshold_does_not_raise_event()
     {
-        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, Ids(2), Now.AddMonths(-2), Now, Now);
+        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, Ids(2), Now.AddMonths(-2), Now, RecurrenceCluster.DetectionThreshold, Now);
 
         Assert.Equal(2, cluster.ClosedExceptionCount);
         Assert.Null(cluster.NotifiedAt);
@@ -36,10 +36,10 @@ public sealed class RecurrenceClusterTests
     public void Refresh_re_crossing_the_threshold_re_raises_the_event()
     {
         // Start below threshold (no event), then a refresh pushes it to/over threshold → newly detected.
-        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, Ids(2), Now.AddMonths(-2), Now, Now);
+        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, Ids(2), Now.AddMonths(-2), Now, RecurrenceCluster.DetectionThreshold, Now);
         cluster.ClearDomainEvents();
 
-        cluster.Refresh(Ids(4), Now.AddMonths(-3), Now, 24, Now);
+        cluster.Refresh(Ids(4), Now.AddMonths(-3), Now, 24, RecurrenceCluster.DetectionThreshold, Now);
 
         Assert.Equal(4, cluster.ClosedExceptionCount);
         Assert.Contains(cluster.DomainEvents, e => e is RecurrenceClusterDetectedEvent);
@@ -48,10 +48,10 @@ public sealed class RecurrenceClusterTests
     [Fact]
     public void Refresh_that_stays_above_threshold_does_not_re_raise()
     {
-        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, Ids(3), Now.AddMonths(-3), Now, Now);
+        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, Ids(3), Now.AddMonths(-3), Now, RecurrenceCluster.DetectionThreshold, Now);
         cluster.ClearDomainEvents();
 
-        cluster.Refresh(Ids(5), Now.AddMonths(-4), Now, 24, Now);
+        cluster.Refresh(Ids(5), Now.AddMonths(-4), Now, 24, RecurrenceCluster.DetectionThreshold, Now);
 
         Assert.Equal(5, cluster.ClosedExceptionCount);
         Assert.DoesNotContain(cluster.DomainEvents, e => e is RecurrenceClusterDetectedEvent);
@@ -61,10 +61,10 @@ public sealed class RecurrenceClusterTests
     public void Refresh_downgrading_below_threshold_emits_nothing_and_keeps_the_row()
     {
         // The daily scan downgrades a cluster whose members have aged out of the window.
-        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, Ids(4), Now.AddMonths(-5), Now, Now);
+        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "control_gap", 24, Ids(4), Now.AddMonths(-5), Now, RecurrenceCluster.DetectionThreshold, Now);
         cluster.ClearDomainEvents();
 
-        cluster.Refresh([], cluster.FirstOccurredAt, cluster.LastOccurredAt, 24, Now);
+        cluster.Refresh([], cluster.FirstOccurredAt, cluster.LastOccurredAt, 24, RecurrenceCluster.DetectionThreshold, Now);
 
         Assert.Equal(0, cluster.ClosedExceptionCount);
         Assert.DoesNotContain(cluster.DomainEvents, e => e is RecurrenceClusterDetectedEvent);
@@ -73,7 +73,7 @@ public sealed class RecurrenceClusterTests
     [Fact]
     public void Blank_category_normalises_to_null()
     {
-        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "   ", 24, Ids(3), Now.AddMonths(-1), Now, Now);
+        var cluster = RecurrenceCluster.Create(Guid.NewGuid(), "   ", 24, Ids(3), Now.AddMonths(-1), Now, RecurrenceCluster.DetectionThreshold, Now);
         Assert.Null(cluster.Category);
     }
 }

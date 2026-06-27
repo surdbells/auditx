@@ -42,6 +42,7 @@ public sealed class ApproveActionCommandHandler(
     IEnumerable<IPendingActionExecutor> executors,
     ICurrentUser currentUser,
     IPermissionResolver permissions,
+    IActiveConfigurationProvider activeConfig,
     IAuditRecorder audit,
     IClock clock,
     IUnitOfWork unitOfWork)
@@ -74,6 +75,10 @@ public sealed class ApproveActionCommandHandler(
         }, cancellationToken);
 
         await permissions.InvalidateAllAsync(cancellationToken);
+        // Post-commit: a config_activation approval may have switched the active version for some domain. The generic
+        // handler doesn't know which, so drop all cached active configs (cheap; approvals are infrequent). Invalidating
+        // here — after the transaction commits — avoids the race where a concurrent reader re-seeds the stale version.
+        activeConfig.InvalidateAll();
         return Unit.Value;
     }
 }

@@ -14,11 +14,12 @@ public static class MakerCheckerActionTypes
     public const string SanctionApplication = "sanction_application";
     public const string SanctionsGridEdit = "sanctions_grid_edit";
     public const string RetentionPolicyChange = "retention_policy_change";
+    public const string ConfigActivation = "config_activation";
 
     /// <summary>Action types enabled for maker-checker by default on deployment.</summary>
     public static readonly IReadOnlyList<string> DefaultEnabled =
     [
         RolePermissionChange, TemplatePublish, PlanApproval, MapApproval,
-        SanctionApplication, SanctionsGridEdit, RetentionPolicyChange,
+        SanctionApplication, SanctionsGridEdit, RetentionPolicyChange, ConfigActivation,
     ];
 }
