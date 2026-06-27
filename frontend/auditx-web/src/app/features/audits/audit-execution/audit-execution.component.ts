@@ -21,6 +21,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Observable } from 'rxjs';
 
 import { AuditsService } from '../../../core/services/audits.service';
+import { ExceptionsService } from '../../../core/services/exceptions.service';
+import { UsersService } from '../../../core/services/users.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
@@ -31,9 +33,15 @@ import {
   ChecklistResponse,
   EvidenceFile,
   ProblemDetails,
+  RaiseExceptionRequest,
   ResponseVerdict,
   ReviewSummary,
+  UserDto,
 } from '../../../core/models';
+import {
+  RaiseExceptionDialogComponent,
+  RaiseExceptionDialogData,
+} from '../../exceptions/dialogs/raise-exception-dialog.component';
 import {
   RespondItemDialogComponent,
   RespondItemDialogData,
@@ -102,6 +110,8 @@ export class AuditExecutionComponent {
   readonly reloadRequested = output<void>();
 
   private readonly service = inject(AuditsService);
+  private readonly exceptions = inject(ExceptionsService);
+  private readonly users = inject(UsersService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -109,6 +119,10 @@ export class AuditExecutionComponent {
   readonly progress = signal<ChecklistProgress | null>(null);
   readonly summary = signal<ReviewSummary | null>(null);
   readonly failItems = signal<ChecklistProgressItem[]>([]);
+  /** itemId → response comment for fail items, used to prefill the raise dialog. */
+  private readonly failComments = signal<Record<string, string>>({});
+
+  private usersCache: UserDto[] = [];
 
   /** itemId → loaded response (lazy, populated when a panel expands). */
   readonly responses = signal<Record<string, ChecklistResponse | null>>({});
@@ -145,6 +159,9 @@ export class AuditExecutionComponent {
     () =>
       this.auth.hasPermission(Permissions.ViewEvidence) ||
       this.auth.hasPermission(Permissions.ViewAudit),
+  );
+  readonly canRaiseException = computed(() =>
+    this.auth.hasPermission(Permissions.RaiseException),
   );
 
   /** Responding / discarding needs RespondItem AND an in_progress audit. */
@@ -228,6 +245,14 @@ export class AuditExecutionComponent {
         const byId = new Map(
           (this.progress()?.items ?? []).map((i) => [i.itemId, i]),
         );
+        // Capture the response comment so the raise dialog can prefill it.
+        const comments: Record<string, string> = {};
+        for (const f of r.items) {
+          if (f.comment) {
+            comments[f.itemId] = f.comment;
+          }
+        }
+        this.failComments.set(comments);
         this.failItems.set(
           r.items.map(
             (f) =>
@@ -417,6 +442,51 @@ export class AuditExecutionComponent {
       next: () => this.afterMutation(message),
       error: (err: unknown) => this.handleError(err),
     });
+  }
+
+  /* ---- Raise exception from a failed item ---- */
+
+  raiseException(item: ChecklistProgressItem): void {
+    if (this.usersCache.length) {
+      this.openRaiseDialog(item, this.usersCache);
+      return;
+    }
+    this.users.list({ status: 'active', limit: 200 }).subscribe({
+      next: (page) => {
+        this.usersCache = page.items;
+        this.openRaiseDialog(item, page.items);
+      },
+      error: () => this.openRaiseDialog(item, []),
+    });
+  }
+
+  private openRaiseDialog(
+    item: ChecklistProgressItem,
+    users: UserDto[],
+  ): void {
+    const comment = this.failComments()[item.itemId] ?? '';
+    const data: RaiseExceptionDialogData = {
+      checklistItemId: item.itemId,
+      title: item.prompt,
+      rootCause: comment,
+      recommendation: comment,
+      users,
+    };
+    this.dialog
+      .open(RaiseExceptionDialogComponent, { data, width: '560px' })
+      .afterClosed()
+      .subscribe((result?: RaiseExceptionRequest) => {
+        if (!result) {
+          return;
+        }
+        this.exceptions.raise(this.audit().id, result).subscribe({
+          next: () => {
+            this.notify.success('Exception raised.');
+            // The item now has an exception; refresh progress + the fail list.
+            this.refresh();
+          },
+        });
+      });
   }
 
   /* ---- Evidence (NO audit version) ---- */

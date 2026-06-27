@@ -16,7 +16,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Observable } from 'rxjs';
 
+import { RouterLink } from '@angular/router';
+
 import { AuditsService } from '../../../core/services/audits.service';
+import { ExceptionsService } from '../../../core/services/exceptions.service';
 import { UsersService } from '../../../core/services/users.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -25,6 +28,7 @@ import {
   Audit,
   AuditChecklistItem,
   AuditTeamMember,
+  ExceptionListItem,
   ProblemDetails,
   TransitionTarget,
   UserDto,
@@ -73,6 +77,7 @@ const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
+    RouterLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -91,6 +96,7 @@ export class AuditDetailComponent {
   readonly id = input.required<string>();
 
   private readonly service = inject(AuditsService);
+  private readonly exceptionsService = inject(ExceptionsService);
   private readonly users = inject(UsersService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -100,11 +106,17 @@ export class AuditDetailComponent {
   readonly audit = signal<Audit | null>(null);
   /** userId → display name, resolved lazily. */
   readonly userNames = signal<Record<string, string>>({});
+  /** Exceptions raised against this audit (M6). */
+  readonly exceptions = signal<ExceptionListItem[]>([]);
 
   private usersCache: UserDto[] = [];
 
   readonly canManage = computed(() =>
     this.auth.hasPermission(Permissions.ManageAudit),
+  );
+
+  readonly canViewExceptions = computed(() =>
+    this.auth.hasPermission(Permissions.ViewExceptions),
   );
 
   readonly status = computed(() => this.audit()?.status ?? null);
@@ -220,8 +232,22 @@ export class AuditDetailComponent {
         this.audit.set(audit);
         this.state.set('ready');
         this.ensureUsers();
+        this.loadExceptions();
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  /** Loads the exceptions raised against this audit (M6). Non-fatal on error. */
+  private loadExceptions(): void {
+    if (!this.canViewExceptions()) {
+      return;
+    }
+    this.exceptionsService.listForAudit(this.id()).subscribe({
+      next: (items) => this.exceptions.set(items),
+      error: () => {
+        // Non-fatal: leave the section empty.
+      },
     });
   }
 

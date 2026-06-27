@@ -170,6 +170,81 @@
   color: #1b5e20;
 }
 
+// M6 — Exception lifecycle statuses (closed / cancelled / in_progress reuse
+// the palette above; the rest are defined here).
+.status-badge[data-status='open'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
+.status-badge[data-status='map_submitted'] {
+  background: color-mix(in srgb, #6a1b9a 16%, transparent);
+  color: #4a148c;
+}
+
+.status-badge[data-status='map_approved'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #1b5e20;
+}
+
+.status-badge[data-status='map_rejected'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
+.status-badge[data-status='pending_closure'],
+.status-badge[data-status='pending_cia_approval'] {
+  background: color-mix(in srgb, #ef6c00 18%, transparent);
+  color: #e65100;
+}
+
+// M6 — Exception severity pills, driven by a [data-severity] attribute.
+.severity-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font: var(--mat-sys-label-medium);
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.severity-badge[data-severity='low'] {
+  background: color-mix(in srgb, #616161 16%, transparent);
+  color: #424242;
+}
+
+.severity-badge[data-severity='medium'] {
+  background: color-mix(in srgb, #1565c0 16%, transparent);
+  color: #0d47a1;
+}
+
+.severity-badge[data-severity='high'] {
+  background: color-mix(in srgb, #ef6c00 18%, transparent);
+  color: #e65100;
+}
+
+.severity-badge[data-severity='critical'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
+// M6 — Overdue badge.
+.overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font: var(--mat-sys-label-medium);
+  font-weight: 500;
+  white-space: nowrap;
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #b71c1c;
+}
+
 .muted {
   color: var(--mat-sys-on-surface-variant);
 }

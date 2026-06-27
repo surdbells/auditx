@@ -108,6 +108,12 @@ export class MainLayoutComponent {
       permissions: [Permissions.ViewCoverage],
     },
     {
+      label: 'Exceptions',
+      icon: 'report_problem',
+      route: '/exceptions',
+      permissions: [Permissions.ViewExceptions],
+    },
+    {
       label: 'Maker-Checker',
       icon: 'fact_check',
       route: '/admin/maker-checker',

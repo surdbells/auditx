@@ -41,10 +41,18 @@
               <p class="exec__fail-prompt">{{ item.prompt }}</p>
               <span class="muted">Assignee: {{ nameOf(item.assignedUserId) }}</span>
             </div>
-            <button matButton="filled" type="button" (click)="recordJudgement(item)">
-              <mat-icon>gavel</mat-icon>
-              Record judgement
-            </button>
+            <div class="exec__fail-actions">
+              @if (canRaiseException()) {
+                <button matButton type="button" (click)="raiseException(item)">
+                  <mat-icon>report_problem</mat-icon>
+                  Raise exception
+                </button>
+              }
+              <button matButton="filled" type="button" (click)="recordJudgement(item)">
+                <mat-icon>gavel</mat-icon>
+                Record judgement
+              </button>
+            </div>
           </li>
         }
       </ul>

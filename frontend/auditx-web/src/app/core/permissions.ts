@@ -48,6 +48,16 @@ export const Permissions = {
   UploadEvidence: 'UploadEvidence',
   ViewEvidence: 'ViewEvidence',
   ManageEvidence: 'ManageEvidence',
+
+  // M6 — Exceptions & Management Action Plans (MAP)
+  ViewExceptions: 'ViewExceptions',
+  RaiseException: 'RaiseException',
+  ManageException: 'ManageException',
+  SubmitMap: 'SubmitMap',
+  ApproveMap: 'ApproveMap',
+  CloseException: 'CloseException',
+  CancelException: 'CancelException',
+  CIA: 'CIA',
 } as const;
 
 export type PermissionKey = (typeof Permissions)[keyof typeof Permissions];

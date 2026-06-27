@@ -1,0 +1,206 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+
+import { environment } from '../../../environments/environment';
+import { ApiService } from './api.service';
+import {
+  ApiResponse,
+  ApproveMapResult,
+  ChangeSeverityRequest,
+  CloseExceptionRequest,
+  CursorPage,
+  EvidenceFile,
+  Exception,
+  ExceptionHistoryEntry,
+  ExceptionListItem,
+  ExceptionQuery,
+  RaiseExceptionRequest,
+  ReassignOwnerRequest,
+  ReasonVersionRequest,
+  SubmitMapRequest,
+  VersionRequest,
+} from '../models';
+
+/**
+ * Typed client for the M6 Exceptions & Management Action Plan (MAP) endpoints.
+ *
+ * Every exception mutation echoes the Exception's `version`; the response is the
+ * updated Exception with a fresh version that callers must refresh into local
+ * state. Evidence list/upload/download carry NO version. `approve` returns the
+ * updated Exception (200) or, when maker-checker-gated, a 202 with a
+ * `pendingActionId` — {@link approveMap} surfaces which path occurred.
+ */
+@Injectable({ providedIn: 'root' })
+export class ExceptionsService {
+  private readonly api = inject(ApiService);
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = environment.apiBaseUrl;
+
+  /* ---- Raise / list / read ---- */
+
+  raise(auditId: string, body: RaiseExceptionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/audits/${auditId}/exceptions`, body);
+  }
+
+  /** Per-audit list (used on the audit-detail page). */
+  listForAudit(
+    auditId: string,
+    status?: string,
+  ): Observable<ExceptionListItem[]> {
+    return this.api.get<ExceptionListItem[]>(
+      `/audits/${auditId}/exceptions`,
+      { status },
+    );
+  }
+
+  /** Cross-audit cursor-paged tracker. */
+  list(query: ExceptionQuery): Observable<CursorPage<ExceptionListItem>> {
+    return this.api.get<CursorPage<ExceptionListItem>>('/exceptions', {
+      status: query.status,
+      severity: query.severity,
+      owner: query.owner,
+      entity: query.entity,
+      audit: query.audit,
+      category: query.category,
+      recurrence: query.recurrence,
+      overdue: query.overdue,
+      cursor: query.cursor,
+      limit: query.limit,
+    });
+  }
+
+  getById(id: string): Observable<Exception> {
+    return this.api.get<Exception>(`/exceptions/${id}`);
+  }
+
+  getHistory(id: string): Observable<ExceptionHistoryEntry[]> {
+    return this.api.get<ExceptionHistoryEntry[]>(`/exceptions/${id}/history`);
+  }
+
+  /* ---- Management ---- */
+
+  changeSeverity(
+    id: string,
+    body: ChangeSeverityRequest,
+  ): Observable<Exception> {
+    return this.api.patch<Exception>(`/exceptions/${id}/severity`, body);
+  }
+
+  reassignOwner(
+    id: string,
+    body: ReassignOwnerRequest,
+  ): Observable<Exception> {
+    return this.api.patch<Exception>(`/exceptions/${id}/owner`, body);
+  }
+
+  cancel(id: string, body: ReasonVersionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/cancel`, body);
+  }
+
+  /* ---- MAP lifecycle ---- */
+
+  submitMap(id: string, body: SubmitMapRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/map`, body);
+  }
+
+  /**
+   * Approves the MAP. Returns `{ exception }` when applied directly (200) or
+   * `{ pendingActionId }` when maker-checker-gated (202, status stays
+   * map_submitted). Reads the HTTP status to disambiguate.
+   */
+  approveMap(id: string, body: VersionRequest): Observable<ApproveMapResult> {
+    return this.http
+      .post<ApiResponse<Exception | { pendingActionId: string }>>(
+        `${this.baseUrl}/exceptions/${id}/map/approve`,
+        body,
+        { withCredentials: true, observe: 'response' },
+      )
+      .pipe(
+        map((res) => {
+          const data = res.body?.data;
+          if (res.status === 202) {
+            const pending = data as { pendingActionId: string } | null;
+            return { pendingActionId: pending?.pendingActionId };
+          }
+          return { exception: data as Exception };
+        }),
+      );
+  }
+
+  rejectMap(id: string, body: ReasonVersionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/map/reject`, body);
+  }
+
+  markMapComplete(id: string, body: VersionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/map/mark-complete`, body);
+  }
+
+  returnForEvidence(
+    id: string,
+    body: ReasonVersionRequest,
+  ): Observable<Exception> {
+    return this.api.post<Exception>(
+      `/exceptions/${id}/return-for-evidence`,
+      body,
+    );
+  }
+
+  /** Marks a single MAP action complete. */
+  markActionComplete(
+    id: string,
+    actionId: string,
+    body: VersionRequest,
+  ): Observable<Exception> {
+    return this.api.patch<Exception>(
+      `/exceptions/${id}/map/actions/${actionId}`,
+      body,
+    );
+  }
+
+  /* ---- Closure / CIA ---- */
+
+  close(id: string, body: CloseExceptionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/close`, body);
+  }
+
+  ciaCountersign(id: string, body: VersionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/cia-countersign`, body);
+  }
+
+  /* ---- Per-action evidence (NO version) ---- */
+
+  listActionEvidence(
+    id: string,
+    actionId: string,
+  ): Observable<EvidenceFile[]> {
+    return this.api.get<EvidenceFile[]>(
+      `/exceptions/${id}/map/actions/${actionId}/evidence`,
+    );
+  }
+
+  /** Multipart upload (field `file`); no version. */
+  uploadActionEvidence(
+    id: string,
+    actionId: string,
+    file: File,
+  ): Observable<EvidenceFile> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http
+      .post<ApiResponse<EvidenceFile>>(
+        `${this.baseUrl}/exceptions/${id}/map/actions/${actionId}/evidence`,
+        form,
+        { withCredentials: true },
+      )
+      .pipe(map((r) => r.data));
+  }
+
+  /** Downloads the raw evidence binary as a Blob (the Exception carries auditId). */
+  downloadEvidence(auditId: string, evidenceId: string): Observable<Blob> {
+    return this.http.get(
+      `${this.baseUrl}/audits/${auditId}/evidence/${evidenceId}`,
+      { responseType: 'blob', withCredentials: true },
+    );
+  }
+}

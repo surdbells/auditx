@@ -1,0 +1,297 @@
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading exception…" />
+  }
+  @case ('error') {
+    <app-error-state message="We couldn't load this exception." (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (exception(); as e) {
+      <app-page-header [title]="e.title" subtitle="Exception">
+        <div actions class="detail__actions">
+          <button matButton type="button" (click)="showHistory()">
+            <mat-icon>history</mat-icon>
+            History
+          </button>
+          @if (canManageNow()) {
+            <button matButton type="button" (click)="changeSeverity()">
+              <mat-icon>tune</mat-icon>
+              Change severity
+            </button>
+            <button matButton type="button" (click)="reassignOwner()">
+              <mat-icon>person</mat-icon>
+              Reassign owner
+            </button>
+          }
+          @if (canCancelNow()) {
+            <button matButton type="button" (click)="cancel()">
+              <mat-icon>cancel</mat-icon>
+              Cancel
+            </button>
+          }
+        </div>
+      </app-page-header>
+
+      <div class="detail__status-row">
+        <span class="severity-badge" [attr.data-severity]="e.severity">
+          {{ e.severity }}
+        </span>
+        <span class="status-badge" [attr.data-status]="e.status">
+          {{ e.status.replaceAll('_', ' ') }}
+        </span>
+        @if (e.isOverdue) {
+          <span class="overdue-badge" [matTooltip]="e.daysPastTarget + ' day(s) past target'">
+            Overdue +{{ e.daysPastTarget }}
+          </span>
+        }
+        @if (e.isRecurrence) {
+          <span class="status-badge">Recurrence</span>
+        }
+      </div>
+
+      @if (e.status === 'cancelled' && e.cancellationReason) {
+        <mat-card appearance="outlined" class="detail__notice">
+          <strong>Cancelled.</strong> {{ e.cancellationReason }}
+        </mat-card>
+      }
+      @if (e.status === 'map_rejected' && e.mapRejectionReason) {
+        <mat-card appearance="outlined" class="detail__notice">
+          <strong>MAP rejected.</strong> {{ e.mapRejectionReason }}
+        </mat-card>
+      }
+
+      <!-- Overview -->
+      <mat-card appearance="outlined" class="detail__card">
+        <h3 class="detail__card-title">Overview</h3>
+        <dl class="detail__grid">
+          <div>
+            <dt>Target date</dt>
+            <dd>
+              {{ e.targetDate | date: 'mediumDate' }}
+              @if (e.targetDateOverridden) {
+                <span class="muted">(overridden)</span>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Owner</dt>
+            <dd>{{ ownerName() }}</dd>
+          </div>
+          <div>
+            <dt>Raised by</dt>
+            <dd>{{ raisedByName() }} · {{ e.raisedAt | date: 'mediumDate' }}</dd>
+          </div>
+          <div>
+            <dt>Category</dt>
+            <dd>{{ e.category || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Audit</dt>
+            <dd><a [routerLink]="['/audits', e.auditId]">View audit</a></dd>
+          </div>
+          @if (e.isRecurrence && e.recurrenceOfExceptionId) {
+            <div>
+              <dt>Recurrence of</dt>
+              <dd>
+                <a [routerLink]="['/exceptions', e.recurrenceOfExceptionId]">
+                  Previous exception
+                </a>
+              </dd>
+            </div>
+          }
+        </dl>
+        @if (e.rootCause) {
+          <div class="detail__scope">
+            <dt>Root cause</dt>
+            <dd>{{ e.rootCause }}</dd>
+          </div>
+        }
+        @if (e.recommendation) {
+          <div class="detail__scope">
+            <dt>Recommendation</dt>
+            <dd>{{ e.recommendation }}</dd>
+          </div>
+        }
+      </mat-card>
+
+      <!-- Management Action Plan -->
+      <mat-card appearance="outlined" class="detail__card">
+        <div class="detail__card-head">
+          <h3 class="detail__card-title">Management action plan</h3>
+          <div class="detail__card-actions">
+            @if (canSubmitMapNow()) {
+              <button matButton="filled" type="button" (click)="submitMap()">
+                <mat-icon>playlist_add</mat-icon>
+                {{ e.status === 'map_rejected' ? 'Resubmit MAP' : 'Submit MAP' }}
+              </button>
+            }
+            @if (canReviewMap()) {
+              <button matButton="filled" type="button" (click)="approveMap()">
+                <mat-icon>check</mat-icon>
+                Approve
+              </button>
+              <button matButton type="button" (click)="rejectMap()">
+                <mat-icon>close</mat-icon>
+                Reject
+              </button>
+            }
+            @if (canMarkMapComplete()) {
+              <button matButton="filled" type="button" (click)="markMapComplete()">
+                <mat-icon>task_alt</mat-icon>
+                Mark MAP complete
+              </button>
+            }
+            @if (canReturnForEvidence()) {
+              <button matButton type="button" (click)="returnForEvidence()">
+                <mat-icon>reply</mat-icon>
+                Return for evidence
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (!e.mapActions.length) {
+          <p class="muted detail__empty">No management actions submitted yet.</p>
+        } @else {
+          <ul class="detail__actions-list">
+            @for (action of e.mapActions; track action.id) {
+              <li class="detail__action">
+                <div class="detail__action-head">
+                  <p class="detail__action-desc">{{ action.description }}</p>
+                  <span class="status-badge" [attr.data-status]="action.status === 'complete' ? 'completed' : 'planned'">
+                    {{ action.status }}
+                  </span>
+                </div>
+                <div class="detail__action-meta muted">
+                  <span>Owner: {{ nameOf(action.ownerUserId) }}</span>
+                  <span>· Due {{ action.targetDate | date: 'mediumDate' }}</span>
+                  @if (action.expectedEvidenceType) {
+                    <span>· Evidence: {{ action.expectedEvidenceType }}</span>
+                  }
+                </div>
+
+                <div class="detail__action-actions">
+                  @if (canWorkActions() && action.status !== 'complete') {
+                    <button matButton type="button" (click)="markActionComplete(action)">
+                      <mat-icon>done</mat-icon>
+                      Mark complete
+                    </button>
+                  }
+                </div>
+
+                <!-- Per-action evidence -->
+                @if (canViewEvidence()) {
+                  <div class="detail__evidence">
+                    <div class="detail__evidence-head">
+                      <span class="detail__evidence-title">Evidence</span>
+                      <button matButton type="button" (click)="loadEvidence(action)">
+                        <mat-icon>refresh</mat-icon>
+                        Load
+                      </button>
+                      @if (canUploadEvidence() && !isReadOnly()) {
+                        <button matButton type="button" (click)="fileInput.click()">
+                          <mat-icon>upload_file</mat-icon>
+                          Upload
+                        </button>
+                        <input
+                          #fileInput
+                          type="file"
+                          hidden
+                          (change)="uploadEvidence(action, fileInput)"
+                        />
+                      }
+                    </div>
+                    @if (!evidenceFor(action.id).length) {
+                      <p class="muted detail__evidence-empty">No evidence loaded.</p>
+                    } @else {
+                      <ul class="detail__files">
+                        @for (file of evidenceFor(action.id); track file.id) {
+                          <li class="detail__file">
+                            <div class="detail__file-info">
+                              <span class="detail__file-name">
+                                {{ file.originalFilename }}
+                              </span>
+                              <span class="muted detail__file-meta">
+                                {{ formatSize(file.sizeBytes) }} ·
+                                {{ nameOf(file.uploadedBy) }} ·
+                                {{ file.uploadedAt | date: 'short' }}
+                              </span>
+                            </div>
+                            <button
+                              matIconButton
+                              type="button"
+                              (click)="downloadEvidence(file)"
+                              aria-label="Download evidence"
+                            >
+                              <mat-icon>download</mat-icon>
+                            </button>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </mat-card>
+
+      <!-- Closure / CIA -->
+      @if (canCloseNow() || canCiaCountersign()) {
+        <mat-card appearance="outlined" class="detail__card">
+          <div class="detail__card-head">
+            <h3 class="detail__card-title">Closure</h3>
+            <div class="detail__card-actions">
+              @if (canCloseNow()) {
+                <button matButton="filled" type="button" (click)="close()">
+                  <mat-icon>lock</mat-icon>
+                  Close exception
+                </button>
+              }
+              @if (canCiaCountersign()) {
+                <button matButton="filled" type="button" (click)="ciaCountersign()">
+                  <mat-icon>verified</mat-icon>
+                  CIA countersign
+                </button>
+              }
+            </div>
+          </div>
+          @if (e.ciaPending) {
+            <p class="muted">
+              This Critical exception is awaiting CIA countersign before final closure.
+            </p>
+          }
+        </mat-card>
+      }
+
+      @if (e.status === 'closed') {
+        <mat-card appearance="outlined" class="detail__card">
+          <h3 class="detail__card-title">Closed</h3>
+          <dl class="detail__grid">
+            <div>
+              <dt>Closed by</dt>
+              <dd>{{ nameOf(e.closedBy) }}</dd>
+            </div>
+            <div>
+              <dt>Closed at</dt>
+              <dd>{{ e.closedAt ? (e.closedAt | date: 'medium') : '—' }}</dd>
+            </div>
+            @if (e.ciaCountersignedBy) {
+              <div>
+                <dt>CIA countersigned by</dt>
+                <dd>{{ nameOf(e.ciaCountersignedBy) }}</dd>
+              </div>
+            }
+          </dl>
+          @if (e.closureEvidenceNote) {
+            <div class="detail__scope">
+              <dt>Closure note</dt>
+              <dd>{{ e.closureEvidenceNote }}</dd>
+            </div>
+          }
+        </mat-card>
+      }
+    }
+  }
+}

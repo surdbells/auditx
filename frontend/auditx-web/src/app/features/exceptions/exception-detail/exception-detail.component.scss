@@ -1,0 +1,159 @@
+.detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.detail__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.detail__notice {
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+}
+
+.detail__card {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+}
+
+.detail__card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.detail__card-title {
+  margin: 0 0 0.75rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.detail__card-head .detail__card-title {
+  margin: 0;
+}
+
+.detail__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.detail__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.detail__grid dt,
+.detail__scope dt {
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+  margin-bottom: 0.2rem;
+}
+
+.detail__grid dd,
+.detail__scope dd {
+  margin: 0;
+}
+
+.detail__scope {
+  margin-top: 1rem;
+}
+
+.detail__empty {
+  margin: 0;
+}
+
+.detail__actions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail__action {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+}
+
+.detail__action-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.detail__action-desc {
+  margin: 0;
+  font-weight: 500;
+}
+
+.detail__action-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.4rem 0;
+}
+
+.detail__action-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.detail__evidence {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  padding-top: 0.5rem;
+}
+
+.detail__evidence-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail__evidence-title {
+  font-weight: 500;
+  margin-right: auto;
+}
+
+.detail__evidence-empty {
+  margin: 0.5rem 0 0;
+}
+
+.detail__files {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail__file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.detail__file-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail__file-name {
+  font-weight: 500;
+}

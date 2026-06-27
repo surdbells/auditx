@@ -1,0 +1,50 @@
+.exceptions__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.exceptions__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.exceptions__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.exceptions__table {
+  width: 100%;
+}
+
+.exceptions__row {
+  cursor: pointer;
+}
+
+.exceptions__row:hover {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.exceptions__title {
+  font-weight: 500;
+}
+
+.exceptions__flags {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.exceptions__recurrence {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.exceptions__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}

@@ -229,6 +229,39 @@
         }
       </mat-card>
 
+      <!-- Exceptions (M6) — raised against this audit's findings -->
+      @if (canViewExceptions() && showExecution()) {
+        <mat-card appearance="outlined" class="detail__card">
+          <h3 class="detail__card-title">
+            Exceptions ({{ exceptions().length }})
+          </h3>
+          @if (!exceptions().length) {
+            <p class="muted detail__empty">No exceptions raised yet.</p>
+          } @else {
+            <ul class="detail__exceptions">
+              @for (ex of exceptions(); track ex.id) {
+                <li class="detail__exception">
+                  <a class="detail__exception-link" [routerLink]="['/exceptions', ex.id]">
+                    {{ ex.title }}
+                  </a>
+                  <div class="detail__exception-meta">
+                    <span class="severity-badge" [attr.data-severity]="ex.severity">
+                      {{ ex.severity }}
+                    </span>
+                    <span class="status-badge" [attr.data-status]="ex.status">
+                      {{ ex.status.replaceAll('_', ' ') }}
+                    </span>
+                    @if (ex.isOverdue) {
+                      <span class="overdue-badge">Overdue +{{ ex.daysPastTarget }}</span>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </mat-card>
+      }
+
       <!-- Execution / fieldwork (M5) — shown once the audit is past Draft -->
       @if (showExecution()) {
         <app-audit-execution
