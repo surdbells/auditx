@@ -1,0 +1,73 @@
+<app-page-header
+  title="Evidence Integrity"
+  subtitle="Evidence files flagged for integrity review (hash mismatches, tampering)."
+/>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading flagged evidence…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the flagged evidence."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="verified"
+        title="No flagged evidence"
+        message="All evidence files have passed integrity checks."
+      />
+    } @else {
+      <mat-card appearance="outlined" class="integrity__table-card">
+        <div class="integrity__table-wrapper">
+          <table mat-table [dataSource]="flagged()" class="integrity__table">
+            <ng-container matColumnDef="filename">
+              <th mat-header-cell *matHeaderCellDef>Filename</th>
+              <td mat-cell *matCellDef="let e">
+                <span class="integrity__filename">{{
+                  e.originalFilename
+                }}</span>
+                <span class="integrity__mime">{{ e.mimeType }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="auditId">
+              <th mat-header-cell *matHeaderCellDef>Audit ID</th>
+              <td mat-cell *matCellDef="let e">{{ e.auditId }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="sha256">
+              <th mat-header-cell *matHeaderCellDef>SHA-256</th>
+              <td mat-cell *matCellDef="let e" class="integrity__hash">
+                {{ e.sha256Hash }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="uploadedAt">
+              <th mat-header-cell *matHeaderCellDef>Uploaded at</th>
+              <td mat-cell *matCellDef="let e">
+                {{ e.uploadedAt | date: 'short' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <td mat-cell *matCellDef="let e">
+                <button matButton type="button" (click)="unflag(e)">
+                  <mat-icon>flag_off</mat-icon>
+                  Unflag
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

@@ -61,6 +61,10 @@ export const Permissions = {
   CloseException: 'CloseException',
   CancelException: 'CancelException',
   CIA: 'CIA',
+
+  // M11 — Audit Trail & Evidence Integrity
+  ViewAuditTrail: 'ViewAuditTrail',
+  ExportAuditTrail: 'ExportAuditTrail',
 } as const;
 
 export type PermissionKey = (typeof Permissions)[keyof typeof Permissions];

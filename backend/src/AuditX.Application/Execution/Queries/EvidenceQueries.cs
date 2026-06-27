@@ -28,6 +28,23 @@ public sealed class ListEvidenceForResponseQueryHandler(
     }
 }
 
+/// <summary>Globally lists flagged (integrity-quarantined) evidence for the M11 integrity admin view (AdminOps).</summary>
+public sealed record FlaggedEvidenceDto(
+    Guid Id, Guid AuditId, string OriginalFilename, string MimeType, long SizeBytes, string Sha256Hash, DateTimeOffset UploadedAt, Guid UploadedBy);
+
+public sealed record ListFlaggedEvidenceQuery : IQuery<IReadOnlyList<FlaggedEvidenceDto>>;
+
+public sealed class ListFlaggedEvidenceQueryHandler(IEvidenceRepository evidence)
+    : IQueryHandler<ListFlaggedEvidenceQuery, IReadOnlyList<FlaggedEvidenceDto>>
+{
+    public async Task<IReadOnlyList<FlaggedEvidenceDto>> Handle(ListFlaggedEvidenceQuery query, CancellationToken cancellationToken)
+    {
+        var files = await evidence.ListFlaggedAsync(cancellationToken);
+        return files.Select(f => new FlaggedEvidenceDto(
+            f.Id, f.AuditId, f.OriginalFilename, f.MimeType, f.SizeBytes, f.Sha256Hash, f.UploadedAt, f.UploadedBy)).ToArray();
+    }
+}
+
 public sealed record DownloadEvidenceQuery(Guid AuditId, Guid EvidenceId) : IQuery<EvidenceDownloadResult>;
 
 public sealed class DownloadEvidenceQueryHandler(

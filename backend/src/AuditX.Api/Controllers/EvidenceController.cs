@@ -1,4 +1,5 @@
 using AuditX.Api.Authorization;
+using AuditX.Api.Contracts;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Execution.Commands;
 using AuditX.Application.Execution.Queries;
@@ -49,4 +50,19 @@ public sealed class EvidenceController(IDispatcher dispatcher) : ApiControllerBa
         await dispatcher.Send(new SoftDeleteEvidenceCommand(auditId, id, reason), cancellationToken);
         return NoContent();
     }
+
+    // M11 evidence integrity: clear an integrity flag after investigation (audit-scoped in-handler).
+    [RequirePermission(PermissionKeys.ManageEvidence)]
+    [HttpPost("api/v1/audits/{auditId:guid}/evidence/{id:guid}/unflag")]
+    public async Task<IActionResult> Unflag(Guid auditId, Guid id, [FromBody] UnflagEvidenceRequest request, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new UnflagEvidenceCommand(auditId, id, request.Resolution), cancellationToken);
+        return NoContent();
+    }
+
+    // M11 integrity admin: global list of flagged evidence (ops view).
+    [RequirePermission(PermissionKeys.AdminOps)]
+    [HttpGet("api/v1/evidence/flagged")]
+    public async Task<IActionResult> ListFlagged(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListFlaggedEvidenceQuery(), cancellationToken));
 }

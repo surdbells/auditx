@@ -1,0 +1,37 @@
+<h2 mat-dialog-title>Unflag evidence</h2>
+<mat-dialog-content>
+  <p class="unflag__intro">
+    Removing the integrity flag from
+    <strong>{{ evidence.originalFilename }}</strong> requires a resolution note
+    for the audit trail.
+  </p>
+  <form [formGroup]="form" class="unflag__form">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Resolution</mat-label>
+      <textarea
+        matInput
+        rows="3"
+        formControlName="resolution"
+        autocomplete="off"
+        placeholder="Explain why the flag is being removed."
+      ></textarea>
+      @if (
+        form.controls.resolution.hasError('required') &&
+        form.controls.resolution.touched
+      ) {
+        <mat-error>A resolution note is required.</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="cancel()">Cancel</button>
+  <button
+    matButton="filled"
+    type="button"
+    (click)="submit()"
+    [disabled]="form.invalid"
+  >
+    Unflag
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,33 @@
+.integrity__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.integrity__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.integrity__table {
+  width: 100%;
+}
+
+.integrity__filename {
+  display: block;
+  font-weight: 500;
+}
+
+.integrity__mime {
+  display: block;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.integrity__hash {
+  max-width: 280px;
+  font: var(--mat-sys-label-small);
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  color: var(--mat-sys-on-surface-variant);
+  white-space: normal;
+  word-break: break-all;
+}

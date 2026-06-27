@@ -13,5 +13,8 @@ public interface IEvidenceRepository
     /// <summary>Total bytes of non-deleted evidence for an audit, for the per-audit aggregate cap (US-M5-010).</summary>
     Task<long> SumSizeForAuditAsync(Guid auditId, CancellationToken cancellationToken = default);
 
+    /// <summary>All currently flagged (integrity-quarantined) evidence files, for the M11 integrity admin view.</summary>
+    Task<IReadOnlyList<EvidenceFile>> ListFlaggedAsync(CancellationToken cancellationToken = default);
+
     void Add(EvidenceFile evidence);
 }

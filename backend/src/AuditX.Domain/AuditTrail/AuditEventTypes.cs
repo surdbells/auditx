@@ -137,6 +137,11 @@ public static class AuditEventTypes
     public const string NotificationRetried = "notification_retried";
     public const string NotificationRuleConfigured = "notification_rule_configured";
     public const string NotificationTemplateOverridden = "notification_template_overridden";
+
+    // M11 audit trail & evidence integrity
+    public const string TrailQueried = "trail_query";
+    public const string TrailExported = "trail_exported";
+    public const string EvidenceUnflagged = "evidence_unflagged";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -171,4 +176,5 @@ public static class AuditTargetTypes
     public const string NotificationDispatch = "notification_dispatch";
     public const string NotificationRule = "notification_rule";
     public const string NotificationTemplate = "notification_template";
+    public const string AuditTrail = "audit_trail";
 }

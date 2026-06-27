@@ -105,3 +105,28 @@ public sealed class SoftDeleteEvidenceCommandHandler(
         return Unit.Value;
     }
 }
+
+/// <summary>Clear an evidence integrity flag after investigation (US-M11 evidence unflag). Reason is mandatory.</summary>
+public sealed record UnflagEvidenceCommand(Guid AuditId, Guid EvidenceId, string Resolution) : ICommand<Unit>;
+
+public sealed class UnflagEvidenceCommandHandler(
+    IAuditRepository audits, IEvidenceRepository evidence, IPermissionResolver permissions, ICurrentUser currentUser, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<UnflagEvidenceCommand, Unit>
+{
+    public async Task<Unit> Handle(UnflagEvidenceCommand command, CancellationToken cancellationToken)
+    {
+        var auditEntity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
+        await AuditAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+
+        var file = await evidence.GetByIdAsync(command.EvidenceId, cancellationToken);
+        if (file is null || file.AuditId != command.AuditId)
+        {
+            throw new NotFoundException("Evidence", command.EvidenceId);
+        }
+
+        file.ClearFlag(command.Resolution); // guards not-flagged + blank-resolution (422).
+        audit.Record(AuditEventTypes.EvidenceUnflagged, AuditTargetTypes.EvidenceFile, file.Id, payload: new { command.Resolution });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Unit.Value;
+    }
+}

@@ -144,6 +144,24 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'admin/audit-trail',
+        title: 'Audit Trail · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAuditTrail)],
+        loadComponent: () =>
+          import(
+            './features/admin/audit-trail/audit-trail.component'
+          ).then((m) => m.AuditTrailComponent),
+      },
+      {
+        path: 'admin/evidence-integrity',
+        title: 'Evidence Integrity · AuditX',
+        canActivate: [permissionGuard(Permissions.AdminOps)],
+        loadComponent: () =>
+          import(
+            './features/admin/evidence-integrity/evidence-integrity.component'
+          ).then((m) => m.EvidenceIntegrityComponent),
+      },
+      {
         path: 'account/notification-preferences',
         title: 'Notification preferences · AuditX',
         loadComponent: () =>

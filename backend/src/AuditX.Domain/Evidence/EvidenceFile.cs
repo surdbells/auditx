@@ -82,6 +82,19 @@ public sealed class EvidenceFile : AggregateRoot, ISoftDeletable
         RaiseDomainEvent(new EvidenceHashMismatchEvent(Id, AuditId, Sha256Hash));
     }
 
+    /// <summary>Clear an integrity flag after investigation (US-M11 evidence unflag); reason is mandatory.</summary>
+    public void ClearFlag(string resolution)
+    {
+        if (!IsFlagged)
+        {
+            throw new DomainException("evidence.not_flagged", "The evidence file is not flagged.");
+        }
+
+        Guard.NotNullOrWhiteSpace(resolution, "evidence.resolution_required", "A resolution note is required to unflag.");
+        IsFlagged = false;
+        RaiseDomainEvent(new EvidenceUnflaggedEvent(Id, AuditId, resolution));
+    }
+
     // Explicit interface implementation so the reason-less path is not part of the public surface;
     // application code must use the reason-bearing overload (US-M5-011 mandatory reason).
     void ISoftDeletable.SoftDelete(Guid? deletedBy, DateTimeOffset deletedAtUtc) => MarkDeleted(deletedBy, deletedAtUtc);

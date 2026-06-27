@@ -1,0 +1,71 @@
+.trail__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.trail__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.trail__filter-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.trail__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.trail__table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.trail__table {
+  width: 100%;
+}
+
+.trail__row {
+  cursor: pointer;
+}
+
+.trail__row:hover {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.trail__event {
+  display: block;
+  font-weight: 500;
+}
+
+.trail__event-raw {
+  display: block;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.trail__actor-type {
+  display: block;
+  font-weight: 500;
+}
+
+.trail__actor-id {
+  display: block;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.trail__target-id {
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.trail__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}

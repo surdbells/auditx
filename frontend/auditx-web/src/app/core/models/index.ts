@@ -9,3 +9,4 @@ export * from './planning.models';
 export * from './coverage.models';
 export * from './audit.models';
 export * from './exception.models';
+export * from './audit-trail.models';

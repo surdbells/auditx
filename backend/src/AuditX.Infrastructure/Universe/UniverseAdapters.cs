@@ -1,6 +1,7 @@
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Abstractions.Universe;
+using AuditX.Application.Common.Models;
 using AuditX.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -105,11 +106,113 @@ public sealed class AuditTrailReader(AppDbContext db) : IAuditTrailReader
         }
 
         return await query
-            .OrderByDescending(e => e.OccurredAtUtc)
+            .OrderByDescending(e => e.OccurredAtUtc).ThenByDescending(e => e.Id)
             .Take(limit)
-            .Select(e => new AuditTrailEntryView(
-                e.Id, e.EventType, e.TargetObjectType, e.TargetObjectId, e.ActorUserId, e.ActorType.ToString(),
-                e.OccurredAtUtc, e.BeforeStateJson, e.AfterStateJson, e.EventPayloadJson))
+            .Select(Projection)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<CursorPage<AuditTrailEntryView>> QueryAsync(AuditTrailFilter filter, PageRequest page, CancellationToken cancellationToken = default)
+    {
+        var query = Filtered(filter);
+
+        if (TryDecodeCursor(page.Cursor, out var afterTime, out var afterId))
+        {
+            // Keyset: rows strictly older than the cursor in the (occurred_at desc, id desc) total order.
+            query = query.Where(e => e.OccurredAtUtc < afterTime || (e.OccurredAtUtc == afterTime && e.Id.CompareTo(afterId) < 0));
+        }
+
+        var rows = await query
+            .OrderByDescending(e => e.OccurredAtUtc).ThenByDescending(e => e.Id)
+            .Take(page.Limit + 1)
+            .Select(Projection)
+            .ToListAsync(cancellationToken);
+
+        var hasMore = rows.Count > page.Limit;
+        if (hasMore)
+        {
+            rows.RemoveAt(rows.Count - 1);
+        }
+
+        var next = hasMore ? EncodeCursor(rows[^1].OccurredAtUtc, rows[^1].Id) : null;
+        return new CursorPage<AuditTrailEntryView>(rows, next, hasMore);
+    }
+
+    public IAsyncEnumerable<AuditTrailEntryView> StreamAsync(AuditTrailFilter filter, CancellationToken cancellationToken = default)
+        => Filtered(filter)
+            .OrderByDescending(e => e.OccurredAtUtc).ThenByDescending(e => e.Id)
+            .Select(Projection)
+            .AsAsyncEnumerable();
+
+    private IQueryable<Domain.AuditTrail.AuditTrailEntry> Filtered(AuditTrailFilter filter)
+    {
+        var query = db.AuditTrail.AsNoTracking();
+        if (filter.ActorUserId is { } actor)
+        {
+            query = query.Where(e => e.ActorUserId == actor);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.EventType))
+        {
+            query = query.Where(e => e.EventType == filter.EventType);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.TargetObjectType))
+        {
+            query = query.Where(e => e.TargetObjectType == filter.TargetObjectType);
+        }
+
+        if (filter.TargetObjectId is { } targetId)
+        {
+            query = query.Where(e => e.TargetObjectId == targetId);
+        }
+
+        if (filter.From is { } from)
+        {
+            query = query.Where(e => e.OccurredAtUtc >= from);
+        }
+
+        if (filter.To is { } to)
+        {
+            query = query.Where(e => e.OccurredAtUtc <= to);
+        }
+
+        return query;
+    }
+
+    private static readonly System.Linq.Expressions.Expression<Func<Domain.AuditTrail.AuditTrailEntry, AuditTrailEntryView>> Projection =
+        e => new AuditTrailEntryView(
+            e.Id, e.EventType, e.TargetObjectType, e.TargetObjectId, e.ActorUserId, e.ActorType.ToString(),
+            e.ActorSystemLabel, e.OccurredAtUtc, e.OriginatingTimezone, e.BeforeStateJson, e.AfterStateJson,
+            e.RequestContextJson, e.EventPayloadJson);
+
+    private static string EncodeCursor(DateTimeOffset occurredAt, Guid id)
+        => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{occurredAt.UtcTicks}:{id}"));
+
+    private static bool TryDecodeCursor(string? cursor, out DateTimeOffset occurredAt, out Guid id)
+    {
+        occurredAt = default;
+        id = default;
+        if (string.IsNullOrWhiteSpace(cursor))
+        {
+            return false;
+        }
+
+        try
+        {
+            var parts = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(cursor)).Split(':', 2);
+            if (parts.Length == 2 && long.TryParse(parts[0], out var ticks) && Guid.TryParse(parts[1], out id)
+                && ticks >= DateTimeOffset.MinValue.UtcTicks && ticks <= DateTimeOffset.MaxValue.UtcTicks)
+            {
+                occurredAt = new DateTimeOffset(ticks, TimeSpan.Zero);
+                return true;
+            }
+        }
+        catch (FormatException)
+        {
+            // Malformed cursor → treat as no cursor (first page).
+        }
+
+        return false;
     }
 }

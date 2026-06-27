@@ -1,0 +1,20 @@
+.unflag__intro {
+  margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.unflag__form {
+  display: flex;
+  flex-direction: column;
+  min-width: 420px;
+}
+
+.full {
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .unflag__form {
+    min-width: auto;
+  }
+}

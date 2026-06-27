@@ -142,6 +142,18 @@ export class MainLayoutComponent {
       permissions: [Permissions.ConfigureNotifications],
     },
     {
+      label: 'Audit Trail',
+      icon: 'history',
+      route: '/admin/audit-trail',
+      permissions: [Permissions.ViewAuditTrail],
+    },
+    {
+      label: 'Evidence Integrity',
+      icon: 'verified_user',
+      route: '/admin/evidence-integrity',
+      permissions: [Permissions.AdminOps],
+    },
+    {
       label: 'Administration',
       icon: 'settings',
       route: '/admin/administration',

@@ -3,24 +3,24 @@
 _Single-tenant internal-audit platform for a bank. ASP.NET Core 10 / EF Core 10 (SQL Server) ·
 Angular 21 + Material · Clean Architecture monorepo · 15 modules (M1–M15), ~262 user stories._
 
-**Report date:** 2026-06-27 · **Branch:** `main` · **Latest commit:** `e630e37` (M10 Notifications)
+**Report date:** 2026-06-27 · **Branch:** `main` · **Latest commit:** M11 Audit Trail (Phase 2 complete)
 
 ---
 
 ## 1. Executive summary
 
-- **9 of 15 modules delivered** end-to-end (Domain → Application → Infrastructure → API → Angular → tests):
-  **M1, M2, M3, M4, M5, M6, M10, M14, M15.**
-- **1 module next up:** **M11 — Audit Trail** (the last of the core-lifecycle phase). Its emit-only seams
-  (domain events, `IAuditRecorder`, append-only trigger) are already in place from earlier modules.
-- **5 modules not yet started:** M7 (Sanctions), M8 (Reports), M9 (Analytics), M12 (Configuration),
-  M13 (Audit Committee Workspace).
+- **10 of 15 modules delivered** end-to-end (Domain → Application → Infrastructure → API → Angular → tests):
+  **M1, M2, M3, M4, M5, M6, M10, M11, M14, M15.**
+- **Phases 1 and 2 are complete.** The core audit lifecycle — universe/planning → engagement → fieldwork →
+  exceptions/MAP → notifications → audit trail — is fully built.
+- **5 modules not yet started (Phases 3–4):** M7 (Sanctions & Disciplinary Grid), M8 (Reports),
+  M9 (Advanced Analytics & Dashboards), M12 (Template & Workflow Configuration), M13 (Audit Committee Workspace).
 - **Quality bar:** every module passes a build with **0 warnings** (warnings-as-errors), a multi-agent
   **adversarial review** with all confirmed findings fixed, and **Docker-gated integration tests** against
   real SQL Server + Redis.
 
 ```
-Modules delivered  ███████████████████████░░░░░░░░░░░░░  9 / 15  (60%)
+Modules delivered  ██████████████████████████░░░░░░░░░░░  10 / 15  (67%)
 ```
 
 ---
@@ -39,7 +39,7 @@ Modules delivered  ████████████████████�
 | M8 | Reports | ⬜ | ⬜ | ⬜ | Not started |
 | M9 | Advanced Analytics & Dashboards | ⬜ | ⬜ | ⬜ | Not started |
 | M10 | Notifications (email/SMS) | ✅ | ✅ | ✅ | **Done** |
-| M11 | Audit Trail & Evidence Integrity | 🟡 seams only | ⬜ | ⬜ | **Next** |
+| M11 | Audit Trail & Evidence Integrity | ✅ | ✅ | ✅ | **Done** |
 | M12 | Template & Workflow Configuration | ⬜ | ⬜ | ⬜ | Not started |
 | M13 | Audit Committee Workspace | ⬜ | ⬜ | ⬜ | Not started |
 | M14 | Integrations & Webhooks | ✅ | ✅ | ✅ | **Done** |
@@ -75,8 +75,10 @@ trail), Docker stack, CI.
   CIA countersign for critical closure, raise-from-Fail, remediation evidence. `8e3eff8`, `29c494e`, `502947e`
 - **M10 Notifications** — event-driven email/SMS dispatch (rules, templates, retry/dead-letter), admin
   config + per-user preferences. `e630e37`
-- **M11 Audit Trail** — **next.** Append-only trail already written in-transaction by every module; this
-  module adds the query, export, and SIEM-streaming surface.
+- **M11 Audit Trail & Evidence Integrity** — general filtered + keyset-cursor query over the append-only
+  trail, per-object history, CSV export (SHA-256 integrity hash, PII-safe), self-auditing reads, and the
+  M5-deferred evidence unflag/integrity admin. _(Retention enforcement, evidence sampling, SIEM streaming,
+  PDF/async export deferred to a later operational pass — see `m11_blueprint.md`.)_
 
 ### Phases 3–4 — Findings-to-close, reporting & governance _(not started)_
 - **M7 Sanctions & Disciplinary Grid** — disciplinary case lifecycle fed by findings.
@@ -92,14 +94,15 @@ trail), Docker stack, CI.
 
 | Suite | Count | Gate |
 |-------|------:|------|
-| Backend — Domain unit tests | 96 | every build |
-| Backend — Application unit tests | 25 | every build |
+| Backend — Domain unit tests | 99 | every build |
+| Backend — Application unit tests | 27 | every build |
 | Backend — Infrastructure tests | 14 | Docker (Testcontainers SQL Server) |
-| Backend — API integration tests | 24 | Docker (Testcontainers SQL Server + Redis) |
-| Frontend — Angular specs | 217 | CI |
+| Backend — API integration tests | 31 | Docker (Testcontainers SQL Server + Redis) |
+| Frontend — Angular specs | 227 | CI |
 | **Build warnings** | **0** | warnings-as-errors |
 
-- **EF migrations:** code-first, snake_case schema, applied + seeded on startup; latest `AddNotifications`.
+- **EF migrations:** code-first, snake_case schema, applied + seeded on startup; latest `AddNotifications`
+  (M11 needed no migration — query/command surface over existing columns).
 - **Review discipline:** each Phase-2 module ran a multi-dimension adversarial-review workflow
   (correctness / persistence / security / wiring) with per-finding verification; M10 alone fixed 18 findings.
 
@@ -136,7 +139,9 @@ trail), Docker stack, CI.
 
 ## 7. Next step
 
-Proceed with **M11 — Audit Trail & Evidence Integrity**: the query, filtering, export (CSV/JSON), and
-SIEM-streaming surface over the append-only trail that every prior module already populates, plus the evidence
-hash-verification/unflag operations seamed in M5. Same rhythm: spec-extraction → backend slice →
-adversarial review → tests → Angular feature → commit.
+**Phases 1–2 are complete.** The remaining work is Phases 3–4 — the findings-to-close, reporting, and
+governance modules: **M7 Sanctions & Disciplinary Grid**, **M8 Reports**, **M9 Advanced Analytics &
+Dashboards**, **M12 Template & Workflow Configuration**, **M13 Audit Committee Workspace** — plus the
+operational tail deferred from M10/M11 (notification digests/quiet-hours, audit-trail retention enforcement,
+evidence sampling, SIEM streaming transport, PDF/async export). Each module follows the same rhythm:
+spec-extraction → backend slice → adversarial review → tests → Angular feature → commit.

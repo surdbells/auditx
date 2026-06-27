@@ -1,0 +1,57 @@
+<h2 mat-dialog-title>{{ humaniseEventType(entry.eventType) }}</h2>
+<mat-dialog-content>
+  <dl class="detail__meta">
+    <dt>Event type</dt>
+    <dd>{{ entry.eventType }}</dd>
+
+    <dt>Actor</dt>
+    <dd>
+      <span class="detail__actor-type">{{
+        humaniseActorType(entry.actorType)
+      }}</span>
+      @if (entry.actorUserId) {
+        <span class="detail__muted">user {{ entry.actorUserId }}</span>
+      }
+      @if (entry.actorSystemLabel) {
+        <span class="detail__muted">{{ entry.actorSystemLabel }}</span>
+      }
+    </dd>
+
+    <dt>Occurred at</dt>
+    <dd>
+      {{ entry.occurredAtUtc | date: 'medium' }}
+      @if (entry.originatingTimezone) {
+        <span class="detail__muted">({{ entry.originatingTimezone }})</span>
+      }
+    </dd>
+
+    <dt>Target</dt>
+    <dd>
+      {{ entry.targetObjectType }}
+      @if (entry.targetObjectId) {
+        <span class="detail__muted">{{ entry.targetObjectId }}</span>
+      }
+    </dd>
+  </dl>
+
+  <h3 class="detail__section-title">Before / After</h3>
+  <div class="detail__json-grid">
+    <div class="detail__json-col">
+      <h4 class="detail__json-label">Before</h4>
+      <pre class="detail__json">{{ prettyJson(entry.beforeStateJson) }}</pre>
+    </div>
+    <div class="detail__json-col">
+      <h4 class="detail__json-label">After</h4>
+      <pre class="detail__json">{{ prettyJson(entry.afterStateJson) }}</pre>
+    </div>
+  </div>
+
+  <h3 class="detail__section-title">Request context</h3>
+  <pre class="detail__json">{{ prettyJson(entry.requestContextJson) }}</pre>
+
+  <h3 class="detail__section-title">Event payload</h3>
+  <pre class="detail__json">{{ prettyJson(entry.eventPayloadJson) }}</pre>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton type="button" mat-dialog-close>Close</button>
+</mat-dialog-actions>

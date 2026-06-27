@@ -19,5 +19,11 @@ public sealed class EvidenceRepository(AppDbContext db) : IEvidenceRepository
     public async Task<long> SumSizeForAuditAsync(Guid auditId, CancellationToken cancellationToken = default)
         => await db.EvidenceFiles.Where(e => e.AuditId == auditId).SumAsync(e => e.SizeBytes, cancellationToken);
 
+    public async Task<IReadOnlyList<EvidenceFile>> ListFlaggedAsync(CancellationToken cancellationToken = default)
+        => await db.EvidenceFiles.AsNoTracking()
+            .Where(e => e.IsFlagged)
+            .OrderByDescending(e => e.UploadedAt)
+            .ToListAsync(cancellationToken);
+
     public void Add(EvidenceFile evidence) => db.EvidenceFiles.Add(evidence);
 }
