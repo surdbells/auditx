@@ -93,6 +93,13 @@ export const Permissions = {
   DecideAppeal: 'DecideAppeal',
   ViewGrid: 'ViewGrid',
   ManageGrid: 'ManageGrid',
+
+  // M13 — Audit Committee Workspace
+  ACMember: 'ACMember',
+  // ACChair already declared in the M3 block above.
+  ViewACPacks: 'ViewACPacks',
+  GenerateACPack: 'GenerateACPack',
+  // CIA already declared in the M6 block above.
 } as const;
 
 export type PermissionKey = (typeof Permissions)[keyof typeof Permissions];

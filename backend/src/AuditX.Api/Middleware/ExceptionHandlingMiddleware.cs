@@ -84,6 +84,7 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         EvidenceLockedException locked => (StatusCodes.Status423Locked, locked.ErrorCode, "Locked", locked.Message, null),
         EvidenceIntegrityException integrity => (StatusCodes.Status500InternalServerError, integrity.ErrorCode, "Evidence integrity failure", integrity.Message, null),
         ReportIntegrityException reportIntegrity => (StatusCodes.Status500InternalServerError, reportIntegrity.ErrorCode, "Report integrity failure", reportIntegrity.Message, null),
+        AcPackIntegrityException acIntegrity => (StatusCodes.Status500InternalServerError, acIntegrity.ErrorCode, "AC pack integrity failure", acIntegrity.Message, null),
         DomainException domain => (StatusCodes.Status422UnprocessableEntity, domain.Code, "Business rule violation", domain.Message, null),
         Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "concurrency_conflict", "Conflict", "The record was modified by someone else; reload and retry.", null),
         _ => (StatusCodes.Status500InternalServerError, "internal_error", "An unexpected error occurred", "An unexpected error occurred. Please contact support with the request id.", null),

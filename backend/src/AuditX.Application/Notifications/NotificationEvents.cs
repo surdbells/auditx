@@ -48,10 +48,13 @@ public static class NotificationEvents
         "exception_raised", "exception_owner_reassigned", "map_submitted", "map_approved", "map_rejected",
         "map_completed", "exception_pending_cia", "exception_closed", "exception_cancelled",
         // M3 planning
-        "plan_submitted",
+        "plan_submitted", "plan_decided",
         // M8 reports
         "report_generated", "report_distributed", "report_hash_mismatch",
         // M9 analytics
         "recurrence_cluster_detected",
+        // M13 audit committee
+        "ac_pack_generated", "ac_pack_distributed", "ac_action_item_created",
+        "ac_action_item_closure_acknowledged", "ac_comment_added",
     ];
 }

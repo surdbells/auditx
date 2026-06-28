@@ -53,7 +53,10 @@ builder.Services.AddScoped<AuditAutoStartJob>();
 builder.Services.AddScoped<NotificationRetryJob>();
 builder.Services.AddScoped<ReportGenerationJob>();
 builder.Services.AddScoped<RecurrenceClusterScanJob>();
+builder.Services.AddScoped<AcPackGenerationJob>();
+builder.Services.AddScoped<AcPackRecurringGenerationJob>();
 builder.Services.AddScoped<AuditX.Application.Abstractions.Reports.IReportGenerationQueue, HangfireReportGenerationQueue>();
+builder.Services.AddScoped<AuditX.Application.Abstractions.Ac.IAcPackGenerationQueue, HangfireAcPackGenerationQueue>();
 
 var app = builder.Build();
 
@@ -109,6 +112,12 @@ recurringJobs.AddOrUpdate<RecurrenceClusterScanJob>(
     RecurrenceClusterScanJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Daily);
+
+// Quarterly auto-generation of the audit-committee pack (M13). Runs at 02:00 on the 1st of Jan/Apr/Jul/Oct.
+recurringJobs.AddOrUpdate<AcPackRecurringGenerationJob>(
+    AcPackRecurringGenerationJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    "0 2 1 1,4,7,10 *");
 
 app.Run();
 return;

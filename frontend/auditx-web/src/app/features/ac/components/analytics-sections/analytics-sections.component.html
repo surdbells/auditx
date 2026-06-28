@@ -1,0 +1,183 @@
+<!-- Plan status + exception portfolio KPIs -->
+<mat-card appearance="outlined" class="sections__card">
+  <h3 class="sections__title">Plan & exception summary</h3>
+  <dl class="sections__kpis">
+    <div class="kpi">
+      <dt>Plans</dt>
+      <dd>{{ totalPlans() }}</dd>
+    </div>
+    <div class="kpi">
+      <dt>Plan items</dt>
+      <dd>{{ planItemsCompleted() }} / {{ planItemsTotal() }}</dd>
+    </div>
+    <div class="kpi">
+      <dt>Plan completion</dt>
+      <dd>{{ percent(planCompletionPercent()) }}</dd>
+    </div>
+    <div class="kpi">
+      <dt>Open exceptions</dt>
+      <dd>{{ openExceptionTotal() }}</dd>
+    </div>
+    <div class="kpi">
+      <dt>Avg closure (days)</dt>
+      <dd>{{ days(averageClosureDays()) }}</dd>
+    </div>
+  </dl>
+
+  @if (exceptionsBySeverity().length) {
+    <div class="sections__severity">
+      @for (s of exceptionsBySeverity(); track s.severity) {
+        <span class="status-badge" [attr.data-status]="s.severity">
+          {{ humanise(s.severity) }}: {{ s.count }}
+        </span>
+      }
+    </div>
+  }
+</mat-card>
+
+<!-- Material findings -->
+<mat-card appearance="outlined" class="sections__card sections__table-card">
+  <h3 class="sections__title sections__table-title">Material findings</h3>
+  @if (!materialFindings().length) {
+    <p class="sections__muted sections__pad">No material findings in scope.</p>
+  } @else {
+    <div class="sections__table-wrapper">
+      <table mat-table [dataSource]="materialFindings()" class="sections__table">
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>Finding</th>
+          <td mat-cell *matCellDef="let f">
+            @if (f.restricted || !f.title) {
+              <span class="sections__restricted">
+                <mat-icon
+                  class="sections__restricted-icon"
+                  matTooltip="Detail withheld pending chair review"
+                  >lock</mat-icon
+                >
+                Restricted — pending chair review
+              </span>
+            } @else {
+              {{ f.title }}
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="severity">
+          <th mat-header-cell *matHeaderCellDef>Severity</th>
+          <td mat-cell *matCellDef="let f">
+            <span class="status-badge" [attr.data-status]="f.severity">
+              {{ humanise(f.severity) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let f">{{ humanise(f.status) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="raisedAt">
+          <th mat-header-cell *matHeaderCellDef>Raised</th>
+          <td mat-cell *matCellDef="let f">{{ f.raisedAt | date: 'mediumDate' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="targetDate">
+          <th mat-header-cell *matHeaderCellDef>Target</th>
+          <td mat-cell *matCellDef="let f">{{ f.targetDate | date: 'mediumDate' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="findingColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: findingColumns"></tr>
+      </table>
+    </div>
+  }
+</mat-card>
+
+<!-- Sanctions consistency (aggregate, no subject identity) -->
+<mat-card appearance="outlined" class="sections__card sections__table-card">
+  <h3 class="sections__title sections__table-title">Sanctions consistency</h3>
+  <dl class="sections__kpis sections__pad">
+    <div class="kpi">
+      <dt>Total cases</dt>
+      <dd>{{ sanctionsTotalCases() }}</dd>
+    </div>
+    <div class="kpi">
+      <dt>Grid adherence</dt>
+      <dd>{{ percent(sanctionsGridAdherencePercent()) }}</dd>
+    </div>
+    <div class="kpi">
+      <dt>Appeal rate</dt>
+      <dd>{{ percent(sanctionsAppealRatePercent()) }}</dd>
+    </div>
+  </dl>
+  @if (!sanctionsByBusinessUnit().length) {
+    <p class="sections__muted sections__pad">No sanctions activity in scope.</p>
+  } @else {
+    <div class="sections__table-wrapper">
+      <table
+        mat-table
+        [dataSource]="sanctionsByBusinessUnit()"
+        class="sections__table"
+      >
+        <ng-container matColumnDef="businessUnit">
+          <th mat-header-cell *matHeaderCellDef>Business unit</th>
+          <td mat-cell *matCellDef="let r">{{ r.businessUnit }}</td>
+        </ng-container>
+        <ng-container matColumnDef="caseCount">
+          <th mat-header-cell *matHeaderCellDef>Cases</th>
+          <td mat-cell *matCellDef="let r">{{ r.caseCount }}</td>
+        </ng-container>
+        <ng-container matColumnDef="gridAdherence">
+          <th mat-header-cell *matHeaderCellDef>Grid adherence</th>
+          <td mat-cell *matCellDef="let r">{{ percent(r.gridAdherencePercent) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="deviationCount">
+          <th mat-header-cell *matHeaderCellDef>Deviations</th>
+          <td mat-cell *matCellDef="let r">{{ r.deviationCount }}</td>
+        </ng-container>
+        <ng-container matColumnDef="appealRate">
+          <th mat-header-cell *matHeaderCellDef>Appeal rate</th>
+          <td mat-cell *matCellDef="let r">{{ percent(r.appealRatePercent) }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="sanctionsColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: sanctionsColumns"></tr>
+      </table>
+    </div>
+  }
+</mat-card>
+
+<!-- Recurrence clusters -->
+<mat-card appearance="outlined" class="sections__card sections__table-card">
+  <h3 class="sections__title sections__table-title">Recurrence clusters</h3>
+  @if (!recurrenceClusters().length) {
+    <p class="sections__muted sections__pad">No recurrence clusters detected.</p>
+  } @else {
+    <div class="sections__table-wrapper">
+      <table
+        mat-table
+        [dataSource]="recurrenceClusters()"
+        class="sections__table"
+      >
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef>Category</th>
+          <td mat-cell *matCellDef="let c">{{ humanise(c.category) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="count">
+          <th mat-header-cell *matHeaderCellDef>Closed exceptions</th>
+          <td mat-cell *matCellDef="let c">{{ c.closedExceptionCount }}</td>
+        </ng-container>
+        <ng-container matColumnDef="window">
+          <th mat-header-cell *matHeaderCellDef>Window (months)</th>
+          <td mat-cell *matCellDef="let c">{{ c.windowMonths }}</td>
+        </ng-container>
+        <ng-container matColumnDef="lastOccurred">
+          <th mat-header-cell *matHeaderCellDef>Last occurred</th>
+          <td mat-cell *matCellDef="let c">{{ c.lastOccurredAt | date: 'mediumDate' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="recurrenceColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: recurrenceColumns"></tr>
+      </table>
+    </div>
+  }
+</mat-card>

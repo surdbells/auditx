@@ -22,6 +22,411 @@ namespace AuditX.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("AuditX.Domain.Ac.AcActionItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AcknowledgedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("acknowledged_at");
+
+                    b.Property<Guid?>("AcknowledgedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("acknowledged_by_user_id");
+
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("assigned_to_user_id");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("closed_at");
+
+                    b.Property<Guid?>("ClosedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("closed_by_user_id");
+
+                    b.Property<string>("ClosureResponse")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("closure_response");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<string>("DeletionReason")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("deletion_reason");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("description");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date")
+                        .HasColumnName("due_date");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("ac_action_items", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Ac.AcComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("author_user_id");
+
+                    b.Property<string>("CommentText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("comment_text");
+
+                    b.Property<DateTimeOffset>("CommentedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("commented_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("target_id");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("target_type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TargetType", "TargetId");
+
+                    b.ToTable("ac_comments", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Ac.AcPack", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AcMeetingLabel")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("ac_meeting_label");
+
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("approved_at");
+
+                    b.Property<Guid?>("ApprovedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("approved_by");
+
+                    b.Property<string>("ArtefactStoragePath")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)")
+                        .HasColumnName("artefact_storage_path");
+
+                    b.Property<string>("CiaSupplementaryText")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("cia_supplementary_text");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("completed_at");
+
+                    b.Property<string>("ContentSnapshotJson")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("content_snapshot_json");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<string>("DeletionReason")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("deletion_reason");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<Guid>("GeneratedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("generated_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateOnly>("PeriodEnd")
+                        .HasColumnType("date")
+                        .HasColumnName("period_end");
+
+                    b.Property<DateOnly>("PeriodStart")
+                        .HasColumnType("date")
+                        .HasColumnName("period_start");
+
+                    b.Property<string>("ProducedArtefactsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("produced_artefacts_json");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("requested_at");
+
+                    b.Property<string>("RequestedFormatsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("requested_formats_json");
+
+                    b.Property<string>("Sha256Hash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasColumnName("sha256_hash");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("version_number");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("ac_packs", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Ac.AcPackDistribution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AcPackId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("ac_pack_id");
+
+                    b.Property<int>("AcPackVersionNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("ac_pack_version_number");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("DispatchedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("dispatched_at");
+
+                    b.Property<Guid>("DispatchedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("dispatched_by");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("outcome");
+
+                    b.Property<Guid>("RecipientUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("recipient_user_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AcPackId");
+
+                    b.HasIndex("AcPackId", "DispatchedAt");
+
+                    b.ToTable("ac_pack_distributions", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Ac.FindingVisibilityRestriction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AllowedUserIdsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("allowed_user_ids_json");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("FindingId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("finding_id");
+
+                    b.Property<string>("FindingType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("finding_type");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset>("RestrictedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("restricted_at");
+
+                    b.Property<Guid>("RestrictedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("restricted_by_user_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FindingType", "FindingId")
+                        .IsUnique();
+
+                    b.ToTable("finding_visibility_restrictions", (string)null);
+                });
+
             modelBuilder.Entity("AuditX.Domain.Administration.ObjectRestoreRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3515,6 +3920,15 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.ToTable("risk_dimensions", (string)null);
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Ac.AcPackDistribution", b =>
+                {
+                    b.HasOne("AuditX.Domain.Ac.AcPack", null)
+                        .WithMany("Distributions")
+                        .HasForeignKey("AcPackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AuditX.Domain.Analytics.DashboardWidget", b =>
                 {
                     b.HasOne("AuditX.Domain.Analytics.Dashboard", null)
@@ -3686,6 +4100,11 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ParentEntityId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Ac.AcPack", b =>
+                {
+                    b.Navigation("Distributions");
                 });
 
             modelBuilder.Entity("AuditX.Domain.Analytics.Dashboard", b =>

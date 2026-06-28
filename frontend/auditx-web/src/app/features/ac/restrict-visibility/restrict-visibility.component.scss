@@ -1,0 +1,37 @@
+.restrict__card {
+  padding: 1.25rem;
+  max-width: 640px;
+}
+
+.restrict__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+}
+
+.restrict__meta dt {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+  margin-bottom: 0.25rem;
+}
+
+.restrict__meta dd {
+  margin: 0;
+}
+
+.restrict__form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.restrict__field {
+  width: 100%;
+}
+
+.restrict__muted {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}

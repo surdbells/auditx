@@ -73,6 +73,10 @@ public static class DependencyInjection
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IRecurrenceClusterRepository, RecurrenceClusterRepository>();
         services.AddScoped<IBankConfigurationRepository, BankConfigurationRepository>();
+        services.AddScoped<IAcPackRepository, AcPackRepository>();
+        services.AddScoped<IAcActionItemRepository, AcActionItemRepository>();
+        services.AddScoped<IAcCommentRepository, AcCommentRepository>();
+        services.AddScoped<IFindingVisibilityRestrictionRepository, FindingVisibilityRestrictionRepository>();
         services.AddScoped<Application.Abstractions.Sanctions.IDossierGenerator, Sanctions.HtmlDossierGenerator>();
 
         // M8 reports: assembler + generation service + format-dispatching renderer (HTML always + DOCX via OpenXml).
@@ -85,6 +89,14 @@ public static class DependencyInjection
         services.AddScoped<Reports.OpenXmlReportRenderer>();
         services.AddScoped<Application.Abstractions.Reports.IReportRenderer>(sp => new Reports.CompositeReportRenderer(
             [sp.GetRequiredService<Reports.HtmlReportRenderer>(), sp.GetRequiredService<Reports.OpenXmlReportRenderer>()]));
+        // M13 audit committee: AC-pack assembler + generation service + format-dispatching renderer (HTML always +
+        // DOCX via OpenXml), mirroring the M8 wiring (concrete renderers under their own types; composite built explicitly).
+        services.AddScoped<Application.Ac.Generation.AcPackContentAssembler>();
+        services.AddScoped<Application.Ac.Generation.AcPackGenerationService>();
+        services.AddScoped<Ac.HtmlAcPackRenderer>();
+        services.AddScoped<Ac.OpenXmlAcPackRenderer>();
+        services.AddScoped<Application.Abstractions.Ac.IAcPackRenderer>(sp => new Ac.CompositeAcPackRenderer(
+            [sp.GetRequiredService<Ac.HtmlAcPackRenderer>(), sp.GetRequiredService<Ac.OpenXmlAcPackRenderer>()]));
         // M12 configuration: active-config provider (memory-cached, invalidated on activate/rollback) + the snapshotter
         // used to stamp exception_defaults provenance at raise. IExceptionDefaults now reads the active config behind
         // the same (unchanged) interface, falling back to the hardcoded defaults.

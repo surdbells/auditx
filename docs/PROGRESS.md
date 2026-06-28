@@ -9,17 +9,16 @@ Angular 21 + Material · Clean Architecture monorepo · 15 modules (M1–M15), ~
 
 ## 1. Executive summary
 
-- **14 of 15 modules delivered** end-to-end (Domain → Application → Infrastructure → API → Angular → tests):
-  **M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12, M14, M15.**
-- **Phases 1 and 2 are complete**, plus **M7 (Sanctions)**, **M8 (Reports)**, **M9 (Analytics & Dashboards)** and
-  **M12 (Configuration)** from the findings-to-close / reporting / governance phase.
-- **1 module not yet started:** M13 (Audit Committee Workspace).
+- **All 15 modules delivered** end-to-end (Domain → Application → Infrastructure → API → Angular → tests):
+  **M1–M15.**
+- **Every delivery phase is complete** — foundation, core audit lifecycle, findings-to-close, reporting,
+  analytics, configuration, and the Audit Committee workspace.
 - **Quality bar:** every module passes a build with **0 warnings** (warnings-as-errors), a multi-agent
   **adversarial review** with all confirmed findings fixed, and **Docker-gated integration tests** against
   real SQL Server + Redis.
 
 ```
-Modules delivered  ████████████████████████████████████░  14 / 15  (93%)
+Modules delivered  █████████████████████████████████████  15 / 15  (100%)
 ```
 
 ---
@@ -40,7 +39,7 @@ Modules delivered  ████████████████████�
 | M10 | Notifications (email/SMS) | ✅ | ✅ | ✅ | **Done** |
 | M11 | Audit Trail & Evidence Integrity | ✅ | ✅ | ✅ | **Done** |
 | M12 | Template & Workflow Configuration | ✅ | ✅ | ✅ | **Done** |
-| M13 | Audit Committee Workspace | ⬜ | ⬜ | ⬜ | Not started |
+| M13 | Audit Committee Workspace | ✅ | ✅ | ✅ | **Done** |
 | M14 | Integrations & Webhooks | ✅ | ✅ | ✅ | **Done** |
 | M15 | Administration | ✅ | ✅ | ✅ | **Done** |
 
@@ -102,7 +101,14 @@ trail), Docker stack, CI.
   hardcoded values as v1 so upgrade behaviour is unchanged. _(Escalation rules + hourly evaluator, the visual
   state-machine editor / configurable workflow graphs, preview, bulk import/export, drift detection and taxonomy
   versioning deferred — see `m12_blueprint.md`.)_
-- **M13 Audit Committee Workspace** — AC review workspace and sign-off flow.
+- **M13 Audit Committee Workspace** — a versioned, hash-sealed **AC pack** generated from M9 analytics (HTML+DOCX,
+  SHA-256, verify-on-read) with a **CIA review → approve → distribute** gate (the artefact is re-sealed at approval so
+  the distributed document includes the CIA narrative); a read-only **AC dashboard** (aggregates only — never sanctions
+  subject identity); **action items** (close-with-response → chair acknowledge); **generic AC commentary** on
+  plans/packs/findings; and **restricted-finding visibility** (per-requester allow-list applied on every read path,
+  including a redacted re-render on download). Seeded custom **AC Member / AC Chair / Chief Internal Auditor** roles.
+  _(The external-NED time-bounded token auth scheme, native PDF, and formal meetings/minutes/voting are deferred —
+  see `m13_blueprint.md`.)_
 
 ---
 
@@ -110,14 +116,14 @@ trail), Docker stack, CI.
 
 | Suite | Count | Gate |
 |-------|------:|------|
-| Backend — Domain unit tests | 141 | every build |
-| Backend — Application unit tests | 51 | every build |
+| Backend — Domain unit tests | 151 | every build |
+| Backend — Application unit tests | 54 | every build |
 | Backend — Infrastructure tests | 14 | Docker (Testcontainers SQL Server) |
-| Backend — API integration tests | 52 | Docker (Testcontainers SQL Server, collections serialized) |
-| Frontend — Angular specs | 323 | CI |
+| Backend — API integration tests | 55 | Docker (Testcontainers SQL Server, collections serialized) |
+| Frontend — Angular specs | 361 | CI |
 | **Build warnings** | **0** | warnings-as-errors |
 
-- **EF migrations:** code-first, snake_case schema, applied + seeded on startup; latest `AddConfiguration`.
+- **EF migrations:** code-first, snake_case schema, applied + seeded on startup; latest `AddAuditCommittee`.
 - **Review discipline:** each Phase-2 module ran a multi-dimension adversarial-review workflow
   (correctness / persistence / security / wiring) with per-finding verification; M10 alone fixed 18 findings.
 
@@ -154,9 +160,13 @@ trail), Docker stack, CI.
 
 ## 7. Next step
 
-**Phases 1–2 are complete; M7, M8, M9 and M12 are delivered.** Remaining: **M13 Audit Committee Workspace** —
-plus the operational tail deferred across modules (native PDF rendering for dossiers/reports, the M9 ad-hoc query
-engine + AC-pack export artefact + predictive indicators + analytics caching, the M12 escalation engine + visual
-workflow editor + bulk config import/export + drift detection, distribution lists, notification digests/quiet-hours,
-audit-trail retention enforcement, evidence sampling, SIEM streaming transport, HRIS transmission). Each module
-follows the same rhythm: spec-extraction → backend slice → adversarial review → tests → Angular feature → commit.
+**All 15 modules are delivered.** Focus now shifts to production hardening — a stub/placeholder sweep, full
+Swagger/OpenAPI documentation, a list-endpoint audit (server-side pagination + filters + search across every
+collection), a DB + API industry-standard pass — and a complete deployment runbook (local Docker, Microsoft Azure,
+and Nigerian-bank on-prem Windows Server).
+
+**Operational tail deferred across modules** (documented per-module blueprint; not blocking core delivery): native PDF
+rendering for dossiers/reports/AC packs, the M9 ad-hoc query engine + predictive indicators + analytics caching, the
+M12 escalation engine + visual workflow editor + bulk config import/export + drift detection, the M13 external-NED
+token auth scheme + meetings/minutes, distribution lists, notification digests/quiet-hours, audit-trail retention
+enforcement, evidence sampling, SIEM streaming transport, HRIS transmission.

@@ -1,0 +1,35 @@
+<app-page-header
+  title="Audit-committee dashboard"
+  subtitle="Live, read-only governance aggregates. Sanctions are reported by business unit only."
+/>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading dashboard…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the AC dashboard."
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (dashboard(); as d) {
+      <app-ac-analytics-sections
+        [totalPlans]="d.totalPlans"
+        [planItemsTotal]="d.planItemsTotal"
+        [planItemsCompleted]="d.planItemsCompleted"
+        [planCompletionPercent]="d.planCompletionPercent"
+        [openExceptionTotal]="d.openExceptionTotal"
+        [averageClosureDays]="d.averageClosureDays"
+        [exceptionsBySeverity]="d.exceptionsBySeverity"
+        [materialFindings]="d.materialFindings"
+        [sanctionsTotalCases]="d.sanctionsTotalCases"
+        [sanctionsGridAdherencePercent]="d.sanctionsGridAdherencePercent"
+        [sanctionsAppealRatePercent]="d.sanctionsAppealRatePercent"
+        [sanctionsByBusinessUnit]="d.sanctionsByBusinessUnit"
+        [recurrenceClusters]="d.recurrenceClusters"
+      />
+    }
+  }
+}

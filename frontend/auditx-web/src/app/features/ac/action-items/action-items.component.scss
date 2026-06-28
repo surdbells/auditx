@@ -1,0 +1,40 @@
+.items__filter {
+  margin-bottom: 1rem;
+  max-width: 240px;
+}
+
+.items__card {
+  padding: 1.25rem 0 0;
+  overflow: hidden;
+}
+
+.items__table-wrapper {
+  overflow-x: auto;
+}
+
+.items__table {
+  width: 100%;
+}
+
+.items__title {
+  font: var(--mat-sys-body-large);
+}
+
+.items__desc,
+.items__closure {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  margin-top: 0.25rem;
+}
+
+.items__actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.items__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}

@@ -380,6 +380,15 @@ export const routes: Routes = [
           ).then((m) => m.PerformanceScorecardsComponent),
       },
       {
+        path: 'ac',
+        title: 'Audit Committee · AuditX',
+        canActivate: [
+          permissionGuard(Permissions.ViewACPacks, Permissions.ACMember),
+        ],
+        loadChildren: () =>
+          import('./features/ac/ac.routes').then((m) => m.AC_ROUTES),
+      },
+      {
         path: 'admin/configuration',
         title: 'Configuration · AuditX',
         canActivate: [permissionGuard(Permissions.ViewConfig)],

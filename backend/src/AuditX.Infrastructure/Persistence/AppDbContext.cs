@@ -1,3 +1,4 @@
+using AuditX.Domain.Ac;
 using AuditX.Domain.Administration;
 using AuditX.Domain.Analytics;
 using AuditX.Domain.Audits;
@@ -111,6 +112,16 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<RecurrenceCluster> RecurrenceClusters => Set<RecurrenceCluster>();
 
     public DbSet<BankConfiguration> BankConfigurations => Set<BankConfiguration>();
+
+    public DbSet<AcPack> AcPacks => Set<AcPack>();
+
+    public DbSet<AcPackDistribution> AcPackDistributions => Set<AcPackDistribution>();
+
+    public DbSet<AcActionItem> AcActionItems => Set<AcActionItem>();
+
+    public DbSet<AcComment> AcComments => Set<AcComment>();
+
+    public DbSet<FindingVisibilityRestriction> FindingVisibilityRestrictions => Set<FindingVisibilityRestriction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

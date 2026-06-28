@@ -1,0 +1,33 @@
+.pack-list__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pack-list__filter {
+  margin-bottom: 1rem;
+  max-width: 240px;
+}
+
+.pack-list__card {
+  padding: 1.25rem 0 0;
+  overflow: hidden;
+}
+
+.pack-list__table-wrapper {
+  overflow-x: auto;
+}
+
+.pack-list__table {
+  width: 100%;
+}
+
+.pack-list__hash {
+  font-family: var(--mat-sys-body-medium-font, monospace);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pack-list__load-more {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}

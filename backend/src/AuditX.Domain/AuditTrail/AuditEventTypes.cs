@@ -175,6 +175,20 @@ public static class AuditEventTypes
     public const string ConfigurationVersionCreated = "configuration_version_created";
     public const string ConfigurationVersionActivated = "configuration_version_activated";
     public const string ConfigurationRolledBack = "configuration_rolled_back";
+
+    // M13 audit committee
+    public const string AcPackGenerationRequested = "ac_pack_generation_requested";
+    public const string AcPackGenerated = "ac_pack_generated";
+    public const string AcPackGenerationFailed = "ac_pack_generation_failed";
+    public const string AcPackSupplementaryTextUpdated = "ac_pack_supplementary_text_updated";
+    public const string AcPackApproved = "ac_pack_approved";
+    public const string AcPackDistributed = "ac_pack_distributed";
+    public const string AcPackHashMismatch = "ac_pack_hash_mismatch";
+    public const string AcActionItemCreated = "ac_action_item_created";
+    public const string AcActionItemUpdated = "ac_action_item_updated";
+    public const string AcActionItemClosureAcknowledged = "ac_action_item_closure_acknowledged";
+    public const string AcCommentAdded = "ac_comment_added";
+    public const string FindingVisibilityRestricted = "finding_visibility_restricted";
 }
 
 /// <summary>Canonical target-object-type identifiers used in audit-trail entries.</summary>
@@ -218,4 +232,8 @@ public static class AuditTargetTypes
     public const string Dashboard = "dashboard";
     public const string RecurrenceCluster = "recurrence_cluster";
     public const string BankConfiguration = "bank_configuration";
+    public const string AcPack = "ac_pack";
+    public const string AcActionItem = "ac_action_item";
+    public const string AcComment = "ac_comment";
+    public const string FindingVisibilityRestriction = "finding_visibility_restriction";
 }

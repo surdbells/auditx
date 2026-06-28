@@ -1,0 +1,54 @@
+<app-page-header
+  title="Plans awaiting decision"
+  subtitle="Submitted annual plans pending an audit-committee chair decision."
+/>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading message="Loading plans…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the plans awaiting decision."
+      (retry)="load()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="how_to_vote"
+        title="No plans awaiting decision"
+        message="Submitted plans will appear here for committee review."
+      />
+    } @else {
+      <mat-accordion class="plans">
+        @for (p of plans(); track p.id) {
+          <mat-expansion-panel class="plans__panel">
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{ p.periodLabel }}</mat-panel-title>
+              <mat-panel-description>
+                <span class="status-badge" [attr.data-status]="p.status">
+                  {{ humanise(p.status) }}
+                </span>
+                <span class="plans__period">
+                  {{ p.periodStart | date: 'mediumDate' }} –
+                  {{ p.periodEnd | date: 'mediumDate' }}
+                </span>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <div class="plans__body">
+              <p class="plans__meta">{{ p.itemCount }} plan item(s).</p>
+              <a matButton="outlined" [routerLink]="['/planning', p.id]">
+                <mat-icon>open_in_new</mat-icon>
+                {{ canDecide() ? 'Review & decide' : 'Open plan' }}
+              </a>
+
+              <app-ac-comments targetType="plan" [targetId]="p.id" />
+            </div>
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+    }
+  }
+}

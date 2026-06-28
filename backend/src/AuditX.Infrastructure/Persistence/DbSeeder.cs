@@ -1,3 +1,4 @@
+using AuditX.Application.Ac;
 using AuditX.Application.Configuration;
 using AuditX.Application.Sanctions;
 using AuditX.Domain.Authorization;
@@ -26,6 +27,7 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         await SeedRiskDimensionsAsync(cancellationToken);
         await SeedEntityTypesAsync(cancellationToken);
         await SeedSanctionsRolesAsync(cancellationToken);
+        await SeedAcRolesAsync(cancellationToken);
         await SeedSanctionsGridAsync(cancellationToken);
         await SeedReportTemplateAsync(cancellationToken);
         await SeedNotificationDefaultsAsync(cancellationToken);
@@ -98,6 +100,26 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             // when a (entity, category) group newly reaches the closed-exception recurrence threshold.
             (Domain.AuditTrail.AuditEventTypes.RecurrenceClusterDetected, "recurrence_cluster_detected", "role", BuiltInRoles.AuditManagerName, "[\"email\"]",
                 "A recurring control weakness was detected", "{{ ClosedExceptionCount }} closed exceptions for entity {{ AuditableEntityId }} (category {{ Category }}) within {{ WindowMonths }} months indicate a recurrence. Please review."),
+
+            // M3 planning AC routing (A4/D1). plan_submitted → the AC Member role (a plan awaits the committee's
+            // attention); plan_decided → the CIA (route on the single PlanDecidedEvent's Decision payload).
+            (Domain.AuditTrail.AuditEventTypes.PlanSubmitted, "plan_submitted", "role", AcRoles.AuditCommitteeMember, "[\"email\"]",
+                "An annual audit plan was submitted", "Annual plan {{ PlanId }} ({{ PeriodLabel }}) has been submitted and awaits audit-committee review."),
+            ("plan_decided", "plan_decided", "role", AcRoles.ChiefInternalAuditor, "[\"email\"]",
+                "An annual audit plan decision was recorded", "A decision ({{ Decision }}) was recorded on annual plan {{ PlanId }}."),
+
+            // M13 audit committee. CIA-role recipients for generated/comment/action-item/ack; per-recipient
+            // payload_derived for distributed (one AcPackDistributedEvent carries one RecipientUserId).
+            (Domain.AuditTrail.AuditEventTypes.AcPackGenerated, "ac_pack_generated", "role", AcRoles.ChiefInternalAuditor, "[\"email\"]",
+                "An audit-committee pack is ready for review", "AC pack version {{ VersionNumber }} has been generated and awaits your review and approval."),
+            (Domain.AuditTrail.AuditEventTypes.AcPackDistributed, "ac_pack_distributed", "payload_derived", "RecipientUserId", "[\"email\"]",
+                "An audit-committee pack has been distributed", "Audit-committee pack version {{ VersionNumber }} ({{ AcMeetingLabel }}) has been distributed to you."),
+            (Domain.AuditTrail.AuditEventTypes.AcActionItemCreated, "ac_action_item_created", "role", AcRoles.ChiefInternalAuditor, "[\"email\"]",
+                "A new audit-committee action item was raised", "Audit-committee action item \"{{ Title }}\" has been raised and assigned for follow-up."),
+            (Domain.AuditTrail.AuditEventTypes.AcActionItemClosureAcknowledged, "ac_action_item_closure_acknowledged", "role", AcRoles.ChiefInternalAuditor, "[\"email\"]",
+                "An audit-committee action item closure was acknowledged", "The audit committee chair has acknowledged the closure of action item {{ AcActionItemId }}."),
+            (Domain.AuditTrail.AuditEventTypes.AcCommentAdded, "ac_comment_added", "role", AcRoles.ChiefInternalAuditor, "[\"email\"]",
+                "A new audit-committee comment was posted", "A comment was posted on {{ TargetType }} {{ TargetId }} by the audit committee."),
         };
 
         foreach (var d in defaults)
@@ -229,6 +251,40 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
                 [PermissionKeys.DcMember, PermissionKeys.ViewSanctions]),
             (SanctionsRoles.AppealsAuthority, "Decides appeals filed against sanctions decisions.",
                 [PermissionKeys.DecideAppeal, PermissionKeys.ViewSanctions]),
+        };
+
+        foreach (var (name, description, permissions) in roleDefs)
+        {
+            if (existing.Contains(name, StringComparer.Ordinal))
+            {
+                continue;
+            }
+
+            var role = Role.CreateCustom(name, description);
+            role.SetPermissions(permissions.Select(key => (key, PermissionScopeType.Global, (string?)null)));
+            db.Roles.Add(role);
+        }
+    }
+
+    /// <summary>
+    /// Seed the three non-builtin, least-privilege M13 audit-committee / CIA roles (B2, FR-M1-011). Custom roles
+    /// (<c>is_builtin=false</c>) so a bank can reconfigure them. CIA stays on the Administrator built-in too; the
+    /// dedicated "Chief Internal Auditor" role makes the CIA notifications target a sensible recipient set.
+    /// </summary>
+    private async Task SeedAcRolesAsync(CancellationToken cancellationToken)
+    {
+        var existing = await db.Roles.Select(r => r.Name).ToListAsync(cancellationToken);
+
+        var roleDefs = new (string Name, string Description, string[] Permissions)[]
+        {
+            // ViewPlan is the least-privilege grant that lets the AC read the submitted-plans list (D4) — the existing
+            // GET /annual-plans gate — without widening that gate for everyone.
+            (AcRoles.AuditCommitteeMember, "Reads approved/distributed audit-committee packs, the AC dashboard, action items and submitted plans.",
+                [PermissionKeys.AcMember, PermissionKeys.ViewAcPacks, PermissionKeys.ViewPlan]),
+            (AcRoles.AuditCommitteeChair, "An audit-committee member who also chairs the committee: decides plans and acknowledges action-item closures.",
+                [PermissionKeys.AcMember, PermissionKeys.ViewAcPacks, PermissionKeys.ViewPlan, PermissionKeys.AcChair]),
+            (AcRoles.ChiefInternalAuditor, "Generates, reviews, approves and distributes audit-committee packs and manages restricted-finding visibility.",
+                [PermissionKeys.Cia, PermissionKeys.GenerateAcPack, PermissionKeys.ViewAcPacks, PermissionKeys.ViewPlan]),
         };
 
         foreach (var (name, description, permissions) in roleDefs)

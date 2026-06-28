@@ -120,6 +120,30 @@ export class MainLayoutComponent {
       permissions: [Permissions.ViewAnalytics],
     },
     {
+      label: 'AC Packs',
+      icon: 'inventory_2',
+      route: '/ac/packs',
+      permissions: [Permissions.ViewACPacks],
+    },
+    {
+      label: 'AC Dashboard',
+      icon: 'space_dashboard',
+      route: '/ac/dashboard',
+      permissions: [Permissions.ACMember],
+    },
+    {
+      label: 'AC Action Items',
+      icon: 'checklist',
+      route: '/ac/action-items',
+      permissions: [Permissions.ACMember],
+    },
+    {
+      label: 'Plans Awaiting Decision',
+      icon: 'how_to_vote',
+      route: '/ac/plans-awaiting',
+      permissions: [Permissions.ACMember],
+    },
+    {
       label: 'Maker-Checker',
       icon: 'fact_check',
       route: '/admin/maker-checker',
