@@ -174,7 +174,11 @@ critical/high and the high-value mediums are fixed:
   computation (was a zero-filled stub), free-text search on audits/exceptions/sanctions, missing indexes added, and
   cursor pagination on the last unbounded lists (webhook deliveries, per-audit reports). M15 admin validators added.
 
-Remaining: the deployment runbook (local Docker, Microsoft Azure, Nigerian-bank on-prem Windows Server).
+A complete **[deployment runbook](DEPLOYMENT_RUNBOOK.md)** covers all three targets — local Docker, Microsoft Azure,
+and Nigerian-bank on-prem Windows Server (AD/LDAPS/Kerberos, SQL Server, IIS/Kestrel, Redis, secrets/DataProtection,
+controlled migrations, smoke tests, rollback, and hardening).
+
+**The platform is feature-complete (15/15 modules), production-hardened, fully API-documented, and deployment-ready.**
 
 **Operational tail deferred across modules** (documented per-module blueprint; not blocking core delivery): native PDF
 rendering for dossiers/reports/AC packs, the M9 ad-hoc query engine + predictive indicators + analytics caching, the

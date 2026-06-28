@@ -58,13 +58,16 @@ services:
       redis:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: "Production"
+      # This is a LOCAL DEMO stack: it runs the seeded Development identity provider (admin/manager/auditor/auditee,
+      # password Passw0rd!). The production safety guard refuses to boot the dev provider outside Development, so this
+      # stack MUST run as Development. For a production deployment see docs/DEPLOYMENT_RUNBOOK.md.
+      ASPNETCORE_ENVIRONMENT: "Development"
       ASPNETCORE_HTTP_PORTS: "8080"
       Database__MigrateOnStartup: "true"
       ConnectionStrings__Default: "Server=sqlserver,1433;Database=auditx;User Id=sa;Password=Auditx_Local_Dev_123;TrustServerCertificate=True;Encrypt=False"
       Redis__ConnectionString: "redis:6379"
       Identity__Provider: "Development"
-      Jwt__SigningKey: "CHANGE-ME-compose-signing-key-min-32-bytes-0123456789"
+      Jwt__SigningKey: "auditx-compose-dev-signing-key-min-32-bytes-0123456789"
       Cors__Origins__0: "http://localhost:4200"
     ports:
       - "8080:8080"
