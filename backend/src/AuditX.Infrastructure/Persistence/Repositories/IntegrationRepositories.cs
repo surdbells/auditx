@@ -1,4 +1,5 @@
 using AuditX.Application.Abstractions.Persistence;
+using AuditX.Application.Common.Models;
 using AuditX.Domain.Administration;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Integrations;
@@ -43,7 +44,7 @@ public sealed class WebhookRepository(AppDbContext db) : IWebhookRepository
     public Task<WebhookDelivery?> GetDeliveryAsync(Guid id, CancellationToken cancellationToken = default)
         => db.WebhookDeliveries.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
 
-    public async Task<IReadOnlyList<WebhookDelivery>> GetDeliveriesAsync(WebhookDeliveryStatus? status, int limit, CancellationToken cancellationToken = default)
+    public async Task<CursorPage<WebhookDelivery>> GetDeliveriesAsync(WebhookDeliveryStatus? status, Guid? subscriptionId, PageRequest page, CancellationToken cancellationToken = default)
     {
         var query = db.WebhookDeliveries.AsNoTracking().AsQueryable();
         if (status is { } s)
@@ -51,7 +52,60 @@ public sealed class WebhookRepository(AppDbContext db) : IWebhookRepository
             query = query.Where(d => d.Status == s);
         }
 
-        return await query.OrderByDescending(d => d.CreatedAt).Take(limit).ToListAsync(cancellationToken);
+        if (subscriptionId is { } sub)
+        {
+            query = query.Where(d => d.SubscriptionId == sub);
+        }
+
+        if (TryDecodeCursor(page.Cursor, out var afterCreated, out var afterId))
+        {
+            // Keyset: rows strictly older than the cursor in the (created_at desc, id desc) total order.
+            query = query.Where(d => d.CreatedAt < afterCreated || (d.CreatedAt == afterCreated && d.Id.CompareTo(afterId) < 0));
+        }
+
+        var items = await query
+            .OrderByDescending(d => d.CreatedAt).ThenByDescending(d => d.Id)
+            .Take(page.Limit + 1)
+            .ToListAsync(cancellationToken);
+
+        var hasMore = items.Count > page.Limit;
+        if (hasMore)
+        {
+            items.RemoveAt(items.Count - 1);
+        }
+
+        var next = hasMore ? EncodeCursor(items[^1].CreatedAt, items[^1].Id) : null;
+        return new CursorPage<WebhookDelivery>(items, next, hasMore);
+    }
+
+    private static string EncodeCursor(DateTimeOffset createdAt, Guid id)
+        => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{createdAt.UtcTicks}:{id}"));
+
+    private static bool TryDecodeCursor(string? cursor, out DateTimeOffset createdAt, out Guid id)
+    {
+        createdAt = default;
+        id = default;
+        if (string.IsNullOrWhiteSpace(cursor))
+        {
+            return false;
+        }
+
+        try
+        {
+            var parts = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(cursor)).Split(':', 2);
+            if (parts.Length == 2 && long.TryParse(parts[0], out var ticks) && Guid.TryParse(parts[1], out id)
+                && ticks >= DateTimeOffset.MinValue.UtcTicks && ticks <= DateTimeOffset.MaxValue.UtcTicks)
+            {
+                createdAt = new DateTimeOffset(ticks, TimeSpan.Zero);
+                return true;
+            }
+        }
+        catch (FormatException)
+        {
+            // Malformed cursor → treat as no cursor (first page).
+        }
+
+        return false;
     }
 
     public async Task<IReadOnlyList<WebhookDelivery>> GetDueForRetryAsync(DateTimeOffset asOfUtc, int limit, CancellationToken cancellationToken = default)

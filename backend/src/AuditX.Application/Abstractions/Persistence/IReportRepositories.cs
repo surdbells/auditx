@@ -8,8 +8,8 @@ public interface IReportRepository
     /// <summary>Loads a report including its distribution log.</summary>
     Task<Report?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    /// <summary>All non-deleted report versions for an audit, newest version first.</summary>
-    Task<IReadOnlyList<Report>> ListByAuditAsync(Guid auditId, CancellationToken cancellationToken = default);
+    /// <summary>Keyset-paginated report versions for an audit, newest version first (keyset on version number desc).</summary>
+    Task<CursorPage<Report>> ListByAuditAsync(Guid auditId, PageRequest page, CancellationToken cancellationToken = default);
 
     /// <summary>Keyset-paginated distribution log for a report, ordered by dispatch time.</summary>
     Task<CursorPage<ReportDistribution>> ListDistributionsAsync(Guid reportId, PageRequest page, CancellationToken cancellationToken = default);

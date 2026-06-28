@@ -119,11 +119,11 @@ trail), Docker stack, CI.
 | Backend — Domain unit tests | 151 | every build |
 | Backend — Application unit tests | 54 | every build |
 | Backend — Infrastructure tests | 14 | Docker (Testcontainers SQL Server) |
-| Backend — API integration tests | 55 | Docker (Testcontainers SQL Server, collections serialized) |
-| Frontend — Angular specs | 361 | CI |
+| Backend — API integration tests | 56 | Docker (Testcontainers SQL Server, collections serialized) |
+| Frontend — Angular specs | 364 | CI |
 | **Build warnings** | **0** | warnings-as-errors |
 
-- **EF migrations:** code-first, snake_case schema, applied + seeded on startup; latest `AddAuditCommittee`.
+- **EF migrations:** code-first, snake_case schema, applied + seeded on startup; latest `ProductionHardening`.
 - **Review discipline:** each Phase-2 module ran a multi-dimension adversarial-review workflow
   (correctness / persistence / security / wiring) with per-finding verification; M10 alone fixed 18 findings.
 
@@ -160,10 +160,21 @@ trail), Docker stack, CI.
 
 ## 7. Next step
 
-**All 15 modules are delivered.** Focus now shifts to production hardening — a stub/placeholder sweep, full
-Swagger/OpenAPI documentation, a list-endpoint audit (server-side pagination + filters + search across every
-collection), a DB + API industry-standard pass — and a complete deployment runbook (local Docker, Microsoft Azure,
-and Nigerian-bank on-prem Windows Server).
+**All 15 modules are delivered, plus a production-hardening pass.** A 5-dimension production-readiness audit
+(stubs, list endpoints, DB schema, API conventions, security/config) produced 34 actionable findings; all
+critical/high and the high-value mediums are fixed:
+- **Security:** fail-fast guards that refuse to boot a non-Development environment with the dev identity provider,
+  a placeholder/short JWT key, or no connection string; secrets removed from base config (dev values moved to
+  `appsettings.Development.json`, `appsettings.Production.json` template added); security-response headers + HSTS +
+  HTTPS redirection; persisted/named DataProtection key ring; rate limiting (auth brute-force + global DoS backstop);
+  RFC 7807 for model-binding errors.
+- **Swagger/OpenAPI:** complete spec — API metadata, XML summaries (controllers + DTOs), bearer security scheme,
+  snake_case enums, and the standard RFC 7807 error responses on every operation (runtime-smoke-tested).
+- **DB + querying:** soft-delete-aware unique indexes (re-provisioning/recreate no longer blocked), real coverage-matrix
+  computation (was a zero-filled stub), free-text search on audits/exceptions/sanctions, missing indexes added, and
+  cursor pagination on the last unbounded lists (webhook deliveries, per-audit reports). M15 admin validators added.
+
+Remaining: the deployment runbook (local Docker, Microsoft Azure, Nigerian-bank on-prem Windows Server).
 
 **Operational tail deferred across modules** (documented per-module blueprint; not blocking core delivery): native PDF
 rendering for dossiers/reports/AC packs, the M9 ad-hoc query engine + predictive indicators + analytics caching, the

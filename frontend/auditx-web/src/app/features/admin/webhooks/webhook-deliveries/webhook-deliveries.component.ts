@@ -23,6 +23,7 @@ import {
   WebhookDelivery,
   WebhookDeliveryStatus,
 } from '../../../../core/models';
+import { humaniseStatus } from '../../notifications/humanise-status';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
@@ -66,10 +67,10 @@ export class WebhookDeliveriesComponent {
 
   readonly statuses: { value: WebhookDeliveryStatus | ''; label: string }[] = [
     { value: '', label: 'All statuses' },
-    { value: 'Pending', label: 'Pending' },
-    { value: 'Delivered', label: 'Delivered' },
-    { value: 'Failed', label: 'Failed' },
-    { value: 'DeadLetter', label: 'Dead-letter' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'failed', label: 'Failed' },
+    { value: 'dead_letter', label: 'Dead-letter' },
   ];
 
   readonly statusFilter = new FormControl<WebhookDeliveryStatus | ''>('', {
@@ -78,6 +79,11 @@ export class WebhookDeliveriesComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly deliveries = signal<WebhookDelivery[]>([]);
+  readonly nextCursor = signal<string | null>(null);
+  readonly hasMore = signal(false);
+  readonly loadingMore = signal(false);
+
+  readonly humanise = humaniseStatus;
 
   readonly canRetry = computed(() =>
     this.auth.hasPermission(Permissions.AdminOps),
@@ -96,21 +102,59 @@ export class WebhookDeliveriesComponent {
 
   fetch(): void {
     this.state.set('loading');
+    this.deliveries.set([]);
+    this.nextCursor.set(null);
+    this.query(null, (items, cursor, more) => {
+      this.deliveries.set(items);
+      this.nextCursor.set(cursor);
+      this.hasMore.set(more);
+      this.state.set('ready');
+    });
+  }
+
+  loadMore(): void {
+    if (!this.hasMore() || this.loadingMore()) {
+      return;
+    }
+    this.loadingMore.set(true);
+    this.query(this.nextCursor(), (items, cursor, more) => {
+      this.deliveries.update((current) => [...current, ...items]);
+      this.nextCursor.set(cursor);
+      this.hasMore.set(more);
+      this.loadingMore.set(false);
+    });
+  }
+
+  private query(
+    cursor: string | null,
+    onSuccess: (
+      items: WebhookDelivery[],
+      cursor: string | null,
+      more: boolean,
+    ) => void,
+  ): void {
     this.webhooksService
-      .listDeliveries(this.statusFilter.value, PAGE_LIMIT)
+      .listDeliveries({
+        status: this.statusFilter.value,
+        cursor: cursor ?? undefined,
+        limit: PAGE_LIMIT,
+      })
       .subscribe({
-        next: (items) => {
-          this.deliveries.set(items);
-          this.state.set('ready');
+        next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
+        error: () => {
+          if (cursor === null) {
+            this.state.set('error');
+          } else {
+            this.loadingMore.set(false);
+          }
         },
-        error: () => this.state.set('error'),
       });
   }
 
   canRetryRow(delivery: WebhookDelivery): boolean {
     return (
       this.canRetry() &&
-      (delivery.status === 'DeadLetter' || delivery.status === 'Failed')
+      (delivery.status === 'dead_letter' || delivery.status === 'failed')
     );
   }
 

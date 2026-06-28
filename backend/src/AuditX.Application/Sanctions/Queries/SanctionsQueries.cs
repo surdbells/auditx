@@ -29,7 +29,7 @@ internal static class SanctionsStatusParsing
 
 // ---- List (always masks subject — A1) ----
 
-public sealed record ListSanctionsCasesQuery(string? Status, string? Cursor, int? Limit) : IQuery<CursorPage<SanctionsCaseListDto>>;
+public sealed record ListSanctionsCasesQuery(string? Status, string? Search, string? Cursor, int? Limit) : IQuery<CursorPage<SanctionsCaseListDto>>;
 
 public sealed class ListSanctionsCasesQueryHandler(ISanctionsCaseRepository cases)
     : IQueryHandler<ListSanctionsCasesQuery, CursorPage<SanctionsCaseListDto>>
@@ -38,7 +38,7 @@ public sealed class ListSanctionsCasesQueryHandler(ISanctionsCaseRepository case
     {
         var status = SanctionsStatusParsing.Parse(query.Status);
         var page = PageRequest.Of(query.Cursor, query.Limit);
-        var result = await cases.ListPagedAsync(status, page, cancellationToken);
+        var result = await cases.ListPagedAsync(status, query.Search, page, cancellationToken);
         return new CursorPage<SanctionsCaseListDto>(result.Items.Select(c => c.ToListDto()).ToArray(), result.NextCursor, result.HasMore);
     }
 }

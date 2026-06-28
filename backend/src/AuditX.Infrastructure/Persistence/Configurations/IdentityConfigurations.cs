@@ -29,9 +29,11 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(40)
             .IsRequired();
 
-        builder.HasIndex(u => u.AdObjectSid).IsUnique();
-        builder.HasIndex(u => u.AdSamAccountName).IsUnique();
-        builder.HasIndex(u => u.AdUserPrincipalName).IsUnique();
+        // AD natural keys are unique among LIVE users only, so off-boarding (soft-delete) frees the keys for
+        // a returning principal to be re-provisioned with the same objectSID / sAMAccountName / UPN.
+        builder.HasIndex(u => u.AdObjectSid).IsUnique().HasFilter("[is_deleted] = 0");
+        builder.HasIndex(u => u.AdSamAccountName).IsUnique().HasFilter("[is_deleted] = 0");
+        builder.HasIndex(u => u.AdUserPrincipalName).IsUnique().HasFilter("[is_deleted] = 0");
         builder.HasIndex(u => u.Status);
 
         builder.HasQueryFilter(u => !u.IsDeleted);

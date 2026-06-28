@@ -1,29 +1,32 @@
 /**
  * M14 — Integrations & Webhooks models (camelCase, mirroring the backend contract).
+ *
+ * Enum-valued fields (`type`, health `state`, delivery `status`) are serialized
+ * as snake_case by the backend (`ToSnake`), matching the project-wide contract.
  */
 
 export type IntegrationType =
-  | 'ActiveDirectory'
-  | 'Smtp'
-  | 'Sms'
-  | 'FileStorage'
-  | 'Siem'
-  | 'Saml'
-  | 'Oidc'
-  | 'Webhook';
+  | 'active_directory'
+  | 'smtp'
+  | 'sms'
+  | 'file_storage'
+  | 'siem'
+  | 'saml'
+  | 'oidc'
+  | 'webhook';
 
 export const INTEGRATION_TYPES: IntegrationType[] = [
-  'ActiveDirectory',
-  'Smtp',
-  'Sms',
-  'FileStorage',
-  'Siem',
-  'Saml',
-  'Oidc',
-  'Webhook',
+  'active_directory',
+  'smtp',
+  'sms',
+  'file_storage',
+  'siem',
+  'saml',
+  'oidc',
+  'webhook',
 ];
 
-export type IntegrationHealthState = 'Healthy' | 'Degraded' | 'Failing';
+export type IntegrationHealthState = 'healthy' | 'degraded' | 'failing';
 
 export interface Integration {
   id: string;
@@ -73,10 +76,10 @@ export interface IntegrationTestResult {
 /* ---- Webhooks ---- */
 
 export type WebhookDeliveryStatus =
-  | 'Pending'
-  | 'Delivered'
-  | 'Failed'
-  | 'DeadLetter';
+  | 'pending'
+  | 'delivered'
+  | 'failed'
+  | 'dead_letter';
 
 export interface WebhookSubscription {
   id: string;

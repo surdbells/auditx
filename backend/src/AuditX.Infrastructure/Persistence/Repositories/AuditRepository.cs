@@ -17,13 +17,21 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
     public async Task<CursorPage<Audit>> SearchAsync(
-        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, PageRequest page, CancellationToken cancellationToken = default)
+        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageRequest page, CancellationToken cancellationToken = default)
     {
         var query = db.Audits.AsNoTracking().Include(a => a.ChecklistItems).AsQueryable();
 
         if (status is { } s)
         {
             query = query.Where(a => a.Status == s);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(a =>
+                EF.Functions.Like(a.Name, $"%{term}%") ||
+                (a.ScopeDescription != null && EF.Functions.Like(a.ScopeDescription, $"%{term}%")));
         }
 
         if (!string.IsNullOrWhiteSpace(auditType))

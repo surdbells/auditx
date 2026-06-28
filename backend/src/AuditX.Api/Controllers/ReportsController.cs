@@ -27,8 +27,8 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
 
     [RequirePermission(PermissionKeys.ViewReport)]
     [HttpGet("api/v1/audits/{auditId:guid}/reports")]
-    public async Task<IActionResult> ListForAudit(Guid auditId, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListAuditReportsQuery(auditId), cancellationToken));
+    public async Task<IActionResult> ListForAudit(Guid auditId, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListAuditReportsQuery(auditId, cursor, limit), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewReport)]
     [HttpGet("api/v1/reports/{id:guid}")]

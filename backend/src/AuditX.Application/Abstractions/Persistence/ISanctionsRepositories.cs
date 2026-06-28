@@ -9,8 +9,11 @@ public interface ISanctionsCaseRepository
     /// <summary>Loads a case including its stored team members.</summary>
     Task<SanctionsCase?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    /// <summary>Keyset-paginated tracker over all cases, optionally filtered by status.</summary>
-    Task<CursorPage<SanctionsCase>> ListPagedAsync(SanctionsCaseStatus? status, PageRequest page, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Keyset-paginated tracker over all cases, optionally filtered by status and a free-text term. The search
+    /// matches only subject-free fields (case category) — it never searches or exposes the masked subject identity.
+    /// </summary>
+    Task<CursorPage<SanctionsCase>> ListPagedAsync(SanctionsCaseStatus? status, string? search, PageRequest page, CancellationToken cancellationToken = default);
 
     /// <summary>Keyset-paginated queue of cases referred to the disciplinary committee (status <c>dc_referral</c>).</summary>
     Task<CursorPage<SanctionsCase>> ListReferredAsync(PageRequest page, CancellationToken cancellationToken = default);

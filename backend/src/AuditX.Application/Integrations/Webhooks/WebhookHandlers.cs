@@ -3,6 +3,7 @@ using AuditX.Application.Abstractions.Integrations;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
+using AuditX.Application.Common.Models;
 using AuditX.Application.Integrations.Dtos;
 using AuditX.Application.Integrations.Mapping;
 using AuditX.Domain.AuditTrail;
@@ -102,21 +103,22 @@ public sealed class ListWebhookSubscriptionsQueryHandler(IWebhookRepository webh
         => (await webhooks.GetAllSubscriptionsAsync(cancellationToken)).Select(s => s.ToDto()).ToArray();
 }
 
-public sealed record ListWebhookDeliveriesQuery(string? Status, int? Limit) : IQuery<IReadOnlyList<WebhookDeliveryDto>>;
+public sealed record ListWebhookDeliveriesQuery(string? Status, Guid? SubscriptionId, string? Cursor, int? Limit)
+    : IQuery<CursorPage<WebhookDeliveryDto>>;
 
 public sealed class ListWebhookDeliveriesQueryHandler(IWebhookRepository webhooks)
-    : IQueryHandler<ListWebhookDeliveriesQuery, IReadOnlyList<WebhookDeliveryDto>>
+    : IQueryHandler<ListWebhookDeliveriesQuery, CursorPage<WebhookDeliveryDto>>
 {
-    public async Task<IReadOnlyList<WebhookDeliveryDto>> Handle(ListWebhookDeliveriesQuery query, CancellationToken cancellationToken)
+    public async Task<CursorPage<WebhookDeliveryDto>> Handle(ListWebhookDeliveriesQuery query, CancellationToken cancellationToken)
     {
         WebhookDeliveryStatus? status = query.Status is null
             ? null
-            : Enum.TryParse<WebhookDeliveryStatus>(query.Status, ignoreCase: true, out var parsed)
+            : Enum.TryParse<WebhookDeliveryStatus>(query.Status.Replace("_", string.Empty), ignoreCase: true, out var parsed)
                 ? parsed
                 : throw new ConflictException("invalid_delivery_status", $"Unknown delivery status '{query.Status}'.");
 
-        var limit = query.Limit is null or <= 0 ? 100 : Math.Min(query.Limit.Value, 500);
-        var deliveries = await webhooks.GetDeliveriesAsync(status, limit, cancellationToken);
-        return deliveries.Select(d => d.ToDto()).ToArray();
+        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var result = await webhooks.GetDeliveriesAsync(status, query.SubscriptionId, page, cancellationToken);
+        return new CursorPage<WebhookDeliveryDto>(result.Items.Select(d => d.ToDto()).ToArray(), result.NextCursor, result.HasMore);
     }
 }

@@ -11,12 +11,19 @@ public sealed class SanctionsCaseRepository(AppDbContext db) : ISanctionsCaseRep
     public Task<SanctionsCase?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.SanctionsCases.Include(c => c.TeamMembers).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
-    public async Task<CursorPage<SanctionsCase>> ListPagedAsync(SanctionsCaseStatus? status, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<CursorPage<SanctionsCase>> ListPagedAsync(SanctionsCaseStatus? status, string? search, PageRequest page, CancellationToken cancellationToken = default)
     {
         var query = db.SanctionsCases.AsNoTracking().AsQueryable();
         if (status is { } s)
         {
             query = query.Where(c => c.Status == s);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            // Subject-free search only: case Category. The subject identity is masked and is never searched.
+            var term = search.Trim();
+            query = query.Where(c => c.Category != null && EF.Functions.Like(c.Category, $"%{term}%"));
         }
 
         return await PageAsync(query, page, cancellationToken);

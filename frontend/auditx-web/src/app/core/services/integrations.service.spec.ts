@@ -10,7 +10,7 @@ const BASE = '/api/v1';
 function integration(overrides: Partial<Integration> = {}): Integration {
   return {
     id: 'i-1',
-    type: 'Smtp',
+    type: 'smtp',
     name: 'Primary SMTP',
     connectionDetailsJson: '{"host":"mail"}',
     hasCredentials: true,
@@ -50,19 +50,19 @@ describe('IntegrationsService', () => {
     http.expectOne(`${BASE}/integrations/i-1/health`).flush({
       data: {
         integrationId: 'i-1',
-        state: 'Degraded',
+        state: 'degraded',
         lastSuccessAt: null,
         lastFailureAt: null,
         recentFailureCount: 2,
       },
     });
-    expect(state).toBe('Degraded');
+    expect(state).toBe('degraded');
   });
 
   it('creates an integration with the supplied body', () => {
     service
       .create({
-        type: 'Webhook',
+        type: 'webhook',
         name: 'Hook',
         connectionDetailsJson: '{}',
         credentials: 'secret',
@@ -72,9 +72,9 @@ describe('IntegrationsService', () => {
       .subscribe();
     const req = http.expectOne(`${BASE}/integrations`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body.type).toBe('Webhook');
+    expect(req.request.body.type).toBe('webhook');
     expect(req.request.body.credentials).toBe('secret');
-    req.flush({ data: integration({ type: 'Webhook' }) });
+    req.flush({ data: integration({ type: 'webhook' }) });
   });
 
   it('patches an integration', () => {

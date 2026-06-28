@@ -29,6 +29,7 @@ import {
   IntegrationType,
   UpdateIntegrationRequest,
 } from '../../../../core/models';
+import { humaniseIntegrationType } from '../integration-type-label';
 
 export interface IntegrationEditorDialogData {
   /** Present when editing; absent for create. */
@@ -79,6 +80,7 @@ export class IntegrationEditorDialogComponent {
   private readonly fb = inject(FormBuilder);
 
   readonly types: IntegrationType[] = INTEGRATION_TYPES;
+  readonly humaniseType = humaniseIntegrationType;
   readonly isEdit = !!this.data.integration;
   readonly candidates = this.data.candidates;
 
@@ -88,7 +90,7 @@ export class IntegrationEditorDialogComponent {
 
   readonly form = this.fb.nonNullable.group({
     type: [
-      (this.data.integration?.type ?? 'Smtp') as IntegrationType,
+      (this.data.integration?.type ?? 'smtp') as IntegrationType,
       Validators.required,
     ],
     name: [

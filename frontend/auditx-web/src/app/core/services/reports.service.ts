@@ -53,9 +53,16 @@ export class ReportsService {
     );
   }
 
-  /** Version list (newest first) for an audit. */
-  listForAudit(auditId: string): Observable<ReportListItem[]> {
-    return this.api.get<ReportListItem[]>(`/audits/${auditId}/reports`);
+  /** Cursor-paginated version list (newest first) for an audit. */
+  listForAudit(
+    auditId: string,
+    cursor?: string | null,
+    limit?: number,
+  ): Observable<CursorPage<ReportListItem>> {
+    return this.api.get<CursorPage<ReportListItem>>(
+      `/audits/${auditId}/reports`,
+      { cursor, limit },
+    );
   }
 
   /** Single report metadata/status surface — POLL this for generation status. */

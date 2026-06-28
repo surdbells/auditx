@@ -22,7 +22,8 @@ public sealed class TemplateConfiguration : IEntityTypeConfiguration<Template>
             .HasMaxLength(40)
             .IsRequired();
 
-        builder.HasIndex(t => new { t.Name, t.AuditType }).IsUnique();
+        // Unique among live (non-deleted) templates so a name+audit_type can be recreated after soft-delete.
+        builder.HasIndex(t => new { t.Name, t.AuditType }).IsUnique().HasFilter("[is_deleted] = 0");
         builder.HasIndex(t => t.AuditType);
         builder.HasIndex(t => t.Status);
 

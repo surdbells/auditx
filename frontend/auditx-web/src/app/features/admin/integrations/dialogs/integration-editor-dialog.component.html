@@ -5,7 +5,7 @@
       <mat-label>Type</mat-label>
       <mat-select formControlName="type">
         @for (t of types; track t) {
-          <mat-option [value]="t">{{ t }}</mat-option>
+          <mat-option [value]="t">{{ humaniseType(t) }}</mat-option>
         }
       </mat-select>
       @if (isEdit) {
@@ -80,7 +80,7 @@
       <mat-select formControlName="fallbackIntegrationId">
         <mat-option [value]="''">None</mat-option>
         @for (c of candidates; track c.id) {
-          <mat-option [value]="c.id">{{ c.name }} ({{ c.type }})</mat-option>
+          <mat-option [value]="c.id">{{ c.name }} ({{ humaniseType(c.type) }})</mat-option>
         }
       </mat-select>
     </mat-form-field>

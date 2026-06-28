@@ -69,8 +69,9 @@ public sealed class ReportTemplateConfiguration : IEntityTypeConfiguration<Repor
         builder.Property(t => t.Version).IsRowVersion();
 
         builder.HasIndex(t => t.VersionNumber).IsUnique();
-        // Exactly one active template bank-wide (US-M8-007): filtered unique index on is_active = 1.
-        builder.HasIndex(t => t.IsActive).IsUnique().HasFilter("[is_active] = 1");
+        // Exactly one active, live template bank-wide (US-M8-007): filtered unique on is_active = 1 AND is_deleted = 0,
+        // so a soft-deleted active template does not block promoting a replacement to active.
+        builder.HasIndex(t => t.IsActive).IsUnique().HasFilter("[is_active] = 1 AND [is_deleted] = 0");
 
         builder.HasQueryFilter(t => !t.IsDeleted);
     }

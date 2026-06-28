@@ -84,6 +84,9 @@ export class ReportsPanelComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly reports = signal<ReportListItem[]>([]);
+  readonly nextCursor = signal<string | null>(null);
+  readonly hasMore = signal(false);
+  readonly loadingMore = signal(false);
   readonly auditStatus = signal<AuditStatus | null>(null);
   readonly auditName = signal<string>('');
   /** Set while a generation is pending/running and being polled. */
@@ -131,12 +134,31 @@ export class ReportsPanelComponent {
   }
 
   private loadList(): void {
+    this.nextCursor.set(null);
     this.service.listForAudit(this.auditId()).subscribe({
-      next: (items) => {
-        this.reports.set(items);
+      next: (page) => {
+        this.reports.set(page.items);
+        this.nextCursor.set(page.nextCursor);
+        this.hasMore.set(page.hasMore);
         this.state.set('ready');
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  loadMore(): void {
+    if (!this.hasMore() || this.loadingMore()) {
+      return;
+    }
+    this.loadingMore.set(true);
+    this.service.listForAudit(this.auditId(), this.nextCursor()).subscribe({
+      next: (page) => {
+        this.reports.update((current) => [...current, ...page.items]);
+        this.nextCursor.set(page.nextCursor);
+        this.hasMore.set(page.hasMore);
+        this.loadingMore.set(false);
+      },
+      error: () => this.loadingMore.set(false),
     });
   }
 

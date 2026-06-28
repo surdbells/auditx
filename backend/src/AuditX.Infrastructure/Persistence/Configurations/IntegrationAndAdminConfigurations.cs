@@ -58,6 +58,10 @@ public sealed class WebhookDeliveryConfiguration : IEntityTypeConfiguration<Webh
 
         builder.HasIndex(d => d.SubscriptionId);
         builder.HasIndex(d => new { d.Status, d.NextRetryAt });
+
+        // Back the cursor-paginated deliveries list (newest first, keyset on (created_at desc, id desc)) so the
+        // filtered+ordered page is served without a sort on a fastest-growing table.
+        builder.HasIndex(d => new { d.Status, d.CreatedAt });
     }
 }
 

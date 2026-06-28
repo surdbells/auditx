@@ -19,8 +19,9 @@ public sealed class BankConfigurationConfiguration : IEntityTypeConfiguration<Ba
 
         // Per-domain incrementing version is unique (no two rows share a (domain, version_number)).
         builder.HasIndex(c => new { c.Domain, c.VersionNumber }).IsUnique();
-        // Exactly one active version PER DOMAIN (M12): filtered unique index on (domain, is_active) WHERE is_active = 1.
-        builder.HasIndex(c => new { c.Domain, c.IsActive }).IsUnique().HasFilter("[is_active] = 1");
+        // Exactly one active, live version PER DOMAIN (M12): filtered unique on (domain, is_active) WHERE the row
+        // is active AND not soft-deleted, so a soft-deleted active version does not block promoting a replacement.
+        builder.HasIndex(c => new { c.Domain, c.IsActive }).IsUnique().HasFilter("[is_active] = 1 AND [is_deleted] = 0");
 
         builder.HasQueryFilter(c => !c.IsDeleted);
     }

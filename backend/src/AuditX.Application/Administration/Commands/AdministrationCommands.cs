@@ -47,6 +47,17 @@ public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository set
 
 public sealed record UpdateResourceLimitsCommand(int MaxEvidenceFileMb, int MaxAuditEvidenceGb) : ICommand<ResourceLimitsDto>;
 
+public sealed class UpdateResourceLimitsCommandValidator : AbstractValidator<UpdateResourceLimitsCommand>
+{
+    // Mirror the domain's accepted range (BankSettings.SetResourceLimits keeps 1..1024) so out-of-range caps
+    // fail fast with a 422 instead of being silently ignored.
+    public UpdateResourceLimitsCommandValidator()
+    {
+        RuleFor(x => x.MaxEvidenceFileMb).InclusiveBetween(1, 1024);
+        RuleFor(x => x.MaxAuditEvidenceGb).InclusiveBetween(1, 1024);
+    }
+}
+
 public sealed class UpdateResourceLimitsCommandHandler(IBankSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateResourceLimitsCommand, ResourceLimitsDto>
 {
@@ -102,6 +113,15 @@ public sealed class BulkDeactivateUsersCommandHandler(
 }
 
 public sealed record BulkImportUsersCommand(string CsvContent) : ICommand<BulkOperationResultDto>;
+
+public sealed class BulkImportUsersCommandValidator : AbstractValidator<BulkImportUsersCommand>
+{
+    // Bound the uploaded CSV payload (≈1 MB) so an unbounded body cannot be used to exhaust memory/storage.
+    public BulkImportUsersCommandValidator()
+    {
+        RuleFor(x => x.CsvContent).NotEmpty().MaximumLength(1_000_000);
+    }
+}
 
 public sealed class BulkImportUsersCommandHandler(
     IUserRepository users, IRoleRepository roles, IUserRoleRepository userRoles, IAuditRecorder audit, IUnitOfWork unitOfWork)
@@ -174,6 +194,18 @@ public sealed class BulkImportUsersCommandHandler(
 // ---- ITANDT support channel ----
 
 public sealed record EnableSupportChannelCommand(IReadOnlyList<string> EngineerIdentifiers, int DurationMinutes) : ICommand<SupportChannelStatusDto>;
+
+public sealed class EnableSupportChannelCommandValidator : AbstractValidator<EnableSupportChannelCommand>
+{
+    // At least one named engineer; cap the list and each identifier; bound the duration to the domain max
+    // (SupportChannelSession.MaxDurationMinutes = 480) so out-of-range values fail fast rather than silently clamp.
+    public EnableSupportChannelCommandValidator()
+    {
+        RuleFor(x => x.EngineerIdentifiers).NotEmpty();
+        RuleForEach(x => x.EngineerIdentifiers).NotEmpty().MaximumLength(256);
+        RuleFor(x => x.DurationMinutes).InclusiveBetween(1, SupportChannelSession.MaxDurationMinutes);
+    }
+}
 
 public sealed class EnableSupportChannelCommandHandler(
     IAdministrationRepository admin, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
@@ -253,6 +285,16 @@ public sealed class InstallReleaseCommandHandler(
 
 public sealed record RecordRestoreDrillCommand(string Outcome, string? Details) : ICommand<RestoreDrillDto>;
 
+public sealed class RecordRestoreDrillCommandValidator : AbstractValidator<RecordRestoreDrillCommand>
+{
+    // Outcome is parsed to an enum in the handler; bound the free-text Details to the column length (2000).
+    public RecordRestoreDrillCommandValidator()
+    {
+        RuleFor(x => x.Outcome).NotEmpty();
+        RuleFor(x => x.Details).MaximumLength(2000);
+    }
+}
+
 public sealed class RecordRestoreDrillCommandHandler(IAdministrationRepository admin, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<RecordRestoreDrillCommand, RestoreDrillDto>
 {
@@ -273,6 +315,17 @@ public sealed class RecordRestoreDrillCommandHandler(IAdministrationRepository a
 
 public sealed record RequestObjectRestoreCommand(string ObjectType, Guid ObjectId, DateTimeOffset SnapshotDate, string Justification)
     : ICommand<ObjectRestoreRequestDto>;
+
+public sealed class RequestObjectRestoreCommandValidator : AbstractValidator<RequestObjectRestoreCommand>
+{
+    // Bound the free-text fields to their column lengths (object_type 100, justification 2000) so an oversized
+    // body fails fast with a 422 rather than reaching the DB.
+    public RequestObjectRestoreCommandValidator()
+    {
+        RuleFor(x => x.ObjectType).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.Justification).NotEmpty().MaximumLength(2000);
+    }
+}
 
 public sealed class RequestObjectRestoreCommandHandler(
     IAdministrationRepository admin, ICurrentUser currentUser, IAuditRecorder audit, IUnitOfWork unitOfWork)

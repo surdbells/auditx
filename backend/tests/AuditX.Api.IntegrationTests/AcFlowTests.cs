@@ -72,11 +72,36 @@ public sealed class AcFlowTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var packId = JsonDocument.Parse(await accepted.Content.ReadAsStringAsync())
             .RootElement.GetProperty("data").GetProperty("acPackId").GetGuid();
 
-        // Run the generation service directly (the Hangfire job runs the same idempotent service).
-        using (var scope = factory.Services.CreateScope())
+        // Best-effort nudge the generation service directly; the enqueued Hangfire job runs the same idempotent
+        // service, so if the two race for the pack one loses on the rowversion — swallow it and poll for the result.
+        try
         {
+            using var scope = factory.Services.CreateScope();
             await scope.ServiceProvider.GetRequiredService<AcPackGenerationService>().RunAsync(packId, CancellationToken.None);
         }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The Hangfire job won the race; polling below observes the settled pack.
+        }
+
+        // Wait until generation has settled (the CIA can see a pending pack).
+        string? status = null;
+        for (var i = 0; i < 20 && status is not ("pending_review" or "failed"); i++)
+        {
+            var poll = await cia.GetAsync($"/api/v1/ac-packs/{packId}");
+            if (poll.StatusCode == HttpStatusCode.OK)
+            {
+                status = (await DataAsync(poll)).GetProperty("status").GetString();
+            }
+
+            if (status is "pending_review" or "failed")
+            {
+                break;
+            }
+
+            await Task.Delay(250);
+        }
+        Assert.Equal("pending_review", status);
 
         // While PendingReview an AC member cannot see the pack (existence not leaked → 404).
         Assert.Equal(HttpStatusCode.NotFound, (await member.GetAsync($"/api/v1/ac-packs/{packId}")).StatusCode);

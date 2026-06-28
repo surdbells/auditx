@@ -34,8 +34,8 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
     public async Task<IActionResult> Search(
         [FromQuery] string? status, [FromQuery] string? severity, [FromQuery] Guid? owner, [FromQuery] Guid? entity,
         [FromQuery] Guid? audit, [FromQuery] string? category, [FromQuery] bool? recurrence, [FromQuery] bool? overdue,
-        [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new SearchExceptionsQuery(status, severity, owner, entity, audit, category, recurrence, overdue, cursor, limit), cancellationToken));
+        [FromQuery] string? search, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new SearchExceptionsQuery(status, severity, owner, entity, audit, category, recurrence, overdue, search, cursor, limit), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewExceptions)]
     [HttpGet("api/v1/exceptions/{id:guid}")]

@@ -119,6 +119,19 @@
             <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
           </table>
         </div>
+
+        @if (hasMore()) {
+          <div class="panel__load-more">
+            <button
+              matButton="outlined"
+              type="button"
+              (click)="loadMore()"
+              [disabled]="loadingMore()"
+            >
+              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+            </button>
+          </div>
+        }
       </mat-card>
     }
   }

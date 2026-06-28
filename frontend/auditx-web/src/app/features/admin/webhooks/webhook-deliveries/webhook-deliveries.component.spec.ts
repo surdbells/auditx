@@ -14,7 +14,7 @@ function delivery(overrides: Partial<WebhookDelivery> = {}): WebhookDelivery {
     subscriptionId: 's-1',
     eventType: 'audit.created',
     eventId: 'e-1',
-    status: 'DeadLetter',
+    status: 'dead_letter',
     attempts: 5,
     nextRetryAt: null,
     lastError: 'connection refused',
@@ -22,6 +22,14 @@ function delivery(overrides: Partial<WebhookDelivery> = {}): WebhookDelivery {
     createdAt: '',
     ...overrides,
   };
+}
+
+function page(
+  items: WebhookDelivery[],
+  nextCursor: string | null = null,
+  hasMore = false,
+) {
+  return { data: { items, nextCursor, hasMore } };
 }
 
 function session(permissions: string[]): SessionDto {
@@ -62,38 +70,56 @@ describe('WebhookDeliveriesComponent', () => {
 
   afterEach(() => http.verify());
 
-  it('loads deliveries and renders them', async () => {
+  it('loads deliveries (cursor page) and renders them', async () => {
     setup();
     http
       .expectOne((r) => r.url === `${BASE}/webhook-deliveries`)
-      .flush({ data: [delivery()] });
+      .flush(page([delivery()]));
     await fixture.whenStable();
     fixture.detectChanges();
 
     expect(component.deliveries().length).toBe(1);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('audit.created');
-    expect(text).toContain('DeadLetter');
+    // snake_case status is humanised for display.
+    expect(text).toContain('Dead letter');
   });
 
   it('re-fetches with a status query when the filter changes', async () => {
     setup();
     http
       .expectOne((r) => r.url === `${BASE}/webhook-deliveries`)
-      .flush({ data: [] });
+      .flush(page([]));
     await fixture.whenStable();
 
-    component.statusFilter.setValue('DeadLetter');
+    component.statusFilter.setValue('dead_letter');
     const req = http.expectOne((r) => r.url === `${BASE}/webhook-deliveries`);
-    expect(req.request.params.get('status')).toBe('DeadLetter');
-    req.flush({ data: [delivery()] });
+    expect(req.request.params.get('status')).toBe('dead_letter');
+    req.flush(page([delivery()]));
+  });
+
+  it('loads more via the next cursor and appends the page', async () => {
+    setup();
+    const first = http.expectOne((r) => r.url === `${BASE}/webhook-deliveries`);
+    expect(first.request.params.has('cursor')).toBe(false);
+    first.flush(page([delivery()], 'cur-2', true));
+    await fixture.whenStable();
+
+    expect(component.hasMore()).toBe(true);
+    component.loadMore();
+    const next = http.expectOne((r) => r.url === `${BASE}/webhook-deliveries`);
+    expect(next.request.params.get('cursor')).toBe('cur-2');
+    next.flush(page([delivery({ id: 'd-2' })], null, false));
+
+    expect(component.deliveries().length).toBe(2);
+    expect(component.hasMore()).toBe(false);
   });
 
   it('retries a dead-lettered delivery via AdminOps', async () => {
     setup();
     http
       .expectOne((r) => r.url === `${BASE}/webhook-deliveries`)
-      .flush({ data: [delivery()] });
+      .flush(page([delivery()]));
     await fixture.whenStable();
 
     expect(component.canRetryRow(delivery())).toBe(true);
@@ -105,14 +131,14 @@ describe('WebhookDeliveriesComponent', () => {
     // The component re-fetches after a successful retry.
     http
       .expectOne((r) => r.url === `${BASE}/webhook-deliveries`)
-      .flush({ data: [delivery({ status: 'Pending' })] });
+      .flush(page([delivery({ status: 'pending' })]));
   });
 
   it('does not allow retry without AdminOps', async () => {
     setup(['ConfigureWebhooks']);
     http
       .expectOne((r) => r.url === `${BASE}/webhook-deliveries`)
-      .flush({ data: [delivery()] });
+      .flush(page([delivery()]));
     await fixture.whenStable();
 
     expect(component.canRetry()).toBe(false);

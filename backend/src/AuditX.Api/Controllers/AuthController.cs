@@ -7,6 +7,7 @@ using AuditX.Application.Identity.Dtos;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AuditX.Api.Controllers;
 
@@ -15,6 +16,7 @@ public sealed class AuthController(IDispatcher dispatcher) : ApiControllerBase
 {
     /// <summary>Forms-fallback login: AD credentials validated by an LDAP bind. Sets the session cookie.</summary>
     [AllowAnonymous]
+    [EnableRateLimiting("auth")]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {

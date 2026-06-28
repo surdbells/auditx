@@ -25,8 +25,9 @@ public sealed class TaxonomyProvider(AppDbContext db) : ITaxonomyProvider
 }
 
 /// <summary>
-/// Coverage analytics read model (US-M3-021..023). Computes over the universe; audit-fact joins arrive
-/// with M4 (until then the coverage matrix is zero-filled and last-audited reflects M3 state).
+/// Coverage analytics read model (US-M3-021..023). Computes over the universe and the M4 audit fact table:
+/// the coverage matrix counts completed audits per (entity_type, audit_type) and last-audited reflects the
+/// MarkAudited timestamp set on audit completion.
 /// </summary>
 public sealed class CoverageQueryService(AppDbContext db, IClock clock, ITaxonomyProvider taxonomy) : ICoverageQueryService
 {
@@ -79,12 +80,44 @@ public sealed class CoverageQueryService(AppDbContext db, IClock clock, ITaxonom
         var rows = await taxonomy.GetActiveEntityTypesAsync(cancellationToken);
         var columns = await taxonomy.GetAuditTypesAsync(cancellationToken);
 
-        // Cells = completed audits per (entity_type, audit_type) within the window. The audit fact table
-        // arrives with M4; until then the matrix is zero-filled over the bounded, ordered taxonomy axes.
         var cells = new int[rows.Count][];
         for (var r = 0; r < rows.Count; r++)
         {
             cells[r] = new int[columns.Count];
+        }
+
+        // Cells = COMPLETED audits per (audited entity's entity_type, audit's audit_type) within the window.
+        // An audit reaches an entity through its plan item (audit.plan_item_id → plan_item.entity_id →
+        // auditable_entity.entity_type); audits without a plan item have no universe-entity linkage and are
+        // therefore not attributable to an entity_type row. The window is keyed on actual_end_date (set on
+        // completion), expressed as a DateOnly cutoff to match the column type.
+        var cutoff = DateOnly.FromDateTime(clock.UtcNow.AddMonths(-windowMonths).UtcDateTime);
+        var counts = await (
+            from audit in db.Audits.AsNoTracking()
+            where audit.Status == Domain.Enums.AuditStatus.Completed
+                && audit.ActualEndDate != null && audit.ActualEndDate >= cutoff
+                && audit.PlanItemId != null
+            join planItem in db.PlanItems.AsNoTracking() on audit.PlanItemId equals planItem.Id
+            join entity in db.AuditUniverseEntities.AsNoTracking() on planItem.EntityId equals entity.Id
+            group audit by new { entity.EntityType, audit.AuditType } into g
+            select new { g.Key.EntityType, g.Key.AuditType, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var rowIndex = rows
+            .Select((name, index) => (name, index))
+            .ToDictionary(x => x.name, x => x.index, StringComparer.OrdinalIgnoreCase);
+        var columnIndex = columns
+            .Select((name, index) => (name, index))
+            .ToDictionary(x => x.name, x => x.index, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var count in counts)
+        {
+            // Only place counts whose entity_type and audit_type are on the (active, bounded) axes; an audit of
+            // an entity whose type was since deactivated, or of an audit_type no longer in use, falls off-grid.
+            if (rowIndex.TryGetValue(count.EntityType, out var r) && columnIndex.TryGetValue(count.AuditType, out var c))
+            {
+                cells[r][c] = count.Count;
+            }
         }
 
         return new CoverageMatrix(rows, columns, cells);

@@ -11,7 +11,7 @@ const BASE = '/api/v1';
 function integration(overrides: Partial<Integration> = {}): Integration {
   return {
     id: 'i-1',
-    type: 'Smtp',
+    type: 'smtp',
     name: 'Primary SMTP',
     connectionDetailsJson: '{}',
     hasCredentials: true,
@@ -69,7 +69,7 @@ describe('IntegrationsListComponent', () => {
     setup();
     http
       .expectOne(`${BASE}/integrations`)
-      .flush({ data: [integration(), integration({ id: 'i-2', name: 'SIEM', type: 'Siem' })] });
+      .flush({ data: [integration(), integration({ id: 'i-2', name: 'SIEM', type: 'siem' })] });
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -79,7 +79,7 @@ describe('IntegrationsListComponent', () => {
       .flush({
         data: {
           integrationId: 'i-1',
-          state: 'Healthy',
+          state: 'healthy',
           lastSuccessAt: null,
           lastFailureAt: null,
           recentFailureCount: 0,
@@ -90,7 +90,7 @@ describe('IntegrationsListComponent', () => {
       .flush({
         data: {
           integrationId: 'i-2',
-          state: 'Failing',
+          state: 'failing',
           lastSuccessAt: null,
           lastFailureAt: null,
           recentFailureCount: 4,
@@ -100,10 +100,11 @@ describe('IntegrationsListComponent', () => {
     fixture.detectChanges();
 
     expect(component.integrations().length).toBe(2);
-    expect(component.healthState('i-1')).toBe('Healthy');
-    expect(component.healthState('i-2')).toBe('Failing');
+    expect(component.healthState('i-1')).toBe('healthy');
+    expect(component.healthState('i-2')).toBe('failing');
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Primary SMTP');
+    // health state is capitalised for display.
     expect(text).toContain('Healthy');
   });
 
@@ -124,7 +125,7 @@ describe('IntegrationsListComponent', () => {
     http.expectOne(`${BASE}/integrations/i-1/health`).flush({
       data: {
         integrationId: 'i-1',
-        state: 'Healthy',
+        state: 'healthy',
         lastSuccessAt: null,
         lastFailureAt: null,
         recentFailureCount: 0,

@@ -24,8 +24,8 @@ public sealed class DashboardConfiguration : IEntityTypeConfiguration<Dashboard>
         builder.HasMany(d => d.Widgets).WithOne().HasForeignKey(w => w.DashboardId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(d => d.Widgets).HasField("_widgets").UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        // Slug is unique among live (non-deleted) dashboards.
-        builder.HasIndex(d => d.Slug).IsUnique();
+        // Slug is unique among live (non-deleted) dashboards — filtered so a soft-deleted dashboard frees its slug.
+        builder.HasIndex(d => d.Slug).IsUnique().HasFilter("[is_deleted] = 0");
 
         builder.HasQueryFilter(d => !d.IsDeleted);
     }

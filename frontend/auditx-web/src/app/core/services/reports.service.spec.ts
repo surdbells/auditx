@@ -99,14 +99,23 @@ describe('ReportsService', () => {
     expect(result?.status).toBe('pending');
   });
 
-  it('lists the report versions for an audit', () => {
-    let result: ReportListItem[] | undefined;
-    service.listForAudit('au-1').subscribe((r) => (result = r));
-    const req = http.expectOne(`${BASE}/audits/au-1/reports`);
+  it('lists the report versions for an audit as a cursor page', () => {
+    let result: { items: ReportListItem[]; hasMore: boolean } | undefined;
+    service.listForAudit('au-1').subscribe((page) => (result = page));
+    const req = http.expectOne((r) => r.url === `${BASE}/audits/au-1/reports`);
     expect(req.request.method).toBe('GET');
-    req.flush({ data: [listItem()] });
-    expect(result?.length).toBe(1);
-    expect(result?.[0].versionNumber).toBe(1);
+    req.flush({ data: { items: [listItem()], nextCursor: null, hasMore: false } });
+    expect(result?.items.length).toBe(1);
+    expect(result?.items[0].versionNumber).toBe(1);
+    expect(result?.hasMore).toBe(false);
+  });
+
+  it('forwards cursor + limit when paging the audit report list', () => {
+    service.listForAudit('au-1', 'cur-1', 20).subscribe();
+    const req = http.expectOne((r) => r.url === `${BASE}/audits/au-1/reports`);
+    expect(req.request.params.get('cursor')).toBe('cur-1');
+    expect(req.request.params.get('limit')).toBe('20');
+    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
   });
 
   it('fetches a single report (status surface) and unwraps the envelope', () => {

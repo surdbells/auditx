@@ -1,3 +1,4 @@
+using AuditX.Application.Common.Models;
 using AuditX.Domain.Administration;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Integrations;
@@ -29,7 +30,7 @@ public interface IWebhookRepository
 
     Task<WebhookDelivery?> GetDeliveryAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<WebhookDelivery>> GetDeliveriesAsync(WebhookDeliveryStatus? status, int limit, CancellationToken cancellationToken = default);
+    Task<CursorPage<WebhookDelivery>> GetDeliveriesAsync(WebhookDeliveryStatus? status, Guid? subscriptionId, PageRequest page, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<WebhookDelivery>> GetDueForRetryAsync(DateTimeOffset asOfUtc, int limit, CancellationToken cancellationToken = default);
 

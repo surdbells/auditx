@@ -68,6 +68,12 @@ public sealed class NotificationDispatchConfiguration : IEntityTypeConfiguration
         builder.HasIndex(d => new { d.Status, d.NextRetryAt });
         builder.HasIndex(d => d.EventId);
 
+        // Back the dispatch-list filters (US-M10): a recipient- or event-type-only filter would otherwise scan a
+        // fastest-growing table. Trailing Id aligns the index with the keyset cursor (OrderBy Id) so filter+sort
+        // are served without a separate sort.
+        builder.HasIndex(d => new { d.RecipientUserId, d.Id });
+        builder.HasIndex(d => new { d.EventType, d.Id });
+
         // Idempotency backstop: one dispatch per (event, rule, recipient, channel). Unique so a concurrent
         // ingest race fails the second insert at the DB rather than producing a duplicate notification.
         builder.HasIndex(d => new { d.EventId, d.RuleId, d.RecipientUserId, d.Channel }).IsUnique();

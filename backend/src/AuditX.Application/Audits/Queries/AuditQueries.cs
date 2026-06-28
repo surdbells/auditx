@@ -8,7 +8,7 @@ using AuditX.Domain.Enums;
 
 namespace AuditX.Application.Audits.Queries;
 
-public sealed record ListAuditsQuery(string? Status, string? AuditType, Guid? Lead, Guid? PlanItem, string? Cursor, int? Limit)
+public sealed record ListAuditsQuery(string? Status, string? AuditType, Guid? Lead, Guid? PlanItem, string? Search, string? Cursor, int? Limit)
     : IQuery<CursorPage<AuditListItemDto>>;
 
 public sealed class ListAuditsQueryHandler(IAuditRepository audits)
@@ -25,7 +25,7 @@ public sealed class ListAuditsQueryHandler(IAuditRepository audits)
         }
 
         var page = PageRequest.Of(query.Cursor, query.Limit);
-        var result = await audits.SearchAsync(status, query.AuditType, query.Lead, query.PlanItem, page, cancellationToken);
+        var result = await audits.SearchAsync(status, query.AuditType, query.Lead, query.PlanItem, query.Search, page, cancellationToken);
         return new CursorPage<AuditListItemDto>(result.Items.Select(a => a.ToListItemDto()).ToArray(), result.NextCursor, result.HasMore);
     }
 }

@@ -10,11 +10,26 @@ public sealed class ReportRepository(AppDbContext db) : IReportRepository
     public Task<Report?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.Reports.Include(r => r.Distributions).FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
-    public async Task<IReadOnlyList<Report>> ListByAuditAsync(Guid auditId, CancellationToken cancellationToken = default)
-        => await db.Reports.AsNoTracking()
-            .Where(r => r.AuditId == auditId)
-            .OrderByDescending(r => r.VersionNumber)
-            .ToListAsync(cancellationToken);
+    public async Task<CursorPage<Report>> ListByAuditAsync(Guid auditId, PageRequest page, CancellationToken cancellationToken = default)
+    {
+        var query = db.Reports.AsNoTracking().Where(r => r.AuditId == auditId);
+
+        // Newest version first; keyset on the descending version number using an encoded int cursor (per-audit
+        // versions are a dense incrementing int, so this is a stable total order without a tiebreaker).
+        if (!string.IsNullOrWhiteSpace(page.Cursor) && int.TryParse(page.Cursor, out var cursorVersion))
+        {
+            query = query.Where(r => r.VersionNumber < cursorVersion);
+        }
+
+        var items = await query.OrderByDescending(r => r.VersionNumber).Take(page.Limit + 1).ToListAsync(cancellationToken);
+        var hasMore = items.Count > page.Limit;
+        if (hasMore)
+        {
+            items.RemoveAt(items.Count - 1);
+        }
+
+        return new CursorPage<Report>(items, hasMore ? items[^1].VersionNumber.ToString() : null, hasMore);
+    }
 
     public async Task<CursorPage<ReportDistribution>> ListDistributionsAsync(Guid reportId, PageRequest page, CancellationToken cancellationToken = default)
     {

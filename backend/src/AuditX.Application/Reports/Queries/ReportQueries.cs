@@ -16,19 +16,20 @@ namespace AuditX.Application.Reports.Queries;
 
 // ---- List versions for an audit ----
 
-public sealed record ListAuditReportsQuery(Guid AuditId) : IQuery<IReadOnlyList<ReportListItemDto>>;
+public sealed record ListAuditReportsQuery(Guid AuditId, string? Cursor, int? Limit) : IQuery<CursorPage<ReportListItemDto>>;
 
 public sealed class ListAuditReportsQueryHandler(
     IReportRepository reports, IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser)
-    : IQueryHandler<ListAuditReportsQuery, IReadOnlyList<ReportListItemDto>>
+    : IQueryHandler<ListAuditReportsQuery, CursorPage<ReportListItemDto>>
 {
-    public async Task<IReadOnlyList<ReportListItemDto>> Handle(ListAuditReportsQuery query, CancellationToken cancellationToken)
+    public async Task<CursorPage<ReportListItemDto>> Handle(ListAuditReportsQuery query, CancellationToken cancellationToken)
     {
         var audit = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
         await ReportAccess.EnsureCanAccessAsync(audit, currentUser.UserId, permissions, cancellationToken);
 
-        var items = await reports.ListByAuditAsync(query.AuditId, cancellationToken);
-        return items.Select(r => r.ToListDto()).ToArray();
+        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var result = await reports.ListByAuditAsync(query.AuditId, page, cancellationToken);
+        return new CursorPage<ReportListItemDto>(result.Items.Select(r => r.ToListDto()).ToArray(), result.NextCursor, result.HasMore);
     }
 }
 

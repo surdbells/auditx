@@ -1,13 +1,19 @@
+using System.Threading.RateLimiting;
 using AuditX.Api.Authentication;
 using AuditX.Api.BackgroundJobs;
 using AuditX.Api.Identity;
 using AuditX.Api.Middleware;
+using AuditX.Api.OpenApi;
+using AuditX.Api.Startup;
 using AuditX.Application;
 using AuditX.Application.Abstractions;
 using AuditX.Infrastructure;
 using AuditX.Infrastructure.Options;
 using AuditX.Infrastructure.Persistence;
 using Hangfire;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -20,8 +26,30 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .WriteTo.Console(formatProvider: System.Globalization.CultureInfo.InvariantCulture));
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Model-binding / malformed-body failures return the SAME RFC 7807 problem+json shape the exception middleware
+// produces (request_id + error_code + field_errors), so the API's error contract is uniform end-to-end.
+builder.Services.Configure<ApiBehaviorOptions>(options => options.InvalidModelStateResponseFactory = context =>
+{
+    var fieldErrors = context.ModelState
+        .Where(kv => kv.Value is { Errors.Count: > 0 })
+        .ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value!.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Invalid value." : e.ErrorMessage).ToArray());
+
+    var problem = new ProblemDetails
+    {
+        Title = "Validation failed",
+        Status = StatusCodes.Status422UnprocessableEntity,
+        Detail = "One or more fields are invalid.",
+    };
+    problem.Extensions["request_id"] = System.Diagnostics.Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
+    problem.Extensions["error_code"] = "validation_failed";
+    problem.Extensions["field_errors"] = fieldErrors;
+    return new ObjectResult(problem) { StatusCode = StatusCodes.Status422UnprocessableEntity, ContentTypes = { "application/problem+json" } };
+});
+
+builder.Services.AddAuditXOpenApi();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddApplication();
@@ -31,6 +59,33 @@ builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<IRequestContext, HttpRequestContext>();
 
 builder.Services.AddApiAuthentication(builder.Configuration);
+
+// Persist + name the DataProtection key ring so DataProtection-encrypted integration credentials (M14) survive
+// restarts and decrypt across instances. On Windows Server the default already persists to the profile/registry;
+// in containers / multi-instance set DataProtection:KeyRingPath to a shared, backed-up location (see the runbook).
+var dataProtection = builder.Services.AddDataProtection().SetApplicationName("AuditX");
+var keyRingPath = builder.Configuration["DataProtection:KeyRingPath"];
+if (!string.IsNullOrWhiteSpace(keyRingPath))
+{
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keyRingPath));
+}
+
+// Rate limiting (anti-brute-force on auth + a global per-IP DoS backstop). Applied to the pipeline only outside
+// Development so the integration suite (many rapid logins from one host) is unaffected.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("auth", o =>
+    {
+        o.Window = TimeSpan.FromMinutes(1);
+        o.PermitLimit = 10;        // 10 sign-in attempts / minute / client IP
+        o.QueueLimit = 0;
+    });
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions { Window = TimeSpan.FromSeconds(1), PermitLimit = 50, QueueLimit = 0 }));
+});
 
 var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
@@ -60,6 +115,19 @@ builder.Services.AddScoped<AuditX.Application.Abstractions.Ac.IAcPackGenerationQ
 
 var app = builder.Build();
 
+// Fail fast if a non-Development environment would boot with an insecure configuration (dev identity provider,
+// placeholder/short JWT signing key, or no connection string).
+ProductionSafetyGuard.Validate(app.Services, app.Environment, app.Configuration);
+
+// Transport + browser hardening outside Development (HTTPS/HSTS terminate at the reverse proxy in most deployments,
+// but enforce here too as defence-in-depth). Security-response headers are always applied.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -70,6 +138,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 app.UseCors();
+
+// Rate limiting only outside Development (keeps the integration suite's rapid logins unthrottled).
+if (!app.Environment.IsDevelopment())
+{
+    app.UseRateLimiter();
+}
+
 app.UseAuthentication();
 app.UseMiddleware<SessionSlidingMiddleware>();
 app.UseAuthorization();

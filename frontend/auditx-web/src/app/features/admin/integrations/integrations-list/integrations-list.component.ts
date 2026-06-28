@@ -20,6 +20,7 @@ import {
   Integration,
   IntegrationHealthState,
 } from '../../../../core/models';
+import { humaniseIntegrationType } from '../integration-type-label';
 import {
   IntegrationEditorDialogComponent,
   IntegrationEditorDialogData,
@@ -72,6 +73,8 @@ export class IntegrationsListComponent {
   /** integrationId → health state, populated lazily. */
   readonly health = signal<Record<string, IntegrationHealthState>>({});
 
+  readonly humaniseType = humaniseIntegrationType;
+
   readonly canManage = computed(() =>
     this.auth.hasPermission(Permissions.ConfigureIntegrations),
   );
@@ -114,6 +117,11 @@ export class IntegrationsListComponent {
 
   healthState(id: string): IntegrationHealthState | null {
     return this.health()[id] ?? null;
+  }
+
+  /** Capitalises a health state for display (e.g. `healthy` → `Healthy`). */
+  humaniseHealth(state: IntegrationHealthState | null): string {
+    return state ? state.charAt(0).toUpperCase() + state.slice(1) : '';
   }
 
   create(): void {

@@ -68,12 +68,43 @@ describe('WebhooksService', () => {
     expect(done).toBe(true);
   });
 
-  it('lists deliveries with status filter and limit', () => {
-    service.listDeliveries('DeadLetter', 50).subscribe();
+  it('lists deliveries with filters, cursor + limit and unwraps the page', () => {
+    let result: { items: unknown[]; hasMore: boolean } | undefined;
+    service
+      .listDeliveries({
+        subscriptionId: 's-1',
+        status: 'dead_letter',
+        cursor: 'cur-1',
+        limit: 50,
+      })
+      .subscribe((page) => (result = page));
     const req = http.expectOne((r) => r.url === `${BASE}/webhook-deliveries`);
-    expect(req.request.params.get('status')).toBe('DeadLetter');
+    expect(req.request.params.get('subscriptionId')).toBe('s-1');
+    expect(req.request.params.get('status')).toBe('dead_letter');
+    expect(req.request.params.get('cursor')).toBe('cur-1');
     expect(req.request.params.get('limit')).toBe('50');
-    req.flush({ data: [] });
+    req.flush({
+      data: {
+        items: [
+          {
+            id: 'd-1',
+            subscriptionId: 's-1',
+            eventType: 'audit.created',
+            eventId: 'e-1',
+            status: 'dead_letter',
+            attempts: 5,
+            nextRetryAt: null,
+            lastError: null,
+            deliveredAt: null,
+            createdAt: '',
+          },
+        ],
+        nextCursor: 'cur-2',
+        hasMore: true,
+      },
+    });
+    expect(result?.items.length).toBe(1);
+    expect(result?.hasMore).toBe(true);
   });
 
   it('retries a delivery via void POST', () => {

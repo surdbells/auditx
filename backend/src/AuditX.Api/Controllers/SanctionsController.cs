@@ -16,8 +16,8 @@ public sealed class SanctionsController(IDispatcher dispatcher) : ApiControllerB
 
     [RequirePermission(PermissionKeys.ViewSanctions)]
     [HttpGet("api/v1/sanctions/cases")]
-    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListSanctionsCasesQuery(status, cursor, limit), cancellationToken));
+    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] string? search, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListSanctionsCasesQuery(status, search, cursor, limit), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewSanctions)]
     [HttpGet("api/v1/sanctions/cases/{id:guid}")]

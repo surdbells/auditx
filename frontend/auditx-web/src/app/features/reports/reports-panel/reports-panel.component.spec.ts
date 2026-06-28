@@ -129,7 +129,7 @@ describe('ReportsPanelComponent', () => {
     await fixture.whenStable();
     http
       .expectOne(`${BASE}/audits/au-1/reports`)
-      .flush({ data: items });
+      .flush({ data: { items, nextCursor: null, hasMore: false } });
     await fixture.whenStable();
     fixture.detectChanges();
   }
@@ -181,7 +181,13 @@ describe('ReportsPanelComponent', () => {
         .flush({ data: report({ status: 'completed' }) });
       http
         .expectOne(`${BASE}/audits/au-1/reports`)
-        .flush({ data: [listItem({ id: 'r-9', versionNumber: 2 })] });
+        .flush({
+          data: {
+            items: [listItem({ id: 'r-9', versionNumber: 2 })],
+            nextCursor: null,
+            hasMore: false,
+          },
+        });
     } finally {
       jasmine.clock().uninstall();
     }
@@ -189,6 +195,28 @@ describe('ReportsPanelComponent', () => {
     expect(component.generating()).toBe(false);
     expect(notify.success).toHaveBeenCalled();
     expect(component.reports().length).toBe(1);
+  });
+
+  it('loads more report versions via the next cursor', async () => {
+    await setup(['ViewReport'], 'completed', [listItem()]);
+
+    // setup() flushed hasMore: false; simulate a first page that has more.
+    component.hasMore.set(true);
+    component.nextCursor.set('cur-2');
+
+    component.loadMore();
+    const req = http.expectOne((r) => r.url === `${BASE}/audits/au-1/reports`);
+    expect(req.request.params.get('cursor')).toBe('cur-2');
+    req.flush({
+      data: {
+        items: [listItem({ id: 'r-2', versionNumber: 2 })],
+        nextCursor: null,
+        hasMore: false,
+      },
+    });
+
+    expect(component.reports().length).toBe(2);
+    expect(component.hasMore()).toBe(false);
   });
 
   it('humanises report statuses', async () => {

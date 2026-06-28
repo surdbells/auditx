@@ -66,10 +66,7 @@ public sealed class AuditUniverseController(IDispatcher dispatcher) : ApiControl
     [RequirePermission(PermissionKeys.ManageConfiguration)]
     [HttpPost("entity-types")]
     public async Task<IActionResult> AddEntityType([FromBody] AddEntityTypeRequest request, CancellationToken cancellationToken)
-    {
-        await dispatcher.Send(new AddEntityTypeCommand(request.Type), cancellationToken);
-        return StatusCode(StatusCodes.Status201Created);
-    }
+        => Created(await dispatcher.Send(new AddEntityTypeCommand(request.Type), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageConfiguration)]
     [HttpDelete("entity-types/{type}")]

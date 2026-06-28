@@ -63,6 +63,14 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
             query = query.Where(e => e.Category == filter.Category);
         }
 
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var term = filter.Search.Trim();
+            query = query.Where(e =>
+                EF.Functions.Like(e.Title, $"%{term}%") ||
+                EF.Functions.Like(e.RootCause, $"%{term}%"));
+        }
+
         if (filter.IsRecurrence is { } rec)
         {
             query = query.Where(e => e.IsRecurrence == rec);

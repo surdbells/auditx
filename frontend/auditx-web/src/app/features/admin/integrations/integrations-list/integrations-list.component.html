@@ -43,7 +43,7 @@
 
             <ng-container matColumnDef="type">
               <th mat-header-cell *matHeaderCellDef>Type</th>
-              <td mat-cell *matCellDef="let i">{{ i.type }}</td>
+              <td mat-cell *matCellDef="let i">{{ humaniseType(i.type) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="health">
@@ -51,7 +51,7 @@
               <td mat-cell *matCellDef="let i">
                 @if (canViewHealth() && healthState(i.id)) {
                   <span class="status-badge" [attr.data-status]="healthState(i.id)">
-                    {{ healthState(i.id) }}
+                    {{ humaniseHealth(healthState(i.id)) }}
                   </span>
                 } @else {
                   <span class="muted">—</span>
