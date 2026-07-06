@@ -1,0 +1,15 @@
+# Keep the Docker build context small + prevent host (Windows) build artefacts from leaking into Linux images.
+**/node_modules
+**/bin
+**/obj
+**/dist
+**/.angular
+**/TestResults
+**/.vs
+**/.vscode
+.git
+.github
+**/*.user
+**/appsettings.Development.json
+docs
+*.md

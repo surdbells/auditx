@@ -206,14 +206,69 @@ static async Task InitialiseDatabaseAsync(WebApplication app)
         return;
     }
 
+    var connectionString = app.Configuration.GetConnectionString("Default");
+
+    // Deterministically create the target database (empty) BEFORE anything touches it. On a fresh SQL Server the
+    // app's EF migration and Hangfire's own schema-install both connect to a database that does not exist yet
+    // (SQL error 4060) and race each other during cold start; creating it up front (from a master connection, with
+    // a warm-up retry) makes the boot reliable.
+    if (!string.IsNullOrWhiteSpace(connectionString))
+    {
+        await EnsureDatabaseExistsAsync(connectionString);
+    }
+
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
+
+    // Install the Hangfire SQL schema explicitly + idempotently BEFORE seeding. The seed raises domain events whose
+    // post-commit dispatch enqueues Hangfire jobs; the Hangfire background server that would install the schema does
+    // not start until the host runs (after this seed). Installing it here — after the DB + app schema exist —
+    // guarantees `HangFire.Job` et al. are present when the seed enqueues.
+    if (!string.IsNullOrWhiteSpace(connectionString))
+    {
+        await using var hangfireConnection = new Microsoft.Data.SqlClient.SqlConnection(connectionString);
+        await hangfireConnection.OpenAsync();
+        Hangfire.SqlServer.SqlServerObjectsInstaller.Install(hangfireConnection);
+    }
 
     var identityOptions = scope.ServiceProvider
         .GetRequiredService<Microsoft.Extensions.Options.IOptions<IdentityOptions>>().Value;
     var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
     await seeder.SeedAsync(seedDevelopmentUsers: identityOptions.UseDevelopmentProvider);
+}
+
+// Create the target database if it does not exist, from a master connection, retrying while SQL Server warms up.
+// Idempotent — safe on every boot. The database name comes from the (trusted) connection string.
+static async Task EnsureDatabaseExistsAsync(string connectionString)
+{
+    var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connectionString);
+    var databaseName = builder.InitialCatalog;
+    if (string.IsNullOrWhiteSpace(databaseName) || string.Equals(databaseName, "master", StringComparison.OrdinalIgnoreCase))
+    {
+        return;
+    }
+
+    builder.InitialCatalog = "master";
+    await using var connection = new Microsoft.Data.SqlClient.SqlConnection(builder.ConnectionString);
+
+    for (var attempt = 1; ; attempt++)
+    {
+        try
+        {
+            await connection.OpenAsync();
+            break;
+        }
+        catch (Microsoft.Data.SqlClient.SqlException) when (attempt < 30)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2)); // SQL Server is still warming up
+        }
+    }
+
+    await using var command = connection.CreateCommand();
+    // databaseName is bracket-quoted; it originates from server configuration, not user input.
+    command.CommandText = $"IF DB_ID(N'{databaseName.Replace("'", "''")}') IS NULL CREATE DATABASE [{databaseName.Replace("]", "]]")}];";
+    await command.ExecuteNonQueryAsync();
 }
 
 /// <summary>Exposed so the integration-test host (WebApplicationFactory) can reference the API assembly.</summary>
