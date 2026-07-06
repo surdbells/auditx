@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +17,12 @@ import {
   AcSeverityCount,
 } from '../../../../core/models';
 import { days, humanise, percent } from '../../format';
+import {
+  BarChartComponent,
+  ChartDatum,
+  DonutChartComponent,
+  GaugeChartComponent,
+} from '../../../../shared/charts';
 
 /**
  * Renders the shared AC analytics snapshot sections — plan status, exception
@@ -26,7 +37,16 @@ import { days, humanise, percent } from '../../format';
 @Component({
   selector: 'app-ac-analytics-sections',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, MatCardModule, MatIconModule, MatTableModule, MatTooltipModule],
+  imports: [
+    DatePipe,
+    MatCardModule,
+    MatIconModule,
+    MatTableModule,
+    MatTooltipModule,
+    BarChartComponent,
+    DonutChartComponent,
+    GaugeChartComponent,
+  ],
   templateUrl: './analytics-sections.component.html',
   styleUrl: './analytics-sections.component.scss',
 })
@@ -49,6 +69,22 @@ export class AcAnalyticsSectionsComponent {
   readonly humanise = humanise;
   readonly percent = percent;
   readonly days = days;
+
+  /** Severity breakdown as donut segments (colours resolved from the label). */
+  readonly severityChart = computed<ChartDatum[]>(() =>
+    this.exceptionsBySeverity().map((s) => ({
+      label: humanise(s.severity),
+      value: s.count,
+    })),
+  );
+
+  /** Recurrence clusters as bars (closed-exception count per category). */
+  readonly recurrenceChart = computed<ChartDatum[]>(() =>
+    this.recurrenceClusters().map((c) => ({
+      label: humanise(c.category),
+      value: c.closedExceptionCount,
+    })),
+  );
 
   readonly findingColumns = ['title', 'severity', 'status', 'raisedAt', 'targetDate'];
   readonly sanctionsColumns = [

@@ -69,8 +69,16 @@
               } @else {
                 @switch (widget.widgetType) {
                   @case ('single_metric') {
+                    @let gauge = gaugeMetric(widget);
                     @let figures = keyFigures(widget);
-                    @if (figures.length === 0) {
+                    @if (gauge) {
+                      <div class="widget__gauge">
+                        <app-gauge-chart
+                          [value]="gauge.value"
+                          [label]="gauge.label"
+                        />
+                      </div>
+                    } @else if (figures.length === 0) {
                       <p class="widget__unavailable">No data.</p>
                     } @else {
                       <div class="metric__grid">
@@ -85,27 +93,27 @@
                   }
 
                   @case ('chart') {
-                    @let series = bars(widget);
-                    @if (series.length > 0) {
-                      <div class="bars" role="img" aria-label="Bar chart">
-                        @for (b of series; track b.label) {
-                          <div class="bar">
-                            <span class="bar__label">{{ b.label }}</span>
-                            <span class="bar__track">
-                              <span
-                                class="bar__fill"
-                                [style.width]="barWidth(b.value, series)"
-                              ></span>
-                            </span>
-                            <span class="bar__value">{{ b.value }}</span>
-                          </div>
-                        }
-                      </div>
-                    } @else {
-                      <!-- No numeric series derivable: fall back to a table. -->
-                      <ng-container
-                        *ngTemplateOutlet="tableTpl; context: { $implicit: widget }"
-                      />
+                    @let kind = chartKind(widget);
+                    @switch (kind) {
+                      @case ('donut') {
+                        <app-donut-chart
+                          [data]="chartData(widget)"
+                          [label]="widget.title"
+                          centerLabel="open"
+                        />
+                      }
+                      @case ('bar') {
+                        <app-bar-chart
+                          [data]="chartData(widget)"
+                          [label]="widget.title"
+                        />
+                      }
+                      @default {
+                        <!-- No numeric series derivable: fall back to a table. -->
+                        <ng-container
+                          *ngTemplateOutlet="tableTpl; context: { $implicit: widget }"
+                        />
+                      }
                     }
                   }
 

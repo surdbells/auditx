@@ -119,22 +119,25 @@ describe('DashboardViewComponent', () => {
     expect(component.widgets().map((w) => w.id)).toEqual(['w-1', 'w-2']);
   });
 
-  it('renders single_metric key figures from the data payload', async () => {
+  it('renders single_metric key figures from a non-gauge payload', async () => {
     await setup(['ViewAnalytics'], {
       ...detail(),
       widgets: [
         widget({
           widgetType: 'single_metric',
-          data: { planExecutionPercent: 70, openExceptionBacklog: 3 },
+          data: { openExceptionBacklog: 3, closedExceptions: 12 },
         }),
       ],
     });
+    // No gauge-triggering percentage, so the figure grid renders.
+    expect(component.gaugeMetric(component.widgets()[0])).toBeNull();
     const figures = component.keyFigures(component.widgets()[0]);
     expect(figures.length).toBe(2);
-    const exec = figures.find((f) => f.label === 'Plan Execution Percent');
-    expect(exec?.value).toBe('70.0%');
+    const backlog = figures.find((f) => f.label === 'Open Exception Backlog');
+    expect(backlog?.value).toBe('3');
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('70.0%');
+    expect(text).toContain('3');
+    expect(text).toContain('12');
   });
 
   it('projects an array payload into a generic table', async () => {
@@ -157,7 +160,7 @@ describe('DashboardViewComponent', () => {
     expect(text).toContain('Retail');
   });
 
-  it('derives bars for a chart widget from a breakdown payload', async () => {
+  it('renders a bySeverity chart widget as a donut chart', async () => {
     await setup(['ViewAnalytics'], {
       ...detail(),
       widgets: [
@@ -172,11 +175,58 @@ describe('DashboardViewComponent', () => {
         }),
       ],
     });
-    const bars = component.bars(component.widgets()[0]);
+    const w = component.widgets()[0];
+    const bars = component.bars(w);
     expect(bars.map((b) => b.label)).toEqual(['Critical', 'High']);
-    // The largest value (5) is 100%.
-    expect(component.barWidth(5, bars)).toBe('100%');
-    expect(component.barWidth(2, bars)).toBe('40%');
+    // A severity breakdown is a parts-of-a-whole → donut.
+    expect(component.chartKind(w)).toBe('donut');
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-donut-chart')).toBeTruthy();
+    // The donut ring is drawn from one stroked circle per slice (+1 track).
+    expect(host.querySelectorAll('app-donut-chart circle').length).toBe(3);
+  });
+
+  it('renders a non-severity chart widget (age buckets) as a bar chart', async () => {
+    await setup(['ViewAnalytics'], {
+      ...detail(),
+      widgets: [
+        widget({
+          widgetType: 'chart',
+          data: {
+            byAgeBucket: [
+              { bucket: '0_30', count: 4 },
+              { bucket: '31_60', count: 1 },
+            ],
+          },
+        }),
+      ],
+    });
+    const w = component.widgets()[0];
+    expect(component.chartKind(w)).toBe('bar');
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-bar-chart')).toBeTruthy();
+    // One filled bar rect (plus its track) per datum.
+    expect(host.querySelectorAll('app-bar-chart rect').length).toBe(4);
+  });
+
+  it('renders a percentage single_metric as a gauge', async () => {
+    await setup(['ViewAnalytics'], {
+      ...detail(),
+      widgets: [
+        widget({
+          widgetType: 'single_metric',
+          data: { planExecutionPercent: 70, openExceptionBacklog: 3 },
+        }),
+      ],
+    });
+    const w = component.widgets()[0];
+    expect(component.gaugeMetric(w)).toEqual({
+      value: 70,
+      label: 'Plan Execution',
+    });
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-gauge-chart')).toBeTruthy();
+    expect((host.textContent ?? '').includes('70%')).toBe(true);
   });
 
   it('renders an empty shell for a widget whose data is null (degraded/forbidden)', async () => {

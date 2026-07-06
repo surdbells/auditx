@@ -236,6 +236,14 @@ static async Task InitialiseDatabaseAsync(WebApplication app)
         .GetRequiredService<Microsoft.Extensions.Options.IOptions<IdentityOptions>>().Value;
     var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
     await seeder.SeedAsync(seedDevelopmentUsers: identityOptions.UseDevelopmentProvider);
+
+    // Rich, interconnected DEMO dataset (every module populated) — gated behind Database:SeedDemoData and idempotent.
+    // Never enabled in production by default. Runs AFTER the deployment seed so its roles/dimensions/templates exist.
+    if (app.Configuration.GetValue<bool>("Database:SeedDemoData"))
+    {
+        var demoSeeder = scope.ServiceProvider.GetRequiredService<DemoDataSeeder>();
+        await demoSeeder.SeedAsync();
+    }
 }
 
 // Create the target database if it does not exist, from a master connection, retrying while SQL Server warms up.

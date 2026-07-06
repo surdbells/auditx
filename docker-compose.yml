@@ -64,11 +64,16 @@ services:
       ASPNETCORE_ENVIRONMENT: "Development"
       ASPNETCORE_HTTP_PORTS: "8080"
       Database__MigrateOnStartup: "true"
+      # Seed the rich, interconnected demo dataset (every module populated) for this local demo stack. Idempotent
+      # and gated: never enable in a production deployment. Log in as admin / manager / auditor / auditee (Passw0rd!).
+      Database__SeedDemoData: "true"
       ConnectionStrings__Default: "Server=sqlserver,1433;Database=auditx;User Id=sa;Password=Auditx_Local_Dev_123;TrustServerCertificate=True;Encrypt=False"
       Redis__ConnectionString: "redis:6379"
       Identity__Provider: "Development"
       Jwt__SigningKey: "auditx-compose-dev-signing-key-min-32-bytes-0123456789"
       Cors__Origins__0: "http://localhost:4200"
+    volumes:
+      - evidence-data:/app/evidence-store
     ports:
       - "8080:8080"
 
@@ -86,3 +91,4 @@ volumes:
   sqlserver-data:
   redis-data:
   rabbitmq-data:
+  evidence-data:

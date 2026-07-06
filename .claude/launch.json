@@ -4,8 +4,9 @@
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "frontend/auditx-web", "start", "--", "--host", "127.0.0.1"],
-      "port": 4200
+      "runtimeArgs": ["--prefix", "frontend/auditx-web", "start", "--", "--port", "4222", "--host", "127.0.0.1"],
+      "port": 4222,
+      "autoPort": false
     }
   ]
 }

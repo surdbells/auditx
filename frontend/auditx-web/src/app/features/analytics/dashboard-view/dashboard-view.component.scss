@@ -69,50 +69,11 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-/* ---- chart (inline CSS bars) ---- */
+/* ---- chart (inline SVG) ---- */
 
-.bars {
+.widget__gauge {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.bar {
-  display: grid;
-  grid-template-columns: minmax(80px, 30%) 1fr auto;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.bar__label {
-  font: var(--mat-sys-body-small);
-  color: var(--mat-sys-on-surface-variant);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bar__track {
-  display: block;
-  height: 14px;
-  border-radius: 7px;
-  background: var(--mat-sys-surface-variant);
-  overflow: hidden;
-}
-
-.bar__fill {
-  display: block;
-  height: 100%;
-  min-width: 2px;
-  border-radius: 7px;
-  background: var(--mat-sys-primary);
-}
-
-.bar__value {
-  font: var(--mat-sys-label-medium);
-  color: var(--mat-sys-on-surface);
-  text-align: right;
-  min-width: 2ch;
+  justify-content: center;
 }
 
 /* ---- table ---- */

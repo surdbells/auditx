@@ -11,10 +11,6 @@
       <dd>{{ planItemsCompleted() }} / {{ planItemsTotal() }}</dd>
     </div>
     <div class="kpi">
-      <dt>Plan completion</dt>
-      <dd>{{ percent(planCompletionPercent()) }}</dd>
-    </div>
-    <div class="kpi">
       <dt>Open exceptions</dt>
       <dd>{{ openExceptionTotal() }}</dd>
     </div>
@@ -23,6 +19,27 @@
       <dd>{{ days(averageClosureDays()) }}</dd>
     </div>
   </dl>
+
+  <div class="sections__charts">
+    <figure class="sections__chart">
+      <figcaption class="sections__chart-title">Plan completion</figcaption>
+      <app-gauge-chart
+        [value]="planCompletionPercent()"
+        label="Plan completion"
+      />
+    </figure>
+
+    @if (severityChart().length) {
+      <figure class="sections__chart sections__chart--wide">
+        <figcaption class="sections__chart-title">Open exceptions by severity</figcaption>
+        <app-donut-chart
+          [data]="severityChart()"
+          label="Open exceptions by severity"
+          centerLabel="open"
+        />
+      </figure>
+    }
+  </div>
 
   @if (exceptionsBySeverity().length) {
     <div class="sections__severity">
@@ -101,14 +118,21 @@
       <dd>{{ sanctionsTotalCases() }}</dd>
     </div>
     <div class="kpi">
-      <dt>Grid adherence</dt>
-      <dd>{{ percent(sanctionsGridAdherencePercent()) }}</dd>
-    </div>
-    <div class="kpi">
       <dt>Appeal rate</dt>
       <dd>{{ percent(sanctionsAppealRatePercent()) }}</dd>
     </div>
   </dl>
+  @if (sanctionsTotalCases() > 0) {
+    <div class="sections__charts sections__pad">
+      <figure class="sections__chart">
+        <figcaption class="sections__chart-title">Grid adherence</figcaption>
+        <app-gauge-chart
+          [value]="sanctionsGridAdherencePercent()"
+          label="Grid adherence"
+        />
+      </figure>
+    </div>
+  }
   @if (!sanctionsByBusinessUnit().length) {
     <p class="sections__muted sections__pad">No sanctions activity in scope.</p>
   } @else {
@@ -152,6 +176,17 @@
   @if (!recurrenceClusters().length) {
     <p class="sections__muted sections__pad">No recurrence clusters detected.</p>
   } @else {
+    <div class="sections__charts sections__pad">
+      <figure class="sections__chart sections__chart--wide">
+        <figcaption class="sections__chart-title">
+          Closed exceptions by category
+        </figcaption>
+        <app-bar-chart
+          [data]="recurrenceChart()"
+          label="Recurrence: closed exceptions by category"
+        />
+      </figure>
+    </div>
     <div class="sections__table-wrapper">
       <table
         mat-table

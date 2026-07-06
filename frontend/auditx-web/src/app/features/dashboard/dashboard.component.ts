@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../core/services/auth.service';
 import { Permissions } from '../../core/permissions';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { ChartDatum, DonutChartComponent } from '../../shared/charts';
 
 interface DashboardCard {
   title: string;
@@ -30,6 +31,7 @@ interface DashboardCard {
     MatButtonModule,
     MatChipsModule,
     PageHeaderComponent,
+    DonutChartComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -43,6 +45,32 @@ export class DashboardComponent {
   readonly permissionCount = computed(
     () => this.session()?.permissions.length ?? 0,
   );
+
+  /**
+   * A donut of the signed-in user's granted permissions bucketed by access verb
+   * (View / Manage / Configure / Approve / Other). Purely derived from the
+   * session already in memory — no extra API call — so the home page carries a
+   * real visual without new data dependencies.
+   */
+  readonly accessProfile = computed<ChartDatum[]>(() => {
+    const perms = this.session()?.permissions ?? [];
+    const buckets: Record<string, number> = {
+      View: 0,
+      Manage: 0,
+      Configure: 0,
+      Approve: 0,
+      Other: 0,
+    };
+    for (const p of perms) {
+      const verb = ['View', 'Manage', 'Configure', 'Approve'].find((v) =>
+        p.startsWith(v),
+      );
+      buckets[verb ?? 'Other'] += 1;
+    }
+    return Object.entries(buckets)
+      .filter(([, count]) => count > 0)
+      .map(([label, value]) => ({ label, value }));
+  });
 
   private readonly allCards: DashboardCard[] = [
     {

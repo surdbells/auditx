@@ -25,12 +25,17 @@ import {
   KeyFigure,
   TableProjection,
   cellText,
-  maxBar,
   toBars,
   toKeyFigures,
   toTable,
 } from '../widget-data';
 import { humanise } from '../format';
+import {
+  BarChartComponent,
+  ChartDatum,
+  DonutChartComponent,
+  GaugeChartComponent,
+} from '../../../shared/charts';
 import {
   WidgetDialogComponent,
   WidgetDialogResult,
@@ -68,6 +73,9 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    BarChartComponent,
+    DonutChartComponent,
+    GaugeChartComponent,
   ],
   templateUrl: './dashboard-view.component.html',
   styleUrl: './dashboard-view.component.scss',
@@ -129,8 +137,65 @@ export class DashboardViewComponent {
     return toBars(widget.data);
   }
 
-  barWidth(value: number, bars: BarDatum[]): string {
-    return `${Math.round((value / maxBar(bars)) * 100)}%`;
+  /** Bars/segments as chart data (BarDatum is a ChartDatum without a colour). */
+  chartData(widget: DashboardWidget): ChartDatum[] {
+    return toBars(widget.data);
+  }
+
+  /**
+   * Picks the SVG chart kind for a `chart` widget from the data's shape. A
+   * severity/status breakdown reads best as a donut (parts of a whole); any
+   * other labelled series (age buckets, by-entity, coverage) as bars.
+   */
+  chartKind(widget: DashboardWidget): 'donut' | 'bar' | 'none' {
+    const bars = toBars(widget.data);
+    if (bars.length === 0) {
+      return 'none';
+    }
+    return this.isBreakdown(widget.data) ? 'donut' : 'bar';
+  }
+
+  /** True when the payload exposes a `bySeverity` (parts-of-a-whole) array. */
+  private isBreakdown(data: unknown): boolean {
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      Array.isArray((data as Record<string, unknown>)['bySeverity'])
+    );
+  }
+
+  /**
+   * A single percentage single-metric worth rendering as a gauge (plan
+   * execution, closure/adherence rate) — returns `{ value, label }` or null so
+   * the plain figure grid is used otherwise.
+   */
+  gaugeMetric(widget: DashboardWidget): { value: number; label: string } | null {
+    const data = widget.data;
+    if (typeof data !== 'object' || data === null) {
+      return null;
+    }
+    const dict = data as Record<string, unknown>;
+    const PREFERRED = [
+      'planExecutionPercent',
+      'closureRatePercent',
+      'completionPercent',
+      'overallGridAdherencePercent',
+      'gridAdherencePercent',
+    ];
+    for (const key of PREFERRED) {
+      const value = dict[key];
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        return { value, label: this.gaugeLabel(key) };
+      }
+    }
+    return null;
+  }
+
+  private gaugeLabel(key: string): string {
+    const spaced = key
+      .replace(/Percent$/, '')
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
   }
 
   cell(value: unknown): string {

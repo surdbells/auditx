@@ -33,6 +33,25 @@
   font: var(--mat-sys-body-small);
 }
 
+.dashboard__access {
+  margin-bottom: 1.5rem;
+}
+
+.access-card {
+  max-width: 520px;
+}
+
+.access-card__title {
+  margin: 0 0 0.25rem;
+  font: var(--mat-sys-title-medium);
+}
+
+.access-card__hint {
+  margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
 .dashboard__roles {
   margin-bottom: 1.5rem;
 }

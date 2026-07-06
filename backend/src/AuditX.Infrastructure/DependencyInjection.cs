@@ -111,6 +111,10 @@ public static class DependencyInjection
         services.AddScoped<Application.Analytics.Services.RecurrenceClusterService>();
         services.AddScoped<IAuditTrailReader, Universe.AuditTrailReader>();
         services.AddScoped<DbSeeder>();
+        // Rich, interconnected DEMO dataset seeder (gated behind Database:SeedDemoData; never in production by
+        // default). Depends on AppDbContext + the same Application services the API uses (report/AC-pack generation,
+        // recurrence scan, audit-creation) so the demo exercises the real generation/analytics paths.
+        services.AddScoped<DemoDataSeeder>();
 
         // M14 integrations + M15 administration adapters.
         services.Configure<ReleaseSigningOptions>(configuration.GetSection(ReleaseSigningOptions.SectionName));

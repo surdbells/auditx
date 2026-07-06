@@ -41,6 +41,24 @@
   </mat-card>
 </section>
 
+@if (accessProfile().length) {
+  <section class="dashboard__access" aria-label="Access profile">
+    <mat-card class="access-card" appearance="outlined">
+      <mat-card-content>
+        <h3 class="access-card__title">Your access profile</h3>
+        <p class="access-card__hint">
+          Your {{ permissionCount() }} permissions, grouped by access level.
+        </p>
+        <app-donut-chart
+          [data]="accessProfile()"
+          label="Access profile by permission verb"
+          centerLabel="perms"
+        />
+      </mat-card-content>
+    </mat-card>
+  </section>
+}
+
 @if (session()?.roles?.length) {
   <section class="dashboard__roles" aria-label="Your roles">
     <mat-chip-set>
