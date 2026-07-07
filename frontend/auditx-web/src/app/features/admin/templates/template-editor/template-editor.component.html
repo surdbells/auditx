@@ -135,34 +135,53 @@
                 }
               </div>
 
-              @if (group.items.length === 0) {
-                <p class="editor__muted">No items in this section.</p>
-              }
-              @for (item of group.items; track item.id) {
-                <div class="editor__item">
-                  @if (canEditStructure()) {
-                    <div class="editor__item-move">
-                      <button
-                        matIconButton
-                        type="button"
-                        aria-label="Move up"
-                        [disabled]="item.orderIndex === orderedItems()[0].orderIndex"
-                        (click)="moveItem(item, -1)"
-                      >
-                        <mat-icon>arrow_upward</mat-icon>
-                      </button>
-                      <button
-                        matIconButton
-                        type="button"
-                        aria-label="Move down"
-                        [disabled]="item.orderIndex === orderedItems()[orderedItems().length - 1].orderIndex"
-                        (click)="moveItem(item, 1)"
-                      >
-                        <mat-icon>arrow_downward</mat-icon>
-                      </button>
-                    </div>
-                  }
-                  <div class="editor__item-body">
+              <div
+                class="editor__items"
+                cdkDropList
+                [id]="listId(group.name)"
+                [cdkDropListData]="group.items"
+                [cdkDropListConnectedTo]="dropListIds()"
+                [cdkDropListDisabled]="!canEditStructure()"
+                (cdkDropListDropped)="dropItem($event)"
+              >
+                @if (group.items.length === 0) {
+                  <p class="editor__muted">No items in this section.</p>
+                }
+                @for (item of group.items; track item.id) {
+                  <div class="editor__item" cdkDrag [cdkDragData]="item">
+                    @if (canEditStructure()) {
+                      <div class="editor__item-move">
+                        <button
+                          matIconButton
+                          type="button"
+                          cdkDragHandle
+                          class="editor__drag-handle"
+                          aria-label="Drag to reorder"
+                          matTooltip="Drag to reorder"
+                        >
+                          <mat-icon>drag_indicator</mat-icon>
+                        </button>
+                        <button
+                          matIconButton
+                          type="button"
+                          aria-label="Move up"
+                          [disabled]="item.orderIndex === orderedItems()[0].orderIndex"
+                          (click)="moveItem(item, -1)"
+                        >
+                          <mat-icon>arrow_upward</mat-icon>
+                        </button>
+                        <button
+                          matIconButton
+                          type="button"
+                          aria-label="Move down"
+                          [disabled]="item.orderIndex === orderedItems()[orderedItems().length - 1].orderIndex"
+                          (click)="moveItem(item, 1)"
+                        >
+                          <mat-icon>arrow_downward</mat-icon>
+                        </button>
+                      </div>
+                    }
+                    <div class="editor__item-body">
                     <div class="editor__item-prompt">
                       {{ item.prompt }}
                       @if (item.isRequired) {
@@ -198,6 +217,7 @@
                   }
                 </div>
               }
+              </div>
             </div>
           }
         </mat-card-content>

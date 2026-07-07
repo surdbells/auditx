@@ -17,6 +17,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  CdkDropList,
+  CdkDrag,
+  CdkDragHandle,
+  type CdkDragDrop,
+  moveItemInArray,
+  transferArrayItem,
+} from '@angular/cdk/drag-drop';
+import { switchMap } from 'rxjs';
 
 import { TemplatesService } from '../../../../core/services/templates.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -64,6 +73,9 @@ interface SectionGroup {
     MatMenuModule,
     MatChipsModule,
     MatTooltipModule,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
@@ -389,6 +401,90 @@ export class TemplateEditorComponent {
       .subscribe({
         next: () => this.refresh(),
       });
+  }
+
+  /* ---- Drag & drop reordering ---- */
+
+  /** Stable cdkDropList id for a section (empty name = the un-sectioned group). */
+  listId(sectionName: string): string {
+    return `dl:${sectionName}`;
+  }
+
+  private sectionFromListId(id: string): string {
+    return id.startsWith('dl:') ? id.slice(3) : id;
+  }
+
+  /** All section drop-list ids, so every list is a connected drop target for cross-section moves. */
+  readonly dropListIds = computed(() =>
+    this.sectionGroups().map((g) => this.listId(g.name)),
+  );
+
+  /**
+   * Handle an item dropped within or across sections. Optimistically reflects the new arrangement,
+   * then persists: a cross-section move re-homes the item (updateItem) before the global reorder.
+   */
+  dropItem(event: CdkDragDrop<TemplateItem[]>): void {
+    if (!this.canEditStructure()) {
+      return;
+    }
+    const sourceName = this.sectionFromListId(event.previousContainer.id);
+    const targetName = this.sectionFromListId(event.container.id);
+    if (event.previousContainer === event.container && event.previousIndex === event.currentIndex) {
+      return;
+    }
+
+    // Work on fresh copies of the grouped view, apply the move, then flatten to the new global order.
+    const groups = this.sectionGroups().map((g) => ({ name: g.name, items: [...g.items] }));
+    const source = groups.find((g) => g.name === sourceName);
+    const target = groups.find((g) => g.name === targetName);
+    if (!source || !target) {
+      return;
+    }
+    if (source === target) {
+      moveItemInArray(target.items, event.previousIndex, event.currentIndex);
+    } else {
+      transferArrayItem(source.items, target.items, event.previousIndex, event.currentIndex);
+    }
+    const movedItem = target.items[event.currentIndex];
+    const orderedItemIds = groups.flatMap((g) => g.items.map((i) => i.id));
+
+    // Optimistic local update so the list doesn't snap back before the request resolves.
+    this.applyOptimisticReorder(groups);
+
+    const reorder$ = this.templatesService.reorderItems(this.id(), { orderedItemIds });
+    const sectionChanged = sourceName !== targetName;
+    if (sectionChanged && movedItem) {
+      this.templatesService
+        .updateItem(this.id(), movedItem.id, {
+          prompt: movedItem.prompt,
+          referenceNotes: movedItem.referenceNotes,
+          responseType: movedItem.responseType,
+          sectionName: targetName,
+          isRequired: movedItem.isRequired,
+          defaultAssignmentRuleJson: movedItem.defaultAssignmentRuleJson,
+        })
+        .pipe(switchMap(() => reorder$))
+        .subscribe({ next: () => this.refresh(), error: () => this.refresh() });
+    } else {
+      reorder$.subscribe({ next: () => this.refresh(), error: () => this.refresh() });
+    }
+  }
+
+  private applyOptimisticReorder(
+    groups: readonly { name: string; items: TemplateItem[] }[],
+  ): void {
+    const t = this.template();
+    if (!t) {
+      return;
+    }
+    const items: TemplateItem[] = [];
+    let order = 0;
+    for (const group of groups) {
+      for (const item of group.items) {
+        items.push({ ...item, sectionName: group.name, orderIndex: order++ });
+      }
+    }
+    this.template.set({ ...t, items });
   }
 
   /* ---- Lifecycle ---- */
