@@ -20,6 +20,11 @@ describe('CoverageComponent', () => {
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+
+    // The component eagerly loads entity-type options for its filters.
+    http
+      .expectOne((r) => r.url === `${BASE}/audit-universe/entity-types`)
+      .flush({ data: [] });
   });
 
   afterEach(() => http.verify());

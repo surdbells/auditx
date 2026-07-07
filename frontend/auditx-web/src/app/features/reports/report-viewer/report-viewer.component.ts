@@ -16,6 +16,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ReportsService } from '../../../core/services/reports.service';
+import { AuditsService } from '../../../core/services/audits.service';
 import { UsersService } from '../../../core/services/users.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -64,6 +65,7 @@ export class ReportViewerComponent {
   readonly id = input.required<string>();
 
   private readonly service = inject(ReportsService);
+  private readonly audits = inject(AuditsService);
   private readonly users = inject(UsersService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -78,6 +80,8 @@ export class ReportViewerComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly report = signal<Report | null>(null);
+  /** Resolved audit name for the header subtitle; falls back to the id. */
+  readonly auditName = signal<string | null>(null);
 
   readonly distributions = signal<ReportDistribution[]>([]);
   readonly nextCursor = signal<string | null>(null);
@@ -116,9 +120,20 @@ export class ReportViewerComponent {
       next: (report) => {
         this.report.set(report);
         this.state.set('ready');
+        this.resolveAuditName(report.auditId);
         this.ensureUsers(() => this.loadDistributions());
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  /** Resolves the audit name for the subtitle; leaves null (→ id) on failure. */
+  private resolveAuditName(auditId: string): void {
+    this.audits.getById(auditId).subscribe({
+      next: (audit) => this.auditName.set(audit.name),
+      error: () => {
+        // Non-fatal: the header falls back to the audit id.
+      },
     });
   }
 

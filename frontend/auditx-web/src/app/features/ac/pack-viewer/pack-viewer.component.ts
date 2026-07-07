@@ -16,6 +16,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AcService } from '../../../core/services/ac.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
@@ -70,6 +71,8 @@ export class AcPackViewerComponent {
   readonly id = input.required<string>();
 
   private readonly service = inject(AcService);
+  /** Resolves distribution recipient user ids to display names. */
+  readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);

@@ -11,9 +11,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 
 import { CoverageService } from '../../core/services/coverage.service';
+import { UniverseService } from '../../core/services/universe.service';
 import {
   CoverageMatrix,
   HighRiskGapRow,
@@ -34,6 +36,7 @@ type ReportState = 'idle' | 'loading' | 'ready' | 'error';
     MatTableModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatButtonModule,
     MatIconModule,
     PageHeaderComponent,
@@ -43,7 +46,20 @@ type ReportState = 'idle' | 'loading' | 'ready' | 'error';
 })
 export class CoverageComponent {
   private readonly service = inject(CoverageService);
+  private readonly universe = inject(UniverseService);
   private readonly fb = inject(FormBuilder);
+
+  /** Entity-type options for the coverage filters. */
+  readonly entityTypes = signal<string[]>([]);
+
+  constructor() {
+    this.universe.entityTypes().subscribe({
+      next: (types) => this.entityTypes.set(types),
+      error: () => {
+        // Non-fatal: the filters just fall back to "Any".
+      },
+    });
+  }
 
   /* ---- Not-audited-since report ---- */
   readonly notAuditedForm = this.fb.nonNullable.group({

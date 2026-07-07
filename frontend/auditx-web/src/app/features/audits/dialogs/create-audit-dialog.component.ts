@@ -55,6 +55,7 @@ function toDateOnly(value: Date | null): string {
           }
         </mat-form-field>
 
+        <!-- TODO(ux): audit-type free-text — no audit-type enum/lookup source exists yet to back a dropdown. -->
         <mat-form-field appearance="outline" class="full">
           <mat-label>Audit type</mat-label>
           <input matInput formControlName="auditType" autocomplete="off" />

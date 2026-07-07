@@ -42,7 +42,7 @@
             <ng-container matColumnDef="lead">
               <th mat-header-cell *matHeaderCellDef>Audit lead</th>
               <td mat-cell *matCellDef="let s" class="scorecards__lead">
-                {{ s.auditLeadUserId }}
+                {{ userLookup.displayName(s.auditLeadUserId) }}
               </td>
             </ng-container>
 

@@ -13,6 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 
 import { SanctionsService } from '../../../../core/services/sanctions.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -52,6 +53,7 @@ interface GridRow {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatIconModule,
     LoadingComponent,
     EmptyStateComponent,
@@ -72,6 +74,9 @@ export class SanctionsGridAdminComponent {
   /** Banner text when a save/activate was routed to a second approver. */
   readonly pendingBanner = signal<string | null>(null);
   readonly saving = signal(false);
+
+  /** Severity keys — case matters, they form part of the grid cell key. */
+  readonly severities = ['low', 'medium', 'high', 'critical'];
 
   /** New blank cell descriptors. */
   newCategory = '';

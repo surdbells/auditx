@@ -35,6 +35,7 @@
     <h2 class="restore__title">Object restore</h2>
     @if (canExecRestore()) {
       <form [formGroup]="restoreForm" class="restore__form">
+        <!-- TODO(ux): objectType free-text — no restorable-object-type enum/lookup source exists to build a dropdown yet. -->
         <mat-form-field appearance="outline">
           <mat-label>Object type</mat-label>
           <input matInput formControlName="objectType" autocomplete="off" />

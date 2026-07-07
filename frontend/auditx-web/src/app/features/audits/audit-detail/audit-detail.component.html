@@ -103,7 +103,7 @@
             <dt>Template</dt>
             <dd>
               @if (a.templateId) {
-                {{ a.templateId }}@if (a.templateVersion) { (v{{ a.templateVersion }}) }
+                {{ templateName() ?? a.templateId }}@if (a.templateVersion) { (v{{ a.templateVersion }}) }
               } @else {
                 —
               }
@@ -111,6 +111,7 @@
           </div>
           <div>
             <dt>Linked plan item</dt>
+            <!-- TODO(ux): planItemId shown as raw id — no plan-item label/lookup source is available on the audit aggregate. -->
             <dd>{{ a.planItemId || '—' }}</dd>
           </div>
         </dl>

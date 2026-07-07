@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -16,7 +21,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
-import { WidgetType } from '../../../core/models';
+import { RolesService } from '../../../core/services/roles.service';
+import { RoleDto, WidgetType } from '../../../core/models';
 
 /** Data passed in: the suggested next position for the new widget. */
 export interface WidgetDialogData {
@@ -37,6 +43,18 @@ const WIDGET_TYPES: { value: WidgetType; label: string }[] = [
   { value: 'single_metric', label: 'Single metric' },
   { value: 'table', label: 'Table' },
   { value: 'chart', label: 'Chart' },
+];
+
+/** Fixed set of dashboard metric keys the backend understands (snake_case). */
+const METRIC_KEYS: string[] = [
+  'function_performance',
+  'exception_portfolio',
+  'sanctions_consistency',
+  'material_findings',
+  'plan_status',
+  'coverage',
+  'performance_scorecards',
+  'recurrence_clusters',
 ];
 
 function jsonValidator(control: AbstractControl): ValidationErrors | null {
@@ -87,17 +105,11 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
 
         <mat-form-field appearance="outline" class="full">
           <mat-label>Metric key</mat-label>
-          <input
-            matInput
-            formControlName="metricKey"
-            autocomplete="off"
-            placeholder="e.g. function_performance"
-          />
-          <mat-hint>
-            Known keys: function_performance, exception_portfolio,
-            sanctions_consistency, material_findings, plan_status, coverage,
-            performance_scorecards, recurrence_clusters
-          </mat-hint>
+          <mat-select formControlName="metricKey">
+            @for (key of metricKeys; track key) {
+              <mat-option [value]="key">{{ key }}</mat-option>
+            }
+          </mat-select>
           @if (form.controls.metricKey.hasError('required')) {
             <mat-error>A metric key is required.</mat-error>
           }
@@ -114,8 +126,13 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Target role ID (optional)</mat-label>
-          <input matInput formControlName="targetRoleId" autocomplete="off" />
+          <mat-label>Target role (optional)</mat-label>
+          <mat-select formControlName="targetRoleId">
+            <mat-option [value]="''">— none —</mat-option>
+            @for (role of roles(); track role.id) {
+              <mat-option [value]="role.id">{{ role.name }}</mat-option>
+            }
+          </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
@@ -168,8 +185,12 @@ export class WidgetDialogComponent {
       MatDialogRef,
     );
   private readonly fb = inject(FormBuilder);
+  private readonly rolesService = inject(RolesService);
 
   readonly widgetTypes = WIDGET_TYPES;
+  readonly metricKeys = METRIC_KEYS;
+  /** Roles for the optional target-role select. */
+  readonly roles = signal<RoleDto[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required]],
@@ -179,6 +200,15 @@ export class WidgetDialogComponent {
     targetRoleId: [''],
     configJson: ['', [jsonValidator]],
   });
+
+  constructor() {
+    this.rolesService.list(false).subscribe({
+      next: (roles) => this.roles.set(roles),
+      error: () => {
+        // Non-fatal: the target-role select just stays at "— none —".
+      },
+    });
+  }
 
   submit(): void {
     if (this.form.invalid) {

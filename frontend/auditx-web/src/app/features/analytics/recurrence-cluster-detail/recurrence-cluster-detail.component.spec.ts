@@ -74,9 +74,22 @@ describe('RecurrenceClusterDetailComponent', () => {
       .flush({ data: detail() });
     await fixture.whenStable();
     fixture.detectChanges();
+
+    // Rendering the auditable-entity name lazily loads the entity directory.
+    flushEntityDirectory();
   }
 
-  afterEach(() => http.verify());
+  /** Flushes the (at most one) lazy entity-directory GET the entity label triggers. */
+  function flushEntityDirectory(): void {
+    for (const req of http.match((r) => r.url === `${BASE}/audit-universe/entities`)) {
+      req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    }
+  }
+
+  afterEach(() => {
+    flushEntityDirectory();
+    http.verify();
+  });
 
   it('loads the cluster and its member exceptions', async () => {
     await setup(['ViewAnalytics', 'ViewExceptions']);

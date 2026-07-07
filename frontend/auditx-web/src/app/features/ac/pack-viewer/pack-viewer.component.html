@@ -141,7 +141,7 @@
             <table mat-table [dataSource]="distributions()" class="viewer__table">
               <ng-container matColumnDef="recipient">
                 <th mat-header-cell *matHeaderCellDef>Recipient</th>
-                <td mat-cell *matCellDef="let d">{{ d.recipientUserId }}</td>
+                <td mat-cell *matCellDef="let d">{{ userLookup.displayName(d.recipientUserId) }}</td>
               </ng-container>
               <ng-container matColumnDef="version">
                 <th mat-header-cell *matHeaderCellDef>Version</th>

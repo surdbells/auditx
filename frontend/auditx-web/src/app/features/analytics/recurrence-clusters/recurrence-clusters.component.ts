@@ -13,6 +13,7 @@ import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 
 import { AnalyticsService } from '../../../core/services/analytics.service';
+import { EntityLookupService } from '../../../core/services/entity-lookup.service';
 import { RecurrenceCluster } from '../../../core/models';
 import { humanise } from '../format';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
@@ -43,6 +44,8 @@ type ViewState = 'loading' | 'ready' | 'error';
 })
 export class RecurrenceClustersComponent {
   private readonly service = inject(AnalyticsService);
+  /** Resolves auditable-entity ids to names in the table. */
+  readonly entityLookup = inject(EntityLookupService);
 
   readonly displayedColumns = [
     'entity',

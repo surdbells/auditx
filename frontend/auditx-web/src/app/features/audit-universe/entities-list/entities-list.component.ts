@@ -22,6 +22,7 @@ import { MatTableModule } from '@angular/material/table';
 import { debounceTime } from 'rxjs';
 
 import { UniverseService } from '../../../core/services/universe.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
@@ -74,6 +75,8 @@ export type HeatBand = 'none' | 'low' | 'moderate' | 'high' | 'critical';
 })
 export class EntitiesListComponent {
   private readonly universe = inject(UniverseService);
+  /** Resolves owner user ids to display names in the table. */
+  readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);

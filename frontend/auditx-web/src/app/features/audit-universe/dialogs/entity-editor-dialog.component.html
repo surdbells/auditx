@@ -38,8 +38,13 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Owner (user id)</mat-label>
-      <input matInput formControlName="ownerUserId" autocomplete="off" />
+      <mat-label>Owner</mat-label>
+      <mat-select formControlName="ownerUserId">
+        <mat-option [value]="''">— none —</mat-option>
+        @for (u of userLookup.options(); track u.id) {
+          <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
+        }
+      </mat-select>
     </mat-form-field>
   </form>
 

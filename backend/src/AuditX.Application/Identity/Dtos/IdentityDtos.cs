@@ -29,6 +29,10 @@ public sealed record UserDto(
     string Status,
     DateTimeOffset? LastLoginAt);
 
+/// <summary>Minimal id→name entry for the shared user directory, readable by any authenticated user
+/// so user references (owners, leads, authors, recipients) can be shown as names rather than raw ids.</summary>
+public sealed record UserDirectoryEntryDto(Guid Id, string DisplayName);
+
 public sealed record UserDetailDto(
     Guid Id,
     string Email,

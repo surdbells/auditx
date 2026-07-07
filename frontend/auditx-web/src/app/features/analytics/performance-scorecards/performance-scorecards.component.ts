@@ -12,6 +12,7 @@ import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 
 import { AnalyticsService } from '../../../core/services/analytics.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { PerformanceScorecard } from '../../../core/models';
 import { days } from '../format';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
@@ -41,6 +42,8 @@ type ViewState = 'loading' | 'ready' | 'error';
 })
 export class PerformanceScorecardsComponent {
   private readonly service = inject(AnalyticsService);
+  /** Resolves audit-lead user ids to display names in the table. */
+  readonly userLookup = inject(UserLookupService);
 
   readonly displayedColumns = [
     'lead',

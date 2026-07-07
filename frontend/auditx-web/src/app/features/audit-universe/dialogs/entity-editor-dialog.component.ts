@@ -23,6 +23,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 
 import { UniverseService } from '../../../core/services/universe.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { RiskDimensionsService } from '../../../core/services/risk-dimensions.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -81,6 +82,8 @@ export class EntityEditorDialogComponent {
     inject<MatDialogRef<EntityEditorDialogComponent, boolean>>(MatDialogRef);
   private readonly fb = inject(FormBuilder);
   private readonly universe = inject(UniverseService);
+  /** Populates the owner select (lazy directory load). */
+  readonly userLookup = inject(UserLookupService);
   private readonly riskDimensions = inject(RiskDimensionsService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -132,6 +135,7 @@ export class EntityEditorDialogComponent {
   });
 
   constructor() {
+    this.userLookup.ensureLoaded();
     if (this.isEdit) {
       this.loadScoreRows();
     }

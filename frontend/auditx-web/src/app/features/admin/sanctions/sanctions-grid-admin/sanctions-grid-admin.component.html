@@ -96,7 +96,11 @@
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Severity</mat-label>
-          <input matInput [(ngModel)]="newSeverity" name="newSeverity" />
+          <mat-select [(ngModel)]="newSeverity" name="newSeverity">
+            @for (s of severities; track s) {
+              <mat-option [value]="s">{{ humanise(s) }}</mat-option>
+            }
+          </mat-select>
         </mat-form-field>
         <label class="grid__recurrence">
           <input type="checkbox" [(ngModel)]="newRecurrence" name="newRecurrence" />

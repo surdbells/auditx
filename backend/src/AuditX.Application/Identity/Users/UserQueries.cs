@@ -48,6 +48,23 @@ public sealed class ListUsersQueryHandler(IUserRepository users)
     }
 }
 
+/// <summary>Lightweight id→name directory (any authenticated user) for resolving user references in views.</summary>
+public sealed record ListUserDirectoryQuery(string? Cursor, int? Limit) : IQuery<CursorPage<UserDirectoryEntryDto>>;
+
+public sealed class ListUserDirectoryQueryHandler(IUserRepository users)
+    : IQueryHandler<ListUserDirectoryQuery, CursorPage<UserDirectoryEntryDto>>
+{
+    public async Task<CursorPage<UserDirectoryEntryDto>> Handle(ListUserDirectoryQuery query, CancellationToken cancellationToken)
+    {
+        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var result = await users.SearchAsync(null, null, null, page, cancellationToken);
+        return new CursorPage<UserDirectoryEntryDto>(
+            result.Items.Select(u => new UserDirectoryEntryDto(u.Id, u.DisplayName)).ToArray(),
+            result.NextCursor,
+            result.HasMore);
+    }
+}
+
 /// <summary>Full user detail including roles and delegations (US-M15-005).</summary>
 public sealed record GetUserQuery(Guid Id) : IQuery<UserDetailDto>;
 

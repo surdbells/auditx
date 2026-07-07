@@ -18,6 +18,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SanctionsService } from '../../../../core/services/sanctions.service';
+import { UserLookupService } from '../../../../core/services/user-lookup.service';
 import {
   SanctionsCaseListItem,
   SanctionsCaseStatus,
@@ -57,6 +58,8 @@ const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
 })
 export class SanctionsTrackerComponent {
   private readonly service = inject(SanctionsService);
+  /** Resolves unmasked subject user ids to display names. */
+  private readonly userLookup = inject(UserLookupService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
@@ -106,9 +109,10 @@ export class SanctionsTrackerComponent {
   }
 
   subjectLabel(row: SanctionsCaseListItem): string {
-    return row.subjectMasked || !row.subjectUserId
-      ? MASKED_SUBJECT
-      : row.subjectUserId;
+    if (row.subjectMasked || !row.subjectUserId) {
+      return MASKED_SUBJECT;
+    }
+    return this.userLookup.displayName(row.subjectUserId);
   }
 
   fetchFirstPage(): void {

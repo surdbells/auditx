@@ -61,9 +61,22 @@ describe('AcCommentsComponent', () => {
       .flush({ data: comments });
     await fixture.whenStable();
     fixture.detectChanges();
+
+    // Rendering an author name lazily loads the user directory.
+    flushUserDirectory();
   }
 
-  afterEach(() => http.verify());
+  /** Flushes the (at most one) lazy user-directory GET the author label triggers. */
+  function flushUserDirectory(): void {
+    for (const req of http.match((r) => r.url === `${BASE}/users/directory`)) {
+      req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    }
+  }
+
+  afterEach(() => {
+    flushUserDirectory();
+    http.verify();
+  });
 
   it('loads comments for the bound target', async () => {
     await setup(['ACMember'], [comment()]);

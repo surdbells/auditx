@@ -30,6 +30,15 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
         return NoContent();
     }
 
+    // Authenticated-only (no permission gate): a minimal id→name directory so any signed-in user can
+    // display user references (owners, leads, authors, recipients) as names instead of raw ids.
+    [HttpGet("directory")]
+    public async Task<IActionResult> Directory(
+        [FromQuery] string? cursor,
+        [FromQuery] int? limit,
+        CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListUserDirectoryQuery(cursor, limit), cancellationToken));
+
     [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpGet]
     public async Task<IActionResult> List(

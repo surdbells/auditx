@@ -17,6 +17,7 @@ import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { SanctionsService } from '../../../../core/services/sanctions.service';
+import { UserLookupService } from '../../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
@@ -75,6 +76,8 @@ export class SanctionsCaseDetailComponent {
   readonly id = input.required<string>();
 
   private readonly service = inject(SanctionsService);
+  /** Resolves the unmasked subject user id to a display name. */
+  private readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -92,7 +95,7 @@ export class SanctionsCaseDetailComponent {
     if (!c || c.subjectMasked || !c.subjectUserId) {
       return MASKED_SUBJECT;
     }
-    return c.subjectUserId;
+    return this.userLookup.displayName(c.subjectUserId);
   });
 
   /* ---- Permissions ---- */

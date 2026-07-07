@@ -16,6 +16,7 @@ import { MatTableModule } from '@angular/material/table';
 
 import { AnnualPlansService } from '../../../core/services/annual-plans.service';
 import { UniverseService } from '../../../core/services/universe.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
@@ -70,6 +71,8 @@ export class PlanDetailComponent {
 
   private readonly service = inject(AnnualPlansService);
   private readonly universe = inject(UniverseService);
+  /** Resolves assigned-lead user ids to display names in the item table. */
+  readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);

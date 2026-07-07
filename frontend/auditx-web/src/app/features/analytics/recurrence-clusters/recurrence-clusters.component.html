@@ -38,7 +38,7 @@
             <ng-container matColumnDef="entity">
               <th mat-header-cell *matHeaderCellDef>Entity</th>
               <td mat-cell *matCellDef="let c" class="clusters__entity">
-                {{ c.auditableEntityId }}
+                {{ entityLookup.name(c.auditableEntityId) }}
               </td>
             </ng-container>
 

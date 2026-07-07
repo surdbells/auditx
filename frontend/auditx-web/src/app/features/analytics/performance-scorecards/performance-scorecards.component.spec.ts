@@ -43,9 +43,22 @@ describe('PerformanceScorecardsComponent', () => {
       .flush({ data: rows });
     await fixture.whenStable();
     fixture.detectChanges();
+
+    // Rendering a lead name lazily loads the user directory.
+    flushUserDirectory();
   }
 
-  afterEach(() => http.verify());
+  /** Flushes the (at most one) lazy user-directory GET the lead label triggers. */
+  function flushUserDirectory(): void {
+    for (const req of http.match((r) => r.url === `${BASE}/users/directory`)) {
+      req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    }
+  }
+
+  afterEach(() => {
+    flushUserDirectory();
+    http.verify();
+  });
 
   it('renders scorecard rows and formats nullable averages', async () => {
     await setup([scorecard()]);

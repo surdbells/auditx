@@ -14,6 +14,7 @@ import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 
 import { AnalyticsService } from '../../../core/services/analytics.service';
+import { EntityLookupService } from '../../../core/services/entity-lookup.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
 import { RecurrenceClusterDetail } from '../../../core/models';
@@ -49,6 +50,8 @@ export class RecurrenceClusterDetailComponent {
   readonly id = input.required<string>();
 
   private readonly service = inject(AnalyticsService);
+  /** Resolves the auditable-entity id to a name in the header. */
+  readonly entityLookup = inject(EntityLookupService);
   private readonly auth = inject(AuthService);
 
   readonly displayedColumns = [

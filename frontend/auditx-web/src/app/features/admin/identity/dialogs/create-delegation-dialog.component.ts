@@ -22,6 +22,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { UserLookupService } from '../../../../core/services/user-lookup.service';
 import { CreateDelegationRequest, RoleDto } from '../../../../core/models';
 
 export interface CreateDelegationDialogData {
@@ -61,8 +62,12 @@ function dateRangeValidator(group: AbstractControl): ValidationErrors | null {
       </p>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Delegate to (user ID)</mat-label>
-          <input matInput formControlName="toUserId" placeholder="User GUID" />
+          <mat-label>Delegate to</mat-label>
+          <mat-select formControlName="toUserId">
+            @for (u of userLookup.options(); track u.id) {
+              <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
+            }
+          </mat-select>
           @if (form.controls.toUserId.hasError('required') && form.controls.toUserId.touched) {
             <mat-error>A target user is required.</mat-error>
           }
@@ -148,6 +153,8 @@ export class CreateDelegationDialogComponent {
       MatDialogRef,
     );
   private readonly fb = inject(FormBuilder);
+  /** Populates the delegate-to select (lazy directory load). */
+  readonly userLookup = inject(UserLookupService);
 
   readonly form = this.fb.nonNullable.group(
     {
@@ -158,6 +165,10 @@ export class CreateDelegationDialogComponent {
     },
     { validators: dateRangeValidator },
   );
+
+  constructor() {
+    this.userLookup.ensureLoaded();
+  }
 
   submit(): void {
     if (this.form.invalid) {

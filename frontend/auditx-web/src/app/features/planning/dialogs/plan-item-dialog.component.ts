@@ -16,6 +16,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { AddPlanItemRequest, EntityListItem } from '../../../core/models';
 
 export interface PlanItemDialogData {
@@ -62,6 +63,7 @@ function toDateOnly(value: Date | null): string {
           }
         </mat-form-field>
 
+        <!-- TODO(ux): audit-type free-text — no audit-type enum/lookup source exists yet; leave as free text until one is introduced. -->
         <mat-form-field appearance="outline" class="full">
           <mat-label>Audit type</mat-label>
           <input matInput formControlName="auditType" autocomplete="off" />
@@ -91,8 +93,13 @@ function toDateOnly(value: Date | null): string {
             <input matInput type="number" formControlName="estimatedEffortDays" min="0" />
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Assigned lead (user id)</mat-label>
-            <input matInput formControlName="assignedLeadUserId" autocomplete="off" />
+            <mat-label>Assigned lead</mat-label>
+            <mat-select formControlName="assignedLeadUserId">
+              <mat-option [value]="''">— none —</mat-option>
+              @for (u of userLookup.options(); track u.id) {
+                <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
+              }
+            </mat-select>
           </mat-form-field>
         </div>
       </form>
@@ -137,6 +144,8 @@ export class PlanItemDialogComponent {
       MatDialogRef,
     );
   private readonly fb = inject(FormBuilder);
+  /** Populates the assigned-lead select (lazy directory load). */
+  readonly userLookup = inject(UserLookupService);
 
   readonly form = this.fb.nonNullable.group({
     entityId: ['', [Validators.required]],
@@ -146,6 +155,10 @@ export class PlanItemDialogComponent {
     estimatedEffortDays: [null as number | null],
     assignedLeadUserId: [''],
   });
+
+  constructor() {
+    this.userLookup.ensureLoaded();
+  }
 
   submit(): void {
     if (this.form.invalid) {

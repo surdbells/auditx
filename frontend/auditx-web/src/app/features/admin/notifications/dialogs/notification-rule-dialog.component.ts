@@ -26,9 +26,34 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import {
   CreateNotificationRuleRequest,
+  NotificationChannel,
   NotificationRule,
   UpdateNotificationRuleRequest,
 } from '../../../../core/models';
+
+/** Selectable delivery channels (mirrors CHANNELS in the template dialog). */
+const CHANNELS: NotificationChannel[] = ['email', 'sms'];
+
+/**
+ * Parses a stored channels JSON-array string into a channel-value array.
+ * Tolerates a malformed / empty string by returning an empty selection.
+ */
+function parseChannels(json: string | null | undefined): NotificationChannel[] {
+  if (!json) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.filter((c): c is NotificationChannel =>
+      (CHANNELS as string[]).includes(c),
+    );
+  } catch {
+    return [];
+  }
+}
 
 export interface NotificationRuleDialogData {
   /** Present when editing; absent for create. */
@@ -84,6 +109,7 @@ export class NotificationRuleDialogComponent {
 
   readonly isEdit = signal(!!this.data.rule);
   readonly eventTypes = signal<string[]>(this.data.eventTypes ?? []);
+  readonly channels = CHANNELS;
 
   readonly title = computed(() =>
     this.isEdit() ? 'Edit notification rule' : 'New notification rule',
@@ -97,9 +123,9 @@ export class NotificationRuleDialogComponent {
       this.data.rule?.recipientResolutionJson ?? '',
       [Validators.required, jsonValidator],
     ],
-    channelsJson: [
-      this.data.rule?.channelsJson ?? '',
-      [Validators.required, jsonValidator],
+    channels: [
+      parseChannels(this.data.rule?.channelsJson),
+      [Validators.required, Validators.minLength(1)],
     ],
     isActive: [this.data.rule?.isActive ?? true],
   });
@@ -110,6 +136,7 @@ export class NotificationRuleDialogComponent {
       return;
     }
     const v = this.form.getRawValue();
+    const channelsJson = JSON.stringify(v.channels);
     if (this.isEdit() && this.data.rule) {
       this.dialogRef.close({
         mode: 'update',
@@ -117,7 +144,7 @@ export class NotificationRuleDialogComponent {
         body: {
           name: v.name.trim(),
           recipientResolutionJson: v.recipientResolutionJson.trim(),
-          channelsJson: v.channelsJson.trim(),
+          channelsJson,
           templateKey: v.templateKey.trim(),
           isActive: v.isActive,
           version: this.data.rule.version,
@@ -131,7 +158,7 @@ export class NotificationRuleDialogComponent {
         eventType: v.eventType.trim(),
         name: v.name.trim(),
         recipientResolutionJson: v.recipientResolutionJson.trim(),
-        channelsJson: v.channelsJson.trim(),
+        channelsJson,
         templateKey: v.templateKey.trim(),
         isActive: v.isActive,
       },

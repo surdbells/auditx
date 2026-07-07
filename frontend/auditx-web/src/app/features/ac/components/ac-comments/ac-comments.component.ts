@@ -16,6 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
 import { AcService } from '../../../../core/services/ac.service';
+import { UserLookupService } from '../../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
@@ -46,6 +47,8 @@ export class AcCommentsComponent {
   readonly targetId = input.required<string>();
 
   private readonly service = inject(AcService);
+  /** Resolves comment-author user ids to display names. */
+  readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
 

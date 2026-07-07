@@ -11,7 +11,7 @@
         <li class="comments__item">
           <p class="comments__text">{{ c.commentText }}</p>
           <p class="comments__meta">
-            {{ c.authorUserId }} · {{ c.commentedAt | date: 'medium' }}
+            {{ userLookup.displayName(c.authorUserId) }} · {{ c.commentedAt | date: 'medium' }}
           </p>
         </li>
       }

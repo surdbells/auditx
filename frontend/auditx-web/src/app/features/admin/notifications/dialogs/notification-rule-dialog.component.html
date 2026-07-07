@@ -27,6 +27,7 @@
       }
     </mat-form-field>
 
+    <!-- TODO(ux): templateKey free-text — no notification-template-key lookup endpoint exists to source a dropdown yet. -->
     <mat-form-field appearance="outline" class="full">
       <mat-label>Template key</mat-label>
       <input matInput formControlName="templateKey" autocomplete="off" />
@@ -54,18 +55,14 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Channels (JSON)</mat-label>
-      <textarea
-        matInput
-        rows="2"
-        formControlName="channelsJson"
-        spellcheck="false"
-        placeholder='["email", "sms"]'
-      ></textarea>
-      @if (form.controls.channelsJson.hasError('required') && form.controls.channelsJson.touched) {
+      <mat-label>Channels</mat-label>
+      <mat-select formControlName="channels" multiple>
+        @for (channel of channels; track channel) {
+          <mat-option [value]="channel">{{ channel }}</mat-option>
+        }
+      </mat-select>
+      @if ((form.controls.channels.hasError('required') || form.controls.channels.hasError('minlength')) && form.controls.channels.touched) {
         <mat-error>At least one channel is required.</mat-error>
-      } @else if (form.controls.channelsJson.hasError('json')) {
-        <mat-error>Must be valid JSON.</mat-error>
       }
     </mat-form-field>
 

@@ -20,6 +20,7 @@ import { RouterLink } from '@angular/router';
 
 import { AuditsService } from '../../../core/services/audits.service';
 import { ExceptionsService } from '../../../core/services/exceptions.service';
+import { TemplatesService } from '../../../core/services/templates.service';
 import { UsersService } from '../../../core/services/users.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -97,6 +98,7 @@ export class AuditDetailComponent {
 
   private readonly service = inject(AuditsService);
   private readonly exceptionsService = inject(ExceptionsService);
+  private readonly templates = inject(TemplatesService);
   private readonly users = inject(UsersService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -104,6 +106,10 @@ export class AuditDetailComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly audit = signal<Audit | null>(null);
+  /** Resolved template name for the metadata card; falls back to the id. */
+  readonly templateName = signal<string | null>(null);
+  /** Tracks which templateId `templateName` was resolved for (avoids refetch). */
+  private resolvedTemplateId: string | null = null;
   /** userId → display name, resolved lazily. */
   readonly userNames = signal<Record<string, string>>({});
   /** Exceptions raised against this audit (M6). */
@@ -236,9 +242,33 @@ export class AuditDetailComponent {
         this.audit.set(audit);
         this.state.set('ready');
         this.ensureUsers();
+        this.resolveTemplateName(audit.templateId);
         this.loadExceptions();
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  /**
+   * Resolves the audit's template id to a human name (once per id). Leaves the
+   * name null on failure or when there is no template, so the metadata card
+   * falls back to the raw id / "—".
+   */
+  private resolveTemplateName(templateId: string | null | undefined): void {
+    if (!templateId) {
+      this.templateName.set(null);
+      this.resolvedTemplateId = null;
+      return;
+    }
+    if (templateId === this.resolvedTemplateId) {
+      return;
+    }
+    this.resolvedTemplateId = templateId;
+    this.templates.getById(templateId).subscribe({
+      next: (template) => this.templateName.set(template.name),
+      error: () => {
+        // Non-fatal: the card falls back to the raw template id.
+      },
     });
   }
 
@@ -264,6 +294,7 @@ export class AuditDetailComponent {
       next: (audit) => {
         this.audit.set(audit);
         this.ensureUsers();
+        this.resolveTemplateName(audit.templateId);
       },
     });
   }

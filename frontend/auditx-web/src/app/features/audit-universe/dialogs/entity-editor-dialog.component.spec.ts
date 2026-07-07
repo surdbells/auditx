@@ -103,6 +103,11 @@ describe('EntityEditorDialogComponent', () => {
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+
+    // The owner select lazily loads the user directory on construction.
+    http.expectOne((r) => r.url === `${BASE}/users/directory`).flush({
+      data: { items: [], nextCursor: null, hasMore: false },
+    });
   }
 
   afterEach(() => http.verify());

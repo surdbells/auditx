@@ -37,6 +37,12 @@ export interface UserDetailDto extends UserDto {
   delegations: DelegationDto[];
 }
 
+/** Minimal id→name entry from the authenticated-only user directory (GET /users/directory). */
+export interface UserDirectoryEntry {
+  id: string;
+  displayName: string;
+}
+
 export interface UserRoleDto {
   id: string;
   roleId: string;

@@ -9,7 +9,7 @@
     @if (report(); as r) {
       <app-page-header
         [title]="'Report v' + r.versionNumber"
-        [subtitle]="'Audit ' + r.auditId"
+        [subtitle]="'Audit ' + (auditName() ?? r.auditId)"
       >
         <div actions class="viewer__actions">
           @if (canDistribute() && isCompleted()) {

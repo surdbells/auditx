@@ -9,6 +9,7 @@ import {
   GrantRoleRequest,
   NotificationPreferencesRequest,
   UserDetailDto,
+  UserDirectoryEntry,
   UserDto,
   UserQuery,
   UserRoleDto,
@@ -33,6 +34,14 @@ export class UsersService {
       search: query.search,
       role: query.role,
       status: query.status,
+      cursor: query.cursor,
+      limit: query.limit,
+    });
+  }
+
+  /** Authenticated-only id→name directory (no admin permission required) for resolving user references. */
+  directory(query: { cursor?: string | null; limit?: number } = {}): Observable<CursorPage<UserDirectoryEntry>> {
+    return this.api.get<CursorPage<UserDirectoryEntry>>('/users/directory', {
       cursor: query.cursor,
       limit: query.limit,
     });
