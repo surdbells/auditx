@@ -87,7 +87,14 @@ export class TemplateEditorComponent {
   readonly saving = signal(false);
   readonly template = signal<Template | null>(null);
 
-  readonly isNew = computed(() => this.id() === 'new');
+  // Treat a missing/empty route param the same as the explicit 'new' sentinel. Angular's
+  // withComponentInputBinding() does not preserve the input default on the paramless
+  // `/admin/templates/new` route (it pushes undefined), so relying on `=== 'new'` alone
+  // sent create-mode down the load-by-id path → GET /templates/undefined → 404 error page.
+  readonly isNew = computed(() => {
+    const id = this.id();
+    return !id || id === 'new';
+  });
   readonly canManage = computed(() =>
     this.auth.hasPermission(Permissions.ManageTemplates),
   );

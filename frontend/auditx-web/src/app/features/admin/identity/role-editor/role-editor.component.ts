@@ -101,7 +101,12 @@ export class RoleEditorComponent {
   readonly groups = signal<PermissionGroup[]>([]);
   readonly editingRole = signal<RoleDto | null>(null);
 
-  readonly isNew = computed(() => this.id() === 'new');
+  // Missing/empty route param means create-mode too: withComponentInputBinding() does not
+  // preserve the input default on the paramless `/admin/roles/new` route (it pushes undefined).
+  readonly isNew = computed(() => {
+    const id = this.id();
+    return !id || id === 'new';
+  });
   readonly isReadOnly = computed(() => this.editingRole()?.isBuiltIn ?? false);
   readonly scopeLabels = SCOPE_LABELS;
 

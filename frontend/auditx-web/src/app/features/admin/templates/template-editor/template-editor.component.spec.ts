@@ -180,6 +180,43 @@ describe('TemplateEditorComponent', () => {
     expect(component.template()?.status).toBe('draft');
   });
 
+  it('enters create-mode without loading when the route supplies no id (regression: /admin/templates/new)', async () => {
+    // withComponentInputBinding() pushes `undefined` into the id input on the paramless
+    // `/admin/templates/new` route (it does not preserve the 'new' default). The editor must
+    // treat that as create-mode and NOT attempt GET /templates/undefined (which 404s → error page).
+    notify = jasmine.createSpyObj<NotificationService>('NotificationService', [
+      'success',
+      'info',
+      'warning',
+      'error',
+    ]);
+    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+
+    TestBed.configureTestingModule({
+      imports: [TemplateEditorComponent],
+      providers: [
+        provideTestEnv(),
+        provideRouter([]),
+        { provide: NotificationService, useValue: notify },
+        { provide: MatDialog, useValue: dialog },
+      ],
+    });
+    TestBed.inject(AuthService).setSession(session(['ViewTemplates', 'ManageTemplates']));
+
+    fixture = TestBed.createComponent(TemplateEditorComponent);
+    fixture.componentRef.setInput('id', undefined);
+    component = fixture.componentInstance;
+    http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.isNew()).toBe(true);
+    expect(component.state()).toBe('ready');
+    // No load-by-id and no versions request in create-mode.
+    http.expectNone((r) => r.url.includes('/templates'));
+  });
+
   it('treats published templates as read-only', async () => {
     await setup(['ViewTemplates', 'ManageTemplates'], template({ status: 'published', currentVersion: 1 }));
     await fixture.whenStable();
