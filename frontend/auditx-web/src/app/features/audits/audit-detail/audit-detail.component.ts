@@ -24,6 +24,7 @@ import { TemplatesService } from '../../../core/services/templates.service';
 import { UsersService } from '../../../core/services/users.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { Permissions } from '../../../core/permissions';
 import {
   Audit,
@@ -103,6 +104,8 @@ export class AuditDetailComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  /** Resolves the stored audit-type code to its human label (lazy-loaded). */
+  readonly refLookup = inject(ReferenceDataLookupService);
 
   readonly state = signal<ViewState>('loading');
   readonly audit = signal<Audit | null>(null);

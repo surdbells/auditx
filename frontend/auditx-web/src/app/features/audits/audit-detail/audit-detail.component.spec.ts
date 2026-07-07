@@ -172,6 +172,13 @@ describe('AuditDetailComponent', () => {
     )) {
       req.flush({ data: { count: 0, items: [] } });
     }
+    // The header subtitle resolves the audit-type code via the reference-data
+    // lookup, which lazily GETs the active `audit_type` items. Drain it too.
+    for (const req of http.match(
+      (r) => r.url === `${BASE}/reference-data/audit_type`,
+    )) {
+      req.flush({ data: [] });
+    }
   }
 
   afterEach(() => {

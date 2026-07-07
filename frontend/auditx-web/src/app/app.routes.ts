@@ -398,6 +398,15 @@ export const routes: Routes = [
           ).then((m) => m.ConfigurationListComponent),
       },
       {
+        path: 'admin/reference-data',
+        title: 'Reference data · AuditX',
+        canActivate: [permissionGuard(Permissions.ManageConfiguration)],
+        loadComponent: () =>
+          import(
+            './features/admin/reference-data/reference-data.component'
+          ).then((m) => m.ReferenceDataComponent),
+      },
+      {
         path: 'admin/configuration/:domain',
         title: 'Configuration domain · AuditX',
         canActivate: [permissionGuard(Permissions.ViewConfig)],

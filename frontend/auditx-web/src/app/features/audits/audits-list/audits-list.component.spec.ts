@@ -74,7 +74,23 @@ describe('AuditsListComponent', () => {
       .flush({ data: page(items, hasMore) });
   }
 
-  afterEach(() => http.verify());
+  /**
+   * The audit-type filter/column reads the reference-data lookup, which lazily
+   * GETs the active `audit_type` items. Drain it so it doesn't leak between the
+   * assertions (never-throw: flushing an empty list is enough).
+   */
+  function flushAuditTypeLookup(): void {
+    for (const req of http.match(
+      (r) => r.url === `${BASE}/reference-data/audit_type`,
+    )) {
+      req.flush({ data: [] });
+    }
+  }
+
+  afterEach(() => {
+    flushAuditTypeLookup();
+    http.verify();
+  });
 
   it('loads counts and renders audits in the table', async () => {
     setup();

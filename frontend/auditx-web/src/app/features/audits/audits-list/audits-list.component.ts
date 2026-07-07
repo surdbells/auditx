@@ -23,6 +23,7 @@ import { AuditsService } from '../../../core/services/audits.service';
 import { UsersService } from '../../../core/services/users.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { Permissions } from '../../../core/permissions';
 import {
   AuditListItem,
@@ -72,6 +73,10 @@ export class AuditsListComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  /** Backs the audit-type filter dropdown and column labels (lazy-loaded). */
+  readonly refLookup = inject(ReferenceDataLookupService);
+
+  readonly auditTypes = this.refLookup.options('audit_type');
 
   readonly displayedColumns = [
     'name',

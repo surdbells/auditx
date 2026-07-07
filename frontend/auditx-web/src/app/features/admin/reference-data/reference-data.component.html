@@ -1,0 +1,148 @@
+<app-page-header
+  title="Reference data"
+  subtitle="Managed lookups (audit types, exception categories, …) that back dropdowns across the app."
+>
+  @if (canManage() && selectedCategory()) {
+    <button actions matButton="filled" type="button" (click)="create()">
+      <mat-icon>add</mat-icon>
+      New item
+    </button>
+  }
+</app-page-header>
+
+@switch (categoriesState()) {
+  @case ('loading') {
+    <app-loading message="Loading categories…" />
+  }
+  @case ('error') {
+    <app-error-state
+      message="We couldn't load the reference-data categories."
+      (retry)="loadCategories()"
+    />
+  }
+  @case ('ready') {
+    <mat-card appearance="outlined" class="ref__filters-card">
+      <form [formGroup]="controls" class="ref__filters">
+        <mat-button-toggle-group
+          formControlName="category"
+          aria-label="Category"
+          class="ref__categories"
+        >
+          @for (c of categories(); track c.code) {
+            <mat-button-toggle [value]="c.code">{{ c.label }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+
+        <mat-slide-toggle formControlName="showInactive">
+          Show inactive
+        </mat-slide-toggle>
+      </form>
+    </mat-card>
+
+    @switch (state()) {
+      @case ('loading') {
+        <app-loading message="Loading items…" />
+      }
+      @case ('error') {
+        <app-error-state
+          message="We couldn't load the items for this category."
+          (retry)="fetch()"
+        />
+      }
+      @case ('ready') {
+        @if (isEmpty()) {
+          <app-empty-state
+            icon="list_alt"
+            title="No items"
+            [message]="
+              'Add an item to ' + (selectedCategory()?.label ?? 'this category') + '.'
+            "
+          />
+        } @else {
+          <mat-card appearance="outlined" class="ref__table-card">
+            <div class="table-scroll">
+              <table mat-table [dataSource]="items()" class="ref__table">
+                <ng-container matColumnDef="code">
+                  <th mat-header-cell *matHeaderCellDef>Code</th>
+                  <td mat-cell *matCellDef="let i">
+                    <span class="ref__code">{{ i.code }}</span>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="label">
+                  <th mat-header-cell *matHeaderCellDef>Label</th>
+                  <td mat-cell *matCellDef="let i">{{ i.label }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="description">
+                  <th mat-header-cell *matHeaderCellDef>Description</th>
+                  <td mat-cell *matCellDef="let i">
+                    {{ i.description || '—' }}
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="sortOrder">
+                  <th mat-header-cell *matHeaderCellDef>Sort</th>
+                  <td mat-cell *matCellDef="let i">{{ i.sortOrder }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="active">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let i">
+                    <span
+                      class="status-badge"
+                      [attr.data-status]="i.isActive ? 'active' : 'deactivated'"
+                    >
+                      {{ i.isActive ? 'active' : 'inactive' }}
+                    </span>
+                  </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+                  <td mat-cell *matCellDef="let i">
+                    @if (canManage()) {
+                      <button
+                        matIconButton
+                        type="button"
+                        (click)="edit(i)"
+                        [attr.aria-label]="'Edit ' + i.label"
+                        matTooltip="Edit"
+                      >
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      @if (i.isActive) {
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="archive(i)"
+                          [attr.aria-label]="'Archive ' + i.label"
+                          matTooltip="Archive"
+                        >
+                          <mat-icon>archive</mat-icon>
+                        </button>
+                      } @else {
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="reactivate(i)"
+                          [attr.aria-label]="'Reactivate ' + i.label"
+                          matTooltip="Reactivate"
+                        >
+                          <mat-icon>unarchive</mat-icon>
+                        </button>
+                      }
+                    }
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+              </table>
+            </div>
+          </mat-card>
+        }
+      }
+    }
+  }
+}

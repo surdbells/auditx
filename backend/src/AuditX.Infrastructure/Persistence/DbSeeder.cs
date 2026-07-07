@@ -5,6 +5,7 @@ using AuditX.Domain.Authorization;
 using AuditX.Domain.Configuration;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Identity;
+using AuditX.Domain.ReferenceData;
 using AuditX.Infrastructure.Identity;
 using AuditX.Infrastructure.Options;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,7 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         await SeedMakerCheckerGatesAsync(cancellationToken);
         await SeedRiskDimensionsAsync(cancellationToken);
         await SeedEntityTypesAsync(cancellationToken);
+        await SeedReferenceDataAsync(cancellationToken);
         await SeedSanctionsRolesAsync(cancellationToken);
         await SeedAcRolesAsync(cancellationToken);
         await SeedSanctionsGridAsync(cancellationToken);
@@ -231,6 +233,61 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             if (!existing.Contains(name, StringComparer.OrdinalIgnoreCase))
             {
                 db.EntityTypeTaxonomy.Add(Domain.Universe.EntityTypeTaxonomy.Create(name));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Seed the core managed reference-data lists (audit types, exception categories) that back the platform's
+    /// dropdowns. Idempotent per (category, code): a missing code is added without disturbing bank-added entries.
+    /// Code is the stable machine key stored on referencing records; Label is the human display.
+    /// </summary>
+    private async Task SeedReferenceDataAsync(CancellationToken cancellationToken)
+    {
+        // (category, code, label, sortOrder).
+        var items = new (string Category, string Code, string Label)[]
+        {
+            (ReferenceDataCategories.AuditType, "financial_statement", "Financial Statement Audit"),
+            (ReferenceDataCategories.AuditType, "branch_operations", "Branch Operations"),
+            (ReferenceDataCategories.AuditType, "aml_cft", "AML/CFT"),
+            (ReferenceDataCategories.AuditType, "credit_review", "Credit Review"),
+            (ReferenceDataCategories.AuditType, "it_general_controls", "IT General Controls"),
+            (ReferenceDataCategories.AuditType, "treasury", "Treasury"),
+            (ReferenceDataCategories.AuditType, "regulatory_compliance", "Regulatory Compliance"),
+            (ReferenceDataCategories.AuditType, "operational", "Operational Audit"),
+
+            (ReferenceDataCategories.ExceptionCategory, "cash_handling", "Cash Handling"),
+            (ReferenceDataCategories.ExceptionCategory, "credit", "Credit"),
+            (ReferenceDataCategories.ExceptionCategory, "aml_kyc", "AML/KYC"),
+            (ReferenceDataCategories.ExceptionCategory, "it_security", "IT Security"),
+            (ReferenceDataCategories.ExceptionCategory, "financial_reporting", "Financial Reporting"),
+            (ReferenceDataCategories.ExceptionCategory, "operational", "Operational"),
+            (ReferenceDataCategories.ExceptionCategory, "regulatory", "Regulatory"),
+        };
+
+        // One round-trip: existing (category, code) pairs across the seeded categories. Include soft-deleted rows so
+        // a re-seed never collides with the filtered unique index over an archived code.
+        var categories = items.Select(i => i.Category).Distinct().ToList();
+        var existing = await db.ReferenceDataItems.IgnoreQueryFilters()
+            .Where(i => categories.Contains(i.Category))
+            .Select(i => new { i.Category, i.Code })
+            .ToListAsync(cancellationToken);
+        var existingKeys = existing.Select(e => (e.Category, e.Code)).ToHashSet();
+
+        var sortOrder = 0;
+        var currentCategory = string.Empty;
+        foreach (var (category, code, label) in items)
+        {
+            if (category != currentCategory)
+            {
+                currentCategory = category;
+                sortOrder = 0;
+            }
+
+            var order = sortOrder++;
+            if (!existingKeys.Contains((category, code)))
+            {
+                db.ReferenceDataItems.Add(ReferenceDataItem.Create(category, code, label, description: null, sortOrder: order));
             }
         }
     }

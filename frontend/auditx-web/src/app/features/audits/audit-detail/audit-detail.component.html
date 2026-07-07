@@ -7,7 +7,10 @@
   }
   @case ('ready') {
     @if (audit(); as a) {
-      <app-page-header [title]="a.name" [subtitle]="a.auditType">
+      <app-page-header
+        [title]="a.name"
+        [subtitle]="refLookup.label('audit_type', a.auditType)"
+      >
         <div actions class="detail__actions">
           @if (canViewReports()) {
             <a matButton type="button" [routerLink]="['/audits', a.id, 'reports']">

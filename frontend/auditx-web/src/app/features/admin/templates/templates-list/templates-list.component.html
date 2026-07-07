@@ -24,10 +24,14 @@
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
 
-    <!-- TODO(ux): audit-type free-text filter — no audit-type enum/lookup source exists yet to back a dropdown. -->
     <mat-form-field appearance="outline">
       <mat-label>Audit type</mat-label>
-      <input matInput formControlName="auditType" autocomplete="off" />
+      <mat-select formControlName="auditType">
+        <mat-option [value]="''">All types</mat-option>
+        @for (o of auditTypes(); track o.code) {
+          <mat-option [value]="o.code">{{ o.label }}</mat-option>
+        }
+      </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -75,7 +79,9 @@
 
             <ng-container matColumnDef="auditType">
               <th mat-header-cell *matHeaderCellDef>Audit type</th>
-              <td mat-cell *matCellDef="let t">{{ t.auditType }}</td>
+              <td mat-cell *matCellDef="let t">
+                {{ refLookup.label('audit_type', t.auditType) }}
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="status">

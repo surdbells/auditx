@@ -12,6 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { CreateAuditRequest, UserDto } from '../../../core/models';
 
 export interface CreateAuditDialogData {
@@ -55,10 +56,13 @@ function toDateOnly(value: Date | null): string {
           }
         </mat-form-field>
 
-        <!-- TODO(ux): audit-type free-text — no audit-type enum/lookup source exists yet to back a dropdown. -->
         <mat-form-field appearance="outline" class="full">
           <mat-label>Audit type</mat-label>
-          <input matInput formControlName="auditType" autocomplete="off" />
+          <mat-select formControlName="auditType">
+            @for (o of auditTypes(); track o.code) {
+              <mat-option [value]="o.code">{{ o.label }}</mat-option>
+            }
+          </mat-select>
           @if (form.controls.auditType.hasError('required') && form.controls.auditType.touched) {
             <mat-error>An audit type is required.</mat-error>
           }
@@ -163,6 +167,10 @@ export class CreateAuditDialogComponent {
       MatDialogRef,
     );
   private readonly fb = inject(FormBuilder);
+  private readonly refLookup = inject(ReferenceDataLookupService);
+
+  /** Active audit-type reference-data items (lazy-loaded). */
+  readonly auditTypes = this.refLookup.options('audit_type');
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],

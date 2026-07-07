@@ -16,6 +16,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   CdkDropList,
@@ -30,6 +31,7 @@ import { switchMap } from 'rxjs';
 import { TemplatesService } from '../../../../core/services/templates.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { ReferenceDataLookupService } from '../../../../core/services/reference-data-lookup.service';
 import { Permissions } from '../../../../core/permissions';
 import {
   Template,
@@ -71,6 +73,7 @@ interface SectionGroup {
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
+    MatSelectModule,
     MatChipsModule,
     MatTooltipModule,
     CdkDropList,
@@ -94,6 +97,10 @@ export class TemplateEditorComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly refLookup = inject(ReferenceDataLookupService);
+
+  /** Active audit-type reference-data items (lazy-loaded). */
+  readonly auditTypes = this.refLookup.options('audit_type');
 
   readonly state = signal<ViewState>('loading');
   readonly saving = signal(false);

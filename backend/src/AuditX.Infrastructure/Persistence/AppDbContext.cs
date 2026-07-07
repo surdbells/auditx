@@ -10,6 +10,7 @@ using AuditX.Domain.Identity;
 using AuditX.Domain.Integrations;
 using AuditX.Domain.Notifications;
 using AuditX.Domain.Planning;
+using AuditX.Domain.ReferenceData;
 using AuditX.Domain.Reports;
 using AuditX.Domain.Sanctions;
 using AuditX.Domain.Templates;
@@ -112,6 +113,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<RecurrenceCluster> RecurrenceClusters => Set<RecurrenceCluster>();
 
     public DbSet<BankConfiguration> BankConfigurations => Set<BankConfiguration>();
+
+    public DbSet<ReferenceDataItem> ReferenceDataItems => Set<ReferenceDataItem>();
 
     public DbSet<AcPack> AcPacks => Set<AcPack>();
 

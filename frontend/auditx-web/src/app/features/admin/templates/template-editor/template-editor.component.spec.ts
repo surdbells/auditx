@@ -104,7 +104,23 @@ describe('TemplateEditorComponent', () => {
     fixture.detectChanges();
   }
 
-  afterEach(() => http.verify());
+  /**
+   * The audit-type select reads the reference-data lookup, which lazily GETs
+   * the active `audit_type` items. Drain it so it doesn't leak (never-throw:
+   * flushing an empty list is enough).
+   */
+  function flushAuditTypeLookup(): void {
+    for (const req of http.match(
+      (r) => r.url === `${BASE}/reference-data/audit_type`,
+    )) {
+      req.flush({ data: [] });
+    }
+  }
+
+  afterEach(() => {
+    flushAuditTypeLookup();
+    http.verify();
+  });
 
   it('loads and renders the template and its items', async () => {
     await setup();

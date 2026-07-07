@@ -17,6 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { UserLookupService } from '../../../core/services/user-lookup.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { AddPlanItemRequest, EntityListItem } from '../../../core/models';
 
 export interface PlanItemDialogData {
@@ -63,10 +64,13 @@ function toDateOnly(value: Date | null): string {
           }
         </mat-form-field>
 
-        <!-- TODO(ux): audit-type free-text — no audit-type enum/lookup source exists yet; leave as free text until one is introduced. -->
         <mat-form-field appearance="outline" class="full">
           <mat-label>Audit type</mat-label>
-          <input matInput formControlName="auditType" autocomplete="off" />
+          <mat-select formControlName="auditType">
+            @for (o of auditTypes(); track o.code) {
+              <mat-option [value]="o.code">{{ o.label }}</mat-option>
+            }
+          </mat-select>
           @if (form.controls.auditType.hasError('required') && form.controls.auditType.touched) {
             <mat-error>An audit type is required.</mat-error>
           }
@@ -146,6 +150,10 @@ export class PlanItemDialogComponent {
   private readonly fb = inject(FormBuilder);
   /** Populates the assigned-lead select (lazy directory load). */
   readonly userLookup = inject(UserLookupService);
+  private readonly refLookup = inject(ReferenceDataLookupService);
+
+  /** Active audit-type reference-data items (lazy-loaded). */
+  readonly auditTypes = this.refLookup.options('audit_type');
 
   readonly form = this.fb.nonNullable.group({
     entityId: ['', [Validators.required]],

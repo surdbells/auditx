@@ -196,6 +196,12 @@ export class MainLayoutComponent {
       permissions: [Permissions.ViewConfig, Permissions.ManageConfiguration],
     },
     {
+      label: 'Reference data',
+      icon: 'list_alt',
+      route: '/admin/reference-data',
+      permissions: [Permissions.ManageConfiguration],
+    },
+    {
       label: 'Audit Trail',
       icon: 'history',
       route: '/admin/audit-trail',

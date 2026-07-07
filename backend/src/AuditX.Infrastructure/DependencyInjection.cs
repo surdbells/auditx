@@ -73,6 +73,7 @@ public static class DependencyInjection
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IRecurrenceClusterRepository, RecurrenceClusterRepository>();
         services.AddScoped<IBankConfigurationRepository, BankConfigurationRepository>();
+        services.AddScoped<IReferenceDataRepository, ReferenceDataRepository>();
         services.AddScoped<IAcPackRepository, AcPackRepository>();
         services.AddScoped<IAcActionItemRepository, AcActionItemRepository>();
         services.AddScoped<IAcCommentRepository, AcCommentRepository>();

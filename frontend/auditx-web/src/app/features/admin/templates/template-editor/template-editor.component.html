@@ -55,7 +55,11 @@
 
           <mat-form-field appearance="outline" class="full">
             <mat-label>Audit type</mat-label>
-            <input matInput formControlName="auditType" autocomplete="off" />
+            <mat-select formControlName="auditType">
+              @for (o of auditTypes(); track o.code) {
+                <mat-option [value]="o.code">{{ o.label }}</mat-option>
+              }
+            </mat-select>
             @if (form.controls.auditType.hasError('required') && form.controls.auditType.touched) {
               <mat-error>An audit type is required.</mat-error>
             }

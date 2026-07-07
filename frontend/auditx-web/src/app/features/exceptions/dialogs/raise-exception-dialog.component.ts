@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import {
   ExceptionSeverity,
   RaiseExceptionRequest,
@@ -99,7 +100,12 @@ function toDateOnly(value: Date | null): string {
 
         <mat-form-field appearance="outline" class="full">
           <mat-label>Category (optional)</mat-label>
-          <input matInput formControlName="category" autocomplete="off" />
+          <mat-select formControlName="category">
+            <mat-option [value]="''">— none —</mat-option>
+            @for (o of categories(); track o.code) {
+              <mat-option [value]="o.code">{{ o.label }}</mat-option>
+            }
+          </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
@@ -184,8 +190,11 @@ export class RaiseExceptionDialogComponent {
     MatDialogRef<RaiseExceptionDialogComponent, RaiseExceptionRequest>
   >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly refLookup = inject(ReferenceDataLookupService);
 
   readonly severities = SEVERITIES;
+  /** Active exception-category reference-data items (lazy-loaded). */
+  readonly categories = this.refLookup.options('exception_category');
 
   readonly form = this.fb.nonNullable.group({
     title: [this.data.title ?? '', [Validators.required, Validators.maxLength(300)]],

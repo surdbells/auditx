@@ -1,0 +1,29 @@
+.ref__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.ref__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ref__categories {
+  flex-wrap: wrap;
+}
+
+.ref__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ref__table {
+  width: 100%;
+}
+
+.ref__code {
+  font-family: var(--mat-sys-body-medium-font, monospace);
+  font-weight: 500;
+}

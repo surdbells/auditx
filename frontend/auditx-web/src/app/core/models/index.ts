@@ -15,3 +15,4 @@ export * from './report.models';
 export * from './analytics.models';
 export * from './configuration.models';
 export * from './ac.models';
+export * from './reference-data.models';

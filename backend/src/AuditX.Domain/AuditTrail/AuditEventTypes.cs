@@ -177,6 +177,12 @@ public static class AuditEventTypes
     public const string ConfigurationVersionActivated = "configuration_version_activated";
     public const string ConfigurationRolledBack = "configuration_rolled_back";
 
+    // Reference data (managed lists)
+    public const string ReferenceDataItemCreated = "reference_data_item_created";
+    public const string ReferenceDataItemUpdated = "reference_data_item_updated";
+    public const string ReferenceDataItemArchived = "reference_data_item_archived";
+    public const string ReferenceDataItemReactivated = "reference_data_item_reactivated";
+
     // M13 audit committee
     public const string AcPackGenerationRequested = "ac_pack_generation_requested";
     public const string AcPackGenerated = "ac_pack_generated";
@@ -233,6 +239,7 @@ public static class AuditTargetTypes
     public const string Dashboard = "dashboard";
     public const string RecurrenceCluster = "recurrence_cluster";
     public const string BankConfiguration = "bank_configuration";
+    public const string ReferenceDataItem = "reference_data_item";
     public const string AcPack = "ac_pack";
     public const string AcActionItem = "ac_action_item";
     public const string AcComment = "ac_comment";
