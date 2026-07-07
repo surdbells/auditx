@@ -47,6 +47,11 @@ export interface PlanItem {
   assignedLeadUserId: string | null;
   linkedAuditId: string | null;
   status: PlanItemStatus;
+  orderIndex: number;
+}
+
+export interface ReorderPlanItemsRequest {
+  orderedItemIds: string[];
 }
 
 export interface Plan {

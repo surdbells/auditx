@@ -28,7 +28,10 @@ public sealed class PlanItem : Entity
 
     public PlanItemStatus Status { get; private set; } = PlanItemStatus.Planned;
 
-    internal PlanItem(Guid annualPlanId, Guid entityId, string auditType, DateOnly start, DateOnly end, decimal? effortDays, Guid? assignedLeadUserId)
+    /// <summary>Display order within the plan (manually reorderable while the plan is editable).</summary>
+    public int OrderIndex { get; private set; }
+
+    internal PlanItem(Guid annualPlanId, Guid entityId, string auditType, DateOnly start, DateOnly end, decimal? effortDays, Guid? assignedLeadUserId, int orderIndex)
     {
         AnnualPlanId = annualPlanId;
         EntityId = entityId;
@@ -36,8 +39,11 @@ public sealed class PlanItem : Entity
         SetDates(start, end);
         EstimatedEffortDays = effortDays;
         AssignedLeadUserId = assignedLeadUserId;
+        OrderIndex = orderIndex;
         Status = PlanItemStatus.Planned;
     }
+
+    internal void SetOrder(int orderIndex) => OrderIndex = orderIndex;
 
     internal void SetDates(DateOnly start, DateOnly end)
     {

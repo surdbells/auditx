@@ -88,6 +88,7 @@ public static class AuditEventTypes
     public const string PlanUpdated = "plan_updated";
     public const string PlanItemAdded = "plan_item_added";
     public const string PlanItemRemoved = "plan_item_removed";
+    public const string PlanItemsReordered = "plan_items_reordered";
     public const string PlanSubmitted = "plan_submitted";
     public const string PlanRevisionSubmitted = "plan_revision_submitted";
     public const string PlanDecisionRecorded = "plan_decision_recorded";

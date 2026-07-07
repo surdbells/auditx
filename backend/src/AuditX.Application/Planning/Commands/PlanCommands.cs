@@ -105,6 +105,21 @@ public sealed class RemovePlanItemCommandHandler(IAnnualPlanRepository plans, IA
     }
 }
 
+public sealed record ReorderPlanItemsCommand(Guid PlanId, IReadOnlyList<Guid> OrderedItemIds) : ICommand<Unit>;
+
+public sealed class ReorderPlanItemsCommandHandler(IAnnualPlanRepository plans, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<ReorderPlanItemsCommand, Unit>
+{
+    public async Task<Unit> Handle(ReorderPlanItemsCommand command, CancellationToken cancellationToken)
+    {
+        var plan = await plans.GetByIdAsync(command.PlanId, cancellationToken) ?? throw new NotFoundException("Plan", command.PlanId);
+        plan.ReorderItems(command.OrderedItemIds);
+        audit.Record(AuditEventTypes.PlanItemsReordered, AuditTargetTypes.AnnualPlan, plan.Id);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Unit.Value;
+    }
+}
+
 public sealed record SubmitPlanCommand(Guid PlanId) : ICommand<PlanDto>;
 
 public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)

@@ -52,6 +52,14 @@ public sealed class AnnualPlansController(IDispatcher dispatcher) : ApiControlle
     }
 
     [RequirePermission(PermissionKeys.ManagePlan)]
+    [HttpPost("{id:guid}/items/reorder")]
+    public async Task<IActionResult> ReorderItems(Guid id, [FromBody] ReorderPlanItemsRequest request, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new ReorderPlanItemsCommand(id, request.OrderedItemIds), cancellationToken);
+        return NoContent();
+    }
+
+    [RequirePermission(PermissionKeys.ManagePlan)]
     [HttpPost("{id:guid}/submit")]
     public async Task<IActionResult> Submit(Guid id, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new SubmitPlanCommand(id), cancellationToken));

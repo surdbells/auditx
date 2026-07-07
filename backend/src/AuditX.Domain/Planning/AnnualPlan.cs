@@ -78,7 +78,7 @@ public sealed class AnnualPlan : AggregateRoot
     {
         EnsureStatus("plan.not_editable", PlanStatus.Draft, PlanStatus.RevisionsRequested);
         EnsureWithinPeriod(start, end);
-        var item = new PlanItem(Id, entityId, auditType, start, end, effortDays, assignedLeadUserId);
+        var item = new PlanItem(Id, entityId, auditType, start, end, effortDays, assignedLeadUserId, _items.Count);
         _items.Add(item);
         return item;
     }
@@ -87,6 +87,30 @@ public sealed class AnnualPlan : AggregateRoot
     {
         EnsureStatus("plan.not_editable", PlanStatus.Draft, PlanStatus.RevisionsRequested);
         _items.Remove(FindItem(itemId));
+        RenumberItems();
+    }
+
+    public void ReorderItems(IReadOnlyList<Guid> orderedItemIds)
+    {
+        EnsureStatus("plan.not_editable", PlanStatus.Draft, PlanStatus.RevisionsRequested);
+        if (orderedItemIds.Count != _items.Count || orderedItemIds.Distinct().Count() != _items.Count)
+        {
+            throw new DomainException("plan.reorder_mismatch", "The reorder must list every plan item exactly once.");
+        }
+
+        for (var index = 0; index < orderedItemIds.Count; index++)
+        {
+            FindItem(orderedItemIds[index]).SetOrder(index);
+        }
+    }
+
+    private void RenumberItems()
+    {
+        var ordered = _items.OrderBy(i => i.OrderIndex).ToList();
+        for (var index = 0; index < ordered.Count; index++)
+        {
+            ordered[index].SetOrder(index);
+        }
     }
 
     public void Submit(DateTimeOffset nowUtc)

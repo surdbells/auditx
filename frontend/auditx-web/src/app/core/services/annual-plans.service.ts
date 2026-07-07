@@ -11,6 +11,7 @@ import {
   PlanItem,
   PlanListItem,
   PlanQuery,
+  ReorderPlanItemsRequest,
   SavePlanRequest,
   SubmitRevisionRequest,
 } from '../models';
@@ -52,6 +53,10 @@ export class AnnualPlansService {
 
   removeItem(id: string, itemId: string): Observable<void> {
     return this.api.deleteVoid(`/annual-plans/${id}/items/${itemId}`);
+  }
+
+  reorderItems(id: string, body: ReorderPlanItemsRequest): Observable<void> {
+    return this.api.postVoid(`/annual-plans/${id}/items/reorder`, body);
   }
 
   /* ---- Lifecycle ---- */

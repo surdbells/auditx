@@ -9,7 +9,8 @@ public sealed record PlanItemDto(
     decimal? EstimatedEffortDays,
     Guid? AssignedLeadUserId,
     Guid? LinkedAuditId,
-    string Status);
+    string Status,
+    int OrderIndex);
 
 public sealed record ApprovalDecisionDto(string Decision, string? Detail, IReadOnlyList<string> Comments, Guid DecidedBy, DateTimeOffset DecidedAt);
 

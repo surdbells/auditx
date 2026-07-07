@@ -20,6 +20,43 @@ public sealed class AnnualPlanTests
     }
 
     [Fact]
+    public void AddItem_assigns_incremental_order_and_reorder_sets_by_position()
+    {
+        var plan = NewPlan();
+        var a = plan.AddItem(Guid.NewGuid(), "a", new(2027, 2, 1), new(2027, 2, 28), null, null);
+        var b = plan.AddItem(Guid.NewGuid(), "b", new(2027, 3, 1), new(2027, 3, 28), null, null);
+        var c = plan.AddItem(Guid.NewGuid(), "c", new(2027, 4, 1), new(2027, 4, 28), null, null);
+        Assert.Equal(0, a.OrderIndex);
+        Assert.Equal(1, b.OrderIndex);
+        Assert.Equal(2, c.OrderIndex);
+
+        plan.ReorderItems([c.Id, a.Id, b.Id]);
+
+        Assert.Equal(0, c.OrderIndex);
+        Assert.Equal(1, a.OrderIndex);
+        Assert.Equal(2, b.OrderIndex);
+    }
+
+    [Fact]
+    public void ReorderItems_must_list_every_item_once()
+    {
+        var plan = NewPlan();
+        var a = plan.AddItem(Guid.NewGuid(), "a", new(2027, 2, 1), new(2027, 2, 28), null, null);
+        plan.AddItem(Guid.NewGuid(), "b", new(2027, 3, 1), new(2027, 3, 28), null, null);
+        Assert.Throws<DomainException>(() => plan.ReorderItems([a.Id]));
+    }
+
+    [Fact]
+    public void ReorderItems_rejected_once_plan_is_approved()
+    {
+        var plan = PlanWithItem();
+        var item = plan.Items[0];
+        plan.Submit(Now);
+        plan.RecordDecision(AcDecisionOutcome.Approved, "ok", [], Guid.NewGuid(), Now);
+        Assert.Throws<InvalidStateTransitionException>(() => plan.ReorderItems([item.Id]));
+    }
+
+    [Fact]
     public void Create_rejects_inverted_period()
         => Assert.Throws<DomainException>(() => AnnualPlan.Create("X", End, Start));
 

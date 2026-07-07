@@ -23,6 +23,8 @@ public sealed record UpdatePlanRequest(string PeriodLabel, DateOnly PeriodStart,
 
 public sealed record AddPlanItemRequest(Guid EntityId, string AuditType, DateOnly PlannedStartDate, DateOnly PlannedEndDate, decimal? EstimatedEffortDays, Guid? AssignedLeadUserId);
 
+public sealed record ReorderPlanItemsRequest(IReadOnlyList<Guid> OrderedItemIds);
+
 public sealed record PlanDecisionRequest(string Decision, string? Detail, IReadOnlyList<string>? Comments);
 
 public sealed record SubmitPlanRevisionRequest(string Kind, Guid? ItemId, DateOnly? NewStartDate, DateOnly? NewEndDate);

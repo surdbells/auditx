@@ -94,3 +94,26 @@
 .muted {
   color: var(--mat-sys-on-surface-variant);
 }
+
+/* ---- Drag & drop reordering of plan items ---- */
+.detail__drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+.cdk-drag-preview {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  opacity: 0.96;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.cdk-drag-animating {
+  transition: transform 180ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.detail__items-table.cdk-drop-list-dragging .mat-mdc-row:not(.cdk-drag-placeholder) {
+  transition: transform 180ms cubic-bezier(0, 0, 0.2, 1);
+}

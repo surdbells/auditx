@@ -13,6 +13,14 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  CdkDropList,
+  CdkDrag,
+  CdkDragHandle,
+  type CdkDragDrop,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
 
 import { AnnualPlansService } from '../../../core/services/annual-plans.service';
 import { UniverseService } from '../../../core/services/universe.service';
@@ -58,6 +66,10 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
+    MatTooltipModule,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
@@ -77,14 +89,12 @@ export class PlanDetailComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
 
-  readonly itemColumns = [
-    'auditType',
-    'planned',
-    'effort',
-    'lead',
-    'status',
-    'actions',
-  ];
+  /** A drag handle column is shown only while the plan's items are reorderable. */
+  readonly itemColumns = computed(() =>
+    this.isEditable()
+      ? ['drag', 'auditType', 'planned', 'effort', 'lead', 'status', 'actions']
+      : ['auditType', 'planned', 'effort', 'lead', 'status', 'actions'],
+  );
 
   readonly state = signal<ViewState>('loading');
   readonly plan = signal<Plan | null>(null);
@@ -207,6 +217,24 @@ export class PlanDetailComponent {
       },
       error: () => openDialog([]),
     });
+  }
+
+  /** Reorder plan items by dragging a row. Only permitted while the plan is editable. */
+  dropItem(event: CdkDragDrop<PlanItem[]>): void {
+    const p = this.plan();
+    if (!p || !this.isEditable() || event.previousIndex === event.currentIndex) {
+      return;
+    }
+    const items = [...p.items];
+    moveItemInArray(items, event.previousIndex, event.currentIndex);
+    // Optimistically reflect the new order (and re-stamp orderIndex) so the row doesn't snap back.
+    this.plan.set({
+      ...p,
+      items: items.map((it, index) => ({ ...it, orderIndex: index })),
+    });
+    this.service
+      .reorderItems(this.id(), { orderedItemIds: items.map((i) => i.id) })
+      .subscribe({ next: () => this.refresh(), error: () => this.refresh() });
   }
 
   removeItem(item: PlanItem): void {

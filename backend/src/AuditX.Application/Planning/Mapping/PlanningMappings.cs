@@ -8,7 +8,7 @@ public static class PlanningMappings
 {
     public static PlanItemDto ToDto(this PlanItem item) => new(
         item.Id, item.EntityId, item.AuditType, item.PlannedStartDate, item.PlannedEndDate,
-        item.EstimatedEffortDays, item.AssignedLeadUserId, item.LinkedAuditId, item.Status.ToSnake());
+        item.EstimatedEffortDays, item.AssignedLeadUserId, item.LinkedAuditId, item.Status.ToSnake(), item.OrderIndex);
 
     public static PlanDto ToDto(this AnnualPlan plan)
     {
@@ -19,7 +19,7 @@ public static class PlanningMappings
         return new PlanDto(
             plan.Id, plan.PeriodLabel, plan.PeriodStart, plan.PeriodEnd, plan.Status.ToSnake(),
             plan.SubmittedAt, plan.ApprovedAt, decision,
-            plan.Items.OrderBy(i => i.PlannedStartDate).Select(i => i.ToDto()).ToArray());
+            plan.Items.OrderBy(i => i.OrderIndex).Select(i => i.ToDto()).ToArray());
     }
 
     public static PlanListItemDto ToListItemDto(this AnnualPlan plan) => new(

@@ -141,7 +141,30 @@
           <p class="muted detail__empty">No items have been added yet.</p>
         } @else {
           <div class="table-scroll">
-            <table mat-table [dataSource]="p.items" class="detail__items-table">
+            <table
+              mat-table
+              [dataSource]="p.items"
+              class="detail__items-table"
+              cdkDropList
+              [cdkDropListData]="p.items"
+              [cdkDropListDisabled]="!isEditable()"
+              (cdkDropListDropped)="dropItem($event)"
+            >
+              <ng-container matColumnDef="drag">
+                <th mat-header-cell *matHeaderCellDef aria-label="Reorder"></th>
+                <td mat-cell *matCellDef="let i">
+                  <button
+                    matIconButton
+                    type="button"
+                    cdkDragHandle
+                    class="detail__drag-handle"
+                    aria-label="Drag to reorder"
+                    matTooltip="Drag to reorder"
+                  >
+                    <mat-icon>drag_indicator</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
               <ng-container matColumnDef="auditType">
                 <th mat-header-cell *matHeaderCellDef>Audit type</th>
                 <td mat-cell *matCellDef="let i">{{ i.auditType }}</td>
@@ -187,8 +210,13 @@
                 </td>
               </ng-container>
 
-              <tr mat-header-row *matHeaderRowDef="itemColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: itemColumns"></tr>
+              <tr mat-header-row *matHeaderRowDef="itemColumns()"></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: itemColumns()"
+                cdkDrag
+                [cdkDragData]="row"
+              ></tr>
             </table>
           </div>
         }
