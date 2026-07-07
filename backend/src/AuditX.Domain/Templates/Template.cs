@@ -100,6 +100,21 @@ public sealed class Template : AggregateRoot, ISoftDeletable
         }
     }
 
+    public void ReorderSections(IReadOnlyList<string> orderedSectionNames)
+    {
+        EnsureDraft();
+        var distinct = orderedSectionNames.Select(n => n.ToLowerInvariant()).Distinct().Count();
+        if (orderedSectionNames.Count != _sections.Count || distinct != _sections.Count)
+        {
+            throw new DomainException("template.reorder_mismatch", "The reorder must list every section exactly once.");
+        }
+
+        for (var index = 0; index < orderedSectionNames.Count; index++)
+        {
+            FindSection(orderedSectionNames[index]).SetOrder(index);
+        }
+    }
+
     public TemplateSection AddSection(string name)
     {
         EnsureDraft();

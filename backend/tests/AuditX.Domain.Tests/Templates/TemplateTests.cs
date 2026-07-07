@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text.Json;
 using AuditX.Domain.Common;
 using AuditX.Domain.Enums;
@@ -110,6 +111,30 @@ public sealed class TemplateTests
         template.AddItem("B", null, ResponseType.PassFailNa, null, false, null);
 
         Assert.Throws<DomainException>(() => template.ReorderItems([a.Id]));
+    }
+
+    [Fact]
+    public void ReorderSections_sets_order_by_position()
+    {
+        var template = Template.CreateDraft("T", "branch", null);
+        template.AddSection("A");
+        template.AddSection("B");
+        template.AddSection("C");
+
+        template.ReorderSections(["C", "A", "B"]);
+
+        var ordered = template.Sections.OrderBy(s => s.OrderIndex).Select(s => s.Name).ToArray();
+        Assert.Equal(["C", "A", "B"], ordered);
+    }
+
+    [Fact]
+    public void ReorderSections_must_list_every_section_once()
+    {
+        var template = Template.CreateDraft("T", "branch", null);
+        template.AddSection("A");
+        template.AddSection("B");
+
+        Assert.Throws<DomainException>(() => template.ReorderSections(["A"]));
     }
 
     [Fact]

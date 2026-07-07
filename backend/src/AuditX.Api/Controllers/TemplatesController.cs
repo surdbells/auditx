@@ -109,6 +109,14 @@ public sealed class TemplatesController(IDispatcher dispatcher) : ApiControllerB
         return NoContent();
     }
 
+    [RequirePermission(PermissionKeys.ManageTemplates)]
+    [HttpPost("{id:guid}/sections/reorder")]
+    public async Task<IActionResult> ReorderSections(Guid id, [FromBody] ReorderSectionsRequest request, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new ReorderTemplateSectionsCommand(id, request.OrderedSectionNames), cancellationToken);
+        return NoContent();
+    }
+
     // ---- Lifecycle ----
 
     [RequirePermission(PermissionKeys.ManageTemplates)]

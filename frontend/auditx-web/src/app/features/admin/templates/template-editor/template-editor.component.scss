@@ -162,3 +162,21 @@
   outline-offset: 2px;
   border-radius: 8px;
 }
+
+.editor__section.cdk-drag-preview {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  border-radius: 10px;
+  background: var(--mat-sys-surface, #fff);
+}
+
+.editor__section.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.editor__section.cdk-drag-animating {
+  transition: transform 180ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.editor__sections.cdk-drop-list-dragging .editor__section:not(.cdk-drag-placeholder) {
+  transition: transform 180ms cubic-bezier(0, 0, 0.2, 1);
+}

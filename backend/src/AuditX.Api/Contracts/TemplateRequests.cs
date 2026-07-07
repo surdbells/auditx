@@ -18,4 +18,6 @@ public sealed record AddSectionRequest(string Name);
 
 public sealed record RenameSectionRequest(string CurrentName, string NewName);
 
+public sealed record ReorderSectionsRequest(IReadOnlyList<string> OrderedSectionNames);
+
 public sealed record CloneTemplateRequest(string NewName);

@@ -23,4 +23,6 @@ public sealed class TemplateSection : Entity
     }
 
     internal void Rename(string name) => Name = Guard.NotNullOrWhiteSpace(name, "template.section_name_required", "Section name is required.");
+
+    internal void SetOrder(int orderIndex) => OrderIndex = orderIndex;
 }

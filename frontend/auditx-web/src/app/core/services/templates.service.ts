@@ -13,6 +13,7 @@ import {
   PendingActionDto,
   RenameSectionRequest,
   ReorderItemsRequest,
+  ReorderSectionsRequest,
   SaveTemplateItemRequest,
   Template,
   TemplateDiff,
@@ -79,6 +80,10 @@ export class TemplatesService {
 
   reorderItems(id: string, body: ReorderItemsRequest): Observable<void> {
     return this.api.postVoid(`/templates/${id}/items/reorder`, body);
+  }
+
+  reorderSections(id: string, body: ReorderSectionsRequest): Observable<void> {
+    return this.api.postVoid(`/templates/${id}/sections/reorder`, body);
   }
 
   /* ---- Sections ---- */

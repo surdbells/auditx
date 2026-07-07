@@ -144,6 +144,21 @@ public sealed class ReorderTemplateItemsCommandHandler(ITemplateRepository templ
     }
 }
 
+public sealed record ReorderTemplateSectionsCommand(Guid TemplateId, IReadOnlyList<string> OrderedSectionNames) : ICommand<Unit>;
+
+public sealed class ReorderTemplateSectionsCommandHandler(ITemplateRepository templates, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<ReorderTemplateSectionsCommand, Unit>
+{
+    public async Task<Unit> Handle(ReorderTemplateSectionsCommand command, CancellationToken cancellationToken)
+    {
+        var template = await templates.GetByIdAsync(command.TemplateId, cancellationToken) ?? throw new NotFoundException("Template", command.TemplateId);
+        template.ReorderSections(command.OrderedSectionNames);
+        audit.Record(AuditEventTypes.TemplateSectionsReordered, AuditTargetTypes.Template, template.Id);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Unit.Value;
+    }
+}
+
 public sealed record AddTemplateSectionCommand(Guid TemplateId, string Name) : ICommand<TemplateDto>;
 
 public sealed class AddTemplateSectionCommandHandler(ITemplateRepository templates, IAuditRecorder audit, IUnitOfWork unitOfWork)

@@ -107,9 +107,33 @@
           @if (sectionGroups().length === 0) {
             <p class="editor__muted">No items yet.</p>
           }
+          <div
+            class="editor__sections"
+            cdkDropList
+            [cdkDropListData]="sectionGroups()"
+            [cdkDropListDisabled]="!canEditStructure()"
+            (cdkDropListDropped)="dropSection($event)"
+          >
           @for (group of sectionGroups(); track group.name) {
-            <div class="editor__section">
+            <div
+              class="editor__section"
+              cdkDrag
+              [cdkDragData]="group"
+              [cdkDragDisabled]="!group.name || !canEditStructure()"
+            >
               <div class="editor__section-head">
+                @if (canEditStructure() && group.name) {
+                  <button
+                    matIconButton
+                    type="button"
+                    cdkDragHandle
+                    class="editor__drag-handle"
+                    aria-label="Drag to reorder section"
+                    matTooltip="Drag to reorder section"
+                  >
+                    <mat-icon>drag_indicator</mat-icon>
+                  </button>
+                }
                 <h3 class="editor__section-title">
                   {{ group.name || 'Unsectioned' }}
                 </h3>
@@ -220,6 +244,7 @@
               </div>
             </div>
           }
+          </div>
         </mat-card-content>
       </mat-card>
 

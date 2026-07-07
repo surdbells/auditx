@@ -487,6 +487,39 @@ export class TemplateEditorComponent {
     this.template.set({ ...t, items });
   }
 
+  /**
+   * Reorder named sections. Indices are into the full grouped view (which pins the un-sectioned
+   * group last and disables dragging it); the un-sectioned group is filtered out before persisting.
+   */
+  dropSection(event: CdkDragDrop<SectionGroup[]>): void {
+    if (!this.canEditStructure() || event.previousIndex === event.currentIndex) {
+      return;
+    }
+    const names = this.sectionGroups().map((g) => g.name);
+    moveItemInArray(names, event.previousIndex, event.currentIndex);
+    const realNames = names.filter((n) => n !== '');
+    if (realNames.length === 0) {
+      return;
+    }
+    this.applyOptimisticSectionReorder(realNames);
+    this.templatesService
+      .reorderSections(this.id(), { orderedSectionNames: realNames })
+      .subscribe({ next: () => this.refresh(), error: () => this.refresh() });
+  }
+
+  private applyOptimisticSectionReorder(orderedNames: readonly string[]): void {
+    const t = this.template();
+    if (!t) {
+      return;
+    }
+    const order = new Map(orderedNames.map((name, index) => [name, index]));
+    const sections = t.sections.map((s) => ({
+      ...s,
+      orderIndex: order.get(s.name) ?? s.orderIndex,
+    }));
+    this.template.set({ ...t, sections });
+  }
+
   /* ---- Lifecycle ---- */
 
   publish(): void {

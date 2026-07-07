@@ -115,6 +115,10 @@ export interface ReorderItemsRequest {
   orderedItemIds: string[];
 }
 
+export interface ReorderSectionsRequest {
+  orderedSectionNames: string[];
+}
+
 export interface CreateSectionRequest {
   name: string;
 }

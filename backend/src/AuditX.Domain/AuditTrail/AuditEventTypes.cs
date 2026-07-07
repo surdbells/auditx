@@ -43,6 +43,7 @@ public static class AuditEventTypes
     public const string TemplateSectionAdded = "template_section_added";
     public const string TemplateSectionRenamed = "template_section_renamed";
     public const string TemplateSectionRemoved = "template_section_removed";
+    public const string TemplateSectionsReordered = "template_sections_reordered";
     public const string TemplatePublished = "template_published";
     public const string TemplateDraftCreated = "template_draft_created";
     public const string TemplateArchived = "template_archived";
