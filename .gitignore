@@ -36,6 +36,9 @@ Thumbs.db
 
 # ---------- Docker ----------
 docker/.data/
+# Local-only Compose overrides (machine-specific port remaps, etc.) — never committed.
+docker-compose.override.yml
+docker-compose.override.yaml
 
 # ---------- Logs ----------
 logs/

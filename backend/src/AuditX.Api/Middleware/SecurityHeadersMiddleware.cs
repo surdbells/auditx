@@ -8,16 +8,32 @@ namespace AuditX.Api.Middleware;
 /// </summary>
 public sealed class SecurityHeadersMiddleware(RequestDelegate next)
 {
+    // Default: the API only returns data (JSON / file downloads); forbid any active content from being interpreted.
+    private const string ApiContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
+
+    // The Swagger UI documentation page (Development only) is a real HTML app: it must load its own bundled
+    // scripts/styles, apply inline styles, and fetch the OpenAPI document + issue "Try it out" calls to this same
+    // origin. A "default-src 'none'" policy renders it blank, so scope a self-only policy to the /swagger path.
+    private const string SwaggerContentSecurityPolicy =
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data:; " +
+        "font-src 'self' data:; " +
+        "connect-src 'self'; " +
+        "frame-ancestors 'none'; base-uri 'none'";
+
     public async Task Invoke(HttpContext context)
     {
+        var isSwagger = context.Request.Path.StartsWithSegments("/swagger", System.StringComparison.OrdinalIgnoreCase);
+
         var headers = context.Response.Headers;
         headers["X-Content-Type-Options"] = "nosniff";
         headers["X-Frame-Options"] = "DENY";
         headers["Referrer-Policy"] = "no-referrer";
         headers["Cross-Origin-Resource-Policy"] = "same-origin";
         headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
-        // The API only returns data (JSON / file downloads); forbid any active content from being interpreted.
-        headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
+        headers["Content-Security-Policy"] = isSwagger ? SwaggerContentSecurityPolicy : ApiContentSecurityPolicy;
         headers.Remove("X-Powered-By");
         headers.Remove("Server");
 
