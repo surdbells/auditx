@@ -1,4 +1,7 @@
-<mat-sidenav-container class="layout">
+<mat-sidenav-container
+  class="layout"
+  [class.layout--collapsed]="collapsed() && !isHandset()"
+>
   <mat-sidenav
     class="layout__sidenav"
     [mode]="isHandset() ? 'over' : 'side'"
@@ -6,27 +9,92 @@
     [fixedInViewport]="isHandset()"
     (closedStart)="sidenavOpened.set(false)"
   >
-    <div class="layout__brand">
-      <mat-icon class="layout__brand-icon" aria-hidden="true">verified_user</mat-icon>
-      <div class="layout__brand-text">
-        <span class="layout__brand-name">AuditX</span>
-        <span class="layout__brand-sub">{{ 'layout.brandSub' | t }}</span>
+    <div class="nav">
+      <!-- Brand -->
+      <div class="nav__brand">
+        <span class="nav__logo" aria-hidden="true">
+          <mat-icon>verified_user</mat-icon>
+        </span>
+        <span class="nav__brand-text">
+          <span class="nav__brand-name">AuditX</span>
+          <span class="nav__brand-sub">{{ 'layout.brandSub' | t }}</span>
+        </span>
+        @if (!isHandset()) {
+          <button
+            matIconButton
+            type="button"
+            class="nav__collapse"
+            (click)="toggleCollapsed()"
+            [matTooltip]="(collapsed() ? 'layout.expandNav' : 'layout.collapseNav') | t"
+            matTooltipPosition="right"
+            [attr.aria-label]="(collapsed() ? 'layout.expandNav' : 'layout.collapseNav') | t"
+          >
+            <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+          </button>
+        }
       </div>
-    </div>
 
-    <mat-nav-list>
-      @for (item of navItems(); track item.route) {
-        <a
-          mat-list-item
-          [routerLink]="item.route"
-          routerLinkActive="active-link"
-          (click)="onNavigate()"
-        >
-          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-          <span matListItemTitle>{{ item.labelKey | t }}</span>
+      <div class="nav__divider"></div>
+
+      <!-- Grouped navigation -->
+      <nav class="nav__scroll" [attr.aria-label]="'layout.primaryNav' | t">
+        @for (section of navSections(); track section.titleKey) {
+          <div class="nav__section">
+            <div class="nav__section-title">{{ section.titleKey | t }}</div>
+            @for (item of section.items; track item.route) {
+              <a
+                class="nav__item"
+                [routerLink]="item.route"
+                routerLinkActive="nav__item--active"
+                (click)="onNavigate()"
+                [matTooltip]="collapsed() && !isHandset() ? (item.labelKey | t) : ''"
+                matTooltipPosition="right"
+              >
+                <mat-icon class="nav__item-icon">{{ item.icon }}</mat-icon>
+                <span class="nav__label">{{ item.labelKey | t }}</span>
+              </a>
+            }
+          </div>
+        }
+      </nav>
+
+      <div class="nav__divider"></div>
+
+      <!-- Bottom profile menu -->
+      <button
+        type="button"
+        class="nav__profile"
+        [matMenuTriggerFor]="profileMenu"
+        [attr.aria-label]="'layout.accountMenu' | t"
+        [matTooltip]="collapsed() && !isHandset() ? displayName() : ''"
+        matTooltipPosition="right"
+      >
+        <span class="nav__avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="nav__profile-text">
+          <span class="nav__profile-name">{{ displayName() }}</span>
+          <span class="nav__profile-email">{{ session()?.email }}</span>
+        </span>
+        <mat-icon class="nav__profile-caret">unfold_more</mat-icon>
+      </button>
+
+      <mat-menu #profileMenu="matMenu" class="profile-menu" xPosition="after">
+        <div class="profile-menu__card" mat-menu-item disabled>
+          <span class="profile-menu__avatar" aria-hidden="true">{{ initials() }}</span>
+          <span class="profile-menu__id">
+            <span class="profile-menu__name">{{ displayName() }}</span>
+            <span class="profile-menu__email">{{ session()?.email }}</span>
+          </span>
+        </div>
+        <a mat-menu-item [routerLink]="settingsRoute" (click)="onNavigate()">
+          <mat-icon>settings</mat-icon>
+          <span>{{ 'layout.settings' | t }}</span>
         </a>
-      }
-    </mat-nav-list>
+        <button mat-menu-item type="button" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>{{ 'layout.signOut' | t }}</span>
+        </button>
+      </mat-menu>
+    </div>
   </mat-sidenav>
 
   <mat-sidenav-content class="layout__content">
@@ -43,39 +111,7 @@
       }
       <span class="layout__toolbar-title">{{ 'layout.platformSubtitle' | t }}</span>
       <span class="layout__spacer"></span>
-
       <app-language-switcher />
-
-      <button
-        matButton
-        type="button"
-        [matMenuTriggerFor]="userMenu"
-        class="layout__user-btn"
-        [attr.aria-label]="'layout.accountMenu' | t"
-      >
-        <span class="layout__avatar" aria-hidden="true">{{ initials() }}</span>
-        <span class="layout__user-name">{{ displayName() }}</span>
-        <mat-icon>arrow_drop_down</mat-icon>
-      </button>
-
-      <mat-menu #userMenu="matMenu">
-        <div class="layout__menu-header" mat-menu-item disabled>
-          <div class="layout__menu-name">{{ displayName() }}</div>
-          <div class="layout__menu-email">{{ session()?.email }}</div>
-        </div>
-        <a
-          mat-menu-item
-          routerLink="/account/notification-preferences"
-          (click)="onNavigate()"
-        >
-          <mat-icon>notifications_active</mat-icon>
-          <span>{{ 'layout.notificationPreferences' | t }}</span>
-        </a>
-        <button mat-menu-item type="button" (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          <span>{{ 'layout.signOut' | t }}</span>
-        </button>
-      </mat-menu>
     </mat-toolbar>
 
     <main class="layout__main">

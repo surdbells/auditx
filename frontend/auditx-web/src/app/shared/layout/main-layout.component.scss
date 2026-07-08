@@ -3,97 +3,292 @@
   background: transparent;
 }
 
-// ---- Sidebar -----------------------------------------------------------
+// ---- Sidebar shell -----------------------------------------------------
 .layout__sidenav {
-  width: 264px;
+  width: 260px;
   border-right: 1px solid var(--mat-sys-outline-variant);
   background: #ffffff;
-  padding: 0 0.75rem;
+  overflow: hidden;
+}
+// Icon-only rail (desktop collapse). Width is instant so the pushed content
+// margin (recomputed via updateContentMargins) never lags a transition.
+.layout--collapsed .layout__sidenav {
+  width: 76px;
 }
 
-.layout__brand {
+.nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+// ---- Brand -------------------------------------------------------------
+.nav__brand {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1.35rem 0.75rem 1.1rem;
+  gap: 0.7rem;
+  padding: 0.9rem 0.85rem;
+  min-height: 64px;
 }
-
-// Gradient logo mark.
-.layout__brand-icon {
+.nav__logo {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  color: #fff !important;
-  font-size: 24px;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
   background-image: linear-gradient(135deg, #6366f1, #7c3aed);
-  box-shadow: 0 8px 18px -6px rgb(79 70 229 / 0.55);
+  box-shadow: 0 8px 16px -6px rgb(79 70 229 / 0.55);
 }
-
-.layout__brand-text {
+.nav__logo mat-icon {
+  color: #fff;
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+.nav__brand-text {
   display: flex;
   flex-direction: column;
   line-height: 1.05;
+  min-width: 0;
+  flex: 1 1 auto;
 }
-
-.layout__brand-name {
-  font-size: 1.15rem;
-  font-weight: 700;
+.nav__brand-name {
+  font-size: 1.1rem;
+  font-weight: 750;
   letter-spacing: -0.02em;
   color: #0f172a;
 }
-
-.layout__brand-sub {
-  font-size: 0.62rem;
+.nav__brand-sub {
+  font-size: 0.58rem;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #94a3b8;
 }
-
-// Nav list — quiet items, rounded hover, a clear indigo active pill.
-.layout__sidenav .mat-mdc-list-item {
-  border-radius: 12px !important;
-  margin: 2px 0;
-  height: 42px !important;
-  color: #475569;
-  transition:
-    background-color var(--ax-dur) var(--ax-ease),
-    color var(--ax-dur) var(--ax-ease);
-}
-.layout__sidenav .mat-mdc-list-item .mat-mdc-list-item-title {
-  font-size: 0.875rem !important;
-  font-weight: 500;
-}
-.layout__sidenav .mat-mdc-list-item:hover {
-  background: #f1f5f9;
-}
-.layout__sidenav .mat-mdc-list-item .mat-icon {
+.nav__collapse {
+  flex: 0 0 auto;
   color: #94a3b8;
 }
 
-.active-link.mat-mdc-list-item {
-  background: linear-gradient(90deg, #eef2ff, #f5f3ff) !important;
-  color: #4338ca !important;
-  font-weight: 600;
-  box-shadow: inset 3px 0 0 0 #4f46e5;
-}
-.active-link.mat-mdc-list-item .mat-mdc-list-item-title {
-  font-weight: 600;
-}
-.active-link.mat-mdc-list-item .mat-icon {
-  color: #4f46e5 !important;
+// ---- Dividers ----------------------------------------------------------
+.nav__divider {
+  height: 1px;
+  background: var(--mat-sys-outline-variant);
+  margin: 0 0.85rem;
 }
 
+// ---- Scrollable groups -------------------------------------------------
+.nav__scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.5rem 0.6rem 0.75rem;
+}
+.nav__section + .nav__section {
+  margin-top: 0.6rem;
+}
+.nav__section-title {
+  padding: 0.5rem 0.6rem 0.3rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #9aa4b6;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+// Flat, compact, square nav items with a left-accent active state.
+.nav__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  height: 38px;
+  padding: 0 0.65rem;
+  border-radius: 0;
+  color: #475569;
+  text-decoration: none;
+  font-size: 0.855rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.nav__item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.nav__item-icon {
+  flex: 0 0 auto;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+  transition: color 140ms ease;
+}
+.nav__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav__item--active {
+  background: #eef2ff;
+  color: #3730a3;
+  font-weight: 650;
+}
+.nav__item--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: #4f46e5;
+}
+.nav__item--active .nav__item-icon {
+  color: #4f46e5;
+}
+
+// ---- Bottom profile ----------------------------------------------------
+.nav__profile {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 140ms ease;
+}
+.nav__profile:hover {
+  background: #f1f5f9;
+}
+.nav__avatar {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  box-shadow: 0 6px 14px -6px rgb(79 70 229 / 0.5);
+}
+.nav__profile-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.nav__profile-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav__profile-email {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav__profile-caret {
+  flex: 0 0 auto;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+}
+
+// ---- Collapsed rail: hide text, centre icons ---------------------------
+.layout--collapsed {
+  // Stack the logo over the expand toggle so the rail always offers a way back.
+  .nav__brand {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.85rem 0;
+  }
+  .nav__brand-text,
+  .nav__label,
+  .nav__profile-text,
+  .nav__profile-caret {
+    display: none;
+  }
+  .nav__section-title {
+    text-align: center;
+    letter-spacing: 0;
+    color: transparent;
+    height: 1px;
+    padding: 0;
+    margin: 0.5rem 0.5rem;
+    background: var(--mat-sys-outline-variant);
+    overflow: hidden;
+  }
+  .nav__item {
+    justify-content: center;
+    padding: 0;
+    gap: 0;
+  }
+  .nav__profile {
+    justify-content: center;
+    padding: 0.7rem 0;
+  }
+}
+
+// ---- Bottom profile popover -------------------------------------------
+.profile-menu__card.mat-mdc-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  opacity: 1 !important;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  cursor: default;
+}
+.profile-menu__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.profile-menu__id {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.profile-menu__name {
+  font-weight: 600;
+  color: #0f172a;
+}
+.profile-menu__email {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+// ---- Topbar — frosted, sticky -----------------------------------------
 .layout__content {
   display: flex;
   flex-direction: column;
   background: transparent;
 }
-
-// ---- Topbar — frosted, sticky, hairline border ------------------------
 .layout__toolbar {
   position: sticky;
   top: 0;
@@ -103,46 +298,14 @@
   backdrop-filter: saturate(1.4) blur(12px);
   border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
-
 .layout__toolbar-title {
   font-size: 0.95rem;
   font-weight: 600;
   color: #334155;
 }
-
 .layout__spacer {
   flex: 1 1 auto;
 }
-
-.layout__user-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.layout__user-name {
-  max-width: 18ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
-  color: #334155;
-}
-
-.layout__avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #7c3aed);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  box-shadow: 0 6px 14px -6px rgb(79 70 229 / 0.5);
-}
-
 .layout__main {
   flex: 1 1 auto;
   padding: 2rem;
@@ -152,27 +315,9 @@
   box-sizing: border-box;
 }
 
-.layout__menu-header {
-  display: flex;
-  flex-direction: column;
-  opacity: 1 !important;
-}
-
-.layout__menu-name {
-  font-weight: 600;
-}
-
-.layout__menu-email {
-  font: var(--mat-sys-body-small);
-  color: var(--mat-sys-on-surface-variant);
-}
-
 @media (max-width: 599px) {
   .layout__main {
     padding: 1.1rem;
-  }
-  .layout__user-name {
-    display: none;
   }
   .layout__toolbar-title {
     display: none;
