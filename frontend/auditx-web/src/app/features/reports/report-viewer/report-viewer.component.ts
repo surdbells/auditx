@@ -42,7 +42,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const DISTRIBUTIONS_PAGE_SIZE = 20;
+const DISTRIBUTIONS_PAGE_SIZE = 7;
 
 @Component({
   selector: 'app-report-viewer',

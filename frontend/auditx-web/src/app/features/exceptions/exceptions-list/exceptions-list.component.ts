@@ -35,7 +35,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 7;
 
 @Component({
   selector: 'app-exceptions-list',

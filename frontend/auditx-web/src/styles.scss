@@ -186,9 +186,15 @@ body {
   border-radius: 12px !important;
 }
 
-// ---- Form fields -------------------------------------------------------
-.mat-mdc-text-field-wrapper {
-  border-radius: 12px !important;
+// ---- Filter bars -------------------------------------------------------
+// Every list wraps its filter fields in a `{feature}__filters-card` mat-card. A
+// bordered + shadowed card hugging outlined fields reads as a doubled border, so
+// flatten these into a plain layout container — the fields' own outlines are enough.
+[class*='__filters-card'].mat-mdc-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
 // ---- Menus / dialogs / chips -------------------------------------------

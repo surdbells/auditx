@@ -32,7 +32,7 @@ import { ErrorStateComponent } from '../../../../shared/components/error-state/e
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_LIMIT = 100;
+const PAGE_LIMIT = 7;
 
 @Component({
   selector: 'app-webhook-deliveries',

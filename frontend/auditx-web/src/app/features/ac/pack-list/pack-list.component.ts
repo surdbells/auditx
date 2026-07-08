@@ -36,7 +36,7 @@ type ViewState = 'loading' | 'ready' | 'error';
 
 /** Poll interval (ms) while a generation is pending/generating. */
 const POLL_INTERVAL = 2000;
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 7;
 
 /** Pack statuses the filter offers. */
 const STATUS_OPTIONS = [

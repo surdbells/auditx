@@ -35,7 +35,7 @@ import { CloseActionItemDialogComponent } from '../dialogs/close-action-item-dia
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 7;
 const STATUS_OPTIONS = ['', 'open', 'in_progress', 'closed', 'acknowledged'];
 
 @Component({

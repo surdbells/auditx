@@ -36,7 +36,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 7;
 
 /** Converts a Date to the start-of-day ISO datetime string. */
 function toIsoStart(value: Date | null): string | undefined {

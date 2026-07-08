@@ -24,7 +24,7 @@ import { PageHeaderComponent } from '../../../../shared/components/page-header/p
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 7;
 const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
 
 @Component({
