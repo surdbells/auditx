@@ -23,20 +23,31 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       gap: 1rem;
       align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.75rem;
     }
     .page-header__title {
       margin: 0;
       font: var(--mat-sys-headline-small);
+      font-weight: 700;
+      letter-spacing: -0.015em;
     }
     .page-header__subtitle {
-      margin: 0.25rem 0 0;
+      margin: 0.35rem 0 0;
+      max-width: 68ch;
       color: var(--mat-sys-on-surface-variant);
     }
     .page-header__actions {
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
+    }
+    @media (max-width: 599px) {
+      .page-header {
+        margin-bottom: 1.25rem;
+      }
+      .page-header__actions {
+        width: 100%;
+      }
     }
   `,
 })

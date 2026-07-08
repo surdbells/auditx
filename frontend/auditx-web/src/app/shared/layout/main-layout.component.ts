@@ -66,7 +66,9 @@ export class MainLayoutComponent {
     { initialValue: false },
   );
 
-  readonly sidenavOpened = signal(true);
+  // On desktop the template binding forces the drawer open; on handset it starts
+  // closed so the user lands on content, and the hamburger opens it over the page.
+  readonly sidenavOpened = signal(false);
 
   private readonly allNavItems: NavItem[] = [
     { labelKey: 'nav.dashboard', icon: 'dashboard', route: '/dashboard', permissions: [] },

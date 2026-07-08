@@ -1,8 +1,5 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
+// Angular Material 3 theming via `mat.theme()` — defines the --mat-sys-* design tokens
+// used across the app. Docs: https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 @use './styles/status-badge';
 
@@ -15,31 +12,145 @@ html {
         tertiary: mat.$blue-palette,
       ),
       typography: Roboto,
-      density: 0,
+      // Compact, enterprise-grade control density — tighter rows and fields
+      // without sacrificing tap targets.
+      density: -1,
     )
   );
+
+  // ---- AuditX design tokens ---------------------------------------------
+  // A small, deliberate scale layered on top of Material's system variables so
+  // spacing, radii, elevation and motion are consistent across every feature.
+  --ax-radius-sm: 8px;
+  --ax-radius: 12px;
+  --ax-radius-lg: 16px;
+
+  // Soft, low-spread elevations (premium, not heavy).
+  --ax-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --ax-shadow-2: 0 2px 6px rgba(15, 23, 42, 0.07), 0 6px 16px rgba(15, 23, 42, 0.06);
+  --ax-shadow-3: 0 8px 28px rgba(15, 23, 42, 0.12);
+
+  --ax-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ax-dur: 180ms;
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
   color-scheme: light;
 
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
+  background-color: var(--mat-sys-surface-container-low);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
 
-  // Reset the user agent margin.
   margin: 0;
   height: 100%;
-}
-/* You can add global styles to this file, and also import other style files */
 
-/* Snackbar variants used by NotificationService. */
+  // Crisper type rendering.
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// ---- Global element polish ---------------------------------------------
+
+::selection {
+  background: color-mix(in srgb, var(--mat-sys-primary) 24%, transparent);
+}
+
+// A visible, consistent keyboard-focus ring across custom (non-Material) controls.
+:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}
+
+// Slimmer, themed scrollbars (WebKit/Blink) — feels lighter than the OS default.
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mat-sys-outline) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--mat-sys-outline) 60%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--mat-sys-outline) 85%, transparent);
+  background-clip: padding-box;
+}
+
+// ---- Cards -------------------------------------------------------------
+// Cards carry almost every screen; a soft resting elevation, refined border and
+// larger radius are the single biggest lift in perceived quality.
+.mat-mdc-card {
+  border-radius: var(--ax-radius-lg) !important;
+  transition: box-shadow var(--ax-dur) var(--ax-ease),
+    border-color var(--ax-dur) var(--ax-ease);
+}
+.mat-mdc-card.mat-mdc-card-outlined {
+  border-color: var(--mat-sys-outline-variant);
+  box-shadow: var(--ax-shadow-1);
+}
+.mat-mdc-card.mat-mdc-card-outlined:hover {
+  box-shadow: var(--ax-shadow-2);
+}
+
+// ---- Data tables -------------------------------------------------------
+// Uppercase, tracked headers; quiet row separators; a soft row hover.
+.mat-mdc-table {
+  background: transparent;
+}
+.mat-mdc-table .mat-mdc-header-cell {
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+.mat-mdc-table .mat-mdc-row {
+  transition: background-color var(--ax-dur) var(--ax-ease);
+}
+.mat-mdc-table .mat-mdc-row:hover {
+  background: color-mix(in srgb, var(--mat-sys-primary) 5%, transparent);
+}
+.mat-mdc-header-row,
+.mat-mdc-row {
+  border-bottom-color: var(--mat-sys-outline-variant) !important;
+}
+
+// ---- Buttons -----------------------------------------------------------
+// A subtle resting shadow on the primary (filled) button reads more premium.
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-raised-button.mat-primary,
+button[matButton='filled'] {
+  box-shadow: var(--ax-shadow-1);
+}
+
+// ---- Dialogs -----------------------------------------------------------
+.mat-mdc-dialog-surface {
+  border-radius: var(--ax-radius-lg) !important;
+}
+
+// ---- Motion preferences ------------------------------------------------
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+// ---- Snackbar variants used by NotificationService ---------------------
 .auditx-snack-success {
   --mdc-snackbar-container-color: #2e7d32;
   --mdc-snackbar-supporting-text-color: #ffffff;
@@ -60,8 +171,14 @@ body {
   --mdc-snackbar-supporting-text-color: var(--mat-sys-inverse-on-surface);
 }
 
-/* Generic table/scroll helpers reused by feature pages. */
+// ---- Generic helpers reused by feature pages ---------------------------
 .table-scroll {
   overflow-x: auto;
   width: 100%;
+  border-radius: var(--ax-radius);
+}
+
+// Long content (wide tables, code blocks) must never push the page sideways.
+.layout__main {
+  min-width: 0;
 }

@@ -3,9 +3,9 @@
 }
 
 .layout__sidenav {
-  width: 248px;
+  width: 256px;
   border-right: 1px solid var(--mat-sys-outline-variant);
-  background: var(--mat-sys-surface-container-low);
+  background: var(--mat-sys-surface);
 }
 
 .layout__brand {
@@ -30,12 +30,13 @@
 
 .layout__brand-name {
   font: var(--mat-sys-title-large);
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .layout__brand-sub {
   font: var(--mat-sys-label-small);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--mat-sys-on-surface-variant);
 }
@@ -45,16 +46,19 @@
   flex-direction: column;
 }
 
+// Frosted, quietly elevated toolbar that stays put while content scrolls under it.
 .layout__toolbar {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: var(--mat-sys-surface);
+  background: color-mix(in srgb, var(--mat-sys-surface) 82%, transparent);
+  backdrop-filter: saturate(1.2) blur(10px);
   border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .layout__toolbar-title {
   font: var(--mat-sys-title-medium);
+  font-weight: 600;
 }
 
 .layout__spacer {
@@ -74,6 +78,7 @@
   white-space: nowrap;
 }
 
+// Gradient monogram avatar — a small premium accent in the toolbar.
 .layout__avatar {
   display: inline-flex;
   align-items: center;
@@ -81,16 +86,20 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--mat-sys-primary);
+  background: linear-gradient(
+    135deg,
+    var(--mat-sys-primary),
+    var(--mat-sys-tertiary)
+  );
   color: var(--mat-sys-on-primary);
   font: var(--mat-sys-label-medium);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .layout__main {
   flex: 1 1 auto;
-  padding: 1.5rem;
-  max-width: 1280px;
+  padding: 1.75rem;
+  max-width: 1320px;
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -111,12 +120,19 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
+// Nav items: quiet by default, a clear primary "pill" for the active route.
+.layout__sidenav .mat-mdc-list-item {
+  border-radius: 0 999px 999px 0;
+  margin-right: 0.5rem;
+  transition: background-color var(--ax-dur, 180ms) var(--ax-ease, ease);
+}
+
 .active-link {
   --mat-list-list-item-leading-icon-color: var(--mat-sys-primary);
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
-  border-radius: 0 24px 24px 0;
-  margin-right: 0.5rem;
+  --mat-list-list-item-label-text-color: var(--mat-sys-on-primary-container);
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font-weight: 600;
 }
 
 @media (max-width: 599px) {
@@ -124,6 +140,10 @@
     padding: 1rem;
   }
   .layout__user-name {
+    display: none;
+  }
+  // Reclaim width on small screens — the hamburger already conveys context.
+  .layout__toolbar-title {
     display: none;
   }
 }
