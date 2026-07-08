@@ -214,6 +214,11 @@ export class AuditExecutionComponent {
     return groups;
   });
 
+  /** Count of responded items within a checklist section (for the section header meta). */
+  sectionDone(group: ProgressGroup): number {
+    return group.items.filter((i) => i.itemState === 'responded').length;
+  }
+
   constructor() {
     // Refetch progress / summary whenever the audit id first appears or changes.
     effect(() => {

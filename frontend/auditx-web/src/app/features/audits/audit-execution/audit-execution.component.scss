@@ -23,14 +23,77 @@
   margin-top: 1rem;
 }
 
+// Each checklist section is a bordered panel with a tinted header — not a bare heading.
 .exec__section {
   margin-top: 1rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--mat-sys-surface);
 }
-
-.exec__section-title {
-  margin: 0 0 0.5rem;
-  font: var(--mat-sys-title-small);
+.exec__section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+.exec__section-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  color: #4f46e5;
+  background: #eef2ff;
+  border: 1px solid #e0e7ff;
+}
+.exec__section-icon mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+.exec__section-headings {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.exec__section-name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+.exec__section-meta {
+  font-size: 0.75rem;
   color: var(--mat-sys-on-surface-variant);
+}
+.exec__section-count {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+// Let the section panel own the border; strip the accordion's own frame.
+.exec__section .mat-accordion,
+.exec__section .mat-expansion-panel {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent;
+}
+.exec__section .mat-expansion-panel:not(:last-child) {
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .exec__item-title {

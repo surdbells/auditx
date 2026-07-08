@@ -199,8 +199,12 @@
           <p class="muted detail__empty">{{ 'audits.checklist.empty' | t }}</p>
         } @else {
           @for (group of checklistGroups(); track group.name) {
-            <div class="detail__section">
-              <h4 class="detail__section-title">{{ group.name }}</h4>
+            <section class="detail__section">
+              <header class="detail__section-head">
+                <span class="detail__section-icon" aria-hidden="true"><mat-icon>segment</mat-icon></span>
+                <h4 class="detail__section-name">{{ group.name }}</h4>
+                <span class="detail__section-count">{{ group.items.length }}</span>
+              </header>
               <ul class="detail__items">
                 @for (item of group.items; track item.id) {
                   <li class="detail__item">
@@ -245,7 +249,7 @@
                   </li>
                 }
               </ul>
-            </div>
+            </section>
           }
         }
       </mat-card>

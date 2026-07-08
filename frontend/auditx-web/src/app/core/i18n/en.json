@@ -575,6 +575,7 @@
   "audits.exec.noFailures": "No outstanding failures need judgement.",
   "audits.exec.checklistTitle": "Checklist execution",
   "audits.exec.noItems": "No checklist items to work on.",
+  "audits.exec.sectionMeta": "{{done}} of {{total}} responded",
   "audits.exec.hasExceptionTooltip": "Has exception",
   "audits.exec.verdictInline": "· Verdict: {{verdict}}",
   "audits.exec.draftTag": "Draft",

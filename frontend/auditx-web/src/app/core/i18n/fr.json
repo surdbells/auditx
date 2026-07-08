@@ -575,6 +575,7 @@
   "audits.exec.noFailures": "Aucun échec en attente ne nécessite de jugement.",
   "audits.exec.checklistTitle": "Exécution de la liste de contrôle",
   "audits.exec.noItems": "Aucun point de contrôle à traiter.",
+  "audits.exec.sectionMeta": "{{done}} sur {{total}} traités",
   "audits.exec.hasExceptionTooltip": "Comporte une anomalie",
   "audits.exec.verdictInline": "· Verdict : {{verdict}}",
   "audits.exec.draftTag": "Brouillon",
