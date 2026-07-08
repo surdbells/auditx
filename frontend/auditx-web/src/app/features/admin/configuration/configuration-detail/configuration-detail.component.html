@@ -1,26 +1,26 @@
 <app-page-header
   [title]="title()"
-  subtitle="Active configuration, version history, and a typed draft editor."
+  [subtitle]="'config.detail.subtitle' | t"
 >
   <div actions>
     <a matButton routerLink="/admin/configuration">
       <mat-icon>arrow_back</mat-icon>
-      All domains
+      {{ 'config.detail.allDomains' | t }}
     </a>
     <button matButton type="button" (click)="fetch()">
       <mat-icon>refresh</mat-icon>
-      Refresh
+      {{ 'config.detail.refresh' | t }}
     </button>
   </div>
 </app-page-header>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading configuration…" />
+    <app-loading [message]="'config.detail.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load this configuration domain."
+      [message]="'config.detail.error' | t"
       (retry)="fetch()"
     />
   }
@@ -35,33 +35,39 @@
     <!-- Active version summary -->
     <mat-card appearance="outlined" class="config__card">
       <mat-card-header>
-        <mat-card-title>Active version</mat-card-title>
+        <mat-card-title>{{ 'config.detail.activeVersion.title' | t }}</mat-card-title>
         @if (active(); as a) {
           <mat-card-subtitle>
-            v{{ a.versionNumber }} · activated
-            {{ (a.activatedAt ?? a.createdAtUtc) | date: 'medium' }}
+            {{
+              'config.detail.activeVersion.subtitle'
+                | t
+                  : {
+                      version: a.versionNumber,
+                      date: (a.activatedAt ?? a.createdAtUtc) | date: 'medium',
+                    }
+            }}
           </mat-card-subtitle>
         }
       </mat-card-header>
       <mat-card-content>
         @if (activeDefinition(); as def) {
           <dl class="config__defs">
-            <div><dt>Critical target</dt><dd>{{ def.criticalTargetDays }} days</dd></div>
-            <div><dt>High target</dt><dd>{{ def.highTargetDays }} days</dd></div>
-            <div><dt>Medium target</dt><dd>{{ def.mediumTargetDays }} days</dd></div>
-            <div><dt>Low target</dt><dd>{{ def.lowTargetDays }} days</dd></div>
+            <div><dt>{{ 'config.detail.def.criticalTarget' | t }}</dt><dd>{{ 'config.detail.def.days' | t: { count: def.criticalTargetDays } }}</dd></div>
+            <div><dt>{{ 'config.detail.def.highTarget' | t }}</dt><dd>{{ 'config.detail.def.days' | t: { count: def.highTargetDays } }}</dd></div>
+            <div><dt>{{ 'config.detail.def.mediumTarget' | t }}</dt><dd>{{ 'config.detail.def.days' | t: { count: def.mediumTargetDays } }}</dd></div>
+            <div><dt>{{ 'config.detail.def.lowTarget' | t }}</dt><dd>{{ 'config.detail.def.days' | t: { count: def.lowTargetDays } }}</dd></div>
             <div>
-              <dt>Recurrence window</dt>
-              <dd>{{ def.recurrenceWindowMonths }} months</dd>
+              <dt>{{ 'config.detail.def.recurrenceWindow' | t }}</dt>
+              <dd>{{ 'config.detail.def.months' | t: { count: def.recurrenceWindowMonths } }}</dd>
             </div>
             <div>
-              <dt>Recurrence threshold</dt>
-              <dd>{{ def.recurrenceThreshold }} occurrences</dd>
+              <dt>{{ 'config.detail.def.recurrenceThreshold' | t }}</dt>
+              <dd>{{ 'config.detail.def.occurrences' | t: { count: def.recurrenceThreshold } }}</dd>
             </div>
           </dl>
         } @else {
           <p class="config__muted">
-            The active definition could not be parsed.
+            {{ 'config.detail.def.parseError' | t }}
           </p>
         }
       </mat-card-content>
@@ -71,17 +77,16 @@
     @if (canManage()) {
       <mat-card appearance="outlined" class="config__card">
         <mat-card-header>
-          <mat-card-title>New draft</mat-card-title>
-          <mat-card-subtitle
-            >Edit the values and submit a new inactive draft to activate
-            later.</mat-card-subtitle
-          >
+          <mat-card-title>{{ 'config.detail.draft.title' | t }}</mat-card-title>
+          <mat-card-subtitle>{{
+            'config.detail.draft.subtitle' | t
+          }}</mat-card-subtitle>
         </mat-card-header>
         <mat-card-content>
           <form [formGroup]="form" class="config__form">
             <div class="config__grid">
               <mat-form-field appearance="outline">
-                <mat-label>Critical target (days)</mat-label>
+                <mat-label>{{ 'config.detail.draft.criticalTargetLabel' | t }}</mat-label>
                 <input
                   matInput
                   type="number"
@@ -90,7 +95,7 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>High target (days)</mat-label>
+                <mat-label>{{ 'config.detail.draft.highTargetLabel' | t }}</mat-label>
                 <input
                   matInput
                   type="number"
@@ -99,7 +104,7 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Medium target (days)</mat-label>
+                <mat-label>{{ 'config.detail.draft.mediumTargetLabel' | t }}</mat-label>
                 <input
                   matInput
                   type="number"
@@ -108,7 +113,7 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Low target (days)</mat-label>
+                <mat-label>{{ 'config.detail.draft.lowTargetLabel' | t }}</mat-label>
                 <input
                   matInput
                   type="number"
@@ -117,7 +122,7 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Recurrence window (months)</mat-label>
+                <mat-label>{{ 'config.detail.draft.recurrenceWindowLabel' | t }}</mat-label>
                 <input
                   matInput
                   type="number"
@@ -127,7 +132,7 @@
                 />
               </mat-form-field>
               <mat-form-field appearance="outline">
-                <mat-label>Recurrence threshold</mat-label>
+                <mat-label>{{ 'config.detail.draft.recurrenceThresholdLabel' | t }}</mat-label>
                 <input
                   matInput
                   type="number"
@@ -138,32 +143,31 @@
             </div>
 
             <mat-form-field appearance="outline" class="config__full">
-              <mat-label>Change reason</mat-label>
+              <mat-label>{{ 'config.detail.draft.changeReasonLabel' | t }}</mat-label>
               <textarea
                 matInput
                 rows="3"
                 formControlName="changeReason"
               ></textarea>
-              <mat-hint
-                >Explain why you're changing this (at least
-                {{ minReason }} characters).</mat-hint
-              >
+              <mat-hint>{{
+                'config.detail.draft.changeReasonHint' | t: { count: minReason }
+              }}</mat-hint>
               @if (
                 form.controls.changeReason.hasError('required') &&
                 form.controls.changeReason.touched
               ) {
-                <mat-error>A change reason is required.</mat-error>
+                <mat-error>{{ 'config.detail.draft.changeReasonRequired' | t }}</mat-error>
               }
               @if (form.controls.changeReason.hasError('minlength')) {
-                <mat-error
-                  >At least {{ minReason }} characters are required.</mat-error
-                >
+                <mat-error>{{
+                  'config.detail.draft.changeReasonMinLength' | t: { count: minReason }
+                }}</mat-error>
               }
             </mat-form-field>
 
             @if (fieldErrors().length) {
               <div class="config__field-errors" role="alert">
-                <p>The server rejected the draft:</p>
+                <p>{{ 'config.detail.draft.serverRejected' | t }}</p>
                 <ul>
                   @for (fe of fieldErrors(); track fe.field + fe.code) {
                     <li><strong>{{ fe.field }}</strong>: {{ fe.message }}</li>
@@ -181,7 +185,7 @@
             [disabled]="form.invalid || saving()"
           >
             <mat-icon>save</mat-icon>
-            Save draft
+            {{ 'config.detail.draft.save' | t }}
           </button>
         </mat-card-actions>
       </mat-card>
@@ -190,59 +194,59 @@
     <!-- Version history -->
     <mat-card appearance="outlined" class="config__card config__table-card">
       <mat-card-header>
-        <mat-card-title>Version history</mat-card-title>
+        <mat-card-title>{{ 'config.detail.history.title' | t }}</mat-card-title>
       </mat-card-header>
       <div class="config__table-wrapper">
         <table mat-table [dataSource]="versions()" class="config__table">
           <ng-container matColumnDef="versionNumber">
-            <th mat-header-cell *matHeaderCellDef>Version</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'config.detail.history.version' | t }}</th>
             <td mat-cell *matCellDef="let v">v{{ v.versionNumber }}</td>
           </ng-container>
 
           <ng-container matColumnDef="state">
-            <th mat-header-cell *matHeaderCellDef>State</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'config.detail.history.state' | t }}</th>
             <td mat-cell *matCellDef="let v">
               <span
                 class="status-badge"
                 [attr.data-status]="v.isActive ? 'active' : 'inactive'"
               >
-                {{ v.isActive ? 'Active' : 'Inactive' }}
+                {{ (v.isActive ? 'config.detail.history.active' : 'config.detail.history.inactive') | t }}
               </span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="changeReason">
-            <th mat-header-cell *matHeaderCellDef>Change reason</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'config.detail.history.changeReason' | t }}</th>
             <td mat-cell *matCellDef="let v" class="config__reason">
               {{ v.changeReason || '—' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="created">
-            <th mat-header-cell *matHeaderCellDef>Created</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'config.detail.history.created' | t }}</th>
             <td mat-cell *matCellDef="let v">
               {{ v.createdAtUtc | date: 'short' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="activated">
-            <th mat-header-cell *matHeaderCellDef>Activated</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'config.detail.history.activated' | t }}</th>
             <td mat-cell *matCellDef="let v">
               {{ v.activatedAt ? (v.activatedAt | date: 'short') : '—' }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+            <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'config.detail.history.actionsAria' | t"></th>
             <td mat-cell *matCellDef="let v" class="config__row-actions">
               @if (canManage() && !v.isActive) {
                 <button matButton type="button" (click)="activate(v)">
                   <mat-icon>play_circle</mat-icon>
-                  Activate
+                  {{ 'config.detail.history.activate' | t }}
                 </button>
                 <button matButton type="button" (click)="rollback(v)">
                   <mat-icon>history</mat-icon>
-                  Roll back
+                  {{ 'config.detail.history.rollback' | t }}
                 </button>
               }
             </td>
@@ -260,7 +264,7 @@
             (click)="loadMore()"
             [disabled]="loadingMore()"
           >
-            Load more
+            {{ 'config.detail.history.loadMore' | t }}
           </button>
         </mat-card-actions>
       }

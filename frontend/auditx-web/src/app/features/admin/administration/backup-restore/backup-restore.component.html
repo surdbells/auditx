@@ -1,10 +1,10 @@
 <div class="restore__grid">
   <mat-card appearance="outlined" class="restore__card">
-    <h2 class="restore__title">Record restore drill</h2>
+    <h2 class="restore__title">{{ 'administration.backup.drill.title' | t }}</h2>
     @if (canManageRetention()) {
       <form [formGroup]="drillForm" class="restore__form">
         <mat-form-field appearance="outline">
-          <mat-label>Outcome</mat-label>
+          <mat-label>{{ 'administration.backup.drill.outcomeLabel' | t }}</mat-label>
           <mat-select formControlName="outcome">
             @for (o of outcomes; track o) {
               <mat-option [value]="o">{{ o }}</mat-option>
@@ -12,7 +12,7 @@
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Details</mat-label>
+          <mat-label>{{ 'administration.backup.drill.detailsLabel' | t }}</mat-label>
           <textarea matInput rows="3" formControlName="details"></textarea>
         </mat-form-field>
         <div class="restore__actions">
@@ -22,34 +22,34 @@
             (click)="recordDrill()"
             [disabled]="drillForm.invalid || recording()"
           >
-            {{ recording() ? 'Saving…' : 'Record drill' }}
+            {{ (recording() ? 'administration.backup.drill.saving' : 'administration.backup.drill.record') | t }}
           </button>
         </div>
       </form>
     } @else {
-      <p class="muted">You do not have permission to record restore drills.</p>
+      <p class="muted">{{ 'administration.backup.drill.noPermission' | t }}</p>
     }
   </mat-card>
 
   <mat-card appearance="outlined" class="restore__card">
-    <h2 class="restore__title">Object restore</h2>
+    <h2 class="restore__title">{{ 'administration.backup.restore.title' | t }}</h2>
     @if (canExecRestore()) {
       <form [formGroup]="restoreForm" class="restore__form">
         <!-- TODO(ux): objectType free-text — no restorable-object-type enum/lookup source exists to build a dropdown yet. -->
         <mat-form-field appearance="outline">
-          <mat-label>Object type</mat-label>
+          <mat-label>{{ 'administration.backup.restore.objectTypeLabel' | t }}</mat-label>
           <input matInput formControlName="objectType" autocomplete="off" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Object ID</mat-label>
+          <mat-label>{{ 'administration.backup.restore.objectIdLabel' | t }}</mat-label>
           <input matInput formControlName="objectId" autocomplete="off" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Snapshot date</mat-label>
+          <mat-label>{{ 'administration.backup.restore.snapshotDateLabel' | t }}</mat-label>
           <input matInput type="date" formControlName="snapshotDate" />
         </mat-form-field>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Justification</mat-label>
+          <mat-label>{{ 'administration.backup.restore.justificationLabel' | t }}</mat-label>
           <textarea matInput rows="2" formControlName="justification"></textarea>
         </mat-form-field>
         <div class="restore__actions">
@@ -59,7 +59,7 @@
             (click)="requestRestore()"
             [disabled]="restoreForm.invalid || requesting()"
           >
-            {{ requesting() ? 'Requesting…' : 'Request restore' }}
+            {{ (requesting() ? 'administration.backup.restore.requesting' : 'administration.backup.restore.request') | t }}
           </button>
         </div>
       </form>
@@ -67,13 +67,13 @@
       @if (lastRequest(); as req) {
         <div class="restore__request">
           <p>
-            Request <strong>{{ req.objectType }}/{{ req.objectId }}</strong>
+            {{ 'administration.backup.restore.requestLabel' | t }} <strong>{{ req.objectType }}/{{ req.objectId }}</strong>
             <span class="status-badge" [attr.data-status]="req.status">{{ req.status }}</span>
           </p>
           @if (req.status === 'Requested') {
             <form [formGroup]="decisionForm" class="restore__decision">
               <mat-form-field appearance="outline" class="full">
-                <mat-label>Decision comment</mat-label>
+                <mat-label>{{ 'administration.backup.restore.decisionCommentLabel' | t }}</mat-label>
                 <input matInput formControlName="comment" autocomplete="off" />
               </mat-form-field>
               <div class="restore__decision-actions">
@@ -84,7 +84,7 @@
                   (click)="decide(false)"
                   [disabled]="deciding()"
                 >
-                  Reject
+                  {{ 'administration.backup.restore.reject' | t }}
                 </button>
                 <button
                   matButton="filled"
@@ -92,7 +92,7 @@
                   (click)="decide(true)"
                   [disabled]="deciding()"
                 >
-                  Approve
+                  {{ 'administration.backup.restore.approve' | t }}
                 </button>
               </div>
             </form>
@@ -100,41 +100,41 @@
         </div>
       }
     } @else {
-      <p class="muted">You do not have permission to request object restores.</p>
+      <p class="muted">{{ 'administration.backup.restore.noPermission' | t }}</p>
     }
   </mat-card>
 </div>
 
 <mat-card appearance="outlined" class="restore__history-card">
-  <h2 class="restore__title">Restore drill history</h2>
+  <h2 class="restore__title">{{ 'administration.backup.history.title' | t }}</h2>
   @switch (state()) {
     @case ('loading') {
-      <app-loading message="Loading drills…" />
+      <app-loading [message]="'administration.backup.history.loading' | t" />
     }
     @case ('error') {
       <app-error-state
-        message="We couldn't load the restore drills."
+        [message]="'administration.backup.history.error' | t"
         (retry)="fetch()"
       />
     }
     @case ('ready') {
       @if (drills().length === 0) {
-        <p class="muted">No restore drills recorded yet.</p>
+        <p class="muted">{{ 'administration.backup.history.empty' | t }}</p>
       } @else {
         <div class="restore__table-wrapper">
           <table mat-table [dataSource]="drills()" class="restore__table">
             <ng-container matColumnDef="executedAt">
-              <th mat-header-cell *matHeaderCellDef>Executed</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'administration.backup.history.col.executed' | t }}</th>
               <td mat-cell *matCellDef="let d">{{ d.executedAt | date: 'medium' }}</td>
             </ng-container>
             <ng-container matColumnDef="outcome">
-              <th mat-header-cell *matHeaderCellDef>Outcome</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'administration.backup.history.col.outcome' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 <span class="status-badge" [attr.data-status]="d.outcome">{{ d.outcome }}</span>
               </td>
             </ng-container>
             <ng-container matColumnDef="details">
-              <th mat-header-cell *matHeaderCellDef>Details</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'administration.backup.history.col.details' | t }}</th>
               <td mat-cell *matCellDef="let d">{{ d.details ?? '—' }}</td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="drillColumns"></tr>

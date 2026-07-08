@@ -15,6 +15,8 @@ import { MatTableModule } from '@angular/material/table';
 import { AdministrationService } from '../../../../core/services/administration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { BulkOperationResult } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-bulk-users',
@@ -27,6 +29,7 @@ import { BulkOperationResult } from '../../../../core/models';
     MatButtonModule,
     MatIconModule,
     MatTableModule,
+    TranslatePipe,
   ],
   templateUrl: './bulk-users.component.html',
   styleUrl: './bulk-users.component.scss',
@@ -35,6 +38,7 @@ export class BulkUsersComponent {
   private readonly admin = inject(AdministrationService);
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly errorColumns = ['identifier', 'message'];
 
@@ -83,7 +87,11 @@ export class BulkUsersComponent {
     this.admin.bulkDeactivateUsers(ids).subscribe({
       next: (result) => {
         this.deactivateResult.set(result);
-        this.notify.success(`${result.successCount} user(s) deactivated.`);
+        this.notify.success(
+          this.i18n.translate('administration.bulkUsers.notify.deactivated', {
+            count: result.successCount,
+          }),
+        );
         this.deactivating.set(false);
       },
       error: () => this.deactivating.set(false),
@@ -102,7 +110,11 @@ export class BulkUsersComponent {
       .subscribe({
         next: (result) => {
           this.importResult.set(result);
-          this.notify.success(`${result.successCount} user(s) imported.`);
+          this.notify.success(
+            this.i18n.translate('administration.bulkUsers.notify.imported', {
+              count: result.successCount,
+            }),
+          );
           this.importing.set(false);
         },
         error: () => this.importing.set(false),

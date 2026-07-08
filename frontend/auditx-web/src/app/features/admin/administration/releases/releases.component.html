@@ -1,31 +1,31 @@
 <mat-card appearance="outlined" class="releases__card">
-  <h2 class="releases__title">Install release</h2>
+  <h2 class="releases__title">{{ 'administration.releases.install.title' | t }}</h2>
   <p class="muted">
-    Releases are signature- and hash-verified before installation. Invalid bundles are rejected.
+    {{ 'administration.releases.install.hint' | t }}
   </p>
   <form [formGroup]="form" class="releases__form">
     <mat-form-field appearance="outline">
-      <mat-label>Version</mat-label>
+      <mat-label>{{ 'administration.releases.install.versionLabel' | t }}</mat-label>
       <input matInput formControlName="version" autocomplete="off" />
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Change record reference</mat-label>
+      <mat-label>{{ 'administration.releases.install.changeRecordReferenceLabel' | t }}</mat-label>
       <input matInput formControlName="changeRecordReference" autocomplete="off" />
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Manifest SHA-256</mat-label>
+      <mat-label>{{ 'administration.releases.install.manifestSha256Label' | t }}</mat-label>
       <input matInput formControlName="manifestSha256" autocomplete="off" />
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Signature (Base64)</mat-label>
+      <mat-label>{{ 'administration.releases.install.signatureLabel' | t }}</mat-label>
       <textarea matInput rows="3" formControlName="signatureBase64" spellcheck="false"></textarea>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Manifest content (Base64)</mat-label>
+      <mat-label>{{ 'administration.releases.install.manifestContentLabel' | t }}</mat-label>
       <textarea matInput rows="3" formControlName="manifestContentBase64" spellcheck="false"></textarea>
     </mat-form-field>
 
@@ -36,7 +36,7 @@
         (click)="install()"
         [disabled]="form.invalid || installing()"
       >
-        {{ installing() ? 'Verifying…' : 'Install release' }}
+        {{ (installing() ? 'administration.releases.install.verifying' : 'administration.releases.install.submit') | t }}
       </button>
     </div>
   </form>
@@ -44,11 +44,11 @@
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading releases…" />
+    <app-loading [message]="'administration.releases.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the release history."
+      [message]="'administration.releases.error' | t"
       (retry)="fetch()"
     />
   }
@@ -57,29 +57,29 @@
       <div class="releases__table-wrapper">
         <table mat-table [dataSource]="releases()" class="releases__table">
           <ng-container matColumnDef="version">
-            <th mat-header-cell *matHeaderCellDef>Version</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'administration.releases.col.version' | t }}</th>
             <td mat-cell *matCellDef="let r">{{ r.version }}</td>
           </ng-container>
 
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'administration.releases.col.status' | t }}</th>
             <td mat-cell *matCellDef="let r">
               <span class="status-badge" [attr.data-status]="r.status">{{ r.status }}</span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="changeRecord">
-            <th mat-header-cell *matHeaderCellDef>Change record</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'administration.releases.col.changeRecord' | t }}</th>
             <td mat-cell *matCellDef="let r">{{ r.changeRecordReference }}</td>
           </ng-container>
 
           <ng-container matColumnDef="detail">
-            <th mat-header-cell *matHeaderCellDef>Detail</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'administration.releases.col.detail' | t }}</th>
             <td mat-cell *matCellDef="let r" class="releases__detail">{{ r.detail ?? '—' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="createdAt">
-            <th mat-header-cell *matHeaderCellDef>Recorded</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'administration.releases.col.recorded' | t }}</th>
             <td mat-cell *matCellDef="let r">{{ r.createdAt | date: 'short' }}</td>
           </ng-container>
 

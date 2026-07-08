@@ -9,6 +9,9 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
+
 export interface ConfigReasonDialogData {
   title: string;
   message?: string;
@@ -36,6 +39,7 @@ export interface ConfigReasonResult {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
@@ -51,25 +55,27 @@ export interface ConfigReasonResult {
             form.controls.changeReason.hasError('required') &&
             form.controls.changeReason.touched
           ) {
-            <mat-error>This field is required.</mat-error>
+            <mat-error>{{ 'config.reasonDialog.required' | t }}</mat-error>
           }
           @if (form.controls.changeReason.hasError('minlength')) {
-            <mat-error
-              >At least {{ minLength }} characters are required.</mat-error
-            >
+            <mat-error>{{
+              'config.reasonDialog.minLength' | t: { count: minLength }
+            }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">
+        {{ 'config.reasonDialog.cancel' | t }}
+      </button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        {{ data.confirmLabel ?? 'Confirm' }}
+        {{ data.confirmLabel ?? ('config.reasonDialog.confirm' | t) }}
       </button>
     </mat-dialog-actions>
   `,
@@ -95,8 +101,10 @@ export class ConfigReasonDialogComponent {
     MatDialogRef<ConfigReasonDialogComponent, ConfigReasonResult>
   >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
-  readonly label = this.data.label ?? 'Change reason';
+  readonly label =
+    this.data.label ?? this.i18n.translate('config.reasonDialog.label');
   readonly minLength = this.data.minLength ?? 20;
 
   readonly form = this.fb.nonNullable.group({

@@ -1,10 +1,10 @@
 <div class="bulk__grid">
   <mat-card appearance="outlined" class="bulk__card">
-    <h2 class="bulk__title">Bulk deactivate</h2>
-    <p class="muted">Paste user IDs separated by spaces, commas or new lines.</p>
+    <h2 class="bulk__title">{{ 'administration.bulkUsers.deactivate.title' | t }}</h2>
+    <p class="muted">{{ 'administration.bulkUsers.deactivate.hint' | t }}</p>
     <form [formGroup]="deactivateForm" class="bulk__form">
       <mat-form-field appearance="outline" class="full">
-        <mat-label>User IDs</mat-label>
+        <mat-label>{{ 'administration.bulkUsers.deactivate.userIdsLabel' | t }}</mat-label>
         <textarea
           matInput
           rows="5"
@@ -19,7 +19,7 @@
           (click)="bulkDeactivate()"
           [disabled]="deactivateForm.invalid || deactivating()"
         >
-          {{ deactivating() ? 'Working…' : 'Deactivate users' }}
+          {{ (deactivating() ? 'administration.bulkUsers.deactivate.working' : 'administration.bulkUsers.deactivate.submit') | t }}
         </button>
       </div>
     </form>
@@ -28,16 +28,16 @@
       <div class="bulk__result">
         <p class="bulk__success">
           <mat-icon aria-hidden="true">check_circle</mat-icon>
-          {{ r.successCount }} succeeded, {{ r.errors.length }} failed.
+          {{ 'administration.bulkUsers.deactivate.result' | t: { success: r.successCount, failed: r.errors.length } }}
         </p>
         @if (r.errors.length) {
           <table mat-table [dataSource]="r.errors" class="bulk__error-table">
             <ng-container matColumnDef="identifier">
-              <th mat-header-cell *matHeaderCellDef>Identifier</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'administration.bulkUsers.errorTable.identifier' | t }}</th>
               <td mat-cell *matCellDef="let e">{{ e.identifier }}</td>
             </ng-container>
             <ng-container matColumnDef="message">
-              <th mat-header-cell *matHeaderCellDef>Error</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'administration.bulkUsers.errorTable.message' | t }}</th>
               <td mat-cell *matCellDef="let e">{{ e.message }}</td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
@@ -49,13 +49,13 @@
   </mat-card>
 
   <mat-card appearance="outlined" class="bulk__card">
-    <h2 class="bulk__title">CSV import</h2>
-    <p class="muted">Upload a CSV file or paste its contents below.</p>
+    <h2 class="bulk__title">{{ 'administration.bulkUsers.import.title' | t }}</h2>
+    <p class="muted">{{ 'administration.bulkUsers.import.hint' | t }}</p>
     <form [formGroup]="importForm" class="bulk__form">
       <div class="bulk__upload">
         <button matButton type="button" (click)="fileInput.click()">
           <mat-icon>upload_file</mat-icon>
-          Choose file
+          {{ 'administration.bulkUsers.import.chooseFile' | t }}
         </button>
         <input
           #fileInput
@@ -66,7 +66,7 @@
         />
       </div>
       <mat-form-field appearance="outline" class="full">
-        <mat-label>CSV content</mat-label>
+        <mat-label>{{ 'administration.bulkUsers.import.csvContentLabel' | t }}</mat-label>
         <textarea
           matInput
           rows="6"
@@ -82,7 +82,7 @@
           (click)="bulkImport()"
           [disabled]="importForm.invalid || importing()"
         >
-          {{ importing() ? 'Importing…' : 'Import users' }}
+          {{ (importing() ? 'administration.bulkUsers.import.importing' : 'administration.bulkUsers.import.submit') | t }}
         </button>
       </div>
     </form>
@@ -91,16 +91,16 @@
       <div class="bulk__result">
         <p class="bulk__success">
           <mat-icon aria-hidden="true">check_circle</mat-icon>
-          {{ r.successCount }} imported, {{ r.errors.length }} failed.
+          {{ 'administration.bulkUsers.import.result' | t: { success: r.successCount, failed: r.errors.length } }}
         </p>
         @if (r.errors.length) {
           <table mat-table [dataSource]="r.errors" class="bulk__error-table">
             <ng-container matColumnDef="identifier">
-              <th mat-header-cell *matHeaderCellDef>Identifier</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'administration.bulkUsers.errorTable.identifier' | t }}</th>
               <td mat-cell *matCellDef="let e">{{ e.identifier }}</td>
             </ng-container>
             <ng-container matColumnDef="message">
-              <th mat-header-cell *matHeaderCellDef>Error</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'administration.bulkUsers.errorTable.message' | t }}</th>
               <td mat-cell *matCellDef="let e">{{ e.message }}</td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>

@@ -17,6 +17,8 @@ import { MatInputModule } from '@angular/material/input';
 import { AdministrationService } from '../../../../core/services/administration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { SupportChannelStatus } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -38,6 +40,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatChipsModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,
   ],
@@ -49,6 +52,7 @@ export class SupportChannelComponent {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly status = signal<SupportChannelStatus | null>(null);
@@ -104,7 +108,9 @@ export class SupportChannelComponent {
         next: (s) => {
           this.status.set(s);
           this.engineers.set([]);
-          this.notify.success('Support channel enabled.');
+          this.notify.success(
+            this.i18n.translate('administration.support.enabledToast'),
+          );
           this.submitting.set(false);
         },
         error: () => this.submitting.set(false),
@@ -113,9 +119,9 @@ export class SupportChannelComponent {
 
   revoke(): void {
     const data: ConfirmDialogData = {
-      title: 'Revoke support access',
-      message: 'Immediately revoke all active support engineer access?',
-      confirmLabel: 'Revoke',
+      title: this.i18n.translate('administration.support.revokeTitle'),
+      message: this.i18n.translate('administration.support.revokeMessage'),
+      confirmLabel: this.i18n.translate('administration.support.revokeConfirm'),
       destructive: true,
     };
     this.dialog
@@ -127,7 +133,9 @@ export class SupportChannelComponent {
         }
         this.admin.revokeSupportChannel().subscribe({
           next: () => {
-            this.notify.success('Support channel revoked.');
+            this.notify.success(
+              this.i18n.translate('administration.support.revokedToast'),
+            );
             this.fetch();
           },
         });

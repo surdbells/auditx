@@ -11,6 +11,8 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { AdministrationService } from '../../../../core/services/administration.service';
 import { SystemHealth } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 
@@ -23,6 +25,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     DatePipe,
     MatCardModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,
   ],
@@ -31,20 +34,39 @@ type ViewState = 'loading' | 'ready' | 'error';
 })
 export class SystemHealthComponent {
   private readonly admin = inject(AdministrationService);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly health = signal<SystemHealth | null>(null);
 
   readonly metrics = computed(() => {
+    // Track the active language so labels re-resolve on toggle.
+    this.i18n.lang();
     const h = this.health();
     if (!h) {
       return [];
     }
     return [
-      { icon: 'group', label: 'Active users', value: h.activeUserCount },
-      { icon: 'groups', label: 'Total users', value: h.totalUserCount },
-      { icon: 'description', label: 'Templates', value: h.templateCount },
-      { icon: 'hub', label: 'Integrations', value: h.integrationCount },
+      {
+        icon: 'group',
+        label: this.i18n.translate('administration.health.activeUsers'),
+        value: h.activeUserCount,
+      },
+      {
+        icon: 'groups',
+        label: this.i18n.translate('administration.health.totalUsers'),
+        value: h.totalUserCount,
+      },
+      {
+        icon: 'description',
+        label: this.i18n.translate('administration.health.templates'),
+        value: h.templateCount,
+      },
+      {
+        icon: 'hub',
+        label: this.i18n.translate('administration.health.integrations'),
+        value: h.integrationCount,
+      },
     ];
   });
 

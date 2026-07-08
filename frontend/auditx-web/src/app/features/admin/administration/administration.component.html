@@ -1,46 +1,46 @@
 <app-page-header
-  title="Administration"
-  subtitle="Bank-wide settings, bulk operations, support access, releases and recovery."
+  [title]="'administration.page.title' | t"
+  [subtitle]="'administration.page.subtitle' | t"
 />
 
 <mat-tab-group>
   @if (canViewSettings()) {
-    <mat-tab label="Bank settings">
+    <mat-tab [label]="'administration.tabs.bankSettings' | t">
       <div class="tab-body">
         <app-bank-settings />
       </div>
     </mat-tab>
   }
   @if (canManageUsers()) {
-    <mat-tab label="Bulk users">
+    <mat-tab [label]="'administration.tabs.bulkUsers' | t">
       <div class="tab-body">
         <app-bulk-users />
       </div>
     </mat-tab>
   }
   @if (canManageSupport()) {
-    <mat-tab label="Support channel">
+    <mat-tab [label]="'administration.tabs.support' | t">
       <div class="tab-body">
         <app-support-channel />
       </div>
     </mat-tab>
   }
   @if (canInstallReleases()) {
-    <mat-tab label="Releases">
+    <mat-tab [label]="'administration.tabs.releases' | t">
       <div class="tab-body">
         <app-releases />
       </div>
     </mat-tab>
   }
   @if (canBackupRestore()) {
-    <mat-tab label="Backup &amp; restore">
+    <mat-tab [label]="'administration.tabs.backup' | t">
       <div class="tab-body">
         <app-backup-restore />
       </div>
     </mat-tab>
   }
   @if (canViewHealth()) {
-    <mat-tab label="System health">
+    <mat-tab [label]="'administration.tabs.health' | t">
       <div class="tab-body">
         <app-system-health />
       </div>

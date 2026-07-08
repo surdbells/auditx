@@ -16,6 +16,8 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
 import { BankSettings } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 
@@ -30,6 +32,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,
   ],
@@ -41,6 +44,7 @@ export class BankSettingsComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly saving = signal(false);
@@ -119,7 +123,9 @@ export class BankSettingsComponent {
       })
       .subscribe({
         next: () => {
-          this.notify.success('Bank settings saved.');
+          this.notify.success(
+            this.i18n.translate('administration.bankSettings.savedToast'),
+          );
           this.saving.set(false);
         },
         error: () => this.saving.set(false),
@@ -140,7 +146,9 @@ export class BankSettingsComponent {
       })
       .subscribe({
         next: () => {
-          this.notify.success('Resource limits saved.');
+          this.notify.success(
+            this.i18n.translate('administration.bankSettings.limitsSavedToast'),
+          );
           this.savingLimits.set(false);
         },
         error: () => this.savingLimits.set(false),

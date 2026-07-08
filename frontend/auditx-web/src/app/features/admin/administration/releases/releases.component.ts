@@ -18,6 +18,8 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { ReleaseInstall } from '../../../../core/models';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -35,6 +37,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatIconModule,
     LoadingComponent,
     ErrorStateComponent,
+    TranslatePipe,
   ],
   templateUrl: './releases.component.html',
   styleUrl: './releases.component.scss',
@@ -43,6 +46,7 @@ export class ReleasesComponent {
   private readonly admin = inject(AdministrationService);
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = ['version', 'status', 'changeRecord', 'detail', 'createdAt'];
 
@@ -92,10 +96,22 @@ export class ReleasesComponent {
         next: (result) => {
           if (result.status === 'Rejected') {
             this.notify.warning(
-              `Release ${result.version} rejected: ${result.detail ?? 'verification failed'}`,
+              this.i18n.translate('administration.releases.notify.rejected', {
+                version: result.version,
+                detail:
+                  result.detail ??
+                  this.i18n.translate(
+                    'administration.releases.notify.verificationFailed',
+                  ),
+              }),
             );
           } else {
-            this.notify.success(`Release ${result.version} ${result.status.toLowerCase()}.`);
+            this.notify.success(
+              this.i18n.translate('administration.releases.notify.installed', {
+                version: result.version,
+                status: result.status.toLowerCase(),
+              }),
+            );
             this.form.reset();
           }
           this.installing.set(false);

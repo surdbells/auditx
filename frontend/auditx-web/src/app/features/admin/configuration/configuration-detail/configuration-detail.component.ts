@@ -37,12 +37,14 @@ import {
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-/** Title shown for each known domain. */
-const DOMAIN_TITLES: Record<string, string> = {
-  [CONFIG_DOMAIN_EXCEPTION_DEFAULTS]: 'Exception defaults & SLAs',
+/** Translation key for the title shown for each known domain. */
+const DOMAIN_TITLE_KEYS: Record<string, string> = {
+  [CONFIG_DOMAIN_EXCEPTION_DEFAULTS]: 'config.detail.exceptionDefaults.title',
 };
 
 const MIN_REASON = 20;
@@ -70,6 +72,7 @@ const MIN_REASON = 20;
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './configuration-detail.component.html',
   styleUrl: './configuration-detail.component.scss',
@@ -80,6 +83,7 @@ export class ConfigurationDetailComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   /** Route param: the configuration domain (e.g. `exception_defaults`). */
   readonly domain = input.required<string>();
@@ -109,9 +113,10 @@ export class ConfigurationDetailComponent {
 
   readonly minReason = MIN_REASON;
 
-  readonly title = computed(
-    () => DOMAIN_TITLES[this.domain()] ?? this.domain(),
-  );
+  readonly title = computed(() => {
+    const key = DOMAIN_TITLE_KEYS[this.domain()];
+    return key ? this.i18n.translate(key) : this.domain();
+  });
 
   readonly canManage = computed(() =>
     this.auth.hasPermission(Permissions.ManageConfiguration),
@@ -220,7 +225,11 @@ export class ConfigurationDetailComponent {
       .subscribe({
         next: (draft) => {
           this.saving.set(false);
-          this.notify.success(`Draft v${draft.versionNumber} created.`);
+          this.notify.success(
+            this.i18n.translate('config.detail.toast.draftCreated', {
+              version: draft.versionNumber,
+            }),
+          );
           this.form.controls.changeReason.reset('');
           this.loadVersions();
         },
@@ -233,9 +242,15 @@ export class ConfigurationDetailComponent {
 
   activate(v: ConfigurationVersion): void {
     const data: ConfigReasonDialogData = {
-      title: `Activate v${v.versionNumber}`,
-      message: `Make version ${v.versionNumber} the active configuration for "${this.title()}". Provide a change reason (at least ${MIN_REASON} characters).`,
-      confirmLabel: 'Activate',
+      title: this.i18n.translate('config.detail.activate.dialogTitle', {
+        version: v.versionNumber,
+      }),
+      message: this.i18n.translate('config.detail.activate.dialogMessage', {
+        version: v.versionNumber,
+        title: this.title(),
+        count: MIN_REASON,
+      }),
+      confirmLabel: this.i18n.translate('config.detail.activate.confirmLabel'),
       minLength: MIN_REASON,
     };
     this.dialog
@@ -254,11 +269,21 @@ export class ConfigurationDetailComponent {
             next: (action) => {
               if (action.pendingActionId) {
                 this.pendingBanner.set(
-                  `Activation of v${v.versionNumber} was submitted for a second approver (action ${action.pendingActionId}).`,
+                  this.i18n.translate('config.detail.activate.pendingBanner', {
+                    version: v.versionNumber,
+                    actionId: action.pendingActionId,
+                  }),
                 );
-                this.notify.info('Activation submitted for sign-off.');
+                this.notify.info(
+                  this.i18n.translate('config.detail.activate.submittedInfo'),
+                );
               } else {
-                this.notify.success(`Version ${v.versionNumber} activated.`);
+                this.notify.success(
+                  this.i18n.translate(
+                    'config.detail.activate.activatedSuccess',
+                    { version: v.versionNumber },
+                  ),
+                );
                 if (action.version) {
                   this.applyActive(action.version);
                 }
@@ -271,9 +296,14 @@ export class ConfigurationDetailComponent {
 
   rollback(v: ConfigurationVersion): void {
     const data: ConfigReasonDialogData = {
-      title: `Roll back to v${v.versionNumber}`,
-      message: `Roll the active configuration back to version ${v.versionNumber}. Provide a change reason (at least ${MIN_REASON} characters).`,
-      confirmLabel: 'Roll back',
+      title: this.i18n.translate('config.detail.rollback.dialogTitle', {
+        version: v.versionNumber,
+      }),
+      message: this.i18n.translate('config.detail.rollback.dialogMessage', {
+        version: v.versionNumber,
+        count: MIN_REASON,
+      }),
+      confirmLabel: this.i18n.translate('config.detail.rollback.confirmLabel'),
       minLength: MIN_REASON,
     };
     this.dialog
@@ -293,11 +323,21 @@ export class ConfigurationDetailComponent {
             next: (action) => {
               if (action.pendingActionId) {
                 this.pendingBanner.set(
-                  `Rollback to v${v.versionNumber} was submitted for a second approver (action ${action.pendingActionId}).`,
+                  this.i18n.translate('config.detail.rollback.pendingBanner', {
+                    version: v.versionNumber,
+                    actionId: action.pendingActionId,
+                  }),
                 );
-                this.notify.info('Rollback submitted for sign-off.');
+                this.notify.info(
+                  this.i18n.translate('config.detail.rollback.submittedInfo'),
+                );
               } else {
-                this.notify.success(`Rolled back to v${v.versionNumber}.`);
+                this.notify.success(
+                  this.i18n.translate(
+                    'config.detail.rollback.rolledBackSuccess',
+                    { version: v.versionNumber },
+                  ),
+                );
                 if (action.version) {
                   this.applyActive(action.version);
                 }
@@ -307,7 +347,9 @@ export class ConfigurationDetailComponent {
             error: (err: unknown) => {
               if (err instanceof HttpErrorResponse && err.status === 409) {
                 this.notify.warning(
-                  'That version is already active — nothing to roll back.',
+                  this.i18n.translate(
+                    'config.detail.rollback.alreadyActiveWarning',
+                  ),
                 );
               }
               // Other errors already surfaced by the global interceptor.

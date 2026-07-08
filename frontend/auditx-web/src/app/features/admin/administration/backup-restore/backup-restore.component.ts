@@ -26,6 +26,8 @@ import {
 } from '../../../../core/models';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -44,6 +46,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatIconModule,
     LoadingComponent,
     ErrorStateComponent,
+    TranslatePipe,
   ],
   templateUrl: './backup-restore.component.html',
   styleUrl: './backup-restore.component.scss',
@@ -53,6 +56,7 @@ export class BackupRestoreComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly drillColumns = ['executedAt', 'outcome', 'details'];
 
@@ -114,7 +118,9 @@ export class BackupRestoreComponent {
       .createRestoreDrill({ outcome: v.outcome, details: v.details.trim() })
       .subscribe({
         next: () => {
-          this.notify.success('Restore drill recorded.');
+          this.notify.success(
+            this.i18n.translate('administration.backup.notify.drillRecorded'),
+          );
           this.drillForm.reset({ outcome: 'Success', details: '' });
           this.recording.set(false);
           this.fetch();
@@ -140,7 +146,9 @@ export class BackupRestoreComponent {
       .subscribe({
         next: (req) => {
           this.lastRequest.set(req);
-          this.notify.success('Object restore requested.');
+          this.notify.success(
+            this.i18n.translate('administration.backup.notify.restoreRequested'),
+          );
           this.restoreForm.reset();
           this.requesting.set(false);
         },
@@ -163,7 +171,11 @@ export class BackupRestoreComponent {
         next: (updated) => {
           this.lastRequest.set(updated);
           this.notify.success(
-            `Restore request ${approve ? 'approved' : 'rejected'}.`,
+            this.i18n.translate(
+              approve
+                ? 'administration.backup.notify.restoreApproved'
+                : 'administration.backup.notify.restoreRejected',
+            ),
           );
           this.deciding.set(false);
         },

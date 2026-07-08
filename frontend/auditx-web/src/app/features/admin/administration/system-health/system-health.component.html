@@ -1,10 +1,10 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading system health…" />
+    <app-loading [message]="'administration.health.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the system health metrics."
+      [message]="'administration.health.loadError' | t"
       (retry)="fetch()"
     />
   }
@@ -14,7 +14,7 @@
         {{ health()?.status }}
       </span>
       <span class="muted">
-        Generated {{ health()?.generatedAt | date: 'medium' }}
+        {{ 'administration.health.generated' | t: { date: (health()?.generatedAt | date: 'medium') } }}
       </span>
     </div>
 
