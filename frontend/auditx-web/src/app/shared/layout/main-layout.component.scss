@@ -37,7 +37,7 @@
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 9px;
+  border-radius: 0;
   background-image: linear-gradient(135deg, #6366f1, #7c3aed);
   box-shadow: 0 8px 16px -6px rgb(79 70 229 / 0.55);
 }
@@ -87,10 +87,21 @@
   padding: 0.5rem 0.6rem 0.75rem;
 }
 .nav__section + .nav__section {
-  margin-top: 0.6rem;
+  margin-top: 0.15rem;
+}
+
+// Accordion header (a full-width toggle button).
+.nav__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.6rem 0.4rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 .nav__section-title {
-  padding: 0.5rem 0.6rem 0.3rem;
   font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.11em;
@@ -98,6 +109,27 @@
   color: #9aa4b6;
   white-space: nowrap;
   overflow: hidden;
+}
+.nav__section-chevron {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #b8c0cf;
+  transform: rotate(-90deg);
+  transition: transform 160ms ease;
+}
+.nav__section--open .nav__section-chevron {
+  transform: rotate(0deg);
+}
+.nav__section-head:hover .nav__section-title,
+.nav__section-head:hover .nav__section-chevron {
+  color: #4f46e5;
+}
+// Divider standing in for the section header on the collapsed rail.
+.nav__section-rule {
+  height: 1px;
+  margin: 0.5rem 0.4rem;
+  background: var(--mat-sys-outline-variant);
 }
 
 // Flat, compact, square nav items with a left-accent active state.
@@ -174,7 +206,7 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: 0;
   background: linear-gradient(135deg, #6366f1, #7c3aed);
   color: #fff;
   font-size: 0.74rem;
@@ -226,16 +258,6 @@
   .nav__profile-caret {
     display: none;
   }
-  .nav__section-title {
-    text-align: center;
-    letter-spacing: 0;
-    color: transparent;
-    height: 1px;
-    padding: 0;
-    margin: 0.5rem 0.5rem;
-    background: var(--mat-sys-outline-variant);
-    overflow: hidden;
-  }
   .nav__item {
     justify-content: center;
     padding: 0;
@@ -263,7 +285,7 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: 0;
   background: linear-gradient(135deg, #6366f1, #7c3aed);
   color: #fff;
   font-size: 0.74rem;

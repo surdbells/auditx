@@ -36,23 +36,42 @@
 
       <div class="nav__divider"></div>
 
-      <!-- Grouped navigation -->
+      <!-- Grouped navigation (accordion — one section open at a time on desktop) -->
       <nav class="nav__scroll" [attr.aria-label]="'layout.primaryNav' | t">
         @for (section of navSections(); track section.titleKey) {
-          <div class="nav__section">
-            <div class="nav__section-title">{{ section.titleKey | t }}</div>
-            @for (item of section.items; track item.route) {
-              <a
-                class="nav__item"
-                [routerLink]="item.route"
-                routerLinkActive="nav__item--active"
-                (click)="onNavigate()"
-                [matTooltip]="collapsed() && !isHandset() ? (item.labelKey | t) : ''"
-                matTooltipPosition="right"
-              >
-                <mat-icon class="nav__item-icon">{{ item.icon }}</mat-icon>
-                <span class="nav__label">{{ item.labelKey | t }}</span>
-              </a>
+          <div class="nav__section" [class.nav__section--open]="isSectionOpen(section)">
+            @if (section.collapsible !== false) {
+              @if (collapsed() && !isHandset()) {
+                <div class="nav__section-rule" aria-hidden="true"></div>
+              } @else {
+                <button
+                  type="button"
+                  class="nav__section-head"
+                  (click)="toggleSection(section.titleKey)"
+                  [attr.aria-expanded]="isSectionOpen(section)"
+                >
+                  <span class="nav__section-title">{{ section.titleKey | t }}</span>
+                  <mat-icon class="nav__section-chevron">expand_more</mat-icon>
+                </button>
+              }
+            }
+
+            @if (isSectionOpen(section)) {
+              <div class="nav__section-items">
+                @for (item of section.items; track item.route) {
+                  <a
+                    class="nav__item"
+                    [routerLink]="item.route"
+                    routerLinkActive="nav__item--active"
+                    (click)="onNavigate()"
+                    [matTooltip]="collapsed() && !isHandset() ? (item.labelKey | t) : ''"
+                    matTooltipPosition="right"
+                  >
+                    <mat-icon class="nav__item-icon">{{ item.icon }}</mat-icon>
+                    <span class="nav__label">{{ item.labelKey | t }}</span>
+                  </a>
+                }
+              </div>
             }
           </div>
         }

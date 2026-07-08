@@ -6,16 +6,16 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavContainer, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { map } from 'rxjs';
+import { filter, map } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -36,6 +36,8 @@ interface NavSection {
   /** Section header translation key. */
   titleKey: string;
   items: NavItem[];
+  /** Collapsible accordion group (default). Non-collapsible groups (e.g. Overview) pin their items at the top. */
+  collapsible?: boolean;
 }
 
 const COLLAPSE_KEY = 'auditx.nav.collapsed';
@@ -87,9 +89,17 @@ export class MainLayoutComponent {
   /** Icon-only rail on desktop; persisted so the choice survives reloads. */
   readonly collapsed = signal(this.readCollapsed());
 
+  /**
+   * The single expanded nav section (accordion). Follows the active route so the current
+   * screen's group is always open; defaults to Audit. Ignored on the collapsed rail, where
+   * every group shows as icons. Set correctly in the constructor once allSections exists.
+   */
+  readonly openSection = signal('nav.section.audit');
+
   private readonly allSections: NavSection[] = [
     {
       titleKey: 'nav.section.overview',
+      collapsible: false,
       items: [{ labelKey: 'nav.dashboard', icon: 'dashboard', route: '/dashboard', permissions: [] }],
     },
     {
@@ -184,6 +194,7 @@ export class MainLayoutComponent {
     this.allSections
       .map((section) => ({
         titleKey: section.titleKey,
+        collapsible: section.collapsible,
         items: section.items.filter(
           (item) =>
             item.permissions.length === 0 ||
@@ -203,6 +214,54 @@ export class MainLayoutComponent {
     const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
     return (first + last).toUpperCase();
   });
+
+  constructor() {
+    // Keep the accordion aligned with the active route so the current screen's group is open.
+    this.openSection.set(this.sectionForUrl(this.router.url));
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.openSection.set(this.sectionForUrl(this.router.url)));
+  }
+
+  /**
+   * True when a section is expanded — non-collapsible groups (Overview) always are; the collapsed
+   * rail shows every group; otherwise it's the single open accordion section.
+   */
+  isSectionOpen(section: NavSection): boolean {
+    if (section.collapsible === false) {
+      return true;
+    }
+    return (this.collapsed() && !this.isHandset()) || this.openSection() === section.titleKey;
+  }
+
+  /** Accordion toggle: open the clicked section (closing others), or collapse it if already open. */
+  toggleSection(titleKey: string): void {
+    this.openSection.update((cur) => (cur === titleKey ? '' : titleKey));
+  }
+
+  /**
+   * The collapsible section whose route matches the URL (longest match wins); Audit as the fallback.
+   * Non-collapsible groups (Overview) are skipped so the dashboard still opens Audit by default.
+   */
+  private sectionForUrl(url: string): string {
+    let best: { titleKey: string; len: number } | null = null;
+    for (const section of this.allSections) {
+      if (section.collapsible === false) {
+        continue;
+      }
+      for (const item of section.items) {
+        if (url === item.route || url.startsWith(item.route + '/')) {
+          if (!best || item.route.length > best.len) {
+            best = { titleKey: section.titleKey, len: item.route.length };
+          }
+        }
+      }
+    }
+    return best?.titleKey ?? 'nav.section.audit';
+  }
 
   toggleSidenav(): void {
     this.sidenavOpened.update((v) => !v);
