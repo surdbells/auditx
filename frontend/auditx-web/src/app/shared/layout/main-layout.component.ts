@@ -19,9 +19,12 @@ import { map } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { Permissions } from '../../core/permissions';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { LanguageSwitcherComponent } from '../../core/i18n/language-switcher.component';
 
 interface NavItem {
-  label: string;
+  /** Translation key resolved with the `t` pipe. */
+  labelKey: string;
   icon: string;
   route: string;
   /** Permission keys; item is shown when the user holds any of them (empty = always). */
@@ -41,6 +44,8 @@ interface NavItem {
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
+    TranslatePipe,
+    LanguageSwitcherComponent,
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
@@ -64,87 +69,87 @@ export class MainLayoutComponent {
   readonly sidenavOpened = signal(true);
 
   private readonly allNavItems: NavItem[] = [
-    { label: 'Dashboard', icon: 'dashboard', route: '/dashboard', permissions: [] },
+    { labelKey: 'nav.dashboard', icon: 'dashboard', route: '/dashboard', permissions: [] },
     {
-      label: 'Users',
+      labelKey: 'nav.users',
       icon: 'group',
       route: '/admin/users',
       permissions: [Permissions.ManageUsers],
     },
     {
-      label: 'Roles',
+      labelKey: 'nav.roles',
       icon: 'admin_panel_settings',
       route: '/admin/roles',
       permissions: [Permissions.ManageRoles],
     },
     {
-      label: 'Templates',
+      labelKey: 'nav.templates',
       icon: 'description',
       route: '/admin/templates',
       permissions: [Permissions.ViewTemplates],
     },
     {
-      label: 'Audit Universe',
+      labelKey: 'nav.universe',
       icon: 'account_tree',
       route: '/audit-universe',
       permissions: [Permissions.ViewUniverse],
     },
     {
-      label: 'Planning',
+      labelKey: 'nav.planning',
       icon: 'event_note',
       route: '/planning',
       permissions: [Permissions.ViewPlan],
     },
     {
-      label: 'Audits',
+      labelKey: 'nav.audits',
       icon: 'assignment',
       route: '/audits',
       permissions: [Permissions.ViewAudits],
     },
     {
-      label: 'Coverage',
+      labelKey: 'nav.coverage',
       icon: 'grid_view',
       route: '/coverage',
       permissions: [Permissions.ViewCoverage],
     },
     {
-      label: 'Exceptions',
+      labelKey: 'nav.exceptions',
       icon: 'report_problem',
       route: '/exceptions',
       permissions: [Permissions.ViewExceptions],
     },
     {
-      label: 'Analytics',
+      labelKey: 'nav.analytics',
       icon: 'analytics',
       route: '/analytics',
       permissions: [Permissions.ViewAnalytics],
     },
     {
-      label: 'AC Packs',
+      labelKey: 'nav.acPacks',
       icon: 'inventory_2',
       route: '/ac/packs',
       permissions: [Permissions.ViewACPacks],
     },
     {
-      label: 'AC Dashboard',
+      labelKey: 'nav.acDashboard',
       icon: 'space_dashboard',
       route: '/ac/dashboard',
       permissions: [Permissions.ACMember],
     },
     {
-      label: 'AC Action Items',
+      labelKey: 'nav.acActionItems',
       icon: 'checklist',
       route: '/ac/action-items',
       permissions: [Permissions.ACMember],
     },
     {
-      label: 'Plans Awaiting Decision',
+      labelKey: 'nav.plansAwaiting',
       icon: 'how_to_vote',
       route: '/ac/plans-awaiting',
       permissions: [Permissions.ACMember],
     },
     {
-      label: 'Maker-Checker',
+      labelKey: 'nav.makerChecker',
       icon: 'fact_check',
       route: '/admin/maker-checker',
       permissions: [
@@ -154,67 +159,67 @@ export class MainLayoutComponent {
       ],
     },
     {
-      label: 'Integrations',
+      labelKey: 'nav.integrations',
       icon: 'hub',
       route: '/admin/integrations',
       permissions: [Permissions.ViewIntegrations],
     },
     {
-      label: 'Webhooks',
+      labelKey: 'nav.webhooks',
       icon: 'webhook',
       route: '/admin/webhooks',
       permissions: [Permissions.ConfigureWebhooks, Permissions.AdminOps],
     },
     {
-      label: 'Notifications',
+      labelKey: 'nav.notifications',
       icon: 'notifications',
       route: '/admin/notifications',
       permissions: [Permissions.ConfigureNotifications],
     },
     {
-      label: 'Report Templates',
+      labelKey: 'nav.reportTemplates',
       icon: 'summarize',
       route: '/admin/report-templates',
       permissions: [Permissions.ConfigureReports],
     },
     {
-      label: 'Sanctions',
+      labelKey: 'nav.sanctions',
       icon: 'gavel',
       route: '/admin/sanctions',
       permissions: [Permissions.ViewSanctions],
     },
     {
-      label: 'Sanctions Grid',
+      labelKey: 'nav.sanctionsGrid',
       icon: 'grid_on',
       route: '/admin/sanctions/grid',
       permissions: [Permissions.ManageGrid],
     },
     {
-      label: 'Configuration',
+      labelKey: 'nav.configuration',
       icon: 'tune',
       route: '/admin/configuration',
       permissions: [Permissions.ViewConfig, Permissions.ManageConfiguration],
     },
     {
-      label: 'Reference data',
+      labelKey: 'nav.referenceData',
       icon: 'list_alt',
       route: '/admin/reference-data',
       permissions: [Permissions.ManageConfiguration],
     },
     {
-      label: 'Audit Trail',
+      labelKey: 'nav.auditTrail',
       icon: 'history',
       route: '/admin/audit-trail',
       permissions: [Permissions.ViewAuditTrail],
     },
     {
-      label: 'Evidence Integrity',
+      labelKey: 'nav.evidenceIntegrity',
       icon: 'verified_user',
       route: '/admin/evidence-integrity',
       permissions: [Permissions.AdminOps],
     },
     {
-      label: 'Administration',
+      labelKey: 'nav.administration',
       icon: 'settings',
       route: '/admin/administration',
       permissions: [

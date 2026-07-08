@@ -10,7 +10,7 @@
       <mat-icon class="layout__brand-icon" aria-hidden="true">verified_user</mat-icon>
       <div class="layout__brand-text">
         <span class="layout__brand-name">AuditX</span>
-        <span class="layout__brand-sub">Enterprise</span>
+        <span class="layout__brand-sub">{{ 'layout.brandSub' | t }}</span>
       </div>
     </div>
 
@@ -23,7 +23,7 @@
           (click)="onNavigate()"
         >
           <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-          <span matListItemTitle>{{ item.label }}</span>
+          <span matListItemTitle>{{ item.labelKey | t }}</span>
         </a>
       }
     </mat-nav-list>
@@ -35,21 +35,23 @@
         <button
           matIconButton
           type="button"
-          aria-label="Toggle navigation"
+          [attr.aria-label]="'layout.toggleNav' | t"
           (click)="toggleSidenav()"
         >
           <mat-icon>menu</mat-icon>
         </button>
       }
-      <span class="layout__toolbar-title">Internal Audit Platform</span>
+      <span class="layout__toolbar-title">{{ 'layout.platformSubtitle' | t }}</span>
       <span class="layout__spacer"></span>
+
+      <app-language-switcher />
 
       <button
         matButton
         type="button"
         [matMenuTriggerFor]="userMenu"
         class="layout__user-btn"
-        aria-label="Account menu"
+        [attr.aria-label]="'layout.accountMenu' | t"
       >
         <span class="layout__avatar" aria-hidden="true">{{ initials() }}</span>
         <span class="layout__user-name">{{ displayName() }}</span>
@@ -67,11 +69,11 @@
           (click)="onNavigate()"
         >
           <mat-icon>notifications_active</mat-icon>
-          <span>Notification preferences</span>
+          <span>{{ 'layout.notificationPreferences' | t }}</span>
         </a>
         <button mat-menu-item type="button" (click)="logout()">
           <mat-icon>logout</mat-icon>
-          <span>Sign out</span>
+          <span>{{ 'layout.signOut' | t }}</span>
         </button>
       </mat-menu>
     </mat-toolbar>

@@ -19,6 +19,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { SessionDto } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { LanguageSwitcherComponent } from '../../../core/i18n/language-switcher.component';
 
 @Component({
   selector: 'app-login',
@@ -31,6 +33,8 @@ import { SessionDto } from '../../../core/models';
     MatButtonModule,
     MatIconModule,
     MatProgressBarModule,
+    TranslatePipe,
+    LanguageSwitcherComponent,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -70,8 +74,8 @@ export class LoginComponent {
       },
       error: () => {
         this.submitting.set(false);
-        // Opaque message per security requirements.
-        this.errorMessage.set('Invalid username or password.');
+        // Opaque message per security requirements. Stores a translation key, rendered via `| t`.
+        this.errorMessage.set('auth.login.invalidCredentials');
       },
     });
   }
@@ -90,9 +94,7 @@ export class LoginComponent {
       },
       error: () => {
         this.ssoBusy.set(false);
-        this.errorMessage.set(
-          'Windows SSO is unavailable here. Please sign in with your username and password.',
-        );
+        this.errorMessage.set('auth.login.ssoFailed');
       },
     });
   }
