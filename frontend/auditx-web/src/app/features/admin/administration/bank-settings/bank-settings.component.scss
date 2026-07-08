@@ -29,6 +29,16 @@
   flex: 1 1 160px;
 }
 
+.settings__toggle {
+  flex: 1 1 100%;
+}
+.settings__toggle-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+  max-width: 60ch;
+}
+
 .settings__actions {
   flex: 1 1 100%;
   display: flex;

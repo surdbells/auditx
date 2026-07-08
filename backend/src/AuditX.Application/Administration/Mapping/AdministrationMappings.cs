@@ -9,7 +9,7 @@ public static class AdministrationMappings
     public static BankSettingsDto ToDto(this BankSettings bank) => new(
         bank.BankDisplayName, bank.Timezone, bank.LocaleDefault,
         bank.AdProvisioningFilterOuDn, bank.AdProvisioningFilterGroupSid,
-        bank.MaxEvidenceFileMb, bank.MaxAuditEvidenceGb);
+        bank.MaxEvidenceFileMb, bank.MaxAuditEvidenceGb, bank.AllowOverlappingPlanPeriods);
 
     public static SupportChannelStatusDto ToStatusDto(this SupportChannelSession? session, DateTimeOffset nowUtc)
         => session is null

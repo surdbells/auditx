@@ -159,3 +159,19 @@ public sealed class RemoveAuditChecklistItemCommandHandler(IAuditRepository audi
         return Unit.Value;
     }
 }
+
+public sealed record ReorderAuditChecklistItemsCommand(Guid AuditId, IReadOnlyList<Guid> OrderedItemIds, string Version) : ICommand<AuditDto>;
+
+public sealed class ReorderAuditChecklistItemsCommandHandler(IAuditRepository audits, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<ReorderAuditChecklistItemsCommand, AuditDto>
+{
+    public async Task<AuditDto> Handle(ReorderAuditChecklistItemsCommand command, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
+        entity.EnsureVersion(command.Version);
+        entity.ReorderChecklistItems(command.OrderedItemIds);
+        audit.Record(AuditEventTypes.AuditChecklistItemsReordered, AuditTargetTypes.AuditChecklistItem, entity.Id);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto();
+    }
+}

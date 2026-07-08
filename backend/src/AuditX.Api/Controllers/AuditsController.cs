@@ -107,6 +107,11 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
         return NoContent();
     }
 
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/checklist/items/reorder")]
+    public async Task<IActionResult> ReorderChecklistItems(Guid id, [FromBody] ReorderAuditChecklistItemsRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ReorderAuditChecklistItemsCommand(id, request.OrderedItemIds, request.Version), cancellationToken));
+
     // ---- M5 execution / fieldwork ----
 
     [RequirePermission(PermissionKeys.RespondItem)]

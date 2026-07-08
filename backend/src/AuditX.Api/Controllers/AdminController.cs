@@ -24,7 +24,8 @@ public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
     [HttpPatch("bank-settings")]
     public async Task<IActionResult> UpdateBankSettings([FromBody] UpdateBankSettingsRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new UpdateBankSettingsCommand(
-            request.BankDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid), cancellationToken));
+            request.BankDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid,
+            request.AllowOverlappingPlanPeriods), cancellationToken));
 
     [RequirePermission(PermissionKeys.ConfigureLimits)]
     [HttpPatch("resource-limits")]

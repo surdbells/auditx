@@ -125,6 +125,14 @@ export class AuditsService {
     );
   }
 
+  /** Re-stamp checklist item order (drag-and-drop). Sends the full ordered id list. */
+  reorderChecklistItems(
+    id: string,
+    body: { orderedItemIds: string[]; version: string },
+  ): Observable<Audit> {
+    return this.api.post<Audit>(`/audits/${id}/checklist/items/reorder`, body);
+  }
+
   /* =====================================================================
    * M5 — Execution / Fieldwork
    * ===================================================================== */

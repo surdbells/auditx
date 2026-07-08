@@ -34,6 +34,12 @@ public sealed class BankSettings : Entity
     /// <summary>When true, a Pass verdict also requires a comment (BR-M5-002 bank policy).</summary>
     public bool RequireCommentOnPass { get; private set; }
 
+    /// <summary>
+    /// When true, annual plans may cover overlapping periods; when false (default), the overlap check is enforced.
+    /// Configurable so banks that run concurrent/rolling plans can opt out of the single-period-at-a-time rule.
+    /// </summary>
+    public bool AllowOverlappingPlanPeriods { get; private set; }
+
     public static BankSettings CreateDefault(string bankDisplayName) => new()
     {
         BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
@@ -55,6 +61,8 @@ public sealed class BankSettings : Entity
     }
 
     public void SetRequireCommentOnPass(bool value) => RequireCommentOnPass = value;
+
+    public void SetAllowOverlappingPlanPeriods(bool value) => AllowOverlappingPlanPeriods = value;
 
     public void SetResourceLimits(int maxEvidenceFileMb, int maxAuditEvidenceGb)
     {

@@ -17,6 +17,7 @@ function settings(overrides: Partial<BankSettings> = {}): BankSettings {
     adProvisioningFilterGroupSid: null,
     maxEvidenceFileMb: 25,
     maxAuditEvidenceGb: 10,
+    allowOverlappingPlanPeriods: false,
     ...overrides,
   };
 }

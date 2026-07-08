@@ -10,6 +10,7 @@ export interface BankSettings {
   adProvisioningFilterGroupSid: string | null;
   maxEvidenceFileMb: number;
   maxAuditEvidenceGb: number;
+  allowOverlappingPlanPeriods: boolean;
 }
 
 export interface UpdateBankSettingsRequest {
@@ -18,6 +19,7 @@ export interface UpdateBankSettingsRequest {
   localeDefault: string;
   adProvisioningFilterOuDn: string | null;
   adProvisioningFilterGroupSid: string | null;
+  allowOverlappingPlanPeriods: boolean;
 }
 
 export interface ResourceLimits {

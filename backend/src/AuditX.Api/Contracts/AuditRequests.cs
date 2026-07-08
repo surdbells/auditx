@@ -27,3 +27,5 @@ public sealed record TransferAuditLeadRequest(Guid NewLeadUserId, bool RemoveOut
 public sealed record AddAuditChecklistItemRequest(string Prompt, string? ReferenceNotes, string ResponseType, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version);
 
 public sealed record EditAuditChecklistItemRequest(string Prompt, string? ReferenceNotes, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version);
+
+public sealed record ReorderAuditChecklistItemsRequest(IReadOnlyList<Guid> OrderedItemIds, string Version);

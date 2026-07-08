@@ -290,6 +290,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'audits/:id/execute',
+        title: 'Fieldwork · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAudit)],
+        loadComponent: () =>
+          import('./features/audits/audit-execution/audit-execution-page.component').then(
+            (m) => m.AuditExecutionPageComponent,
+          ),
+      },
+      {
         path: 'audits/:auditId/reports',
         title: 'Reports · AuditX',
         canActivate: [permissionGuard(Permissions.ViewReport)],

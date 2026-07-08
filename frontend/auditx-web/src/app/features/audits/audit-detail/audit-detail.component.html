@@ -205,9 +205,27 @@
                 <h4 class="detail__section-name">{{ group.name }}</h4>
                 <span class="detail__section-count">{{ group.items.length }}</span>
               </header>
-              <ul class="detail__items">
+              <ul
+                class="detail__items"
+                cdkDropList
+                [cdkDropListData]="group.items"
+                [cdkDropListDisabled]="!canEditChecklist()"
+                (cdkDropListDropped)="dropChecklistItem($event, group)"
+              >
                 @for (item of group.items; track item.id) {
-                  <li class="detail__item">
+                  <li class="detail__item" cdkDrag [cdkDragData]="item">
+                    @if (canEditChecklist()) {
+                      <button
+                        matIconButton
+                        type="button"
+                        cdkDragHandle
+                        class="detail__drag"
+                        [attr.aria-label]="'audits.actions.reorderItemAria' | t"
+                        [matTooltip]="'audits.actions.dragToReorder' | t"
+                      >
+                        <mat-icon>drag_indicator</mat-icon>
+                      </button>
+                    }
                     <div class="detail__item-main">
                       <p class="detail__item-prompt">
                         {{ item.prompt }}
@@ -287,13 +305,18 @@
         </mat-card>
       }
 
-      <!-- Execution / fieldwork (M5) — shown once the audit is past Draft -->
+      <!-- Fieldwork (M5) lives on its own screen once the audit is past Draft -->
       @if (showExecution()) {
-        <app-audit-execution
-          [audit]="a"
-          [userNames]="userNames()"
-          (reloadRequested)="reload()"
-        />
+        <a class="detail__fieldwork" [routerLink]="['/audits', a.id, 'execute']">
+          <span class="detail__fieldwork-icon"><mat-icon>fact_check</mat-icon></span>
+          <span class="detail__fieldwork-text">
+            <span class="detail__fieldwork-title">{{ 'audits.exec.openTitle' | t }}</span>
+            <span class="detail__fieldwork-sub">
+              {{ 'audits.exec.openSubtitle' | t: { responded: a.checklistItems.length } }}
+            </span>
+          </span>
+          <mat-icon class="detail__fieldwork-arrow">arrow_forward</mat-icon>
+        </a>
       }
     }
   }

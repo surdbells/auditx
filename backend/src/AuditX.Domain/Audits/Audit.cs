@@ -217,6 +217,22 @@ public sealed class Audit : AggregateRoot
         _checklistItems.Remove(FindItem(itemId));
     }
 
+    /// <summary>Re-stamp checklist item order from a full ordered id list (drag-and-drop reordering).</summary>
+    public void ReorderChecklistItems(IReadOnlyList<Guid> orderedItemIds)
+    {
+        EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
+        if (orderedItemIds.Count != _checklistItems.Count
+            || !orderedItemIds.ToHashSet().SetEquals(_checklistItems.Select(i => i.Id)))
+        {
+            throw new DomainException("audit.reorder_mismatch", "The reorder must list exactly the current checklist items once each.");
+        }
+
+        for (var index = 0; index < orderedItemIds.Count; index++)
+        {
+            FindItem(orderedItemIds[index]).SetOrder(index);
+        }
+    }
+
     // ---- State machine ----
 
     public void Plan()

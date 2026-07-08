@@ -14,6 +14,13 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  CdkDrag,
+  CdkDragHandle,
+  CdkDropList,
+  type CdkDragDrop,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
 import { Observable } from 'rxjs';
 
 import { RouterLink } from '@angular/router';
@@ -64,7 +71,6 @@ import {
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
-import { AuditExecutionComponent } from '../audit-execution/audit-execution.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -89,10 +95,12 @@ const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
     MatIconModule,
     MatChipsModule,
     MatTooltipModule,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
-    AuditExecutionComponent,
     TranslatePipe,
   ],
   templateUrl: './audit-detail.component.html',
@@ -692,6 +700,52 @@ export class AuditDetailComponent {
             },
             error: (err: unknown) => this.handleMutationError(err),
           });
+      });
+  }
+
+  /**
+   * Reorder checklist items within a section by dragging. Optimistically re-stamps orderIndex so the row
+   * doesn't snap back, sends the full ordered id list, and reverts on error.
+   */
+  dropChecklistItem(event: CdkDragDrop<AuditChecklistItem[]>, group: ChecklistGroup): void {
+    if (event.previousIndex === event.currentIndex) {
+      return;
+    }
+    const current = this.audit();
+    if (!current) {
+      return;
+    }
+
+    const reordered = [...group.items];
+    moveItemInArray(reordered, event.previousIndex, event.currentIndex);
+
+    // Full ordered id list across all sections (groups are already in orderIndex order).
+    const orderedIds: string[] = [];
+    for (const g of this.checklistGroups()) {
+      const list = g.name === group.name ? reordered : g.items;
+      for (const item of list) {
+        orderedIds.push(item.id);
+      }
+    }
+
+    // Optimistic re-stamp.
+    const rank = new Map(orderedIds.map((id, index) => [id, index]));
+    this.audit.set({
+      ...current,
+      checklistItems: current.checklistItems.map((it) => ({
+        ...it,
+        orderIndex: rank.get(it.id) ?? it.orderIndex,
+      })),
+    });
+
+    this.service
+      .reorderChecklistItems(current.id, { orderedItemIds: orderedIds, version: current.version })
+      .subscribe({
+        next: (updated) => this.audit.set(updated),
+        error: (err: unknown) => {
+          this.reload();
+          this.handleMutationError(err);
+        },
       });
   }
 }

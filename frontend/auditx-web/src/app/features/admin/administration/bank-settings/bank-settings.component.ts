@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import { AdministrationService } from '../../../../core/services/administration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -32,6 +33,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatSlideToggleModule,
     TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,
@@ -63,6 +65,7 @@ export class BankSettingsComponent {
     localeDefault: ['', Validators.required],
     adProvisioningFilterOuDn: [''],
     adProvisioningFilterGroupSid: [''],
+    allowOverlappingPlanPeriods: [false],
   });
 
   readonly limitsForm = this.fb.nonNullable.group({
@@ -92,6 +95,7 @@ export class BankSettingsComponent {
       localeDefault: s.localeDefault,
       adProvisioningFilterOuDn: s.adProvisioningFilterOuDn ?? '',
       adProvisioningFilterGroupSid: s.adProvisioningFilterGroupSid ?? '',
+      allowOverlappingPlanPeriods: s.allowOverlappingPlanPeriods,
     });
     this.limitsForm.patchValue({
       maxEvidenceFileMb: s.maxEvidenceFileMb,
@@ -120,6 +124,7 @@ export class BankSettingsComponent {
         adProvisioningFilterOuDn: v.adProvisioningFilterOuDn.trim() || null,
         adProvisioningFilterGroupSid:
           v.adProvisioningFilterGroupSid.trim() || null,
+        allowOverlappingPlanPeriods: v.allowOverlappingPlanPeriods,
       })
       .subscribe({
         next: () => {

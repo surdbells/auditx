@@ -43,6 +43,7 @@ describe('AdministrationService', () => {
         localeDefault: 'en',
         adProvisioningFilterOuDn: null,
         adProvisioningFilterGroupSid: null,
+        allowOverlappingPlanPeriods: false,
       })
       .subscribe();
     const req = http.expectOne(`${BASE}/admin/bank-settings`);

@@ -38,6 +38,13 @@
             <input matInput formControlName="adProvisioningFilterGroupSid" autocomplete="off" />
           </mat-form-field>
 
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="allowOverlappingPlanPeriods">
+              {{ 'administration.bankSettings.allowPlanOverlap' | t }}
+            </mat-slide-toggle>
+            <p class="settings__toggle-hint">{{ 'administration.bankSettings.allowPlanOverlapHint' | t }}</p>
+          </div>
+
           @if (canManageSettings()) {
             <div class="settings__actions">
               <button

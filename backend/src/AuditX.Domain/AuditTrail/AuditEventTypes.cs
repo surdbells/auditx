@@ -107,6 +107,7 @@ public static class AuditEventTypes
     public const string AuditChecklistItemAdded = "audit_checklist_item_added";
     public const string AuditChecklistItemEdited = "audit_checklist_item_edited";
     public const string AuditChecklistItemRemoved = "audit_checklist_item_removed";
+    public const string AuditChecklistItemsReordered = "audit_checklist_items_reordered";
 
     // M5 execution / evidence
     public const string ItemResponded = "item_responded";

@@ -22,12 +22,15 @@ public sealed class CreatePlanCommandValidator : AbstractValidator<CreatePlanCom
     }
 }
 
-public sealed class CreatePlanCommandHandler(IAnnualPlanRepository plans, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class CreatePlanCommandHandler(
+    IAnnualPlanRepository plans, IBankSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<CreatePlanCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(CreatePlanCommand command, CancellationToken cancellationToken)
     {
-        if (await plans.AnyOverlappingAsync(command.PeriodStart, command.PeriodEnd, null, cancellationToken))
+        var bank = await settings.GetAsync(cancellationToken);
+        if (!bank.AllowOverlappingPlanPeriods
+            && await plans.AnyOverlappingAsync(command.PeriodStart, command.PeriodEnd, null, cancellationToken))
         {
             throw new ConflictException("plan.period_overlap", "The plan period overlaps an existing plan.");
         }
@@ -42,13 +45,16 @@ public sealed class CreatePlanCommandHandler(IAnnualPlanRepository plans, IAudit
 
 public sealed record UpdatePlanCommand(Guid Id, string PeriodLabel, DateOnly PeriodStart, DateOnly PeriodEnd) : ICommand<PlanDto>;
 
-public sealed class UpdatePlanCommandHandler(IAnnualPlanRepository plans, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class UpdatePlanCommandHandler(
+    IAnnualPlanRepository plans, IBankSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<UpdatePlanCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(UpdatePlanCommand command, CancellationToken cancellationToken)
     {
         var plan = await plans.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Plan", command.Id);
-        if (await plans.AnyOverlappingAsync(command.PeriodStart, command.PeriodEnd, plan.Id, cancellationToken))
+        var bank = await settings.GetAsync(cancellationToken);
+        if (!bank.AllowOverlappingPlanPeriods
+            && await plans.AnyOverlappingAsync(command.PeriodStart, command.PeriodEnd, plan.Id, cancellationToken))
         {
             throw new ConflictException("plan.period_overlap", "The plan period overlaps an existing plan.");
         }
