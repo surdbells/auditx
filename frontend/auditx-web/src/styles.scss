@@ -1,50 +1,98 @@
-// Angular Material 3 theming via `mat.theme()` — defines the --mat-sys-* design tokens
-// used across the app. Docs: https://material.angular.dev/guide/theming
+// Angular Material 3 theming via `mat.theme()`. We keep Material for interactive
+// controls but re-skin it to the AuditX premium design system: Inter typography,
+// an indigo-on-slate palette, rounder shapes and softer elevation. Design tokens
+// (colours, radii, shadows) live in tailwind.css (`@theme`) and are shared here.
 @use '@angular/material' as mat;
 @use './styles/status-badge';
+
+$ax-font: 'Inter Variable, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
 html {
   height: 100%;
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
+        primary: mat.$violet-palette,
+        tertiary: mat.$violet-palette,
       ),
-      typography: Roboto,
-      // Compact, enterprise-grade control density — tighter rows and fields
-      // without sacrificing tap targets.
+      typography: (
+        plain-family: $ax-font,
+        brand-family: $ax-font,
+      ),
+      // Compact, enterprise-grade control density.
       density: -1,
     )
   );
 
-  // ---- AuditX design tokens ---------------------------------------------
-  // A small, deliberate scale layered on top of Material's system variables so
-  // spacing, radii, elevation and motion are consistent across every feature.
-  --ax-radius-sm: 8px;
-  --ax-radius: 12px;
-  --ax-radius-lg: 16px;
+  // ---- Re-skin Material's system tokens to the AuditX palette ------------
+  // Overriding --mat-sys-* re-colours every Material component at once.
 
-  // Soft, low-spread elevations (premium, not heavy).
-  --ax-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.05);
-  --ax-shadow-2: 0 2px 6px rgba(15, 23, 42, 0.07), 0 6px 16px rgba(15, 23, 42, 0.06);
-  --ax-shadow-3: 0 8px 28px rgba(15, 23, 42, 0.12);
+  // Primary = brand indigo.
+  --mat-sys-primary: #4f46e5;
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: #e0e7ff;
+  --mat-sys-on-primary-container: #312e81;
+  --mat-sys-inverse-primary: #a5b4fc;
 
+  // Secondary drives the active nav pill + subtler accents.
+  --mat-sys-secondary: #475569;
+  --mat-sys-on-secondary: #ffffff;
+  --mat-sys-secondary-container: #eef2ff;
+  --mat-sys-on-secondary-container: #3730a3;
+
+  // Tertiary = violet accent.
+  --mat-sys-tertiary: #7c3aed;
+  --mat-sys-on-tertiary: #ffffff;
+  --mat-sys-tertiary-container: #ede9fe;
+  --mat-sys-on-tertiary-container: #4c1d95;
+
+  // Surfaces + text on a cool slate scale.
+  --mat-sys-surface: #ffffff;
+  --mat-sys-surface-container-lowest: #ffffff;
+  --mat-sys-surface-container-low: #f8fafc;
+  --mat-sys-surface-container: #f1f5f9;
+  --mat-sys-surface-container-high: #eef2f7;
+  --mat-sys-surface-container-highest: #e8edf3;
+  --mat-sys-surface-variant: #f1f5f9;
+  --mat-sys-on-surface: #0f172a;
+  --mat-sys-on-surface-variant: #64748b;
+  --mat-sys-outline: #cbd5e1;
+  --mat-sys-outline-variant: #e5e9f0;
+  --mat-sys-inverse-surface: #1e293b;
+  --mat-sys-inverse-on-surface: #f1f5f9;
+
+  // Rounder shapes than stock Material (cards / dialogs / menus / fields).
+  --mat-sys-corner-extra-small: 8px;
+  --mat-sys-corner-small: 10px;
+  --mat-sys-corner-medium: 14px;
+  --mat-sys-corner-large: 18px;
+  --mat-sys-corner-extra-large: 24px;
+
+  // ---- Local motion + elevation helpers ---------------------------------
   --ax-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ax-dur: 180ms;
+  --ax-shadow-1: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 3px rgb(15 23 42 / 0.06);
+  --ax-shadow-2: 0 2px 6px rgb(15 23 42 / 0.06), 0 10px 24px -12px rgb(15 23 42 / 0.14);
+  --ax-shadow-3: 0 16px 40px -12px rgb(15 23 42 / 0.22);
 }
 
 body {
   color-scheme: light;
-
-  background-color: var(--mat-sys-surface-container-low);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
+  font-family: Inter Variable, Inter, ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
 
   margin: 0;
-  height: 100%;
+  min-height: 100%;
 
-  // Crisper type rendering.
+  // Premium canvas: quiet slate with a soft brand-tinted wash.
+  background:
+    radial-gradient(60rem 60rem at 100% -10%, rgb(99 102 241 / 0.07), transparent 60%),
+    radial-gradient(50rem 40rem at -10% 0%, rgb(124 58 237 / 0.05), transparent 55%),
+    #f6f7fb;
+  background-attachment: fixed;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -57,43 +105,40 @@ body {
 }
 
 // ---- Global element polish ---------------------------------------------
-
 ::selection {
-  background: color-mix(in srgb, var(--mat-sys-primary) 24%, transparent);
+  background: color-mix(in srgb, var(--mat-sys-primary) 22%, transparent);
 }
 
-// A visible, consistent keyboard-focus ring across custom (non-Material) controls.
 :focus-visible {
   outline: 2px solid var(--mat-sys-primary);
   outline-offset: 2px;
 }
 
-// Slimmer, themed scrollbars (WebKit/Blink) — feels lighter than the OS default.
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--mat-sys-outline) transparent;
+  scrollbar-color: #cbd5e1 transparent;
 }
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--mat-sys-outline) 60%, transparent);
+  background: color-mix(in srgb, #94a3b8 55%, transparent);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--mat-sys-outline) 85%, transparent);
+  background: color-mix(in srgb, #94a3b8 85%, transparent);
   background-clip: padding-box;
 }
 
 // ---- Cards -------------------------------------------------------------
-// Cards carry almost every screen; a soft resting elevation, refined border and
-// larger radius are the single biggest lift in perceived quality.
+// Refined outlined cards: soft border, larger radius, layered resting shadow.
 .mat-mdc-card {
-  border-radius: var(--ax-radius-lg) !important;
-  transition: box-shadow var(--ax-dur) var(--ax-ease),
+  border-radius: 18px !important;
+  transition:
+    box-shadow var(--ax-dur) var(--ax-ease),
     border-color var(--ax-dur) var(--ax-ease);
 }
 .mat-mdc-card.mat-mdc-card-outlined {
@@ -105,14 +150,13 @@ body {
 }
 
 // ---- Data tables -------------------------------------------------------
-// Uppercase, tracked headers; quiet row separators; a soft row hover.
 .mat-mdc-table {
   background: transparent;
 }
 .mat-mdc-table .mat-mdc-header-cell {
-  font: var(--mat-sys-label-medium);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--mat-sys-on-surface-variant);
 }
@@ -120,7 +164,7 @@ body {
   transition: background-color var(--ax-dur) var(--ax-ease);
 }
 .mat-mdc-table .mat-mdc-row:hover {
-  background: color-mix(in srgb, var(--mat-sys-primary) 5%, transparent);
+  background: color-mix(in srgb, var(--mat-sys-primary) 4%, transparent);
 }
 .mat-mdc-header-row,
 .mat-mdc-row {
@@ -128,16 +172,37 @@ body {
 }
 
 // ---- Buttons -----------------------------------------------------------
-// A subtle resting shadow on the primary (filled) button reads more premium.
-.mat-mdc-unelevated-button.mat-primary,
-.mat-mdc-raised-button.mat-primary,
-button[matButton='filled'] {
-  box-shadow: var(--ax-shadow-1);
+// Softer-than-pill radius + a subtle resting shadow on filled buttons.
+.mat-mdc-button-base {
+  border-radius: 11px !important;
+  letter-spacing: 0 !important;
+  font-weight: 600 !important;
+}
+.mat-mdc-unelevated-button,
+.mat-mdc-raised-button {
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12), 0 8px 18px -10px rgb(79 70 229 / 0.5) !important;
+}
+.mat-mdc-icon-button {
+  border-radius: 12px !important;
 }
 
-// ---- Dialogs -----------------------------------------------------------
+// ---- Form fields -------------------------------------------------------
+.mat-mdc-text-field-wrapper {
+  border-radius: 12px !important;
+}
+
+// ---- Menus / dialogs / chips -------------------------------------------
+.mat-mdc-menu-panel {
+  border-radius: 14px !important;
+  box-shadow: var(--ax-shadow-3) !important;
+  border: 1px solid var(--mat-sys-outline-variant);
+}
 .mat-mdc-dialog-surface {
-  border-radius: var(--ax-radius-lg) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--ax-shadow-3) !important;
+}
+.mat-mdc-chip {
+  border-radius: 9px !important;
 }
 
 // ---- Motion preferences ------------------------------------------------
@@ -152,17 +217,17 @@ button[matButton='filled'] {
 
 // ---- Snackbar variants used by NotificationService ---------------------
 .auditx-snack-success {
-  --mdc-snackbar-container-color: #2e7d32;
+  --mdc-snackbar-container-color: #059669;
   --mdc-snackbar-supporting-text-color: #ffffff;
   --mat-snack-bar-button-color: #ffffff;
 }
 .auditx-snack-error {
-  --mdc-snackbar-container-color: var(--mat-sys-error);
-  --mdc-snackbar-supporting-text-color: var(--mat-sys-on-error);
-  --mat-snack-bar-button-color: var(--mat-sys-on-error);
+  --mdc-snackbar-container-color: #dc2626;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
 }
 .auditx-snack-warning {
-  --mdc-snackbar-container-color: #e65100;
+  --mdc-snackbar-container-color: #d97706;
   --mdc-snackbar-supporting-text-color: #ffffff;
   --mat-snack-bar-button-color: #ffffff;
 }
@@ -175,7 +240,7 @@ button[matButton='filled'] {
 .table-scroll {
   overflow-x: auto;
   width: 100%;
-  border-radius: var(--ax-radius);
+  border-radius: 12px;
 }
 
 // Long content (wide tables, code blocks) must never push the page sideways.
