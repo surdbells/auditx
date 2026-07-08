@@ -80,6 +80,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<AuditTeamMember> AuditTeamMembers => Set<AuditTeamMember>();
 
+    public DbSet<AuditSection> AuditSections => Set<AuditSection>();
+
     public DbSet<AuditChecklistItem> AuditChecklistItems => Set<AuditChecklistItem>();
 
     public DbSet<ChecklistResponse> ChecklistResponses => Set<ChecklistResponse>();

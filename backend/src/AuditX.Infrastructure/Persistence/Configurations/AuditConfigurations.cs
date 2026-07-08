@@ -35,11 +35,29 @@ public sealed class AuditConfiguration : IEntityTypeConfiguration<Audit>
         builder.HasIndex(a => new { a.Status, a.StartDate });
 
         builder.HasMany(a => a.TeamMembers).WithOne().HasForeignKey(m => m.AuditId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(a => a.Sections).WithOne().HasForeignKey(s => s.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(a => a.ChecklistItems).WithOne().HasForeignKey(i => i.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(a => a.Responses).WithOne().HasForeignKey(r => r.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(a => a.TeamMembers).HasField("_teamMembers").UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(a => a.Sections).HasField("_sections").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.ChecklistItems).HasField("_checklistItems").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.Responses).HasField("_responses").UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+public sealed class AuditSectionConfiguration : IEntityTypeConfiguration<AuditSection>
+{
+    public void Configure(EntityTypeBuilder<AuditSection> builder)
+    {
+        builder.ToTable("audit_sections");
+        builder.HasKey(s => s.Id);
+        builder.Property(s => s.Id).ValueGeneratedNever();
+
+        builder.Property(s => s.Name).HasMaxLength(100).IsRequired();
+
+        builder.HasIndex(s => s.AuditId);
+        // One section name per audit (case-insensitive under the default SQL Server collation).
+        builder.HasIndex(s => new { s.AuditId, s.Name }).IsUnique();
     }
 }
 

@@ -160,6 +160,72 @@ public sealed class RemoveAuditChecklistItemCommandHandler(IAuditRepository audi
     }
 }
 
+// ---- Sections (first-class CRUD) ----
+
+public sealed record AddAuditSectionCommand(Guid AuditId, string Name, string Version) : ICommand<AuditDto>;
+
+public sealed class AddAuditSectionCommandHandler(IAuditRepository audits, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<AddAuditSectionCommand, AuditDto>
+{
+    public async Task<AuditDto> Handle(AddAuditSectionCommand command, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
+        entity.EnsureVersion(command.Version);
+        var section = entity.AddSection(command.Name);
+        audit.Record(AuditEventTypes.AuditSectionAdded, AuditTargetTypes.AuditSection, entity.Id, payload: new { sectionId = section.Id, section.Name });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto();
+    }
+}
+
+public sealed record RenameAuditSectionCommand(Guid AuditId, string CurrentName, string NewName, string Version) : ICommand<AuditDto>;
+
+public sealed class RenameAuditSectionCommandHandler(IAuditRepository audits, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<RenameAuditSectionCommand, AuditDto>
+{
+    public async Task<AuditDto> Handle(RenameAuditSectionCommand command, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
+        entity.EnsureVersion(command.Version);
+        entity.RenameSection(command.CurrentName, command.NewName);
+        audit.Record(AuditEventTypes.AuditSectionRenamed, AuditTargetTypes.AuditSection, entity.Id, payload: new { command.CurrentName, command.NewName });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto();
+    }
+}
+
+public sealed record RemoveAuditSectionCommand(Guid AuditId, string Name, string Version) : ICommand<AuditDto>;
+
+public sealed class RemoveAuditSectionCommandHandler(IAuditRepository audits, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<RemoveAuditSectionCommand, AuditDto>
+{
+    public async Task<AuditDto> Handle(RemoveAuditSectionCommand command, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
+        entity.EnsureVersion(command.Version);
+        entity.RemoveSection(command.Name);
+        audit.Record(AuditEventTypes.AuditSectionRemoved, AuditTargetTypes.AuditSection, entity.Id, payload: new { command.Name });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto();
+    }
+}
+
+public sealed record ReorderAuditSectionsCommand(Guid AuditId, IReadOnlyList<string> OrderedSectionNames, string Version) : ICommand<AuditDto>;
+
+public sealed class ReorderAuditSectionsCommandHandler(IAuditRepository audits, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<ReorderAuditSectionsCommand, AuditDto>
+{
+    public async Task<AuditDto> Handle(ReorderAuditSectionsCommand command, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
+        entity.EnsureVersion(command.Version);
+        entity.ReorderSections(command.OrderedSectionNames);
+        audit.Record(AuditEventTypes.AuditSectionsReordered, AuditTargetTypes.AuditSection, entity.Id);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto();
+    }
+}
+
 public sealed record ReorderAuditChecklistItemsCommand(Guid AuditId, IReadOnlyList<Guid> OrderedItemIds, string Version) : ICommand<AuditDto>;
 
 public sealed class ReorderAuditChecklistItemsCommandHandler(IAuditRepository audits, IAuditRecorder audit, IUnitOfWork unitOfWork)

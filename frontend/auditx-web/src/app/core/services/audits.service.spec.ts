@@ -25,6 +25,7 @@ function audit(overrides: Partial<Audit> = {}): Audit {
     cancellationReason: null,
     version: 'v1',
     teamMembers: [],
+    sections: [],
     checklistItems: [],
     ...overrides,
   };

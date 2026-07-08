@@ -13,6 +13,7 @@ namespace AuditX.Domain.Audits;
 public sealed class Audit : AggregateRoot
 {
     private readonly List<AuditTeamMember> _teamMembers = [];
+    private readonly List<AuditSection> _sections = [];
     private readonly List<AuditChecklistItem> _checklistItems = [];
     private readonly List<ChecklistResponse> _responses = [];
 
@@ -53,6 +54,8 @@ public sealed class Audit : AggregateRoot
     public byte[] Version { get; private set; } = [];
 
     public IReadOnlyList<AuditTeamMember> TeamMembers => _teamMembers.AsReadOnly();
+
+    public IReadOnlyList<AuditSection> Sections => _sections.AsReadOnly();
 
     public IReadOnlyList<AuditChecklistItem> ChecklistItems => _checklistItems.AsReadOnly();
 
@@ -195,12 +198,77 @@ public sealed class Audit : AggregateRoot
         RaiseDomainEvent(new AuditLeadTransferredEvent(Id, outgoing.UserId, newLeadUserId));
     }
 
+    // ---- Sections ----
+
+    /// <summary>Add a named section. Mirrors the template section CRUD; allowed while the checklist is editable.</summary>
+    public AuditSection AddSection(string name)
+    {
+        EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
+        var trimmed = Guard.NotNullOrWhiteSpace(name, "audit.section_name_required", "Section name is required.").Trim();
+        if (_sections.Any(s => string.Equals(s.Name, trimmed, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new DomainException("audit.section_exists", $"A section named '{trimmed}' already exists.");
+        }
+
+        var section = new AuditSection(Id, trimmed, _sections.Count);
+        _sections.Add(section);
+        return section;
+    }
+
+    /// <summary>Rename a section and cascade the new name to every item that referenced it.</summary>
+    public void RenameSection(string currentName, string newName)
+    {
+        EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
+        var trimmed = Guard.NotNullOrWhiteSpace(newName, "audit.section_name_required", "Section name is required.").Trim();
+        var section = FindSection(currentName);
+        if (!string.Equals(currentName, trimmed, StringComparison.OrdinalIgnoreCase)
+            && _sections.Any(s => string.Equals(s.Name, trimmed, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new DomainException("audit.section_exists", $"A section named '{trimmed}' already exists.");
+        }
+
+        section.Rename(trimmed);
+        foreach (var item in _checklistItems.Where(i => string.Equals(i.SectionName, currentName, StringComparison.OrdinalIgnoreCase)))
+        {
+            item.RenameSection(trimmed);
+        }
+    }
+
+    /// <summary>Remove an empty section. Reassign its items first (mirrors the template rule).</summary>
+    public void RemoveSection(string name)
+    {
+        EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
+        var section = FindSection(name);
+        if (_checklistItems.Any(i => string.Equals(i.SectionName, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new DomainException("audit.section_in_use", "Cannot remove a section that still has items.");
+        }
+
+        _sections.Remove(section);
+    }
+
+    public void ReorderSections(IReadOnlyList<string> orderedSectionNames)
+    {
+        EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
+        var distinct = orderedSectionNames.Select(n => n.ToLowerInvariant()).Distinct().Count();
+        if (orderedSectionNames.Count != _sections.Count || distinct != _sections.Count)
+        {
+            throw new DomainException("audit.reorder_mismatch", "The reorder must list every section exactly once.");
+        }
+
+        for (var index = 0; index < orderedSectionNames.Count; index++)
+        {
+            FindSection(orderedSectionNames[index]).SetOrder(index);
+        }
+    }
+
     // ---- Checklist ----
 
     public AuditChecklistItem AddChecklistItem(string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired, Guid? assignedUserId)
     {
         EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
-        var item = new AuditChecklistItem(Id, prompt, referenceNotes, responseType, sectionName, _checklistItems.Count, isRequired, assignedUserId);
+        var section = EnsureSection(sectionName);
+        var item = new AuditChecklistItem(Id, prompt, referenceNotes, responseType, section, _checklistItems.Count, isRequired, assignedUserId);
         _checklistItems.Add(item);
         return item;
     }
@@ -208,7 +276,8 @@ public sealed class Audit : AggregateRoot
     public void EditChecklistItem(Guid itemId, string prompt, string? referenceNotes, string? sectionName, bool isRequired, Guid? assignedUserId)
     {
         EnsureStatus("audit.checklist_locked", AuditStatus.Draft);
-        FindItem(itemId).Update(prompt, referenceNotes, sectionName, isRequired, assignedUserId);
+        var section = EnsureSection(sectionName);
+        FindItem(itemId).Update(prompt, referenceNotes, section, isRequired, assignedUserId);
     }
 
     public void RemoveChecklistItem(Guid itemId)
@@ -403,6 +472,33 @@ public sealed class Audit : AggregateRoot
 
     private AuditChecklistItem FindItem(Guid itemId)
         => _checklistItems.FirstOrDefault(i => i.Id == itemId) ?? throw new DomainException("audit.item_not_found", "Checklist item not found.");
+
+    private AuditSection FindSection(string name)
+        => _sections.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))
+           ?? throw new DomainException("audit.section_not_found", $"Section '{name}' not found.");
+
+    /// <summary>
+    /// Resolve an item's section: null/blank means ungrouped; otherwise find the section (case-insensitively)
+    /// and return its canonical name, auto-creating it if it does not yet exist. Auto-create keeps free-text
+    /// section entry working and back-fills a first-class section for items imported from a template.
+    /// </summary>
+    private string? EnsureSection(string? sectionName)
+    {
+        if (string.IsNullOrWhiteSpace(sectionName))
+        {
+            return null;
+        }
+
+        var trimmed = sectionName.Trim();
+        var existing = _sections.FirstOrDefault(s => string.Equals(s.Name, trimmed, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            return existing.Name;
+        }
+
+        _sections.Add(new AuditSection(Id, trimmed, _sections.Count));
+        return trimmed;
+    }
 
     private void EnsureStatus(string code, params AuditStatus[] allowed)
     {

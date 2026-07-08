@@ -65,6 +65,7 @@ function audit(status: AuditStatus = 'draft', overrides: Partial<Audit> = {}): A
     cancellationReason: null,
     version: 'v1',
     teamMembers: [],
+    sections: [],
     checklistItems: [],
     ...overrides,
   };

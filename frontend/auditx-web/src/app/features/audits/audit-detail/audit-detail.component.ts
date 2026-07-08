@@ -60,6 +60,11 @@ import {
   TransferLeadDialogResult,
 } from '../dialogs/transfer-lead-dialog.component';
 import {
+  SectionNameDialogComponent,
+  SectionNameDialogData,
+  SectionNameDialogResult,
+} from '../dialogs/section-name-dialog.component';
+import {
   TransitionReasonDialogComponent,
   TransitionReasonDialogData,
   TransitionReasonResult,
@@ -78,7 +83,10 @@ type ViewState = 'loading' | 'ready' | 'error';
 
 /** A checklist section grouping for the template. */
 interface ChecklistGroup {
+  /** Display name (ungrouped uses a translated label). */
   name: string;
+  /** The section's real name for CRUD; null for the ungrouped bucket. */
+  sectionName: string | null;
   items: AuditChecklistItem[];
 }
 
@@ -166,27 +174,62 @@ export class AuditDetailComponent {
     (this.audit()?.teamMembers ?? []).filter((m) => m.isActive),
   );
 
-  /** Checklist grouped by sectionName, ordered by orderIndex. */
+  /**
+   * Checklist grouped into first-class sections (ordered by the section's own OrderIndex, empty sections
+   * included), followed by any orphan sections (safety net) and an "ungrouped" bucket for items with no section.
+   */
   readonly checklistGroups = computed<ChecklistGroup[]>(() => {
-    const items = [...(this.audit()?.checklistItems ?? [])].sort(
+    const audit = this.audit();
+    const items = [...(audit?.checklistItems ?? [])].sort(
       (a, b) => a.orderIndex - b.orderIndex,
     );
-    const groups: ChecklistGroup[] = [];
-    const byName = new Map<string, ChecklistGroup>();
+    const sections = [...(audit?.sections ?? [])].sort(
+      (a, b) => a.orderIndex - b.orderIndex,
+    );
+
+    const itemsBySection = new Map<string, AuditChecklistItem[]>();
+    const ungrouped: AuditChecklistItem[] = [];
     for (const item of items) {
-      const name =
-        item.sectionName?.trim() ||
-        this.i18n.translate('audits.checklist.ungrouped');
-      let group = byName.get(name);
-      if (!group) {
-        group = { name, items: [] };
-        byName.set(name, group);
-        groups.push(group);
+      const key = item.sectionName?.trim();
+      if (!key) {
+        ungrouped.push(item);
+        continue;
       }
-      group.items.push(item);
+      const list = itemsBySection.get(key.toLowerCase()) ?? [];
+      list.push(item);
+      itemsBySection.set(key.toLowerCase(), list);
+    }
+
+    const groups: ChecklistGroup[] = [];
+    const seen = new Set<string>();
+    for (const s of sections) {
+      const key = s.name.toLowerCase();
+      seen.add(key);
+      groups.push({ name: s.name, sectionName: s.name, items: itemsBySection.get(key) ?? [] });
+    }
+    // Orphan section names that have no entity (shouldn't happen post-migration, but never drop items).
+    for (const [key, list] of itemsBySection) {
+      if (!seen.has(key)) {
+        const name = list[0].sectionName!.trim();
+        groups.push({ name, sectionName: name, items: list });
+      }
+    }
+    if (ungrouped.length) {
+      groups.push({
+        name: this.i18n.translate('audits.checklist.ungrouped'),
+        sectionName: null,
+        items: ungrouped,
+      });
     }
     return groups;
   });
+
+  /** Section names for the item dialog's section picker. */
+  readonly sectionNames = computed(() =>
+    [...(this.audit()?.sections ?? [])]
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map((s) => s.name),
+  );
 
   private readonly auditorCount = computed(
     () =>
@@ -254,6 +297,11 @@ export class AuditDetailComponent {
   /** Checklist items may be edited / removed only in draft. */
   readonly canEditChecklist = computed(
     () => this.canManage() && this.isDraft(),
+  );
+
+  /** Sections may be added / renamed / removed / reordered while the checklist is editable (draft or in progress). */
+  readonly canManageSections = computed(
+    () => this.canManage() && (this.isDraft() || this.isInProgress()),
   );
 
   /** Team may be changed while the audit is not read-only. */
@@ -626,10 +674,94 @@ export class AuditDetailComponent {
       });
   }
 
+  /* ---- Sections (first-class CRUD) ---- */
+
+  addSection(): void {
+    const data: SectionNameDialogData = {
+      title: this.i18n.translate('audits.sections.addTitle'),
+      label: this.i18n.translate('audits.sections.nameLabel'),
+      confirmLabel: this.i18n.translate('audits.sections.addConfirm'),
+      cancelLabel: this.i18n.translate('common.cancel'),
+      duplicateError: this.i18n.translate('audits.sections.duplicate'),
+      requiredError: this.i18n.translate('audits.sections.required'),
+      existingNames: this.sectionNames(),
+    };
+    this.dialog
+      .open(SectionNameDialogComponent, { data, width: '420px' })
+      .afterClosed()
+      .subscribe((result?: SectionNameDialogResult) => {
+        if (!result) {
+          return;
+        }
+        this.runMutation(
+          this.service.addSection(this.id(), { name: result.name, version: this.version() }),
+          this.i18n.translate('audits.sections.added'),
+        );
+      });
+  }
+
+  renameSection(group: ChecklistGroup): void {
+    if (!group.sectionName) {
+      return;
+    }
+    const current = group.sectionName;
+    const data: SectionNameDialogData = {
+      title: this.i18n.translate('audits.sections.renameTitle'),
+      label: this.i18n.translate('audits.sections.nameLabel'),
+      confirmLabel: this.i18n.translate('audits.sections.renameConfirm'),
+      cancelLabel: this.i18n.translate('common.cancel'),
+      duplicateError: this.i18n.translate('audits.sections.duplicate'),
+      requiredError: this.i18n.translate('audits.sections.required'),
+      initialName: current,
+      existingNames: this.sectionNames(),
+    };
+    this.dialog
+      .open(SectionNameDialogComponent, { data, width: '420px' })
+      .afterClosed()
+      .subscribe((result?: SectionNameDialogResult) => {
+        if (!result || result.name === current) {
+          return;
+        }
+        this.runMutation(
+          this.service.renameSection(this.id(), {
+            currentName: current,
+            newName: result.name,
+            version: this.version(),
+          }),
+          this.i18n.translate('audits.sections.renamed'),
+        );
+      });
+  }
+
+  removeSection(group: ChecklistGroup): void {
+    if (!group.sectionName) {
+      return;
+    }
+    const name = group.sectionName;
+    const data: ConfirmDialogData = {
+      title: this.i18n.translate('audits.sections.removeTitle'),
+      message: this.i18n.translate('audits.sections.removeMessage', { name }),
+      confirmLabel: this.i18n.translate('audits.actions.remove'),
+      destructive: true,
+    };
+    this.dialog
+      .open(ConfirmDialogComponent, { data, width: '440px' })
+      .afterClosed()
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+        this.runMutation(
+          this.service.removeSection(this.id(), { name, version: this.version() }),
+          this.i18n.translate('audits.sections.removed'),
+        );
+      });
+  }
+
   /* ---- Checklist ---- */
 
   addChecklistItem(): void {
-    const data: ChecklistItemDialogData = { users: this.usersCache };
+    const data: ChecklistItemDialogData = { users: this.usersCache, sections: this.sectionNames() };
     this.dialog
       .open(ChecklistItemDialogComponent, { data, width: '560px' })
       .afterClosed()
@@ -653,7 +785,7 @@ export class AuditDetailComponent {
   }
 
   editChecklistItem(item: AuditChecklistItem): void {
-    const data: ChecklistItemDialogData = { item, users: this.usersCache };
+    const data: ChecklistItemDialogData = { item, users: this.usersCache, sections: this.sectionNames() };
     this.dialog
       .open(ChecklistItemDialogComponent, { data, width: '560px' })
       .afterClosed()

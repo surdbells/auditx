@@ -44,6 +44,7 @@ function audit(status: AuditStatus = 'in_progress', overrides: Partial<Audit> = 
         removedAt: null,
       },
     ],
+    sections: [],
     checklistItems: [],
     ...overrides,
   };

@@ -69,6 +69,9 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
 
     internal void SetOrder(int orderIndex) => OrderIndex = orderIndex;
 
+    /// <summary>Cascade a section rename (called from Audit.RenameSection).</summary>
+    internal void RenameSection(string newSectionName) => SectionName = newSectionName;
+
     internal void Assign(Guid? userId) => AssignedUserId = userId;
 
     /// <summary>Set by M5 when a response is recorded/cleared.</summary>

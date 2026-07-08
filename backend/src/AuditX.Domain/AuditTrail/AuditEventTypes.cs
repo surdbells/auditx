@@ -108,6 +108,10 @@ public static class AuditEventTypes
     public const string AuditChecklistItemEdited = "audit_checklist_item_edited";
     public const string AuditChecklistItemRemoved = "audit_checklist_item_removed";
     public const string AuditChecklistItemsReordered = "audit_checklist_items_reordered";
+    public const string AuditSectionAdded = "audit_section_added";
+    public const string AuditSectionRenamed = "audit_section_renamed";
+    public const string AuditSectionRemoved = "audit_section_removed";
+    public const string AuditSectionsReordered = "audit_sections_reordered";
 
     // M5 execution / evidence
     public const string ItemResponded = "item_responded";
@@ -224,6 +228,7 @@ public static class AuditTargetTypes
     public const string PlanItem = "plan_item";
     public const string Audit = "audit";
     public const string AuditTeamMember = "audit_team_member";
+    public const string AuditSection = "audit_section";
     public const string AuditChecklistItem = "audit_checklist_item";
     public const string ChecklistResponse = "checklist_response";
     public const string EvidenceFile = "evidence_file";

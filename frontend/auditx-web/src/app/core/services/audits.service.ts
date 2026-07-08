@@ -133,6 +133,30 @@ export class AuditsService {
     return this.api.post<Audit>(`/audits/${id}/checklist/items/reorder`, body);
   }
 
+  /* ---- Checklist sections (first-class CRUD) ---- */
+
+  addSection(id: string, body: { name: string; version: string }): Observable<Audit> {
+    return this.api.post<Audit>(`/audits/${id}/checklist/sections`, body);
+  }
+
+  renameSection(
+    id: string,
+    body: { currentName: string; newName: string; version: string },
+  ): Observable<Audit> {
+    return this.api.patch<Audit>(`/audits/${id}/checklist/sections/rename`, body);
+  }
+
+  removeSection(id: string, body: { name: string; version: string }): Observable<Audit> {
+    return this.api.post<Audit>(`/audits/${id}/checklist/sections/remove`, body);
+  }
+
+  reorderSections(
+    id: string,
+    body: { orderedSectionNames: string[]; version: string },
+  ): Observable<Audit> {
+    return this.api.post<Audit>(`/audits/${id}/checklist/sections/reorder`, body);
+  }
+
   /* =====================================================================
    * M5 — Execution / Fieldwork
    * ===================================================================== */

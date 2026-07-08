@@ -154,6 +154,19 @@
   font-weight: 700;
 }
 
+// Rename / remove controls on a section header — compact so they don't bloat the row.
+.detail__section-actions {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+.detail__section-actions .mat-mdc-icon-button {
+  width: 34px;
+  height: 34px;
+  padding: 5px;
+}
+
 .detail__items {
   list-style: none;
   margin: 0;

@@ -187,15 +187,23 @@
           <h3 class="detail__card-title">
             {{ 'audits.checklist.title' | t: { count: a.checklistItems.length } }}
           </h3>
-          @if (canAddChecklistItem()) {
-            <button matButton="filled" type="button" (click)="addChecklistItem()">
-              <mat-icon>add</mat-icon>
-              {{ 'audits.actions.addItem' | t }}
-            </button>
-          }
+          <div class="detail__card-actions">
+            @if (canManageSections()) {
+              <button matButton type="button" (click)="addSection()">
+                <mat-icon>create_new_folder</mat-icon>
+                {{ 'audits.actions.addSection' | t }}
+              </button>
+            }
+            @if (canAddChecklistItem()) {
+              <button matButton="filled" type="button" (click)="addChecklistItem()">
+                <mat-icon>add</mat-icon>
+                {{ 'audits.actions.addItem' | t }}
+              </button>
+            }
+          </div>
         </div>
 
-        @if (!a.checklistItems.length) {
+        @if (!checklistGroups().length) {
           <p class="muted detail__empty">{{ 'audits.checklist.empty' | t }}</p>
         } @else {
           @for (group of checklistGroups(); track group.name) {
@@ -204,6 +212,30 @@
                 <span class="detail__section-icon" aria-hidden="true"><mat-icon>segment</mat-icon></span>
                 <h4 class="detail__section-name">{{ group.name }}</h4>
                 <span class="detail__section-count">{{ group.items.length }}</span>
+                @if (canManageSections() && group.sectionName) {
+                  <span class="detail__section-actions">
+                    <button
+                      matIconButton
+                      type="button"
+                      (click)="renameSection(group)"
+                      [attr.aria-label]="'audits.sections.renameAria' | t: { name: group.name }"
+                      [matTooltip]="'audits.sections.renameConfirm' | t"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    @if (!group.items.length) {
+                      <button
+                        matIconButton
+                        type="button"
+                        (click)="removeSection(group)"
+                        [attr.aria-label]="'audits.sections.removeAria' | t: { name: group.name }"
+                        [matTooltip]="'audits.actions.remove' | t"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
+                  </span>
+                }
               </header>
               <ul
                 class="detail__items"

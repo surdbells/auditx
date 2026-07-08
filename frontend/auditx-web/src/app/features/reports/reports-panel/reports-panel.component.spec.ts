@@ -49,6 +49,7 @@ function audit(status: AuditStatus = 'under_review'): Audit {
     cancellationReason: null,
     version: 'v1',
     teamMembers: [],
+    sections: [],
     checklistItems: [],
   };
 }

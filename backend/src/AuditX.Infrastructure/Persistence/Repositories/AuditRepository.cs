@@ -12,6 +12,7 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
     public Task<Audit?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.Audits
             .Include(a => a.TeamMembers)
+            .Include(a => a.Sections)
             .Include(a => a.ChecklistItems)
             .Include(a => a.Responses)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);

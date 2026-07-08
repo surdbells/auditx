@@ -112,6 +112,28 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> ReorderChecklistItems(Guid id, [FromBody] ReorderAuditChecklistItemsRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new ReorderAuditChecklistItemsCommand(id, request.OrderedItemIds, request.Version), cancellationToken));
 
+    // ---- Checklist sections (first-class CRUD) ----
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/checklist/sections")]
+    public async Task<IActionResult> AddSection(Guid id, [FromBody] AddAuditSectionRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new AddAuditSectionCommand(id, request.Name, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPatch("{id:guid}/checklist/sections/rename")]
+    public async Task<IActionResult> RenameSection(Guid id, [FromBody] RenameAuditSectionRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new RenameAuditSectionCommand(id, request.CurrentName, request.NewName, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/checklist/sections/remove")]
+    public async Task<IActionResult> RemoveSection(Guid id, [FromBody] RemoveAuditSectionRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new RemoveAuditSectionCommand(id, request.Name, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/checklist/sections/reorder")]
+    public async Task<IActionResult> ReorderSections(Guid id, [FromBody] ReorderAuditSectionsRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ReorderAuditSectionsCommand(id, request.OrderedSectionNames, request.Version), cancellationToken));
+
     // ---- M5 execution / fieldwork ----
 
     [RequirePermission(PermissionKeys.RespondItem)]

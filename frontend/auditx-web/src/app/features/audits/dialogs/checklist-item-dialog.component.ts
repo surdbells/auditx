@@ -22,6 +22,8 @@ export interface ChecklistItemDialogData {
   item?: AuditChecklistItem;
   /** Users selectable as the assignee. */
   users: UserDto[];
+  /** Existing section names the item can be filed under (managed via the Add Section control). */
+  sections: string[];
 }
 
 export interface ChecklistItemDialogResult {
@@ -65,7 +67,12 @@ export interface ChecklistItemDialogResult {
         <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>Section</mat-label>
-            <input matInput formControlName="sectionName" autocomplete="off" />
+            <mat-select formControlName="sectionName">
+              <mat-option [value]="''">Ungrouped</mat-option>
+              @for (s of data.sections; track s) {
+                <mat-option [value]="s">{{ s }}</mat-option>
+              }
+            </mat-select>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Response type</mat-label>

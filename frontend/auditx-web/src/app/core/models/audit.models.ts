@@ -44,6 +44,13 @@ export interface AuditTeamMember {
   removedAt: string | null;
 }
 
+/** A named, ordered grouping of checklist items within an audit (first-class, CRUD-managed). */
+export interface AuditSection {
+  id: string;
+  name: string;
+  orderIndex: number;
+}
+
 /** A single checklist item attached to an audit. */
 export interface AuditChecklistItem {
   id: string;
@@ -75,6 +82,7 @@ export interface Audit {
   cancellationReason: string | null;
   version: string;
   teamMembers: AuditTeamMember[];
+  sections: AuditSection[];
   checklistItems: AuditChecklistItem[];
 }
 
