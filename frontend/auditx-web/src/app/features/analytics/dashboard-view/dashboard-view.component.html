@@ -1,32 +1,32 @@
 <app-page-header
-  [title]="dashboard()?.name ?? 'Dashboard'"
+  [title]="dashboard()?.name ?? ('analytics.view.titleFallback' | t)"
   [subtitle]="dashboard()?.description ?? ''"
 >
   <div actions>
     <a matButton routerLink="/analytics">
       <mat-icon>arrow_back</mat-icon>
-      All dashboards
+      {{ 'analytics.nav.allDashboards' | t }}
     </a>
     @if (canConfigure() && dashboard()) {
       <button matButton="filled" type="button" (click)="addWidget()">
         <mat-icon>add</mat-icon>
-        Add widget
+        {{ 'analytics.view.addWidget' | t }}
       </button>
     }
     <button matButton type="button" (click)="fetch()">
       <mat-icon>refresh</mat-icon>
-      Refresh
+      {{ 'analytics.actions.refresh' | t }}
     </button>
   </div>
 </app-page-header>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading dashboard…" />
+    <app-loading [message]="'analytics.view.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load this dashboard."
+      [message]="'analytics.view.error' | t"
       (retry)="fetch()"
     />
   }
@@ -34,8 +34,8 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="widgets"
-        title="No widgets"
-        message="This dashboard has no widgets configured yet."
+        [title]="'analytics.view.empty.title' | t"
+        [message]="'analytics.view.empty.message' | t"
       />
     } @else {
       <div class="widgets__grid">
@@ -51,8 +51,8 @@
                   matIconButton
                   type="button"
                   class="widget__remove"
-                  aria-label="Remove widget"
-                  matTooltip="Remove widget"
+                  [attr.aria-label]="'analytics.view.removeWidget' | t"
+                  [matTooltip]="'analytics.view.removeWidget' | t"
                   (click)="deleteWidget(widget)"
                 >
                   <mat-icon>close</mat-icon>
@@ -64,7 +64,7 @@
               @if (isUnavailable(widget)) {
                 <p class="widget__unavailable">
                   <mat-icon aria-hidden="true">lock</mat-icon>
-                  This widget is not available to you.
+                  {{ 'analytics.view.unavailable' | t }}
                 </p>
               } @else {
                 @switch (widget.widgetType) {
@@ -79,7 +79,7 @@
                         />
                       </div>
                     } @else if (figures.length === 0) {
-                      <p class="widget__unavailable">No data.</p>
+                      <p class="widget__unavailable">{{ 'analytics.view.noData' | t }}</p>
                     } @else {
                       <div class="metric__grid">
                         @for (f of figures; track f.label) {
@@ -99,7 +99,7 @@
                         <app-donut-chart
                           [data]="chartData(widget)"
                           [label]="widget.title"
-                          centerLabel="open"
+                          [centerLabel]="'analytics.view.centerLabelOpen' | t"
                         />
                       }
                       @case ('bar') {
@@ -136,7 +136,7 @@
 <ng-template #tableTpl let-widget>
   @let projection = table(widget);
   @if (projection.rows.length === 0) {
-    <p class="widget__unavailable">No rows.</p>
+    <p class="widget__unavailable">{{ 'analytics.view.noRows' | t }}</p>
   } @else {
     <div class="widget__table-wrapper">
       <table mat-table [dataSource]="projection.rows" class="widget__table">

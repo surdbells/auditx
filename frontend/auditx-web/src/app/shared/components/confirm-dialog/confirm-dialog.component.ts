@@ -6,6 +6,8 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 
+import { TranslationService } from '../../../core/i18n/translation.service';
+
 export interface ConfirmDialogData {
   title: string;
   message: string;
@@ -26,7 +28,7 @@ export interface ConfirmDialogData {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button matButton type="button" (click)="cancel()">
-        {{ data.cancelLabel ?? 'Cancel' }}
+        {{ data.cancelLabel ?? cancelFallback }}
       </button>
       <button
         [matButton]="data.destructive ? 'filled' : 'filled'"
@@ -35,7 +37,7 @@ export interface ConfirmDialogData {
         (click)="confirm()"
         cdkFocusInitial
       >
-        {{ data.confirmLabel ?? 'Confirm' }}
+        {{ data.confirmLabel ?? confirmFallback }}
       </button>
     </mat-dialog-actions>
   `,
@@ -50,6 +52,12 @@ export class ConfirmDialogComponent {
   readonly data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
   private readonly dialogRef =
     inject<MatDialogRef<ConfirmDialogComponent, boolean>>(MatDialogRef);
+  private readonly i18n = inject(TranslationService);
+
+  /** Localised fallback for the cancel button when the caller supplies no label. */
+  readonly cancelFallback = this.i18n.translate('shared.dialog.cancel');
+  /** Localised fallback for the confirm button when the caller supplies no label. */
+  readonly confirmFallback = this.i18n.translate('shared.dialog.confirm');
 
   confirm(): void {
     this.dialogRef.close(true);

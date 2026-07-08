@@ -1,15 +1,15 @@
 <app-page-header
-  title="Notification preferences"
-  subtitle="Control which non-critical notifications you receive."
+  [title]="'account.prefs.title' | t"
+  [subtitle]="'account.prefs.subtitle' | t"
 />
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading your preferences…" />
+    <app-loading [message]="'account.prefs.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load your notification preferences."
+      [message]="'account.prefs.error' | t"
       (retry)="fetch()"
     />
   }
@@ -17,29 +17,29 @@
     <mat-card appearance="outlined" class="prefs__card">
       <div class="prefs__row">
         <div class="prefs__text">
-          <span class="prefs__label">Receive non-critical SMS</span>
+          <span class="prefs__label">{{ 'account.prefs.smsLabel' | t }}</span>
           <span class="prefs__hint">
-            Critical alerts are always sent by SMS regardless of this setting.
+            {{ 'account.prefs.smsHint' | t }}
           </span>
         </div>
         <mat-slide-toggle
           [checked]="smsNonCritical()"
           (change)="smsNonCritical.set($event.checked)"
-          aria-label="Receive non-critical SMS"
+          [attr.aria-label]="'account.prefs.smsLabel' | t"
         />
       </div>
 
       <div class="prefs__row">
         <div class="prefs__text">
-          <span class="prefs__label">Email digests</span>
+          <span class="prefs__label">{{ 'account.prefs.digestsLabel' | t }}</span>
           <span class="prefs__hint">
-            Bundle low-priority notifications into a periodic email digest.
+            {{ 'account.prefs.digestsHint' | t }}
           </span>
         </div>
         <mat-slide-toggle
           [checked]="digests()"
           (change)="digests.set($event.checked)"
-          aria-label="Email digests"
+          [attr.aria-label]="'account.prefs.digestsLabel' | t"
         />
       </div>
 
@@ -50,7 +50,7 @@
           (click)="save()"
           [disabled]="saving()"
         >
-          {{ saving() ? 'Saving…' : 'Save preferences' }}
+          {{ (saving() ? 'account.actions.saving' : 'account.actions.save') | t }}
         </button>
       </div>
     </mat-card>

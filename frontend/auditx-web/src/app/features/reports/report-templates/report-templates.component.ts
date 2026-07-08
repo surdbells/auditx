@@ -27,6 +27,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -43,6 +45,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './report-templates.component.html',
   styleUrl: './report-templates.component.scss',
@@ -52,6 +55,7 @@ export class ReportTemplatesComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'name',
@@ -97,10 +101,17 @@ export class ReportTemplatesComponent {
         }
         this.service.createTemplate(result).subscribe({
           next: (saved) => {
-            this.notify.success(`Template "${saved.name}" created.`);
+            this.notify.success(
+              this.i18n.translate('reports.templates.notify.created', {
+                name: saved.name,
+              }),
+            );
             this.fetch();
           },
-          error: () => this.notify.error('We could not create the template.'),
+          error: () =>
+            this.notify.error(
+              this.i18n.translate('reports.templates.notify.createError'),
+            ),
         });
       });
   }
@@ -121,11 +132,17 @@ export class ReportTemplatesComponent {
           .activateTemplate(template.id, { reason: result.reason })
           .subscribe({
             next: (saved) => {
-              this.notify.success(`Template "${saved.name}" activated.`);
+              this.notify.success(
+                this.i18n.translate('reports.templates.notify.activated', {
+                  name: saved.name,
+                }),
+              );
               this.fetch();
             },
             error: () =>
-              this.notify.error('We could not activate the template.'),
+              this.notify.error(
+                this.i18n.translate('reports.templates.notify.activateError'),
+              ),
           });
       });
   }

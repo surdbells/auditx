@@ -24,6 +24,8 @@ import {
   WebhookDeliveryStatus,
 } from '../../../../core/models';
 import { humaniseStatus } from '../../notifications/humanise-status';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
@@ -44,6 +46,7 @@ const PAGE_LIMIT = 100;
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -55,6 +58,7 @@ export class WebhookDeliveriesComponent {
   private readonly webhooksService = inject(WebhooksService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'eventType',
@@ -66,11 +70,11 @@ export class WebhookDeliveriesComponent {
   ];
 
   readonly statuses: { value: WebhookDeliveryStatus | ''; label: string }[] = [
-    { value: '', label: 'All statuses' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'delivered', label: 'Delivered' },
-    { value: 'failed', label: 'Failed' },
-    { value: 'dead_letter', label: 'Dead-letter' },
+    { value: '', label: this.i18n.translate('integrations.deliveries.status.all') },
+    { value: 'pending', label: this.i18n.translate('integrations.deliveries.status.pending') },
+    { value: 'delivered', label: this.i18n.translate('integrations.deliveries.status.delivered') },
+    { value: 'failed', label: this.i18n.translate('integrations.deliveries.status.failed') },
+    { value: 'dead_letter', label: this.i18n.translate('integrations.deliveries.status.deadLetter') },
   ];
 
   readonly statusFilter = new FormControl<WebhookDeliveryStatus | ''>('', {
@@ -161,7 +165,7 @@ export class WebhookDeliveriesComponent {
   retry(delivery: WebhookDelivery): void {
     this.webhooksService.retryDelivery(delivery.id).subscribe({
       next: () => {
-        this.notify.success('Delivery re-queued for retry.');
+        this.notify.success(this.i18n.translate('integrations.deliveries.retry.success'));
         this.fetch();
       },
     });

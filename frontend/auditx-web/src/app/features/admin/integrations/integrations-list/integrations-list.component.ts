@@ -21,6 +21,8 @@ import {
   IntegrationHealthState,
 } from '../../../../core/models';
 import { humaniseIntegrationType } from '../integration-type-label';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
   IntegrationEditorDialogComponent,
   IntegrationEditorDialogData,
@@ -46,6 +48,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -59,6 +62,7 @@ export class IntegrationsListComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'name',
@@ -137,7 +141,11 @@ export class IntegrationsListComponent {
         }
         this.integrationsService.create(result.body).subscribe({
           next: (created) => {
-            this.notify.success(`Integration "${created.name}" created.`);
+            this.notify.success(
+              this.i18n.translate('integrations.list.created.success', {
+                name: created.name,
+              }),
+            );
             this.fetch();
           },
         });
@@ -158,7 +166,11 @@ export class IntegrationsListComponent {
         }
         this.integrationsService.update(result.id, result.body).subscribe({
           next: (updated) => {
-            this.notify.success(`Integration "${updated.name}" updated.`);
+            this.notify.success(
+              this.i18n.translate('integrations.list.updated.success', {
+                name: updated.name,
+              }),
+            );
             this.fetch();
           },
         });
@@ -167,9 +179,11 @@ export class IntegrationsListComponent {
 
   deactivate(integration: Integration): void {
     const data: ConfirmDialogData = {
-      title: 'Deactivate integration',
-      message: `Deactivate "${integration.name}"? It will stop handling traffic.`,
-      confirmLabel: 'Deactivate',
+      title: this.i18n.translate('integrations.list.deactivate.title'),
+      message: this.i18n.translate('integrations.list.deactivate.message', {
+        name: integration.name,
+      }),
+      confirmLabel: this.i18n.translate('integrations.actions.deactivate'),
       destructive: true,
     };
     this.dialog
@@ -181,7 +195,11 @@ export class IntegrationsListComponent {
         }
         this.integrationsService.deactivate(integration.id).subscribe({
           next: () => {
-            this.notify.success(`"${integration.name}" deactivated.`);
+            this.notify.success(
+              this.i18n.translate('integrations.list.deactivated.success', {
+                name: integration.name,
+              }),
+            );
             this.fetch();
           },
         });
@@ -192,9 +210,17 @@ export class IntegrationsListComponent {
     this.integrationsService.test(integration.id).subscribe({
       next: (result) => {
         if (result.success) {
-          this.notify.success(`Test succeeded: ${result.detail}`);
+          this.notify.success(
+            this.i18n.translate('integrations.list.test.success', {
+              detail: result.detail,
+            }),
+          );
         } else {
-          this.notify.warning(`Test failed: ${result.detail}`);
+          this.notify.warning(
+            this.i18n.translate('integrations.list.test.failed', {
+              detail: result.detail,
+            }),
+          );
         }
       },
     });

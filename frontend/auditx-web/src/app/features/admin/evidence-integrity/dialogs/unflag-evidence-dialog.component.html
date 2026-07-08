@@ -1,37 +1,39 @@
-<h2 mat-dialog-title>Unflag evidence</h2>
+<h2 mat-dialog-title>{{ 'adminMisc.evidence.unflag.title' | t }}</h2>
 <mat-dialog-content>
   <p class="unflag__intro">
-    Removing the integrity flag from
-    <strong>{{ evidence.originalFilename }}</strong> requires a resolution note
-    for the audit trail.
+    {{ 'adminMisc.evidence.unflag.intro.before' | t }}
+    <strong>{{ evidence.originalFilename }}</strong>
+    {{ 'adminMisc.evidence.unflag.intro.after' | t }}
   </p>
   <form [formGroup]="form" class="unflag__form">
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Resolution</mat-label>
+      <mat-label>{{ 'adminMisc.evidence.unflag.resolution' | t }}</mat-label>
       <textarea
         matInput
         rows="3"
         formControlName="resolution"
         autocomplete="off"
-        placeholder="Explain why the flag is being removed."
+        [placeholder]="'adminMisc.evidence.unflag.placeholder' | t"
       ></textarea>
       @if (
         form.controls.resolution.hasError('required') &&
         form.controls.resolution.touched
       ) {
-        <mat-error>A resolution note is required.</mat-error>
+        <mat-error>{{ 'adminMisc.evidence.unflag.required' | t }}</mat-error>
       }
     </mat-form-field>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button matButton type="button" (click)="cancel()">Cancel</button>
+  <button matButton type="button" (click)="cancel()">
+    {{ 'adminMisc.actions.cancel' | t }}
+  </button>
   <button
     matButton="filled"
     type="button"
     (click)="submit()"
     [disabled]="form.invalid"
   >
-    Unflag
+    {{ 'adminMisc.evidence.actions.unflag' | t }}
   </button>
 </mat-dialog-actions>

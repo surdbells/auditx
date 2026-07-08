@@ -2,22 +2,22 @@
   <div class="rules__toolbar">
     <button matButton="filled" type="button" (click)="create()">
       <mat-icon>add</mat-icon>
-      Create rule
+      {{ 'notifications.rules.create' | t }}
     </button>
     <button matButton type="button" (click)="fetch()">
       <mat-icon>refresh</mat-icon>
-      Refresh
+      {{ 'notifications.actions.refresh' | t }}
     </button>
   </div>
 }
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading rules…" />
+    <app-loading [message]="'notifications.rules.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the notification rules."
+      [message]="'notifications.rules.error.load' | t"
       (retry)="fetch()"
     />
   }
@@ -25,70 +25,70 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="notifications"
-        title="No rules"
-        message="No notification rules have been configured yet."
+        [title]="'notifications.rules.empty.title' | t"
+        [message]="'notifications.rules.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="rules__table-card">
         <div class="rules__table-wrapper">
           <table mat-table [dataSource]="rules()" class="rules__table">
             <ng-container matColumnDef="eventType">
-              <th mat-header-cell *matHeaderCellDef>Event</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.event' | t }}</th>
               <td mat-cell *matCellDef="let r">
                 <span class="rules__event">{{ r.eventType }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.field.name' | t }}</th>
               <td mat-cell *matCellDef="let r">
                 <span class="rules__name">{{ r.name }}</span>
                 @if (r.isSystemDefault) {
-                  <span class="rules__system-badge">System default</span>
+                  <span class="rules__system-badge">{{ 'notifications.rules.systemDefault' | t }}</span>
                 }
               </td>
             </ng-container>
 
             <ng-container matColumnDef="channels">
-              <th mat-header-cell *matHeaderCellDef>Channels</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.field.channels' | t }}</th>
               <td mat-cell *matCellDef="let r">{{ summarise(r.channelsJson) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="recipients">
-              <th mat-header-cell *matHeaderCellDef>Recipients</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.recipient' | t }}</th>
               <td mat-cell *matCellDef="let r">
                 {{ summarise(r.recipientResolutionJson) }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="active">
-              <th mat-header-cell *matHeaderCellDef>Active</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.status.active' | t }}</th>
               <td mat-cell *matCellDef="let r">
                 <span
                   class="status-badge"
                   [attr.data-status]="r.isActive ? 'active' : 'inactive'"
                 >
-                  {{ r.isActive ? 'Active' : 'Inactive' }}
+                  {{ r.isActive ? ('notifications.status.active' | t) : ('notifications.status.inactive' | t) }}
                 </span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'notifications.column.actions' | t"></th>
               <td mat-cell *matCellDef="let r" class="rules__actions">
                 <button matButton type="button" (click)="preview(r)">
                   <mat-icon>visibility</mat-icon>
-                  Preview
+                  {{ 'notifications.actions.preview' | t }}
                 </button>
                 @if (canManage()) {
                   <button matButton type="button" (click)="edit(r)">
                     <mat-icon>edit</mat-icon>
-                    Edit
+                    {{ 'notifications.actions.edit' | t }}
                   </button>
                   @if (r.isActive) {
                     <button matButton type="button" (click)="deactivate(r)">
                       <mat-icon>block</mat-icon>
-                      Deactivate
+                      {{ 'notifications.actions.deactivate' | t }}
                     </button>
                   }
                 }

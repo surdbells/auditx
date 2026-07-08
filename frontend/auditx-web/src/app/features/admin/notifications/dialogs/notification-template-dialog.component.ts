@@ -21,16 +21,13 @@ import {
   NotificationTemplate,
   NotificationTemplateRequest,
 } from '../../../../core/models';
+import { TranslationService } from '../../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface NotificationTemplateDialogData {
   /** Present when overriding an existing (typically system) template. */
   template?: NotificationTemplate;
 }
-
-const CHANNELS: { value: NotificationChannel; label: string }[] = [
-  { value: 'email', label: 'Email' },
-  { value: 'sms', label: 'SMS' },
-];
 
 @Component({
   selector: 'app-notification-template-dialog',
@@ -42,6 +39,7 @@ const CHANNELS: { value: NotificationChannel; label: string }[] = [
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   templateUrl: './notification-template-dialog.component.html',
   styleUrl: './notification-template-dialog.component.scss',
@@ -56,12 +54,21 @@ export class NotificationTemplateDialogComponent {
       >
     >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
-  readonly channels = CHANNELS;
+  readonly channels: { value: NotificationChannel; label: string }[] = [
+    {
+      value: 'email',
+      label: this.i18n.translate('notifications.channel.email'),
+    },
+    { value: 'sms', label: this.i18n.translate('notifications.channel.sms') },
+  ];
   readonly isOverride = signal(!!this.data.template);
 
   readonly title = computed(() =>
-    this.isOverride() ? 'Override template' : 'New bank template',
+    this.isOverride()
+      ? this.i18n.translate('notifications.templateDialog.title.override')
+      : this.i18n.translate('notifications.templates.new'),
   );
 
   readonly form = this.fb.nonNullable.group({

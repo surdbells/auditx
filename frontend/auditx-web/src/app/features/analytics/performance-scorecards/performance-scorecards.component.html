@@ -1,26 +1,26 @@
 <app-page-header
-  title="Performance scorecards"
-  subtitle="Throughput, cycle time and exception-closure metrics per audit lead."
+  [title]="'analytics.scorecards.title' | t"
+  [subtitle]="'analytics.scorecards.subtitle' | t"
 >
   <div actions>
     <a matButton routerLink="/analytics">
       <mat-icon>arrow_back</mat-icon>
-      All dashboards
+      {{ 'analytics.nav.allDashboards' | t }}
     </a>
     <button matButton type="button" (click)="fetch()">
       <mat-icon>refresh</mat-icon>
-      Refresh
+      {{ 'analytics.actions.refresh' | t }}
     </button>
   </div>
 </app-page-header>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading scorecards…" />
+    <app-loading [message]="'analytics.scorecards.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the performance scorecards."
+      [message]="'analytics.scorecards.error' | t"
       (retry)="fetch()"
     />
   }
@@ -28,8 +28,8 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="leaderboard"
-        title="No scorecards"
-        message="No audit-lead performance data is available."
+        [title]="'analytics.scorecards.empty.title' | t"
+        [message]="'analytics.scorecards.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="scorecards__table-card">
@@ -40,41 +40,41 @@
             class="scorecards__table"
           >
             <ng-container matColumnDef="lead">
-              <th mat-header-cell *matHeaderCellDef>Audit lead</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.scorecards.col.lead' | t }}</th>
               <td mat-cell *matCellDef="let s" class="scorecards__lead">
                 {{ userLookup.displayName(s.auditLeadUserId) }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="auditsLed">
-              <th mat-header-cell *matHeaderCellDef>Led</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.scorecards.col.led' | t }}</th>
               <td mat-cell *matCellDef="let s">{{ s.auditsLed }}</td>
             </ng-container>
 
             <ng-container matColumnDef="auditsCompleted">
-              <th mat-header-cell *matHeaderCellDef>Completed</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.scorecards.col.completed' | t }}</th>
               <td mat-cell *matCellDef="let s">{{ s.auditsCompleted }}</td>
             </ng-container>
 
             <ng-container matColumnDef="cycleDays">
-              <th mat-header-cell *matHeaderCellDef>Avg cycle (days)</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.scorecards.col.avgCycle' | t }}</th>
               <td mat-cell *matCellDef="let s">
                 {{ days(s.averageCycleDays) }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="exceptionsRaised">
-              <th mat-header-cell *matHeaderCellDef>Exceptions raised</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.scorecards.col.exceptionsRaised' | t }}</th>
               <td mat-cell *matCellDef="let s">{{ s.exceptionsRaised }}</td>
             </ng-container>
 
             <ng-container matColumnDef="exceptionsClosed">
-              <th mat-header-cell *matHeaderCellDef>Exceptions closed</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.scorecards.col.exceptionsClosed' | t }}</th>
               <td mat-cell *matCellDef="let s">{{ s.exceptionsClosed }}</td>
             </ng-container>
 
             <ng-container matColumnDef="closureDays">
-              <th mat-header-cell *matHeaderCellDef>Avg closure (days)</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.scorecards.col.avgClosure' | t }}</th>
               <td mat-cell *matCellDef="let s">
                 {{ days(s.averageExceptionClosureDays) }}
               </td>

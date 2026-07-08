@@ -12,6 +12,8 @@ import { MatTableModule } from '@angular/material/table';
 
 import { NotificationAdminService } from '../../../../core/services/notifications-admin.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { TranslationService } from '../../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
 import { NotificationDispatch } from '../../../../core/models';
@@ -31,6 +33,7 @@ const PAGE_LIMIT = 100;
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -41,6 +44,7 @@ const PAGE_LIMIT = 100;
 export class NotificationDeadLetterComponent {
   private readonly notifications = inject(NotificationAdminService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(TranslationService);
   private readonly auth = inject(AuthService);
 
   readonly displayedColumns = [
@@ -81,7 +85,9 @@ export class NotificationDeadLetterComponent {
   retry(dispatch: NotificationDispatch): void {
     this.notifications.retryDispatch(dispatch.id).subscribe({
       next: () => {
-        this.notify.success('Dispatch re-queued for retry.');
+        this.notify.success(
+          this.i18n.translate('notifications.deadLetter.toast.retried'),
+        );
         this.fetch();
       },
     });

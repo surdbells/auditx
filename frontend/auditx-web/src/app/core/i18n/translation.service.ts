@@ -52,12 +52,15 @@ export class TranslationService {
    * Resolve a translation key for the active language. Falls back to English, then to
    * the raw key. `{{name}}`-style placeholders are replaced from `params`.
    */
-  translate(key: string, params?: Record<string, string | number>): string {
+  translate(
+    key: string,
+    params?: Record<string, string | number | null | undefined>,
+  ): string {
     const active = DICTIONARIES[this.lang()] ?? DICTIONARIES.en;
     let value = active[key] ?? DICTIONARIES.en[key] ?? key;
     if (params) {
       for (const [name, replacement] of Object.entries(params)) {
-        value = value.split(`{{${name}}}`).join(String(replacement));
+        value = value.split(`{{${name}}}`).join(String(replacement ?? ''));
       }
     }
     return value;

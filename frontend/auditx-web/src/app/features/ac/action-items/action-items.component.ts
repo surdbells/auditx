@@ -20,6 +20,8 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
 import { AcActionItem, UserDto } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { humanise } from '../format';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -51,6 +53,7 @@ const STATUS_OPTIONS = ['', 'open', 'in_progress', 'closed', 'acknowledged'];
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './action-items.component.html',
   styleUrl: './action-items.component.scss',
@@ -61,6 +64,7 @@ export class AcActionItemsComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly statusOptions = STATUS_OPTIONS;
   readonly displayedColumns = [
@@ -152,11 +156,13 @@ export class AcActionItemsComponent {
           }
           this.service.createActionItem(request).subscribe({
             next: () => {
-              this.notify.success('Action item created.');
+              this.notify.success(this.i18n.translate('ac.items.notify.created'));
               this.load();
             },
             error: () =>
-              this.notify.error('We could not create the action item.'),
+              this.notify.error(
+                this.i18n.translate('ac.items.notify.createError'),
+              ),
           });
         });
     });
@@ -170,9 +176,10 @@ export class AcActionItemsComponent {
       .subscribe({
         next: (updated) => {
           this.replace(updated);
-          this.notify.success('Marked in progress.');
+          this.notify.success(this.i18n.translate('ac.items.notify.inProgress'));
         },
-        error: () => this.notify.error('We could not update the item.'),
+        error: () =>
+          this.notify.error(this.i18n.translate('ac.items.notify.updateError')),
       });
   }
 
@@ -189,9 +196,12 @@ export class AcActionItemsComponent {
           .subscribe({
             next: (updated) => {
               this.replace(updated);
-              this.notify.success('Action item closed.');
+              this.notify.success(this.i18n.translate('ac.items.notify.closed'));
             },
-            error: () => this.notify.error('We could not close the item.'),
+            error: () =>
+              this.notify.error(
+                this.i18n.translate('ac.items.notify.closeError'),
+              ),
           });
       });
   }
@@ -202,9 +212,12 @@ export class AcActionItemsComponent {
     this.service.acknowledgeActionItemClosure(item.id).subscribe({
       next: (updated) => {
         this.replace(updated);
-        this.notify.success('Closure acknowledged.');
+        this.notify.success(this.i18n.translate('ac.items.notify.acknowledged'));
       },
-      error: () => this.notify.error('We could not acknowledge the closure.'),
+      error: () =>
+        this.notify.error(
+          this.i18n.translate('ac.items.notify.acknowledgeError'),
+        ),
     });
   }
 

@@ -53,6 +53,8 @@ import {
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -73,6 +75,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './plan-detail.component.html',
   styleUrl: './plan-detail.component.scss',
@@ -88,6 +91,7 @@ export class PlanDetailComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   /** A drag handle column is shown only while the plan's items are reorderable. */
   readonly itemColumns = computed(() =>
@@ -199,7 +203,7 @@ export class PlanDetailComponent {
           }
           this.service.addItem(this.id(), result).subscribe({
             next: () => {
-              this.notify.success('Plan item added.');
+              this.notify.success(this.i18n.translate('planning.toast.itemAdded'));
               this.refresh();
             },
           });
@@ -239,9 +243,11 @@ export class PlanDetailComponent {
 
   removeItem(item: PlanItem): void {
     const data: ConfirmDialogData = {
-      title: 'Remove plan item',
-      message: `Remove the "${item.auditType}" item from this plan?`,
-      confirmLabel: 'Remove',
+      title: this.i18n.translate('planning.remove.title'),
+      message: this.i18n.translate('planning.remove.message', {
+        type: item.auditType,
+      }),
+      confirmLabel: this.i18n.translate('planning.remove.confirm'),
       destructive: true,
     };
     this.dialog
@@ -253,7 +259,7 @@ export class PlanDetailComponent {
         }
         this.service.removeItem(this.id(), item.id).subscribe({
           next: () => {
-            this.notify.success('Plan item removed.');
+            this.notify.success(this.i18n.translate('planning.toast.itemRemoved'));
             this.refresh();
           },
         });
@@ -264,7 +270,7 @@ export class PlanDetailComponent {
     this.service.submit(this.id()).subscribe({
       next: (plan) => {
         this.plan.set(plan);
-        this.notify.success('Plan submitted for approval.');
+        this.notify.success(this.i18n.translate('planning.toast.submitted'));
         this.loadExecution();
       },
     });
@@ -284,7 +290,7 @@ export class PlanDetailComponent {
         this.service.submitRevision(this.id(), result).subscribe({
           next: (plan) => {
             this.plan.set(plan);
-            this.notify.success('Revision submitted.');
+            this.notify.success(this.i18n.translate('planning.toast.revisionSubmitted'));
             this.loadExecution();
           },
         });
@@ -302,7 +308,11 @@ export class PlanDetailComponent {
         this.service.decision(this.id(), result).subscribe({
           next: (plan) => {
             this.plan.set(plan);
-            this.notify.success(`Decision recorded: ${result.decision}.`);
+            this.notify.success(
+              this.i18n.translate('planning.toast.decisionRecorded', {
+                decision: result.decision,
+              }),
+            );
           },
         });
       });
@@ -310,9 +320,9 @@ export class PlanDetailComponent {
 
   close(): void {
     const data: ConfirmDialogData = {
-      title: 'Close plan',
-      message: 'Close this plan? It will become read-only.',
-      confirmLabel: 'Close plan',
+      title: this.i18n.translate('planning.close.title'),
+      message: this.i18n.translate('planning.close.message'),
+      confirmLabel: this.i18n.translate('planning.close.confirm'),
       destructive: true,
     };
     this.dialog
@@ -324,7 +334,7 @@ export class PlanDetailComponent {
         }
         this.service.close(this.id()).subscribe({
           next: () => {
-            this.notify.success('Plan closed.');
+            this.notify.success(this.i18n.translate('planning.toast.closed'));
             this.refresh();
           },
         });

@@ -17,6 +17,8 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
 import { WebhookSubscription } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { WebhookSubscriptionDialogComponent } from '../dialogs/webhook-subscription-dialog.component';
 import {
   ConfirmDialogComponent,
@@ -37,6 +39,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatButtonModule,
     MatIconModule,
     MatListModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -49,6 +52,7 @@ export class WebhookSubscriptionsComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = ['destinationUrl', 'events', 'active', 'actions'];
 
@@ -88,7 +92,11 @@ export class WebhookSubscriptionsComponent {
         }
         this.webhooksService.createSubscription(result).subscribe({
           next: (created) => {
-            this.notify.success(`Subscription to ${created.destinationUrl} created.`);
+            this.notify.success(
+              this.i18n.translate('integrations.subscriptions.created.success', {
+                url: created.destinationUrl,
+              }),
+            );
             this.fetch();
           },
           // 409 (external URL rejected) is surfaced by the error interceptor.
@@ -98,9 +106,11 @@ export class WebhookSubscriptionsComponent {
 
   remove(subscription: WebhookSubscription): void {
     const data: ConfirmDialogData = {
-      title: 'Delete subscription',
-      message: `Delete the webhook to "${subscription.destinationUrl}"?`,
-      confirmLabel: 'Delete',
+      title: this.i18n.translate('integrations.subscriptions.delete.title'),
+      message: this.i18n.translate('integrations.subscriptions.delete.message', {
+        url: subscription.destinationUrl,
+      }),
+      confirmLabel: this.i18n.translate('integrations.actions.delete'),
       destructive: true,
     };
     this.dialog
@@ -112,7 +122,7 @@ export class WebhookSubscriptionsComponent {
         }
         this.webhooksService.deleteSubscription(subscription.id).subscribe({
           next: () => {
-            this.notify.success('Subscription deleted.');
+            this.notify.success(this.i18n.translate('integrations.subscriptions.deleted.success'));
             this.fetch();
           },
         });

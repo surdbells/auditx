@@ -15,6 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { CreateReportTemplateRequest } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 function jsonValidator(control: AbstractControl): ValidationErrors | null {
   const value = (control.value ?? '').trim();
@@ -39,24 +40,25 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>New report template</h2>
+    <h2 mat-dialog-title>{{ 'reports.dialog.template.title' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Name</mat-label>
+          <mat-label>{{ 'reports.dialog.template.nameLabel' | t }}</mat-label>
           <input matInput formControlName="name" autocomplete="off" />
           @if (
             form.controls.name.hasError('required') &&
             form.controls.name.touched
           ) {
-            <mat-error>A name is required.</mat-error>
+            <mat-error>{{ 'reports.dialog.template.nameError' | t }}</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Template definition (JSON)</mat-label>
+          <mat-label>{{ 'reports.dialog.template.definitionLabel' | t }}</mat-label>
           <textarea
             matInput
             rows="10"
@@ -68,22 +70,22 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
             form.controls.templateDefinitionJson.hasError('required') &&
             form.controls.templateDefinitionJson.touched
           ) {
-            <mat-error>A definition is required.</mat-error>
+            <mat-error>{{ 'reports.dialog.template.definitionRequired' | t }}</mat-error>
           } @else if (form.controls.templateDefinitionJson.hasError('json')) {
-            <mat-error>Must be valid JSON.</mat-error>
+            <mat-error>{{ 'reports.dialog.template.definitionJsonError' | t }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'reports.common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        Create
+        {{ 'reports.common.create' | t }}
       </button>
     </mat-dialog-actions>
   `,

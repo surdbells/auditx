@@ -1,11 +1,11 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading user…" />
+    <app-loading [message]="'identity.userDetail.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      title="Couldn't load user"
-      message="The user could not be loaded. They may not exist or you may lack access."
+      [title]="'identity.userDetail.error.title' | t"
+      [message]="'identity.userDetail.error.message' | t"
       (retry)="fetch()"
     />
   }
@@ -14,38 +14,38 @@
       <app-page-header [title]="u.displayName" [subtitle]="u.email">
         <button actions matButton="outlined" type="button" (click)="goBack()">
           <mat-icon>arrow_back</mat-icon>
-          Back to users
+          {{ 'identity.userDetail.backToUsers' | t }}
         </button>
       </app-page-header>
 
       <div class="detail__grid">
         <mat-card appearance="outlined" class="detail__profile">
           <mat-card-header>
-            <mat-card-title>Profile</mat-card-title>
+            <mat-card-title>{{ 'identity.userDetail.profile' | t }}</mat-card-title>
           </mat-card-header>
           <mat-card-content>
             <dl class="profile">
-              <dt>Status</dt>
+              <dt>{{ 'identity.field.status' | t }}</dt>
               <dd>
                 <span class="status-badge" [attr.data-status]="u.status">
                   {{ u.status | userStatusLabel }}
                 </span>
               </dd>
-              <dt>First name</dt>
+              <dt>{{ 'identity.field.firstName' | t }}</dt>
               <dd>{{ u.firstName }}</dd>
-              <dt>Last name</dt>
+              <dt>{{ 'identity.field.lastName' | t }}</dt>
               <dd>{{ u.lastName }}</dd>
-              <dt>Email</dt>
+              <dt>{{ 'identity.field.email' | t }}</dt>
               <dd>{{ u.email }}</dd>
-              <dt>Last login</dt>
+              <dt>{{ 'identity.field.lastLogin' | t }}</dt>
               <dd>
                 @if (u.lastLoginAt) {
                   {{ u.lastLoginAt | date: 'medium' }}
                 } @else {
-                  <span class="muted">Never</span>
+                  <span class="muted">{{ 'identity.common.never' | t }}</span>
                 }
               </dd>
-              <dt>User ID</dt>
+              <dt>{{ 'identity.field.userId' | t }}</dt>
               <dd class="mono">{{ u.id }}</dd>
             </dl>
           </mat-card-content>
@@ -53,10 +53,10 @@
 
         <mat-card appearance="outlined" class="detail__roles">
           <mat-card-header class="detail__card-header">
-            <mat-card-title>Roles</mat-card-title>
+            <mat-card-title>{{ 'identity.userDetail.roles' | t }}</mat-card-title>
             <button matButton="filled" type="button" (click)="openGrantRole()">
               <mat-icon>add</mat-icon>
-              Grant role
+              {{ 'identity.grantRole.title' | t }}
             </button>
           </mat-card-header>
           <mat-card-content>
@@ -68,20 +68,20 @@
                     <span matListItemTitle>{{ role.roleName }}</span>
                     <span matListItemLine>
                       @if (role.scopeValue) {
-                        Scope: {{ role.scopeValue }}
+                        {{ 'identity.userDetail.scopePrefix' | t }}{{ role.scopeValue }}
                       } @else {
-                        Global scope
+                        {{ 'identity.userDetail.globalScope' | t }}
                       }
                       @if (!role.isActive) {
-                        · inactive
+                        {{ 'identity.userDetail.inactiveSuffix' | t }}
                       }
                     </span>
                     <button
                       matIconButton
                       matListItemMeta
                       type="button"
-                      matTooltip="Revoke role"
-                      [attr.aria-label]="'Revoke ' + role.roleName"
+                      [matTooltip]="'identity.userDetail.revokeRole' | t"
+                      [attr.aria-label]="'identity.userDetail.revokeAria' | t: { name: role.roleName }"
                       (click)="revokeRole(role)"
                     >
                       <mat-icon>delete_outline</mat-icon>
@@ -90,17 +90,17 @@
                 }
               </mat-list>
             } @else {
-              <p class="muted">No roles assigned directly to this user.</p>
+              <p class="muted">{{ 'identity.userDetail.noRoles' | t }}</p>
             }
           </mat-card-content>
         </mat-card>
 
         <mat-card appearance="outlined" class="detail__delegations">
           <mat-card-header class="detail__card-header">
-            <mat-card-title>Delegations</mat-card-title>
+            <mat-card-title>{{ 'identity.userDetail.delegations' | t }}</mat-card-title>
             <button matButton="filled" type="button" (click)="openCreateDelegation()">
               <mat-icon>add</mat-icon>
-              New delegation
+              {{ 'identity.userDetail.newDelegation' | t }}
             </button>
           </mat-card-header>
           <mat-card-content>
@@ -108,24 +108,24 @@
               <div class="table-scroll">
                 <table mat-table [dataSource]="delegations()" class="detail__table">
                   <ng-container matColumnDef="roleName">
-                    <th mat-header-cell *matHeaderCellDef>Role</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'identity.field.role' | t }}</th>
                     <td mat-cell *matCellDef="let d">{{ d.roleName }}</td>
                   </ng-container>
                   <ng-container matColumnDef="period">
-                    <th mat-header-cell *matHeaderCellDef>Period</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'identity.userDetail.period' | t }}</th>
                     <td mat-cell *matCellDef="let d">
                       {{ d.startDate | date: 'mediumDate' }} –
                       {{ d.endDate | date: 'mediumDate' }}
                     </td>
                   </ng-container>
                   <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'identity.field.status' | t }}</th>
                     <td mat-cell *matCellDef="let d">
                       <span
                         class="status-badge"
                         [attr.data-status]="d.isActive ? 'active' : 'deactivated'"
                       >
-                        {{ d.isActive ? 'Active' : 'Inactive' }}
+                        {{ (d.isActive ? 'identity.status.active' : 'identity.status.inactive') | t }}
                       </span>
                     </td>
                   </ng-container>
@@ -135,8 +135,8 @@
                       <button
                         matIconButton
                         type="button"
-                        matTooltip="Revoke delegation"
-                        aria-label="Revoke delegation"
+                        [matTooltip]="'identity.userDetail.revokeDelegation' | t"
+                        [attr.aria-label]="'identity.userDetail.revokeDelegation' | t"
                         (click)="revokeDelegation(d)"
                       >
                         <mat-icon>delete_outline</mat-icon>
@@ -148,7 +148,7 @@
                 </table>
               </div>
             } @else {
-              <p class="muted">No delegations for this user.</p>
+              <p class="muted">{{ 'identity.userDetail.noDelegations' | t }}</p>
             }
           </mat-card-content>
         </mat-card>

@@ -19,6 +19,8 @@ import {
   RaiseExceptionRequest,
   UserDto,
 } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 export interface RaiseExceptionDialogData {
   /** Checklist item this exception is raised against. */
@@ -31,13 +33,6 @@ export interface RaiseExceptionDialogData {
   /** Users selectable as the exception owner. */
   users: UserDto[];
 }
-
-const SEVERITIES: { value: ExceptionSeverity; label: string }[] = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-  { value: 'critical', label: 'Critical' },
-];
 
 /** Converts a Date to an ISO `yyyy-MM-dd` DateOnly string. */
 function toDateOnly(value: Date | null): string {
@@ -191,8 +186,14 @@ export class RaiseExceptionDialogComponent {
   >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
   private readonly refLookup = inject(ReferenceDataLookupService);
+  private readonly i18n = inject(TranslationService);
 
-  readonly severities = SEVERITIES;
+  readonly severities: { value: ExceptionSeverity; label: string }[] = [
+    { value: 'low', label: this.i18n.translate('exceptions.severity.low') },
+    { value: 'medium', label: this.i18n.translate('exceptions.severity.medium') },
+    { value: 'high', label: this.i18n.translate('exceptions.severity.high') },
+    { value: 'critical', label: this.i18n.translate('exceptions.severity.critical') },
+  ];
   /** Active exception-category reference-data items (lazy-loaded). */
   readonly categories = this.refLookup.options('exception_category');
 

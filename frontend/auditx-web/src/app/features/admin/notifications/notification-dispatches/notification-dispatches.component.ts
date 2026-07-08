@@ -17,6 +17,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 
 import { NotificationAdminService } from '../../../../core/services/notifications-admin.service';
+import { TranslationService } from '../../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { DispatchStatus, NotificationDispatch } from '../../../../core/models';
 import { humaniseStatus } from '../humanise-status';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
@@ -40,6 +42,7 @@ const PAGE_LIMIT = 100;
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -49,6 +52,7 @@ const PAGE_LIMIT = 100;
 })
 export class NotificationDispatchesComponent {
   private readonly notifications = inject(NotificationAdminService);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'eventType',
@@ -62,13 +66,34 @@ export class NotificationDispatchesComponent {
   ];
 
   readonly statuses: { value: DispatchStatus | ''; label: string }[] = [
-    { value: '', label: 'All statuses' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'dispatched', label: 'Dispatched' },
-    { value: 'delivered', label: 'Delivered' },
-    { value: 'bounced', label: 'Bounced' },
-    { value: 'failed', label: 'Failed' },
-    { value: 'dead_letter', label: 'Dead-letter' },
+    {
+      value: '',
+      label: this.i18n.translate('notifications.dispatches.status.all'),
+    },
+    {
+      value: 'pending',
+      label: this.i18n.translate('notifications.status.pending'),
+    },
+    {
+      value: 'dispatched',
+      label: this.i18n.translate('notifications.status.dispatched'),
+    },
+    {
+      value: 'delivered',
+      label: this.i18n.translate('notifications.status.delivered'),
+    },
+    {
+      value: 'bounced',
+      label: this.i18n.translate('notifications.status.bounced'),
+    },
+    {
+      value: 'failed',
+      label: this.i18n.translate('notifications.status.failed'),
+    },
+    {
+      value: 'dead_letter',
+      label: this.i18n.translate('notifications.status.deadLetter'),
+    },
   ];
 
   readonly statusFilter = new FormControl<DispatchStatus | ''>('', {

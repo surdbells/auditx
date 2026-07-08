@@ -10,6 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { GenerateAcPackRequest } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /**
  * Generate a new AC pack for a reporting period. HTML is always produced; the
@@ -25,41 +26,42 @@ import { GenerateAcPackRequest } from '../../../core/models';
     MatInputModule,
     MatCheckboxModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Generate AC pack</h2>
+    <h2 mat-dialog-title>{{ 'ac.generatePack.title' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Period start</mat-label>
+          <mat-label>{{ 'ac.generatePack.periodStart' | t }}</mat-label>
           <input matInput type="date" formControlName="periodStart" />
         </mat-form-field>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Period end</mat-label>
+          <mat-label>{{ 'ac.generatePack.periodEnd' | t }}</mat-label>
           <input matInput type="date" formControlName="periodEnd" />
         </mat-form-field>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Committee-meeting label (optional)</mat-label>
+          <mat-label>{{ 'ac.generatePack.meetingLabel' | t }}</mat-label>
           <input
             matInput
             formControlName="acMeetingLabel"
-            placeholder="e.g. Q1 2026 Audit Committee"
+            [placeholder]="'ac.generatePack.meetingPlaceholder' | t"
           />
         </mat-form-field>
         <mat-checkbox formControlName="docx">
-          Also produce a DOCX artefact
+          {{ 'ac.generatePack.docx' | t }}
         </mat-checkbox>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'ac.common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        Generate
+        {{ 'ac.generatePack.submit' | t }}
       </button>
     </mat-dialog-actions>
   `,

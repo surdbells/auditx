@@ -21,6 +21,8 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
 import { AcComment, AcCommentTargetType } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 
 /**
  * AC commentary box (BR-M13-010): a polymorphic comment thread attached to a
@@ -38,6 +40,7 @@ import { AcComment, AcCommentTargetType } from '../../../../core/models';
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
+    TranslatePipe,
   ],
   templateUrl: './ac-comments.component.html',
   styleUrl: './ac-comments.component.scss',
@@ -51,6 +54,7 @@ export class AcCommentsComponent {
   readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(TranslationService);
 
   readonly comments = signal<AcComment[]>([]);
   readonly loading = signal(false);
@@ -103,7 +107,7 @@ export class AcCommentsComponent {
         },
         error: () => {
           this.posting.set(false);
-          this.notify.error('We could not post your comment.');
+          this.notify.error(this.i18n.translate('ac.comments.postError'));
         },
       });
   }

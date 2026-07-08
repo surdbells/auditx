@@ -39,6 +39,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -61,6 +63,7 @@ const PAGE_SIZE = 20;
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './audits-list.component.html',
   styleUrl: './audits-list.component.scss',
@@ -73,6 +76,7 @@ export class AuditsListComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
   /** Backs the audit-type filter dropdown and column labels (lazy-loaded). */
   readonly refLookup = inject(ReferenceDataLookupService);
 
@@ -86,15 +90,29 @@ export class AuditsListComponent {
     'progress',
   ];
 
-  readonly statuses: { value: AuditStatus | 'all'; label: string }[] = [
-    { value: 'all', label: 'All statuses' },
-    { value: 'draft', label: 'Draft' },
-    { value: 'planned', label: 'Planned' },
-    { value: 'in_progress', label: 'In progress' },
-    { value: 'under_review', label: 'Under review' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' },
-  ];
+  readonly statuses = computed<{ value: AuditStatus | 'all'; label: string }[]>(
+    () => [
+      { value: 'all', label: this.i18n.translate('audits.status.all') },
+      { value: 'draft', label: this.i18n.translate('audits.status.draft') },
+      { value: 'planned', label: this.i18n.translate('audits.status.planned') },
+      {
+        value: 'in_progress',
+        label: this.i18n.translate('audits.status.inProgress'),
+      },
+      {
+        value: 'under_review',
+        label: this.i18n.translate('audits.status.underReview'),
+      },
+      {
+        value: 'completed',
+        label: this.i18n.translate('audits.status.completed'),
+      },
+      {
+        value: 'cancelled',
+        label: this.i18n.translate('audits.status.cancelled'),
+      },
+    ],
+  );
 
   readonly filters = this.fb.nonNullable.group({
     status: 'all' as AuditStatus | 'all',
@@ -206,7 +224,11 @@ export class AuditsListComponent {
           }
           this.service.create(result).subscribe({
             next: (created) => {
-              this.notify.success(`Audit "${created.name}" created.`);
+              this.notify.success(
+                this.i18n.translate('audits.notify.created', {
+                  name: created.name,
+                }),
+              );
               void this.router.navigate(['/audits', created.id]);
             },
           });

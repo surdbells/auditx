@@ -24,6 +24,8 @@ import {
   SanctionsCaseStatus,
 } from '../../../../core/models';
 import { humanise } from '../humanise';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
@@ -48,6 +50,7 @@ const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -62,6 +65,7 @@ export class SanctionsTrackerComponent {
   private readonly userLookup = inject(UserLookupService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'subject',
@@ -73,15 +77,39 @@ export class SanctionsTrackerComponent {
   ];
 
   readonly statuses: { value: SanctionsCaseStatus | 'all'; label: string }[] = [
-    { value: 'all', label: 'All statuses' },
-    { value: 'recommendation_drafted', label: 'Recommendation drafted' },
-    { value: 'recommendation_submitted', label: 'Recommendation submitted' },
-    { value: 'hr_outcome_recorded', label: 'HR outcome recorded' },
-    { value: 'dc_referral', label: 'DC referral' },
-    { value: 'dc_decision_recorded', label: 'DC decision recorded' },
-    { value: 'appealed', label: 'Appealed' },
-    { value: 'appeal_decision_recorded', label: 'Appeal decision recorded' },
-    { value: 'closed', label: 'Closed' },
+    { value: 'all', label: this.i18n.translate('sanctions.status.all') },
+    {
+      value: 'recommendation_drafted',
+      label: this.i18n.translate('sanctions.status.recommendation_drafted'),
+    },
+    {
+      value: 'recommendation_submitted',
+      label: this.i18n.translate('sanctions.status.recommendation_submitted'),
+    },
+    {
+      value: 'hr_outcome_recorded',
+      label: this.i18n.translate('sanctions.status.hr_outcome_recorded'),
+    },
+    {
+      value: 'dc_referral',
+      label: this.i18n.translate('sanctions.status.dc_referral'),
+    },
+    {
+      value: 'dc_decision_recorded',
+      label: this.i18n.translate('sanctions.status.dc_decision_recorded'),
+    },
+    {
+      value: 'appealed',
+      label: this.i18n.translate('sanctions.status.appealed'),
+    },
+    {
+      value: 'appeal_decision_recorded',
+      label: this.i18n.translate('sanctions.status.appeal_decision_recorded'),
+    },
+    {
+      value: 'closed',
+      label: this.i18n.translate('sanctions.status.closed'),
+    },
   ];
 
   readonly filters = this.fb.nonNullable.group({

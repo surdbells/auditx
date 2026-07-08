@@ -9,6 +9,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { BankSettingsComponent } from './bank-settings/bank-settings.component';
 import { BulkUsersComponent } from './bulk-users/bulk-users.component';
 import { SupportChannelComponent } from './support-channel/support-channel.component';
@@ -22,6 +23,7 @@ import { SystemHealthComponent } from './system-health/system-health.component';
   imports: [
     MatTabsModule,
     PageHeaderComponent,
+    TranslatePipe,
     BankSettingsComponent,
     BulkUsersComponent,
     SupportChannelComponent,

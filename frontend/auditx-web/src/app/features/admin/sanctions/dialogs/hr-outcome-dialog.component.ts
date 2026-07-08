@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { HrOutcomeType } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface HrOutcomeDialogResult {
   outcomeType: HrOutcomeType;
@@ -17,10 +18,10 @@ export interface HrOutcomeDialogResult {
 }
 
 const OUTCOMES: { value: HrOutcomeType; label: string }[] = [
-  { value: 'imposed', label: 'Imposed' },
-  { value: 'declined', label: 'Declined' },
-  { value: 'modified', label: 'Modified' },
-  { value: 'dc_referral', label: 'Refer to disciplinary committee' },
+  { value: 'imposed', label: 'sanctions.hrOutcome.imposed' },
+  { value: 'declined', label: 'sanctions.hrOutcome.declined' },
+  { value: 'modified', label: 'sanctions.hrOutcome.modified' },
+  { value: 'dc_referral', label: 'sanctions.referDc.title' },
 ];
 
 /** Captures the HR authority's outcome on the recommended sanction. */
@@ -34,40 +35,41 @@ const OUTCOMES: { value: HrOutcomeType; label: string }[] = [
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Record HR outcome</h2>
+    <h2 mat-dialog-title>{{ 'sanctions.action.recordHrOutcome' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Outcome</mat-label>
+          <mat-label>{{ 'sanctions.field.outcome' | t }}</mat-label>
           <mat-select formControlName="outcomeType">
             @for (o of outcomes; track o.value) {
-              <mat-option [value]="o.value">{{ o.label }}</mat-option>
+              <mat-option [value]="o.value">{{ o.label | t }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Detail</mat-label>
+          <mat-label>{{ 'sanctions.field.detail' | t }}</mat-label>
           <textarea matInput formControlName="detail" rows="3"></textarea>
           @if (
             form.controls.detail.hasError('required') &&
             form.controls.detail.touched
           ) {
-            <mat-error>Detail is required.</mat-error>
+            <mat-error>{{ 'sanctions.dialog.hrOutcome.detailRequired' | t }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'sanctions.common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        Save
+        {{ 'sanctions.common.save' | t }}
       </button>
     </mat-dialog-actions>
   `,

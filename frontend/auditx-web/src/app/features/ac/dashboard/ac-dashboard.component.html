@@ -1,15 +1,15 @@
 <app-page-header
-  title="Audit-committee dashboard"
-  subtitle="Live, read-only governance aggregates. Sanctions are reported by business unit only."
+  [title]="'ac.dashboard.title' | t"
+  [subtitle]="'ac.dashboard.subtitle' | t"
 />
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading dashboard…" />
+    <app-loading [message]="'ac.dashboard.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the AC dashboard."
+      [message]="'ac.dashboard.error' | t"
       (retry)="fetch()"
     />
   }

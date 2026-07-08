@@ -1,17 +1,17 @@
 <div class="dead-letter__toolbar">
   <button matButton type="button" (click)="fetch()">
     <mat-icon>refresh</mat-icon>
-    Refresh
+    {{ 'notifications.actions.refresh' | t }}
   </button>
 </div>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading dead-letter queue…" />
+    <app-loading [message]="'notifications.deadLetter.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the dead-letter queue."
+      [message]="'notifications.deadLetter.error.load' | t"
       (retry)="fetch()"
     />
   }
@@ -19,8 +19,8 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="mark_email_read"
-        title="Dead-letter queue is empty"
-        message="No notification dispatches have been dead-lettered."
+        [title]="'notifications.deadLetter.empty.title' | t"
+        [message]="'notifications.deadLetter.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="dead-letter__table-card">
@@ -31,7 +31,7 @@
             class="dead-letter__table"
           >
             <ng-container matColumnDef="eventType">
-              <th mat-header-cell *matHeaderCellDef>Event</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.event' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 <span class="dead-letter__event">{{ d.eventType }}</span>
                 <span class="dead-letter__template">{{ d.templateKey }}</span>
@@ -39,36 +39,36 @@
             </ng-container>
 
             <ng-container matColumnDef="recipient">
-              <th mat-header-cell *matHeaderCellDef>Recipient</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.recipient' | t }}</th>
               <td mat-cell *matCellDef="let d">{{ d.recipientAddress }}</td>
             </ng-container>
 
             <ng-container matColumnDef="channel">
-              <th mat-header-cell *matHeaderCellDef>Channel</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.channel' | t }}</th>
               <td mat-cell *matCellDef="let d" class="dead-letter__channel">
                 {{ d.channel }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="attempts">
-              <th mat-header-cell *matHeaderCellDef>Attempts</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.attempts' | t }}</th>
               <td mat-cell *matCellDef="let d">{{ d.attempts }}</td>
             </ng-container>
 
             <ng-container matColumnDef="lastError">
-              <th mat-header-cell *matHeaderCellDef>Last error</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.lastError' | t }}</th>
               <td mat-cell *matCellDef="let d" class="dead-letter__error">
                 {{ d.lastError ?? '—' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'notifications.column.actions' | t"></th>
               <td mat-cell *matCellDef="let d">
                 @if (canRetry()) {
                   <button matButton type="button" (click)="retry(d)">
                     <mat-icon>replay</mat-icon>
-                    Retry
+                    {{ 'notifications.actions.retry' | t }}
                   </button>
                 }
               </td>

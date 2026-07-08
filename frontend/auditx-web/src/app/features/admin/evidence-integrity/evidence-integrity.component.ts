@@ -24,6 +24,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -40,6 +42,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './evidence-integrity.component.html',
   styleUrl: './evidence-integrity.component.scss',
@@ -48,6 +51,7 @@ export class EvidenceIntegrityComponent {
   private readonly service = inject(AuditTrailService);
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'filename',
@@ -92,7 +96,9 @@ export class EvidenceIntegrityComponent {
           .unflagEvidence(evidence.auditId, evidence.id, result.resolution)
           .subscribe({
             next: () => {
-              this.notify.success('Evidence unflagged.');
+              this.notify.success(
+                this.i18n.translate('adminMisc.evidence.unflagged'),
+              );
               this.fetch();
             },
           });

@@ -24,6 +24,7 @@ import {
   PlanRevisionKind,
   SubmitRevisionRequest,
 } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface SubmitRevisionDialogData {
   items: PlanItem[];
@@ -57,23 +58,24 @@ function toDateOnly(value: Date | null): string {
     MatRadioModule,
     MatDatepickerModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Submit revision</h2>
+    <h2 mat-dialog-title>{{ 'planning.revisionDialog.title' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-radio-group formControlName="kind" class="kind">
           <mat-radio-button value="minor">
-            Minor — shift a single item's dates
+            {{ 'planning.revisionDialog.minor' | t }}
           </mat-radio-button>
           <mat-radio-button value="material">
-            Material — re-open the plan for re-approval
+            {{ 'planning.revisionDialog.material' | t }}
           </mat-radio-button>
         </mat-radio-group>
 
         @if (isMinor()) {
           <mat-form-field appearance="outline" class="full">
-            <mat-label>Item</mat-label>
+            <mat-label>{{ 'planning.revisionDialog.item' | t }}</mat-label>
             <mat-select formControlName="itemId">
               @for (i of data.items; track i.id) {
                 <mat-option [value]="i.id">
@@ -82,19 +84,19 @@ function toDateOnly(value: Date | null): string {
               }
             </mat-select>
             @if (form.controls.itemId.hasError('required') && form.controls.itemId.touched) {
-              <mat-error>Select the item to reschedule.</mat-error>
+              <mat-error>{{ 'planning.revisionDialog.itemRequired' | t }}</mat-error>
             }
           </mat-form-field>
 
           <div class="row">
             <mat-form-field appearance="outline">
-              <mat-label>New start</mat-label>
+              <mat-label>{{ 'planning.revisionDialog.newStart' | t }}</mat-label>
               <input matInput [matDatepicker]="startPicker" formControlName="newStartDate" />
               <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
               <mat-datepicker #startPicker />
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>New end</mat-label>
+              <mat-label>{{ 'planning.revisionDialog.newEnd' | t }}</mat-label>
               <input matInput [matDatepicker]="endPicker" formControlName="newEndDate" />
               <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
               <mat-datepicker #endPicker />
@@ -102,16 +104,15 @@ function toDateOnly(value: Date | null): string {
           </div>
         } @else {
           <p class="hint">
-            A material revision re-opens the whole plan so items can be added,
-            removed or rescheduled, then re-submitted for AC Chair approval.
+            {{ 'planning.revisionDialog.materialHint' | t }}
           </p>
         }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'planning.common.cancel' | t }}</button>
       <button matButton="filled" type="button" (click)="submit()" [disabled]="invalid()">
-        Submit
+        {{ 'planning.common.submit' | t }}
       </button>
     </mat-dialog-actions>
   `,

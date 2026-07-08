@@ -1,15 +1,15 @@
 <app-page-header
-  title="Evidence Integrity"
-  subtitle="Evidence files flagged for integrity review (hash mismatches, tampering)."
+  [title]="'adminMisc.evidence.title' | t"
+  [subtitle]="'adminMisc.evidence.subtitle' | t"
 />
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading flagged evidence…" />
+    <app-loading [message]="'adminMisc.evidence.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the flagged evidence."
+      [message]="'adminMisc.evidence.error' | t"
       (retry)="fetch()"
     />
   }
@@ -17,15 +17,17 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="verified"
-        title="No flagged evidence"
-        message="All evidence files have passed integrity checks."
+        [title]="'adminMisc.evidence.empty.title' | t"
+        [message]="'adminMisc.evidence.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="integrity__table-card">
         <div class="integrity__table-wrapper">
           <table mat-table [dataSource]="flagged()" class="integrity__table">
             <ng-container matColumnDef="filename">
-              <th mat-header-cell *matHeaderCellDef>Filename</th>
+              <th mat-header-cell *matHeaderCellDef>
+                {{ 'adminMisc.evidence.column.filename' | t }}
+              </th>
               <td mat-cell *matCellDef="let e">
                 <span class="integrity__filename">{{
                   e.originalFilename
@@ -36,30 +38,40 @@
 
             <!-- TODO(ux): auditId shown as raw id — no audit-name lookup is wired into this integrity grid yet. -->
             <ng-container matColumnDef="auditId">
-              <th mat-header-cell *matHeaderCellDef>Audit ID</th>
+              <th mat-header-cell *matHeaderCellDef>
+                {{ 'adminMisc.evidence.column.auditId' | t }}
+              </th>
               <td mat-cell *matCellDef="let e">{{ e.auditId }}</td>
             </ng-container>
 
             <ng-container matColumnDef="sha256">
-              <th mat-header-cell *matHeaderCellDef>SHA-256</th>
+              <th mat-header-cell *matHeaderCellDef>
+                {{ 'adminMisc.evidence.column.sha256' | t }}
+              </th>
               <td mat-cell *matCellDef="let e" class="integrity__hash">
                 {{ e.sha256Hash }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="uploadedAt">
-              <th mat-header-cell *matHeaderCellDef>Uploaded at</th>
+              <th mat-header-cell *matHeaderCellDef>
+                {{ 'adminMisc.evidence.column.uploadedAt' | t }}
+              </th>
               <td mat-cell *matCellDef="let e">
                 {{ e.uploadedAt | date: 'short' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                [attr.aria-label]="'adminMisc.evidence.column.actions' | t"
+              ></th>
               <td mat-cell *matCellDef="let e">
                 <button matButton type="button" (click)="unflag(e)">
                   <mat-icon>flag_off</mat-icon>
-                  Unflag
+                  {{ 'adminMisc.evidence.actions.unflag' | t }}
                 </button>
               </td>
             </ng-container>

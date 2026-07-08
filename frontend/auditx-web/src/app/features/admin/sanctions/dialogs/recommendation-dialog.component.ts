@@ -9,6 +9,8 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+
 export interface RecommendationDialogData {
   recommendation: string | null;
   gridRecommendedRange: string | null;
@@ -35,47 +37,47 @@ export interface RecommendationDialogResult {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Record recommendation</h2>
+    <h2 mat-dialog-title>{{ 'sanctions.dialog.recommendation.title' | t }}</h2>
     <mat-dialog-content>
       @if (data.gridRecommendedRange) {
         <p class="grid-hint">
-          Grid v{{ data.gridConsultedVersion }} recommends:
+          {{ 'sanctions.dialog.recommendation.gridRecommends' | t: { version: data.gridConsultedVersion } }}
           <strong>{{ data.gridRecommendedRange }}</strong>
         </p>
       } @else {
         <p class="grid-hint muted">
-          No active grid cell matched this case — record a recommendation and a
-          deviation reason.
+          {{ 'sanctions.dialog.recommendation.noGrid' | t }}
         </p>
       }
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Recommendation</mat-label>
+          <mat-label>{{ 'sanctions.field.recommendation' | t }}</mat-label>
           <textarea matInput formControlName="recommendation" rows="3"></textarea>
           @if (
             form.controls.recommendation.hasError('required') &&
             form.controls.recommendation.touched
           ) {
-            <mat-error>A recommendation is required.</mat-error>
+            <mat-error>{{ 'sanctions.dialog.recommendation.required' | t }}</mat-error>
           }
         </mat-form-field>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Deviation reason (if outside the grid range)</mat-label>
+          <mat-label>{{ 'sanctions.dialog.recommendation.deviationLabel' | t }}</mat-label>
           <textarea matInput formControlName="deviationReason" rows="2"></textarea>
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'sanctions.common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        Save
+        {{ 'sanctions.common.save' | t }}
       </button>
     </mat-dialog-actions>
   `,

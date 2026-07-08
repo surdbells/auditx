@@ -1,6 +1,6 @@
 <app-page-header
-  title="Audit-committee packs"
-  subtitle="Versioned, hash-sealed AC packs for committee review and distribution."
+  [title]="'ac.packs.title' | t"
+  [subtitle]="'ac.packs.subtitle' | t"
 >
   <div actions class="pack-list__actions">
     @if (canGenerate()) {
@@ -11,7 +11,7 @@
         [disabled]="generating()"
       >
         <mat-icon>add</mat-icon>
-        {{ generating() ? 'Generating…' : 'Generate pack' }}
+        {{ (generating() ? 'ac.packs.generating' : 'ac.packs.generate') | t }}
       </button>
     }
   </div>
@@ -19,13 +19,13 @@
 
 <div class="pack-list__filter">
   <mat-form-field appearance="outline">
-    <mat-label>Status</mat-label>
+    <mat-label>{{ 'ac.field.status' | t }}</mat-label>
     <mat-select
       [value]="statusFilter()"
       (valueChange)="onStatusChange($event)"
     >
       @for (s of statusOptions; track s) {
-        <mat-option [value]="s">{{ s ? humanise(s) : 'All' }}</mat-option>
+        <mat-option [value]="s">{{ s ? humanise(s) : ('ac.filter.all' | t) }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
@@ -33,11 +33,11 @@
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading AC packs…" />
+    <app-loading [message]="'ac.packs.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the AC packs."
+      [message]="'ac.packs.error' | t"
       (retry)="load()"
     />
   }
@@ -45,22 +45,22 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="folder_open"
-        title="No AC packs yet"
-        message="Generate a pack to begin assembling the committee briefing."
+        [title]="'ac.packs.empty.title' | t"
+        [message]="'ac.packs.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="pack-list__card">
         <div class="pack-list__table-wrapper">
           <table mat-table [dataSource]="packs()" class="pack-list__table">
             <ng-container matColumnDef="version">
-              <th mat-header-cell *matHeaderCellDef>Version</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.packs.col.version' | t }}</th>
               <td mat-cell *matCellDef="let p">
                 <a [routerLink]="['/ac/packs', p.id]">v{{ p.versionNumber }}</a>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="period">
-              <th mat-header-cell *matHeaderCellDef>Period</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.packs.col.period' | t }}</th>
               <td mat-cell *matCellDef="let p">
                 {{ p.periodStart | date: 'mediumDate' }} –
                 {{ p.periodEnd | date: 'mediumDate' }}
@@ -68,12 +68,12 @@
             </ng-container>
 
             <ng-container matColumnDef="meeting">
-              <th mat-header-cell *matHeaderCellDef>Meeting</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.packs.col.meeting' | t }}</th>
               <td mat-cell *matCellDef="let p">{{ p.acMeetingLabel ?? '—' }}</td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.col.status' | t }}</th>
               <td mat-cell *matCellDef="let p">
                 <span class="status-badge" [attr.data-status]="p.status">
                   {{ humanise(p.status) }}
@@ -82,7 +82,7 @@
             </ng-container>
 
             <ng-container matColumnDef="hash">
-              <th mat-header-cell *matHeaderCellDef>SHA-256</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.packs.col.hash' | t }}</th>
               <td mat-cell *matCellDef="let p">
                 <code class="pack-list__hash" [matTooltip]="p.sha256Hash ?? ''">
                   {{ shortHash(p.sha256Hash) }}
@@ -91,7 +91,7 @@
             </ng-container>
 
             <ng-container matColumnDef="requestedAt">
-              <th mat-header-cell *matHeaderCellDef>Requested</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.packs.col.requested' | t }}</th>
               <td mat-cell *matCellDef="let p">
                 {{ p.requestedAt | date: 'medium' }}
               </td>
@@ -110,7 +110,7 @@
               (click)="loadMore()"
               [disabled]="loadingMore()"
             >
-              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+              {{ (loadingMore() ? 'ac.common.loadingShort' : 'ac.common.loadMore') | t }}
             </button>
           </div>
         }

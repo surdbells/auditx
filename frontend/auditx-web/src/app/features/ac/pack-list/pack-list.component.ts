@@ -23,6 +23,8 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
 import { AcPack, AcPackListItem } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { humanise, shortHash } from '../format';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -64,6 +66,7 @@ const STATUS_OPTIONS = [
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './pack-list.component.html',
   styleUrl: './pack-list.component.scss',
@@ -74,6 +77,7 @@ export class AcPackListComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(TranslationService);
 
   readonly statusOptions = STATUS_OPTIONS;
   readonly displayedColumns = [
@@ -167,12 +171,12 @@ export class AcPackListComponent {
         this.generating.set(true);
         this.service.generatePack(request).subscribe({
           next: (result) => {
-            this.notify.info('AC pack generation started.');
+            this.notify.info(this.i18n.translate('ac.packs.notify.started'));
             this.pollUntilSettled(result.acPackId);
           },
           error: () => {
             this.generating.set(false);
-            this.notify.error('We could not start pack generation.');
+            this.notify.error(this.i18n.translate('ac.packs.notify.startError'));
           },
         });
       });
@@ -187,7 +191,7 @@ export class AcPackListComponent {
         error: () => {
           this.pollSub?.unsubscribe();
           this.generating.set(false);
-          this.notify.error('We lost track of the pack generation.');
+          this.notify.error(this.i18n.translate('ac.packs.notify.lostTrack'));
           this.load();
         },
       });
@@ -198,13 +202,19 @@ export class AcPackListComponent {
     if (pack.status === 'failed') {
       this.pollSub?.unsubscribe();
       this.generating.set(false);
-      this.notify.error(pack.failureReason || 'Pack generation failed.');
+      this.notify.error(
+        pack.failureReason || this.i18n.translate('ac.packs.notify.failed'),
+      );
       this.load();
     } else if (pack.status !== 'pending' && pack.status !== 'generating') {
       // pending_review (or beyond): ready for CIA review.
       this.pollSub?.unsubscribe();
       this.generating.set(false);
-      this.notify.success(`AC pack v${pack.versionNumber} is ready for review.`);
+      this.notify.success(
+        this.i18n.translate('ac.packs.notify.ready', {
+          version: pack.versionNumber,
+        }),
+      );
       this.load();
     }
     // pending / generating: keep polling.

@@ -19,6 +19,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { AddPlanItemRequest, EntityListItem } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface PlanItemDialogData {
   /** Universe entities selectable for this plan item. */
@@ -47,44 +48,45 @@ function toDateOnly(value: Date | null): string {
     MatSelectModule,
     MatDatepickerModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Add plan item</h2>
+    <h2 mat-dialog-title>{{ 'planning.itemDialog.title' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Entity</mat-label>
+          <mat-label>{{ 'planning.itemDialog.entity' | t }}</mat-label>
           <mat-select formControlName="entityId">
             @for (e of data.entities; track e.id) {
               <mat-option [value]="e.id">{{ e.name }}</mat-option>
             }
           </mat-select>
           @if (form.controls.entityId.hasError('required') && form.controls.entityId.touched) {
-            <mat-error>Select an entity.</mat-error>
+            <mat-error>{{ 'planning.itemDialog.entityRequired' | t }}</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Audit type</mat-label>
+          <mat-label>{{ 'planning.itemDialog.auditType' | t }}</mat-label>
           <mat-select formControlName="auditType">
             @for (o of auditTypes(); track o.code) {
               <mat-option [value]="o.code">{{ o.label }}</mat-option>
             }
           </mat-select>
           @if (form.controls.auditType.hasError('required') && form.controls.auditType.touched) {
-            <mat-error>An audit type is required.</mat-error>
+            <mat-error>{{ 'planning.itemDialog.auditTypeRequired' | t }}</mat-error>
           }
         </mat-form-field>
 
         <div class="row">
           <mat-form-field appearance="outline">
-            <mat-label>Planned start</mat-label>
+            <mat-label>{{ 'planning.itemDialog.plannedStart' | t }}</mat-label>
             <input matInput [matDatepicker]="startPicker" formControlName="plannedStartDate" />
             <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
             <mat-datepicker #startPicker />
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Planned end</mat-label>
+            <mat-label>{{ 'planning.itemDialog.plannedEnd' | t }}</mat-label>
             <input matInput [matDatepicker]="endPicker" formControlName="plannedEndDate" />
             <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
             <mat-datepicker #endPicker />
@@ -93,13 +95,13 @@ function toDateOnly(value: Date | null): string {
 
         <div class="row">
           <mat-form-field appearance="outline">
-            <mat-label>Estimated effort (days)</mat-label>
+            <mat-label>{{ 'planning.itemDialog.estimatedEffort' | t }}</mat-label>
             <input matInput type="number" formControlName="estimatedEffortDays" min="0" />
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Assigned lead</mat-label>
+            <mat-label>{{ 'planning.itemDialog.assignedLead' | t }}</mat-label>
             <mat-select formControlName="assignedLeadUserId">
-              <mat-option [value]="''">— none —</mat-option>
+              <mat-option [value]="''">{{ 'planning.itemDialog.none' | t }}</mat-option>
               @for (u of userLookup.options(); track u.id) {
                 <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
               }
@@ -109,9 +111,9 @@ function toDateOnly(value: Date | null): string {
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'planning.common.cancel' | t }}</button>
       <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
-        Add item
+        {{ 'planning.common.addItem' | t }}
       </button>
     </mat-dialog-actions>
   `,

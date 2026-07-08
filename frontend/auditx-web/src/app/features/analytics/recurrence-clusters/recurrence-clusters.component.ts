@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { EntityLookupService } from '../../../core/services/entity-lookup.service';
 import { RecurrenceCluster } from '../../../core/models';
@@ -34,6 +35,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,

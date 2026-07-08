@@ -32,6 +32,8 @@ import { TemplatesService } from '../../../../core/services/templates.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ReferenceDataLookupService } from '../../../../core/services/reference-data-lookup.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { Permissions } from '../../../../core/permissions';
 import {
   Template,
@@ -79,6 +81,7 @@ interface SectionGroup {
     CdkDropList,
     CdkDrag,
     CdkDragHandle,
+    TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
@@ -97,6 +100,7 @@ export class TemplateEditorComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
   private readonly refLookup = inject(ReferenceDataLookupService);
 
   /** Active audit-type reference-data items (lazy-loaded). */
@@ -231,7 +235,7 @@ export class TemplateEditorComponent {
         .subscribe({
           next: (created) => {
             this.saving.set(false);
-            this.notify.success('Template created.');
+            this.notify.success(this.i18n.translate('templatesAdmin.notify.created'));
             void this.router.navigate(['/admin/templates', created.id]);
           },
           error: () => this.saving.set(false),
@@ -246,7 +250,7 @@ export class TemplateEditorComponent {
           next: (updated) => {
             this.saving.set(false);
             this.applyTemplate(updated);
-            this.notify.success('Template updated.');
+            this.notify.success(this.i18n.translate('templatesAdmin.notify.updated'));
           },
           error: () => this.saving.set(false),
         });
@@ -257,8 +261,8 @@ export class TemplateEditorComponent {
 
   addSection(): void {
     const data: SectionDialogData = {
-      title: 'Add section',
-      confirmLabel: 'Add',
+      title: this.i18n.translate('templatesAdmin.editor.addSection'),
+      confirmLabel: this.i18n.translate('templatesAdmin.action.add'),
     };
     this.dialog
       .open(SectionDialogComponent, { data, width: '420px' })
@@ -270,7 +274,7 @@ export class TemplateEditorComponent {
         this.templatesService.addSection(this.id(), { name }).subscribe({
           next: (t) => {
             this.applyTemplate(t);
-            this.notify.success('Section added.');
+            this.notify.success(this.i18n.translate('templatesAdmin.notify.sectionAdded'));
           },
         });
       });
@@ -278,8 +282,8 @@ export class TemplateEditorComponent {
 
   renameSection(currentName: string): void {
     const data: SectionDialogData = {
-      title: 'Rename section',
-      confirmLabel: 'Rename',
+      title: this.i18n.translate('templatesAdmin.editor.renameSection'),
+      confirmLabel: this.i18n.translate('templatesAdmin.action.rename'),
       name: currentName,
     };
     this.dialog
@@ -293,7 +297,7 @@ export class TemplateEditorComponent {
           .renameSection(this.id(), { currentName, newName })
           .subscribe({
             next: () => {
-              this.notify.success('Section renamed.');
+              this.notify.success(this.i18n.translate('templatesAdmin.notify.sectionRenamed'));
               this.refresh();
             },
           });
@@ -302,9 +306,11 @@ export class TemplateEditorComponent {
 
   removeSection(name: string): void {
     const data: ConfirmDialogData = {
-      title: 'Remove section',
-      message: `Remove the "${name}" section? Its items will become unsectioned.`,
-      confirmLabel: 'Remove',
+      title: this.i18n.translate('templatesAdmin.editor.removeSection'),
+      message: this.i18n.translate('templatesAdmin.editor.removeSectionMessage', {
+        name,
+      }),
+      confirmLabel: this.i18n.translate('templatesAdmin.action.remove'),
       destructive: true,
     };
     this.dialog
@@ -316,7 +322,7 @@ export class TemplateEditorComponent {
         }
         this.templatesService.removeSection(this.id(), name).subscribe({
           next: () => {
-            this.notify.success('Section removed.');
+            this.notify.success(this.i18n.translate('templatesAdmin.notify.sectionRemoved'));
             this.refresh();
           },
         });
@@ -340,7 +346,7 @@ export class TemplateEditorComponent {
         this.templatesService.addItem(this.id(), body).subscribe({
           next: (t) => {
             this.applyTemplate(t);
-            this.notify.success('Item added.');
+            this.notify.success(this.i18n.translate('templatesAdmin.notify.itemAdded'));
           },
         });
       });
@@ -361,7 +367,7 @@ export class TemplateEditorComponent {
         this.templatesService.updateItem(this.id(), item.id, body).subscribe({
           next: (t) => {
             this.applyTemplate(t);
-            this.notify.success('Item updated.');
+            this.notify.success(this.i18n.translate('templatesAdmin.notify.itemUpdated'));
           },
         });
       });
@@ -369,9 +375,9 @@ export class TemplateEditorComponent {
 
   removeItem(item: TemplateItem): void {
     const data: ConfirmDialogData = {
-      title: 'Remove item',
-      message: 'Remove this item from the template?',
-      confirmLabel: 'Remove',
+      title: this.i18n.translate('templatesAdmin.editor.removeItem'),
+      message: this.i18n.translate('templatesAdmin.editor.removeItemMessage'),
+      confirmLabel: this.i18n.translate('templatesAdmin.action.remove'),
       destructive: true,
     };
     this.dialog
@@ -383,7 +389,7 @@ export class TemplateEditorComponent {
         }
         this.templatesService.removeItem(this.id(), item.id).subscribe({
           next: () => {
-            this.notify.success('Item removed.');
+            this.notify.success(this.i18n.translate('templatesAdmin.notify.itemRemoved'));
             this.refresh();
           },
         });
@@ -536,11 +542,11 @@ export class TemplateEditorComponent {
         this.saving.set(false);
         if (result.kind === 'pending') {
           this.notify.info(
-            'Sent for approval. The template will publish once a second authoriser approves it.',
+            this.i18n.translate('templatesAdmin.notify.publishPending'),
           );
         } else {
           this.applyTemplate(result.template);
-          this.notify.success('Template published.');
+          this.notify.success(this.i18n.translate('templatesAdmin.notify.published'));
         }
       },
       error: () => this.saving.set(false),
@@ -553,7 +559,7 @@ export class TemplateEditorComponent {
       next: (t) => {
         this.saving.set(false);
         this.applyTemplate(t);
-        this.notify.success('New draft version created.');
+        this.notify.success(this.i18n.translate('templatesAdmin.notify.newDraftCreated'));
       },
       error: () => this.saving.set(false),
     });

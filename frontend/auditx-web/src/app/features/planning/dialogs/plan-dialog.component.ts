@@ -16,6 +16,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { Plan, SavePlanRequest } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface PlanDialogData {
   /** Present when editing an existing plan. */
@@ -44,13 +45,14 @@ function toDateOnly(value: Date | null): string {
     MatInputModule,
     MatDatepickerModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>{{ isEdit ? 'Edit plan' : 'New annual plan' }}</h2>
+    <h2 mat-dialog-title>{{ isEdit ? ('planning.planDialog.editTitle' | t) : ('planning.planDialog.newTitle' | t) }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Period label</mat-label>
+          <mat-label>{{ 'planning.planDialog.periodLabel' | t }}</mat-label>
           <input
             matInput
             formControlName="periodLabel"
@@ -58,13 +60,13 @@ function toDateOnly(value: Date | null): string {
             autocomplete="off"
           />
           @if (form.controls.periodLabel.hasError('required') && form.controls.periodLabel.touched) {
-            <mat-error>A period label is required.</mat-error>
+            <mat-error>{{ 'planning.planDialog.periodLabelRequired' | t }}</mat-error>
           }
         </mat-form-field>
 
         <div class="row">
           <mat-form-field appearance="outline">
-            <mat-label>Period start</mat-label>
+            <mat-label>{{ 'planning.planDialog.periodStart' | t }}</mat-label>
             <input
               matInput
               [matDatepicker]="startPicker"
@@ -75,7 +77,7 @@ function toDateOnly(value: Date | null): string {
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Period end</mat-label>
+            <mat-label>{{ 'planning.planDialog.periodEnd' | t }}</mat-label>
             <input
               matInput
               [matDatepicker]="endPicker"
@@ -88,14 +90,14 @@ function toDateOnly(value: Date | null): string {
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'planning.common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        {{ isEdit ? 'Save' : 'Create' }}
+        {{ isEdit ? ('planning.common.save' | t) : ('planning.common.create' | t) }}
       </button>
     </mat-dialog-actions>
   `,

@@ -27,6 +27,8 @@ import {
   AcProducedArtefact,
 } from '../../../core/models';
 import { humanise, shortHash } from '../format';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { downloadBlobResponse } from '../../reports/download';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
@@ -62,6 +64,7 @@ const DISTRIBUTIONS_PAGE_SIZE = 20;
     PageHeaderComponent,
     AcAnalyticsSectionsComponent,
     AcCommentsComponent,
+    TranslatePipe,
   ],
   templateUrl: './pack-viewer.component.html',
   styleUrl: './pack-viewer.component.scss',
@@ -76,6 +79,7 @@ export class AcPackViewerComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly distributionColumns = ['recipient', 'version', 'dispatchedAt', 'outcome'];
 
@@ -151,7 +155,8 @@ export class AcPackViewerComponent {
   download(artefact: AcProducedArtefact): void {
     this.service.downloadPack(this.id(), artefact.format).subscribe({
       next: (res) => this.handleDownload(res, artefact.format),
-      error: () => this.notify.error('We could not download the pack.'),
+      error: () =>
+        this.notify.error(this.i18n.translate('ac.viewer.notify.downloadError')),
     });
   }
 
@@ -159,7 +164,7 @@ export class AcPackViewerComponent {
     const version = this.pack()?.versionNumber ?? 0;
     const fallback = `ac-pack-v${version}.${format}`;
     if (!downloadBlobResponse(res, fallback)) {
-      this.notify.error('The download returned no content.');
+      this.notify.error(this.i18n.translate('ac.viewer.notify.noContent'));
     }
   }
 
@@ -181,10 +186,14 @@ export class AcPackViewerComponent {
           .subscribe({
             next: (pack) => {
               this.pack.set(pack);
-              this.notify.success('Supplementary narrative saved.');
+              this.notify.success(
+                this.i18n.translate('ac.viewer.notify.narrativeSaved'),
+              );
             },
             error: () =>
-              this.notify.error('We could not save the supplementary text.'),
+              this.notify.error(
+                this.i18n.translate('ac.viewer.notify.narrativeSaveError'),
+              ),
           });
       });
   }

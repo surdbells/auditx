@@ -1,26 +1,26 @@
 <app-page-header
-  title="Analytics"
-  subtitle="Dashboards and key-performance indicators for the audit function."
+  [title]="'analytics.list.title' | t"
+  [subtitle]="'analytics.list.subtitle' | t"
 >
   <div actions>
     <a matButton routerLink="/analytics/recurrence-clusters">
       <mat-icon>repeat</mat-icon>
-      Recurrence clusters
+      {{ 'analytics.nav.recurrenceClusters' | t }}
     </a>
     <button matButton type="button" (click)="fetch()">
       <mat-icon>refresh</mat-icon>
-      Refresh
+      {{ 'analytics.actions.refresh' | t }}
     </button>
   </div>
 </app-page-header>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading dashboards…" />
+    <app-loading [message]="'analytics.list.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the analytics dashboards."
+      [message]="'analytics.list.error' | t"
       (retry)="fetch()"
     />
   }
@@ -28,8 +28,8 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="dashboard"
-        title="No dashboards"
-        message="You don't have access to any analytics dashboards yet."
+        [title]="'analytics.list.empty.title' | t"
+        [message]="'analytics.list.empty.message' | t"
       />
     } @else {
       <div class="dashboards__grid">
@@ -50,7 +50,7 @@
               <p class="dashboards__meta">
                 <mat-icon aria-hidden="true">widgets</mat-icon>
                 {{ d.widgetCount }}
-                {{ d.widgetCount === 1 ? 'widget' : 'widgets' }}
+                {{ d.widgetCount === 1 ? ('analytics.list.widget' | t) : ('analytics.list.widgets' | t) }}
               </p>
             </mat-card-content>
           </mat-card>

@@ -22,6 +22,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 
 import { CreateWebhookSubscriptionRequest } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 function jsonValidator(control: AbstractControl): ValidationErrors | null {
   const value = (control.value ?? '').trim();
@@ -47,6 +48,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatChipsModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './webhook-subscription-dialog.component.html',
   styleUrl: './webhook-subscription-dialog.component.scss',

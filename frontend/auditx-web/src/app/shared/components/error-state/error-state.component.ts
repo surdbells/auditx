@@ -7,19 +7,21 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-error-state',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule, TranslatePipe],
   template: `
     <div class="error" role="alert">
       <mat-icon class="error__icon" aria-hidden="true">error_outline</mat-icon>
-      <h3 class="error__title">{{ title() }}</h3>
-      <p class="error__message">{{ message() }}</p>
+      <h3 class="error__title">{{ title() | t }}</h3>
+      <p class="error__message">{{ message() | t }}</p>
       @if (showRetry()) {
         <button matButton="filled" type="button" (click)="retry.emit()">
           <mat-icon>refresh</mat-icon>
-          {{ retryLabel() }}
+          {{ retryLabel() | t }}
         </button>
       }
     </div>
@@ -53,10 +55,10 @@ import { MatIconModule } from '@angular/material/icon';
   `,
 })
 export class ErrorStateComponent {
-  readonly title = input('Something went wrong');
-  readonly message = input('We could not load this content. Please try again.');
+  readonly title = input('shared.error.title');
+  readonly message = input('shared.error.message');
   readonly showRetry = input(true);
-  readonly retryLabel = input('Retry');
+  readonly retryLabel = input('shared.error.retry');
 
   readonly retry = output<void>();
 }

@@ -31,6 +31,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -74,6 +76,7 @@ function toIsoEnd(value: Date | null): string | undefined {
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './audit-trail.component.html',
   styleUrl: './audit-trail.component.scss',
@@ -84,6 +87,7 @@ export class AuditTrailComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'occurredAt',
@@ -218,16 +222,22 @@ export class AuditTrailComponent {
         this.exporting.set(false);
         const blob = response.body;
         if (!blob) {
-          this.notify.error('The export returned no content.');
+          this.notify.error(
+            this.i18n.translate('adminMisc.auditTrail.export.noContent'),
+          );
           return;
         }
         this.triggerDownload(blob);
         const sha = response.headers.get('X-Content-SHA256') ?? 'unknown';
-        this.notify.success(`Exported (SHA-256: ${sha})`);
+        this.notify.success(
+          this.i18n.translate('adminMisc.auditTrail.export.success', { sha }),
+        );
       },
       error: () => {
         this.exporting.set(false);
-        this.notify.error('We could not export the audit trail.');
+        this.notify.error(
+          this.i18n.translate('adminMisc.auditTrail.export.error'),
+        );
       },
     });
   }

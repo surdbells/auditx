@@ -22,6 +22,7 @@ import {
   NotAuditedRow,
 } from '../../core/models';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 type ReportState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -40,6 +41,7 @@ type ReportState = 'idle' | 'loading' | 'ready' | 'error';
     MatButtonModule,
     MatIconModule,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './coverage.component.html',
   styleUrl: './coverage.component.scss',

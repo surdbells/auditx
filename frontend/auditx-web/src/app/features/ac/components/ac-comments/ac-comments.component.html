@@ -1,10 +1,10 @@
 <mat-card appearance="outlined" class="comments">
-  <h3 class="comments__title">Audit-committee comments</h3>
+  <h3 class="comments__title">{{ 'ac.comments.title' | t }}</h3>
 
   @if (loading()) {
-    <p class="comments__muted">Loading comments…</p>
+    <p class="comments__muted">{{ 'ac.comments.loading' | t }}</p>
   } @else if (!comments().length) {
-    <p class="comments__muted">No comments yet.</p>
+    <p class="comments__muted">{{ 'ac.comments.empty' | t }}</p>
   } @else {
     <ul class="comments__list">
       @for (c of comments(); track c.id) {
@@ -21,13 +21,13 @@
   @if (canComment()) {
     <form class="comments__form" (ngSubmit)="post()">
       <mat-form-field appearance="outline" class="comments__field">
-        <mat-label>Add a comment</mat-label>
+        <mat-label>{{ 'ac.comments.addLabel' | t }}</mat-label>
         <textarea
           matInput
           name="draft"
           [(ngModel)]="draft"
           rows="2"
-          placeholder="Share a committee observation…"
+          [placeholder]="'ac.comments.placeholder' | t"
         ></textarea>
       </mat-form-field>
       <button
@@ -36,7 +36,7 @@
         [disabled]="!draft.trim() || posting()"
       >
         <mat-icon>send</mat-icon>
-        Post
+        {{ 'ac.comments.post' | t }}
       </button>
     </form>
   }

@@ -33,6 +33,7 @@ function planItem(overrides: Partial<PlanItem> = {}): PlanItem {
     assignedLeadUserId: null,
     linkedAuditId: null,
     status: 'planned',
+    orderIndex: 0,
     ...overrides,
   };
 }

@@ -16,6 +16,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { FlaggedEvidence } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Rejects empty / whitespace-only resolution notes. */
 function nonBlankValidator(
@@ -42,6 +43,7 @@ export interface UnflagEvidenceDialogResult {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   templateUrl: './unflag-evidence-dialog.component.html',
   styleUrl: './unflag-evidence-dialog.component.scss',

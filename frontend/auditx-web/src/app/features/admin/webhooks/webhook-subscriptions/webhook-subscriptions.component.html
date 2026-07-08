@@ -1,22 +1,22 @@
 <div class="subs__header">
   <p class="subs__intro">
-    Outbound notifications to internal endpoints. External URLs are rejected by the server.
+    {{ 'integrations.subscriptions.intro' | t }}
   </p>
   @if (canManage()) {
     <button matButton="filled" type="button" (click)="create()">
       <mat-icon>add</mat-icon>
-      New subscription
+      {{ 'integrations.subscriptions.new' | t }}
     </button>
   }
 </div>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading subscriptions…" />
+    <app-loading [message]="'integrations.subscriptions.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the webhook subscriptions."
+      [message]="'integrations.subscriptions.error' | t"
       (retry)="fetch()"
     />
   }
@@ -24,45 +24,45 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="webhook"
-        title="No subscriptions"
-        message="Create a subscription to start delivering events."
+        [title]="'integrations.subscriptions.empty.title' | t"
+        [message]="'integrations.subscriptions.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="subs__table-card">
         <div class="subs__table-wrapper">
           <table mat-table [dataSource]="subscriptions()" class="subs__table">
             <ng-container matColumnDef="destinationUrl">
-              <th mat-header-cell *matHeaderCellDef>Destination</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'integrations.subscriptions.col.destination' | t }}</th>
               <td mat-cell *matCellDef="let s">
                 <span class="subs__url">{{ s.destinationUrl }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="events">
-              <th mat-header-cell *matHeaderCellDef>Event types</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'integrations.subscriptions.col.eventTypes' | t }}</th>
               <td mat-cell *matCellDef="let s">
                 {{ s.subscribedEventTypes.join(', ') }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="active">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'integrations.field.status' | t }}</th>
               <td mat-cell *matCellDef="let s">
                 <span class="status-badge" [attr.data-status]="s.isActive ? 'active' : 'deactivated'">
-                  {{ s.isActive ? 'Active' : 'Inactive' }}
+                  {{ (s.isActive ? 'integrations.status.active' : 'integrations.status.inactive') | t }}
                 </span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'integrations.field.actions' | t"></th>
               <td mat-cell *matCellDef="let s">
                 @if (canManage()) {
                   <button
                     matIconButton
                     type="button"
                     (click)="remove(s)"
-                    [attr.aria-label]="'Delete ' + s.destinationUrl"
+                    [attr.aria-label]="'integrations.subscriptions.deleteAria' | t: { url: s.destinationUrl }"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>

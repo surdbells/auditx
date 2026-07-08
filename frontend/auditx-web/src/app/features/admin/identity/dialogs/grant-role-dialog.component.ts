@@ -16,6 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { GrantRoleRequest, RoleDto } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface GrantRoleDialogData {
   userDisplayName: string;
@@ -32,38 +33,40 @@ export interface GrantRoleDialogData {
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Grant role</h2>
+    <h2 mat-dialog-title>{{ 'identity.grantRole.title' | t }}</h2>
     <mat-dialog-content>
       <p class="hint">
-        Assign a role to <strong>{{ data.userDisplayName }}</strong>. Optionally restrict
-        it to a scope (e.g. a business unit or branch code).
+        {{ 'identity.grantRole.hintBefore' | t
+        }}<strong>{{ data.userDisplayName }}</strong
+        >{{ 'identity.grantRole.hintAfter' | t }}
       </p>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Role</mat-label>
+          <mat-label>{{ 'identity.field.role' | t }}</mat-label>
           <mat-select formControlName="roleId">
             @for (role of data.roles; track role.id) {
               <mat-option [value]="role.id">{{ role.name }}</mat-option>
             }
           </mat-select>
           @if (form.controls.roleId.hasError('required') && form.controls.roleId.touched) {
-            <mat-error>Please select a role.</mat-error>
+            <mat-error>{{ 'identity.grantRole.roleRequired' | t }}</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Scope value (optional)</mat-label>
-          <input matInput formControlName="scopeValue" placeholder="e.g. BU-RETAIL" />
-          <mat-hint>Leave blank for an unscoped (global) grant.</mat-hint>
+          <mat-label>{{ 'identity.grantRole.scopeLabel' | t }}</mat-label>
+          <input matInput formControlName="scopeValue" [placeholder]="'identity.grantRole.scopePlaceholder' | t" />
+          <mat-hint>{{ 'identity.grantRole.scopeHint' | t }}</mat-hint>
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'identity.actions.cancel' | t }}</button>
       <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
-        Grant role
+        {{ 'identity.grantRole.title' | t }}
       </button>
     </mat-dialog-actions>
   `,

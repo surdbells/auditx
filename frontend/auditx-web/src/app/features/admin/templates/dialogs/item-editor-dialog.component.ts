@@ -15,6 +15,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
   ResponseType,
   SaveTemplateItemRequest,
@@ -28,8 +30,8 @@ export interface ItemEditorDialogData {
   sections: string[];
 }
 
-const RESPONSE_TYPES: { value: ResponseType; label: string }[] = [
-  { value: 'pass_fail_na', label: 'Pass / Fail / N/A' },
+const RESPONSE_TYPES: { value: ResponseType; labelKey: string }[] = [
+  { value: 'pass_fail_na', labelKey: 'templatesAdmin.responseType.passFailNa' },
 ];
 
 @Component({
@@ -43,13 +45,14 @@ const RESPONSE_TYPES: { value: ResponseType; label: string }[] = [
     MatSelectModule,
     MatCheckboxModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>{{ data.item ? 'Edit item' : 'Add item' }}</h2>
+    <h2 mat-dialog-title>{{ (data.item ? 'templatesAdmin.editor.editItem' : 'templatesAdmin.editor.addItem') | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Prompt</mat-label>
+          <mat-label>{{ 'templatesAdmin.item.prompt' | t }}</mat-label>
           <textarea
             matInput
             formControlName="prompt"
@@ -57,18 +60,18 @@ const RESPONSE_TYPES: { value: ResponseType; label: string }[] = [
             cdkFocusInitial
           ></textarea>
           @if (form.controls.prompt.hasError('required') && form.controls.prompt.touched) {
-            <mat-error>A prompt is required.</mat-error>
+            <mat-error>{{ 'templatesAdmin.error.promptRequired' | t }}</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Reference notes</mat-label>
+          <mat-label>{{ 'templatesAdmin.item.referenceNotes' | t }}</mat-label>
           <textarea matInput formControlName="referenceNotes" rows="2"></textarea>
         </mat-form-field>
 
         <div class="row">
           <mat-form-field appearance="outline">
-            <mat-label>Response type</mat-label>
+            <mat-label>{{ 'templatesAdmin.item.responseType' | t }}</mat-label>
             <mat-select formControlName="responseType">
               @for (rt of responseTypes; track rt.value) {
                 <mat-option [value]="rt.value">{{ rt.label }}</mat-option>
@@ -77,9 +80,9 @@ const RESPONSE_TYPES: { value: ResponseType; label: string }[] = [
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Section</mat-label>
+            <mat-label>{{ 'templatesAdmin.item.section' | t }}</mat-label>
             <mat-select formControlName="sectionName">
-              <mat-option [value]="''">(No section)</mat-option>
+              <mat-option [value]="''">{{ 'templatesAdmin.item.noSection' | t }}</mat-option>
               @for (s of data.sections; track s) {
                 <mat-option [value]="s">{{ s }}</mat-option>
               }
@@ -87,13 +90,13 @@ const RESPONSE_TYPES: { value: ResponseType; label: string }[] = [
           </mat-form-field>
         </div>
 
-        <mat-checkbox formControlName="isRequired">Required</mat-checkbox>
+        <mat-checkbox formControlName="isRequired">{{ 'templatesAdmin.editor.required' | t }}</mat-checkbox>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'templatesAdmin.action.cancel' | t }}</button>
       <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
-        {{ data.item ? 'Save' : 'Add' }}
+        {{ (data.item ? 'templatesAdmin.action.save' : 'templatesAdmin.action.add') | t }}
       </button>
     </mat-dialog-actions>
   `,
@@ -129,8 +132,12 @@ export class ItemEditorDialogComponent {
       MatDialogRef,
     );
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
-  readonly responseTypes = RESPONSE_TYPES;
+  readonly responseTypes = RESPONSE_TYPES.map((rt) => ({
+    value: rt.value,
+    label: this.i18n.translate(rt.labelKey),
+  }));
 
   readonly form = this.fb.nonNullable.group({
     prompt: [this.data.item?.prompt ?? '', [Validators.required]],

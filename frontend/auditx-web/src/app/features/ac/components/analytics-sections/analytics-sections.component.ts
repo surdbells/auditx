@@ -17,6 +17,7 @@ import {
   AcSeverityCount,
 } from '../../../../core/models';
 import { days, humanise, percent } from '../../format';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import {
   BarChartComponent,
   ChartDatum,
@@ -46,6 +47,7 @@ import {
     BarChartComponent,
     DonutChartComponent,
     GaugeChartComponent,
+    TranslatePipe,
   ],
   templateUrl: './analytics-sections.component.html',
   styleUrl: './analytics-sections.component.scss',

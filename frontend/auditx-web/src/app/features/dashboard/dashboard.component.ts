@@ -10,6 +10,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { Permissions } from '../../core/permissions';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { ChartDatum, DonutChartComponent } from '../../shared/charts';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslationService } from '../../core/i18n/translation.service';
 
 interface DashboardCard {
   title: string;
@@ -32,12 +34,14 @@ interface DashboardCard {
     MatChipsModule,
     PageHeaderComponent,
     DonutChartComponent,
+    TranslatePipe,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(TranslationService);
 
   readonly session = this.auth.session;
   readonly firstName = computed(() => this.session()?.firstName ?? 'there');
@@ -69,35 +73,35 @@ export class DashboardComponent {
     }
     return Object.entries(buckets)
       .filter(([, count]) => count > 0)
-      .map(([label, value]) => ({ label, value }));
+      .map(([label, value]) => ({
+        label: this.i18n.translate(`dashboard.access.verb.${label}`),
+        value,
+      }));
   });
 
   private readonly allCards: DashboardCard[] = [
     {
-      title: 'User Management',
-      description:
-        'Search the directory, review accounts, assign roles and manage delegations.',
+      title: 'dashboard.card.users.title',
+      description: 'dashboard.card.users.desc',
       icon: 'group',
       route: '/admin/users',
-      cta: 'Manage users',
+      cta: 'dashboard.card.users.cta',
       permissions: [Permissions.ManageUsers],
     },
     {
-      title: 'Roles & Permissions',
-      description:
-        'Define roles, compose permissions by module and configure inheritance.',
+      title: 'dashboard.card.roles.title',
+      description: 'dashboard.card.roles.desc',
       icon: 'admin_panel_settings',
       route: '/admin/roles',
-      cta: 'Manage roles',
+      cta: 'dashboard.card.roles.cta',
       permissions: [Permissions.ManageRoles],
     },
     {
-      title: 'Maker-Checker Queue',
-      description:
-        'Review and approve or reject sensitive changes awaiting a second authoriser.',
+      title: 'dashboard.card.makerChecker.title',
+      description: 'dashboard.card.makerChecker.desc',
       icon: 'fact_check',
       route: '/admin/maker-checker',
-      cta: 'Open queue',
+      cta: 'dashboard.card.makerChecker.cta',
       permissions: [
         Permissions.ManageRoles,
         Permissions.ManageUsers,

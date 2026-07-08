@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { CreateAcActionItemRequest, UserDto } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface CreateActionItemDialogData {
   /** Active users for the optional assignee picker. */
@@ -28,23 +29,24 @@ export interface CreateActionItemDialogData {
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>New action item</h2>
+    <h2 mat-dialog-title>{{ 'ac.items.new' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Title</mat-label>
+          <mat-label>{{ 'ac.createItem.title' | t }}</mat-label>
           <input matInput formControlName="title" maxlength="200" />
         </mat-form-field>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Description (optional)</mat-label>
+          <mat-label>{{ 'ac.createItem.description' | t }}</mat-label>
           <textarea matInput formControlName="description" rows="3"></textarea>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Assign to (optional)</mat-label>
+          <mat-label>{{ 'ac.createItem.assignTo' | t }}</mat-label>
           <mat-select formControlName="assignedToUserId">
-            <mat-option [value]="null">Unassigned</mat-option>
+            <mat-option [value]="null">{{ 'ac.createItem.unassigned' | t }}</mat-option>
             @for (u of data.users; track u.id) {
               <mat-option [value]="u.id">
                 {{ u.displayName }} ({{ u.email }})
@@ -53,20 +55,20 @@ export interface CreateActionItemDialogData {
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Due date (optional)</mat-label>
+          <mat-label>{{ 'ac.createItem.dueDate' | t }}</mat-label>
           <input matInput type="date" formControlName="dueDate" />
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'ac.common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        Create
+        {{ 'ac.common.create' | t }}
       </button>
     </mat-dialog-actions>
   `,

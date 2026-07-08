@@ -27,6 +27,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -47,6 +49,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './roles-list.component.html',
   styleUrl: './roles-list.component.scss',
@@ -56,6 +59,7 @@ export class RolesListComponent {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'name',
@@ -104,9 +108,11 @@ export class RolesListComponent {
   archive(role: RoleDto, event: Event): void {
     event.stopPropagation();
     const data: ConfirmDialogData = {
-      title: 'Archive role',
-      message: `Archive the "${role.name}" role? It will no longer be assignable. This may require maker-checker approval.`,
-      confirmLabel: 'Archive',
+      title: this.i18n.translate('identity.roles.archive.title'),
+      message: this.i18n.translate('identity.roles.archive.message', {
+        name: role.name,
+      }),
+      confirmLabel: this.i18n.translate('identity.actions.archive'),
       destructive: true,
     };
     this.dialog
@@ -118,7 +124,11 @@ export class RolesListComponent {
         }
         this.rolesService.archive(role.id).subscribe({
           next: () => {
-            this.notify.success(`"${role.name}" archived.`);
+            this.notify.success(
+              this.i18n.translate('identity.roles.archive.success', {
+                name: role.name,
+              }),
+            );
             this.fetch();
           },
         });

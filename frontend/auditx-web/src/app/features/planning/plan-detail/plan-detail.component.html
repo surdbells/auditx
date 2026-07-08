@@ -1,9 +1,9 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading plan…" />
+    <app-loading [message]="'planning.detail.loading' | t" />
   }
   @case ('error') {
-    <app-error-state message="We couldn't load this plan." (retry)="fetch()" />
+    <app-error-state [message]="'planning.detail.loadError' | t" (retry)="fetch()" />
   }
   @case ('ready') {
     @if (plan(); as p) {
@@ -19,25 +19,25 @@
           @if (canSubmit()) {
             <button matButton="filled" type="button" (click)="submit()">
               <mat-icon>send</mat-icon>
-              Submit
+              {{ 'planning.detail.submit' | t }}
             </button>
           }
           @if (canSubmitRevision()) {
             <button matButton type="button" (click)="submitRevision()">
               <mat-icon>edit_calendar</mat-icon>
-              Submit revision
+              {{ 'planning.detail.submitRevision' | t }}
             </button>
           }
           @if (canDecideNow()) {
             <button matButton="filled" type="button" (click)="decide()">
               <mat-icon>gavel</mat-icon>
-              Decision
+              {{ 'planning.detail.decision' | t }}
             </button>
           }
           @if (canClose()) {
             <button matButton type="button" (click)="close()">
               <mat-icon>lock</mat-icon>
-              Close
+              {{ 'planning.detail.close' | t }}
             </button>
           }
         </div>
@@ -49,18 +49,18 @@
         </span>
         @if (p.submittedAt) {
           <span class="muted">
-            Submitted {{ p.submittedAt | date: 'short' }}
+            {{ 'planning.detail.submittedAt' | t: { date: (p.submittedAt | date: 'short') } }}
           </span>
         }
         @if (p.approvedAt) {
-          <span class="muted">Approved {{ p.approvedAt | date: 'short' }}</span>
+          <span class="muted">{{ 'planning.detail.approvedAt' | t: { date: (p.approvedAt | date: 'short') } }}</span>
         }
       </div>
 
       @if (p.approvalDecision; as decision) {
         <mat-card appearance="outlined" class="detail__decision-card">
           <h3 class="detail__card-title">
-            Latest decision: {{ decision.decision.replace('_', ' ') }}
+            {{ 'planning.detail.latestDecision' | t: { decision: decision.decision.replace('_', ' ') } }}
           </h3>
           @if (decision.detail) {
             <p>{{ decision.detail }}</p>
@@ -74,7 +74,7 @@
           }
           @if (decision.decidedAt) {
             <p class="muted">
-              Decided {{ decision.decidedAt | date: 'short' }}
+              {{ 'planning.detail.decidedAt' | t: { date: (decision.decidedAt | date: 'short') } }}
             </p>
           }
         </mat-card>
@@ -83,11 +83,11 @@
       <!-- Execution panel -->
       @if (execution(); as exec) {
         <mat-card appearance="outlined" class="detail__exec-card">
-          <h3 class="detail__card-title">Execution</h3>
+          <h3 class="detail__card-title">{{ 'planning.detail.execution' | t }}</h3>
           <div class="detail__exec-progress">
             <div class="detail__exec-progress-label">
-              <span>{{ exec.percentComplete }}% complete</span>
-              <span class="muted">{{ exec.totalItems }} item(s)</span>
+              <span>{{ 'planning.detail.percentComplete' | t: { percent: exec.percentComplete } }}</span>
+              <span class="muted">{{ 'planning.detail.itemCount' | t: { count: exec.totalItems } }}</span>
             </div>
             <mat-progress-bar
               mode="determinate"
@@ -110,13 +110,12 @@
             <div class="detail__behind">
               <h4 class="detail__behind-title">
                 <mat-icon class="detail__behind-icon">warning</mat-icon>
-                Behind schedule ({{ exec.behindSchedule.length }})
+                {{ 'planning.detail.behindSchedule' | t: { count: exec.behindSchedule.length } }}
               </h4>
               <ul class="detail__behind-list">
                 @for (i of exec.behindSchedule; track i.id) {
                   <li>
-                    {{ i.auditType }} — due
-                    {{ i.plannedEndDate | date: 'mediumDate' }}
+                    {{ 'planning.detail.dueOn' | t: { type: i.auditType, date: (i.plannedEndDate | date: 'mediumDate') } }}
                   </li>
                 }
               </ul>
@@ -128,17 +127,17 @@
       <!-- Items -->
       <mat-card appearance="outlined" class="detail__items-card">
         <div class="detail__items-head">
-          <h3 class="detail__card-title">Plan items</h3>
+          <h3 class="detail__card-title">{{ 'planning.detail.planItems' | t }}</h3>
           @if (canManage() && isEditable()) {
             <button matButton="filled" type="button" (click)="addItem()">
               <mat-icon>add</mat-icon>
-              Add item
+              {{ 'planning.common.addItem' | t }}
             </button>
           }
         </div>
 
         @if (!p.items.length) {
-          <p class="muted detail__empty">No items have been added yet.</p>
+          <p class="muted detail__empty">{{ 'planning.detail.noItems' | t }}</p>
         } @else {
           <div class="table-scroll">
             <table
@@ -151,43 +150,43 @@
               (cdkDropListDropped)="dropItem($event)"
             >
               <ng-container matColumnDef="drag">
-                <th mat-header-cell *matHeaderCellDef aria-label="Reorder"></th>
+                <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'planning.detail.reorder' | t"></th>
                 <td mat-cell *matCellDef="let i">
                   <button
                     matIconButton
                     type="button"
                     cdkDragHandle
                     class="detail__drag-handle"
-                    aria-label="Drag to reorder"
-                    matTooltip="Drag to reorder"
+                    [attr.aria-label]="'planning.detail.dragToReorder' | t"
+                    [matTooltip]="'planning.detail.dragToReorder' | t"
                   >
                     <mat-icon>drag_indicator</mat-icon>
                   </button>
                 </td>
               </ng-container>
               <ng-container matColumnDef="auditType">
-                <th mat-header-cell *matHeaderCellDef>Audit type</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colAuditType' | t }}</th>
                 <td mat-cell *matCellDef="let i">{{ i.auditType }}</td>
               </ng-container>
               <ng-container matColumnDef="planned">
-                <th mat-header-cell *matHeaderCellDef>Planned</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colPlanned' | t }}</th>
                 <td mat-cell *matCellDef="let i">
                   {{ i.plannedStartDate | date: 'mediumDate' }} –
                   {{ i.plannedEndDate | date: 'mediumDate' }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="effort">
-                <th mat-header-cell *matHeaderCellDef>Effort</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colEffort' | t }}</th>
                 <td mat-cell *matCellDef="let i">
                   {{ i.estimatedEffortDays !== null ? i.estimatedEffortDays + 'd' : '—' }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="lead">
-                <th mat-header-cell *matHeaderCellDef>Lead</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colLead' | t }}</th>
                 <td mat-cell *matCellDef="let i">{{ userLookup.displayName(i.assignedLeadUserId) }}</td>
               </ng-container>
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'planning.common.status' | t }}</th>
                 <td mat-cell *matCellDef="let i">
                   <span class="status-badge" [attr.data-status]="i.status">
                     {{ i.status.replace('_', ' ') }}
@@ -195,14 +194,14 @@
                 </td>
               </ng-container>
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+                <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'planning.detail.actionsLabel' | t"></th>
                 <td mat-cell *matCellDef="let i">
                   @if (canManage() && isEditable()) {
                     <button
                       matIconButton
                       type="button"
                       (click)="removeItem(i)"
-                      [attr.aria-label]="'Remove ' + i.auditType"
+                      [attr.aria-label]="'planning.detail.removeItemAria' | t: { type: i.auditType }"
                     >
                       <mat-icon>delete</mat-icon>
                     </button>

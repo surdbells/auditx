@@ -7,20 +7,22 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-empty-state',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule, TranslatePipe],
   template: `
     <div class="empty">
       <mat-icon class="empty__icon" aria-hidden="true">{{ icon() }}</mat-icon>
-      <h3 class="empty__title">{{ title() }}</h3>
+      <h3 class="empty__title">{{ title() | t }}</h3>
       @if (message()) {
-        <p class="empty__message">{{ message() }}</p>
+        <p class="empty__message">{{ message() | t }}</p>
       }
       @if (actionLabel()) {
         <button matButton="filled" type="button" (click)="action.emit()">
-          {{ actionLabel() }}
+          {{ actionLabel() | t }}
         </button>
       }
     </div>
@@ -56,7 +58,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class EmptyStateComponent {
   readonly icon = input('inbox');
-  readonly title = input('Nothing here yet');
+  readonly title = input('shared.empty.title');
   readonly message = input('');
   readonly actionLabel = input('');
 

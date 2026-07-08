@@ -22,6 +22,8 @@ import {
   SanctionsGridVersion,
 } from '../../../../core/models';
 import { humanise } from '../humanise';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
@@ -55,6 +57,7 @@ interface GridRow {
     MatInputModule,
     MatSelectModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -67,6 +70,7 @@ export class SanctionsGridAdminComponent {
   private readonly service = inject(SanctionsService);
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly grid = signal<SanctionsGridVersion | null>(null);
@@ -154,12 +158,14 @@ export class SanctionsGridAdminComponent {
     const category = this.newCategory.trim();
     const severity = this.newSeverity.trim();
     if (!category || !severity) {
-      this.notify.warning('Category and severity are required.');
+      this.notify.warning(
+        this.i18n.translate('sanctions.grid.categorySeverityRequired'),
+      );
       return;
     }
     const key = `${category}|${severity}|${this.newRecurrence}`;
     if (this.rows().some((r) => r.key === key)) {
-      this.notify.warning('That category / severity / recurrence cell exists.');
+      this.notify.warning(this.i18n.translate('sanctions.grid.cellExists'));
       return;
     }
     this.rows.update((rows) => [
@@ -187,11 +193,13 @@ export class SanctionsGridAdminComponent {
           this.saving.set(false);
           if (result.pendingActionId) {
             this.pendingBanner.set(
-              `Saved as a draft awaiting a second approver (action ${result.pendingActionId}).`,
+              this.i18n.translate('sanctions.grid.savedPending', {
+                action: result.pendingActionId,
+              }),
             );
-            this.notify.info('Grid draft submitted for sign-off.');
+            this.notify.info(this.i18n.translate('sanctions.grid.draftSubmitted'));
           } else {
-            this.notify.success('Grid draft saved.');
+            this.notify.success(this.i18n.translate('sanctions.grid.draftSaved'));
             if (result.gridVersion) {
               this.grid.set(result.gridVersion);
               this.rows.set(
@@ -211,11 +219,13 @@ export class SanctionsGridAdminComponent {
       return;
     }
     const data: SanctionsReasonDialogData = {
-      title: 'Activate grid version',
-      message: `Activate grid v${g.versionNumber}. Provide an activation reason (at least 20 characters).`,
-      label: 'Activation reason',
+      title: this.i18n.translate('sanctions.grid.activateTitle'),
+      message: this.i18n.translate('sanctions.grid.activateMessage', {
+        version: g.versionNumber,
+      }),
+      label: this.i18n.translate('sanctions.grid.activationReason'),
       minLength: 20,
-      confirmLabel: 'Activate',
+      confirmLabel: this.i18n.translate('sanctions.grid.activate'),
     };
     this.dialog
       .open(SanctionsReasonDialogComponent, { data, width: '480px' })
@@ -231,11 +241,17 @@ export class SanctionsGridAdminComponent {
             next: (action) => {
               if (action.pendingActionId) {
                 this.pendingBanner.set(
-                  `Activation awaiting a second approver (action ${action.pendingActionId}).`,
+                  this.i18n.translate('sanctions.grid.activationPending', {
+                    action: action.pendingActionId,
+                  }),
                 );
-                this.notify.info('Activation submitted for sign-off.');
+                this.notify.info(
+                  this.i18n.translate('sanctions.grid.activationSubmitted'),
+                );
               } else {
-                this.notify.success('Grid version activated.');
+                this.notify.success(
+                  this.i18n.translate('sanctions.grid.versionActivated'),
+                );
                 if (action.gridVersion) {
                   this.grid.set(action.gridVersion);
                 }

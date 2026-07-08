@@ -63,6 +63,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { AuditExecutionComponent } from '../audit-execution/audit-execution.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -89,6 +91,7 @@ const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
     ErrorStateComponent,
     PageHeaderComponent,
     AuditExecutionComponent,
+    TranslatePipe,
   ],
   templateUrl: './audit-detail.component.html',
   styleUrl: './audit-detail.component.scss',
@@ -104,6 +107,7 @@ export class AuditDetailComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
   /** Resolves the stored audit-type code to its human label (lazy-loaded). */
   readonly refLookup = inject(ReferenceDataLookupService);
 
@@ -152,7 +156,9 @@ export class AuditDetailComponent {
     const groups: ChecklistGroup[] = [];
     const byName = new Map<string, ChecklistGroup>();
     for (const item of items) {
-      const name = item.sectionName?.trim() || 'Ungrouped';
+      const name =
+        item.sectionName?.trim() ||
+        this.i18n.translate('audits.checklist.ungrouped');
       let group = byName.get(name);
       if (!group) {
         group = { name, items: [] };
@@ -193,12 +199,15 @@ export class AuditDetailComponent {
     }
     const missing: string[] = [];
     if (this.checklistCount() < 1) {
-      missing.push('at least one checklist item');
+      missing.push(this.i18n.translate('audits.planHint.checklistItem'));
     }
     if (this.auditorCount() < 1) {
-      missing.push('at least one auditor');
+      missing.push(this.i18n.translate('audits.planHint.auditor'));
     }
-    return `Add ${missing.join(' and ')} before planning.`;
+    const items = missing.join(
+      ` ${this.i18n.translate('audits.planHint.and')} `,
+    );
+    return this.i18n.translate('audits.planHint.template', { items });
   });
 
   readonly isDraft = computed(() => this.status() === 'draft');
@@ -409,27 +418,27 @@ export class AuditDetailComponent {
     if (!this.canPlan()) {
       return;
     }
-    this.transitionTo('planned', 'Audit planned.');
+    this.transitionTo('planned', this.i18n.translate('audits.notify.planned'));
   }
 
   start(): void {
-    this.transitionTo('in_progress', 'Audit started.');
+    this.transitionTo('in_progress', this.i18n.translate('audits.notify.started'));
   }
 
   complete(): void {
-    this.transitionTo('completed', 'Audit completed.');
+    this.transitionTo('completed', this.i18n.translate('audits.notify.completed'));
   }
 
   reopen(): void {
     this.transitionWithReason(
       'draft',
       {
-        title: 'Reopen audit',
-        message: 'Move this planned audit back to draft.',
+        title: this.i18n.translate('audits.reopen.title'),
+        message: this.i18n.translate('audits.reopen.message'),
         reasonRequired: true,
-        confirmLabel: 'Reopen',
+        confirmLabel: this.i18n.translate('audits.actions.reopen'),
       },
-      'Audit reopened.',
+      this.i18n.translate('audits.notify.reopened'),
     );
   }
 
@@ -437,12 +446,12 @@ export class AuditDetailComponent {
     this.transitionWithReason(
       'in_progress',
       {
-        title: 'Return to in progress',
-        message: 'Send this audit back to the team for more work.',
+        title: this.i18n.translate('audits.returnToProgress.title'),
+        message: this.i18n.translate('audits.returnToProgress.message'),
         reasonRequired: true,
-        confirmLabel: 'Return',
+        confirmLabel: this.i18n.translate('audits.actions.return'),
       },
-      'Audit returned to in progress.',
+      this.i18n.translate('audits.notify.returned'),
     );
   }
 
@@ -452,26 +461,31 @@ export class AuditDetailComponent {
       this.transitionWithReason(
         'under_review',
         {
-          title: 'Send to review',
-          message: `${this.openItemCount()} item(s) are still unanswered. Provide a reason to proceed.`,
+          title: this.i18n.translate('audits.sendReview.title'),
+          message: this.i18n.translate('audits.sendReview.message', {
+            count: this.openItemCount(),
+          }),
           reasonRequired: true,
-          confirmLabel: 'Send to review',
+          confirmLabel: this.i18n.translate('audits.actions.sendToReview'),
         },
-        'Audit sent for review.',
+        this.i18n.translate('audits.notify.sentForReview'),
       );
       return;
     }
-    this.transitionTo('under_review', 'Audit sent for review.');
+    this.transitionTo(
+      'under_review',
+      this.i18n.translate('audits.notify.sentForReview'),
+    );
   }
 
   cancel(): void {
     this.dialog
       .open(TransitionReasonDialogComponent, {
         data: {
-          title: 'Cancel audit',
-          message: 'Cancelling is permanent. Provide a reason.',
+          title: this.i18n.translate('audits.cancel.title'),
+          message: this.i18n.translate('audits.cancel.message'),
           reasonRequired: true,
-          confirmLabel: 'Cancel audit',
+          confirmLabel: this.i18n.translate('audits.cancel.confirm'),
           destructive: true,
         } satisfies TransitionReasonDialogData,
         width: '480px',
@@ -486,7 +500,7 @@ export class AuditDetailComponent {
             reason: result.reason,
             version: this.version(),
           }),
-          'Audit cancelled.',
+          this.i18n.translate('audits.notify.cancelled'),
         );
       });
   }
@@ -508,16 +522,18 @@ export class AuditDetailComponent {
             teamRole: result.teamRole,
             version: this.version(),
           }),
-          'Team member added.',
+          this.i18n.translate('audits.notify.memberAdded'),
         );
       });
   }
 
   removeMember(member: AuditTeamMember): void {
     const data: ConfirmDialogData = {
-      title: 'Remove team member',
-      message: `Remove ${this.nameOf(member.userId)} from the team?`,
-      confirmLabel: 'Remove',
+      title: this.i18n.translate('audits.removeMember.title'),
+      message: this.i18n.translate('audits.removeMember.message', {
+        name: this.nameOf(member.userId),
+      }),
+      confirmLabel: this.i18n.translate('audits.actions.remove'),
       destructive: true,
     };
     this.dialog
@@ -531,7 +547,9 @@ export class AuditDetailComponent {
           .removeTeamMember(this.id(), member.id, this.version())
           .subscribe({
             next: () => {
-              this.notify.success('Team member removed.');
+              this.notify.success(
+                this.i18n.translate('audits.notify.memberRemoved'),
+              );
               this.reload();
             },
             error: (err: unknown) => this.handleMutationError(err),
@@ -562,7 +580,7 @@ export class AuditDetailComponent {
             removeOutgoing: result.removeOutgoing,
             version: this.version(),
           }),
-          'Lead transferred.',
+          this.i18n.translate('audits.notify.leadTransferred'),
         );
       });
   }
@@ -588,7 +606,7 @@ export class AuditDetailComponent {
             assignedUserId: result.assignedUserId,
             version: this.version(),
           }),
-          'Checklist item added.',
+          this.i18n.translate('audits.notify.itemAdded'),
         );
       });
   }
@@ -611,16 +629,16 @@ export class AuditDetailComponent {
             assignedUserId: result.assignedUserId,
             version: this.version(),
           }),
-          'Checklist item updated.',
+          this.i18n.translate('audits.notify.itemUpdated'),
         );
       });
   }
 
   removeChecklistItem(item: AuditChecklistItem): void {
     const data: ConfirmDialogData = {
-      title: 'Remove checklist item',
-      message: 'Remove this checklist item from the audit?',
-      confirmLabel: 'Remove',
+      title: this.i18n.translate('audits.removeItem.title'),
+      message: this.i18n.translate('audits.removeItem.message'),
+      confirmLabel: this.i18n.translate('audits.actions.remove'),
       destructive: true,
     };
     this.dialog
@@ -634,7 +652,9 @@ export class AuditDetailComponent {
           .removeChecklistItem(this.id(), item.id, this.version())
           .subscribe({
             next: () => {
-              this.notify.success('Checklist item removed.');
+              this.notify.success(
+                this.i18n.translate('audits.notify.itemRemoved'),
+              );
               this.reload();
             },
             error: (err: unknown) => this.handleMutationError(err),

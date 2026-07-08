@@ -1,21 +1,21 @@
 <mat-card appearance="outlined" class="versions__card">
   <mat-card-header>
-    <mat-card-title>Version history</mat-card-title>
+    <mat-card-title>{{ 'templatesAdmin.versions.title' | t }}</mat-card-title>
   </mat-card-header>
   <mat-card-content>
     @switch (state()) {
       @case ('loading') {
-        <app-loading message="Loading versions…" [diameter]="32" />
+        <app-loading [message]="'templatesAdmin.versions.loading' | t" [diameter]="32" />
       }
       @case ('error') {
-        <p class="versions__muted">Couldn't load version history.</p>
+        <p class="versions__muted">{{ 'templatesAdmin.versions.error' | t }}</p>
       }
       @case ('ready') {
         @if (!hasVersions()) {
           <app-empty-state
             icon="history"
-            title="No published versions yet"
-            message="Publish this template to create its first version."
+            [title]="'templatesAdmin.versions.emptyTitle' | t"
+            [message]="'templatesAdmin.versions.emptyMessage' | t"
           />
         } @else {
           <ul class="versions__list">
@@ -28,13 +28,13 @@
                   </span>
                 </div>
                 <button matButton type="button" (click)="viewVersion(v.versionNumber)">
-                  {{ selectedDetail()?.versionNumber === v.versionNumber ? 'Hide' : 'View items' }}
+                  {{ selectedDetail()?.versionNumber === v.versionNumber ? ('templatesAdmin.versions.hide' | t) : ('templatesAdmin.versions.viewItems' | t) }}
                 </button>
               </li>
               @if (selectedDetail()?.versionNumber === v.versionNumber) {
                 <li class="versions__detail">
                   @if (detailLoading()) {
-                    <app-loading message="Loading…" [diameter]="28" />
+                    <app-loading [message]="'templatesAdmin.common.loadingShort' | t" [diameter]="28" />
                   } @else {
                     <ol class="versions__items">
                       @for (item of selectedDetail()?.items ?? []; track $index) {
@@ -44,7 +44,7 @@
                             <span class="versions__item-section">{{ item.sectionName }}</span>
                           }
                           @if (item.isRequired) {
-                            <span class="versions__required">required</span>
+                            <span class="versions__required">{{ 'templatesAdmin.versions.required' | t }}</span>
                           }
                         </li>
                       }
@@ -57,10 +57,10 @@
 
           @if (canDiff()) {
             <div class="versions__diff">
-              <h4 class="versions__diff-title">Compare versions</h4>
+              <h4 class="versions__diff-title">{{ 'templatesAdmin.versions.compareTitle' | t }}</h4>
               <div class="versions__diff-controls">
                 <mat-form-field appearance="outline">
-                  <mat-label>From</mat-label>
+                  <mat-label>{{ 'templatesAdmin.versions.from' | t }}</mat-label>
                   <mat-select
                     [value]="diffFrom()"
                     (valueChange)="diffFrom.set($event)"
@@ -72,7 +72,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>To</mat-label>
+                  <mat-label>{{ 'templatesAdmin.versions.to' | t }}</mat-label>
                   <mat-select
                     [value]="diffTo()"
                     (valueChange)="diffTo.set($event)"
@@ -89,47 +89,47 @@
                   (click)="compare()"
                   [disabled]="diffLoading() || diffFrom() === diffTo()"
                 >
-                  Compare
+                  {{ 'templatesAdmin.versions.compare' | t }}
                 </button>
               </div>
 
               @if (diffLoading()) {
-                <app-loading message="Computing diff…" [diameter]="28" />
+                <app-loading [message]="'templatesAdmin.versions.computingDiff' | t" [diameter]="28" />
               }
               @if (diff(); as d) {
                 <div class="versions__diff-result">
                   <p class="versions__muted">
-                    Changes from v{{ d.fromVersion }} to v{{ d.toVersion }}
+                    {{ 'templatesAdmin.versions.changesFromTo' | t: { from: d.fromVersion, to: d.toVersion } }}
                   </p>
 
                   <div class="versions__diff-group">
-                    <h5 class="versions__diff-heading added">Added ({{ d.added.length }})</h5>
+                    <h5 class="versions__diff-heading added">{{ 'templatesAdmin.versions.added' | t: { count: d.added.length } }}</h5>
                     @for (item of d.added; track $index) {
                       <div class="versions__diff-item added">+ {{ item.prompt }}</div>
                     } @empty {
-                      <p class="versions__muted">None.</p>
+                      <p class="versions__muted">{{ 'templatesAdmin.versions.none' | t }}</p>
                     }
                   </div>
 
                   <div class="versions__diff-group">
-                    <h5 class="versions__diff-heading removed">Removed ({{ d.removed.length }})</h5>
+                    <h5 class="versions__diff-heading removed">{{ 'templatesAdmin.versions.removed' | t: { count: d.removed.length } }}</h5>
                     @for (item of d.removed; track $index) {
                       <div class="versions__diff-item removed">− {{ item.prompt }}</div>
                     } @empty {
-                      <p class="versions__muted">None.</p>
+                      <p class="versions__muted">{{ 'templatesAdmin.versions.none' | t }}</p>
                     }
                   </div>
 
                   <div class="versions__diff-group">
-                    <h5 class="versions__diff-heading modified">Modified ({{ d.modified.length }})</h5>
+                    <h5 class="versions__diff-heading modified">{{ 'templatesAdmin.versions.modified' | t: { count: d.modified.length } }}</h5>
                     @for (mod of d.modified; track $index) {
                       <div class="versions__diff-mod">
                         <div class="versions__diff-item modified">~ {{ mod.prompt }}</div>
-                        <div class="versions__diff-before">before: {{ mod.before.prompt }}</div>
-                        <div class="versions__diff-after">after: {{ mod.after.prompt }}</div>
+                        <div class="versions__diff-before">{{ 'templatesAdmin.versions.before' | t }} {{ mod.before.prompt }}</div>
+                        <div class="versions__diff-after">{{ 'templatesAdmin.versions.after' | t }} {{ mod.after.prompt }}</div>
                       </div>
                     } @empty {
-                      <p class="versions__muted">None.</p>
+                      <p class="versions__muted">{{ 'templatesAdmin.versions.none' | t }}</p>
                     }
                   </div>
                 </div>

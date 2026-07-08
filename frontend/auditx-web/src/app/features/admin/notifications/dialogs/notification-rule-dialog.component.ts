@@ -30,6 +30,8 @@ import {
   NotificationRule,
   UpdateNotificationRuleRequest,
 } from '../../../../core/models';
+import { TranslationService } from '../../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Selectable delivery channels (mirrors CHANNELS in the template dialog). */
 const CHANNELS: NotificationChannel[] = ['email', 'sms'];
@@ -92,6 +94,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatSlideToggleModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './notification-rule-dialog.component.html',
   styleUrl: './notification-rule-dialog.component.scss',
@@ -106,13 +109,16 @@ export class NotificationRuleDialogComponent {
       >
     >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly isEdit = signal(!!this.data.rule);
   readonly eventTypes = signal<string[]>(this.data.eventTypes ?? []);
   readonly channels = CHANNELS;
 
   readonly title = computed(() =>
-    this.isEdit() ? 'Edit notification rule' : 'New notification rule',
+    this.isEdit()
+      ? this.i18n.translate('notifications.ruleDialog.title.edit')
+      : this.i18n.translate('notifications.ruleDialog.title.new'),
   );
 
   readonly form = this.fb.nonNullable.group({

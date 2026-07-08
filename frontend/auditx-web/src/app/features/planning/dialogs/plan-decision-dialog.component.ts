@@ -14,6 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 
 import { PlanDecisionKind, PlanDecisionRequest } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** AC Chair decision dialog for a submitted plan. */
 @Component({
@@ -26,34 +27,35 @@ import { PlanDecisionKind, PlanDecisionRequest } from '../../../core/models';
     MatInputModule,
     MatRadioModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Plan decision</h2>
+    <h2 mat-dialog-title>{{ 'planning.decisionDialog.title' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-radio-group formControlName="decision" class="decision">
-          <mat-radio-button value="approved">Approve</mat-radio-button>
+          <mat-radio-button value="approved">{{ 'planning.decisionDialog.approve' | t }}</mat-radio-button>
           <mat-radio-button value="revisions_requested">
-            Request revisions
+            {{ 'planning.decisionDialog.requestRevisions' | t }}
           </mat-radio-button>
-          <mat-radio-button value="rejected">Reject</mat-radio-button>
+          <mat-radio-button value="rejected">{{ 'planning.decisionDialog.reject' | t }}</mat-radio-button>
         </mat-radio-group>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Detail</mat-label>
+          <mat-label>{{ 'planning.decisionDialog.detail' | t }}</mat-label>
           <input matInput formControlName="detail" autocomplete="off" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Comments</mat-label>
+          <mat-label>{{ 'planning.decisionDialog.comments' | t }}</mat-label>
           <textarea matInput formControlName="comments" rows="3"></textarea>
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'planning.common.cancel' | t }}</button>
       <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
-        Submit decision
+        {{ 'planning.decisionDialog.submit' | t }}
       </button>
     </mat-dialog-actions>
   `,

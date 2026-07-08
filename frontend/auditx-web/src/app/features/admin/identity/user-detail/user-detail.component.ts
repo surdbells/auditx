@@ -35,6 +35,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { UserStatusLabelPipe } from '../../../../shared/pipes/user-status-label.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
   GrantRoleDialogComponent,
   GrantRoleDialogData,
@@ -63,6 +65,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     ErrorStateComponent,
     PageHeaderComponent,
     UserStatusLabelPipe,
+    TranslatePipe,
   ],
   templateUrl: './user-detail.component.html',
   styleUrl: './user-detail.component.scss',
@@ -76,6 +79,7 @@ export class UserDetailComponent {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly user = signal<UserDetailDto | null>(null);
@@ -138,7 +142,7 @@ export class UserDetailComponent {
         }
         this.usersService.grantRole(current.id, request).subscribe({
           next: () => {
-            this.notify.success('Role granted.');
+            this.notify.success(this.i18n.translate('identity.userDetail.roleGranted'));
             this.fetch();
           },
         });
@@ -151,9 +155,12 @@ export class UserDetailComponent {
       return;
     }
     const data: ConfirmDialogData = {
-      title: 'Revoke role',
-      message: `Revoke the "${role.roleName}" role from ${current.displayName}?`,
-      confirmLabel: 'Revoke',
+      title: this.i18n.translate('identity.userDetail.revokeRole'),
+      message: this.i18n.translate('identity.userDetail.revokeRoleMessage', {
+        role: role.roleName,
+        name: current.displayName,
+      }),
+      confirmLabel: this.i18n.translate('identity.actions.revoke'),
       destructive: true,
     };
     this.dialog
@@ -165,7 +172,7 @@ export class UserDetailComponent {
         }
         this.usersService.revokeRole(current.id, role.id).subscribe({
           next: () => {
-            this.notify.success('Role revoked.');
+            this.notify.success(this.i18n.translate('identity.userDetail.roleRevoked'));
             this.fetch();
           },
         });
@@ -190,7 +197,7 @@ export class UserDetailComponent {
         }
         this.usersService.createDelegation(current.id, request).subscribe({
           next: () => {
-            this.notify.success('Delegation created.');
+            this.notify.success(this.i18n.translate('identity.userDetail.delegationCreated'));
             this.fetch();
           },
         });
@@ -203,9 +210,11 @@ export class UserDetailComponent {
       return;
     }
     const data: ConfirmDialogData = {
-      title: 'Revoke delegation',
-      message: `Revoke the delegated "${delegation.roleName}" role?`,
-      confirmLabel: 'Revoke',
+      title: this.i18n.translate('identity.userDetail.revokeDelegation'),
+      message: this.i18n.translate('identity.userDetail.revokeDelegationMessage', {
+        role: delegation.roleName,
+      }),
+      confirmLabel: this.i18n.translate('identity.actions.revoke'),
       destructive: true,
     };
     this.dialog
@@ -219,7 +228,7 @@ export class UserDetailComponent {
           .revokeDelegation(current.id, delegation.id)
           .subscribe({
             next: () => {
-              this.notify.success('Delegation revoked.');
+              this.notify.success(this.i18n.translate('identity.userDetail.delegationRevoked'));
               this.fetch();
             },
           });

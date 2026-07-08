@@ -13,6 +13,8 @@ import { NotificationService } from '../../../core/services/notification.service
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -31,6 +33,7 @@ interface PreferenceFlags {
     PageHeaderComponent,
     LoadingComponent,
     ErrorStateComponent,
+    TranslatePipe,
   ],
   templateUrl: './notification-preferences.component.html',
   styleUrl: './notification-preferences.component.scss',
@@ -38,6 +41,7 @@ interface PreferenceFlags {
 export class NotificationPreferencesComponent {
   private readonly notifications = inject(NotificationAdminService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly saving = signal(false);
@@ -86,7 +90,7 @@ export class NotificationPreferencesComponent {
     this.notifications.updateMyPreferences({ preferencesJson }).subscribe({
       next: () => {
         this.saving.set(false);
-        this.notify.success('Notification preferences saved.');
+        this.notify.success(this.i18n.translate('account.prefs.saved'));
       },
       error: () => this.saving.set(false),
     });

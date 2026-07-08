@@ -6,11 +6,13 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 @Component({
   selector: 'app-awaiting-role',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatCardModule, MatButtonModule, MatIconModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, TranslatePipe],
   templateUrl: './awaiting-role.component.html',
   styleUrl: './awaiting-role.component.scss',
 })
@@ -18,6 +20,7 @@ export class AwaitingRoleComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(TranslationService);
 
   readonly session = this.auth.session;
 
@@ -27,7 +30,7 @@ export class AwaitingRoleComponent {
         if (session.status !== 'awaiting_role_assignment') {
           void this.router.navigate(['/dashboard']);
         } else {
-          this.notify.info('No roles have been assigned yet.');
+          this.notify.info(this.i18n.translate('account.awaiting.noRoles'));
         }
       },
     });

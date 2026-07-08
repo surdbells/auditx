@@ -10,6 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 
 import { UserDto } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface ReassignOwnerDialogData {
   currentOwnerId: string;
@@ -29,28 +30,29 @@ export interface ReassignOwnerDialogResult {
     MatFormFieldModule,
     MatSelectModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Reassign owner</h2>
+    <h2 mat-dialog-title>{{ 'exceptions.dialog.reassignTitle' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Owner</mat-label>
+          <mat-label>{{ 'exceptions.field.owner' | t }}</mat-label>
           <mat-select formControlName="ownerUserId">
             @for (u of data.users; track u.id) {
               <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
             }
           </mat-select>
           @if (form.controls.ownerUserId.hasError('required') && form.controls.ownerUserId.touched) {
-            <mat-error>Select an owner.</mat-error>
+            <mat-error>{{ 'exceptions.error.selectOwner' | t }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'exceptions.action.cancel' | t }}</button>
       <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
-        Save
+        {{ 'exceptions.action.save' | t }}
       </button>
     </mat-dialog-actions>
   `,

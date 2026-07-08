@@ -20,6 +20,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { MapActionInput, UserDto } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface SubmitMapDialogData {
   /** Users selectable as per-action owners. */
@@ -61,22 +62,23 @@ type ActionGroup = FormGroup<{
     MatDatepickerModule,
     MatIconModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Submit management action plan</h2>
+    <h2 mat-dialog-title>{{ 'exceptions.dialog.submitMapTitle' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form">
         <div formArrayName="actions" class="actions">
           @for (group of actions.controls; track group; let i = $index) {
             <div [formGroupName]="i" class="action">
               <div class="action__head">
-                <span class="action__title">Action {{ i + 1 }}</span>
+                <span class="action__title">{{ 'exceptions.map.action' | t: { n: i + 1 } }}</span>
                 @if (actions.length > 1) {
                   <button
                     matIconButton
                     type="button"
                     (click)="removeAction(i)"
-                    aria-label="Remove action"
+                    [attr.aria-label]="'exceptions.action.removeAction' | t"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -84,38 +86,38 @@ type ActionGroup = FormGroup<{
               </div>
 
               <mat-form-field appearance="outline" class="full">
-                <mat-label>Description</mat-label>
+                <mat-label>{{ 'exceptions.field.description' | t }}</mat-label>
                 <textarea matInput formControlName="description" rows="2"></textarea>
                 @if (group.controls.description.hasError('required') && group.controls.description.touched) {
-                  <mat-error>A description is required.</mat-error>
+                  <mat-error>{{ 'exceptions.error.descriptionRequired' | t }}</mat-error>
                 }
               </mat-form-field>
 
               <div class="row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Owner</mat-label>
+                  <mat-label>{{ 'exceptions.field.owner' | t }}</mat-label>
                   <mat-select formControlName="ownerUserId">
                     @for (u of data.users; track u.id) {
                       <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
                     }
                   </mat-select>
                   @if (group.controls.ownerUserId.hasError('required') && group.controls.ownerUserId.touched) {
-                    <mat-error>Select an owner.</mat-error>
+                    <mat-error>{{ 'exceptions.error.selectOwner' | t }}</mat-error>
                   }
                 </mat-form-field>
                 <mat-form-field appearance="outline">
-                  <mat-label>Target date</mat-label>
+                  <mat-label>{{ 'exceptions.field.targetDate' | t }}</mat-label>
                   <input matInput [matDatepicker]="picker" formControlName="targetDate" />
                   <mat-datepicker-toggle matIconSuffix [for]="picker" />
                   <mat-datepicker #picker />
                   @if (group.controls.targetDate.hasError('required') && group.controls.targetDate.touched) {
-                    <mat-error>Provide a target date.</mat-error>
+                    <mat-error>{{ 'exceptions.error.targetDateRequired' | t }}</mat-error>
                   }
                 </mat-form-field>
               </div>
 
               <mat-form-field appearance="outline" class="full">
-                <mat-label>Expected evidence type (optional)</mat-label>
+                <mat-label>{{ 'exceptions.field.expectedEvidence' | t }}</mat-label>
                 <input matInput formControlName="expectedEvidenceType" autocomplete="off" />
               </mat-form-field>
             </div>
@@ -124,14 +126,14 @@ type ActionGroup = FormGroup<{
 
         <button matButton type="button" (click)="addAction()">
           <mat-icon>add</mat-icon>
-          Add action
+          {{ 'exceptions.action.addAction' | t }}
         </button>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'exceptions.action.cancel' | t }}</button>
       <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
-        Submit MAP
+        {{ 'exceptions.action.submitMap' | t }}
       </button>
     </mat-dialog-actions>
   `,

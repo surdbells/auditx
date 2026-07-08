@@ -3,20 +3,22 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-not-found',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MatButtonModule, MatIconModule],
+  imports: [RouterLink, MatButtonModule, MatIconModule, TranslatePipe],
   template: `
     <div class="nf">
       <div class="nf__code">404</div>
-      <h1 class="nf__title">Page not found</h1>
+      <h1 class="nf__title">{{ 'account.notFound.title' | t }}</h1>
       <p class="nf__message">
-        The page you are looking for doesn't exist or you don't have access to it.
+        {{ 'account.notFound.message' | t }}
       </p>
       <a matButton="filled" routerLink="/dashboard">
         <mat-icon>home</mat-icon>
-        Back to dashboard
+        {{ 'account.notFound.back' | t }}
       </a>
     </div>
   `,

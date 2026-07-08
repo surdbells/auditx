@@ -30,6 +30,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -51,6 +53,7 @@ const PAGE_SIZE = 20;
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './plans-list.component.html',
   styleUrl: './plans-list.component.scss',
@@ -62,17 +65,18 @@ export class PlansListComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = ['periodLabel', 'period', 'status', 'itemCount'];
 
-  readonly statuses: { value: PlanStatus | 'all'; label: string }[] = [
-    { value: 'all', label: 'All statuses' },
-    { value: 'draft', label: 'Draft' },
-    { value: 'submitted', label: 'Submitted' },
-    { value: 'revisions_requested', label: 'Revisions requested' },
-    { value: 'revision_submitted', label: 'Revision submitted' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'closed', label: 'Closed' },
+  readonly statuses: { value: PlanStatus | 'all'; labelKey: string }[] = [
+    { value: 'all', labelKey: 'planning.status.all' },
+    { value: 'draft', labelKey: 'planning.status.draft' },
+    { value: 'submitted', labelKey: 'planning.status.submitted' },
+    { value: 'revisions_requested', labelKey: 'planning.status.revisionsRequested' },
+    { value: 'revision_submitted', labelKey: 'planning.status.revisionSubmitted' },
+    { value: 'approved', labelKey: 'planning.status.approved' },
+    { value: 'closed', labelKey: 'planning.status.closed' },
   ];
 
   readonly filters = this.fb.nonNullable.group({
@@ -163,7 +167,11 @@ export class PlansListComponent {
         }
         this.service.create(result).subscribe({
           next: (created) => {
-            this.notify.success(`Plan "${created.periodLabel}" created.`);
+            this.notify.success(
+              this.i18n.translate('planning.toast.created', {
+                label: created.periodLabel,
+              }),
+            );
             void this.router.navigate(['/planning', created.id]);
           },
         });

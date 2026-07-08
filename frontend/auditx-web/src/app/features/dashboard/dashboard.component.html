@@ -1,15 +1,15 @@
 <app-page-header
-  [title]="'Welcome back, ' + firstName()"
-  subtitle="Your enterprise internal-audit control centre."
+  [title]="'dashboard.welcome' | t: { name: firstName() }"
+  [subtitle]="'dashboard.subtitle' | t"
 />
 
-<section class="dashboard__stats" aria-label="Session summary">
+<section class="dashboard__stats" [attr.aria-label]="'dashboard.stats.aria' | t">
   <mat-card class="stat" appearance="outlined">
     <mat-card-content class="stat__content">
       <mat-icon class="stat__icon" aria-hidden="true">badge</mat-icon>
       <div>
         <div class="stat__value">{{ roleCount() }}</div>
-        <div class="stat__label">Active roles</div>
+        <div class="stat__label">{{ 'dashboard.stats.activeRoles' | t }}</div>
       </div>
     </mat-card-content>
   </mat-card>
@@ -19,7 +19,7 @@
       <mat-icon class="stat__icon" aria-hidden="true">key</mat-icon>
       <div>
         <div class="stat__value">{{ permissionCount() }}</div>
-        <div class="stat__label">Permissions granted</div>
+        <div class="stat__label">{{ 'dashboard.stats.permissionsGranted' | t }}</div>
       </div>
     </mat-card-content>
   </mat-card>
@@ -35,24 +35,24 @@
             —
           }
         </div>
-        <div class="stat__label">Session expires</div>
+        <div class="stat__label">{{ 'dashboard.stats.sessionExpires' | t }}</div>
       </div>
     </mat-card-content>
   </mat-card>
 </section>
 
 @if (accessProfile().length) {
-  <section class="dashboard__access" aria-label="Access profile">
+  <section class="dashboard__access" [attr.aria-label]="'dashboard.access.aria' | t">
     <mat-card class="access-card" appearance="outlined">
       <mat-card-content>
-        <h3 class="access-card__title">Your access profile</h3>
+        <h3 class="access-card__title">{{ 'dashboard.access.title' | t }}</h3>
         <p class="access-card__hint">
-          Your {{ permissionCount() }} permissions, grouped by access level.
+          {{ 'dashboard.access.hint' | t: { count: permissionCount() } }}
         </p>
         <app-donut-chart
           [data]="accessProfile()"
-          label="Access profile by permission verb"
-          centerLabel="perms"
+          [label]="'dashboard.access.chartLabel' | t"
+          [centerLabel]="'dashboard.access.centerLabel' | t"
         />
       </mat-card-content>
     </mat-card>
@@ -60,7 +60,7 @@
 }
 
 @if (session()?.roles?.length) {
-  <section class="dashboard__roles" aria-label="Your roles">
+  <section class="dashboard__roles" [attr.aria-label]="'dashboard.roles.aria' | t">
     <mat-chip-set>
       @for (role of session()?.roles; track role) {
         <mat-chip>{{ role }}</mat-chip>
@@ -69,7 +69,7 @@
   </section>
 }
 
-<h2 class="dashboard__section-title">Administration</h2>
+<h2 class="dashboard__section-title">{{ 'dashboard.section.administration' | t }}</h2>
 
 @if (cards().length) {
   <section class="dashboard__cards">
@@ -77,11 +77,11 @@
       <mat-card class="feature" appearance="outlined">
         <mat-card-content class="feature__content">
           <mat-icon class="feature__icon" aria-hidden="true">{{ card.icon }}</mat-icon>
-          <h3 class="feature__title">{{ card.title }}</h3>
-          <p class="feature__desc">{{ card.description }}</p>
+          <h3 class="feature__title">{{ card.title | t }}</h3>
+          <p class="feature__desc">{{ card.description | t }}</p>
         </mat-card-content>
         <mat-card-actions align="end">
-          <a matButton="filled" [routerLink]="card.route">{{ card.cta }}</a>
+          <a matButton="filled" [routerLink]="card.route">{{ card.cta | t }}</a>
         </mat-card-actions>
       </mat-card>
     }
@@ -89,10 +89,7 @@
 } @else {
   <mat-card appearance="outlined">
     <mat-card-content>
-      <p>
-        You do not currently have administrative permissions. Contact your platform
-        administrator if you believe this is incorrect.
-      </p>
+      <p>{{ 'dashboard.noAdmin' | t }}</p>
     </mat-card-content>
   </mat-card>
 }

@@ -1,9 +1,9 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading audit…" />
+    <app-loading [message]="'audits.detail.loading' | t" />
   }
   @case ('error') {
-    <app-error-state message="We couldn't load this audit." (retry)="fetch()" />
+    <app-error-state [message]="'audits.detail.error' | t" (retry)="fetch()" />
   }
   @case ('ready') {
     @if (audit(); as a) {
@@ -15,7 +15,7 @@
           @if (canViewReports()) {
             <a matButton type="button" [routerLink]="['/audits', a.id, 'reports']">
               <mat-icon>summarize</mat-icon>
-              Reports
+              {{ 'audits.actions.reports' | t }}
             </a>
           }
           @if (canManage()) {
@@ -29,39 +29,39 @@
                 [matTooltipDisabled]="canPlan()"
               >
                 <mat-icon>event_available</mat-icon>
-                Plan
+                {{ 'audits.actions.plan' | t }}
               </button>
             }
             @if (isPlanned()) {
               <button matButton="filled" type="button" (click)="start()">
                 <mat-icon>play_arrow</mat-icon>
-                Start
+                {{ 'audits.actions.start' | t }}
               </button>
               <button matButton type="button" (click)="reopen()">
                 <mat-icon>undo</mat-icon>
-                Reopen
+                {{ 'audits.actions.reopen' | t }}
               </button>
             }
             @if (isInProgress()) {
               <button matButton="filled" type="button" (click)="sendToReview()">
                 <mat-icon>rate_review</mat-icon>
-                Send to review
+                {{ 'audits.actions.sendToReview' | t }}
               </button>
             }
             @if (isUnderReview()) {
               <button matButton="filled" type="button" (click)="complete()">
                 <mat-icon>task_alt</mat-icon>
-                Complete
+                {{ 'audits.actions.complete' | t }}
               </button>
               <button matButton type="button" (click)="returnToInProgress()">
                 <mat-icon>reply</mat-icon>
-                Return to in progress
+                {{ 'audits.actions.returnToInProgress' | t }}
               </button>
             }
             @if (canCancel()) {
               <button matButton type="button" (click)="cancel()">
                 <mat-icon>cancel</mat-icon>
-                Cancel
+                {{ 'audits.actions.cancel' | t }}
               </button>
             }
           }
@@ -73,37 +73,37 @@
           {{ a.status.replace('_', ' ') }}
         </span>
         @if (a.actualEndDate) {
-          <span class="muted">Ended {{ a.actualEndDate | date: 'mediumDate' }}</span>
+          <span class="muted">{{ 'audits.detail.ended' | t: { date: (a.actualEndDate | date: 'mediumDate') } }}</span>
         }
       </div>
 
       @if (isCancelled() && a.cancellationReason) {
         <mat-card appearance="outlined" class="detail__notice">
-          <strong>Cancelled.</strong> {{ a.cancellationReason }}
+          <strong>{{ 'audits.detail.cancelledLabel' | t }}</strong> {{ a.cancellationReason }}
         </mat-card>
       }
 
       <!-- Overview -->
       <mat-card appearance="outlined" class="detail__card">
-        <h3 class="detail__card-title">Overview</h3>
+        <h3 class="detail__card-title">{{ 'audits.detail.overview' | t }}</h3>
         <dl class="detail__grid">
           <div>
-            <dt>Window</dt>
+            <dt>{{ 'audits.field.window' | t }}</dt>
             <dd>
               {{ a.startDate | date: 'mediumDate' }} –
               {{ a.targetEndDate ? (a.targetEndDate | date: 'mediumDate') : '—' }}
             </dd>
           </div>
           <div>
-            <dt>Lead</dt>
+            <dt>{{ 'audits.field.lead' | t }}</dt>
             <dd>{{ leadName() }}</dd>
           </div>
           <div>
-            <dt>Auditee</dt>
+            <dt>{{ 'audits.field.auditee' | t }}</dt>
             <dd>{{ auditeeName() }}</dd>
           </div>
           <div>
-            <dt>Template</dt>
+            <dt>{{ 'audits.field.template' | t }}</dt>
             <dd>
               @if (a.templateId) {
                 {{ templateName() ?? a.templateId }}@if (a.templateVersion) { (v{{ a.templateVersion }}) }
@@ -113,14 +113,14 @@
             </dd>
           </div>
           <div>
-            <dt>Linked plan item</dt>
+            <dt>{{ 'audits.field.linkedPlanItem' | t }}</dt>
             <!-- TODO(ux): planItemId shown as raw id — no plan-item label/lookup source is available on the audit aggregate. -->
             <dd>{{ a.planItemId || '—' }}</dd>
           </div>
         </dl>
         @if (a.scopeDescription) {
           <div class="detail__scope">
-            <dt>Scope</dt>
+            <dt>{{ 'audits.field.scope' | t }}</dt>
             <dd>{{ a.scopeDescription }}</dd>
           </div>
         }
@@ -129,23 +129,23 @@
       <!-- Team -->
       <mat-card appearance="outlined" class="detail__card">
         <div class="detail__card-head">
-          <h3 class="detail__card-title">Team</h3>
+          <h3 class="detail__card-title">{{ 'audits.team.title' | t }}</h3>
           @if (canManageTeam()) {
             <div class="detail__card-actions">
               <button matButton type="button" (click)="transferLead()">
                 <mat-icon>swap_horiz</mat-icon>
-                Transfer lead
+                {{ 'audits.actions.transferLead' | t }}
               </button>
               <button matButton="filled" type="button" (click)="addMember()">
                 <mat-icon>person_add</mat-icon>
-                Add member
+                {{ 'audits.actions.addMember' | t }}
               </button>
             </div>
           }
         </div>
 
         @if (!activeMembers().length) {
-          <p class="muted detail__empty">No team members yet.</p>
+          <p class="muted detail__empty">{{ 'audits.team.empty' | t }}</p>
         } @else {
           <ul class="detail__members">
             @for (m of activeMembers(); track m.id) {
@@ -159,7 +159,7 @@
                     matIconButton
                     type="button"
                     (click)="removeMember(m)"
-                    [attr.aria-label]="'Remove ' + nameOf(m.userId)"
+                    [attr.aria-label]="'audits.team.removeAria' | t: { name: nameOf(m.userId) }"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -174,18 +174,18 @@
       <mat-card appearance="outlined" class="detail__card">
         <div class="detail__card-head">
           <h3 class="detail__card-title">
-            Checklist ({{ a.checklistItems.length }})
+            {{ 'audits.checklist.title' | t: { count: a.checklistItems.length } }}
           </h3>
           @if (canAddChecklistItem()) {
             <button matButton="filled" type="button" (click)="addChecklistItem()">
               <mat-icon>add</mat-icon>
-              Add item
+              {{ 'audits.actions.addItem' | t }}
             </button>
           }
         </div>
 
         @if (!a.checklistItems.length) {
-          <p class="muted detail__empty">No checklist items yet.</p>
+          <p class="muted detail__empty">{{ 'audits.checklist.empty' | t }}</p>
         } @else {
           @for (group of checklistGroups(); track group.name) {
             <div class="detail__section">
@@ -197,7 +197,7 @@
                       <p class="detail__item-prompt">
                         {{ item.prompt }}
                         @if (item.isRequired) {
-                          <span class="detail__required">Required</span>
+                          <span class="detail__required">{{ 'audits.checklist.required' | t }}</span>
                         }
                       </p>
                       @if (item.referenceNotes) {
@@ -208,7 +208,7 @@
                           {{ item.itemState.replace('_', ' ') }}
                         </span>
                         <span class="muted">{{ item.responseType.replace('_', '/') }}</span>
-                        <span class="muted">Assignee: {{ nameOf(item.assignedUserId) }}</span>
+                        <span class="muted">{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
                       </div>
                     </div>
                     @if (canEditChecklist()) {
@@ -217,7 +217,7 @@
                           matIconButton
                           type="button"
                           (click)="editChecklistItem(item)"
-                          aria-label="Edit item"
+                          [attr.aria-label]="'audits.actions.editItemAria' | t"
                         >
                           <mat-icon>edit</mat-icon>
                         </button>
@@ -225,7 +225,7 @@
                           matIconButton
                           type="button"
                           (click)="removeChecklistItem(item)"
-                          aria-label="Remove item"
+                          [attr.aria-label]="'audits.actions.removeItemAria' | t"
                         >
                           <mat-icon>delete</mat-icon>
                         </button>
@@ -243,10 +243,10 @@
       @if (canViewExceptions() && showExecution()) {
         <mat-card appearance="outlined" class="detail__card">
           <h3 class="detail__card-title">
-            Exceptions ({{ exceptions().length }})
+            {{ 'audits.exceptions.title' | t: { count: exceptions().length } }}
           </h3>
           @if (!exceptions().length) {
-            <p class="muted detail__empty">No exceptions raised yet.</p>
+            <p class="muted detail__empty">{{ 'audits.exceptions.empty' | t }}</p>
           } @else {
             <ul class="detail__exceptions">
               @for (ex of exceptions(); track ex.id) {
@@ -262,7 +262,7 @@
                       {{ ex.status.replaceAll('_', ' ') }}
                     </span>
                     @if (ex.isOverdue) {
-                      <span class="overdue-badge">Overdue +{{ ex.daysPastTarget }}</span>
+                      <span class="overdue-badge">{{ 'audits.exceptions.overdue' | t: { days: ex.daysPastTarget } }}</span>
                     }
                   </div>
                 </li>

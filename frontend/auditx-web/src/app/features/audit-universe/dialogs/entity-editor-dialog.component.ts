@@ -33,6 +33,8 @@ import {
   Entity,
   RiskDimension,
 } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 export interface EntityEditorDialogData {
   /** Present when editing; absent for create. */
@@ -72,6 +74,7 @@ interface ScoreRow {
     MatTableModule,
     MatExpansionModule,
     MatProgressSpinnerModule,
+    TranslatePipe,
   ],
   templateUrl: './entity-editor-dialog.component.html',
   styleUrl: './entity-editor-dialog.component.scss',
@@ -87,6 +90,7 @@ export class EntityEditorDialogComponent {
   private readonly riskDimensions = inject(RiskDimensionsService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
+  private readonly i18n = inject(TranslationService);
 
   readonly isEdit = !!this.data.entity;
 
@@ -198,9 +202,7 @@ export class EntityEditorDialogComponent {
     const onError = (err: unknown): void => {
       this.savingMeta.set(false);
       if (err instanceof HttpErrorResponse && err.status === 409) {
-        this.notify.error(
-          'This entity was changed by someone else (or the parent would create a cycle). Reopen it and try again.',
-        );
+        this.notify.error(this.i18n.translate('universe.error.conflictEntity'));
       }
       // Other errors already surfaced by the global interceptor.
     };
@@ -223,7 +225,11 @@ export class EntityEditorDialogComponent {
           next: (updated) => {
             this.savingMeta.set(false);
             this.entity.set(updated);
-            this.notify.success(`"${updated.name}" saved.`);
+            this.notify.success(
+              this.i18n.translate('universe.notify.saved', {
+                name: updated.name,
+              }),
+            );
           },
           error: onError,
         });
@@ -240,7 +246,11 @@ export class EntityEditorDialogComponent {
           next: (created) => {
             this.savingMeta.set(false);
             this.entity.set(created);
-            this.notify.success(`"${created.name}" created.`);
+            this.notify.success(
+              this.i18n.translate('universe.notify.created', {
+                name: created.name,
+              }),
+            );
             // Switch into edit mode so scoring becomes available.
             this.dialogRef.close(true);
           },
@@ -271,18 +281,18 @@ export class EntityEditorDialogComponent {
 
     if (inherentAny && !inherentComplete) {
       this.notify.warning(
-        'Score every dimension on the inherent side, or clear it entirely.',
+        this.i18n.translate('universe.warn.inherentIncomplete'),
       );
       return;
     }
     if (residualAny && !residualComplete) {
       this.notify.warning(
-        'Score every dimension on the residual side, or clear it entirely.',
+        this.i18n.translate('universe.warn.residualIncomplete'),
       );
       return;
     }
     if (!inherentComplete && !residualComplete) {
-      this.notify.warning('Enter a complete inherent or residual scoring.');
+      this.notify.warning(this.i18n.translate('universe.warn.scoringRequired'));
       return;
     }
 
@@ -310,14 +320,12 @@ export class EntityEditorDialogComponent {
         this.entity.set(updated);
         this.loadScoreRows();
         this.historyLoaded.set(false);
-        this.notify.success('Risk scores saved.');
+        this.notify.success(this.i18n.translate('universe.notify.scoresSaved'));
       },
       error: (err: unknown) => {
         this.savingScores.set(false);
         if (err instanceof HttpErrorResponse && err.status === 409) {
-          this.notify.error(
-            'Risk scores were changed by someone else. Reopen the entity and try again.',
-          );
+          this.notify.error(this.i18n.translate('universe.error.conflictScores'));
         }
       },
     });

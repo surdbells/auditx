@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 @Component({
   selector: 'app-loading',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatProgressSpinnerModule],
+  imports: [MatProgressSpinnerModule, TranslatePipe],
   template: `
     <div class="loading" role="status" aria-live="polite">
       <mat-spinner [diameter]="diameter()" />
-      <p class="loading__label">{{ message() }}</p>
+      <p class="loading__label">{{ message() | t }}</p>
     </div>
   `,
   styles: `
@@ -28,6 +30,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   `,
 })
 export class LoadingComponent {
-  readonly message = input('Loading…');
+  readonly message = input('shared.loading.message');
   readonly diameter = input(48);
 }

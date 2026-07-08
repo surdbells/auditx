@@ -1,12 +1,12 @@
 <app-page-header
-  title="Exceptions"
-  subtitle="Cross-audit tracker of raised exceptions and their management action plans."
+  [title]="'exceptions.list.title' | t"
+  [subtitle]="'exceptions.list.subtitle' | t"
 />
 
 <mat-card appearance="outlined" class="exceptions__filters-card">
   <form [formGroup]="filters" class="exceptions__filters">
     <mat-form-field appearance="outline">
-      <mat-label>Status</mat-label>
+      <mat-label>{{ 'exceptions.field.status' | t }}</mat-label>
       <mat-select formControlName="status">
         @for (s of statuses; track s.value) {
           <mat-option [value]="s.value">{{ s.label }}</mat-option>
@@ -15,7 +15,7 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Severity</mat-label>
+      <mat-label>{{ 'exceptions.field.severity' | t }}</mat-label>
       <mat-select formControlName="severity">
         @for (s of severities; track s.value) {
           <mat-option [value]="s.value">{{ s.label }}</mat-option>
@@ -24,7 +24,7 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Overdue</mat-label>
+      <mat-label>{{ 'exceptions.field.overdue' | t }}</mat-label>
       <mat-select formControlName="overdue">
         @for (b of boolFilters; track b.value) {
           <mat-option [value]="b.value">{{ b.label }}</mat-option>
@@ -33,7 +33,7 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Recurrence</mat-label>
+      <mat-label>{{ 'exceptions.field.recurrence' | t }}</mat-label>
       <mat-select formControlName="recurrence">
         @for (b of boolFilters; track b.value) {
           <mat-option [value]="b.value">{{ b.label }}</mat-option>
@@ -45,11 +45,11 @@
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading exceptions…" />
+    <app-loading [message]="'exceptions.list.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the exceptions."
+      [message]="'exceptions.list.loadError' | t"
       (retry)="fetchFirstPage()"
     />
   }
@@ -57,22 +57,22 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="report_problem"
-        title="No exceptions found"
-        message="Exceptions raised against audit findings appear here."
+        [title]="'exceptions.list.emptyTitle' | t"
+        [message]="'exceptions.list.emptyMessage' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="exceptions__table-card">
         <div class="table-scroll">
           <table mat-table [dataSource]="exceptions()" class="exceptions__table">
             <ng-container matColumnDef="title">
-              <th mat-header-cell *matHeaderCellDef>Title</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.title' | t }}</th>
               <td mat-cell *matCellDef="let e">
                 <span class="exceptions__title">{{ e.title }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="severity">
-              <th mat-header-cell *matHeaderCellDef>Severity</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.severity' | t }}</th>
               <td mat-cell *matCellDef="let e">
                 <span class="severity-badge" [attr.data-severity]="e.severity">
                   {{ e.severity }}
@@ -81,7 +81,7 @@
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.status' | t }}</th>
               <td mat-cell *matCellDef="let e">
                 <span class="status-badge" [attr.data-status]="e.status">
                   {{ e.status.replaceAll('_', ' ') }}
@@ -90,34 +90,34 @@
             </ng-container>
 
             <ng-container matColumnDef="owner">
-              <th mat-header-cell *matHeaderCellDef>Owner</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.owner' | t }}</th>
               <td mat-cell *matCellDef="let e">{{ nameOf(e.ownerUserId) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="targetDate">
-              <th mat-header-cell *matHeaderCellDef>Target</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.target' | t }}</th>
               <td mat-cell *matCellDef="let e">
                 {{ e.targetDate | date: 'mediumDate' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="flags">
-              <th mat-header-cell *matHeaderCellDef>Flags</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.flags' | t }}</th>
               <td mat-cell *matCellDef="let e">
                 <span class="exceptions__flags">
                   @if (e.isOverdue) {
                     <span
                       class="overdue-badge"
-                      [matTooltip]="e.daysPastTarget + ' day(s) past target'"
+                      [matTooltip]="'exceptions.flag.pastTarget' | t: { days: e.daysPastTarget }"
                     >
-                      Overdue +{{ e.daysPastTarget }}
+                      {{ 'exceptions.flag.overdue' | t: { days: e.daysPastTarget } }}
                     </span>
                   }
                   @if (e.isRecurrence) {
                     <mat-icon
                       class="exceptions__recurrence"
-                      matTooltip="Recurrence"
-                      aria-label="Recurrence"
+                      [matTooltip]="'exceptions.field.recurrence' | t"
+                      [attr.aria-label]="'exceptions.field.recurrence' | t"
                     >
                       repeat
                     </mat-icon>
@@ -144,7 +144,7 @@
               (click)="loadMore()"
               [disabled]="loadingMore()"
             >
-              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+              {{ (loadingMore() ? 'exceptions.action.loadingMore' : 'exceptions.action.loadMore') | t }}
             </button>
           </div>
         }

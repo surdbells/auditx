@@ -35,6 +35,8 @@ import {
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -58,10 +60,10 @@ const SCOPE_ORDER: PermissionScopeType[] = [
 ];
 
 const SCOPE_LABELS: Record<PermissionScopeType, string> = {
-  global: 'Global',
-  business_unit: 'Business unit',
-  branch: 'Branch',
-  self: 'Self',
+  global: 'identity.scope.global',
+  business_unit: 'identity.scope.business_unit',
+  branch: 'identity.scope.branch',
+  self: 'identity.scope.self',
 };
 
 @Component({
@@ -81,6 +83,7 @@ const SCOPE_LABELS: Record<PermissionScopeType, string> = {
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './role-editor.component.html',
   styleUrl: './role-editor.component.scss',
@@ -93,6 +96,7 @@ export class RoleEditorComponent {
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly saving = signal(false);
@@ -231,7 +235,7 @@ export class RoleEditorComponent {
       }));
 
     if (permissions.length === 0) {
-      this.notify.warning('Select at least one permission for this role.');
+      this.notify.warning(this.i18n.translate('identity.roleEditor.selectPermission'));
       return;
     }
 

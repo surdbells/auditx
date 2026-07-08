@@ -1,28 +1,28 @@
 <!-- Progress + review summary -->
 <mat-card appearance="outlined" class="exec__card">
-  <h3 class="exec__card-title">Fieldwork progress</h3>
+  <h3 class="exec__card-title">{{ 'audits.exec.progressTitle' | t }}</h3>
 
   @if (progress(); as p) {
     <div class="exec__progress">
       <div class="exec__progress-head">
-        <span>{{ p.respondedItems }} / {{ p.totalItems }} responded</span>
+        <span>{{ 'audits.exec.responded' | t: { responded: p.respondedItems, total: p.totalItems } }}</span>
         <span class="muted">{{ progressPct() }}%</span>
       </div>
       <mat-progress-bar mode="determinate" [value]="progressPct()" />
       <div class="exec__progress-meta muted">
-        {{ p.inProgressItems }} in progress · {{ p.notStartedItems }} not started
+        {{ 'audits.exec.progressMeta' | t: { inProgress: p.inProgressItems, notStarted: p.notStartedItems } }}
       </div>
     </div>
   } @else {
-    <p class="muted">Loading progress…</p>
+    <p class="muted">{{ 'audits.exec.loadingProgress' | t }}</p>
   }
 
   @if (summary(); as s) {
-    <mat-chip-set class="exec__summary" aria-label="Review summary">
-      <mat-chip disableRipple>Pass {{ s.pass }}</mat-chip>
-      <mat-chip disableRipple>Fail {{ s.fail }}</mat-chip>
-      <mat-chip disableRipple>N/A {{ s.na }}</mat-chip>
-      <mat-chip disableRipple>Exceptions {{ s.exceptions }}</mat-chip>
+    <mat-chip-set class="exec__summary" [attr.aria-label]="'audits.exec.reviewSummaryAria' | t">
+      <mat-chip disableRipple>{{ 'audits.exec.chipPass' | t: { count: s.pass } }}</mat-chip>
+      <mat-chip disableRipple>{{ 'audits.exec.chipFail' | t: { count: s.fail } }}</mat-chip>
+      <mat-chip disableRipple>{{ 'audits.exec.chipNa' | t: { count: s.na } }}</mat-chip>
+      <mat-chip disableRipple>{{ 'audits.exec.chipExceptions' | t: { count: s.exceptions } }}</mat-chip>
     </mat-chip-set>
   }
 </mat-card>
@@ -30,27 +30,27 @@
 <!-- Reviewer: failures lacking an exception -->
 @if (showReviewPanel()) {
   <mat-card appearance="outlined" class="exec__card">
-    <h3 class="exec__card-title">Review · failures without exception</h3>
+    <h3 class="exec__card-title">{{ 'audits.exec.reviewPanelTitle' | t }}</h3>
     @if (!failItems().length) {
-      <p class="muted">No outstanding failures need judgement.</p>
+      <p class="muted">{{ 'audits.exec.noFailures' | t }}</p>
     } @else {
       <ul class="exec__fail-list">
         @for (item of failItems(); track item.itemId) {
           <li class="exec__fail">
             <div class="exec__fail-main">
               <p class="exec__fail-prompt">{{ item.prompt }}</p>
-              <span class="muted">Assignee: {{ nameOf(item.assignedUserId) }}</span>
+              <span class="muted">{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
             </div>
             <div class="exec__fail-actions">
               @if (canRaiseException()) {
                 <button matButton type="button" (click)="raiseException(item)">
                   <mat-icon>report_problem</mat-icon>
-                  Raise exception
+                  {{ 'audits.actions.raiseException' | t }}
                 </button>
               }
               <button matButton="filled" type="button" (click)="recordJudgement(item)">
                 <mat-icon>gavel</mat-icon>
-                Record judgement
+                {{ 'audits.actions.recordJudgement' | t }}
               </button>
             </div>
           </li>
@@ -62,10 +62,10 @@
 
 <!-- Checklist execution -->
 <mat-card appearance="outlined" class="exec__card">
-  <h3 class="exec__card-title">Checklist execution</h3>
+  <h3 class="exec__card-title">{{ 'audits.exec.checklistTitle' | t }}</h3>
 
   @if (!progressGroups().length) {
-    <p class="muted">No checklist items to work on.</p>
+    <p class="muted">{{ 'audits.exec.noItems' | t }}</p>
   } @else {
     @for (group of progressGroups(); track group.name) {
       <div class="exec__section">
@@ -77,7 +77,7 @@
                 <mat-panel-title class="exec__item-title">
                   {{ item.prompt }}
                   @if (item.isRequired) {
-                    <span class="exec__required">Required</span>
+                    <span class="exec__required">{{ 'audits.checklist.required' | t }}</span>
                   }
                 </mat-panel-title>
                 <mat-panel-description class="exec__item-desc">
@@ -95,8 +95,8 @@
                   @if (item.hasException) {
                     <mat-icon
                       class="exec__exception"
-                      matTooltip="Has exception"
-                      aria-label="Has exception"
+                      [matTooltip]="'audits.exec.hasExceptionTooltip' | t"
+                      [attr.aria-label]="'audits.exec.hasExceptionTooltip' | t"
                     >
                       report_problem
                     </mat-icon>
@@ -106,11 +106,11 @@
 
               <div class="exec__item-body">
                 <div class="exec__item-meta muted">
-                  <span>Assignee: {{ nameOf(item.assignedUserId) }}</span>
+                  <span>{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
                   @if (responseFor(item.itemId); as r) {
-                    <span>· Verdict: {{ verdictLabel(r.verdict) }}</span>
+                    <span>{{ 'audits.exec.verdictInline' | t: { verdict: verdictLabel(r.verdict) } }}</span>
                     @if (r.isDraft) {
-                      <span class="exec__draft-tag">Draft</span>
+                      <span class="exec__draft-tag">{{ 'audits.exec.draftTag' | t }}</span>
                     }
                   }
                 </div>
@@ -124,24 +124,24 @@
                   @if (canRespond()) {
                     <button matButton="filled" type="button" (click)="respond(item)">
                       <mat-icon>edit_note</mat-icon>
-                      Respond
+                      {{ 'audits.actions.respond' | t }}
                     </button>
                     @if (hasDraft(item.itemId)) {
                       <button matButton type="button" (click)="discardDraft(item)">
                         <mat-icon>delete_sweep</mat-icon>
-                        Discard draft
+                        {{ 'audits.actions.discardDraft' | t }}
                       </button>
                     }
                   }
                   @if (canManage() && !isReadOnly()) {
                     <button matButton type="button" (click)="assign(item)">
                       <mat-icon>person</mat-icon>
-                      Assign
+                      {{ 'audits.actions.assign' | t }}
                     </button>
                   }
                   <button matButton type="button" (click)="showHistory(item)">
                     <mat-icon>history</mat-icon>
-                    History
+                    {{ 'audits.actions.history' | t }}
                   </button>
                 </div>
 
@@ -151,7 +151,7 @@
                   @if (response) {
                     <div class="exec__evidence">
                       <div class="exec__evidence-head">
-                        <span class="exec__evidence-title">Evidence</span>
+                        <span class="exec__evidence-title">{{ 'audits.exec.evidenceTitle' | t }}</span>
                         @if (canUploadEvidence() && canRespond()) {
                           <button
                             matButton
@@ -159,7 +159,7 @@
                             (click)="fileInput.click()"
                           >
                             <mat-icon>upload_file</mat-icon>
-                            Upload
+                            {{ 'audits.actions.upload' | t }}
                           </button>
                           <input
                             #fileInput
@@ -170,7 +170,7 @@
                         }
                       </div>
                       @if (!evidenceFor(response.id).length) {
-                        <p class="muted exec__evidence-empty">No evidence yet.</p>
+                        <p class="muted exec__evidence-empty">{{ 'audits.exec.noEvidence' | t }}</p>
                       } @else {
                         <ul class="exec__files">
                           @for (file of evidenceFor(response.id); track file.id) {
@@ -185,7 +185,7 @@
                                   {{ file.uploadedAt | date: 'short' }}
                                 </span>
                                 @if (file.isFlagged) {
-                                  <span class="exec__flagged">Flagged</span>
+                                  <span class="exec__flagged">{{ 'audits.exec.flagged' | t }}</span>
                                 }
                               </div>
                               <div class="exec__file-actions">
@@ -193,7 +193,7 @@
                                   matIconButton
                                   type="button"
                                   (click)="downloadEvidence(file)"
-                                  aria-label="Download evidence"
+                                  [attr.aria-label]="'audits.actions.downloadEvidenceAria' | t"
                                 >
                                   <mat-icon>download</mat-icon>
                                 </button>

@@ -13,6 +13,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { CloneTemplateRequest } from '../../../../core/models';
 
 export interface CloneTemplateDialogData {
@@ -28,28 +29,29 @@ export interface CloneTemplateDialogData {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Clone template</h2>
+    <h2 mat-dialog-title>{{ 'templatesAdmin.clone.title' | t }}</h2>
     <mat-dialog-content>
       <p class="hint">
-        Create a new draft template copied from
+        {{ 'templatesAdmin.clone.copiedFrom' | t }}
         <strong>{{ data.sourceName }}</strong>.
       </p>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>New template name</mat-label>
+          <mat-label>{{ 'templatesAdmin.clone.nameLabel' | t }}</mat-label>
           <input matInput formControlName="newName" autocomplete="off" />
           @if (form.controls.newName.hasError('required') && form.controls.newName.touched) {
-            <mat-error>A name is required.</mat-error>
+            <mat-error>{{ 'templatesAdmin.error.nameRequired' | t }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'templatesAdmin.action.cancel' | t }}</button>
       <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
-        Clone
+        {{ 'templatesAdmin.action.clone' | t }}
       </button>
     </mat-dialog-actions>
   `,

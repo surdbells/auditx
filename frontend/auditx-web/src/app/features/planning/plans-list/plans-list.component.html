@@ -1,11 +1,11 @@
 <app-page-header
-  title="Annual Plans"
-  subtitle="Risk-based audit plans, their approval status and execution."
+  [title]="'planning.list.title' | t"
+  [subtitle]="'planning.list.subtitle' | t"
 >
   @if (canManage()) {
     <button actions matButton="filled" type="button" (click)="create()">
       <mat-icon>add</mat-icon>
-      New plan
+      {{ 'planning.list.newPlan' | t }}
     </button>
   }
 </app-page-header>
@@ -13,10 +13,10 @@
 <mat-card appearance="outlined" class="plans__filters-card">
   <form [formGroup]="filters" class="plans__filters">
     <mat-form-field appearance="outline">
-      <mat-label>Status</mat-label>
+      <mat-label>{{ 'planning.filter.status' | t }}</mat-label>
       <mat-select formControlName="status">
         @for (s of statuses; track s.value) {
-          <mat-option [value]="s.value">{{ s.label }}</mat-option>
+          <mat-option [value]="s.value">{{ s.labelKey | t }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
@@ -25,11 +25,11 @@
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading plans…" />
+    <app-loading [message]="'planning.list.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the annual plans."
+      [message]="'planning.list.loadError' | t"
       (retry)="fetchFirstPage()"
     />
   }
@@ -37,22 +37,22 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="event_note"
-        title="No plans found"
-        message="Create an annual plan to start scheduling audits."
+        [title]="'planning.list.emptyTitle' | t"
+        [message]="'planning.list.emptyMessage' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="plans__table-card">
         <div class="table-scroll">
           <table mat-table [dataSource]="plans()" class="plans__table">
             <ng-container matColumnDef="periodLabel">
-              <th mat-header-cell *matHeaderCellDef>Period</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'planning.list.colPeriod' | t }}</th>
               <td mat-cell *matCellDef="let p">
                 <span class="plans__label">{{ p.periodLabel }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="period">
-              <th mat-header-cell *matHeaderCellDef>Window</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'planning.list.colWindow' | t }}</th>
               <td mat-cell *matCellDef="let p">
                 {{ p.periodStart | date: 'mediumDate' }} –
                 {{ p.periodEnd | date: 'mediumDate' }}
@@ -60,7 +60,7 @@
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'planning.common.status' | t }}</th>
               <td mat-cell *matCellDef="let p">
                 <span class="status-badge" [attr.data-status]="p.status">
                   {{ p.status.replace('_', ' ') }}
@@ -69,7 +69,7 @@
             </ng-container>
 
             <ng-container matColumnDef="itemCount">
-              <th mat-header-cell *matHeaderCellDef>Items</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'planning.list.colItems' | t }}</th>
               <td mat-cell *matCellDef="let p">{{ p.itemCount }}</td>
             </ng-container>
 
@@ -91,7 +91,7 @@
               (click)="loadMore()"
               [disabled]="loadingMore()"
             >
-              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+              {{ loadingMore() ? ('planning.list.loadingMore' | t) : ('planning.list.loadMore' | t) }}
             </button>
           </div>
         }

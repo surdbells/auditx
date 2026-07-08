@@ -18,6 +18,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { DistributeReportRequest, UserDto } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface DistributeReportDialogData {
   /** Active users for the recipient picker. */
@@ -42,13 +43,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     MatChipsModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Distribute report</h2>
+    <h2 mat-dialog-title>{{ 'reports.dialog.distribute.title' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Recipients (users)</mat-label>
+          <mat-label>{{ 'reports.dialog.distribute.recipientsLabel' | t }}</mat-label>
           <mat-select formControlName="userIds" multiple>
             @for (u of data.users; track u.id) {
               <mat-option [value]="u.id">
@@ -56,43 +58,43 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               </mat-option>
             }
           </mat-select>
-          <mat-hint>Select one or more internal recipients.</mat-hint>
+          <mat-hint>{{ 'reports.dialog.distribute.recipientsHint' | t }}</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>External email addresses</mat-label>
-          <mat-chip-grid #chipGrid aria-label="Email addresses">
+          <mat-label>{{ 'reports.dialog.distribute.emailsLabel' | t }}</mat-label>
+          <mat-chip-grid #chipGrid [attr.aria-label]="'reports.dialog.distribute.emailsAria' | t">
             @for (email of emails(); track email) {
               <mat-chip-row (removed)="removeEmail(email)">
                 {{ email }}
-                <button matChipRemove [attr.aria-label]="'Remove ' + email">
+                <button matChipRemove [attr.aria-label]="'reports.dialog.distribute.removeEmail' | t: { email: email }">
                   <mat-icon>cancel</mat-icon>
                 </button>
               </mat-chip-row>
             }
             <input
-              placeholder="e.g. board@bank.test"
+              [placeholder]="'reports.dialog.distribute.emailPlaceholder' | t"
               [matChipInputFor]="chipGrid"
               (matChipInputTokenEnd)="addEmail($event)"
             />
           </mat-chip-grid>
           @if (emailError()) {
-            <mat-error>Enter a valid email address.</mat-error>
+            <mat-error>{{ 'reports.dialog.distribute.emailError' | t }}</mat-error>
           } @else {
-            <mat-hint>Press Enter to add an address.</mat-hint>
+            <mat-hint>{{ 'reports.dialog.distribute.emailHint' | t }}</mat-hint>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'reports.common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="!canSubmit()"
       >
-        Distribute
+        {{ 'reports.viewer.action.distribute' | t }}
       </button>
     </mat-dialog-actions>
   `,

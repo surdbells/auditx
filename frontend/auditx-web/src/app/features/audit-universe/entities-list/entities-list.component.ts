@@ -40,6 +40,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -69,6 +71,7 @@ export type HeatBand = 'none' | 'low' | 'moderate' | 'high' | 'critical';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './entities-list.component.html',
   styleUrl: './entities-list.component.scss',
@@ -81,6 +84,7 @@ export class EntitiesListComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'name',
@@ -259,7 +263,9 @@ export class EntitiesListComponent {
       .afterClosed()
       .subscribe((created?: number) => {
         if (created !== undefined) {
-          this.notify.success(`${created} entit(y/ies) imported.`);
+          this.notify.success(
+            this.i18n.translate('universe.notify.imported', { count: created }),
+          );
           this.fetchFirstPage();
         }
       });
@@ -268,9 +274,11 @@ export class EntitiesListComponent {
   archive(entity: EntityListItem, event: Event): void {
     event.stopPropagation();
     const data: ConfirmDialogData = {
-      title: 'Archive entity',
-      message: `Archive "${entity.name}"? It will be hidden from the active universe.`,
-      confirmLabel: 'Archive',
+      title: this.i18n.translate('universe.archive.title'),
+      message: this.i18n.translate('universe.archive.message', {
+        name: entity.name,
+      }),
+      confirmLabel: this.i18n.translate('universe.actions.archive'),
       destructive: true,
     };
     this.dialog
@@ -282,7 +290,11 @@ export class EntitiesListComponent {
         }
         this.universe.archive(entity.id).subscribe({
           next: () => {
-            this.notify.success(`"${entity.name}" archived.`);
+            this.notify.success(
+              this.i18n.translate('universe.notify.archived', {
+                name: entity.name,
+              }),
+            );
             this.fetchFirstPage();
           },
         });

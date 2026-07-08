@@ -7,6 +7,7 @@ import {
 } from '@angular/material/dialog';
 
 import { AuditTrailEntry } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import {
   humaniseActorType,
   humaniseEventType,
@@ -20,7 +21,7 @@ export interface AuditTrailDetailDialogData {
 @Component({
   selector: 'app-audit-trail-detail-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, MatDialogModule, MatButtonModule],
+  imports: [DatePipe, MatDialogModule, MatButtonModule, TranslatePipe],
   templateUrl: './audit-trail-detail-dialog.component.html',
   styleUrl: './audit-trail-detail-dialog.component.scss',
 })

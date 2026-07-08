@@ -9,6 +9,8 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 export interface CiaTextDialogData {
   /** Current supplementary text (prefills the editor). */
   supplementaryText: string | null;
@@ -27,25 +29,26 @@ export interface CiaTextDialogData {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>CIA supplementary narrative</h2>
+    <h2 mat-dialog-title>{{ 'ac.ciaText.title' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Supplementary text</mat-label>
+          <mat-label>{{ 'ac.ciaText.label' | t }}</mat-label>
           <textarea
             matInput
             formControlName="supplementaryText"
             rows="8"
-            placeholder="Add the CIA narrative for the committee…"
+            [placeholder]="'ac.ciaText.placeholder' | t"
           ></textarea>
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
-      <button matButton="filled" type="button" (click)="submit()">Save</button>
+      <button matButton type="button" (click)="cancel()">{{ 'ac.common.cancel' | t }}</button>
+      <button matButton="filled" type="button" (click)="submit()">{{ 'ac.common.save' | t }}</button>
     </mat-dialog-actions>
   `,
   styles: `

@@ -1,6 +1,6 @@
 <mat-card appearance="outlined" class="dispatches__filters-card">
   <mat-form-field appearance="outline" class="dispatches__status">
-    <mat-label>Status</mat-label>
+    <mat-label>{{ 'notifications.column.status' | t }}</mat-label>
     <mat-select [formControl]="statusFilter">
       @for (s of statuses; track s.value) {
         <mat-option [value]="s.value">{{ s.label }}</mat-option>
@@ -9,29 +9,29 @@
   </mat-form-field>
 
   <mat-form-field appearance="outline" class="dispatches__event">
-    <mat-label>Event type</mat-label>
+    <mat-label>{{ 'notifications.field.eventType' | t }}</mat-label>
     <input
       matInput
       [formControl]="eventTypeFilter"
       autocomplete="off"
-      placeholder="e.g. audit.created"
+      [placeholder]="'notifications.dispatches.filter.eventTypePlaceholder' | t"
       (keyup.enter)="fetch()"
     />
   </mat-form-field>
 
   <button matButton type="button" (click)="fetch()">
     <mat-icon>refresh</mat-icon>
-    Apply
+    {{ 'notifications.actions.apply' | t }}
   </button>
 </mat-card>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading dispatches…" />
+    <app-loading [message]="'notifications.dispatches.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the dispatch log."
+      [message]="'notifications.dispatches.error.load' | t"
       (retry)="fetch()"
     />
   }
@@ -39,8 +39,8 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="outgoing_mail"
-        title="No dispatches"
-        message="No dispatches match the selected filters."
+        [title]="'notifications.dispatches.empty.title' | t"
+        [message]="'notifications.dispatches.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="dispatches__table-card">
@@ -51,7 +51,7 @@
             class="dispatches__table"
           >
             <ng-container matColumnDef="eventType">
-              <th mat-header-cell *matHeaderCellDef>Event</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.event' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 <span class="dispatches__event-type">{{ d.eventType }}</span>
                 <span class="dispatches__template">{{ d.templateKey }}</span>
@@ -59,19 +59,19 @@
             </ng-container>
 
             <ng-container matColumnDef="recipient">
-              <th mat-header-cell *matHeaderCellDef>Recipient</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.recipient' | t }}</th>
               <td mat-cell *matCellDef="let d">{{ d.recipientAddress }}</td>
             </ng-container>
 
             <ng-container matColumnDef="channel">
-              <th mat-header-cell *matHeaderCellDef>Channel</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.channel' | t }}</th>
               <td mat-cell *matCellDef="let d" class="dispatches__channel">
                 {{ d.channel }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.status' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 <span class="status-badge" [attr.data-status]="d.status">
                   {{ humanise(d.status) }}
@@ -80,26 +80,26 @@
             </ng-container>
 
             <ng-container matColumnDef="attempts">
-              <th mat-header-cell *matHeaderCellDef>Attempts</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.attempts' | t }}</th>
               <td mat-cell *matCellDef="let d">{{ d.attempts }}</td>
             </ng-container>
 
             <ng-container matColumnDef="nextRetryAt">
-              <th mat-header-cell *matHeaderCellDef>Next retry</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.dispatches.column.nextRetry' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 {{ d.nextRetryAt ? (d.nextRetryAt | date: 'short') : '—' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="deliveredAt">
-              <th mat-header-cell *matHeaderCellDef>Delivered</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.dispatches.column.delivered' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 {{ d.deliveredAt ? (d.deliveredAt | date: 'short') : '—' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="lastError">
-              <th mat-header-cell *matHeaderCellDef>Last error</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'notifications.column.lastError' | t }}</th>
               <td mat-cell *matCellDef="let d" class="dispatches__error">
                 {{ d.lastError ?? '—' }}
               </td>

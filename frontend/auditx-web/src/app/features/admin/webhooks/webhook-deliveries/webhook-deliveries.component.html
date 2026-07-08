@@ -1,6 +1,6 @@
 <mat-card appearance="outlined" class="deliveries__filters-card">
   <mat-form-field appearance="outline" class="deliveries__status">
-    <mat-label>Status</mat-label>
+    <mat-label>{{ 'integrations.field.status' | t }}</mat-label>
     <mat-select [formControl]="statusFilter">
       @for (s of statuses; track s.value) {
         <mat-option [value]="s.value">{{ s.label }}</mat-option>
@@ -9,17 +9,17 @@
   </mat-form-field>
   <button matButton type="button" (click)="fetch()">
     <mat-icon>refresh</mat-icon>
-    Refresh
+    {{ 'integrations.actions.refresh' | t }}
   </button>
 </mat-card>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading deliveries…" />
+    <app-loading [message]="'integrations.deliveries.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the webhook deliveries."
+      [message]="'integrations.deliveries.error' | t"
       (retry)="fetch()"
     />
   }
@@ -27,15 +27,15 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="send"
-        title="No deliveries"
-        message="No deliveries match the selected filter."
+        [title]="'integrations.deliveries.empty.title' | t"
+        [message]="'integrations.deliveries.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="deliveries__table-card">
         <div class="deliveries__table-wrapper">
           <table mat-table [dataSource]="deliveries()" class="deliveries__table">
             <ng-container matColumnDef="eventType">
-              <th mat-header-cell *matHeaderCellDef>Event</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'integrations.deliveries.col.event' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 <span class="deliveries__event">{{ d.eventType }}</span>
                 <span class="deliveries__event-id">{{ d.eventId }}</span>
@@ -43,7 +43,7 @@
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'integrations.field.status' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 <span class="status-badge" [attr.data-status]="d.status">
                   {{ humanise(d.status) }}
@@ -52,31 +52,31 @@
             </ng-container>
 
             <ng-container matColumnDef="attempts">
-              <th mat-header-cell *matHeaderCellDef>Attempts</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'integrations.deliveries.col.attempts' | t }}</th>
               <td mat-cell *matCellDef="let d">{{ d.attempts }}</td>
             </ng-container>
 
             <ng-container matColumnDef="nextRetryAt">
-              <th mat-header-cell *matHeaderCellDef>Next retry</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'integrations.deliveries.col.nextRetry' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 {{ d.nextRetryAt ? (d.nextRetryAt | date: 'short') : '—' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="lastError">
-              <th mat-header-cell *matHeaderCellDef>Last error</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'integrations.deliveries.col.lastError' | t }}</th>
               <td mat-cell *matCellDef="let d" class="deliveries__error">
                 {{ d.lastError ?? '—' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'integrations.field.actions' | t"></th>
               <td mat-cell *matCellDef="let d">
                 @if (canRetryRow(d)) {
                   <button matButton type="button" (click)="retry(d)">
                     <mat-icon>replay</mat-icon>
-                    Retry
+                    {{ 'integrations.actions.retry' | t }}
                   </button>
                 }
               </td>
@@ -95,7 +95,7 @@
               (click)="loadMore()"
               [disabled]="loadingMore()"
             >
-              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+              {{ (loadingMore() ? 'integrations.common.loadingInline' : 'integrations.actions.loadMore') | t }}
             </button>
           </div>
         }

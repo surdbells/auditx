@@ -1,21 +1,21 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading report…" />
+    <app-loading [message]="'reports.viewer.loading' | t" />
   }
   @case ('error') {
-    <app-error-state message="We couldn't load this report." (retry)="fetch()" />
+    <app-error-state [message]="'reports.viewer.error.load' | t" (retry)="fetch()" />
   }
   @case ('ready') {
     @if (report(); as r) {
       <app-page-header
-        [title]="'Report v' + r.versionNumber"
-        [subtitle]="'Audit ' + (auditName() ?? r.auditId)"
+        [title]="'reports.viewer.title' | t: { version: r.versionNumber }"
+        [subtitle]="'reports.viewer.subtitle' | t: { audit: auditName() ?? r.auditId }"
       >
         <div actions class="viewer__actions">
           @if (canDistribute() && isCompleted()) {
             <button matButton="filled" type="button" (click)="distribute()">
               <mat-icon>send</mat-icon>
-              Distribute
+              {{ 'reports.viewer.action.distribute' | t }}
             </button>
           }
         </div>
@@ -23,14 +23,14 @@
 
       <!-- Metadata -->
       <mat-card appearance="outlined" class="viewer__card">
-        <h3 class="viewer__card-title">Overview</h3>
+        <h3 class="viewer__card-title">{{ 'reports.viewer.overview' | t }}</h3>
         <dl class="viewer__grid">
           <div>
-            <dt>Version</dt>
+            <dt>{{ 'reports.viewer.field.version' | t }}</dt>
             <dd>v{{ r.versionNumber }}</dd>
           </div>
           <div>
-            <dt>Status</dt>
+            <dt>{{ 'reports.viewer.field.status' | t }}</dt>
             <dd>
               <span class="status-badge" [attr.data-status]="r.status">
                 {{ humanise(r.status) }}
@@ -38,7 +38,7 @@
             </dd>
           </div>
           <div>
-            <dt>SHA-256</dt>
+            <dt>{{ 'reports.viewer.field.sha256' | t }}</dt>
             <dd>
               <code class="viewer__hash" [matTooltip]="r.sha256Hash ?? ''">
                 {{ shortHash(r.sha256Hash) }}
@@ -46,24 +46,24 @@
             </dd>
           </div>
           <div>
-            <dt>Requested</dt>
+            <dt>{{ 'reports.viewer.field.requested' | t }}</dt>
             <dd>{{ r.requestedAt | date: 'medium' }}</dd>
           </div>
           <div>
-            <dt>Completed</dt>
+            <dt>{{ 'reports.viewer.field.completed' | t }}</dt>
             <dd>
               {{ r.completedAt ? (r.completedAt | date: 'medium') : '—' }}
             </dd>
           </div>
           <div>
-            <dt>Template version</dt>
+            <dt>{{ 'reports.viewer.field.templateVersion' | t }}</dt>
             <dd>v{{ r.templateVersionSnapshot }}</dd>
           </div>
         </dl>
 
         @if (r.status === 'failed' && r.failureReason) {
           <div class="viewer__notice">
-            <strong>Generation failed.</strong> {{ r.failureReason }}
+            <strong>{{ 'reports.viewer.generationFailed' | t }}</strong> {{ r.failureReason }}
           </div>
         }
       </mat-card>
@@ -72,7 +72,7 @@
       @if (isCompleted()) {
         <mat-card appearance="outlined" class="viewer__card">
           <div class="viewer__card-head">
-            <h3 class="viewer__card-title">Artefacts</h3>
+            <h3 class="viewer__card-title">{{ 'reports.viewer.artefacts' | t }}</h3>
             <button
               matButton
               type="button"
@@ -80,7 +80,7 @@
               [disabled]="verifying()"
             >
               <mat-icon>verified</mat-icon>
-              Verify hash
+              {{ 'reports.viewer.action.verifyHash' | t }}
             </button>
           </div>
 
@@ -90,17 +90,16 @@
                 class="status-badge"
                 [attr.data-status]="v.match ? 'match' : 'mismatch'"
               >
-                {{ v.match ? 'Hash matches' : 'Hash mismatch' }}
+                {{ (v.match ? 'reports.viewer.hashMatch' : 'reports.viewer.hashMismatch') | t }}
               </span>
               <span class="muted">
-                Stored {{ shortHash(v.storedHash) }} · recomputed
-                {{ shortHash(v.recomputedHash) }}
+                {{ 'reports.viewer.hashDetail' | t: { stored: shortHash(v.storedHash), recomputed: shortHash(v.recomputedHash) } }}
               </span>
             </div>
           }
 
           @if (!artefacts().length) {
-            <p class="muted viewer__empty">No artefacts were produced.</p>
+            <p class="muted viewer__empty">{{ 'reports.viewer.artefacts.empty' | t }}</p>
           } @else {
             <div class="viewer__downloads">
               @for (a of artefacts(); track a.format) {
@@ -117,10 +116,10 @@
       <!-- Distribution log -->
       <mat-card appearance="outlined" class="viewer__card viewer__table-card">
         <h3 class="viewer__card-title viewer__table-title">
-          Distribution log
+          {{ 'reports.viewer.distribution.title' | t }}
         </h3>
         @if (!distributions().length) {
-          <p class="muted viewer__empty">No distributions recorded yet.</p>
+          <p class="muted viewer__empty">{{ 'reports.viewer.distribution.empty' | t }}</p>
         } @else {
           <div class="viewer__table-wrapper">
             <table
@@ -129,26 +128,26 @@
               class="viewer__table"
             >
               <ng-container matColumnDef="recipient">
-                <th mat-header-cell *matHeaderCellDef>Recipient</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'reports.viewer.column.recipient' | t }}</th>
                 <td mat-cell *matCellDef="let d">{{ recipientLabel(d) }}</td>
               </ng-container>
 
               <ng-container matColumnDef="version">
-                <th mat-header-cell *matHeaderCellDef>Version</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'reports.viewer.field.version' | t }}</th>
                 <td mat-cell *matCellDef="let d">
                   v{{ d.reportVersionNumber }}
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="dispatchedAt">
-                <th mat-header-cell *matHeaderCellDef>Dispatched</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'reports.viewer.column.dispatched' | t }}</th>
                 <td mat-cell *matCellDef="let d">
                   {{ d.dispatchedAt | date: 'medium' }}
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="outcome">
-                <th mat-header-cell *matHeaderCellDef>Outcome</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'reports.viewer.column.outcome' | t }}</th>
                 <td mat-cell *matCellDef="let d">
                   <span class="status-badge" [attr.data-status]="d.outcome">
                     {{ humanise(d.outcome) }}
@@ -169,7 +168,7 @@
                 (click)="loadMore()"
                 [disabled]="loadingMore()"
               >
-                {{ loadingMore() ? 'Loading…' : 'Load more' }}
+                {{ (loadingMore() ? 'reports.common.loadingShort' : 'reports.common.loadMore') | t }}
               </button>
             </div>
           }

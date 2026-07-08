@@ -16,6 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { SanctionsService } from '../../../../core/services/sanctions.service';
 import { SanctionsCaseListItem } from '../../../../core/models';
 import { humanise } from '../humanise';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
@@ -36,6 +37,7 @@ const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,

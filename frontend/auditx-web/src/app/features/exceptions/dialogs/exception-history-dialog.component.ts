@@ -9,6 +9,8 @@ import {
 
 import { ExceptionsService } from '../../../core/services/exceptions.service';
 import { ExceptionHistoryEntry } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 export interface ExceptionHistoryDialogData {
   exceptionId: string;
@@ -23,21 +25,21 @@ type LoadState = 'loading' | 'ready' | 'error';
 @Component({
   selector: 'app-exception-history-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, MatDialogModule, MatButtonModule],
+  imports: [DatePipe, MatDialogModule, MatButtonModule, TranslatePipe],
   template: `
-    <h2 mat-dialog-title>Exception history</h2>
+    <h2 mat-dialog-title>{{ 'exceptions.dialog.historyTitle' | t }}</h2>
     <mat-dialog-content>
       <p class="prompt">{{ data.title }}</p>
       @switch (state()) {
         @case ('loading') {
-          <p class="muted">Loading history…</p>
+          <p class="muted">{{ 'exceptions.history.loading' | t }}</p>
         }
         @case ('error') {
-          <p class="muted">We couldn't load the history.</p>
+          <p class="muted">{{ 'exceptions.history.loadError' | t }}</p>
         }
         @case ('ready') {
           @if (!entries().length) {
-            <p class="muted">No history recorded yet.</p>
+            <p class="muted">{{ 'exceptions.history.empty' | t }}</p>
           } @else {
             <ol class="timeline">
               @for (e of entries(); track e.id) {
@@ -58,7 +60,7 @@ type LoadState = 'loading' | 'ready' | 'error';
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="close()">Close</button>
+      <button matButton type="button" (click)="close()">{{ 'exceptions.action.closeDialog' | t }}</button>
     </mat-dialog-actions>
   `,
   styles: `
@@ -114,6 +116,7 @@ export class ExceptionHistoryDialogComponent {
   private readonly dialogRef =
     inject<MatDialogRef<ExceptionHistoryDialogComponent>>(MatDialogRef);
   private readonly service = inject(ExceptionsService);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<LoadState>('loading');
   readonly entries = signal<ExceptionHistoryEntry[]>([]);
@@ -134,7 +137,7 @@ export class ExceptionHistoryDialogComponent {
 
   nameOf(userId: string | null | undefined): string {
     if (!userId) {
-      return 'System';
+      return this.i18n.translate('exceptions.history.system');
     }
     return this.data.userNames[userId] ?? userId;
   }

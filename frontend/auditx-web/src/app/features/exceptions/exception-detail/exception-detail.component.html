@@ -1,32 +1,32 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading exception…" />
+    <app-loading [message]="'exceptions.detail.loading' | t" />
   }
   @case ('error') {
-    <app-error-state message="We couldn't load this exception." (retry)="fetch()" />
+    <app-error-state [message]="'exceptions.detail.loadError' | t" (retry)="fetch()" />
   }
   @case ('ready') {
     @if (exception(); as e) {
-      <app-page-header [title]="e.title" subtitle="Exception">
+      <app-page-header [title]="e.title" [subtitle]="'exceptions.detail.subtitle' | t">
         <div actions class="detail__actions">
           <button matButton type="button" (click)="showHistory()">
             <mat-icon>history</mat-icon>
-            History
+            {{ 'exceptions.action.history' | t }}
           </button>
           @if (canManageNow()) {
             <button matButton type="button" (click)="changeSeverity()">
               <mat-icon>tune</mat-icon>
-              Change severity
+              {{ 'exceptions.action.changeSeverity' | t }}
             </button>
             <button matButton type="button" (click)="reassignOwner()">
               <mat-icon>person</mat-icon>
-              Reassign owner
+              {{ 'exceptions.action.reassignOwner' | t }}
             </button>
           }
           @if (canCancelNow()) {
             <button matButton type="button" (click)="cancel()">
               <mat-icon>cancel</mat-icon>
-              Cancel
+              {{ 'exceptions.action.cancel' | t }}
             </button>
           }
         </div>
@@ -40,61 +40,61 @@
           {{ e.status.replaceAll('_', ' ') }}
         </span>
         @if (e.isOverdue) {
-          <span class="overdue-badge" [matTooltip]="e.daysPastTarget + ' day(s) past target'">
-            Overdue +{{ e.daysPastTarget }}
+          <span class="overdue-badge" [matTooltip]="'exceptions.flag.pastTarget' | t: { days: e.daysPastTarget }">
+            {{ 'exceptions.flag.overdue' | t: { days: e.daysPastTarget } }}
           </span>
         }
         @if (e.isRecurrence) {
-          <span class="status-badge">Recurrence</span>
+          <span class="status-badge">{{ 'exceptions.field.recurrence' | t }}</span>
         }
       </div>
 
       @if (e.status === 'cancelled' && e.cancellationReason) {
         <mat-card appearance="outlined" class="detail__notice">
-          <strong>Cancelled.</strong> {{ e.cancellationReason }}
+          <strong>{{ 'exceptions.detail.cancelledLabel' | t }}</strong> {{ e.cancellationReason }}
         </mat-card>
       }
       @if (e.status === 'map_rejected' && e.mapRejectionReason) {
         <mat-card appearance="outlined" class="detail__notice">
-          <strong>MAP rejected.</strong> {{ e.mapRejectionReason }}
+          <strong>{{ 'exceptions.detail.mapRejectedLabel' | t }}</strong> {{ e.mapRejectionReason }}
         </mat-card>
       }
 
       <!-- Overview -->
       <mat-card appearance="outlined" class="detail__card">
-        <h3 class="detail__card-title">Overview</h3>
+        <h3 class="detail__card-title">{{ 'exceptions.detail.overview' | t }}</h3>
         <dl class="detail__grid">
           <div>
-            <dt>Target date</dt>
+            <dt>{{ 'exceptions.field.targetDate' | t }}</dt>
             <dd>
               {{ e.targetDate | date: 'mediumDate' }}
               @if (e.targetDateOverridden) {
-                <span class="muted">(overridden)</span>
+                <span class="muted">{{ 'exceptions.detail.overridden' | t }}</span>
               }
             </dd>
           </div>
           <div>
-            <dt>Owner</dt>
+            <dt>{{ 'exceptions.field.owner' | t }}</dt>
             <dd>{{ ownerName() }}</dd>
           </div>
           <div>
-            <dt>Raised by</dt>
+            <dt>{{ 'exceptions.detail.raisedBy' | t }}</dt>
             <dd>{{ raisedByName() }} · {{ e.raisedAt | date: 'mediumDate' }}</dd>
           </div>
           <div>
-            <dt>Category</dt>
+            <dt>{{ 'exceptions.detail.category' | t }}</dt>
             <dd>{{ e.category || '—' }}</dd>
           </div>
           <div>
-            <dt>Audit</dt>
-            <dd><a [routerLink]="['/audits', e.auditId]">View audit</a></dd>
+            <dt>{{ 'exceptions.detail.audit' | t }}</dt>
+            <dd><a [routerLink]="['/audits', e.auditId]">{{ 'exceptions.detail.viewAudit' | t }}</a></dd>
           </div>
           @if (e.isRecurrence && e.recurrenceOfExceptionId) {
             <div>
-              <dt>Recurrence of</dt>
+              <dt>{{ 'exceptions.detail.recurrenceOf' | t }}</dt>
               <dd>
                 <a [routerLink]="['/exceptions', e.recurrenceOfExceptionId]">
-                  Previous exception
+                  {{ 'exceptions.detail.previousException' | t }}
                 </a>
               </dd>
             </div>
@@ -102,13 +102,13 @@
         </dl>
         @if (e.rootCause) {
           <div class="detail__scope">
-            <dt>Root cause</dt>
+            <dt>{{ 'exceptions.detail.rootCause' | t }}</dt>
             <dd>{{ e.rootCause }}</dd>
           </div>
         }
         @if (e.recommendation) {
           <div class="detail__scope">
-            <dt>Recommendation</dt>
+            <dt>{{ 'exceptions.detail.recommendation' | t }}</dt>
             <dd>{{ e.recommendation }}</dd>
           </div>
         }
@@ -117,41 +117,41 @@
       <!-- Management Action Plan -->
       <mat-card appearance="outlined" class="detail__card">
         <div class="detail__card-head">
-          <h3 class="detail__card-title">Management action plan</h3>
+          <h3 class="detail__card-title">{{ 'exceptions.detail.mapTitle' | t }}</h3>
           <div class="detail__card-actions">
             @if (canSubmitMapNow()) {
               <button matButton="filled" type="button" (click)="submitMap()">
                 <mat-icon>playlist_add</mat-icon>
-                {{ e.status === 'map_rejected' ? 'Resubmit MAP' : 'Submit MAP' }}
+                {{ (e.status === 'map_rejected' ? 'exceptions.action.resubmitMap' : 'exceptions.action.submitMap') | t }}
               </button>
             }
             @if (canReviewMap()) {
               <button matButton="filled" type="button" (click)="approveMap()">
                 <mat-icon>check</mat-icon>
-                Approve
+                {{ 'exceptions.action.approve' | t }}
               </button>
               <button matButton type="button" (click)="rejectMap()">
                 <mat-icon>close</mat-icon>
-                Reject
+                {{ 'exceptions.action.reject' | t }}
               </button>
             }
             @if (canMarkMapComplete()) {
               <button matButton="filled" type="button" (click)="markMapComplete()">
                 <mat-icon>task_alt</mat-icon>
-                Mark MAP complete
+                {{ 'exceptions.action.markMapComplete' | t }}
               </button>
             }
             @if (canReturnForEvidence()) {
               <button matButton type="button" (click)="returnForEvidence()">
                 <mat-icon>reply</mat-icon>
-                Return for evidence
+                {{ 'exceptions.action.returnForEvidence' | t }}
               </button>
             }
           </div>
         </div>
 
         @if (!e.mapActions.length) {
-          <p class="muted detail__empty">No management actions submitted yet.</p>
+          <p class="muted detail__empty">{{ 'exceptions.detail.noActions' | t }}</p>
         } @else {
           <ul class="detail__actions-list">
             @for (action of e.mapActions; track action.id) {
@@ -163,10 +163,10 @@
                   </span>
                 </div>
                 <div class="detail__action-meta muted">
-                  <span>Owner: {{ nameOf(action.ownerUserId) }}</span>
-                  <span>· Due {{ action.targetDate | date: 'mediumDate' }}</span>
+                  <span>{{ 'exceptions.detail.actionOwner' | t }} {{ nameOf(action.ownerUserId) }}</span>
+                  <span>{{ 'exceptions.detail.actionDue' | t }} {{ action.targetDate | date: 'mediumDate' }}</span>
                   @if (action.expectedEvidenceType) {
-                    <span>· Evidence: {{ action.expectedEvidenceType }}</span>
+                    <span>{{ 'exceptions.detail.actionEvidence' | t }} {{ action.expectedEvidenceType }}</span>
                   }
                 </div>
 
@@ -174,7 +174,7 @@
                   @if (canWorkActions() && action.status !== 'complete') {
                     <button matButton type="button" (click)="markActionComplete(action)">
                       <mat-icon>done</mat-icon>
-                      Mark complete
+                      {{ 'exceptions.action.markComplete' | t }}
                     </button>
                   }
                 </div>
@@ -183,15 +183,15 @@
                 @if (canViewEvidence()) {
                   <div class="detail__evidence">
                     <div class="detail__evidence-head">
-                      <span class="detail__evidence-title">Evidence</span>
+                      <span class="detail__evidence-title">{{ 'exceptions.detail.evidence' | t }}</span>
                       <button matButton type="button" (click)="loadEvidence(action)">
                         <mat-icon>refresh</mat-icon>
-                        Load
+                        {{ 'exceptions.action.load' | t }}
                       </button>
                       @if (canUploadEvidence() && !isReadOnly()) {
                         <button matButton type="button" (click)="fileInput.click()">
                           <mat-icon>upload_file</mat-icon>
-                          Upload
+                          {{ 'exceptions.action.upload' | t }}
                         </button>
                         <input
                           #fileInput
@@ -202,7 +202,7 @@
                       }
                     </div>
                     @if (!evidenceFor(action.id).length) {
-                      <p class="muted detail__evidence-empty">No evidence loaded.</p>
+                      <p class="muted detail__evidence-empty">{{ 'exceptions.detail.noEvidence' | t }}</p>
                     } @else {
                       <ul class="detail__files">
                         @for (file of evidenceFor(action.id); track file.id) {
@@ -221,7 +221,7 @@
                               matIconButton
                               type="button"
                               (click)="downloadEvidence(file)"
-                              aria-label="Download evidence"
+                              [attr.aria-label]="'exceptions.action.downloadEvidence' | t"
                             >
                               <mat-icon>download</mat-icon>
                             </button>
@@ -241,25 +241,25 @@
       @if (canCloseNow() || canCiaCountersign()) {
         <mat-card appearance="outlined" class="detail__card">
           <div class="detail__card-head">
-            <h3 class="detail__card-title">Closure</h3>
+            <h3 class="detail__card-title">{{ 'exceptions.detail.closure' | t }}</h3>
             <div class="detail__card-actions">
               @if (canCloseNow()) {
                 <button matButton="filled" type="button" (click)="close()">
                   <mat-icon>lock</mat-icon>
-                  Close exception
+                  {{ 'exceptions.action.closeException' | t }}
                 </button>
               }
               @if (canCiaCountersign()) {
                 <button matButton="filled" type="button" (click)="ciaCountersign()">
                   <mat-icon>verified</mat-icon>
-                  CIA countersign
+                  {{ 'exceptions.action.ciaCountersign' | t }}
                 </button>
               }
             </div>
           </div>
           @if (e.ciaPending) {
             <p class="muted">
-              This Critical exception is awaiting CIA countersign before final closure.
+              {{ 'exceptions.detail.ciaPending' | t }}
             </p>
           }
         </mat-card>
@@ -267,26 +267,26 @@
 
       @if (e.status === 'closed') {
         <mat-card appearance="outlined" class="detail__card">
-          <h3 class="detail__card-title">Closed</h3>
+          <h3 class="detail__card-title">{{ 'exceptions.detail.closed' | t }}</h3>
           <dl class="detail__grid">
             <div>
-              <dt>Closed by</dt>
+              <dt>{{ 'exceptions.detail.closedBy' | t }}</dt>
               <dd>{{ nameOf(e.closedBy) }}</dd>
             </div>
             <div>
-              <dt>Closed at</dt>
+              <dt>{{ 'exceptions.detail.closedAt' | t }}</dt>
               <dd>{{ e.closedAt ? (e.closedAt | date: 'medium') : '—' }}</dd>
             </div>
             @if (e.ciaCountersignedBy) {
               <div>
-                <dt>CIA countersigned by</dt>
+                <dt>{{ 'exceptions.detail.ciaCountersignedBy' | t }}</dt>
                 <dd>{{ nameOf(e.ciaCountersignedBy) }}</dd>
               </div>
             }
           </dl>
           @if (e.closureEvidenceNote) {
             <div class="detail__scope">
-              <dt>Closure note</dt>
+              <dt>{{ 'exceptions.detail.closureNote' | t }}</dt>
               <dd>{{ e.closureEvidenceNote }}</dd>
             </div>
           }

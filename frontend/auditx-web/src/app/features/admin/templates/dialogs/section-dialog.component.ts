@@ -13,6 +13,8 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+
 export interface SectionDialogData {
   title: string;
   confirmLabel: string;
@@ -29,22 +31,23 @@ export interface SectionDialogData {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Section name</mat-label>
+          <mat-label>{{ 'templatesAdmin.section.nameLabel' | t }}</mat-label>
           <input matInput formControlName="name" autocomplete="off" cdkFocusInitial />
           @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-            <mat-error>A name is required.</mat-error>
+            <mat-error>{{ 'templatesAdmin.error.nameRequired' | t }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'templatesAdmin.action.cancel' | t }}</button>
       <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
         {{ data.confirmLabel }}
       </button>

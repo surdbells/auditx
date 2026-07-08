@@ -1,11 +1,11 @@
 <app-page-header
-  title="Templates"
-  subtitle="Audit checklist templates, their versions and lifecycle."
+  [title]="'templatesAdmin.list.title' | t"
+  [subtitle]="'templatesAdmin.list.subtitle' | t"
 >
   @if (canManage()) {
     <button actions matButton="filled" type="button" (click)="createTemplate()">
       <mat-icon>add</mat-icon>
-      New template
+      {{ 'templatesAdmin.list.newTemplate' | t }}
     </button>
   }
 </app-page-header>
@@ -13,21 +13,21 @@
 <mat-card appearance="outlined" class="templates__filters-card">
   <form [formGroup]="filters" class="templates__filters">
     <mat-form-field appearance="outline" class="templates__search">
-      <mat-label>Search</mat-label>
+      <mat-label>{{ 'templatesAdmin.list.search' | t }}</mat-label>
       <input
         matInput
         type="search"
         formControlName="search"
-        placeholder="Template name"
+        [placeholder]="'templatesAdmin.list.searchPlaceholder' | t"
         autocomplete="off"
       />
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Audit type</mat-label>
+      <mat-label>{{ 'templatesAdmin.field.auditType' | t }}</mat-label>
       <mat-select formControlName="auditType">
-        <mat-option [value]="''">All types</mat-option>
+        <mat-option [value]="''">{{ 'templatesAdmin.list.allTypes' | t }}</mat-option>
         @for (o of auditTypes(); track o.code) {
           <mat-option [value]="o.code">{{ o.label }}</mat-option>
         }
@@ -35,7 +35,7 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Status</mat-label>
+      <mat-label>{{ 'templatesAdmin.field.status' | t }}</mat-label>
       <mat-select formControlName="status">
         @for (s of statuses; track s.value) {
           <mat-option [value]="s.value">{{ s.label }}</mat-option>
@@ -43,17 +43,17 @@
       </mat-select>
     </mat-form-field>
 
-    <button matButton type="button" (click)="clearFilters()">Clear</button>
+    <button matButton type="button" (click)="clearFilters()">{{ 'templatesAdmin.list.clear' | t }}</button>
   </form>
 </mat-card>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading templates…" />
+    <app-loading [message]="'templatesAdmin.list.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the templates."
+      [message]="'templatesAdmin.list.errorLoad' | t"
       (retry)="fetchFirstPage()"
     />
   }
@@ -61,9 +61,9 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="description"
-        title="No templates found"
-        message="Try adjusting your search or filters."
-        actionLabel="Clear filters"
+        [title]="'templatesAdmin.list.emptyTitle' | t"
+        [message]="'templatesAdmin.list.emptyMessage' | t"
+        [actionLabel]="'templatesAdmin.list.clearFilters' | t"
         (action)="clearFilters()"
       />
     } @else {
@@ -71,21 +71,21 @@
         <div class="templates__table-wrapper">
           <table mat-table [dataSource]="templates()" class="templates__table">
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'templatesAdmin.field.name' | t }}</th>
               <td mat-cell *matCellDef="let t">
                 <span class="templates__name">{{ t.name }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="auditType">
-              <th mat-header-cell *matHeaderCellDef>Audit type</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'templatesAdmin.field.auditType' | t }}</th>
               <td mat-cell *matCellDef="let t">
                 {{ refLookup.label('audit_type', t.auditType) }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'templatesAdmin.field.status' | t }}</th>
               <td mat-cell *matCellDef="let t">
                 <span class="status-badge" [attr.data-status]="t.status">
                   {{ t.status }}
@@ -94,45 +94,45 @@
             </ng-container>
 
             <ng-container matColumnDef="currentVersion">
-              <th mat-header-cell *matHeaderCellDef>Version</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'templatesAdmin.column.version' | t }}</th>
               <td mat-cell *matCellDef="let t">v{{ t.currentVersion }}</td>
             </ng-container>
 
             <ng-container matColumnDef="itemCount">
-              <th mat-header-cell *matHeaderCellDef>Items</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'templatesAdmin.column.items' | t }}</th>
               <td mat-cell *matCellDef="let t">{{ t.itemCount }}</td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'templatesAdmin.column.actions' | t"></th>
               <td mat-cell *matCellDef="let t" (click)="$event.stopPropagation()">
                 <button
                   matIconButton
                   type="button"
                   [matMenuTriggerFor]="rowMenu"
-                  [attr.aria-label]="'Actions for ' + t.name"
+                  [attr.aria-label]="'templatesAdmin.list.actionsFor' | t: { name: t.name }"
                 >
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #rowMenu="matMenu">
                   <a mat-menu-item [routerLink]="['/admin/templates', t.id]">
                     <mat-icon>open_in_new</mat-icon>
-                    <span>Open</span>
+                    <span>{{ 'templatesAdmin.action.open' | t }}</span>
                   </a>
                   @if (canManage()) {
                     <button mat-menu-item type="button" (click)="clone(t, $event)">
                       <mat-icon>content_copy</mat-icon>
-                      <span>Clone</span>
+                      <span>{{ 'templatesAdmin.action.clone' | t }}</span>
                     </button>
                     @if (t.status === 'archived') {
                       <button mat-menu-item type="button" (click)="unarchive(t, $event)">
                         <mat-icon>unarchive</mat-icon>
-                        <span>Unarchive</span>
+                        <span>{{ 'templatesAdmin.action.unarchive' | t }}</span>
                       </button>
                     } @else {
                       <button mat-menu-item type="button" (click)="archive(t, $event)">
                         <mat-icon>archive</mat-icon>
-                        <span>Archive</span>
+                        <span>{{ 'templatesAdmin.action.archive' | t }}</span>
                       </button>
                     }
                   }
@@ -158,7 +158,7 @@
               (click)="loadMore()"
               [disabled]="loadingMore()"
             >
-              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+              {{ loadingMore() ? ('templatesAdmin.common.loadingShort' | t) : ('templatesAdmin.list.loadMore' | t) }}
             </button>
           </div>
         }

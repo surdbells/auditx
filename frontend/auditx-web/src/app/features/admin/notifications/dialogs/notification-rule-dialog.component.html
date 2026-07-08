@@ -2,7 +2,7 @@
 <mat-dialog-content>
   <form [formGroup]="form" class="form">
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Event type</mat-label>
+      <mat-label>{{ 'notifications.field.eventType' | t }}</mat-label>
       @if (eventTypes().length) {
         <mat-select formControlName="eventType">
           @for (et of eventTypes(); track et) {
@@ -13,33 +13,33 @@
         <input matInput formControlName="eventType" autocomplete="off" />
       }
       @if (form.controls.eventType.hasError('required') && form.controls.eventType.touched) {
-        <mat-error>An event type is required.</mat-error>
+        <mat-error>{{ 'notifications.error.eventTypeRequired' | t }}</mat-error>
       } @else if (isEdit()) {
-        <mat-hint>Event type cannot be changed after creation.</mat-hint>
+        <mat-hint>{{ 'notifications.ruleDialog.hint.eventTypeImmutable' | t }}</mat-hint>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Name</mat-label>
+      <mat-label>{{ 'notifications.field.name' | t }}</mat-label>
       <input matInput formControlName="name" autocomplete="off" />
       @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-        <mat-error>A name is required.</mat-error>
+        <mat-error>{{ 'notifications.error.nameRequired' | t }}</mat-error>
       }
     </mat-form-field>
 
     <!-- TODO(ux): templateKey free-text — no notification-template-key lookup endpoint exists to source a dropdown yet. -->
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Template key</mat-label>
+      <mat-label>{{ 'notifications.field.templateKey' | t }}</mat-label>
       <input matInput formControlName="templateKey" autocomplete="off" />
       @if (form.controls.templateKey.hasError('required') && form.controls.templateKey.touched) {
-        <mat-error>A template key is required.</mat-error>
+        <mat-error>{{ 'notifications.error.templateKeyRequired' | t }}</mat-error>
       } @else {
-        <mat-hint>e.g. audit.created.email</mat-hint>
+        <mat-hint>{{ 'notifications.ruleDialog.hint.templateKey' | t }}</mat-hint>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Recipient resolution (JSON)</mat-label>
+      <mat-label>{{ 'notifications.ruleDialog.field.recipientResolution' | t }}</mat-label>
       <textarea
         matInput
         rows="3"
@@ -48,35 +48,35 @@
         placeholder='{ "type": "role", "value": "ChiefAuditExecutive" }'
       ></textarea>
       @if (form.controls.recipientResolutionJson.hasError('required') && form.controls.recipientResolutionJson.touched) {
-        <mat-error>Recipient resolution is required.</mat-error>
+        <mat-error>{{ 'notifications.error.recipientResolutionRequired' | t }}</mat-error>
       } @else if (form.controls.recipientResolutionJson.hasError('json')) {
-        <mat-error>Must be valid JSON.</mat-error>
+        <mat-error>{{ 'notifications.error.invalidJson' | t }}</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Channels</mat-label>
+      <mat-label>{{ 'notifications.field.channels' | t }}</mat-label>
       <mat-select formControlName="channels" multiple>
         @for (channel of channels; track channel) {
           <mat-option [value]="channel">{{ channel }}</mat-option>
         }
       </mat-select>
       @if ((form.controls.channels.hasError('required') || form.controls.channels.hasError('minlength')) && form.controls.channels.touched) {
-        <mat-error>At least one channel is required.</mat-error>
+        <mat-error>{{ 'notifications.error.channelsRequired' | t }}</mat-error>
       }
     </mat-form-field>
 
-    <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+    <mat-slide-toggle formControlName="isActive">{{ 'notifications.status.active' | t }}</mat-slide-toggle>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button matButton type="button" (click)="cancel()">Cancel</button>
+  <button matButton type="button" (click)="cancel()">{{ 'notifications.actions.cancel' | t }}</button>
   <button
     matButton="filled"
     type="button"
     (click)="submit()"
     [disabled]="form.invalid"
   >
-    {{ isEdit() ? 'Save' : 'Create' }}
+    {{ isEdit() ? ('notifications.actions.save' | t) : ('notifications.actions.create' | t) }}
   </button>
 </mat-dialog-actions>

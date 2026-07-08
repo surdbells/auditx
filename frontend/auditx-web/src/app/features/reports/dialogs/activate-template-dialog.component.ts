@@ -9,6 +9,8 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 export interface ActivateTemplateDialogData {
   /** Template name shown in the prompt. */
   templateName: string;
@@ -31,39 +33,47 @@ const MIN_REASON = 20;
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Activate template</h2>
+    <h2 mat-dialog-title>{{ 'reports.dialog.activate.title' | t }}</h2>
     <mat-dialog-content>
       <p>
-        Activate "{{ data.templateName }}" v{{ data.versionNumber }}. Provide an
-        activation reason (at least {{ minLength }} characters).
+        {{
+          'reports.dialog.activate.body'
+            | t
+              : {
+                  name: data.templateName,
+                  version: data.versionNumber,
+                  min: minLength
+                }
+        }}
       </p>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Activation reason</mat-label>
+          <mat-label>{{ 'reports.dialog.activate.reasonLabel' | t }}</mat-label>
           <textarea matInput formControlName="reason" rows="3"></textarea>
           @if (
             form.controls.reason.hasError('required') &&
             form.controls.reason.touched
           ) {
-            <mat-error>This field is required.</mat-error>
+            <mat-error>{{ 'reports.common.error.required' | t }}</mat-error>
           }
           @if (form.controls.reason.hasError('minlength')) {
-            <mat-error>At least {{ minLength }} characters are required.</mat-error>
+            <mat-error>{{ 'reports.dialog.activate.minError' | t: { min: minLength } }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'reports.common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        Activate
+        {{ 'reports.templates.action.activate' | t }}
       </button>
     </mat-dialog-actions>
   `,

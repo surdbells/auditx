@@ -11,6 +11,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { AcAnalyticsSectionsComponent } from '../components/analytics-sections/analytics-sections.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -27,6 +28,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     ErrorStateComponent,
     PageHeaderComponent,
     AcAnalyticsSectionsComponent,
+    TranslatePipe,
   ],
   templateUrl: './ac-dashboard.component.html',
   styleUrl: './ac-dashboard.component.scss',

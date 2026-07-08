@@ -23,6 +23,8 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
 import { ProblemDetails, SanctionsCase } from '../../../../core/models';
 import { humanise } from '../humanise';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -64,6 +66,7 @@ const CONCURRENCY_CONFLICT = 'sanctions.concurrency_conflict';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
@@ -81,6 +84,7 @@ export class SanctionsCaseDetailComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly sanctionsCase = signal<SanctionsCase | null>(null);
@@ -239,7 +243,7 @@ export class SanctionsCaseDetailComponent {
             deviationReason: result.deviationReason,
             version: this.version(),
           }),
-          'Recommendation recorded.',
+          this.i18n.translate('sanctions.notify.recommendationRecorded'),
         );
       });
   }
@@ -247,7 +251,7 @@ export class SanctionsCaseDetailComponent {
   submit(): void {
     this.runMutation(
       this.service.submit(this.id(), { version: this.version() }),
-      'Recommendation submitted.',
+      this.i18n.translate('sanctions.notify.recommendationSubmitted'),
     );
   }
 
@@ -267,18 +271,18 @@ export class SanctionsCaseDetailComponent {
             detail: result.detail,
             version: this.version(),
           }),
-          'HR outcome recorded.',
+          this.i18n.translate('sanctions.notify.hrOutcomeRecorded'),
         );
       });
   }
 
   referToDc(): void {
     const data: SanctionsReasonDialogData = {
-      title: 'Refer to disciplinary committee',
-      message: 'Provide a referral reason (at least 20 characters).',
-      label: 'Referral reason',
+      title: this.i18n.translate('sanctions.referDc.title'),
+      message: this.i18n.translate('sanctions.referDc.message'),
+      label: this.i18n.translate('sanctions.referDc.label'),
       minLength: 20,
-      confirmLabel: 'Refer',
+      confirmLabel: this.i18n.translate('sanctions.referDc.confirm'),
     };
     this.openReason(data, (reason) =>
       this.runMutation(
@@ -286,7 +290,7 @@ export class SanctionsCaseDetailComponent {
           referralReason: reason,
           version: this.version(),
         }),
-        'Case referred to the disciplinary committee.',
+        this.i18n.translate('sanctions.notify.referred'),
       ),
     );
   }
@@ -306,7 +310,7 @@ export class SanctionsCaseDetailComponent {
             votingRecord: result.votingRecord,
             version: this.version(),
           }),
-          'DC decision recorded.',
+          this.i18n.translate('sanctions.notify.dcDecisionRecorded'),
         );
       });
   }
@@ -315,17 +319,17 @@ export class SanctionsCaseDetailComponent {
 
   fileAppeal(): void {
     const data: SanctionsReasonDialogData = {
-      title: 'File appeal',
-      message: 'State the basis for the appeal.',
-      label: 'Basis',
-      confirmLabel: 'File appeal',
+      title: this.i18n.translate('sanctions.action.fileAppeal'),
+      message: this.i18n.translate('sanctions.fileAppeal.message'),
+      label: this.i18n.translate('sanctions.fileAppeal.label'),
+      confirmLabel: this.i18n.translate('sanctions.action.fileAppeal'),
     };
     this.openReason(data, (reason) => {
       this.service
         .fileAppeal(this.id(), { basis: reason, version: this.version() })
         .subscribe({
           next: () => {
-            this.notify.success('Appeal filed.');
+            this.notify.success(this.i18n.translate('sanctions.notify.appealFiled'));
             this.reload();
           },
           error: (err: unknown) => this.handleError(err),
@@ -356,7 +360,7 @@ export class SanctionsCaseDetailComponent {
           })
           .subscribe({
             next: () => {
-              this.notify.success('Appeal decision recorded.');
+              this.notify.success(this.i18n.translate('sanctions.notify.appealDecisionRecorded'));
               this.reload();
             },
             error: (err: unknown) => this.handleError(err),
@@ -369,7 +373,7 @@ export class SanctionsCaseDetailComponent {
   close(): void {
     this.runMutation(
       this.service.close(this.id(), { version: this.version() }),
-      'Case closed.',
+      this.i18n.translate('sanctions.notify.caseClosed'),
     );
   }
 
@@ -394,7 +398,9 @@ export class SanctionsCaseDetailComponent {
       ) ?? `sanctions-dossier-${this.id()}.html`;
     this.triggerDownload(blob, filename);
     this.notify.success(
-      sha ? `Dossier downloaded. SHA-256: ${sha}` : 'Dossier downloaded.',
+      sha
+        ? this.i18n.translate('sanctions.notify.dossierDownloadedSha', { sha })
+        : this.i18n.translate('sanctions.notify.dossierDownloaded'),
     );
   }
 

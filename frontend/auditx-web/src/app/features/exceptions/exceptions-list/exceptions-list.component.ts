@@ -30,6 +30,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -52,6 +54,7 @@ const PAGE_SIZE = 20;
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './exceptions-list.component.html',
   styleUrl: './exceptions-list.component.scss',
@@ -61,6 +64,7 @@ export class ExceptionsListComponent {
   private readonly users = inject(UsersService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'title',
@@ -72,28 +76,28 @@ export class ExceptionsListComponent {
   ];
 
   readonly statuses: { value: ExceptionStatus | 'all'; label: string }[] = [
-    { value: 'all', label: 'All statuses' },
-    { value: 'open', label: 'Open' },
-    { value: 'map_submitted', label: 'MAP submitted' },
-    { value: 'map_approved', label: 'MAP approved' },
-    { value: 'map_rejected', label: 'MAP rejected' },
-    { value: 'pending_closure', label: 'Pending closure' },
-    { value: 'closed', label: 'Closed' },
-    { value: 'cancelled', label: 'Cancelled' },
+    { value: 'all', label: this.i18n.translate('exceptions.filter.allStatuses') },
+    { value: 'open', label: this.i18n.translate('exceptions.status.open') },
+    { value: 'map_submitted', label: this.i18n.translate('exceptions.status.mapSubmitted') },
+    { value: 'map_approved', label: this.i18n.translate('exceptions.status.mapApproved') },
+    { value: 'map_rejected', label: this.i18n.translate('exceptions.status.mapRejected') },
+    { value: 'pending_closure', label: this.i18n.translate('exceptions.status.pendingClosure') },
+    { value: 'closed', label: this.i18n.translate('exceptions.status.closed') },
+    { value: 'cancelled', label: this.i18n.translate('exceptions.status.cancelled') },
   ];
 
   readonly severities: { value: ExceptionSeverity | 'all'; label: string }[] = [
-    { value: 'all', label: 'All severities' },
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' },
-    { value: 'critical', label: 'Critical' },
+    { value: 'all', label: this.i18n.translate('exceptions.filter.allSeverities') },
+    { value: 'low', label: this.i18n.translate('exceptions.severity.low') },
+    { value: 'medium', label: this.i18n.translate('exceptions.severity.medium') },
+    { value: 'high', label: this.i18n.translate('exceptions.severity.high') },
+    { value: 'critical', label: this.i18n.translate('exceptions.severity.critical') },
   ];
 
   readonly boolFilters: { value: 'all' | 'yes' | 'no'; label: string }[] = [
-    { value: 'all', label: 'All' },
-    { value: 'yes', label: 'Yes' },
-    { value: 'no', label: 'No' },
+    { value: 'all', label: this.i18n.translate('exceptions.filter.all') },
+    { value: 'yes', label: this.i18n.translate('exceptions.filter.yes') },
+    { value: 'no', label: this.i18n.translate('exceptions.filter.no') },
   ];
 
   readonly filters = this.fb.nonNullable.group({

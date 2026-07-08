@@ -1,13 +1,13 @@
-<h2 mat-dialog-title>Preview rule</h2>
+<h2 mat-dialog-title>{{ 'notifications.previewDialog.title' | t }}</h2>
 <mat-dialog-content>
   <p class="preview__meta">
-    <span class="preview__label">Rule</span> {{ data.rule.name }}
-    <span class="preview__label">· Template</span> {{ data.rule.templateKey }}
+    <span class="preview__label">{{ 'notifications.previewDialog.label.rule' | t }}</span> {{ data.rule.name }}
+    <span class="preview__label">{{ 'notifications.previewDialog.label.template' | t }}</span> {{ data.rule.templateKey }}
   </p>
 
   <form [formGroup]="form" class="form">
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Sample event payload (JSON)</mat-label>
+      <mat-label>{{ 'notifications.previewDialog.field.samplePayload' | t }}</mat-label>
       <textarea
         matInput
         rows="5"
@@ -15,9 +15,9 @@
         spellcheck="false"
       ></textarea>
       @if (form.controls.samplePayloadJson.hasError('required') && form.controls.samplePayloadJson.touched) {
-        <mat-error>A sample payload is required.</mat-error>
+        <mat-error>{{ 'notifications.error.samplePayloadRequired' | t }}</mat-error>
       } @else if (form.controls.samplePayloadJson.hasError('json')) {
-        <mat-error>Must be valid JSON.</mat-error>
+        <mat-error>{{ 'notifications.error.invalidJson' | t }}</mat-error>
       }
     </mat-form-field>
 
@@ -28,19 +28,19 @@
       [disabled]="form.invalid || state() === 'loading'"
     >
       <mat-icon>visibility</mat-icon>
-      {{ state() === 'loading' ? 'Rendering…' : 'Render preview' }}
+      {{ state() === 'loading' ? ('notifications.previewDialog.rendering' | t) : ('notifications.previewDialog.render' | t) }}
     </button>
   </form>
 
   @if (state() === 'error') {
     <p class="preview__error" role="alert">
-      We couldn't render the preview. Check the recipient resolution and payload.
+      {{ 'notifications.previewDialog.error.render' | t }}
     </p>
   }
 
   @if (state() === 'ready' && preview(); as result) {
     <section class="preview__result">
-      <h3>Resolved recipients</h3>
+      <h3>{{ 'notifications.previewDialog.resolvedRecipients' | t }}</h3>
       @if (result.resolvedRecipientAddresses.length) {
         <ul class="preview__recipients">
           @for (addr of result.resolvedRecipientAddresses; track addr) {
@@ -48,19 +48,19 @@
           }
         </ul>
       } @else {
-        <p class="preview__empty">No recipients resolved for this payload.</p>
+        <p class="preview__empty">{{ 'notifications.previewDialog.noRecipients' | t }}</p>
       }
 
       @if (result.renderedSubject) {
-        <h3>Subject</h3>
+        <h3>{{ 'notifications.field.subject' | t }}</h3>
         <p class="preview__subject">{{ result.renderedSubject }}</p>
       }
 
-      <h3>Body</h3>
+      <h3>{{ 'notifications.field.body' | t }}</h3>
       <pre class="preview__body">{{ result.renderedBody }}</pre>
     </section>
   }
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button matButton type="button" (click)="close()">Close</button>
+  <button matButton type="button" (click)="close()">{{ 'notifications.actions.close' | t }}</button>
 </mat-dialog-actions>

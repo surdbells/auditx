@@ -1,21 +1,21 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading AC pack…" />
+    <app-loading [message]="'ac.viewer.loading' | t" />
   }
   @case ('error') {
-    <app-error-state message="We couldn't load this AC pack." (retry)="fetch()" />
+    <app-error-state [message]="'ac.viewer.error' | t" (retry)="fetch()" />
   }
   @case ('ready') {
     @if (pack(); as p) {
       <app-page-header
-        [title]="'AC pack v' + p.versionNumber"
-        [subtitle]="(p.acMeetingLabel ?? 'Audit committee') + ''"
+        [title]="'ac.viewer.title' | t: { version: p.versionNumber }"
+        [subtitle]="p.acMeetingLabel ?? ('ac.viewer.defaultMeeting' | t)"
       >
         <div actions class="viewer__actions">
           @if (canEditText()) {
             <button matButton type="button" (click)="editCiaText()">
               <mat-icon>edit_note</mat-icon>
-              Edit narrative
+              {{ 'ac.viewer.editNarrative' | t }}
             </button>
           }
           @if (canApprove()) {
@@ -26,7 +26,7 @@
               [disabled]="busy()"
             >
               <mat-icon>check_circle</mat-icon>
-              Approve
+              {{ 'ac.viewer.approve' | t }}
             </button>
           }
           @if (canDistribute()) {
@@ -37,7 +37,7 @@
               [disabled]="busy()"
             >
               <mat-icon>send</mat-icon>
-              Distribute
+              {{ 'ac.viewer.distribute' | t }}
             </button>
           }
         </div>
@@ -45,14 +45,14 @@
 
       <!-- Metadata -->
       <mat-card appearance="outlined" class="viewer__card">
-        <h3 class="viewer__card-title">Overview</h3>
+        <h3 class="viewer__card-title">{{ 'ac.viewer.overview' | t }}</h3>
         <dl class="viewer__grid">
           <div>
-            <dt>Version</dt>
+            <dt>{{ 'ac.viewer.version' | t }}</dt>
             <dd>v{{ p.versionNumber }}</dd>
           </div>
           <div>
-            <dt>Status</dt>
+            <dt>{{ 'ac.col.status' | t }}</dt>
             <dd>
               <span class="status-badge" [attr.data-status]="p.status">
                 {{ humanise(p.status) }}
@@ -60,14 +60,14 @@
             </dd>
           </div>
           <div>
-            <dt>Period</dt>
+            <dt>{{ 'ac.packs.col.period' | t }}</dt>
             <dd>
               {{ p.periodStart | date: 'mediumDate' }} –
               {{ p.periodEnd | date: 'mediumDate' }}
             </dd>
           </div>
           <div>
-            <dt>SHA-256</dt>
+            <dt>{{ 'ac.packs.col.hash' | t }}</dt>
             <dd>
               <code class="viewer__hash" [matTooltip]="p.sha256Hash ?? ''">
                 {{ shortHash(p.sha256Hash) }}
@@ -75,18 +75,18 @@
             </dd>
           </div>
           <div>
-            <dt>Requested</dt>
+            <dt>{{ 'ac.packs.col.requested' | t }}</dt>
             <dd>{{ p.requestedAt | date: 'medium' }}</dd>
           </div>
           <div>
-            <dt>Approved</dt>
+            <dt>{{ 'ac.viewer.approved' | t }}</dt>
             <dd>{{ p.approvedAt ? (p.approvedAt | date: 'medium') : '—' }}</dd>
           </div>
         </dl>
 
         @if (p.status === 'failed' && p.failureReason) {
           <div class="viewer__notice">
-            <strong>Generation failed.</strong> {{ p.failureReason }}
+            <strong>{{ 'ac.viewer.generationFailed' | t }}</strong> {{ p.failureReason }}
           </div>
         }
 
@@ -104,11 +104,11 @@
 
       <!-- CIA supplementary narrative -->
       <mat-card appearance="outlined" class="viewer__card">
-        <h3 class="viewer__card-title">CIA supplementary narrative</h3>
+        <h3 class="viewer__card-title">{{ 'ac.ciaText.title' | t }}</h3>
         @if (p.ciaSupplementaryText) {
           <p class="viewer__narrative">{{ p.ciaSupplementaryText }}</p>
         } @else {
-          <p class="viewer__muted">No supplementary narrative provided.</p>
+          <p class="viewer__muted">{{ 'ac.viewer.noNarrative' | t }}</p>
         }
       </mat-card>
 
@@ -133,28 +133,28 @@
 
       <!-- Distribution log -->
       <mat-card appearance="outlined" class="viewer__card viewer__table-card">
-        <h3 class="viewer__card-title viewer__table-title">Distribution log</h3>
+        <h3 class="viewer__card-title viewer__table-title">{{ 'ac.viewer.distributionLog' | t }}</h3>
         @if (!distributions().length) {
-          <p class="viewer__muted viewer__pad">No distributions recorded yet.</p>
+          <p class="viewer__muted viewer__pad">{{ 'ac.viewer.noDistributions' | t }}</p>
         } @else {
           <div class="viewer__table-wrapper">
             <table mat-table [dataSource]="distributions()" class="viewer__table">
               <ng-container matColumnDef="recipient">
-                <th mat-header-cell *matHeaderCellDef>Recipient</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'ac.viewer.col.recipient' | t }}</th>
                 <td mat-cell *matCellDef="let d">{{ userLookup.displayName(d.recipientUserId) }}</td>
               </ng-container>
               <ng-container matColumnDef="version">
-                <th mat-header-cell *matHeaderCellDef>Version</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'ac.packs.col.version' | t }}</th>
                 <td mat-cell *matCellDef="let d">v{{ d.acPackVersionNumber }}</td>
               </ng-container>
               <ng-container matColumnDef="dispatchedAt">
-                <th mat-header-cell *matHeaderCellDef>Dispatched</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'ac.viewer.col.dispatched' | t }}</th>
                 <td mat-cell *matCellDef="let d">
                   {{ d.dispatchedAt | date: 'medium' }}
                 </td>
               </ng-container>
               <ng-container matColumnDef="outcome">
-                <th mat-header-cell *matHeaderCellDef>Outcome</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'ac.viewer.col.outcome' | t }}</th>
                 <td mat-cell *matCellDef="let d">
                   <span class="status-badge" [attr.data-status]="d.outcome">
                     {{ humanise(d.outcome) }}
@@ -175,7 +175,7 @@
                 (click)="loadMore()"
                 [disabled]="loadingMore()"
               >
-                {{ loadingMore() ? 'Loading…' : 'Load more' }}
+                {{ (loadingMore() ? 'ac.common.loadingShort' : 'ac.common.loadMore') | t }}
               </button>
             </div>
           }

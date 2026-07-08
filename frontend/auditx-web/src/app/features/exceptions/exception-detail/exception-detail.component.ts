@@ -32,6 +32,8 @@ import {
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import {
   SubmitMapDialogComponent,
   SubmitMapDialogData,
@@ -75,6 +77,7 @@ const CONCURRENCY_CONFLICT = 'exception.concurrency_conflict';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './exception-detail.component.html',
   styleUrl: './exception-detail.component.scss',
@@ -88,6 +91,7 @@ export class ExceptionDetailComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly exception = signal<Exception | null>(null);
@@ -271,7 +275,7 @@ export class ExceptionDetailComponent {
             actions: result.actions,
             version: this.version(),
           }),
-          'Management action plan submitted.',
+          this.i18n.translate('exceptions.notify.mapSubmitted'),
         );
       });
   }
@@ -284,10 +288,10 @@ export class ExceptionDetailComponent {
           if (res.exception) {
             this.exception.set(res.exception);
             this.ensureUsers();
-            this.notify.success('Management action plan approved.');
+            this.notify.success(this.i18n.translate('exceptions.notify.mapApproved'));
           } else {
             // 202 maker-checker-gated: status stays map_submitted; reload.
-            this.notify.info('Approval submitted for sign-off.');
+            this.notify.info(this.i18n.translate('exceptions.notify.approvalSubmitted'));
             this.reload();
           }
         },
@@ -298,15 +302,15 @@ export class ExceptionDetailComponent {
   rejectMap(): void {
     this.openReason(
       {
-        title: 'Reject MAP',
-        message: 'Send the management action plan back for revision.',
-        confirmLabel: 'Reject',
+        title: this.i18n.translate('exceptions.dialog.rejectMapTitle'),
+        message: this.i18n.translate('exceptions.dialog.rejectMapMessage'),
+        confirmLabel: this.i18n.translate('exceptions.action.reject'),
         destructive: true,
       },
       (reason) =>
         this.runMutation(
           this.service.rejectMap(this.id(), { reason, version: this.version() }),
-          'Management action plan rejected.',
+          this.i18n.translate('exceptions.notify.mapRejected'),
         ),
     );
   }
@@ -314,16 +318,16 @@ export class ExceptionDetailComponent {
   markMapComplete(): void {
     this.runMutation(
       this.service.markMapComplete(this.id(), { version: this.version() }),
-      'Management action plan marked complete.',
+      this.i18n.translate('exceptions.notify.mapMarkedComplete'),
     );
   }
 
   returnForEvidence(): void {
     this.openReason(
       {
-        title: 'Return for evidence',
-        message: 'Request further evidence before closure.',
-        confirmLabel: 'Return',
+        title: this.i18n.translate('exceptions.action.returnForEvidence'),
+        message: this.i18n.translate('exceptions.dialog.returnMessage'),
+        confirmLabel: this.i18n.translate('exceptions.action.return'),
       },
       (reason) =>
         this.runMutation(
@@ -331,7 +335,7 @@ export class ExceptionDetailComponent {
             reason,
             version: this.version(),
           }),
-          'Returned for evidence.',
+          this.i18n.translate('exceptions.notify.returnedForEvidence'),
         ),
     );
   }
@@ -341,7 +345,7 @@ export class ExceptionDetailComponent {
       this.service.markActionComplete(this.id(), action.id, {
         version: this.version(),
       }),
-      'Action marked complete.',
+      this.i18n.translate('exceptions.notify.actionMarkedComplete'),
     );
   }
 
@@ -366,7 +370,7 @@ export class ExceptionDetailComponent {
             reason: result.reason,
             version: this.version(),
           }),
-          'Severity updated.',
+          this.i18n.translate('exceptions.notify.severityUpdated'),
         );
       });
   }
@@ -392,7 +396,7 @@ export class ExceptionDetailComponent {
             ownerUserId: result.ownerUserId,
             version: this.version(),
           }),
-          'Owner reassigned.',
+          this.i18n.translate('exceptions.notify.ownerReassigned'),
         );
       });
   }
@@ -400,15 +404,15 @@ export class ExceptionDetailComponent {
   cancel(): void {
     this.openReason(
       {
-        title: 'Cancel exception',
-        message: 'Cancelling is permanent. Provide a reason.',
-        confirmLabel: 'Cancel exception',
+        title: this.i18n.translate('exceptions.dialog.cancelTitle'),
+        message: this.i18n.translate('exceptions.dialog.cancelMessage'),
+        confirmLabel: this.i18n.translate('exceptions.dialog.cancelTitle'),
         destructive: true,
       },
       (reason) =>
         this.runMutation(
           this.service.cancel(this.id(), { reason, version: this.version() }),
-          'Exception cancelled.',
+          this.i18n.translate('exceptions.notify.cancelled'),
         ),
     );
   }
@@ -418,11 +422,11 @@ export class ExceptionDetailComponent {
   close(): void {
     this.openReason(
       {
-        title: 'Close exception',
-        label: 'Closure note',
-        message: 'Optionally record a closure note.',
+        title: this.i18n.translate('exceptions.action.closeException'),
+        label: this.i18n.translate('exceptions.detail.closureNote'),
+        message: this.i18n.translate('exceptions.dialog.closeMessage'),
         reasonRequired: false,
-        confirmLabel: 'Close',
+        confirmLabel: this.i18n.translate('exceptions.action.closeConfirm'),
       },
       (reason) =>
         this.runMutation(
@@ -430,7 +434,7 @@ export class ExceptionDetailComponent {
             closureNote: reason || null,
             version: this.version(),
           }),
-          'Exception closed.',
+          this.i18n.translate('exceptions.notify.closed'),
         ),
     );
   }
@@ -438,7 +442,7 @@ export class ExceptionDetailComponent {
   ciaCountersign(): void {
     this.runMutation(
       this.service.ciaCountersign(this.id(), { version: this.version() }),
-      'Exception countersigned.',
+      this.i18n.translate('exceptions.notify.countersigned'),
     );
   }
 
@@ -498,7 +502,7 @@ export class ExceptionDetailComponent {
             ...this.evidenceFor(action.id),
             saved,
           ]);
-          this.notify.success('Evidence uploaded.');
+          this.notify.success(this.i18n.translate('exceptions.notify.evidenceUploaded'));
           input.value = '';
         },
         error: () => {

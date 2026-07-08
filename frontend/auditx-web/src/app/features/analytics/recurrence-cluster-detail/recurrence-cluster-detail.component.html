@@ -1,26 +1,26 @@
 <app-page-header
-  title="Recurrence cluster"
+  [title]="'analytics.detail.title' | t"
   [subtitle]="humanise(cluster()?.category)"
 >
   <div actions>
     <a matButton routerLink="/analytics/recurrence-clusters">
       <mat-icon>arrow_back</mat-icon>
-      All clusters
+      {{ 'analytics.nav.allClusters' | t }}
     </a>
     <button matButton type="button" (click)="fetch()">
       <mat-icon>refresh</mat-icon>
-      Refresh
+      {{ 'analytics.actions.refresh' | t }}
     </button>
   </div>
 </app-page-header>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading cluster…" />
+    <app-loading [message]="'analytics.detail.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load this recurrence cluster."
+      [message]="'analytics.detail.error' | t"
       (retry)="fetch()"
     />
   }
@@ -30,63 +30,63 @@
         <div class="cluster__facts">
           <div class="fact">
             <span class="fact__value">{{ c.closedExceptionCount }}</span>
-            <span class="fact__label">Closed findings</span>
+            <span class="fact__label">{{ 'analytics.clusters.col.closedFindings' | t }}</span>
           </div>
           <div class="fact">
-            <span class="fact__value">{{ c.windowMonths }} mo</span>
-            <span class="fact__label">Window</span>
+            <span class="fact__value">{{ c.windowMonths }} {{ 'analytics.unit.months' | t }}</span>
+            <span class="fact__label">{{ 'analytics.clusters.col.window' | t }}</span>
           </div>
           <div class="fact">
             <span class="fact__value">
               {{ c.firstOccurredAt | date: 'mediumDate' }}
             </span>
-            <span class="fact__label">First occurred</span>
+            <span class="fact__label">{{ 'analytics.detail.firstOccurred' | t }}</span>
           </div>
           <div class="fact">
             <span class="fact__value">
               {{ c.lastOccurredAt | date: 'mediumDate' }}
             </span>
-            <span class="fact__label">Last occurred</span>
+            <span class="fact__label">{{ 'analytics.clusters.col.lastOccurred' | t }}</span>
           </div>
           <div class="fact">
             <span class="fact__value">
               {{ c.detectedAt | date: 'mediumDate' }}
             </span>
-            <span class="fact__label">Detected</span>
+            <span class="fact__label">{{ 'analytics.clusters.col.detected' | t }}</span>
           </div>
           <div class="fact">
             <span class="fact__value">
               {{ (c.notifiedAt | date: 'mediumDate') ?? '—' }}
             </span>
-            <span class="fact__label">Notified</span>
+            <span class="fact__label">{{ 'analytics.detail.notified' | t }}</span>
           </div>
         </div>
         <p class="cluster__entity">
-          Auditable entity: <code>{{ entityLookup.name(c.auditableEntityId) }}</code>
+          {{ 'analytics.detail.auditableEntity' | t }} <code>{{ entityLookup.name(c.auditableEntityId) }}</code>
         </p>
       </mat-card>
 
-      <h2 class="cluster__members-title">Member exceptions</h2>
+      <h2 class="cluster__members-title">{{ 'analytics.detail.memberExceptions' | t }}</h2>
 
       @if (isEmpty()) {
         <app-empty-state
           icon="report_problem"
-          title="No members"
-          message="This cluster has no member exceptions."
+          [title]="'analytics.detail.empty.title' | t"
+          [message]="'analytics.detail.empty.message' | t"
         />
       } @else {
         <mat-card appearance="outlined" class="cluster__table-card">
           <div class="cluster__table-wrapper">
             <table mat-table [dataSource]="c.members" class="cluster__table">
               <ng-container matColumnDef="title">
-                <th mat-header-cell *matHeaderCellDef>Title</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.detail.col.title' | t }}</th>
                 <td mat-cell *matCellDef="let m" class="cluster__title-cell">
                   {{ m.title }}
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="severity">
-                <th mat-header-cell *matHeaderCellDef>Severity</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.detail.col.severity' | t }}</th>
                 <td mat-cell *matCellDef="let m">
                   <span
                     class="severity-badge"
@@ -98,30 +98,30 @@
               </ng-container>
 
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.detail.col.status' | t }}</th>
                 <td mat-cell *matCellDef="let m">{{ humanise(m.status) }}</td>
               </ng-container>
 
               <ng-container matColumnDef="raisedAt">
-                <th mat-header-cell *matHeaderCellDef>Raised</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.detail.col.raised' | t }}</th>
                 <td mat-cell *matCellDef="let m">
                   {{ m.raisedAt | date: 'mediumDate' }}
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="closedAt">
-                <th mat-header-cell *matHeaderCellDef>Closed</th>
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.detail.col.closed' | t }}</th>
                 <td mat-cell *matCellDef="let m">
                   {{ (m.closedAt | date: 'mediumDate') ?? '—' }}
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+                <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'analytics.col.actions' | t"></th>
                 <td mat-cell *matCellDef="let m">
                   @if (canViewExceptions()) {
                     <a matButton [routerLink]="['/exceptions', m.exceptionId]">
-                      Open
+                      {{ 'analytics.actions.open' | t }}
                     </a>
                   }
                 </td>

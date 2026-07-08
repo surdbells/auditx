@@ -37,6 +37,8 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { UserStatusLabelPipe } from '../../../../shared/pipes/user-status-label.pipe';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -63,6 +65,7 @@ const PAGE_SIZE = 20;
     ErrorStateComponent,
     PageHeaderComponent,
     UserStatusLabelPipe,
+    TranslatePipe,
   ],
   templateUrl: './users-list.component.html',
   styleUrl: './users-list.component.scss',
@@ -74,6 +77,7 @@ export class UsersListComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'displayName',
@@ -83,12 +87,12 @@ export class UsersListComponent {
     'actions',
   ];
 
-  readonly statuses: { value: UserStatus | ''; label: string }[] = [
-    { value: '', label: 'All statuses' },
-    { value: 'active', label: 'Active' },
-    { value: 'deactivated', label: 'Deactivated' },
-    { value: 'awaiting_role_assignment', label: 'Awaiting role' },
-    { value: 'locked', label: 'Locked' },
+  readonly statuses: { value: UserStatus | ''; labelKey: string }[] = [
+    { value: '', labelKey: 'identity.users.status.all' },
+    { value: 'active', labelKey: 'identity.status.active' },
+    { value: 'deactivated', labelKey: 'identity.status.deactivated' },
+    { value: 'awaiting_role_assignment', labelKey: 'identity.status.awaitingRole' },
+    { value: 'locked', labelKey: 'identity.status.locked' },
   ];
 
   readonly filters = this.fb.nonNullable.group({
@@ -192,9 +196,11 @@ export class UsersListComponent {
   deactivate(user: UserDto, event: Event): void {
     event.stopPropagation();
     const data: ConfirmDialogData = {
-      title: 'Deactivate user',
-      message: `Deactivate ${user.displayName}? They will immediately lose access to AuditX.`,
-      confirmLabel: 'Deactivate',
+      title: this.i18n.translate('identity.users.deactivate.title'),
+      message: this.i18n.translate('identity.users.deactivate.message', {
+        name: user.displayName,
+      }),
+      confirmLabel: this.i18n.translate('identity.actions.deactivate'),
       destructive: true,
     };
     this.dialog
@@ -206,7 +212,11 @@ export class UsersListComponent {
         }
         this.usersService.deactivate(user.id).subscribe({
           next: () => {
-            this.notify.success(`${user.displayName} has been deactivated.`);
+            this.notify.success(
+              this.i18n.translate('identity.users.deactivate.success', {
+                name: user.displayName,
+              }),
+            );
             this.users.update((list) =>
               list.map((u) =>
                 u.id === user.id ? { ...u, status: 'deactivated' } : u,

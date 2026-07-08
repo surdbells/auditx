@@ -8,6 +8,8 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 /**
  * CIA closure of an AC action item. A non-blank closure response is required —
  * the backend returns 422 on a blank one, so we enforce it client-side too.
@@ -22,34 +24,35 @@ import { MatInputModule } from '@angular/material/input';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Close action item</h2>
+    <h2 mat-dialog-title>{{ 'ac.closeItem.title' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Closure response</mat-label>
+          <mat-label>{{ 'ac.closeItem.label' | t }}</mat-label>
           <textarea
             matInput
             formControlName="closureResponse"
             rows="5"
-            placeholder="Describe the resolution for the committee…"
+            [placeholder]="'ac.closeItem.placeholder' | t"
           ></textarea>
           @if (form.controls.closureResponse.hasError('required')) {
-            <mat-error>A closure response is required.</mat-error>
+            <mat-error>{{ 'ac.closeItem.required' | t }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'ac.common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        Close item
+        {{ 'ac.closeItem.submit' | t }}
       </button>
     </mat-dialog-actions>
   `,

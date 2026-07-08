@@ -23,6 +23,8 @@ import { TemplatesService } from '../../../../core/services/templates.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ReferenceDataLookupService } from '../../../../core/services/reference-data-lookup.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../../core/i18n/translation.service';
 import { Permissions } from '../../../../core/permissions';
 import {
   TemplateListItem,
@@ -59,6 +61,7 @@ const PAGE_SIZE = 20;
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -74,6 +77,7 @@ export class TemplatesListComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
   /** Backs the audit-type filter dropdown and column labels (lazy-loaded). */
   readonly refLookup = inject(ReferenceDataLookupService);
 
@@ -89,10 +93,10 @@ export class TemplatesListComponent {
   ];
 
   readonly statuses: { value: TemplateStatus | 'all'; label: string }[] = [
-    { value: 'all', label: 'All statuses' },
-    { value: 'draft', label: 'Draft' },
-    { value: 'published', label: 'Published' },
-    { value: 'archived', label: 'Archived' },
+    { value: 'all', label: this.i18n.translate('templatesAdmin.status.all') },
+    { value: 'draft', label: this.i18n.translate('templatesAdmin.status.draft') },
+    { value: 'published', label: this.i18n.translate('templatesAdmin.status.published') },
+    { value: 'archived', label: this.i18n.translate('templatesAdmin.status.archived') },
   ];
 
   readonly filters = this.fb.nonNullable.group({
@@ -195,7 +199,11 @@ export class TemplatesListComponent {
         }
         this.templatesService.clone(template.id, result).subscribe({
           next: (created) => {
-            this.notify.success(`Cloned to "${created.name}".`);
+            this.notify.success(
+              this.i18n.translate('templatesAdmin.notify.cloned', {
+                name: created.name,
+              }),
+            );
             void this.router.navigate(['/admin/templates', created.id]);
           },
         });
@@ -205,9 +213,11 @@ export class TemplatesListComponent {
   archive(template: TemplateListItem, event: Event): void {
     event.stopPropagation();
     const data: ConfirmDialogData = {
-      title: 'Archive template',
-      message: `Archive "${template.name}"? It will no longer be available for new audits.`,
-      confirmLabel: 'Archive',
+      title: this.i18n.translate('templatesAdmin.archive.title'),
+      message: this.i18n.translate('templatesAdmin.archive.message', {
+        name: template.name,
+      }),
+      confirmLabel: this.i18n.translate('templatesAdmin.action.archive'),
       destructive: true,
     };
     this.dialog
@@ -219,7 +229,11 @@ export class TemplatesListComponent {
         }
         this.templatesService.archive(template.id).subscribe({
           next: () => {
-            this.notify.success(`"${template.name}" archived.`);
+            this.notify.success(
+              this.i18n.translate('templatesAdmin.notify.archived', {
+                name: template.name,
+              }),
+            );
             this.fetchFirstPage();
           },
         });
@@ -230,7 +244,11 @@ export class TemplatesListComponent {
     event.stopPropagation();
     this.templatesService.unarchive(template.id).subscribe({
       next: () => {
-        this.notify.success(`"${template.name}" restored.`);
+        this.notify.success(
+          this.i18n.translate('templatesAdmin.notify.restored', {
+            name: template.name,
+          }),
+        );
         this.fetchFirstPage();
       },
     });

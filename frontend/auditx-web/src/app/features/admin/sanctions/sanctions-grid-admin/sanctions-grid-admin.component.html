@@ -1,6 +1,6 @@
 <app-page-header
-  title="Sanctions grid"
-  subtitle="The disciplinary grid maps category / severity / recurrence to a recommended sanction range."
+  [title]="'sanctions.grid.title' | t"
+  [subtitle]="'sanctions.grid.subtitle' | t"
 />
 
 @if (pendingBanner(); as banner) {
@@ -12,11 +12,11 @@
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading the grid…" />
+    <app-loading [message]="'sanctions.grid.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the sanctions grid."
+      [message]="'sanctions.grid.error' | t"
       (retry)="fetch()"
     />
   }
@@ -24,18 +24,18 @@
     @if (grid(); as g) {
       <div class="grid__meta">
         <span class="status-badge" [attr.data-status]="g.isActive ? 'active' : 'draft'">
-          {{ g.isActive ? 'Active' : 'Draft' }}
+          {{ g.isActive ? ('sanctions.grid.active' | t) : ('sanctions.grid.draft' | t) }}
         </span>
-        <span class="muted">Version {{ g.versionNumber }}</span>
+        <span class="muted">{{ 'sanctions.grid.version' | t: { version: g.versionNumber } }}</span>
         @if (g.activatedAt) {
-          <span class="muted">· Activated {{ g.activatedAt | date: 'medium' }}</span>
+          <span class="muted">{{ 'sanctions.grid.activated' | t: { date: (g.activatedAt | date: 'medium') } }}</span>
         }
       </div>
     } @else {
       <app-empty-state
         icon="grid_on"
-        title="No active grid"
-        message="Add cells below and save a draft to create the first grid version."
+        [title]="'sanctions.grid.empty.title' | t"
+        [message]="'sanctions.grid.empty.message' | t"
       />
     }
 
@@ -44,11 +44,11 @@
         <table class="grid__table">
           <thead>
             <tr>
-              <th>Category</th>
-              <th>Severity</th>
-              <th>Recurrence</th>
-              <th>Recommended range</th>
-              <th aria-label="Remove"></th>
+              <th>{{ 'sanctions.field.category' | t }}</th>
+              <th>{{ 'sanctions.field.severity' | t }}</th>
+              <th>{{ 'sanctions.field.recurrence' | t }}</th>
+              <th>{{ 'sanctions.grid.recommendedRange' | t }}</th>
+              <th [attr.aria-label]="'sanctions.grid.remove' | t"></th>
             </tr>
           </thead>
           <tbody>
@@ -56,14 +56,14 @@
               <tr>
                 <td>{{ row.category }}</td>
                 <td>{{ humanise(row.severity) }}</td>
-                <td>{{ row.isRecurrence ? 'Yes' : 'No' }}</td>
+                <td>{{ row.isRecurrence ? ('sanctions.common.yes' | t) : ('sanctions.common.no' | t) }}</td>
                 <td>
                   <mat-form-field appearance="outline" class="grid__field">
                     <input
                       matInput
                       [value]="row.recommendedRange"
                       (input)="updateRange(row.key, $any($event.target).value)"
-                      placeholder="e.g. Verbal–Written warning"
+                      [placeholder]="'sanctions.grid.rangePlaceholder' | t"
                     />
                   </mat-form-field>
                 </td>
@@ -72,7 +72,7 @@
                     matIconButton
                     type="button"
                     (click)="removeRow(row.key)"
-                    aria-label="Remove cell"
+                    [attr.aria-label]="'sanctions.grid.removeCell' | t"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -81,7 +81,7 @@
             } @empty {
               <tr>
                 <td colspan="5" class="grid__empty muted">
-                  No cells yet. Add one below.
+                  {{ 'sanctions.grid.noCells' | t }}
                 </td>
               </tr>
             }
@@ -91,11 +91,11 @@
 
       <div class="grid__add">
         <mat-form-field appearance="outline">
-          <mat-label>Category</mat-label>
+          <mat-label>{{ 'sanctions.field.category' | t }}</mat-label>
           <input matInput [(ngModel)]="newCategory" name="newCategory" />
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Severity</mat-label>
+          <mat-label>{{ 'sanctions.field.severity' | t }}</mat-label>
           <mat-select [(ngModel)]="newSeverity" name="newSeverity">
             @for (s of severities; track s) {
               <mat-option [value]="s">{{ humanise(s) }}</mat-option>
@@ -104,11 +104,11 @@
         </mat-form-field>
         <label class="grid__recurrence">
           <input type="checkbox" [(ngModel)]="newRecurrence" name="newRecurrence" />
-          Recurrence
+          {{ 'sanctions.field.recurrence' | t }}
         </label>
         <button matButton="outlined" type="button" (click)="addRow()">
           <mat-icon>add</mat-icon>
-          Add cell
+          {{ 'sanctions.grid.addCell' | t }}
         </button>
       </div>
 
@@ -120,12 +120,12 @@
           [disabled]="saving()"
         >
           <mat-icon>save</mat-icon>
-          {{ saving() ? 'Saving…' : 'Save draft' }}
+          {{ saving() ? ('sanctions.grid.saving' | t) : ('sanctions.grid.saveDraft' | t) }}
         </button>
         @if (canActivate()) {
           <button matButton type="button" (click)="activate()">
             <mat-icon>check_circle</mat-icon>
-            Activate
+            {{ 'sanctions.grid.activate' | t }}
           </button>
         }
       </div>

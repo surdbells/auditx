@@ -29,6 +29,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -47,6 +49,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './risk-dimensions.component.html',
   styleUrl: './risk-dimensions.component.scss',
@@ -57,6 +60,7 @@ export class RiskDimensionsComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'name',
@@ -67,9 +71,9 @@ export class RiskDimensionsComponent {
   ];
 
   readonly filterOptions: { value: RiskDimensionFilter; label: string }[] = [
-    { value: 'true', label: 'Active' },
-    { value: 'false', label: 'Inactive' },
-    { value: 'all', label: 'All' },
+    { value: 'true', label: this.i18n.translate('universe.filter.active') },
+    { value: 'false', label: this.i18n.translate('universe.filter.inactive') },
+    { value: 'all', label: this.i18n.translate('universe.filter.all') },
   ];
 
   readonly filters = this.fb.nonNullable.group({
@@ -116,7 +120,11 @@ export class RiskDimensionsComponent {
         }
         this.service.create(result.body).subscribe({
           next: (created) => {
-            this.notify.success(`Dimension "${created.name}" created.`);
+            this.notify.success(
+              this.i18n.translate('universe.notify.dimCreated', {
+                name: created.name,
+              }),
+            );
             this.fetch();
           },
         });
@@ -134,7 +142,11 @@ export class RiskDimensionsComponent {
         }
         this.service.update(result.id, result.body).subscribe({
           next: (updated) => {
-            this.notify.success(`Dimension "${updated.name}" updated.`);
+            this.notify.success(
+              this.i18n.translate('universe.notify.dimUpdated', {
+                name: updated.name,
+              }),
+            );
             this.fetch();
           },
         });

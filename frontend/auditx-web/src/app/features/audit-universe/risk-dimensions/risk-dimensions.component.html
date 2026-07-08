@@ -1,11 +1,11 @@
 <app-page-header
-  title="Risk Dimensions"
-  subtitle="Configurable dimensions and scales used to score audit-universe entities."
+  [title]="'universe.dims.title' | t"
+  [subtitle]="'universe.dims.subtitle' | t"
 >
   @if (canManage()) {
     <button actions matButton="filled" type="button" (click)="create()">
       <mat-icon>add</mat-icon>
-      New dimension
+      {{ 'universe.dims.newDimension' | t }}
     </button>
   }
 </app-page-header>
@@ -13,7 +13,7 @@
 <mat-card appearance="outlined" class="dims__filters-card">
   <form [formGroup]="filters" class="dims__filters">
     <mat-form-field appearance="outline">
-      <mat-label>Status</mat-label>
+      <mat-label>{{ 'universe.field.status' | t }}</mat-label>
       <mat-select formControlName="active">
         @for (o of filterOptions; track o.value) {
           <mat-option [value]="o.value">{{ o.label }}</mat-option>
@@ -25,11 +25,11 @@
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading risk dimensions…" />
+    <app-loading [message]="'universe.dims.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the risk dimensions."
+      [message]="'universe.error.loadDims' | t"
       (retry)="fetch()"
     />
   }
@@ -37,53 +37,53 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="tune"
-        title="No risk dimensions"
-        message="Create a dimension to start scoring entities."
+        [title]="'universe.dims.emptyTitle' | t"
+        [message]="'universe.dims.emptyMessage' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="dims__table-card">
         <div class="table-scroll">
           <table mat-table [dataSource]="dimensions()" class="dims__table">
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'universe.field.name' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 <span class="dims__name">{{ d.name }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="weight">
-              <th mat-header-cell *matHeaderCellDef>Weight</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'universe.field.weight' | t }}</th>
               <td mat-cell *matCellDef="let d">{{ d.weight }}</td>
             </ng-container>
 
             <ng-container matColumnDef="scale">
-              <th mat-header-cell *matHeaderCellDef>Scale</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'universe.field.scale' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 {{ d.scaleMin }}–{{ d.scaleMax }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="active">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'universe.field.status' | t }}</th>
               <td mat-cell *matCellDef="let d">
                 <span
                   class="status-badge"
                   [attr.data-status]="d.isActive ? 'active' : 'deactivated'"
                 >
-                  {{ d.isActive ? 'active' : 'inactive' }}
+                  {{ d.isActive ? ('universe.value.active' | t) : ('universe.value.inactive' | t) }}
                 </span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'universe.field.actionsAria' | t"></th>
               <td mat-cell *matCellDef="let d">
                 @if (canManage()) {
                   <button
                     matIconButton
                     type="button"
                     (click)="edit(d)"
-                    [attr.aria-label]="'Edit ' + d.name"
+                    [attr.aria-label]="'universe.actions.editAria' | t: { name: d.name }"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>

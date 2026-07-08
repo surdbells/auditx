@@ -32,6 +32,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -60,6 +62,7 @@ const POLL_INTERVAL = 2000;
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './reports-panel.component.html',
   styleUrl: './reports-panel.component.scss',
@@ -73,6 +76,7 @@ export class ReportsPanelComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly i18n = inject(TranslationService);
 
   readonly displayedColumns = [
     'version',
@@ -171,12 +175,16 @@ export class ReportsPanelComponent {
       .generate(this.auditId(), { docx: this.includeDocx })
       .subscribe({
         next: (result) => {
-          this.notify.info('Report generation started.');
+          this.notify.info(
+            this.i18n.translate('reports.panel.notify.generationStarted'),
+          );
           this.pollUntilSettled(result.reportId);
         },
         error: () => {
           this.generating.set(false);
-          this.notify.error('We could not start report generation.');
+          this.notify.error(
+            this.i18n.translate('reports.panel.notify.generateError'),
+          );
         },
       });
   }
@@ -190,7 +198,9 @@ export class ReportsPanelComponent {
         error: () => {
           this.pollSub?.unsubscribe();
           this.generating.set(false);
-          this.notify.error('We lost track of the report generation.');
+          this.notify.error(
+            this.i18n.translate('reports.panel.notify.lostTrack'),
+          );
           this.loadList();
         },
       });
@@ -201,13 +211,18 @@ export class ReportsPanelComponent {
     if (report.status === 'completed') {
       this.pollSub?.unsubscribe();
       this.generating.set(false);
-      this.notify.success(`Report v${report.versionNumber} is ready.`);
+      this.notify.success(
+        this.i18n.translate('reports.panel.notify.ready', {
+          version: report.versionNumber,
+        }),
+      );
       this.loadList();
     } else if (report.status === 'failed') {
       this.pollSub?.unsubscribe();
       this.generating.set(false);
       this.notify.error(
-        report.failureReason || 'Report generation failed.',
+        report.failureReason ||
+          this.i18n.translate('reports.panel.notify.generationFailed'),
       );
       this.loadList();
     }
@@ -217,7 +232,10 @@ export class ReportsPanelComponent {
   download(row: ReportListItem, format: string): void {
     this.service.download(row.id, format).subscribe({
       next: (res) => this.handleDownload(res, row, format),
-      error: () => this.notify.error('We could not download the report.'),
+      error: () =>
+        this.notify.error(
+          this.i18n.translate('reports.common.notify.downloadError'),
+        ),
     });
   }
 
@@ -228,7 +246,9 @@ export class ReportsPanelComponent {
   ): void {
     const fallback = `report-v${row.versionNumber}.${format}`;
     if (!downloadBlobResponse(res, fallback)) {
-      this.notify.error('The download returned no content.');
+      this.notify.error(
+        this.i18n.translate('reports.common.notify.downloadEmpty'),
+      );
     }
   }
 }

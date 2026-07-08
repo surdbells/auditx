@@ -19,6 +19,7 @@ import {
   TemplateVersionDetail,
   TemplateVersionSummary,
 } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
@@ -34,6 +35,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatIconModule,
     MatFormFieldModule,
     MatSelectModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
   ],

@@ -1,21 +1,21 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading sanctions case…" />
+    <app-loading [message]="'sanctions.detail.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load this sanctions case."
+      [message]="'sanctions.detail.error' | t"
       (retry)="fetch()"
     />
   }
   @case ('ready') {
     @if (sanctionsCase(); as c) {
-      <app-page-header [title]="subjectLabel()" subtitle="Sanctions case">
+      <app-page-header [title]="subjectLabel()" [subtitle]="'sanctions.detail.subtitle' | t">
         <div actions class="detail__actions">
           @if (canGenerateDossier()) {
             <button matButton type="button" (click)="generateDossier()">
               <mat-icon>description</mat-icon>
-              Generate dossier
+              {{ 'sanctions.action.generateDossier' | t }}
             </button>
           }
         </div>
@@ -29,40 +29,40 @@
           {{ humanise(c.status) }}
         </span>
         @if (c.isRecurrence) {
-          <span class="status-badge">Recurrence</span>
+          <span class="status-badge">{{ 'sanctions.field.recurrence' | t }}</span>
         }
         @if (c.subjectMasked) {
-          <span class="status-badge" matTooltip="You are not on the case team">
-            Subject redacted
+          <span class="status-badge" [matTooltip]="'sanctions.detail.notOnTeam' | t">
+            {{ 'sanctions.detail.subjectRedacted' | t }}
           </span>
         }
       </div>
 
       <!-- Overview -->
       <mat-card appearance="outlined" class="detail__card">
-        <h3 class="detail__card-title">Overview</h3>
+        <h3 class="detail__card-title">{{ 'sanctions.detail.overview' | t }}</h3>
         <dl class="detail__grid">
           <div>
-            <dt>Subject</dt>
+            <dt>{{ 'sanctions.field.subject' | t }}</dt>
             <dd>{{ subjectLabel() }}</dd>
           </div>
           <div>
-            <dt>Category</dt>
+            <dt>{{ 'sanctions.field.category' | t }}</dt>
             <dd>{{ c.category || '—' }}</dd>
           </div>
           <div>
-            <dt>Linked exception</dt>
+            <dt>{{ 'sanctions.detail.linkedException' | t }}</dt>
             <dd>
-              <a [routerLink]="['/exceptions', c.exceptionId]">View exception</a>
+              <a [routerLink]="['/exceptions', c.exceptionId]">{{ 'sanctions.detail.viewException' | t }}</a>
             </dd>
           </div>
           <div>
-            <dt>Triggered</dt>
+            <dt>{{ 'sanctions.field.triggered' | t }}</dt>
             <dd>{{ c.triggeredAt | date: 'medium' }}</dd>
           </div>
           @if (c.submittedAt) {
             <div>
-              <dt>Submitted</dt>
+              <dt>{{ 'sanctions.field.submitted' | t }}</dt>
               <dd>{{ c.submittedAt | date: 'medium' }}</dd>
             </div>
           }
@@ -72,18 +72,18 @@
       <!-- Recommendation vs grid -->
       <mat-card appearance="outlined" class="detail__card">
         <div class="detail__card-head">
-          <h3 class="detail__card-title">Recommendation</h3>
+          <h3 class="detail__card-title">{{ 'sanctions.field.recommendation' | t }}</h3>
           <div class="detail__card-actions">
             @if (canEditRecommendation()) {
               <button matButton type="button" (click)="recordRecommendation()">
                 <mat-icon>edit</mat-icon>
-                {{ c.recommendation ? 'Edit recommendation' : 'Recommend' }}
+                {{ c.recommendation ? ('sanctions.action.editRecommendation' | t) : ('sanctions.action.recommend' | t) }}
               </button>
             }
             @if (canSubmit()) {
               <button matButton="filled" type="button" (click)="submit()">
                 <mat-icon>send</mat-icon>
-                Submit
+                {{ 'sanctions.action.submit' | t }}
               </button>
             }
           </div>
@@ -91,33 +91,33 @@
 
         <dl class="detail__grid">
           <div>
-            <dt>Grid recommended range</dt>
+            <dt>{{ 'sanctions.detail.gridRange' | t }}</dt>
             <dd>
               @if (c.gridRecommendedRange) {
                 {{ c.gridRecommendedRange }}
-                <span class="muted">(v{{ c.gridConsultedVersion }})</span>
+                <span class="muted">{{ 'sanctions.detail.gridVersion' | t: { version: c.gridConsultedVersion } }}</span>
               } @else {
-                <span class="muted">No matching grid cell</span>
+                <span class="muted">{{ 'sanctions.detail.noGridCell' | t }}</span>
               }
             </dd>
           </div>
           <div>
-            <dt>Within grid range</dt>
-            <dd>{{ c.withinGridRange ? 'Yes' : 'No' }}</dd>
+            <dt>{{ 'sanctions.detail.withinGridRange' | t }}</dt>
+            <dd>{{ c.withinGridRange ? ('sanctions.common.yes' | t) : ('sanctions.common.no' | t) }}</dd>
           </div>
         </dl>
 
         @if (c.recommendation) {
           <div class="detail__scope">
-            <dt>Recorded recommendation</dt>
+            <dt>{{ 'sanctions.detail.recordedRecommendation' | t }}</dt>
             <dd>{{ c.recommendation }}</dd>
           </div>
         } @else {
-          <p class="muted detail__empty">No recommendation recorded yet.</p>
+          <p class="muted detail__empty">{{ 'sanctions.detail.noRecommendation' | t }}</p>
         }
         @if (c.deviationReason) {
           <div class="detail__scope">
-            <dt>Deviation reason</dt>
+            <dt>{{ 'sanctions.detail.deviationReason' | t }}</dt>
             <dd>{{ c.deviationReason }}</dd>
           </div>
         }
@@ -133,7 +133,7 @@
       ) {
         <mat-card appearance="outlined" class="detail__card">
           <div class="detail__card-head">
-            <h3 class="detail__card-title">HR &amp; committee</h3>
+            <h3 class="detail__card-title">{{ 'sanctions.detail.hrCommittee' | t }}</h3>
             <div class="detail__card-actions">
               @if (canRecordHrOutcomeNow()) {
                 <button
@@ -142,13 +142,13 @@
                   (click)="recordHrOutcome()"
                 >
                   <mat-icon>how_to_reg</mat-icon>
-                  Record HR outcome
+                  {{ 'sanctions.action.recordHrOutcome' | t }}
                 </button>
               }
               @if (canReferToDcNow()) {
                 <button matButton type="button" (click)="referToDc()">
                   <mat-icon>forward</mat-icon>
-                  Refer to DC
+                  {{ 'sanctions.action.referToDc' | t }}
                 </button>
               }
               @if (canDcDecideNow()) {
@@ -158,7 +158,7 @@
                   (click)="recordDcDecision()"
                 >
                   <mat-icon>balance</mat-icon>
-                  Record DC decision
+                  {{ 'sanctions.action.recordDcDecision' | t }}
                 </button>
               }
             </div>
@@ -166,12 +166,12 @@
 
           @if (c.hrOutcomeJson) {
             <div class="detail__scope">
-              <dt>HR outcome</dt>
+              <dt>{{ 'sanctions.detail.hrOutcome' | t }}</dt>
               <dd>
                 <pre class="detail__json">{{ c.hrOutcomeJson }}</pre>
                 @if (c.hrOutcomeAt) {
                   <span class="muted">
-                    Recorded {{ c.hrOutcomeAt | date: 'medium' }}
+                    {{ 'sanctions.detail.recordedAt' | t: { date: (c.hrOutcomeAt | date: 'medium') } }}
                   </span>
                 }
               </dd>
@@ -179,12 +179,12 @@
           }
           @if (c.dcDecisionJson) {
             <div class="detail__scope">
-              <dt>DC decision</dt>
+              <dt>{{ 'sanctions.detail.dcDecision' | t }}</dt>
               <dd>
                 <pre class="detail__json">{{ c.dcDecisionJson }}</pre>
                 @if (c.dcDecisionAt) {
                   <span class="muted">
-                    Recorded {{ c.dcDecisionAt | date: 'medium' }}
+                    {{ 'sanctions.detail.recordedAt' | t: { date: (c.dcDecisionAt | date: 'medium') } }}
                   </span>
                 }
               </dd>
@@ -197,12 +197,12 @@
       @if (canFileAppealNow() || canDecideAppealNow() || canCloseNow()) {
         <mat-card appearance="outlined" class="detail__card">
           <div class="detail__card-head">
-            <h3 class="detail__card-title">Appeals &amp; closure</h3>
+            <h3 class="detail__card-title">{{ 'sanctions.detail.appealsClosure' | t }}</h3>
             <div class="detail__card-actions">
               @if (canFileAppealNow()) {
                 <button matButton type="button" (click)="fileAppeal()">
                   <mat-icon>gavel</mat-icon>
-                  File appeal
+                  {{ 'sanctions.action.fileAppeal' | t }}
                 </button>
               }
               @if (canDecideAppealNow()) {
@@ -212,13 +212,13 @@
                   (click)="decideAppeal()"
                 >
                   <mat-icon>rule</mat-icon>
-                  Decide appeal
+                  {{ 'sanctions.action.decideAppeal' | t }}
                 </button>
               }
               @if (canCloseNow()) {
                 <button matButton="filled" type="button" (click)="close()">
                   <mat-icon>lock</mat-icon>
-                  Close case
+                  {{ 'sanctions.action.closeCase' | t }}
                 </button>
               }
             </div>
@@ -228,10 +228,10 @@
 
       @if (c.status === 'closed') {
         <mat-card appearance="outlined" class="detail__card">
-          <h3 class="detail__card-title">Closed</h3>
+          <h3 class="detail__card-title">{{ 'sanctions.detail.closed' | t }}</h3>
           <dl class="detail__grid">
             <div>
-              <dt>Closed at</dt>
+              <dt>{{ 'sanctions.detail.closedAt' | t }}</dt>
               <dd>{{ c.closedAt ? (c.closedAt | date: 'medium') : '—' }}</dd>
             </div>
           </dl>

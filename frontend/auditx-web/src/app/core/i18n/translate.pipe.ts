@@ -28,7 +28,10 @@ export class TranslatePipe implements PipeTransform {
     });
   }
 
-  transform(key: string, params?: Record<string, string | number>): string {
+  transform(
+    key: string,
+    params?: Record<string, string | number | null | undefined>,
+  ): string {
     return this.translation.translate(key, params);
   }
 }

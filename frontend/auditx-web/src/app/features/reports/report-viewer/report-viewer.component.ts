@@ -37,6 +37,8 @@ import {
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -56,6 +58,7 @@ const DISTRIBUTIONS_PAGE_SIZE = 20;
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    TranslatePipe,
   ],
   templateUrl: './report-viewer.component.html',
   styleUrl: './report-viewer.component.scss',
@@ -70,6 +73,7 @@ export class ReportViewerComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly distributionColumns = [
     'recipient',
@@ -142,7 +146,10 @@ export class ReportViewerComponent {
   download(artefact: ReportArtefact): void {
     this.service.download(this.id(), artefact.format).subscribe({
       next: (res) => this.handleDownload(res, artefact.format),
-      error: () => this.notify.error('We could not download the report.'),
+      error: () =>
+        this.notify.error(
+          this.i18n.translate('reports.common.notify.downloadError'),
+        ),
     });
   }
 
@@ -150,7 +157,9 @@ export class ReportViewerComponent {
     const version = this.report()?.versionNumber ?? 0;
     const fallback = `report-v${version}.${format}`;
     if (!downloadBlobResponse(res, fallback)) {
-      this.notify.error('The download returned no content.');
+      this.notify.error(
+        this.i18n.translate('reports.common.notify.downloadEmpty'),
+      );
     }
   }
 
@@ -168,7 +177,9 @@ export class ReportViewerComponent {
       },
       error: () => {
         this.verifying.set(false);
-        this.notify.error('We could not verify the report hash.');
+        this.notify.error(
+          this.i18n.translate('reports.viewer.notify.verifyError'),
+        );
       },
     });
   }
@@ -188,12 +199,16 @@ export class ReportViewerComponent {
           this.service.distribute(this.id(), result).subscribe({
             next: (res) => {
               this.notify.success(
-                `Report distributed to ${res.recipientCount} recipient(s).`,
+                this.i18n.translate('reports.viewer.notify.distributed', {
+                  count: res.recipientCount,
+                }),
               );
               this.reloadDistributions();
             },
             error: () =>
-              this.notify.error('We could not distribute the report.'),
+              this.notify.error(
+                this.i18n.translate('reports.viewer.notify.distributeError'),
+              ),
           });
         });
     });

@@ -1,41 +1,41 @@
-<h2 mat-dialog-title>New webhook subscription</h2>
+<h2 mat-dialog-title>{{ 'integrations.subscriptionDialog.title' | t }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="form">
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Destination URL</mat-label>
+      <mat-label>{{ 'integrations.subscriptionDialog.destinationUrl.label' | t }}</mat-label>
       <input matInput formControlName="destinationUrl" autocomplete="off" />
       @if (form.controls.destinationUrl.hasError('required') && form.controls.destinationUrl.touched) {
-        <mat-error>A destination URL is required.</mat-error>
+        <mat-error>{{ 'integrations.subscriptionDialog.destinationUrl.required' | t }}</mat-error>
       } @else if (form.controls.destinationUrl.hasError('pattern')) {
-        <mat-error>Enter a valid http(s) URL.</mat-error>
+        <mat-error>{{ 'integrations.subscriptionDialog.destinationUrl.pattern' | t }}</mat-error>
       } @else {
-        <mat-hint>Internal endpoints only — external URLs are rejected.</mat-hint>
+        <mat-hint>{{ 'integrations.subscriptionDialog.destinationUrl.hint' | t }}</mat-hint>
       }
     </mat-form-field>
 
     <!-- TODO(ux): event-type chip entry is free-text — no event-catalogue autocomplete source is wired up here yet. -->
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Subscribed event types</mat-label>
-      <mat-chip-grid #chipGrid aria-label="Event types">
+      <mat-label>{{ 'integrations.subscriptionDialog.eventTypes.label' | t }}</mat-label>
+      <mat-chip-grid #chipGrid [attr.aria-label]="'integrations.subscriptionDialog.eventTypes.ariaLabel' | t">
         @for (type of eventTypes(); track type) {
           <mat-chip-row (removed)="removeEventType(type)">
             {{ type }}
-            <button matChipRemove [attr.aria-label]="'Remove ' + type">
+            <button matChipRemove [attr.aria-label]="'integrations.subscriptionDialog.eventTypes.remove' | t: { type: type }">
               <mat-icon>cancel</mat-icon>
             </button>
           </mat-chip-row>
         }
         <input
-          placeholder="e.g. audit.created"
+          [placeholder]="'integrations.subscriptionDialog.eventTypes.placeholder' | t"
           [matChipInputFor]="chipGrid"
           (matChipInputTokenEnd)="addEventType($event)"
         />
       </mat-chip-grid>
-      <mat-hint>Press Enter to add an event type.</mat-hint>
+      <mat-hint>{{ 'integrations.subscriptionDialog.eventTypes.hint' | t }}</mat-hint>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>HMAC secret</mat-label>
+      <mat-label>{{ 'integrations.subscriptionDialog.hmacSecret.label' | t }}</mat-label>
       <input
         matInput
         type="password"
@@ -43,14 +43,14 @@
         autocomplete="new-password"
       />
       @if (form.controls.hmacSecret.hasError('required') && form.controls.hmacSecret.touched) {
-        <mat-error>An HMAC secret is required.</mat-error>
+        <mat-error>{{ 'integrations.subscriptionDialog.hmacSecret.required' | t }}</mat-error>
       } @else {
-        <mat-hint>Write-only signing secret for delivery payloads.</mat-hint>
+        <mat-hint>{{ 'integrations.subscriptionDialog.hmacSecret.hint' | t }}</mat-hint>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Retry policy (JSON)</mat-label>
+      <mat-label>{{ 'integrations.subscriptionDialog.retryPolicy.label' | t }}</mat-label>
       <textarea
         matInput
         rows="3"
@@ -59,19 +59,19 @@
         placeholder='{ "maxAttempts": 5 }'
       ></textarea>
       @if (form.controls.retryPolicyJson.hasError('json')) {
-        <mat-error>Must be valid JSON.</mat-error>
+        <mat-error>{{ 'integrations.validation.json' | t }}</mat-error>
       }
     </mat-form-field>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button matButton type="button" (click)="cancel()">Cancel</button>
+  <button matButton type="button" (click)="cancel()">{{ 'integrations.actions.cancel' | t }}</button>
   <button
     matButton="filled"
     type="button"
     (click)="submit()"
     [disabled]="form.invalid || eventTypes().length === 0"
   >
-    Create
+    {{ 'integrations.actions.create' | t }}
   </button>
 </mat-dialog-actions>

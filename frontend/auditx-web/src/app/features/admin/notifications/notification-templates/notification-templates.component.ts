@@ -13,6 +13,8 @@ import { MatTableModule } from '@angular/material/table';
 
 import { NotificationAdminService } from '../../../../core/services/notifications-admin.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { TranslationService } from '../../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
 import { NotificationTemplate } from '../../../../core/models';
@@ -31,6 +33,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -41,6 +44,7 @@ type ViewState = 'loading' | 'ready' | 'error';
 export class NotificationTemplatesComponent {
   private readonly notifications = inject(NotificationAdminService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(TranslationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
 
@@ -92,7 +96,10 @@ export class NotificationTemplatesComponent {
         this.notifications.overrideTemplate(result).subscribe({
           next: (saved) => {
             this.notify.success(
-              `Bank override saved for "${saved.templateKey}".`,
+              this.i18n.translate(
+                'notifications.templates.toast.overrideSaved',
+                { key: saved.templateKey },
+              ),
             );
             this.fetch();
           },
@@ -113,7 +120,11 @@ export class NotificationTemplatesComponent {
         }
         this.notifications.overrideTemplate(result).subscribe({
           next: (saved) => {
-            this.notify.success(`Bank template "${saved.templateKey}" saved.`);
+            this.notify.success(
+              this.i18n.translate('notifications.templates.toast.created', {
+                key: saved.templateKey,
+              }),
+            );
             this.fetch();
           },
         });

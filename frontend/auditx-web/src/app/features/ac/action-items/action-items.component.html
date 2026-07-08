@@ -1,12 +1,12 @@
 <app-page-header
-  title="Audit-committee action items"
-  subtitle="Track committee directives through to closure and chair acknowledgement."
+  [title]="'ac.items.title' | t"
+  [subtitle]="'ac.items.subtitle' | t"
 >
   <div actions>
     @if (canCreate()) {
       <button matButton="filled" type="button" (click)="create()">
         <mat-icon>add</mat-icon>
-        New action item
+        {{ 'ac.items.new' | t }}
       </button>
     }
   </div>
@@ -14,10 +14,10 @@
 
 <div class="items__filter">
   <mat-form-field appearance="outline">
-    <mat-label>Status</mat-label>
+    <mat-label>{{ 'ac.field.status' | t }}</mat-label>
     <mat-select [value]="statusFilter()" (valueChange)="onStatusChange($event)">
       @for (s of statusOptions; track s) {
-        <mat-option [value]="s">{{ s ? humanise(s) : 'All' }}</mat-option>
+        <mat-option [value]="s">{{ s ? humanise(s) : ('ac.filter.all' | t) }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
@@ -25,11 +25,11 @@
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading action items…" />
+    <app-loading [message]="'ac.items.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the action items."
+      [message]="'ac.items.error' | t"
       (retry)="load()"
     />
   }
@@ -37,15 +37,15 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="task_alt"
-        title="No action items"
-        message="Committee directives will appear here once raised."
+        [title]="'ac.items.empty.title' | t"
+        [message]="'ac.items.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="items__card">
         <div class="items__table-wrapper">
           <table mat-table [dataSource]="items()" class="items__table">
             <ng-container matColumnDef="title">
-              <th mat-header-cell *matHeaderCellDef>Item</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.items.col.item' | t }}</th>
               <td mat-cell *matCellDef="let i">
                 <div class="items__title">{{ i.title }}</div>
                 @if (i.description) {
@@ -53,14 +53,14 @@
                 }
                 @if (i.closureResponse) {
                   <div class="items__closure">
-                    <strong>Closure:</strong> {{ i.closureResponse }}
+                    <strong>{{ 'ac.items.closureLabel' | t }}</strong> {{ i.closureResponse }}
                   </div>
                 }
               </td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.col.status' | t }}</th>
               <td mat-cell *matCellDef="let i">
                 <span class="status-badge" [attr.data-status]="i.status">
                   {{ humanise(i.status) }}
@@ -69,19 +69,19 @@
             </ng-container>
 
             <ng-container matColumnDef="assignee">
-              <th mat-header-cell *matHeaderCellDef>Assignee</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.items.col.assignee' | t }}</th>
               <td mat-cell *matCellDef="let i">{{ assigneeLabel(i) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="dueDate">
-              <th mat-header-cell *matHeaderCellDef>Due</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.items.col.due' | t }}</th>
               <td mat-cell *matCellDef="let i">
                 {{ i.dueDate ? (i.dueDate | date: 'mediumDate') : '—' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'ac.col.actions' | t }}</th>
               <td mat-cell *matCellDef="let i">
                 <div class="items__actions">
                   @if (canManage() && i.status === 'open') {
@@ -90,7 +90,7 @@
                       type="button"
                       (click)="markInProgress(i)"
                     >
-                      Start
+                      {{ 'ac.items.start' | t }}
                     </button>
                   }
                   @if (
@@ -98,12 +98,12 @@
                     (i.status === 'open' || i.status === 'in_progress')
                   ) {
                     <button matButton type="button" (click)="close(i)">
-                      Close
+                      {{ 'ac.items.close' | t }}
                     </button>
                   }
                   @if (canAcknowledge() && i.status === 'closed') {
                     <button matButton="filled" type="button" (click)="acknowledge(i)">
-                      Acknowledge
+                      {{ 'ac.items.acknowledge' | t }}
                     </button>
                   }
                 </div>
@@ -123,7 +123,7 @@
               (click)="loadMore()"
               [disabled]="loadingMore()"
             >
-              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+              {{ (loadingMore() ? 'ac.common.loadingShort' : 'ac.common.loadMore') | t }}
             </button>
           </div>
         }

@@ -10,6 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { DashboardListItem } from '../../../core/models';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
@@ -28,6 +29,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatCardModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,

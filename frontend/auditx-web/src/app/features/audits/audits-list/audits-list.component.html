@@ -1,11 +1,11 @@
 <app-page-header
-  title="Audits"
-  subtitle="Audit engagements, their lifecycle status and checklist progress."
+  [title]="'audits.list.title' | t"
+  [subtitle]="'audits.list.subtitle' | t"
 >
   @if (canCreate()) {
     <button actions matButton="filled" type="button" (click)="create()">
       <mat-icon>add</mat-icon>
-      New audit
+      {{ 'audits.actions.newAudit' | t }}
     </button>
   }
 </app-page-header>
@@ -23,18 +23,18 @@
 <mat-card appearance="outlined" class="audits__filters-card">
   <form [formGroup]="filters" class="audits__filters">
     <mat-form-field appearance="outline">
-      <mat-label>Status</mat-label>
+      <mat-label>{{ 'audits.filter.status' | t }}</mat-label>
       <mat-select formControlName="status">
-        @for (s of statuses; track s.value) {
+        @for (s of statuses(); track s.value) {
           <mat-option [value]="s.value">{{ s.label }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Audit type</mat-label>
+      <mat-label>{{ 'audits.field.auditType' | t }}</mat-label>
       <mat-select formControlName="auditType">
-        <mat-option [value]="''">All types</mat-option>
+        <mat-option [value]="''">{{ 'audits.filter.allTypes' | t }}</mat-option>
         @for (o of auditTypes(); track o.code) {
           <mat-option [value]="o.code">{{ o.label }}</mat-option>
         }
@@ -45,11 +45,11 @@
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading audits…" />
+    <app-loading [message]="'audits.list.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the audits."
+      [message]="'audits.list.error' | t"
       (retry)="fetchFirstPage()"
     />
   }
@@ -57,29 +57,29 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="assignment"
-        title="No audits found"
-        message="Create an audit to start an engagement."
+        [title]="'audits.empty.title' | t"
+        [message]="'audits.empty.message' | t"
       />
     } @else {
       <mat-card appearance="outlined" class="audits__table-card">
         <div class="table-scroll">
           <table mat-table [dataSource]="audits()" class="audits__table">
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'audits.column.name' | t }}</th>
               <td mat-cell *matCellDef="let a">
                 <span class="audits__name">{{ a.name }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="auditType">
-              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'audits.column.type' | t }}</th>
               <td mat-cell *matCellDef="let a">
                 {{ refLookup.label('audit_type', a.auditType) }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'audits.column.status' | t }}</th>
               <td mat-cell *matCellDef="let a">
                 <span class="status-badge" [attr.data-status]="a.status">
                   {{ a.status.replace('_', ' ') }}
@@ -88,7 +88,7 @@
             </ng-container>
 
             <ng-container matColumnDef="window">
-              <th mat-header-cell *matHeaderCellDef>Window</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'audits.column.window' | t }}</th>
               <td mat-cell *matCellDef="let a">
                 {{ a.startDate | date: 'mediumDate' }} –
                 {{ a.targetEndDate ? (a.targetEndDate | date: 'mediumDate') : '—' }}
@@ -96,7 +96,7 @@
             </ng-container>
 
             <ng-container matColumnDef="progress">
-              <th mat-header-cell *matHeaderCellDef>Progress</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'audits.column.progress' | t }}</th>
               <td mat-cell *matCellDef="let a">
                 {{ a.respondedItemCount }} / {{ a.checklistItemCount }}
               </td>
@@ -120,7 +120,7 @@
               (click)="loadMore()"
               [disabled]="loadingMore()"
             >
-              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+              {{ (loadingMore() ? 'audits.actions.loadingMore' : 'audits.actions.loadMore') | t }}
             </button>
           </div>
         }

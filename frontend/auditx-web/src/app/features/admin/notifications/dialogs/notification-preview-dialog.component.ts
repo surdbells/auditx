@@ -23,6 +23,7 @@ import { MatInputModule } from '@angular/material/input';
 
 import { NotificationAdminService } from '../../../../core/services/notifications-admin.service';
 import { NotificationRule, RulePreview } from '../../../../core/models';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface NotificationPreviewDialogData {
   rule: NotificationRule;
@@ -53,6 +54,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './notification-preview-dialog.component.html',
   styleUrl: './notification-preview-dialog.component.scss',

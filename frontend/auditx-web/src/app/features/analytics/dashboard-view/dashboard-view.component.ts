@@ -15,6 +15,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -69,6 +71,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatIconModule,
     MatTableModule,
     MatTooltipModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -88,6 +91,7 @@ export class DashboardViewComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly state = signal<ViewState>('loading');
   readonly dashboard = signal<DashboardDetail | null>(null);
@@ -231,9 +235,14 @@ export class DashboardViewComponent {
           .subscribe({
             next: (detail) => {
               this.dashboard.set(detail);
-              this.notify.success(`Widget "${result.title}" added.`);
+              this.notify.success(
+                this.i18n.translate('analytics.view.widgetAdded', {
+                  title: result.title,
+                }),
+              );
             },
-            error: () => this.notify.error('We could not add the widget.'),
+            error: () =>
+              this.notify.error(this.i18n.translate('analytics.view.addError')),
           });
       });
   }
@@ -244,9 +253,11 @@ export class DashboardViewComponent {
       return;
     }
     const data: ConfirmDialogData = {
-      title: 'Remove widget',
-      message: `Remove "${widget.title}" from this dashboard?`,
-      confirmLabel: 'Remove',
+      title: this.i18n.translate('analytics.view.removeWidget'),
+      message: this.i18n.translate('analytics.view.removeConfirm', {
+        title: widget.title,
+      }),
+      confirmLabel: this.i18n.translate('analytics.view.removeConfirmLabel'),
       destructive: true,
     };
     this.dialog
@@ -261,9 +272,14 @@ export class DashboardViewComponent {
           .subscribe({
             next: (detail) => {
               this.dashboard.set(detail);
-              this.notify.success('Widget removed.');
+              this.notify.success(
+                this.i18n.translate('analytics.view.widgetRemoved'),
+              );
             },
-            error: () => this.notify.error('We could not remove the widget.'),
+            error: () =>
+              this.notify.error(
+                this.i18n.translate('analytics.view.removeError'),
+              ),
           });
       });
   }

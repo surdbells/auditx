@@ -1,28 +1,28 @@
-<h2 mat-dialog-title>{{ isEdit ? 'Edit integration' : 'New integration' }}</h2>
+<h2 mat-dialog-title>{{ (isEdit ? 'integrations.editor.title.edit' : 'integrations.editor.title.new') | t }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="form">
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Type</mat-label>
+      <mat-label>{{ 'integrations.editor.type.label' | t }}</mat-label>
       <mat-select formControlName="type">
         @for (t of types; track t) {
           <mat-option [value]="t">{{ humaniseType(t) }}</mat-option>
         }
       </mat-select>
       @if (isEdit) {
-        <mat-hint>Type cannot be changed after creation.</mat-hint>
+        <mat-hint>{{ 'integrations.editor.type.hint' | t }}</mat-hint>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Name</mat-label>
+      <mat-label>{{ 'integrations.editor.name.label' | t }}</mat-label>
       <input matInput formControlName="name" autocomplete="off" />
       @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-        <mat-error>A name is required.</mat-error>
+        <mat-error>{{ 'integrations.editor.name.required' | t }}</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
-      <mat-label>Connection details (JSON)</mat-label>
+      <mat-label>{{ 'integrations.editor.connection.label' | t }}</mat-label>
       <textarea
         matInput
         rows="5"
@@ -31,9 +31,9 @@
         placeholder='{ "host": "..." }'
       ></textarea>
       @if (form.controls.connectionDetailsJson.hasError('json')) {
-        <mat-error>Must be valid JSON.</mat-error>
+        <mat-error>{{ 'integrations.validation.json' | t }}</mat-error>
       } @else {
-        <mat-hint>Provider-specific connection settings as JSON.</mat-hint>
+        <mat-hint>{{ 'integrations.editor.connection.hint' | t }}</mat-hint>
       }
     </mat-form-field>
 
@@ -42,43 +42,43 @@
         <div class="credentials__row">
           <span class="credentials__status">
             <mat-icon aria-hidden="true">lock</mat-icon>
-            Credentials configured
+            {{ 'integrations.editor.credentials.configured' | t }}
           </span>
           <button matButton type="button" (click)="startEditingCredentials()">
-            Replace
+            {{ 'integrations.editor.credentials.replace' | t }}
           </button>
         </div>
       } @else {
         <mat-form-field appearance="outline" class="full">
-          <mat-label>{{ hasStoredCredentials ? 'New credentials' : 'Credentials' }}</mat-label>
+          <mat-label>{{ (hasStoredCredentials ? 'integrations.editor.credentials.newLabel' : 'integrations.editor.credentials.label') | t }}</mat-label>
           <input
             matInput
             type="password"
             formControlName="credentials"
             autocomplete="new-password"
           />
-          <mat-hint>Write-only. The current value is never displayed.</mat-hint>
+          <mat-hint>{{ 'integrations.editor.credentials.hint' | t }}</mat-hint>
         </mat-form-field>
         @if (hasStoredCredentials) {
           <button matButton type="button" (click)="cancelEditingCredentials()">
-            Keep existing
+            {{ 'integrations.editor.credentials.keepExisting' | t }}
           </button>
         }
       }
     </div>
 
     <mat-form-field appearance="outline">
-      <mat-label>Timeout (seconds)</mat-label>
+      <mat-label>{{ 'integrations.editor.timeout.label' | t }}</mat-label>
       <input matInput type="number" formControlName="timeoutSeconds" />
       @if (form.controls.timeoutSeconds.invalid && form.controls.timeoutSeconds.touched) {
-        <mat-error>Enter a timeout between 1 and 3600.</mat-error>
+        <mat-error>{{ 'integrations.editor.timeout.error' | t }}</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Fallback integration</mat-label>
+      <mat-label>{{ 'integrations.editor.fallback.label' | t }}</mat-label>
       <mat-select formControlName="fallbackIntegrationId">
-        <mat-option [value]="''">None</mat-option>
+        <mat-option [value]="''">{{ 'integrations.editor.fallback.none' | t }}</mat-option>
         @for (c of candidates; track c.id) {
           <mat-option [value]="c.id">{{ c.name }} ({{ humaniseType(c.type) }})</mat-option>
         }
@@ -87,18 +87,18 @@
 
     @if (isEdit) {
       <mat-form-field appearance="outline" class="full">
-        <mat-label>Status</mat-label>
+        <mat-label>{{ 'integrations.field.status' | t }}</mat-label>
         <mat-select formControlName="isActive">
-          <mat-option [value]="true">Active</mat-option>
-          <mat-option [value]="false">Inactive</mat-option>
+          <mat-option [value]="true">{{ 'integrations.status.active' | t }}</mat-option>
+          <mat-option [value]="false">{{ 'integrations.status.inactive' | t }}</mat-option>
         </mat-select>
       </mat-form-field>
     }
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button matButton type="button" (click)="cancel()">Cancel</button>
+  <button matButton type="button" (click)="cancel()">{{ 'integrations.actions.cancel' | t }}</button>
   <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
-    {{ isEdit ? 'Save' : 'Create' }}
+    {{ (isEdit ? 'integrations.actions.save' : 'integrations.actions.create') | t }}
   </button>
 </mat-dialog-actions>

@@ -19,6 +19,7 @@ import {
   RiskDimension,
   UpdateRiskDimensionRequest,
 } from '../../../core/models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface RiskDimensionDialogData {
   /** Present when editing; absent for create. */
@@ -39,51 +40,52 @@ export type RiskDimensionDialogResult =
     MatInputModule,
     MatButtonModule,
     MatSlideToggleModule,
+    TranslatePipe,
   ],
   template: `
     <h2 mat-dialog-title>
-      {{ isEdit ? 'Edit risk dimension' : 'New risk dimension' }}
+      {{ (isEdit ? 'universe.dimDialog.editTitle' : 'universe.dimDialog.newTitle') | t }}
     </h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Name</mat-label>
+          <mat-label>{{ 'universe.field.name' | t }}</mat-label>
           <input matInput formControlName="name" autocomplete="off" />
           @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-            <mat-error>A name is required.</mat-error>
+            <mat-error>{{ 'universe.error.nameRequired' | t }}</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Weight</mat-label>
+          <mat-label>{{ 'universe.field.weight' | t }}</mat-label>
           <input matInput type="number" formControlName="weight" min="0" />
         </mat-form-field>
 
         <div class="row">
           <mat-form-field appearance="outline">
-            <mat-label>Scale min</mat-label>
+            <mat-label>{{ 'universe.field.scaleMin' | t }}</mat-label>
             <input matInput type="number" formControlName="scaleMin" />
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Scale max</mat-label>
+            <mat-label>{{ 'universe.field.scaleMax' | t }}</mat-label>
             <input matInput type="number" formControlName="scaleMax" />
           </mat-form-field>
         </div>
 
         @if (isEdit) {
-          <mat-slide-toggle formControlName="isActive">Active</mat-slide-toggle>
+          <mat-slide-toggle formControlName="isActive">{{ 'universe.filter.active' | t }}</mat-slide-toggle>
         }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'universe.actions.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        {{ isEdit ? 'Save' : 'Create' }}
+        {{ (isEdit ? 'universe.actions.save' : 'universe.actions.create') | t }}
       </button>
     </mat-dialog-actions>
   `,

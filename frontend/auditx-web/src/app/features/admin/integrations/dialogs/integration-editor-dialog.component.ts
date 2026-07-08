@@ -30,6 +30,7 @@ import {
   UpdateIntegrationRequest,
 } from '../../../../core/models';
 import { humaniseIntegrationType } from '../integration-type-label';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 export interface IntegrationEditorDialogData {
   /** Present when editing; absent for create. */
@@ -67,6 +68,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
   ],
   templateUrl: './integration-editor-dialog.component.html',
   styleUrl: './integration-editor-dialog.component.scss',

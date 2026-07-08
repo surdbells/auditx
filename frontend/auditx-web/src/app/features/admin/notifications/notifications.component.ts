@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { NotificationRulesComponent } from './notification-rules/notification-rules.component';
 import { NotificationTemplatesComponent } from './notification-templates/notification-templates.component';
@@ -12,6 +13,7 @@ import { NotificationDeadLetterComponent } from './notification-dead-letter/noti
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatTabsModule,
+    TranslatePipe,
     PageHeaderComponent,
     NotificationRulesComponent,
     NotificationTemplatesComponent,
@@ -20,26 +22,26 @@ import { NotificationDeadLetterComponent } from './notification-dead-letter/noti
   ],
   template: `
     <app-page-header
-      title="Notifications"
-      subtitle="Event-driven notification rules, templates and delivery history."
+      [title]="'notifications.page.title' | t"
+      [subtitle]="'notifications.page.subtitle' | t"
     />
     <mat-tab-group>
-      <mat-tab label="Rules">
+      <mat-tab [label]="'notifications.tabs.rules' | t">
         <div class="tab-body">
           <app-notification-rules />
         </div>
       </mat-tab>
-      <mat-tab label="Templates">
+      <mat-tab [label]="'notifications.tabs.templates' | t">
         <div class="tab-body">
           <app-notification-templates />
         </div>
       </mat-tab>
-      <mat-tab label="Dispatch Log">
+      <mat-tab [label]="'notifications.tabs.dispatchLog' | t">
         <div class="tab-body">
           <app-notification-dispatches />
         </div>
       </mat-tab>
-      <mat-tab label="Dead Letter">
+      <mat-tab [label]="'notifications.tabs.deadLetter' | t">
         <div class="tab-body">
           <app-notification-dead-letter />
         </div>

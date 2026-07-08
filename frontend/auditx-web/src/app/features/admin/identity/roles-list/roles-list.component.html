@@ -1,10 +1,10 @@
 <app-page-header
-  title="Roles"
-  subtitle="Define roles, compose permissions and manage inheritance."
+  [title]="'identity.roles.title' | t"
+  [subtitle]="'identity.roles.subtitle' | t"
 >
   <button actions matButton="filled" type="button" (click)="createRole()">
     <mat-icon>add</mat-icon>
-    New role
+    {{ 'identity.roles.newRole' | t }}
   </button>
 </app-page-header>
 
@@ -13,24 +13,24 @@
     [checked]="includeArchived()"
     (change)="toggleArchived($event.checked)"
   >
-    Show archived roles
+    {{ 'identity.roles.showArchived' | t }}
   </mat-slide-toggle>
 </div>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading roles…" />
+    <app-loading [message]="'identity.roles.loading' | t" />
   }
   @case ('error') {
-    <app-error-state message="We couldn't load the roles." (retry)="fetch()" />
+    <app-error-state [message]="'identity.roles.error' | t" (retry)="fetch()" />
   }
   @case ('ready') {
     @if (isEmpty()) {
       <app-empty-state
         icon="admin_panel_settings"
-        title="No roles yet"
-        message="Create your first role to start assigning permissions."
-        actionLabel="New role"
+        [title]="'identity.roles.empty.title' | t"
+        [message]="'identity.roles.empty.message' | t"
+        [actionLabel]="'identity.roles.newRole' | t"
         (action)="createRole()"
       />
     } @else {
@@ -38,37 +38,37 @@
         <div class="table-scroll">
           <table mat-table [dataSource]="roles()" class="roles__table">
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'identity.field.name' | t }}</th>
               <td mat-cell *matCellDef="let role">
                 <span class="roles__name">{{ role.name }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="description">
-              <th mat-header-cell *matHeaderCellDef>Description</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'identity.roles.col.description' | t }}</th>
               <td mat-cell *matCellDef="let role" class="roles__desc">
                 {{ role.description || '—' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="permissions">
-              <th mat-header-cell *matHeaderCellDef>Permissions</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'identity.roles.col.permissions' | t }}</th>
               <td mat-cell *matCellDef="let role">{{ role.permissions.length }}</td>
             </ng-container>
 
             <ng-container matColumnDef="flags">
-              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'identity.roles.col.type' | t }}</th>
               <td mat-cell *matCellDef="let role">
                 <mat-chip-set>
                   @if (role.isBuiltIn) {
-                    <mat-chip class="chip-builtin" highlighted>Built-in</mat-chip>
+                    <mat-chip class="chip-builtin" highlighted>{{ 'identity.roles.builtIn' | t }}</mat-chip>
                   }
                   @if (role.isArchived) {
-                    <mat-chip class="chip-archived">Archived</mat-chip>
+                    <mat-chip class="chip-archived">{{ 'identity.roles.archived' | t }}</mat-chip>
                   }
                   @if (role.parentRoleIds.length) {
-                    <mat-chip matTooltip="Inherits from parent roles">
-                      Inherits {{ role.parentRoleIds.length }}
+                    <mat-chip [matTooltip]="'identity.roles.inheritsTooltip' | t">
+                      {{ 'identity.roles.inheritsCount' | t: { count: role.parentRoleIds.length } }}
                     </mat-chip>
                   }
                 </mat-chip-set>
@@ -82,14 +82,14 @@
                   matIconButton
                   type="button"
                   [matMenuTriggerFor]="rowMenu"
-                  [attr.aria-label]="'Actions for ' + role.name"
+                  [attr.aria-label]="'identity.common.actionsFor' | t: { name: role.name }"
                 >
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #rowMenu="matMenu">
                   <a mat-menu-item [routerLink]="['/admin/roles', role.id]">
                     <mat-icon>edit</mat-icon>
-                    <span>{{ role.isBuiltIn ? 'View' : 'Edit' }}</span>
+                    <span>{{ (role.isBuiltIn ? 'identity.actions.view' : 'identity.actions.edit') | t }}</span>
                   </a>
                   <button
                     mat-menu-item
@@ -98,7 +98,7 @@
                     (click)="archive(role, $event)"
                   >
                     <mat-icon>archive</mat-icon>
-                    <span>Archive</span>
+                    <span>{{ 'identity.actions.archive' | t }}</span>
                   </button>
                 </mat-menu>
               </td>

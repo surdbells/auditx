@@ -21,6 +21,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { RolesService } from '../../../core/services/roles.service';
 import { RoleDto, WidgetType } from '../../../core/models';
 
@@ -40,9 +41,9 @@ export interface WidgetDialogResult {
 }
 
 const WIDGET_TYPES: { value: WidgetType; label: string }[] = [
-  { value: 'single_metric', label: 'Single metric' },
-  { value: 'table', label: 'Table' },
-  { value: 'chart', label: 'Chart' },
+  { value: 'single_metric', label: 'analytics.widgetDialog.type.single_metric' },
+  { value: 'table', label: 'analytics.widgetDialog.type.table' },
+  { value: 'chart', label: 'analytics.widgetDialog.type.chart' },
 ];
 
 /** Fixed set of dashboard metric keys the backend understands (snake_case). */
@@ -81,42 +82,43 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
-    <h2 mat-dialog-title>Add widget</h2>
+    <h2 mat-dialog-title>{{ 'analytics.view.addWidget' | t }}</h2>
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Title</mat-label>
+          <mat-label>{{ 'analytics.widgetDialog.titleLabel' | t }}</mat-label>
           <input matInput formControlName="title" autocomplete="off" />
           @if (form.controls.title.hasError('required')) {
-            <mat-error>A title is required.</mat-error>
+            <mat-error>{{ 'analytics.widgetDialog.titleRequired' | t }}</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Widget type</mat-label>
+          <mat-label>{{ 'analytics.widgetDialog.widgetType' | t }}</mat-label>
           <mat-select formControlName="widgetType">
             @for (t of widgetTypes; track t.value) {
-              <mat-option [value]="t.value">{{ t.label }}</mat-option>
+              <mat-option [value]="t.value">{{ t.label | t }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Metric key</mat-label>
+          <mat-label>{{ 'analytics.widgetDialog.metricKey' | t }}</mat-label>
           <mat-select formControlName="metricKey">
             @for (key of metricKeys; track key) {
               <mat-option [value]="key">{{ key }}</mat-option>
             }
           </mat-select>
           @if (form.controls.metricKey.hasError('required')) {
-            <mat-error>A metric key is required.</mat-error>
+            <mat-error>{{ 'analytics.widgetDialog.metricKeyRequired' | t }}</mat-error>
           }
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Position</mat-label>
+          <mat-label>{{ 'analytics.widgetDialog.position' | t }}</mat-label>
           <input
             matInput
             type="number"
@@ -126,9 +128,9 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Target role (optional)</mat-label>
+          <mat-label>{{ 'analytics.widgetDialog.targetRole' | t }}</mat-label>
           <mat-select formControlName="targetRoleId">
-            <mat-option [value]="''">— none —</mat-option>
+            <mat-option [value]="''">{{ 'analytics.widgetDialog.none' | t }}</mat-option>
             @for (role of roles(); track role.id) {
               <mat-option [value]="role.id">{{ role.name }}</mat-option>
             }
@@ -136,7 +138,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Config (JSON, optional)</mat-label>
+          <mat-label>{{ 'analytics.widgetDialog.config' | t }}</mat-label>
           <textarea
             matInput
             rows="4"
@@ -145,20 +147,20 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
             placeholder='{ "windowMonths": 12 }'
           ></textarea>
           @if (form.controls.configJson.hasError('json')) {
-            <mat-error>Must be valid JSON.</mat-error>
+            <mat-error>{{ 'analytics.widgetDialog.jsonError' | t }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'analytics.actions.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        Add
+        {{ 'analytics.actions.add' | t }}
       </button>
     </mat-dialog-actions>
   `,

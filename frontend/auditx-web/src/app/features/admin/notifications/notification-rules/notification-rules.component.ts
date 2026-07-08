@@ -13,6 +13,8 @@ import { MatTableModule } from '@angular/material/table';
 
 import { NotificationAdminService } from '../../../../core/services/notifications-admin.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { TranslationService } from '../../../../core/i18n/translation.service';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
 import { NotificationRule } from '../../../../core/models';
@@ -39,6 +41,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -49,6 +52,7 @@ type ViewState = 'loading' | 'ready' | 'error';
 export class NotificationRulesComponent {
   private readonly notifications = inject(NotificationAdminService);
   private readonly notify = inject(NotificationService);
+  private readonly i18n = inject(TranslationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
 
@@ -133,7 +137,11 @@ export class NotificationRulesComponent {
         }
         this.notifications.createRule(result.body).subscribe({
           next: (created) => {
-            this.notify.success(`Rule "${created.name}" created.`);
+            this.notify.success(
+              this.i18n.translate('notifications.rules.toast.created', {
+                name: created.name,
+              }),
+            );
             this.fetch();
           },
         });
@@ -153,7 +161,11 @@ export class NotificationRulesComponent {
         }
         this.notifications.updateRule(result.id, result.body).subscribe({
           next: (updated) => {
-            this.notify.success(`Rule "${updated.name}" updated.`);
+            this.notify.success(
+              this.i18n.translate('notifications.rules.toast.updated', {
+                name: updated.name,
+              }),
+            );
             this.fetch();
           },
           // 409 (concurrent edit) is surfaced by the error interceptor.
@@ -163,9 +175,11 @@ export class NotificationRulesComponent {
 
   deactivate(rule: NotificationRule): void {
     const data: ConfirmDialogData = {
-      title: 'Deactivate rule',
-      message: `Deactivate the notification rule "${rule.name}"?`,
-      confirmLabel: 'Deactivate',
+      title: this.i18n.translate('notifications.rules.deactivate.title'),
+      message: this.i18n.translate('notifications.rules.deactivate.message', {
+        name: rule.name,
+      }),
+      confirmLabel: this.i18n.translate('notifications.actions.deactivate'),
       destructive: true,
     };
     this.dialog
@@ -177,7 +191,9 @@ export class NotificationRulesComponent {
         }
         this.notifications.deactivateRule(rule.id).subscribe({
           next: () => {
-            this.notify.success('Rule deactivated.');
+            this.notify.success(
+              this.i18n.translate('notifications.rules.toast.deactivated'),
+            );
             this.fetch();
           },
         });

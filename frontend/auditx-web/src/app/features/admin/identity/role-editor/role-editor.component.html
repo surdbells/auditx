@@ -1,69 +1,69 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading role editor…" />
+    <app-loading [message]="'identity.roleEditor.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the permissions catalogue or role."
+      [message]="'identity.roleEditor.error' | t"
       (retry)="cancel()"
-      retryLabel="Back to roles"
+      [retryLabel]="'identity.roleEditor.backToRoles' | t"
     />
   }
   @case ('ready') {
     <app-page-header
-      [title]="isNew() ? 'New role' : (isReadOnly() ? 'View role' : 'Edit role')"
+      [title]="isNew() ? ('identity.roleEditor.titleNew' | t) : (isReadOnly() ? ('identity.roleEditor.titleView' | t) : ('identity.roleEditor.titleEdit' | t))"
       [subtitle]="
         isReadOnly()
-          ? 'This is a built-in role and cannot be modified.'
-          : 'Compose permissions and inheritance for this role.'
+          ? ('identity.roleEditor.subtitleReadOnly' | t)
+          : ('identity.roleEditor.subtitleEdit' | t)
       "
     >
       <button actions matButton="outlined" type="button" (click)="cancel()">
         <mat-icon>arrow_back</mat-icon>
-        Back
+        {{ 'identity.actions.back' | t }}
       </button>
     </app-page-header>
 
     @if (isReadOnly()) {
       <div class="editor__readonly-banner" role="note">
         <mat-icon aria-hidden="true">lock</mat-icon>
-        Built-in roles are read-only.
+        {{ 'identity.roleEditor.readOnlyBanner' | t }}
       </div>
     }
 
     <form [formGroup]="form" (ngSubmit)="save()">
       <mat-card appearance="outlined" class="editor__card">
-        <mat-card-header><mat-card-title>Details</mat-card-title></mat-card-header>
+        <mat-card-header><mat-card-title>{{ 'identity.roleEditor.details' | t }}</mat-card-title></mat-card-header>
         <mat-card-content>
           <mat-form-field appearance="outline" class="full">
-            <mat-label>Role name</mat-label>
+            <mat-label>{{ 'identity.roleEditor.roleName' | t }}</mat-label>
             <input matInput formControlName="name" maxlength="120" />
             @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-              <mat-error>A role name is required.</mat-error>
+              <mat-error>{{ 'identity.roleEditor.nameRequired' | t }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full">
-            <mat-label>Description</mat-label>
+            <mat-label>{{ 'identity.roles.col.description' | t }}</mat-label>
             <textarea matInput formControlName="description" rows="2" maxlength="500"></textarea>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full">
-            <mat-label>Inherits permissions from</mat-label>
+            <mat-label>{{ 'identity.roleEditor.inheritsFrom' | t }}</mat-label>
             <mat-select formControlName="parentRoleIds" multiple>
               @for (parent of availableParents(); track parent.id) {
                 <mat-option [value]="parent.id">{{ parent.name }}</mat-option>
               }
             </mat-select>
-            <mat-hint>Selected roles' permissions are inherited by this role.</mat-hint>
+            <mat-hint>{{ 'identity.roleEditor.inheritsHint' | t }}</mat-hint>
           </mat-form-field>
         </mat-card-content>
       </mat-card>
 
       <mat-card appearance="outlined" class="editor__card">
         <mat-card-header class="editor__perm-header">
-          <mat-card-title>Permissions</mat-card-title>
-          <span class="editor__count">{{ selectedCount() }} selected</span>
+          <mat-card-title>{{ 'identity.roles.col.permissions' | t }}</mat-card-title>
+          <span class="editor__count">{{ 'identity.roleEditor.selectedCount' | t: { count: selectedCount() } }}</span>
         </mat-card-header>
         <mat-card-content>
           <mat-accordion multi>
@@ -92,14 +92,14 @@
                       </mat-checkbox>
 
                       <mat-form-field appearance="outline" class="perm-scope" subscriptSizing="dynamic">
-                        <mat-label>Scope</mat-label>
+                        <mat-label>{{ 'identity.roleEditor.scope' | t }}</mat-label>
                         <mat-select
                           [value]="item.scopeType"
                           [disabled]="!item.selected || isReadOnly()"
                           (selectionChange)="setScope(item, $event.value)"
                         >
                           @for (scope of scopeOptions(item.permission); track scope) {
-                            <mat-option [value]="scope">{{ scopeLabels[scope] }}</mat-option>
+                            <mat-option [value]="scope">{{ scopeLabels[scope] | t }}</mat-option>
                           }
                         </mat-select>
                       </mat-form-field>
@@ -113,13 +113,13 @@
       </mat-card>
 
       <div class="editor__actions">
-        <button matButton type="button" (click)="cancel()">Cancel</button>
+        <button matButton type="button" (click)="cancel()">{{ 'identity.actions.cancel' | t }}</button>
         <button
           matButton="filled"
           type="submit"
           [disabled]="saving() || isReadOnly()"
         >
-          {{ saving() ? 'Saving…' : isNew() ? 'Create role' : 'Save changes' }}
+          {{ (saving() ? 'identity.common.saving' : isNew() ? 'identity.roleEditor.createRole' : 'identity.roleEditor.saveChanges') | t }}
         </button>
       </div>
     </form>

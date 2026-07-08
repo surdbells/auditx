@@ -67,6 +67,7 @@ import {
   TransitionReasonDialogData,
   TransitionReasonResult,
 } from '../dialogs/transition-reason-dialog.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
 
@@ -87,7 +88,7 @@ interface ProgressGroup {
 @Component({
   selector: 'app-audit-execution',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
+  imports: [TranslatePipe, 
     DatePipe,
     MatCardModule,
     MatButtonModule,

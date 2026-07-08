@@ -9,6 +9,9 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
+
 export interface ExceptionReasonDialogData {
   title: string;
   message?: string;
@@ -37,6 +40,7 @@ export interface ExceptionReasonResult {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
@@ -46,16 +50,16 @@ export interface ExceptionReasonResult {
       }
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>{{ label }}{{ reasonRequired ? '' : ' (optional)' }}</mat-label>
+          <mat-label>{{ label }}{{ reasonRequired ? '' : ('exceptions.reason.optional' | t) }}</mat-label>
           <textarea matInput formControlName="reason" rows="3"></textarea>
           @if (form.controls.reason.hasError('required') && form.controls.reason.touched) {
-            <mat-error>This field is required.</mat-error>
+            <mat-error>{{ 'exceptions.error.fieldRequired' | t }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'exceptions.action.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
@@ -63,7 +67,7 @@ export interface ExceptionReasonResult {
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        {{ data.confirmLabel ?? 'Confirm' }}
+        {{ data.confirmLabel ?? ('exceptions.action.confirm' | t) }}
       </button>
     </mat-dialog-actions>
   `,
@@ -93,9 +97,10 @@ export class ExceptionReasonDialogComponent {
     MatDialogRef<ExceptionReasonDialogComponent, ExceptionReasonResult>
   >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly reasonRequired = this.data.reasonRequired ?? true;
-  readonly label = this.data.label ?? 'Reason';
+  readonly label = this.data.label ?? this.i18n.translate('exceptions.field.reason');
 
   readonly form = this.fb.nonNullable.group({
     reason: ['', this.reasonRequired ? [Validators.required] : []],

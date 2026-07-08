@@ -1,26 +1,26 @@
 <app-page-header
-  title="Users"
-  subtitle="Search the directory, review accounts and manage access."
+  [title]="'identity.users.title' | t"
+  [subtitle]="'identity.users.subtitle' | t"
 />
 
 <mat-card appearance="outlined" class="users__filters-card">
   <form [formGroup]="filters" class="users__filters">
     <mat-form-field appearance="outline" class="users__search">
-      <mat-label>Search</mat-label>
+      <mat-label>{{ 'identity.users.filter.search' | t }}</mat-label>
       <input
         matInput
         type="search"
         formControlName="search"
-        placeholder="Name or email"
+        [placeholder]="'identity.users.filter.searchPlaceholder' | t"
         autocomplete="off"
       />
       <mat-icon matPrefix>search</mat-icon>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Role</mat-label>
+      <mat-label>{{ 'identity.field.role' | t }}</mat-label>
       <mat-select formControlName="role">
-        <mat-option value="">All roles</mat-option>
+        <mat-option value="">{{ 'identity.users.filter.allRoles' | t }}</mat-option>
         @for (role of roles(); track role.id) {
           <mat-option [value]="role.name">{{ role.name }}</mat-option>
         }
@@ -28,25 +28,25 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Status</mat-label>
+      <mat-label>{{ 'identity.field.status' | t }}</mat-label>
       <mat-select formControlName="status">
         @for (s of statuses; track s.value) {
-          <mat-option [value]="s.value">{{ s.label }}</mat-option>
+          <mat-option [value]="s.value">{{ s.labelKey | t }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
 
-    <button matButton type="button" (click)="clearFilters()">Clear</button>
+    <button matButton type="button" (click)="clearFilters()">{{ 'identity.actions.clear' | t }}</button>
   </form>
 </mat-card>
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading users…" />
+    <app-loading [message]="'identity.users.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the user directory."
+      [message]="'identity.users.error' | t"
       (retry)="fetchFirstPage()"
     />
   }
@@ -54,9 +54,9 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="person_search"
-        title="No users found"
-        message="Try adjusting your search or filters."
-        actionLabel="Clear filters"
+        [title]="'identity.users.empty.title' | t"
+        [message]="'identity.users.empty.message' | t"
+        [actionLabel]="'identity.users.empty.action' | t"
         (action)="clearFilters()"
       />
     } @else {
@@ -64,19 +64,19 @@
         <div class="users__table-wrapper">
           <table mat-table [dataSource]="users()" class="users__table">
             <ng-container matColumnDef="displayName">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'identity.field.name' | t }}</th>
               <td mat-cell *matCellDef="let user">
                 <span class="users__name">{{ user.displayName }}</span>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="email">
-              <th mat-header-cell *matHeaderCellDef>Email</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'identity.field.email' | t }}</th>
               <td mat-cell *matCellDef="let user">{{ user.email }}</td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'identity.field.status' | t }}</th>
               <td mat-cell *matCellDef="let user">
                 <span class="status-badge" [attr.data-status]="user.status">
                   {{ user.status | userStatusLabel }}
@@ -85,31 +85,31 @@
             </ng-container>
 
             <ng-container matColumnDef="lastLoginAt">
-              <th mat-header-cell *matHeaderCellDef>Last login</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'identity.field.lastLogin' | t }}</th>
               <td mat-cell *matCellDef="let user">
                 @if (user.lastLoginAt) {
                   {{ user.lastLoginAt | date: 'medium' }}
                 } @else {
-                  <span class="muted">Never</span>
+                  <span class="muted">{{ 'identity.common.never' | t }}</span>
                 }
               </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'identity.common.actions' | t"></th>
               <td mat-cell *matCellDef="let user" (click)="$event.stopPropagation()">
                 <button
                   matIconButton
                   type="button"
                   [matMenuTriggerFor]="rowMenu"
-                  [attr.aria-label]="'Actions for ' + user.displayName"
+                  [attr.aria-label]="'identity.common.actionsFor' | t: { name: user.displayName }"
                 >
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #rowMenu="matMenu">
                   <a mat-menu-item [routerLink]="['/admin/users', user.id]">
                     <mat-icon>visibility</mat-icon>
-                    <span>View details</span>
+                    <span>{{ 'identity.users.viewDetails' | t }}</span>
                   </a>
                   <button
                     mat-menu-item
@@ -118,7 +118,7 @@
                     (click)="deactivate(user, $event)"
                   >
                     <mat-icon>block</mat-icon>
-                    <span>Deactivate</span>
+                    <span>{{ 'identity.actions.deactivate' | t }}</span>
                   </button>
                 </mat-menu>
               </td>
@@ -142,7 +142,7 @@
               (click)="loadMore()"
               [disabled]="loadingMore()"
             >
-              {{ loadingMore() ? 'Loading…' : 'Load more' }}
+              {{ (loadingMore() ? 'identity.common.loadingMore' : 'identity.common.loadMore') | t }}
             </button>
           </div>
         }

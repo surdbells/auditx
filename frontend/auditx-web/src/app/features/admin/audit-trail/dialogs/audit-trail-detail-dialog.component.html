@@ -1,23 +1,25 @@
 <h2 mat-dialog-title>{{ humaniseEventType(entry.eventType) }}</h2>
 <mat-dialog-content>
   <dl class="detail__meta">
-    <dt>Event type</dt>
+    <dt>{{ 'adminMisc.auditTrail.filter.eventType' | t }}</dt>
     <dd>{{ entry.eventType }}</dd>
 
-    <dt>Actor</dt>
+    <dt>{{ 'adminMisc.auditTrail.column.actor' | t }}</dt>
     <dd>
       <span class="detail__actor-type">{{
         humaniseActorType(entry.actorType)
       }}</span>
       @if (entry.actorUserId) {
-        <span class="detail__muted">user {{ entry.actorUserId }}</span>
+        <span class="detail__muted">{{
+          'adminMisc.auditTrail.detail.user' | t: { id: entry.actorUserId }
+        }}</span>
       }
       @if (entry.actorSystemLabel) {
         <span class="detail__muted">{{ entry.actorSystemLabel }}</span>
       }
     </dd>
 
-    <dt>Occurred at</dt>
+    <dt>{{ 'adminMisc.auditTrail.column.occurredAt' | t }}</dt>
     <dd>
       {{ entry.occurredAtUtc | date: 'medium' }}
       @if (entry.originatingTimezone) {
@@ -25,7 +27,7 @@
       }
     </dd>
 
-    <dt>Target</dt>
+    <dt>{{ 'adminMisc.auditTrail.detail.target' | t }}</dt>
     <dd>
       {{ entry.targetObjectType }}
       @if (entry.targetObjectId) {
@@ -34,24 +36,36 @@
     </dd>
   </dl>
 
-  <h3 class="detail__section-title">Before / After</h3>
+  <h3 class="detail__section-title">
+    {{ 'adminMisc.auditTrail.detail.beforeAfter' | t }}
+  </h3>
   <div class="detail__json-grid">
     <div class="detail__json-col">
-      <h4 class="detail__json-label">Before</h4>
+      <h4 class="detail__json-label">
+        {{ 'adminMisc.auditTrail.detail.before' | t }}
+      </h4>
       <pre class="detail__json">{{ prettyJson(entry.beforeStateJson) }}</pre>
     </div>
     <div class="detail__json-col">
-      <h4 class="detail__json-label">After</h4>
+      <h4 class="detail__json-label">
+        {{ 'adminMisc.auditTrail.detail.after' | t }}
+      </h4>
       <pre class="detail__json">{{ prettyJson(entry.afterStateJson) }}</pre>
     </div>
   </div>
 
-  <h3 class="detail__section-title">Request context</h3>
+  <h3 class="detail__section-title">
+    {{ 'adminMisc.auditTrail.detail.requestContext' | t }}
+  </h3>
   <pre class="detail__json">{{ prettyJson(entry.requestContextJson) }}</pre>
 
-  <h3 class="detail__section-title">Event payload</h3>
+  <h3 class="detail__section-title">
+    {{ 'adminMisc.auditTrail.detail.eventPayload' | t }}
+  </h3>
   <pre class="detail__json">{{ prettyJson(entry.eventPayloadJson) }}</pre>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button matButton type="button" mat-dialog-close>Close</button>
+  <button matButton type="button" mat-dialog-close>
+    {{ 'adminMisc.actions.close' | t }}
+  </button>
 </mat-dialog-actions>
