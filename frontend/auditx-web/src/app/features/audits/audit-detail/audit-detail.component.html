@@ -114,8 +114,19 @@
           </div>
           <div>
             <dt>{{ 'audits.field.linkedPlanItem' | t }}</dt>
-            <!-- TODO(ux): planItemId shown as raw id — no plan-item label/lookup source is available on the audit aggregate. -->
-            <dd>{{ a.planItemId || '—' }}</dd>
+            <dd>
+              @if (a.planItemId) {
+                @if (planLink(); as pl) {
+                  <a [routerLink]="['/planning', pl.planId]">
+                    {{ 'audits.field.fromAnnualPlan' | t: { period: pl.periodLabel } }}
+                  </a>
+                } @else {
+                  {{ 'audits.field.linkedToPlan' | t }}
+                }
+              } @else {
+                —
+              }
+            </dd>
           </div>
         </dl>
         @if (a.scopeDescription) {

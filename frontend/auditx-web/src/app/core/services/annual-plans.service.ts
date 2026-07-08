@@ -9,6 +9,7 @@ import {
   PlanDecisionRequest,
   PlanExecution,
   PlanItem,
+  PlanItemLocator,
   PlanListItem,
   PlanQuery,
   ReorderPlanItemsRequest,
@@ -35,6 +36,13 @@ export class AnnualPlansService {
 
   execution(id: string): Observable<PlanExecution> {
     return this.api.get<PlanExecution>(`/annual-plans/${id}/execution`);
+  }
+
+  /** Resolve a plan item to its owning plan (id + period) so an audit can deep-link back to the plan. */
+  planItemLocator(planItemId: string): Observable<PlanItemLocator> {
+    return this.api.get<PlanItemLocator>(
+      `/annual-plans/by-plan-item/${planItemId}`,
+    );
   }
 
   create(body: SavePlanRequest): Observable<Plan> {

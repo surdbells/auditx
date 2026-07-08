@@ -196,6 +196,27 @@
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'planning.detail.actionsLabel' | t"></th>
                 <td mat-cell *matCellDef="let i">
+                  @if (i.linkedAuditId) {
+                    <button
+                      matButton
+                      type="button"
+                      (click)="openLinkedAudit(i)"
+                      [matTooltip]="'planning.detail.openAuditTip' | t"
+                    >
+                      <mat-icon>open_in_new</mat-icon>
+                      {{ 'planning.detail.openAudit' | t }}
+                    </button>
+                  } @else if (canLaunchAudits()) {
+                    <button
+                      matButton="filled"
+                      type="button"
+                      (click)="launchAudit(i)"
+                      [matTooltip]="'planning.detail.launchAuditTip' | t"
+                    >
+                      <mat-icon>rocket_launch</mat-icon>
+                      {{ 'planning.detail.launchAudit' | t }}
+                    </button>
+                  }
                   @if (canManage() && isEditable()) {
                     <button
                       matIconButton

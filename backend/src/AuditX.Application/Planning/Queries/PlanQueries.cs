@@ -34,6 +34,24 @@ public sealed class GetPlanQueryHandler(IAnnualPlanRepository plans)
     }
 }
 
+/// <summary>
+/// Resolves a plan item to its owning plan (id + period + item status). Backs the audit-detail "linked plan item"
+/// deep link, closing the plan ↔ audit loop from the audit side.
+/// </summary>
+public sealed record GetPlanItemLocatorQuery(Guid PlanItemId) : IQuery<PlanItemLocatorDto>;
+
+public sealed class GetPlanItemLocatorQueryHandler(IAnnualPlanRepository plans)
+    : IQueryHandler<GetPlanItemLocatorQuery, PlanItemLocatorDto>
+{
+    public async Task<PlanItemLocatorDto> Handle(GetPlanItemLocatorQuery query, CancellationToken cancellationToken)
+    {
+        var plan = await plans.GetByPlanItemIdAsync(query.PlanItemId, cancellationToken)
+            ?? throw new NotFoundException("Plan item", query.PlanItemId);
+        var item = plan.Items.First(i => i.Id == query.PlanItemId);
+        return new PlanItemLocatorDto(item.Id, plan.Id, plan.PeriodLabel, Common.Enums.EnumExtensions.ToSnake(item.Status));
+    }
+}
+
 /// <summary>Plan execution progress (US-M3-020): completion percent and behind-schedule items.</summary>
 public sealed record PlanExecutionQuery(Guid Id) : IQuery<PlanExecutionDto>;
 

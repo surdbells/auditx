@@ -50,6 +50,14 @@ export interface PlanItem {
   orderIndex: number;
 }
 
+/** Locates a plan item within its owning plan — backs the audit → plan deep link. */
+export interface PlanItemLocator {
+  planItemId: string;
+  planId: string;
+  periodLabel: string;
+  itemStatus: PlanItemStatus;
+}
+
 export interface ReorderPlanItemsRequest {
   orderedItemIds: string[];
 }

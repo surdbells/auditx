@@ -27,6 +27,9 @@ public sealed record PlanDto(
 
 public sealed record PlanListItemDto(Guid Id, string PeriodLabel, DateOnly PeriodStart, DateOnly PeriodEnd, string Status, int ItemCount);
 
+/// <summary>Locates a plan item within its owning plan — lets an audit link back to the annual plan it fulfils.</summary>
+public sealed record PlanItemLocatorDto(Guid PlanItemId, Guid PlanId, string PeriodLabel, string ItemStatus);
+
 public sealed record PlanExecutionDto(
     int TotalItems,
     IReadOnlyDictionary<string, int> CountsByStatus,

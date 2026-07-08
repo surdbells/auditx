@@ -21,6 +21,7 @@ import { RouterLink } from '@angular/router';
 import { AuditsService } from '../../../core/services/audits.service';
 import { ExceptionsService } from '../../../core/services/exceptions.service';
 import { TemplatesService } from '../../../core/services/templates.service';
+import { AnnualPlansService } from '../../../core/services/annual-plans.service';
 import { UsersService } from '../../../core/services/users.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -31,6 +32,7 @@ import {
   AuditChecklistItem,
   AuditTeamMember,
   ExceptionListItem,
+  PlanItemLocator,
   ProblemDetails,
   TransitionTarget,
   UserDto,
@@ -103,6 +105,7 @@ export class AuditDetailComponent {
   private readonly service = inject(AuditsService);
   private readonly exceptionsService = inject(ExceptionsService);
   private readonly templates = inject(TemplatesService);
+  private readonly plans = inject(AnnualPlansService);
   private readonly users = inject(UsersService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -117,6 +120,9 @@ export class AuditDetailComponent {
   readonly templateName = signal<string | null>(null);
   /** Tracks which templateId `templateName` was resolved for (avoids refetch). */
   private resolvedTemplateId: string | null = null;
+  /** The annual-plan item this audit fulfils, resolved for the deep link (null until/unless resolved). */
+  readonly planLink = signal<PlanItemLocator | null>(null);
+  private resolvedPlanItemId: string | null = null;
   /** userId → display name, resolved lazily. */
   readonly userNames = signal<Record<string, string>>({});
   /** Exceptions raised against this audit (M6). */
@@ -134,6 +140,10 @@ export class AuditDetailComponent {
 
   readonly canViewReports = computed(() =>
     this.auth.hasPermission(Permissions.ViewReport),
+  );
+
+  readonly canViewPlan = computed(() =>
+    this.auth.hasPermission(Permissions.ViewPlan),
   );
 
   readonly status = computed(() => this.audit()?.status ?? null);
@@ -255,9 +265,32 @@ export class AuditDetailComponent {
         this.state.set('ready');
         this.ensureUsers();
         this.resolveTemplateName(audit.templateId);
+        this.resolvePlanLink(audit.planItemId);
         this.loadExceptions();
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  /**
+   * Resolves the audit's plan item to its owning plan for the deep link (once per id, and only when the user can
+   * view plans). Non-fatal: on error the card shows a plain "linked to the annual plan" label without a link.
+   */
+  private resolvePlanLink(planItemId: string | null | undefined): void {
+    if (!planItemId || !this.canViewPlan()) {
+      this.planLink.set(null);
+      this.resolvedPlanItemId = null;
+      return;
+    }
+    if (planItemId === this.resolvedPlanItemId) {
+      return;
+    }
+    this.resolvedPlanItemId = planItemId;
+    this.plans.planItemLocator(planItemId).subscribe({
+      next: (locator) => this.planLink.set(locator),
+      error: () => {
+        // Non-fatal: fall back to a plain "linked to the annual plan" label.
+      },
     });
   }
 

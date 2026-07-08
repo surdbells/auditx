@@ -28,6 +28,12 @@ public sealed class AnnualPlansController(IDispatcher dispatcher) : ApiControlle
     public async Task<IActionResult> Execution(Guid id, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new PlanExecutionQuery(id), cancellationToken));
 
+    // Resolve a plan item to its owning plan so an audit can deep-link back to the annual plan it fulfils.
+    [RequirePermission(PermissionKeys.ViewPlan)]
+    [HttpGet("by-plan-item/{planItemId:guid}")]
+    public async Task<IActionResult> ByPlanItem(Guid planItemId, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetPlanItemLocatorQuery(planItemId), cancellationToken));
+
     [RequirePermission(PermissionKeys.ManagePlan)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreatePlanRequest request, CancellationToken cancellationToken)

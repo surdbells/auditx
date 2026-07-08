@@ -9,6 +9,7 @@ import {
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
@@ -20,6 +21,27 @@ export interface CreateAuditDialogData {
   users: UserDto[];
   /** Published templates; selecting one preloads its checklist into the new audit. */
   templates: TemplateListItem[];
+  /**
+   * When launching an audit from an approved annual-plan item, its context — the form is prefilled from it and
+   * the created audit links back to the plan item (which the plan then marks completed on audit completion).
+   */
+  planItem?: CreateAuditPlanItemContext;
+}
+
+/** The annual-plan item an audit is being launched from. */
+export interface CreateAuditPlanItemContext {
+  planItemId: string;
+  auditType: string;
+  /** Human label for the audit type (banner display). */
+  auditTypeLabel: string;
+  leadUserId: string | null;
+  /** Human label for the audited entity (for the suggested name + banner). */
+  entityName: string;
+  /** Pre-suggested audit name, e.g. "Branch Ops — 2026 Plan". */
+  suggestedName: string;
+  /** Planned window (yyyy-MM-dd) copied into the audit's start / target dates. */
+  plannedStartDate?: string;
+  plannedEndDate?: string;
 }
 
 /** Converts a Date to an ISO `yyyy-MM-dd` DateOnly string. */
@@ -31,6 +53,18 @@ function toDateOnly(value: Date | null): string {
   const m = String(value.getMonth() + 1).padStart(2, '0');
   const d = String(value.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+/** Parses an ISO `yyyy-MM-dd` DateOnly string into a local Date (inverse of {@link toDateOnly}). */
+function fromDateOnly(value: string | undefined): Date | null {
+  if (!value) {
+    return null;
+  }
+  const [y, m, d] = value.split('-').map(Number);
+  if (!y || !m || !d) {
+    return null;
+  }
+  return new Date(y, m - 1, d);
 }
 
 @Component({
@@ -45,10 +79,17 @@ function toDateOnly(value: Date | null): string {
     MatSelectModule,
     MatDatepickerModule,
     MatButtonModule,
+    MatIconModule,
   ],
   template: `
-    <h2 mat-dialog-title>New audit</h2>
+    <h2 mat-dialog-title>{{ data.planItem ? 'Launch audit' : 'New audit' }}</h2>
     <mat-dialog-content>
+      @if (data.planItem; as pi) {
+        <div class="plan-banner">
+          <mat-icon>event_available</mat-icon>
+          <span>Launching from the annual plan — <strong>{{ pi.entityName }}</strong> ({{ pi.auditTypeLabel }}). The audit will be linked to this plan item.</span>
+        </div>
+      }
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
           <mat-label>Name</mat-label>
@@ -153,6 +194,20 @@ function toDateOnly(value: Date | null): string {
     </mat-dialog-actions>
   `,
   styles: `
+    .plan-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      border-radius: var(--ax-radius, 12px);
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
+      font: var(--mat-sys-body-small);
+    }
+    .plan-banner mat-icon {
+      flex: 0 0 auto;
+    }
     .form {
       display: flex;
       flex-direction: column;
@@ -205,6 +260,20 @@ export class CreateAuditDialogComponent {
   /** Exclude the chosen lead / auditee from the team-member list. */
   readonly teamCandidates = computed(() => this.data.users);
 
+  constructor() {
+    // Launching from an annual-plan item: prefill name, type, lead and the planned window.
+    const pi = this.data.planItem;
+    if (pi) {
+      this.form.patchValue({
+        name: pi.suggestedName,
+        auditType: pi.auditType,
+        leadUserId: pi.leadUserId ?? '',
+        startDate: fromDateOnly(pi.plannedStartDate),
+        targetEndDate: fromDateOnly(pi.plannedEndDate),
+      });
+    }
+  }
+
   /** Selecting a template aligns the audit type to that template's type. */
   onTemplateSelected(templateId: string): void {
     const template = this.data.templates.find((t) => t.id === templateId);
@@ -226,6 +295,7 @@ export class CreateAuditDialogComponent {
       name: v.name.trim(),
       auditType: v.auditType.trim(),
       templateId: v.templateId || null,
+      planItemId: this.data.planItem?.planItemId ?? null,
       scopeDescription: v.scopeDescription.trim() || null,
       startDate: toDateOnly(v.startDate),
       targetEndDate: v.targetEndDate ? toDateOnly(v.targetEndDate) : null,
