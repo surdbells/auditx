@@ -13,11 +13,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
-import { CreateAuditRequest, UserDto } from '../../../core/models';
+import { CreateAuditRequest, TemplateListItem, UserDto } from '../../../core/models';
 
 export interface CreateAuditDialogData {
   /** Users selectable as lead / auditee / team members. */
   users: UserDto[];
+  /** Published templates; selecting one preloads its checklist into the new audit. */
+  templates: TemplateListItem[];
 }
 
 /** Converts a Date to an ISO `yyyy-MM-dd` DateOnly string. */
@@ -66,6 +68,22 @@ function toDateOnly(value: Date | null): string {
           @if (form.controls.auditType.hasError('required') && form.controls.auditType.touched) {
             <mat-error>An audit type is required.</mat-error>
           }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Template</mat-label>
+          <mat-select
+            formControlName="templateId"
+            (selectionChange)="onTemplateSelected($event.value)"
+          >
+            <mat-option [value]="''">None (blank checklist)</mat-option>
+            @for (t of data.templates; track t.id) {
+              <mat-option [value]="t.id">{{ t.name }} ({{ t.auditType }})</mat-option>
+            }
+          </mat-select>
+          <mat-hint>
+            Optional. Preloads the template's checklist items into the audit — you can still add or edit items afterward.
+          </mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
@@ -175,6 +193,7 @@ export class CreateAuditDialogComponent {
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
     auditType: ['', [Validators.required]],
+    templateId: [''],
     scopeDescription: [''],
     startDate: [null as Date | null, [Validators.required]],
     targetEndDate: [null as Date | null],
@@ -185,6 +204,14 @@ export class CreateAuditDialogComponent {
 
   /** Exclude the chosen lead / auditee from the team-member list. */
   readonly teamCandidates = computed(() => this.data.users);
+
+  /** Selecting a template aligns the audit type to that template's type. */
+  onTemplateSelected(templateId: string): void {
+    const template = this.data.templates.find((t) => t.id === templateId);
+    if (template) {
+      this.form.controls.auditType.setValue(template.auditType);
+    }
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -198,6 +225,7 @@ export class CreateAuditDialogComponent {
     this.dialogRef.close({
       name: v.name.trim(),
       auditType: v.auditType.trim(),
+      templateId: v.templateId || null,
       scopeDescription: v.scopeDescription.trim() || null,
       startDate: toDateOnly(v.startDate),
       targetEndDate: v.targetEndDate ? toDateOnly(v.targetEndDate) : null,

@@ -21,6 +21,7 @@ import { debounceTime } from 'rxjs';
 
 import { AuditsService } from '../../../core/services/audits.service';
 import { UsersService } from '../../../core/services/users.service';
+import { TemplatesService } from '../../../core/services/templates.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
@@ -29,6 +30,7 @@ import {
   AuditListItem,
   AuditStatus,
   CreateAuditRequest,
+  TemplateListItem,
   UserDto,
 } from '../../../core/models';
 import {
@@ -71,6 +73,7 @@ const PAGE_SIZE = 20;
 export class AuditsListComponent {
   private readonly service = inject(AuditsService);
   private readonly users = inject(UsersService);
+  private readonly templates = inject(TemplatesService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -135,6 +138,7 @@ export class AuditsListComponent {
   );
 
   private usersCache: UserDto[] = [];
+  private templatesCache: TemplateListItem[] = [];
 
   constructor() {
     this.loadCounts();
@@ -213,8 +217,8 @@ export class AuditsListComponent {
   }
 
   create(): void {
-    const openDialog = (users: UserDto[]): void => {
-      const data: CreateAuditDialogData = { users };
+    const openDialog = (users: UserDto[], templates: TemplateListItem[]): void => {
+      const data: CreateAuditDialogData = { users, templates };
       this.dialog
         .open(CreateAuditDialogComponent, { data, width: '640px' })
         .afterClosed()
@@ -235,16 +239,31 @@ export class AuditsListComponent {
         });
     };
 
+    // Load the published templates (whose checklist can preload) alongside the user list.
+    const withTemplates = (users: UserDto[]): void => {
+      if (this.templatesCache.length) {
+        openDialog(users, this.templatesCache);
+        return;
+      }
+      this.templates.list({ status: 'published', limit: 200 }).subscribe({
+        next: (page) => {
+          this.templatesCache = page.items;
+          openDialog(users, page.items);
+        },
+        error: () => openDialog(users, []),
+      });
+    };
+
     if (this.usersCache.length) {
-      openDialog(this.usersCache);
+      withTemplates(this.usersCache);
       return;
     }
     this.users.list({ status: 'active', limit: 200 }).subscribe({
       next: (page) => {
         this.usersCache = page.items;
-        openDialog(page.items);
+        withTemplates(page.items);
       },
-      error: () => openDialog([]),
+      error: () => withTemplates([]),
     });
   }
 
