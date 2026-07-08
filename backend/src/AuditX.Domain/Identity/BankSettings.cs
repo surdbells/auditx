@@ -40,6 +40,13 @@ public sealed class BankSettings : Entity
     /// </summary>
     public bool AllowOverlappingPlanPeriods { get; private set; }
 
+    /// <summary>
+    /// When true, an audit may be launched from a plan item before the annual plan is formally approved
+    /// (any status except Closed); when false (default), audits can only be launched from an Approved plan.
+    /// Lets banks that don't run a formal Audit-Committee approval gate turn plan items into audits directly.
+    /// </summary>
+    public bool AllowAuditLaunchBeforeApproval { get; private set; }
+
     public static BankSettings CreateDefault(string bankDisplayName) => new()
     {
         BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
@@ -63,6 +70,8 @@ public sealed class BankSettings : Entity
     public void SetRequireCommentOnPass(bool value) => RequireCommentOnPass = value;
 
     public void SetAllowOverlappingPlanPeriods(bool value) => AllowOverlappingPlanPeriods = value;
+
+    public void SetAllowAuditLaunchBeforeApproval(bool value) => AllowAuditLaunchBeforeApproval = value;
 
     public void SetResourceLimits(int maxEvidenceFileMb, int maxAuditEvidenceGb)
     {

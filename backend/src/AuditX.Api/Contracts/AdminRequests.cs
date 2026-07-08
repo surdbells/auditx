@@ -2,7 +2,7 @@ namespace AuditX.Api.Contracts;
 
 public sealed record UpdateBankSettingsRequest(
     string BankDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
-    bool AllowOverlappingPlanPeriods = false);
+    bool AllowOverlappingPlanPeriods = false, bool AllowAuditLaunchBeforeApproval = false);
 
 public sealed record UpdateResourceLimitsRequest(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
 

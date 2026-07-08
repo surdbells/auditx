@@ -66,6 +66,7 @@ export class BankSettingsComponent {
     adProvisioningFilterOuDn: [''],
     adProvisioningFilterGroupSid: [''],
     allowOverlappingPlanPeriods: [false],
+    allowAuditLaunchBeforeApproval: [false],
   });
 
   readonly limitsForm = this.fb.nonNullable.group({
@@ -96,6 +97,7 @@ export class BankSettingsComponent {
       adProvisioningFilterOuDn: s.adProvisioningFilterOuDn ?? '',
       adProvisioningFilterGroupSid: s.adProvisioningFilterGroupSid ?? '',
       allowOverlappingPlanPeriods: s.allowOverlappingPlanPeriods,
+      allowAuditLaunchBeforeApproval: s.allowAuditLaunchBeforeApproval,
     });
     this.limitsForm.patchValue({
       maxEvidenceFileMb: s.maxEvidenceFileMb,
@@ -125,6 +127,7 @@ export class BankSettingsComponent {
         adProvisioningFilterGroupSid:
           v.adProvisioningFilterGroupSid.trim() || null,
         allowOverlappingPlanPeriods: v.allowOverlappingPlanPeriods,
+        allowAuditLaunchBeforeApproval: v.allowAuditLaunchBeforeApproval,
       })
       .subscribe({
         next: () => {

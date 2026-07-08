@@ -29,7 +29,9 @@ public sealed class AuditConfiguration : IEntityTypeConfiguration<Audit>
         builder.HasIndex(a => a.Status);
         builder.HasIndex(a => a.AuditType);
         builder.HasIndex(a => a.LeadUserId);
-        builder.HasIndex(a => a.PlanItemId);
+
+        // 1:1 integrity: at most one audit per plan item (nulls excluded so ad-hoc audits without a plan are unaffected).
+        builder.HasIndex(a => a.PlanItemId).IsUnique().HasFilter("[plan_item_id] IS NOT NULL");
         builder.HasIndex(a => new { a.Status, a.StartDate });
 
         builder.HasMany(a => a.TeamMembers).WithOne().HasForeignKey(m => m.AuditId).OnDelete(DeleteBehavior.Cascade);

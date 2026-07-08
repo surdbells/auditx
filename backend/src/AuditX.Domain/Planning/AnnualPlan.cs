@@ -173,11 +173,22 @@ public sealed class AnnualPlan : AggregateRoot
         RaiseDomainEvent(new PlanClosedEvent(Id));
     }
 
-    public void LinkAuditToItem(Guid itemId, Guid auditId)
+    /// <summary>
+    /// Link a freshly-created audit to a plan item. By default audits may only be launched from an
+    /// <see cref="PlanStatus.Approved"/> plan (the Audit-Committee governance gate). When the deployment
+    /// opts in via <c>BankSettings.AllowAuditLaunchBeforeApproval</c>, the caller passes
+    /// <paramref name="allowBeforeApproval"/> = true and audits may be launched from any non-closed plan.
+    /// </summary>
+    public void LinkAuditToItem(Guid itemId, Guid auditId, bool allowBeforeApproval = false)
     {
-        if (Status != PlanStatus.Approved)
+        var linkable = allowBeforeApproval ? Status != PlanStatus.Closed : Status == PlanStatus.Approved;
+        if (!linkable)
         {
-            throw new InvalidStateTransitionException("plan.item_not_linkable", "Audits can only be linked to items of an approved plan.");
+            throw new InvalidStateTransitionException(
+                "plan.item_not_linkable",
+                allowBeforeApproval
+                    ? "Audits cannot be launched from a closed plan."
+                    : "Audits can only be linked to items of an approved plan.");
         }
 
         var item = FindItem(itemId);

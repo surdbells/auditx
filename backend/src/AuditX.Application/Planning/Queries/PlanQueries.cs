@@ -24,13 +24,15 @@ public sealed class ListPlansQueryHandler(IAnnualPlanRepository plans)
 
 public sealed record GetPlanQuery(Guid Id) : IQuery<PlanDto>;
 
-public sealed class GetPlanQueryHandler(IAnnualPlanRepository plans)
+public sealed class GetPlanQueryHandler(IAnnualPlanRepository plans, IBankSettingsRepository settings)
     : IQueryHandler<GetPlanQuery, PlanDto>
 {
     public async Task<PlanDto> Handle(GetPlanQuery query, CancellationToken cancellationToken)
     {
         var plan = await plans.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Plan", query.Id);
-        return plan.ToDto();
+        var bank = await settings.GetAsync(cancellationToken);
+        var canLaunch = PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval);
+        return plan.ToDto(canLaunch);
     }
 }
 
@@ -55,7 +57,7 @@ public sealed class GetPlanItemLocatorQueryHandler(IAnnualPlanRepository plans)
 /// <summary>Plan execution progress (US-M3-020): completion percent and behind-schedule items.</summary>
 public sealed record PlanExecutionQuery(Guid Id) : IQuery<PlanExecutionDto>;
 
-public sealed class PlanExecutionQueryHandler(IAnnualPlanRepository plans, IClock clock)
+public sealed class PlanExecutionQueryHandler(IAnnualPlanRepository plans, IAuditRepository audits, IClock clock)
     : IQueryHandler<PlanExecutionQuery, PlanExecutionDto>
 {
     public async Task<PlanExecutionDto> Handle(PlanExecutionQuery query, CancellationToken cancellationToken)
@@ -77,6 +79,30 @@ public sealed class PlanExecutionQueryHandler(IAnnualPlanRepository plans, ICloc
             .Select(i => i.ToDto())
             .ToArray();
 
-        return new PlanExecutionDto(total, countsByStatus, percent, behind);
+        // Real progress: aggregate checklist-item completion across every audit the plan's items have launched.
+        var progressRows = await audits.GetChecklistProgressByPlanItemIdsAsync(items.Select(i => i.Id).ToArray(), cancellationToken);
+        var byPlanItem = progressRows.ToDictionary(r => r.PlanItemId);
+
+        var itemProgress = items.Select(i =>
+        {
+            byPlanItem.TryGetValue(i.Id, out var row);
+            var itemTotal = row?.TotalChecklistItems ?? 0;
+            var itemResponded = row?.RespondedChecklistItems ?? 0;
+            var itemPct = itemTotal == 0 ? 0m : Math.Round((decimal)itemResponded / itemTotal * 100m, 1, MidpointRounding.AwayFromZero);
+            return new PlanItemProgressDto(
+                i.Id, i.LinkedAuditId,
+                row is null ? null : Common.Enums.EnumExtensions.ToSnake(row.AuditStatus),
+                itemTotal, itemResponded, itemPct);
+        }).ToArray();
+
+        var totalChecklist = progressRows.Sum(r => r.TotalChecklistItems);
+        var respondedChecklist = progressRows.Sum(r => r.RespondedChecklistItems);
+        var checklistPercent = totalChecklist == 0
+            ? 0m
+            : Math.Round((decimal)respondedChecklist / totalChecklist * 100m, 1, MidpointRounding.AwayFromZero);
+
+        return new PlanExecutionDto(
+            total, countsByStatus, percent, behind,
+            totalChecklist, respondedChecklist, checklistPercent, itemProgress);
     }
 }

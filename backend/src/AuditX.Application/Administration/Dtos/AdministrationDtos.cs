@@ -8,7 +8,8 @@ public sealed record BankSettingsDto(
     string? AdProvisioningFilterGroupSid,
     int MaxEvidenceFileMb,
     int MaxAuditEvidenceGb,
-    bool AllowOverlappingPlanPeriods);
+    bool AllowOverlappingPlanPeriods,
+    bool AllowAuditLaunchBeforeApproval);
 
 public sealed record ResourceLimitsDto(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
 

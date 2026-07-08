@@ -71,6 +71,8 @@ export interface Plan {
   submittedAt: string | null;
   approvedAt: string | null;
   approvalDecision: PlanDecision | null;
+  /** True when the plan's items may be turned into audits (approved plan, or a deployment that allows pre-approval launch). */
+  canLaunchAudits: boolean;
   items: PlanItem[];
 }
 
@@ -84,12 +86,27 @@ export interface PlanListItem {
   itemCount: number;
 }
 
+/** Real checklist-completion progress of the audit a plan item drives (indexed by planItemId). */
+export interface PlanItemProgress {
+  planItemId: string;
+  linkedAuditId: string | null;
+  auditStatus: string | null;
+  totalChecklistItems: number;
+  respondedChecklistItems: number;
+  percentComplete: number;
+}
+
 /** Execution roll-up for a plan. */
 export interface PlanExecution {
   totalItems: number;
   countsByStatus: Record<string, number>;
   percentComplete: number;
   behindSchedule: PlanItem[];
+  /** Aggregate checklist completion across every audit the plan's items have launched. */
+  totalChecklistItems: number;
+  respondedChecklistItems: number;
+  checklistPercentComplete: number;
+  itemProgress: PlanItemProgress[];
 }
 
 /* ---- Request payloads ---- */

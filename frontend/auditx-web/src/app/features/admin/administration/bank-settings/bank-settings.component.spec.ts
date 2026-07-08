@@ -18,6 +18,7 @@ function settings(overrides: Partial<BankSettings> = {}): BankSettings {
     maxEvidenceFileMb: 25,
     maxAuditEvidenceGb: 10,
     allowOverlappingPlanPeriods: false,
+    allowAuditLaunchBeforeApproval: false,
     ...overrides,
   };
 }

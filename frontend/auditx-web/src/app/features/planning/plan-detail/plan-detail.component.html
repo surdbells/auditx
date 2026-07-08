@@ -95,6 +95,21 @@
             />
           </div>
 
+          <!-- Real progress: checklist-item completion aggregated across every launched audit. -->
+          <div class="detail__exec-progress">
+            <div class="detail__exec-progress-label">
+              <span>{{ 'planning.detail.checklistPercent' | t: { percent: exec.checklistPercentComplete } }}</span>
+              <span class="muted">
+                {{ 'planning.detail.checklistCount' | t: { responded: exec.respondedChecklistItems, total: exec.totalChecklistItems } }}
+              </span>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              class="detail__exec-checklist-bar"
+              [value]="exec.checklistPercentComplete"
+            />
+          </div>
+
           @if (statusCounts().length) {
             <div class="detail__exec-counts">
               @for (c of statusCounts(); track c.status) {
@@ -188,9 +203,18 @@
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef>{{ 'planning.common.status' | t }}</th>
                 <td mat-cell *matCellDef="let i">
-                  <span class="status-badge" [attr.data-status]="i.status">
-                    {{ i.status.replace('_', ' ') }}
-                  </span>
+                  <div class="detail__item-status">
+                    <span class="status-badge" [attr.data-status]="i.status">
+                      {{ i.status.replace('_', ' ') }}
+                    </span>
+                    @if (progressFor(i); as pr) {
+                      @if (pr.linkedAuditId && pr.totalChecklistItems > 0) {
+                        <span class="detail__item-progress muted">
+                          {{ 'planning.detail.itemChecklist' | t: { responded: pr.respondedChecklistItems, total: pr.totalChecklistItems, percent: pr.percentComplete } }}
+                        </span>
+                      }
+                    }
+                  </div>
                 </td>
               </ng-container>
               <ng-container matColumnDef="actions">
@@ -206,16 +230,28 @@
                       <mat-icon>open_in_new</mat-icon>
                       {{ 'planning.detail.openAudit' | t }}
                     </button>
-                  } @else if (canLaunchAudits()) {
-                    <button
-                      matButton="filled"
-                      type="button"
-                      (click)="launchAudit(i)"
-                      [matTooltip]="'planning.detail.launchAuditTip' | t"
+                  } @else if (canCreateAudit()) {
+                    <!-- Always show the Launch affordance; disable (with a hint) until the plan is linkable so the
+                         plan → audit workflow is discoverable rather than silently missing. The span carries the
+                         tooltip so it still surfaces while the button is disabled. -->
+                    <span
+                      [matTooltip]="
+                        (canLaunchAudits()
+                          ? 'planning.detail.launchAuditTip'
+                          : 'planning.detail.launchLockedTip'
+                        ) | t
+                      "
                     >
-                      <mat-icon>rocket_launch</mat-icon>
-                      {{ 'planning.detail.launchAudit' | t }}
-                    </button>
+                      <button
+                        matButton="filled"
+                        type="button"
+                        (click)="launchAudit(i)"
+                        [disabled]="!canLaunchAudits()"
+                      >
+                        <mat-icon>rocket_launch</mat-icon>
+                        {{ 'planning.detail.launchAudit' | t }}
+                      </button>
+                    </span>
                   }
                   @if (canManage() && isEditable()) {
                     <button

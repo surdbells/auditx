@@ -41,6 +41,7 @@ public sealed class CreateAuditCommandHandler(
     IAuditRepository audits,
     IAnnualPlanRepository plans,
     IUserRepository users,
+    IBankSettingsRepository settings,
     AuditCreationService creationService,
     ICurrentUser currentUser,
     IAuditRecorder audit,
@@ -82,7 +83,9 @@ public sealed class CreateAuditCommandHandler(
 
         if (command.PlanItemId is { } linkItemId)
         {
-            plan!.LinkAuditToItem(linkItemId, auditEntity.Id); // throws plan.item_not_linkable (409) if not Approved
+            var bank = await settings.GetAsync(cancellationToken);
+            // throws plan.item_not_linkable (409) unless the plan is Approved (or the deployment allows pre-approval launch)
+            plan!.LinkAuditToItem(linkItemId, auditEntity.Id, bank.AllowAuditLaunchBeforeApproval);
         }
 
         audits.Add(auditEntity);

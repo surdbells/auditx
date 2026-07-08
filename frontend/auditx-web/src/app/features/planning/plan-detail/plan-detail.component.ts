@@ -42,6 +42,7 @@ import {
   PlanDecisionRequest,
   PlanExecution,
   PlanItem,
+  PlanItemProgress,
   ReferenceDataItem,
   SubmitRevisionRequest,
   TemplateListItem,
@@ -162,15 +163,25 @@ export class PlanDetailComponent {
     return this.canManage() && s === 'approved';
   });
 
+  /** The user is allowed to create audits at all (drives whether the Launch affordance is shown). */
+  readonly canCreateAudit = computed(() =>
+    this.auth.hasPermission(Permissions.CreateAudit),
+  );
+
   /**
-   * Audits can be launched from a plan item only once the plan is Approved (the backend enforces the same rule —
-   * LinkAuditToItem throws 409 otherwise) and the user may create audits.
+   * Audits can actually be launched now: the backend says the plan is in a linkable state
+   * (Approved, or a deployment that allows pre-approval launch) AND the user may create audits.
+   * When false but {@link canCreateAudit} is true, the button is shown disabled with a hint so the
+   * plan → audit workflow is always discoverable rather than silently absent.
    */
   readonly canLaunchAudits = computed(
-    () =>
-      this.plan()?.status === 'approved' &&
-      this.auth.hasPermission(Permissions.CreateAudit),
+    () => !!this.plan()?.canLaunchAudits && this.canCreateAudit(),
   );
+
+  /** Real per-item checklist progress from the execution roll-up, indexed by plan-item id. */
+  progressFor(item: PlanItem): PlanItemProgress | undefined {
+    return this.execution()?.itemProgress.find((p) => p.planItemId === item.id);
+  }
 
   readonly statusCounts = computed(() => {
     const exec = this.execution();

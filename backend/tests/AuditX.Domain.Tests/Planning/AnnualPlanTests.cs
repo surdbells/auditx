@@ -177,4 +177,59 @@ public sealed class AnnualPlanTests
         plan.LinkAuditToItem(itemId, Guid.NewGuid());
         Assert.Equal(PlanItemStatus.InProgress, plan.Items[0].Status);
     }
+
+    [Fact]
+    public void Linking_an_already_linked_item_is_rejected()
+    {
+        var plan = PlanWithItem();
+        var itemId = plan.Items[0].Id;
+        plan.Submit(Now);
+        plan.RecordDecision(AcDecisionOutcome.Approved, null, [], Guid.NewGuid(), Now);
+
+        plan.LinkAuditToItem(itemId, Guid.NewGuid());
+        var ex = Assert.Throws<DomainException>(() => plan.LinkAuditToItem(itemId, Guid.NewGuid()));
+        Assert.Equal("plan.item_already_linked", ex.Code);
+    }
+
+    [Fact]
+    public void Deferring_a_linked_item_clears_the_link_and_allows_relaunch()
+    {
+        var plan = PlanWithItem();
+        var itemId = plan.Items[0].Id;
+        plan.Submit(Now);
+        plan.RecordDecision(AcDecisionOutcome.Approved, null, [], Guid.NewGuid(), Now);
+
+        plan.LinkAuditToItem(itemId, Guid.NewGuid());
+        Assert.NotNull(plan.Items[0].LinkedAuditId);
+
+        // A cancelled audit defers the item and clears its dangling link so it can be re-launched.
+        plan.MarkPlanItemDeferred(itemId);
+        Assert.Null(plan.Items[0].LinkedAuditId);
+        Assert.Equal(PlanItemStatus.Deferred, plan.Items[0].Status);
+
+        var relaunchedAuditId = Guid.NewGuid();
+        plan.LinkAuditToItem(itemId, relaunchedAuditId);
+        Assert.Equal(relaunchedAuditId, plan.Items[0].LinkedAuditId);
+        Assert.Equal(PlanItemStatus.InProgress, plan.Items[0].Status);
+    }
+
+    [Fact]
+    public void Link_audit_before_approval_allowed_when_opted_in()
+    {
+        var plan = PlanWithItem(); // Draft
+        var itemId = plan.Items[0].Id;
+        plan.LinkAuditToItem(itemId, Guid.NewGuid(), allowBeforeApproval: true);
+        Assert.Equal(PlanItemStatus.InProgress, plan.Items[0].Status);
+    }
+
+    [Fact]
+    public void Link_audit_before_approval_still_rejects_a_closed_plan()
+    {
+        var plan = PlanWithItem();
+        var itemId = plan.Items[0].Id;
+        plan.Submit(Now);
+        plan.RecordDecision(AcDecisionOutcome.Approved, null, [], Guid.NewGuid(), Now);
+        plan.Close();
+        Assert.Throws<InvalidStateTransitionException>(() => plan.LinkAuditToItem(itemId, Guid.NewGuid(), allowBeforeApproval: true));
+    }
 }

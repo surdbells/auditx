@@ -11,6 +11,7 @@ export interface BankSettings {
   maxEvidenceFileMb: number;
   maxAuditEvidenceGb: number;
   allowOverlappingPlanPeriods: boolean;
+  allowAuditLaunchBeforeApproval: boolean;
 }
 
 export interface UpdateBankSettingsRequest {
@@ -20,6 +21,7 @@ export interface UpdateBankSettingsRequest {
   adProvisioningFilterOuDn: string | null;
   adProvisioningFilterGroupSid: string | null;
   allowOverlappingPlanPeriods: boolean;
+  allowAuditLaunchBeforeApproval: boolean;
 }
 
 export interface ResourceLimits {

@@ -39,7 +39,7 @@ public sealed class CreatePlanCommandHandler(
         plans.Add(plan);
         audit.Record(AuditEventTypes.PlanCreated, AuditTargetTypes.AnnualPlan, plan.Id, after: new { plan.PeriodLabel, plan.PeriodStart, plan.PeriodEnd });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return plan.ToDto();
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
     }
 }
 
@@ -62,7 +62,7 @@ public sealed class UpdatePlanCommandHandler(
         plan.UpdatePeriod(command.PeriodLabel.Trim(), command.PeriodStart, command.PeriodEnd);
         audit.Record(AuditEventTypes.PlanUpdated, AuditTargetTypes.AnnualPlan, plan.Id);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return plan.ToDto();
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
     }
 }
 
@@ -128,7 +128,7 @@ public sealed class ReorderPlanItemsCommandHandler(IAnnualPlanRepository plans, 
 
 public sealed record SubmitPlanCommand(Guid PlanId) : ICommand<PlanDto>;
 
-public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IBankSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<SubmitPlanCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(SubmitPlanCommand command, CancellationToken cancellationToken)
@@ -137,7 +137,8 @@ public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IAudit
         plan.Submit(clock.UtcNow);
         audit.Record(AuditEventTypes.PlanSubmitted, AuditTargetTypes.AnnualPlan, plan.Id);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return plan.ToDto();
+        var bank = await settings.GetAsync(cancellationToken);
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
     }
 }
 
@@ -145,7 +146,7 @@ public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IAudit
 public sealed record RecordPlanDecisionCommand(Guid PlanId, string Decision, string? Detail, IReadOnlyList<string>? Comments) : ICommand<PlanDto>;
 
 public sealed class RecordPlanDecisionCommandHandler(
-    IAnnualPlanRepository plans, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    IAnnualPlanRepository plans, IBankSettingsRepository settings, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<RecordPlanDecisionCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(RecordPlanDecisionCommand command, CancellationToken cancellationToken)
@@ -160,13 +161,14 @@ public sealed class RecordPlanDecisionCommandHandler(
         plan.RecordDecision(outcome, command.Detail, command.Comments ?? [], decidedBy, clock.UtcNow);
         audit.Record(AuditEventTypes.PlanDecisionRecorded, AuditTargetTypes.AnnualPlan, plan.Id, after: new { decision = outcome.ToString(), decidedBy });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return plan.ToDto();
+        var bank = await settings.GetAsync(cancellationToken);
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
     }
 }
 
 public sealed record SubmitPlanRevisionCommand(Guid PlanId, string Kind, Guid? ItemId, DateOnly? NewStartDate, DateOnly? NewEndDate) : ICommand<PlanDto>;
 
-public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans, IBankSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<SubmitPlanRevisionCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(SubmitPlanRevisionCommand command, CancellationToken cancellationToken)
@@ -193,7 +195,8 @@ public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans
 
         audit.Record(AuditEventTypes.PlanRevisionSubmitted, AuditTargetTypes.AnnualPlan, plan.Id, payload: new { command.Kind });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return plan.ToDto();
+        var bank = await settings.GetAsync(cancellationToken);
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
     }
 }
 

@@ -27,6 +27,7 @@ function plan(status: PlanStatus = 'draft', overrides: Partial<Plan> = {}): Plan
     submittedAt: null,
     approvedAt: null,
     approvalDecision: null,
+    canLaunchAudits: status === 'approved',
     items: [],
     ...overrides,
   };
@@ -38,6 +39,10 @@ function execution(): PlanExecution {
     countsByStatus: {},
     percentComplete: 0,
     behindSchedule: [],
+    totalChecklistItems: 0,
+    respondedChecklistItems: 0,
+    checklistPercentComplete: 0,
+    itemProgress: [],
   };
 }
 

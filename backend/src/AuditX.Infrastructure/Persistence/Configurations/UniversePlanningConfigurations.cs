@@ -104,6 +104,9 @@ public sealed class PlanItemConfiguration : IEntityTypeConfiguration<PlanItem>
 
         builder.HasIndex(i => new { i.AnnualPlanId, i.PlannedStartDate });
         builder.HasIndex(i => i.EntityId);
-        builder.HasIndex(i => i.LinkedAuditId);
+
+        // 1:1 integrity: a live audit link belongs to exactly one plan item (nulls excluded so a deferred/
+        // unlaunched item — whose link is cleared — never collides).
+        builder.HasIndex(i => i.LinkedAuditId).IsUnique().HasFilter("[linked_audit_id] IS NOT NULL");
     }
 }

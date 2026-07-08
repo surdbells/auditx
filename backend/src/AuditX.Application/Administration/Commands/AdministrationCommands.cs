@@ -19,7 +19,7 @@ namespace AuditX.Application.Administration.Commands;
 
 public sealed record UpdateBankSettingsCommand(
     string BankDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
-    bool AllowOverlappingPlanPeriods)
+    bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval)
     : ICommand<BankSettingsDto>;
 
 public sealed class UpdateBankSettingsCommandValidator : AbstractValidator<UpdateBankSettingsCommand>
@@ -41,7 +41,8 @@ public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository set
         bank.Update(command.BankDisplayName, command.Timezone, command.LocaleDefault);
         bank.SetAdProvisioningFilter(command.AdProvisioningFilterOuDn, command.AdProvisioningFilterGroupSid);
         bank.SetAllowOverlappingPlanPeriods(command.AllowOverlappingPlanPeriods);
-        audit.Record(AuditEventTypes.BankSettingsUpdated, AuditTargetTypes.BankSettings, bank.Id, after: new { bank.BankDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods });
+        bank.SetAllowAuditLaunchBeforeApproval(command.AllowAuditLaunchBeforeApproval);
+        audit.Record(AuditEventTypes.BankSettingsUpdated, AuditTargetTypes.BankSettings, bank.Id, after: new { bank.BankDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return bank.ToDto();
     }

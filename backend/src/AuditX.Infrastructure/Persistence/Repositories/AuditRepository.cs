@@ -86,5 +86,24 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
             .Where(a => a.Status == AuditStatus.Planned && a.StartDate <= asOfDate)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<PlanItemAuditProgress>> GetChecklistProgressByPlanItemIdsAsync(
+        IReadOnlyCollection<Guid> planItemIds, CancellationToken cancellationToken = default)
+    {
+        if (planItemIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await db.Audits.AsNoTracking()
+            .Where(a => a.PlanItemId != null && planItemIds.Contains(a.PlanItemId.Value))
+            .Select(a => new PlanItemAuditProgress(
+                a.PlanItemId!.Value,
+                a.Id,
+                a.Status,
+                a.ChecklistItems.Count,
+                a.ChecklistItems.Count(i => i.ItemState == ChecklistItemState.Responded)))
+            .ToListAsync(cancellationToken);
+    }
+
     public void Add(Audit audit) => db.Audits.Add(audit);
 }

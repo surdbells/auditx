@@ -44,6 +44,7 @@ describe('AdministrationService', () => {
         adProvisioningFilterOuDn: null,
         adProvisioningFilterGroupSid: null,
         allowOverlappingPlanPeriods: false,
+        allowAuditLaunchBeforeApproval: false,
       })
       .subscribe();
     const req = http.expectOne(`${BASE}/admin/bank-settings`);

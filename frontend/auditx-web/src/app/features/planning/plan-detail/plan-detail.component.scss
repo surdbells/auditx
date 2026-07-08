@@ -29,10 +29,34 @@
   padding-left: 1.25rem;
 }
 
+.detail__exec-progress {
+  & + & {
+    margin-top: 0.9rem;
+  }
+}
+
 .detail__exec-progress-label {
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.35rem;
+}
+
+// The checklist bar is the "real" (fieldwork) progress — tint it with the tertiary accent so it
+// reads as distinct from the item-level completion bar above it.
+.detail__exec-checklist-bar {
+  --mat-progress-bar-active-indicator-color: var(--mat-sys-tertiary);
+}
+
+.detail__item-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: flex-start;
+}
+
+.detail__item-progress {
+  font: var(--mat-sys-label-small);
+  font-variant-numeric: tabular-nums;
 }
 
 .detail__exec-counts {

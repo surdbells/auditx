@@ -17,6 +17,7 @@ function plan(overrides: Partial<Plan> = {}): Plan {
     submittedAt: null,
     approvedAt: null,
     approvalDecision: null,
+    canLaunchAudits: false,
     items: [],
     ...overrides,
   };

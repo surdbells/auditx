@@ -58,11 +58,26 @@ public sealed class PlanItem : Entity
 
     internal void LinkAudit(Guid auditId)
     {
+        // 1:1 invariant: a plan item drives exactly one live audit. A deferred item has had its link cleared
+        // (see MarkDeferred) so it can be re-launched; any other item that still carries a link is protected.
+        if (LinkedAuditId is not null)
+        {
+            throw new DomainException("plan.item_already_linked", "This plan item already has a linked audit.");
+        }
+
         LinkedAuditId = auditId;
         Status = PlanItemStatus.InProgress;
     }
 
     internal void MarkCompleted() => Status = PlanItemStatus.Completed;
 
-    internal void MarkDeferred() => Status = PlanItemStatus.Deferred;
+    /// <summary>
+    /// The linked audit was cancelled: defer the item and clear the dangling link so the item can be
+    /// re-launched (a cancelled audit is a dead end that must not keep the item permanently occupied).
+    /// </summary>
+    internal void MarkDeferred()
+    {
+        LinkedAuditId = null;
+        Status = PlanItemStatus.Deferred;
+    }
 }
