@@ -1,4 +1,20 @@
 <div class="login">
+  <aside class="login__aside">
+    <div class="login__aside-inner">
+      <div class="login__logo" aria-hidden="true">
+        <mat-icon>verified_user</mat-icon>
+      </div>
+      <div class="login__aside-brand">AuditX Enterprise</div>
+      <p class="login__aside-tagline">{{ 'layout.platformSubtitle' | t }}</p>
+      <ul class="login__aside-points">
+        <li><mat-icon aria-hidden="true">check_circle</mat-icon><span>{{ 'nav.planning' | t }} · {{ 'nav.audits' | t }} · {{ 'nav.exceptions' | t }}</span></li>
+        <li><mat-icon aria-hidden="true">verified_user</mat-icon><span>{{ 'nav.auditTrail' | t }} · {{ 'nav.sanctions' | t }}</span></li>
+        <li><mat-icon aria-hidden="true">insights</mat-icon><span>{{ 'nav.analytics' | t }} · {{ 'nav.coverage' | t }}</span></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="login__main">
   <mat-card class="login__card" appearance="outlined">
     @if (submitting() || ssoBusy()) {
       <mat-progress-bar mode="indeterminate" class="login__progress" />
@@ -91,4 +107,5 @@
       </button>
     </mat-card-content>
   </mat-card>
+  </main>
 </div>

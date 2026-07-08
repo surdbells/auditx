@@ -1,64 +1,113 @@
 .layout {
   height: 100vh;
+  background: transparent;
 }
 
+// ---- Sidebar -----------------------------------------------------------
 .layout__sidenav {
-  width: 256px;
+  width: 264px;
   border-right: 1px solid var(--mat-sys-outline-variant);
-  background: var(--mat-sys-surface);
+  background: #ffffff;
+  padding: 0 0.75rem;
 }
 
 .layout__brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1.25rem 1.25rem 1rem;
+  padding: 1.35rem 0.75rem 1.1rem;
 }
 
+// Gradient logo mark.
 .layout__brand-icon {
-  font-size: 32px;
-  width: 32px;
-  height: 32px;
-  color: var(--mat-sys-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: #fff !important;
+  font-size: 24px;
+  background-image: linear-gradient(135deg, #6366f1, #7c3aed);
+  box-shadow: 0 8px 18px -6px rgb(79 70 229 / 0.55);
 }
 
 .layout__brand-text {
   display: flex;
   flex-direction: column;
-  line-height: 1.1;
+  line-height: 1.05;
 }
 
 .layout__brand-name {
-  font: var(--mat-sys-title-large);
+  font-size: 1.15rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  color: #0f172a;
 }
 
 .layout__brand-sub {
-  font: var(--mat-sys-label-small);
-  letter-spacing: 0.1em;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
+  color: #94a3b8;
+}
+
+// Nav list — quiet items, rounded hover, a clear indigo active pill.
+.layout__sidenav .mat-mdc-list-item {
+  border-radius: 12px !important;
+  margin: 2px 0;
+  height: 42px !important;
+  color: #475569;
+  transition:
+    background-color var(--ax-dur) var(--ax-ease),
+    color var(--ax-dur) var(--ax-ease);
+}
+.layout__sidenav .mat-mdc-list-item .mat-mdc-list-item-title {
+  font-size: 0.875rem !important;
+  font-weight: 500;
+}
+.layout__sidenav .mat-mdc-list-item:hover {
+  background: #f1f5f9;
+}
+.layout__sidenav .mat-mdc-list-item .mat-icon {
+  color: #94a3b8;
+}
+
+.active-link.mat-mdc-list-item {
+  background: linear-gradient(90deg, #eef2ff, #f5f3ff) !important;
+  color: #4338ca !important;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 0 #4f46e5;
+}
+.active-link.mat-mdc-list-item .mat-mdc-list-item-title {
+  font-weight: 600;
+}
+.active-link.mat-mdc-list-item .mat-icon {
+  color: #4f46e5 !important;
 }
 
 .layout__content {
   display: flex;
   flex-direction: column;
+  background: transparent;
 }
 
-// Frosted, quietly elevated toolbar that stays put while content scrolls under it.
+// ---- Topbar — frosted, sticky, hairline border ------------------------
 .layout__toolbar {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: color-mix(in srgb, var(--mat-sys-surface) 82%, transparent);
-  backdrop-filter: saturate(1.2) blur(10px);
+  height: 60px;
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: saturate(1.4) blur(12px);
   border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .layout__toolbar-title {
-  font: var(--mat-sys-title-medium);
+  font-size: 0.95rem;
   font-weight: 600;
+  color: #334155;
 }
 
 .layout__spacer {
@@ -76,30 +125,28 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
+  color: #334155;
 }
 
-// Gradient monogram avatar — a small premium accent in the toolbar.
 .layout__avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--mat-sys-primary),
-    var(--mat-sys-tertiary)
-  );
-  color: var(--mat-sys-on-primary);
-  font: var(--mat-sys-label-medium);
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+  color: #fff;
+  font-size: 0.75rem;
   font-weight: 700;
+  box-shadow: 0 6px 14px -6px rgb(79 70 229 / 0.5);
 }
 
 .layout__main {
   flex: 1 1 auto;
-  padding: 1.75rem;
-  max-width: 1320px;
+  padding: 2rem;
+  max-width: 1360px;
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -120,29 +167,13 @@
   color: var(--mat-sys-on-surface-variant);
 }
 
-// Nav items: quiet by default, a clear primary "pill" for the active route.
-.layout__sidenav .mat-mdc-list-item {
-  border-radius: 0 999px 999px 0;
-  margin-right: 0.5rem;
-  transition: background-color var(--ax-dur, 180ms) var(--ax-ease, ease);
-}
-
-.active-link {
-  --mat-list-list-item-leading-icon-color: var(--mat-sys-primary);
-  --mat-list-list-item-label-text-color: var(--mat-sys-on-primary-container);
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
-  font-weight: 600;
-}
-
 @media (max-width: 599px) {
   .layout__main {
-    padding: 1rem;
+    padding: 1.1rem;
   }
   .layout__user-name {
     display: none;
   }
-  // Reclaim width on small screens — the hamburger already conveys context.
   .layout__toolbar-title {
     display: none;
   }
