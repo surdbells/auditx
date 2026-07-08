@@ -9,6 +9,9 @@
   border-right: 1px solid var(--mat-sys-outline-variant);
   background: #ffffff;
   overflow: hidden;
+  // Material 3 gives the drawer a large default corner radius; force it square (the flat, rounded-corner-free rail).
+  border-radius: 0;
+  --mat-sidenav-container-shape: 0;
 }
 // Icon-only rail (desktop collapse). Width is instant so the pushed content
 // margin (recomputed via updateContentMargins) never lags a transition.
