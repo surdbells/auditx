@@ -13,11 +13,19 @@ public static class ReferenceDataCategories
     /// <summary>Exception categories (cash handling, credit, AML/KYC, …) used when raising exceptions.</summary>
     public const string ExceptionCategory = "exception_category";
 
+    /// <summary>Auditable-entity types (branch, process, system, vendor, …) used across the audit universe.</summary>
+    public const string EntityType = "entity_type";
+
+    /// <summary>Sanctions-grid categories (cash handling, process breach, …) used to key grid cells (M7).</summary>
+    public const string SanctionCategory = "sanction_category";
+
     /// <summary>Every category the store recognises, with its human label — the admin UI's manageable-list menu.</summary>
     public static readonly IReadOnlyList<ReferenceDataCategoryDescriptor> All =
     [
         new(AuditType, "Audit types"),
         new(ExceptionCategory, "Exception categories"),
+        new(EntityType, "Entity types"),
+        new(SanctionCategory, "Sanction categories"),
     ];
 
     public static bool IsKnown(string? category) =>

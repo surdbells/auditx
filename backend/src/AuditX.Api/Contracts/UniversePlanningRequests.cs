@@ -7,8 +7,6 @@ public sealed record UpdateEntityRequest(string Name, string EntityType, string?
 
 public sealed record RiskScoresRequest(IReadOnlyDictionary<string, int>? InherentScores, IReadOnlyDictionary<string, int>? ResidualScores, string Version);
 
-public sealed record AddEntityTypeRequest(string Type);
-
 public sealed record BulkImportEntitiesRequest(string CsvContent);
 
 // Risk dimensions

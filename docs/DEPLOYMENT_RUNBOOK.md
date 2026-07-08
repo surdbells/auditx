@@ -35,11 +35,12 @@ Environment-variable form uses `__` for nested keys (e.g. `ConnectionStrings__De
 | Key | Required | Notes |
 |---|---|---|
 | `ConnectionStrings__Default` | ✅ | SQL Server connection string. Use `Encrypt=True` + a trusted cert in production. |
-| `Identity__Provider` | ✅ | `ActiveDirectory` in production. `Development` is **rejected outside the Development environment** by the startup guard. |
+| `Identity__Provider` | ✅ | `ActiveDirectory` (LDAPS) or `ActiveDirectoryApi` (the bank's AD REST gateway — see [identity-ad-rest-contract.md](identity-ad-rest-contract.md)) in production. `Development` is **rejected outside the Development environment** by the startup guard. |
 | `Jwt__SigningKey` | ✅ | ≥ 32 bytes, high-entropy, from a secret store. The startup guard rejects empty / `CHANGE-ME…` / < 32 bytes outside Development. |
 | `Jwt__Issuer`, `Jwt__Audience` | ⬜ | Default `auditx`. |
 | `Redis__ConnectionString` | ✅ | e.g. `redis-host:6379`. |
-| `ActiveDirectory__Host` / `Port` / `UseLdaps` / `BaseDn` / `ServiceAccountDn` / `ServiceAccountPassword` / `UpnSuffix` | ✅ (AD) | LDAPS service account for user lookup. |
+| `ActiveDirectory__Host` / `Port` / `UseLdaps` / `BaseDn` / `ServiceAccountDn` / `ServiceAccountPassword` / `UpnSuffix` | ✅ (LDAPS) | LDAPS service account for user lookup (`Provider=ActiveDirectory`). |
+| `ActiveDirectoryApi__BaseUrl` / `ApiKey` (+ optional `AuthenticatePath` / `LookupPath` / `StatusPath` / `ApiKeyHeader` / `TimeoutSeconds`) | ✅ (AD-REST) | The bank's AD REST gateway (`Provider=ActiveDirectoryApi`). See [identity-ad-rest-contract.md](identity-ad-rest-contract.md). |
 | `DataProtection__KeyRingPath` | ✅ (multi-instance / container) | Shared, persisted folder for the key ring. On a single Windows host the default profile/registry store is fine. |
 | `Cors__Origins__0` … | ✅ | The SPA origin(s), e.g. `https://auditx.bank.internal`. |
 | `Database__MigrateOnStartup` | ⬜ | `true` applies EF migrations on boot. Prefer `false` in production + a controlled migration step (below). |

@@ -58,23 +58,12 @@ public sealed class AuditUniverseController(IDispatcher dispatcher) : ApiControl
     public async Task<IActionResult> BulkImport([FromBody] BulkImportEntitiesRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new BulkImportEntitiesCommand(request.CsvContent), cancellationToken));
 
+    // Read-only list of active entity types for populating dropdowns. Entity types are managed as reference data
+    // (category "entity_type") through the generic reference-data admin screen — there is no bespoke write endpoint.
     [RequirePermission(PermissionKeys.ViewUniverse)]
     [HttpGet("entity-types")]
     public async Task<IActionResult> ListEntityTypes(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ListEntityTypesQuery(), cancellationToken));
-
-    [RequirePermission(PermissionKeys.ManageConfiguration)]
-    [HttpPost("entity-types")]
-    public async Task<IActionResult> AddEntityType([FromBody] AddEntityTypeRequest request, CancellationToken cancellationToken)
-        => Created(await dispatcher.Send(new AddEntityTypeCommand(request.Type), cancellationToken));
-
-    [RequirePermission(PermissionKeys.ManageConfiguration)]
-    [HttpDelete("entity-types/{type}")]
-    public async Task<IActionResult> RemoveEntityType(string type, CancellationToken cancellationToken)
-    {
-        await dispatcher.Send(new RemoveEntityTypeCommand(type), cancellationToken);
-        return NoContent();
-    }
 }
 
 [Authorize]

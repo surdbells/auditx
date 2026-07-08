@@ -26,7 +26,6 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         var rolesByName = await SeedBuiltInRolesAsync(cancellationToken);
         await SeedMakerCheckerGatesAsync(cancellationToken);
         await SeedRiskDimensionsAsync(cancellationToken);
-        await SeedEntityTypesAsync(cancellationToken);
         await SeedReferenceDataAsync(cancellationToken);
         await SeedSanctionsRolesAsync(cancellationToken);
         await SeedAcRolesAsync(cancellationToken);
@@ -225,18 +224,6 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         }
     }
 
-    private async Task SeedEntityTypesAsync(CancellationToken cancellationToken)
-    {
-        var existing = await db.EntityTypeTaxonomy.Select(t => t.Name).ToListAsync(cancellationToken);
-        foreach (var name in new[] { "branch", "process", "system", "vendor", "product" })
-        {
-            if (!existing.Contains(name, StringComparer.OrdinalIgnoreCase))
-            {
-                db.EntityTypeTaxonomy.Add(Domain.Universe.EntityTypeTaxonomy.Create(name));
-            }
-        }
-    }
-
     /// <summary>
     /// Seed the core managed reference-data lists (audit types, exception categories) that back the platform's
     /// dropdowns. Idempotent per (category, code): a missing code is added without disturbing bank-added entries.
@@ -263,6 +250,23 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             (ReferenceDataCategories.ExceptionCategory, "financial_reporting", "Financial Reporting"),
             (ReferenceDataCategories.ExceptionCategory, "operational", "Operational"),
             (ReferenceDataCategories.ExceptionCategory, "regulatory", "Regulatory"),
+
+            // Entity types — the CODE is the value stored on auditable_entity.entity_type, so these codes must
+            // match the historical taxonomy names (branch/process/system/vendor/product) for existing data.
+            (ReferenceDataCategories.EntityType, "branch", "Branch"),
+            (ReferenceDataCategories.EntityType, "process", "Process"),
+            (ReferenceDataCategories.EntityType, "system", "System"),
+            (ReferenceDataCategories.EntityType, "vendor", "Vendor"),
+            (ReferenceDataCategories.EntityType, "product", "Product"),
+
+            // Sanction categories — the CODE forms part of the grid cell key "<category>|<severity>|<recurrence>",
+            // so these codes must match the seeded sanctions grid's cell categories.
+            (ReferenceDataCategories.SanctionCategory, "cash_handling", "Cash Handling"),
+            (ReferenceDataCategories.SanctionCategory, "process_breach", "Process Breach"),
+            (ReferenceDataCategories.SanctionCategory, "fraud", "Fraud"),
+            (ReferenceDataCategories.SanctionCategory, "aml_kyc", "AML/KYC"),
+            (ReferenceDataCategories.SanctionCategory, "credit", "Credit"),
+            (ReferenceDataCategories.SanctionCategory, "operational", "Operational"),
         };
 
         // One round-trip: existing (category, code) pairs across the seeded categories. Include soft-deleted rows so

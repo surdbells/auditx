@@ -10,11 +10,20 @@ namespace AuditX.Infrastructure.Universe;
 /// <summary>Reads the bank's active entity-type taxonomy and the audit types in use (for analytics axes).</summary>
 public sealed class TaxonomyProvider(AppDbContext db) : ITaxonomyProvider
 {
+    // Entity types are a managed reference-data list (category "entity_type"): the same generic store, admin CRUD
+    // screen and lazy dropdown lookup that back audit types and exception categories. The item CODE is the value
+    // stored on auditable_entity.entity_type, so codes (not labels) drive validation, dropdowns and coverage rows.
     public async Task<IReadOnlyList<string>> GetActiveEntityTypesAsync(CancellationToken cancellationToken = default)
-        => await db.EntityTypeTaxonomy.Where(t => t.IsActive).Select(t => t.Name).OrderBy(n => n).ToListAsync(cancellationToken);
+        => await db.ReferenceDataItems
+            .Where(t => t.Category == Domain.ReferenceData.ReferenceDataCategories.EntityType && t.IsActive)
+            .OrderBy(t => t.SortOrder).ThenBy(t => t.Code)
+            .Select(t => t.Code)
+            .ToListAsync(cancellationToken);
 
     public Task<bool> IsEntityTypeActiveAsync(string entityType, CancellationToken cancellationToken = default)
-        => db.EntityTypeTaxonomy.AnyAsync(t => t.IsActive && t.Name == entityType, cancellationToken);
+        => db.ReferenceDataItems.AnyAsync(
+            t => t.Category == Domain.ReferenceData.ReferenceDataCategories.EntityType && t.IsActive && t.Code == entityType,
+            cancellationToken);
 
     public async Task<IReadOnlyList<string>> GetAuditTypesAsync(CancellationToken cancellationToken = default)
     {

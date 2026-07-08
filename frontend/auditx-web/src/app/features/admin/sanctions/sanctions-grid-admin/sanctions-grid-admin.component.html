@@ -54,7 +54,7 @@
           <tbody>
             @for (row of rows(); track row.key) {
               <tr>
-                <td>{{ row.category }}</td>
+                <td>{{ categoryLabel(row.category) }}</td>
                 <td>{{ humanise(row.severity) }}</td>
                 <td>{{ row.isRecurrence ? ('sanctions.common.yes' | t) : ('sanctions.common.no' | t) }}</td>
                 <td>
@@ -92,7 +92,11 @@
       <div class="grid__add">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'sanctions.field.category' | t }}</mat-label>
-          <input matInput [(ngModel)]="newCategory" name="newCategory" />
+          <mat-select [(ngModel)]="newCategory" name="newCategory">
+            @for (c of categories(); track c.code) {
+              <mat-option [value]="c.code">{{ c.label }}</mat-option>
+            }
+          </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>{{ 'sanctions.field.severity' | t }}</mat-label>

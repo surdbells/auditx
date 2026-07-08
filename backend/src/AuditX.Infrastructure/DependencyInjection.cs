@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<IdentityOptions>(configuration.GetSection(IdentityOptions.SectionName));
         services.Configure<ActiveDirectoryOptions>(configuration.GetSection(ActiveDirectoryOptions.SectionName));
+        services.Configure<ActiveDirectoryApiOptions>(configuration.GetSection(ActiveDirectoryApiOptions.SectionName));
         services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
         services.Configure<StorageOptions>(configuration.GetSection(StorageOptions.SectionName));
 
@@ -168,14 +169,31 @@ public static class DependencyInjection
             services.AddScoped<Application.Abstractions.Notifications.ISmsSender, Notifications.HttpSmsSender>();
         }
 
-        // Identity provider: Active Directory in production, the seeded Development provider locally.
-        if (identityOptions.UseDevelopmentProvider)
+        // Identity provider: seeded Development users locally, Active Directory over LDAPS, or the bank's
+        // AD-over-REST gateway — selected by Identity:Provider.
+        switch (identityOptions.Kind)
         {
-            services.AddScoped<IIdentityProvider, DevIdentityProvider>();
-        }
-        else
-        {
-            services.AddScoped<IIdentityProvider, ActiveDirectoryIdentityProvider>();
+            case IdentityProviderKind.ActiveDirectory:
+                services.AddScoped<IIdentityProvider, ActiveDirectoryIdentityProvider>();
+                break;
+
+            case IdentityProviderKind.ActiveDirectoryApi:
+                var adApiOptions = configuration.GetSection(ActiveDirectoryApiOptions.SectionName).Get<ActiveDirectoryApiOptions>()
+                    ?? new ActiveDirectoryApiOptions();
+                services.AddHttpClient<ActiveDirectoryApiIdentityProvider>(client =>
+                {
+                    client.Timeout = TimeSpan.FromSeconds(Math.Clamp(adApiOptions.TimeoutSeconds, 1, 120));
+                    if (!string.IsNullOrWhiteSpace(adApiOptions.ApiKeyHeader) && !string.IsNullOrWhiteSpace(adApiOptions.ApiKey))
+                    {
+                        client.DefaultRequestHeaders.TryAddWithoutValidation(adApiOptions.ApiKeyHeader, adApiOptions.ApiKey);
+                    }
+                });
+                services.AddScoped<IIdentityProvider>(sp => sp.GetRequiredService<ActiveDirectoryApiIdentityProvider>());
+                break;
+
+            default:
+                services.AddScoped<IIdentityProvider, DevIdentityProvider>();
+                break;
         }
 
         return services;

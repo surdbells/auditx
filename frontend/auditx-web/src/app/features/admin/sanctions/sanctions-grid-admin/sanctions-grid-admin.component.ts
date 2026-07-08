@@ -17,6 +17,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { SanctionsService } from '../../../../core/services/sanctions.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { ReferenceDataLookupService } from '../../../../core/services/reference-data-lookup.service';
 import {
   GridDefinition,
   SanctionsGridVersion,
@@ -71,6 +72,15 @@ export class SanctionsGridAdminComponent {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+  private readonly refLookup = inject(ReferenceDataLookupService);
+
+  /** Managed sanction-category options (reference-data category "sanction_category"). */
+  readonly categories = this.refLookup.options('sanction_category');
+
+  /** Resolves a stored category code to its human label (falls back to the raw code). */
+  categoryLabel(code: string): string {
+    return this.refLookup.label('sanction_category', code);
+  }
 
   readonly state = signal<ViewState>('loading');
   readonly grid = signal<SanctionsGridVersion | null>(null);

@@ -78,51 +78,9 @@ public sealed class ListRiskDimensionsQueryHandler(IRiskDimensionRepository dime
 }
 
 // ---- Entity-type taxonomy ----
-
-public sealed record AddEntityTypeCommand(string Type) : ICommand<EntityTypeDto>;
-
-public sealed class AddEntityTypeCommandHandler(IEntityTypeTaxonomyRepository taxonomy, IAuditRecorder audit, IUnitOfWork unitOfWork)
-    : ICommandHandler<AddEntityTypeCommand, EntityTypeDto>
-{
-    public async Task<EntityTypeDto> Handle(AddEntityTypeCommand command, CancellationToken cancellationToken)
-    {
-        var name = command.Type.Trim();
-        if (await taxonomy.GetByNameAsync(name, cancellationToken) is not null)
-        {
-            throw new ConflictException("taxonomy.type_exists", $"Entity type '{name}' already exists.");
-        }
-
-        taxonomy.Add(EntityTypeTaxonomy.Create(name));
-        audit.Record(AuditEventTypes.EntityTypeAdded, AuditTargetTypes.EntityTypeTaxonomy, null, payload: new { type = name });
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return new EntityTypeDto(name);
-    }
-}
-
-/// <summary>The created entity-type, returned so the create response carries a <c>{data}</c> envelope body.</summary>
-public sealed record EntityTypeDto(string Type);
-
-public sealed record RemoveEntityTypeCommand(string Type) : ICommand<Unit>;
-
-public sealed class RemoveEntityTypeCommandHandler(
-    IEntityTypeTaxonomyRepository taxonomy, IAuditUniverseRepository entities, IAuditRecorder audit, IUnitOfWork unitOfWork)
-    : ICommandHandler<RemoveEntityTypeCommand, Unit>
-{
-    public async Task<Unit> Handle(RemoveEntityTypeCommand command, CancellationToken cancellationToken)
-    {
-        var name = command.Type.Trim();
-        var entry = await taxonomy.GetByNameAsync(name, cancellationToken) ?? throw new NotFoundException("Entity type", name);
-        if (await entities.AnyOfTypeAsync(name, cancellationToken))
-        {
-            throw new ConflictException("taxonomy.type_in_use", $"Entity type '{name}' is in use and cannot be removed.");
-        }
-
-        taxonomy.Remove(entry);
-        audit.Record(AuditEventTypes.EntityTypeRemoved, AuditTargetTypes.EntityTypeTaxonomy, null, payload: new { type = name });
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return Unit.Value;
-    }
-}
+// Entity types are managed as reference data (category "entity_type") via the generic reference-data admin
+// screen; this read-only query backs the universe dropdowns. There is no bespoke add/remove command — the
+// reference-data CRUD endpoints own writes, and ITaxonomyProvider reads the active reference-data items.
 
 public sealed record ListEntityTypesQuery : IQuery<IReadOnlyList<string>>;
 
