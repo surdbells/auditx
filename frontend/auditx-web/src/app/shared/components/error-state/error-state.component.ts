@@ -36,13 +36,22 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
       padding: 3rem 1.5rem;
     }
     .error__icon {
-      font-size: 48px;
-      height: 48px;
-      width: 48px;
-      color: var(--mat-sys-error);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      font-size: 32px;
+      color: #dc2626;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      margin-bottom: 0.5rem;
     }
     .error__title {
       margin: 0.5rem 0 0;
+      font-size: 1.05rem;
+      font-weight: 600;
     }
     .error__message {
       margin: 0;

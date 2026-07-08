@@ -38,13 +38,22 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
       color: var(--mat-sys-on-surface-variant);
     }
     .empty__icon {
-      font-size: 48px;
-      height: 48px;
-      width: 48px;
-      opacity: 0.6;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      font-size: 32px;
+      color: #4f46e5;
+      background: #eef2ff;
+      border: 1px solid #e0e7ff;
+      margin-bottom: 0.5rem;
     }
     .empty__title {
       margin: 0.5rem 0 0;
+      font-size: 1.05rem;
+      font-weight: 600;
       color: var(--mat-sys-on-surface);
     }
     .empty__message {
