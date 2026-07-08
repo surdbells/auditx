@@ -43,3 +43,6 @@ docker-compose.override.yaml
 # ---------- Logs ----------
 logs/
 *.log
+
+# Local-only dev proxy target (machine-specific API port). See frontend/auditx-web/proxy.conf.js.
+frontend/auditx-web/proxy.target.local
