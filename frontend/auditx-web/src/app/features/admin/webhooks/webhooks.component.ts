@@ -21,7 +21,7 @@ import { WebhookDeliveriesComponent } from './webhook-deliveries/webhook-deliver
       [title]="'integrations.webhooks.title' | t"
       [subtitle]="'integrations.webhooks.subtitle' | t"
     />
-    <mat-tab-group>
+    <mat-tab-group class="ax-tabs">
       <mat-tab [label]="'integrations.webhooks.tab.subscriptions' | t">
         <div class="tab-body">
           <app-webhook-subscriptions />

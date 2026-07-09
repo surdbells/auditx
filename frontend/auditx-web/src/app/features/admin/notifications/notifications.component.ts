@@ -25,7 +25,7 @@ import { NotificationDeadLetterComponent } from './notification-dead-letter/noti
       [title]="'notifications.page.title' | t"
       [subtitle]="'notifications.page.subtitle' | t"
     />
-    <mat-tab-group>
+    <mat-tab-group class="ax-tabs">
       <mat-tab [label]="'notifications.tabs.rules' | t">
         <div class="tab-body">
           <app-notification-rules />

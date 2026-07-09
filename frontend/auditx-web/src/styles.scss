@@ -171,6 +171,60 @@ body {
   border-bottom-color: var(--mat-sys-outline-variant) !important;
 }
 
+// ---- Tabs (premium segmented pills) -----------------------------------
+// Opt-in via `class="ax-tabs"` on a <mat-tab-group>: turns the stock underline
+// tabs into a rounded segmented control with a filled, elevated active pill.
+.ax-tabs .mat-mdc-tab-header {
+  border-bottom: 0;
+  margin-bottom: 1.25rem;
+}
+.ax-tabs .mat-mdc-tab-label-container {
+  flex-grow: 0;
+}
+.ax-tabs .mat-mdc-tab-labels {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  background: var(--mat-sys-surface-container);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 13px;
+}
+// Neutralise the default "stretch" so pills hug their labels.
+.ax-tabs.mat-mdc-tab-group-stretch-tabs > .mat-mdc-tab-header .mat-mdc-tab {
+  flex-grow: 0;
+}
+.ax-tabs .mat-mdc-tab {
+  min-width: 0;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 1rem;
+  border-radius: 9px;
+  transition: background var(--ax-dur) var(--ax-ease);
+}
+.ax-tabs .mat-mdc-tab:hover:not(.mdc-tab--active) {
+  background: color-mix(in srgb, var(--mat-sys-on-surface) 5%, transparent);
+}
+.ax-tabs .mdc-tab-indicator {
+  display: none;
+}
+.ax-tabs .mat-mdc-tab .mdc-tab__text-label {
+  color: var(--mat-sys-on-surface-variant);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color var(--ax-dur) var(--ax-ease);
+}
+.ax-tabs .mat-mdc-tab.mdc-tab--active {
+  background: var(--mat-sys-surface);
+  box-shadow: var(--ax-shadow-1);
+}
+.ax-tabs .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: var(--mat-sys-primary);
+}
+// Drop the MDC ripple tint so the pill background stays clean.
+.ax-tabs .mat-mdc-tab .mat-ripple-element {
+  display: none;
+}
+
 // ---- Buttons -----------------------------------------------------------
 // Softer-than-pill radius + a subtle resting shadow on filled buttons.
 .mat-mdc-button-base {
