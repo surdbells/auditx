@@ -180,6 +180,10 @@ describe('AuditDetailComponent', () => {
     )) {
       req.flush({ data: [] });
     }
+    // The activity timeline loads the audit's history on every fetch/reload.
+    for (const req of http.match((r) => r.url === `${BASE}/audits/a-1/history`)) {
+      req.flush({ data: [] });
+    }
   }
 
   afterEach(() => {

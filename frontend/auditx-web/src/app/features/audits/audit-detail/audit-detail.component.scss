@@ -313,6 +313,64 @@
   padding: 0.5rem 0;
 }
 
+// ---- Activity timeline ----
+.detail__timeline {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+}
+.detail__timeline-row {
+  position: relative;
+  display: flex;
+  gap: 0.85rem;
+  padding: 0 0 0.85rem;
+}
+// Connecting line between dots.
+.detail__timeline-row:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 14px;
+  bottom: 0;
+  width: 2px;
+  background: var(--mat-sys-outline-variant);
+}
+.detail__timeline-dot {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  box-shadow: 0 0 0 3px var(--mat-sys-surface);
+}
+.detail__timeline-row--reopen .detail__timeline-dot {
+  background: #e11d48;
+}
+.detail__timeline-body {
+  min-width: 0;
+}
+.detail__timeline-event {
+  margin: 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+.detail__timeline-row--reopen .detail__timeline-event {
+  color: #be123c;
+}
+.detail__timeline-reason {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--mat-sys-on-surface-variant);
+  margin-left: 0.35rem;
+}
+.detail__timeline-meta {
+  margin: 0.1rem 0 0;
+  font-size: 0.78rem;
+}
+
 .detail__exceptions {
   list-style: none;
   margin: 0.75rem 0 0;

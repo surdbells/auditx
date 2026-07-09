@@ -11,6 +11,7 @@ import {
   AssignItemRequest,
   Audit,
   AuditCounts,
+  AuditHistoryEntry,
   AuditListItem,
   AuditQuery,
   BulkReassignRequest,
@@ -55,6 +56,11 @@ export class AuditsService {
 
   getById(id: string): Observable<Audit> {
     return this.api.get<Audit>(`/audits/${id}`);
+  }
+
+  /** The audit's activity timeline (lifecycle / team / section / checklist events) from the trail. */
+  getHistory(id: string): Observable<AuditHistoryEntry[]> {
+    return this.api.get<AuditHistoryEntry[]>(`/audits/${id}/history`);
   }
 
   create(body: CreateAuditRequest): Observable<Audit> {

@@ -376,6 +376,31 @@
         </mat-card>
       }
 
+      <!-- Activity timeline — lifecycle (planned / reopened / …), team & checklist events -->
+      @if (activity().length) {
+        <mat-card appearance="outlined" class="detail__card">
+          <h3 class="detail__card-title">{{ 'audits.activity.title' | t }}</h3>
+          <ol class="detail__timeline">
+            @for (entry of activity(); track entry.id) {
+              <li class="detail__timeline-row" [class.detail__timeline-row--reopen]="isReopen(entry)">
+                <span class="detail__timeline-dot" aria-hidden="true"></span>
+                <div class="detail__timeline-body">
+                  <p class="detail__timeline-event">
+                    {{ eventLabel(entry) }}
+                    @if (reasonOf(entry); as reason) {
+                      <span class="detail__timeline-reason">“{{ reason }}”</span>
+                    }
+                  </p>
+                  <p class="detail__timeline-meta muted">
+                    {{ 'audits.activity.byOn' | t: { name: nameOf(entry.actorUserId), date: (entry.occurredAtUtc | date: 'medium') } }}
+                  </p>
+                </div>
+              </li>
+            }
+          </ol>
+        </mat-card>
+      }
+
       <!-- Fieldwork (M5) lives on its own screen once the audit is past Draft -->
       @if (showExecution()) {
         <a class="detail__fieldwork" [routerLink]="['/audits', a.id, 'execute']">

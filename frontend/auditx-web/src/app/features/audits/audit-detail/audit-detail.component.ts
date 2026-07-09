@@ -37,6 +37,7 @@ import { Permissions } from '../../../core/permissions';
 import {
   Audit,
   AuditChecklistItem,
+  AuditHistoryEntry,
   AuditTeamMember,
   ExceptionListItem,
   PlanItemLocator,
@@ -144,6 +145,8 @@ export class AuditDetailComponent {
   readonly userNames = signal<Record<string, string>>({});
   /** Exceptions raised against this audit (M6). */
   readonly exceptions = signal<ExceptionListItem[]>([]);
+  /** The audit's activity timeline (lifecycle / team / section / checklist events). */
+  readonly activity = signal<AuditHistoryEntry[]>([]);
 
   private usersCache: UserDto[] = [];
 
@@ -350,8 +353,19 @@ export class AuditDetailComponent {
         this.resolveTemplateName(audit.templateId);
         this.resolvePlanLink(audit.planItemId);
         this.loadExceptions();
+        this.loadActivity();
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  /** Loads the audit's activity timeline (non-fatal on error). */
+  private loadActivity(): void {
+    this.service.getHistory(this.id()).subscribe({
+      next: (entries) => this.activity.set(entries),
+      error: () => {
+        // Non-fatal: leave the timeline empty.
+      },
     });
   }
 
@@ -423,6 +437,7 @@ export class AuditDetailComponent {
         this.audit.set(audit);
         this.ensureUsers();
         this.resolveTemplateName(audit.templateId);
+        this.loadActivity();
       },
     });
   }
@@ -457,6 +472,79 @@ export class AuditDetailComponent {
       return '—';
     }
     return this.userNames()[userId] ?? userId;
+  }
+
+  /* ---- Activity timeline ---- */
+
+  private static readonly EVENT_LABELS: Record<string, string> = {
+    audit_created: 'audits.activity.created',
+    audit_metadata_updated: 'audits.activity.metadataUpdated',
+    audit_completed: 'audits.activity.completed',
+    audit_cancelled: 'audits.activity.cancelled',
+    audit_team_member_added: 'audits.activity.teamAdded',
+    audit_team_member_removed: 'audits.activity.teamRemoved',
+    audit_lead_transferred: 'audits.activity.leadTransferred',
+    audit_checklist_item_added: 'audits.activity.itemAdded',
+    audit_checklist_item_edited: 'audits.activity.itemEdited',
+    audit_checklist_item_removed: 'audits.activity.itemRemoved',
+    audit_checklist_items_reordered: 'audits.activity.itemsReordered',
+    audit_section_added: 'audits.activity.sectionAdded',
+    audit_section_renamed: 'audits.activity.sectionRenamed',
+    audit_section_removed: 'audits.activity.sectionRemoved',
+    audit_sections_reordered: 'audits.activity.sectionsReordered',
+  };
+
+  private parseState(json: string | null): { status?: string; reason?: string } | null {
+    if (!json) {
+      return null;
+    }
+    try {
+      return JSON.parse(json) as { status?: string; reason?: string };
+    } catch {
+      return null;
+    }
+  }
+
+  eventLabel(entry: AuditHistoryEntry): string {
+    if (entry.eventType === 'audit_transitioned') {
+      const state = this.parseState(entry.stateJson);
+      const status = state?.status;
+      const hasReason = !!state?.reason;
+      const key =
+        status === 'draft'
+          ? 'reopened'
+          : status === 'planned'
+            ? 'planned'
+            : status === 'in_progress'
+              ? hasReason
+                ? 'returned'
+                : 'started'
+              : status === 'under_review'
+                ? 'sentReview'
+                : status === 'completed'
+                  ? 'completed'
+                  : status === 'cancelled'
+                    ? 'cancelled'
+                    : 'transitioned';
+      return this.i18n.translate('audits.activity.' + key);
+    }
+    const labelKey = AuditDetailComponent.EVENT_LABELS[entry.eventType];
+    return labelKey
+      ? this.i18n.translate(labelKey)
+      : entry.eventType.replace(/_/g, ' ');
+  }
+
+  /** The reason attached to a transition (e.g. the reopen justification), if any. */
+  reasonOf(entry: AuditHistoryEntry): string | null {
+    const reason = this.parseState(entry.stateJson)?.reason;
+    return reason && reason.trim() ? reason.trim() : null;
+  }
+
+  isReopen(entry: AuditHistoryEntry): boolean {
+    return (
+      entry.eventType === 'audit_transitioned' &&
+      this.parseState(entry.stateJson)?.status === 'draft'
+    );
   }
 
   /** Returns the live version, or throws if the audit is not loaded. */

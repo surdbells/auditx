@@ -106,6 +106,16 @@ export interface AuditCounts {
   byStatus: Record<string, number>;
 }
 
+/** One entry in the audit's activity timeline (lifecycle / team / section / checklist events). */
+export interface AuditHistoryEntry {
+  id: string;
+  eventType: string;
+  targetObjectType: string;
+  actorUserId: string | null;
+  occurredAtUtc: string;
+  stateJson: string | null;
+}
+
 /* ---- Request payloads ---- */
 
 export interface CreateAuditRequest {

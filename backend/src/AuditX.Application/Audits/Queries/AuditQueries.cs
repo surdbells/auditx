@@ -4,6 +4,7 @@ using AuditX.Application.Audits.Mapping;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Common.Models;
+using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Enums;
 
 namespace AuditX.Application.Audits.Queries;
@@ -39,6 +40,43 @@ public sealed class GetAuditQueryHandler(IAuditRepository audits)
     {
         var entity = await audits.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Audit", query.Id);
         return entity.ToDto();
+    }
+}
+
+/// <summary>
+/// The audit's activity timeline — lifecycle (created/planned/started/reopened/completed/cancelled), team,
+/// section and checklist events — read from the append-only trail. Gated by ViewAudit at the controller,
+/// mirroring the response/exception-history precedent (not the admin ViewAuditTrail surface).
+/// </summary>
+public sealed record GetAuditHistoryQuery(Guid AuditId) : IQuery<IReadOnlyList<AuditHistoryEntryDto>>;
+
+public sealed class GetAuditHistoryQueryHandler(IAuditRepository audits, IAuditTrailReader trail)
+    : IQueryHandler<GetAuditHistoryQuery, IReadOnlyList<AuditHistoryEntryDto>>
+{
+    // The audit-family trail entries that all carry the audit id as their target id.
+    private static readonly string[] AuditFamilyTargets =
+    [
+        AuditTargetTypes.Audit,
+        AuditTargetTypes.AuditTeamMember,
+        AuditTargetTypes.AuditSection,
+        AuditTargetTypes.AuditChecklistItem,
+    ];
+
+    public async Task<IReadOnlyList<AuditHistoryEntryDto>> Handle(GetAuditHistoryQuery query, CancellationToken cancellationToken)
+    {
+        _ = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+
+        var entries = new List<AuditTrailEntryView>();
+        foreach (var target in AuditFamilyTargets)
+        {
+            entries.AddRange(await trail.GetForTargetAsync(target, query.AuditId, eventType: null, limit: 200, cancellationToken));
+        }
+
+        return entries
+            .OrderBy(e => e.OccurredAtUtc)
+            .Select(e => new AuditHistoryEntryDto(
+                e.Id, e.EventType, e.TargetObjectType, e.ActorUserId, e.OccurredAtUtc, e.AfterStateJson ?? e.EventPayloadJson))
+            .ToArray();
     }
 }
 

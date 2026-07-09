@@ -33,6 +33,11 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetAuditQuery(id), cancellationToken));
 
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/history")]
+    public async Task<IActionResult> History(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetAuditHistoryQuery(id), cancellationToken));
+
     [RequirePermission(PermissionKeys.CreateAudit)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAuditRequest request, CancellationToken cancellationToken)

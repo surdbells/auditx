@@ -33,3 +33,7 @@ public sealed record AuditListItemDto(
     Guid LeadUserId, int ChecklistItemCount, int RespondedItemCount);
 
 public sealed record AuditCountsDto(IReadOnlyDictionary<string, int> ByStatus);
+
+/// <summary>One entry in the audit's activity timeline (from the append-only trail): lifecycle, team + checklist events.</summary>
+public sealed record AuditHistoryEntryDto(
+    Guid Id, string EventType, string TargetObjectType, Guid? ActorUserId, DateTimeOffset OccurredAtUtc, string? StateJson);
