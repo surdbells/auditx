@@ -91,8 +91,15 @@ public static class DependencyInjection
         services.AddScoped<Application.Reports.Generation.ReportGenerationService>();
         services.AddScoped<Reports.HtmlReportRenderer>();
         services.AddScoped<Reports.OpenXmlReportRenderer>();
+        services.AddScoped<Reports.CsvReportRenderer>();
+        services.AddScoped<Reports.XlsxReportRenderer>();
         services.AddScoped<Application.Abstractions.Reports.IReportRenderer>(sp => new Reports.CompositeReportRenderer(
-            [sp.GetRequiredService<Reports.HtmlReportRenderer>(), sp.GetRequiredService<Reports.OpenXmlReportRenderer>()]));
+        [
+            sp.GetRequiredService<Reports.HtmlReportRenderer>(),
+            sp.GetRequiredService<Reports.OpenXmlReportRenderer>(),
+            sp.GetRequiredService<Reports.CsvReportRenderer>(),
+            sp.GetRequiredService<Reports.XlsxReportRenderer>(),
+        ]));
         // M13 audit committee: AC-pack assembler + generation service + format-dispatching renderer (HTML always +
         // DOCX via OpenXml), mirroring the M8 wiring (concrete renderers under their own types; composite built explicitly).
         services.AddScoped<Application.Ac.Generation.AcPackContentAssembler>();

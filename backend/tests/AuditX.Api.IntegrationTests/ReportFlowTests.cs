@@ -191,7 +191,20 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
         Assert.Equal("executive_summary", report.GetProperty("kind").GetString());
         // A standalone report has no audit.
         Assert.True(report.GetProperty("auditId").ValueKind == JsonValueKind.Null);
-        Assert.Contains(report.GetProperty("producedArtefacts").EnumerateArray(), a => a.GetProperty("format").GetString() == "html");
+
+        // HTML (canonical) + CSV + XLSX are always produced for export.
+        var formats = report.GetProperty("producedArtefacts").EnumerateArray()
+            .Select(a => a.GetProperty("format").GetString()).ToArray();
+        Assert.Contains("html", formats);
+        Assert.Contains("csv", formats);
+        Assert.Contains("xlsx", formats);
+
+        foreach (var fmt in new[] { "html", "csv", "xlsx" })
+        {
+            var dl = await manager.GetAsync($"/api/v1/reports/{reportId}/download?format={fmt}");
+            dl.EnsureSuccessStatusCode();
+            Assert.True((await dl.Content.ReadAsByteArrayAsync()).Length > 0);
+        }
 
         var download = await manager.GetAsync($"/api/v1/reports/{reportId}/download?format=html");
         download.EnsureSuccessStatusCode();

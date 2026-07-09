@@ -84,8 +84,7 @@ public sealed class ReportGenerationService(
                 }
 
                 var artefact = renderer.Render(format, context);
-                var ext = format == "docx" ? "docx" : "html";
-                var key = $"reports/{report.Id}/v{report.VersionNumber}/{format}/{Guid.NewGuid():N}.{ext}";
+                var key = $"reports/{report.Id}/v{report.VersionNumber}/{format}/{Guid.NewGuid():N}.{format}";
                 await storage.SaveAsync(key, artefact.Content, cancellationToken);
                 produced.Add(new ProducedArtefact(format, key, artefact.ContentType, artefact.Content.LongLength, artefact.Sha256Hash));
 

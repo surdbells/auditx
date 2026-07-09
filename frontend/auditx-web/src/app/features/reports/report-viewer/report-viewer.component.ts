@@ -8,10 +8,12 @@ import {
 } from '@angular/core';
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -55,6 +57,7 @@ const DISTRIBUTIONS_PAGE_SIZE = 7;
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     MatTooltipModule,
     LoadingComponent,
     ErrorStateComponent,
@@ -75,6 +78,7 @@ export class ReportViewerComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   readonly distributionColumns = [
     'recipient',
@@ -96,6 +100,10 @@ export class ReportViewerComponent {
   readonly verification = signal<ReportHashVerification | null>(null);
   readonly verifying = signal(false);
   readonly printing = signal(false);
+
+  /** Inline preview of the canonical HTML artefact (view before export). */
+  readonly previewHtml = signal<SafeHtml | null>(null);
+  readonly previewState = signal<'idle' | 'loading' | 'ready' | 'error'>('idle');
 
   private usersCache: UserDto[] = [];
 
@@ -127,9 +135,34 @@ export class ReportViewerComponent {
         this.report.set(report);
         this.state.set('ready');
         this.resolveAuditName(report.auditId);
+        this.loadPreview(report);
         this.ensureUsers(() => this.loadDistributions());
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  /**
+   * Loads the canonical HTML artefact and renders it inline (view before export). The report HTML is server-rendered
+   * with every dynamic value HTML-encoded and carries no scripts; it is shown in a fully-sandboxed iframe.
+   */
+  private loadPreview(report: Report): void {
+    if (report.status !== 'completed') {
+      this.previewState.set('idle');
+      return;
+    }
+    this.previewState.set('loading');
+    this.service.download(this.id(), 'html').subscribe({
+      next: async (res) => {
+        const blob = res.body;
+        if (!blob) {
+          this.previewState.set('error');
+          return;
+        }
+        this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(await blob.text()));
+        this.previewState.set('ready');
+      },
+      error: () => this.previewState.set('error'),
     });
   }
 

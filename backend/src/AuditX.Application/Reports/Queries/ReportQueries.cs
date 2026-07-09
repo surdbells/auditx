@@ -103,9 +103,9 @@ public sealed class DownloadReportArtefactQueryHandler(
             throw new ReportIntegrityException();
         }
 
-        var ext = format == "docx" ? "docx" : "html";
+        // The format string IS the extension for every supported format (html/docx/csv/xlsx).
         var stem = report.AuditId is { } aid ? $"audit-report-{aid}" : StandaloneReportModel.FileStemFor(report.Kind);
-        var filename = $"{stem}-v{report.VersionNumber}.{ext}";
+        var filename = $"{stem}-v{report.VersionNumber}.{format}";
         return new ReportArtefactResult(content, artefact.ContentType, filename, artefact.Sha256);
     }
 }
