@@ -14,7 +14,7 @@ public sealed class ExecutionTests
 
     private static Audit InProgressAudit(int items = 1)
     {
-        var a = Audit.Create("Branch Audit", "branch", new DateOnly(2027, 1, 10), new DateOnly(2027, 2, 10), null, null, null, null, Lead, Auditee, null, Lead, Now);
+        var a = Audit.Create("Branch Audit", "branch", new DateOnly(2027, 1, 10), new DateOnly(2027, 2, 10), null, null, null, null, null, Lead, Auditee, null, Lead, Now);
         a.AddTeamMember(Auditor, TeamRole.Auditor, Lead, Now);
         for (var i = 0; i < items; i++)
         {
@@ -31,7 +31,7 @@ public sealed class ExecutionTests
     [Fact]
     public void Responses_locked_until_in_progress()
     {
-        var a = Audit.Create("X", "t", new DateOnly(2027, 1, 1), new DateOnly(2027, 2, 1), null, null, null, null, Lead, Auditee, null, Lead, Now);
+        var a = Audit.Create("X", "t", new DateOnly(2027, 1, 1), new DateOnly(2027, 2, 1), null, null, null, null, null, Lead, Auditee, null, Lead, Now);
         a.AddChecklistItem("Q", null, ResponseType.PassFailNa, null, true, null);
         Assert.Throws<InvalidStateTransitionException>(() => a.RecordResponse(a.ChecklistItems[0].Id, ResponseVerdict.Pass, "ok", false, Actor, false, Now));
     }
@@ -47,7 +47,7 @@ public sealed class ExecutionTests
 
     private static Audit InProgressAuditWith(ResponseType type)
     {
-        var a = Audit.Create("Branch Audit", "branch", new DateOnly(2027, 1, 10), new DateOnly(2027, 2, 10), null, null, null, null, Lead, Auditee, null, Lead, Now);
+        var a = Audit.Create("Branch Audit", "branch", new DateOnly(2027, 1, 10), new DateOnly(2027, 2, 10), null, null, null, null, null, Lead, Auditee, null, Lead, Now);
         a.AddTeamMember(Auditor, TeamRole.Auditor, Lead, Now);
         a.AddChecklistItem("How many exceptions?", null, type, null, true, null);
         a.Plan();
@@ -79,7 +79,7 @@ public sealed class ExecutionTests
     [Fact]
     public void Response_type_can_change_while_draft()
     {
-        var a = Audit.Create("Branch Audit", "branch", new DateOnly(2027, 1, 10), new DateOnly(2027, 2, 10), null, null, null, null, Lead, Auditee, null, Lead, Now);
+        var a = Audit.Create("Branch Audit", "branch", new DateOnly(2027, 1, 10), new DateOnly(2027, 2, 10), null, null, null, null, null, Lead, Auditee, null, Lead, Now);
         a.AddChecklistItem("Q", null, ResponseType.PassFailNa, null, true, null);
         var itemId = a.ChecklistItems[0].Id;
         a.EditChecklistItem(itemId, "Q", null, ResponseType.Rating, "{\"max\":5}", null, true, null);

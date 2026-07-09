@@ -406,9 +406,10 @@ public sealed class DemoDataSeeder(
         var startDate = Today.AddDays(startOffsetDays);
         var targetEnd = Today.AddDays(targetOffsetDays);
 
+        var auditableEntityId = planItemId is { } pid ? plan.Items.FirstOrDefault(i => i.Id == pid)?.EntityId : null;
         var data = new CreateAuditData(
             name, auditType, startDate, targetEnd, ScopeDescription: $"Scope: {name}.",
-            templateId, TemplateVersion: null, planItemId, leadId, auditeeId, auditorIds);
+            templateId, TemplateVersion: null, planItemId, auditableEntityId, leadId, auditeeId, auditorIds);
 
         var audit = await auditCreationService.BuildAsync(data, createdBy: leadId, _now, ct);
         db.Audits.Add(audit);

@@ -41,6 +41,9 @@ public sealed class Audit : AggregateRoot
 
     public Guid? PlanItemId { get; private set; }
 
+    /// <summary>The audit-universe entity this engagement covers (direct link, so ad-hoc audits aren't entity-less).</summary>
+    public Guid? AuditableEntityId { get; private set; }
+
     public Guid LeadUserId { get; private set; }
 
     public Guid AuditeeUserId { get; private set; }
@@ -65,7 +68,7 @@ public sealed class Audit : AggregateRoot
 
     public static Audit Create(
         string name, string auditType, DateOnly startDate, DateOnly targetEndDate,
-        string? scopeDescription, Guid? templateId, int? templateVersion, Guid? planItemId,
+        string? scopeDescription, Guid? templateId, int? templateVersion, Guid? planItemId, Guid? auditableEntityId,
         Guid leadUserId, Guid auditeeUserId, string? configurationVersionsJson, Guid? createdBy, DateTimeOffset nowUtc)
     {
         if (targetEndDate < startDate)
@@ -88,6 +91,7 @@ public sealed class Audit : AggregateRoot
             TemplateId = templateId,
             TemplateVersion = templateVersion,
             PlanItemId = planItemId,
+            AuditableEntityId = auditableEntityId,
             LeadUserId = leadUserId,
             AuditeeUserId = auditeeUserId,
             ConfigurationVersionsJson = string.IsNullOrWhiteSpace(configurationVersionsJson) ? "{}" : configurationVersionsJson,

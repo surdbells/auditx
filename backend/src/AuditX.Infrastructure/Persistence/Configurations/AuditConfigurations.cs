@@ -33,6 +33,8 @@ public sealed class AuditConfiguration : IEntityTypeConfiguration<Audit>
         // 1:1 integrity: at most one audit per plan item (nulls excluded so ad-hoc audits without a plan are unaffected).
         builder.HasIndex(a => a.PlanItemId).IsUnique().HasFilter("[plan_item_id] IS NOT NULL");
         builder.HasIndex(a => new { a.Status, a.StartDate });
+        // Entity-level audit reporting (audits covering a given auditable entity).
+        builder.HasIndex(a => a.AuditableEntityId);
 
         builder.HasMany(a => a.TeamMembers).WithOne().HasForeignKey(m => m.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(a => a.Sections).WithOne().HasForeignKey(s => s.AuditId).OnDelete(DeleteBehavior.Cascade);

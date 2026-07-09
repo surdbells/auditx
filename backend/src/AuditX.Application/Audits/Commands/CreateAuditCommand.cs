@@ -74,9 +74,13 @@ public sealed class CreateAuditCommandHandler(
         }
 
         var targetEnd = command.TargetEndDate ?? ComputeDefaultTargetEnd(command, plan);
+        // Link the audit directly to the entity it covers, sourced from the plan item when plan-launched.
+        var auditableEntityId = command.PlanItemId is { } eid
+            ? plan?.Items.FirstOrDefault(i => i.Id == eid)?.EntityId
+            : null;
         var data = new CreateAuditData(
             command.Name, command.AuditType, command.StartDate, targetEnd, command.ScopeDescription,
-            command.TemplateId, null, command.PlanItemId, command.LeadUserId, command.AuditeeUserId,
+            command.TemplateId, null, command.PlanItemId, auditableEntityId, command.LeadUserId, command.AuditeeUserId,
             command.TeamMemberUserIds ?? []);
 
         var auditEntity = await creationService.BuildAsync(data, currentUser.UserId, clock.UtcNow, cancellationToken);

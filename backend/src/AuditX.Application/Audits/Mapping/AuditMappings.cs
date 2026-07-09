@@ -19,6 +19,7 @@ public static class AuditMappings
         audit.TemplateId,
         audit.TemplateVersion,
         audit.PlanItemId,
+        audit.AuditableEntityId,
         audit.LeadUserId,
         audit.AuditeeUserId,
         audit.CancellationReason,

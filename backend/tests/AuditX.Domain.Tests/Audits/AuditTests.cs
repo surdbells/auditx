@@ -12,7 +12,7 @@ public sealed class AuditTests
     private static readonly Guid Lead = Guid.NewGuid();
     private static readonly Guid Auditee = Guid.NewGuid();
 
-    private static Audit New() => Audit.Create("Branch Audit", "branch", Start, End, null, null, null, null, Lead, Auditee, null, Lead, Now);
+    private static Audit New() => Audit.Create("Branch Audit", "branch", Start, End, null, null, null, null, null, Lead, Auditee, null, Lead, Now);
 
     private static Audit ReadyToPlan()
     {
@@ -24,11 +24,11 @@ public sealed class AuditTests
 
     [Fact]
     public void Create_rejects_target_before_start()
-        => Assert.Throws<DomainException>(() => Audit.Create("X", "t", End, Start, null, null, null, null, Lead, Auditee, null, Lead, Now));
+        => Assert.Throws<DomainException>(() => Audit.Create("X", "t", End, Start, null, null, null, null, null, Lead, Auditee, null, Lead, Now));
 
     [Fact]
     public void Create_rejects_lead_equal_auditee()
-        => Assert.Throws<DomainException>(() => Audit.Create("X", "t", Start, End, null, null, null, null, Lead, Lead, null, Lead, Now));
+        => Assert.Throws<DomainException>(() => Audit.Create("X", "t", Start, End, null, null, null, null, null, Lead, Lead, null, Lead, Now));
 
     [Fact]
     public void Create_starts_draft_with_lead_and_auditee()

@@ -20,6 +20,7 @@ public sealed record AuditDto(
     Guid? TemplateId,
     int? TemplateVersion,
     Guid? PlanItemId,
+    Guid? AuditableEntityId,
     Guid LeadUserId,
     Guid AuditeeUserId,
     string? CancellationReason,

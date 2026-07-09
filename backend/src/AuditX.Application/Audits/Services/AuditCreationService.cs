@@ -17,6 +17,7 @@ public sealed record CreateAuditData(
     Guid? TemplateId,
     int? TemplateVersion,
     Guid? PlanItemId,
+    Guid? AuditableEntityId,
     Guid LeadUserId,
     Guid AuditeeUserId,
     IReadOnlyList<Guid> TeamMemberUserIds);
@@ -48,7 +49,7 @@ public sealed class AuditCreationService(ITemplateRepository templates)
 
         var audit = Audit.Create(
             data.Name.Trim(), data.AuditType.Trim(), data.StartDate, data.TargetEndDate,
-            data.ScopeDescription, data.TemplateId, templateVersion, data.PlanItemId,
+            data.ScopeDescription, data.TemplateId, templateVersion, data.PlanItemId, data.AuditableEntityId,
             data.LeadUserId, data.AuditeeUserId, configurationVersionsJson: "{}", createdBy, nowUtc);
 
         foreach (var userId in data.TeamMemberUserIds.Distinct())
