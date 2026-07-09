@@ -1311,7 +1311,7 @@
   "planning.detail.close": "Clôturer",
   "planning.detail.launchAudit": "Lancer l'audit",
   "planning.detail.launchAuditTip": "Créer un audit à partir de cet élément du plan",
-  "planning.detail.launchLockedTip": "Approuvez d'abord le plan pour lancer ses audits",
+  "planning.detail.launchLockedTip": "Soumettez le plan et faites-le approuver par le comité d'audit avant de pouvoir lancer ses audits.",
   "planning.detail.openAudit": "Ouvrir l'audit",
   "planning.detail.openAuditTip": "Ouvrir l'audit lancé depuis cet élément du plan",
   "planning.detail.submittedAt": "Soumis {{date}}",

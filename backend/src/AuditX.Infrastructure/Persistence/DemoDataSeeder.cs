@@ -123,6 +123,7 @@ public sealed class DemoDataSeeder(
         // Grant the loginable dev users a spread of roles so their sessions can reach the whole platform.
         GrantRole(manager, rolesByName, BuiltInRoles.AuditManagerName);
         GrantRole(manager, rolesByName, AcRoles.ChiefInternalAuditor); // manager doubles as CIA for the demo
+        GrantRole(manager, rolesByName, AcRoles.AuditCommitteeChair); // …and chairs the AC so one login can drive plan → approve → launch
         GrantRole(auditor, rolesByName, BuiltInRoles.AuditorName);
         GrantRole(auditee, rolesByName, BuiltInRoles.AuditeeName);
         GrantRole(auditee, rolesByName, AcRoles.AuditCommitteeMember); // auditee doubles as an AC member for the demo

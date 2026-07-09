@@ -27,10 +27,10 @@ public static class BuiltInRoles
 
     public static readonly BuiltInRoleDefinition AuditManager = new(
         AuditManagerName,
-        "Creates and leads audits, reviews work, approves MAPs, closes exceptions and generates reports.",
+        "Owns the annual audit plan; creates and leads audits, reviews work, approves MAPs, closes exceptions and generates reports.",
         [
             PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.CreateAudit, PermissionKeys.ManageAudit,
-            PermissionKeys.ViewTemplates, PermissionKeys.ViewUniverse, PermissionKeys.ViewPlan, PermissionKeys.ViewCoverage,
+            PermissionKeys.ViewTemplates, PermissionKeys.ViewUniverse, PermissionKeys.ViewPlan, PermissionKeys.ManagePlan, PermissionKeys.ViewCoverage,
             PermissionKeys.RespondItem, PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ManageEvidence,
             PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException,
             PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException,
@@ -61,6 +61,9 @@ public static class BuiltInRoles
             PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException, PermissionKeys.SubmitMap,
             PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException, PermissionKeys.Cia,
             PermissionKeys.ConfigureNotifications, PermissionKeys.ConfigureReports, PermissionKeys.ConfigureExceptionWorkflow,
+            // Bootstrap governance: the super-user can approve annual plans + read AC surfaces out of the box, so a
+            // fresh install can complete plan → approve → launch without first hand-assigning an Audit Committee Chair.
+            PermissionKeys.AcMember, PermissionKeys.AcChair,
             PermissionKeys.ManageGrid, PermissionKeys.ViewGrid,
             PermissionKeys.ConfigureDashboards, PermissionKeys.ConfigurePredictive,
             PermissionKeys.ViewIntegrations, PermissionKeys.ConfigureIntegrations, PermissionKeys.ViewIntegrationHealth, PermissionKeys.ConfigureWebhooks,

@@ -71,6 +71,22 @@ public sealed class Role : AggregateRoot
         SetPermissionsInternal(permissions);
     }
 
+    /// <summary>
+    /// SYSTEM reconciliation of a built-in role's permission set to its code definition (seeder only). Built-in roles
+    /// are code-owned and immutable to administrators; this keeps them in sync when the definition changes, so a
+    /// permission added in code takes effect on the next deploy without a re-seed. Not a user edit — no
+    /// <c>EnsureMutable</c>. Only valid on a built-in role.
+    /// </summary>
+    public void SyncBuiltInPermissions(IEnumerable<(string Key, PermissionScopeType ScopeType, string? ScopePredicateJson)> permissions)
+    {
+        if (!IsBuiltIn)
+        {
+            throw new DomainException("role.not_builtin", "Only built-in roles are reconciled from code.");
+        }
+
+        SetPermissionsInternal(permissions);
+    }
+
     private void SetPermissionsInternal(IEnumerable<(string Key, PermissionScopeType ScopeType, string? ScopePredicateJson)> permissions)
     {
         _permissions.Clear();

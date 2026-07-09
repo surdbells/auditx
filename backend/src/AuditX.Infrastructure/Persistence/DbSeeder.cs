@@ -447,11 +447,21 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
 
         foreach (var definition in BuiltInRoles.All)
         {
-            if (!byName.ContainsKey(definition.Name))
+            if (!byName.TryGetValue(definition.Name, out var role))
             {
-                var role = Role.CreateBuiltIn(definition);
+                role = Role.CreateBuiltIn(definition);
                 db.Roles.Add(role);
                 byName[role.Name] = role;
+                continue;
+            }
+
+            // Reconcile: built-in roles are code-owned. If the code definition's permission set has changed (e.g. a
+            // new grant added in an upgrade), sync the persisted role so it takes effect without a re-seed/wipe.
+            var current = role.Permissions.Select(p => p.PermissionKey).ToHashSet(StringComparer.Ordinal);
+            if (!current.SetEquals(definition.Permissions))
+            {
+                role.SyncBuiltInPermissions(definition.Permissions.Select(
+                    key => (key, PermissionScopeType.Global, (string?)null)));
             }
         }
 

@@ -1311,7 +1311,7 @@
   "planning.detail.close": "Close",
   "planning.detail.launchAudit": "Launch audit",
   "planning.detail.launchAuditTip": "Create an audit from this plan item",
-  "planning.detail.launchLockedTip": "Approve the plan first to launch its audits",
+  "planning.detail.launchLockedTip": "Submit the plan and have the Audit Committee approve it before its audits can be launched.",
   "planning.detail.openAudit": "Open audit",
   "planning.detail.openAuditTip": "Open the audit launched from this plan item",
   "planning.detail.submittedAt": "Submitted {{date}}",
