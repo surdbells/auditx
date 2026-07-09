@@ -157,4 +157,35 @@ public sealed class AuditTests
         a.Plan();
         Assert.Throws<InvalidStateTransitionException>(() => a.EditChecklistItem(itemId, "x", null, ResponseType.PassFailNa, null, null, true, null));
     }
+
+    [Fact]
+    public void Arrange_moves_item_across_sections_and_reorders_while_in_progress()
+    {
+        var a = ReadyToPlan();
+        var i2 = a.AddChecklistItem("Vault reconciled?", null, ResponseType.PassFailNa, "Controls", true, null);
+        var i1 = a.ChecklistItems[0]; // ungrouped
+        a.AddTeamMember(Guid.NewGuid(), TeamRole.Auditor, Lead, Now);
+        a.Plan();
+        a.Start(); // InProgress — item edit is blocked here, but arrange (reorder + move) is allowed
+
+        // Move the ungrouped item into "Controls" and put it first.
+        a.ArrangeChecklistItems([
+            new ChecklistItemPlacement(i1.Id, "Controls"),
+            new ChecklistItemPlacement(i2.Id, "Controls"),
+        ]);
+
+        Assert.Equal("Controls", a.ChecklistItems.First(i => i.Id == i1.Id).SectionName);
+        Assert.Equal(0, a.ChecklistItems.First(i => i.Id == i1.Id).OrderIndex);
+        Assert.Equal(1, a.ChecklistItems.First(i => i.Id == i2.Id).OrderIndex);
+    }
+
+    [Fact]
+    public void Arrange_rejects_a_partial_placement_list()
+    {
+        var a = ReadyToPlan();
+        a.AddChecklistItem("Second", null, ResponseType.PassFailNa, null, true, null);
+        var only = a.ChecklistItems[0].Id;
+        var ex = Assert.Throws<DomainException>(() => a.ArrangeChecklistItems([new ChecklistItemPlacement(only, null)]));
+        Assert.Equal("audit.reorder_mismatch", ex.Code);
+    }
 }

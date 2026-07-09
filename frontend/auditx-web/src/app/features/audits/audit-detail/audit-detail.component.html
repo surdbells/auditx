@@ -206,103 +206,142 @@
         @if (!checklistGroups().length) {
           <p class="muted detail__empty">{{ 'audits.checklist.empty' | t }}</p>
         } @else {
-          @for (group of checklistGroups(); track group.name) {
+          <!-- First-class sections: drag the header handle to reorder whole sections -->
+          <div
+            class="detail__sections"
+            cdkDropList
+            [cdkDropListData]="entitySectionGroups()"
+            [cdkDropListDisabled]="!canManageSections()"
+            (cdkDropListDropped)="dropSection($event)"
+          >
+            @for (group of entitySectionGroups(); track group.name) {
+              <section class="detail__section" cdkDrag [cdkDragData]="group" [cdkDragDisabled]="!canManageSections()">
+                <header class="detail__section-head">
+                  @if (canManageSections()) {
+                    <button
+                      matIconButton
+                      type="button"
+                      cdkDragHandle
+                      class="detail__section-drag"
+                      [attr.aria-label]="'audits.sections.reorderAria' | t"
+                      [matTooltip]="'audits.sections.reorder' | t"
+                    >
+                      <mat-icon>drag_indicator</mat-icon>
+                    </button>
+                  }
+                  <span class="detail__section-icon" aria-hidden="true"><mat-icon>segment</mat-icon></span>
+                  <h4 class="detail__section-name">{{ group.name }}</h4>
+                  <span class="detail__section-count">{{ group.items.length }}</span>
+                  @if (canManageSections()) {
+                    <span class="detail__section-actions">
+                      <button
+                        matIconButton
+                        type="button"
+                        (click)="renameSection(group)"
+                        [attr.aria-label]="'audits.sections.renameAria' | t: { name: group.name }"
+                        [matTooltip]="'audits.sections.renameConfirm' | t"
+                      >
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      @if (!group.items.length) {
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="removeSection(group)"
+                          [attr.aria-label]="'audits.sections.removeAria' | t: { name: group.name }"
+                          [matTooltip]="'audits.actions.remove' | t"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      }
+                    </span>
+                  }
+                </header>
+                <ng-container [ngTemplateOutlet]="itemsTpl" [ngTemplateOutletContext]="{ $implicit: group }" />
+              </section>
+            }
+          </div>
+
+          <!-- Ungrouped bucket (not a reorderable section, but items can be dragged in/out) -->
+          @if (ungroupedGroup(); as group) {
             <section class="detail__section">
               <header class="detail__section-head">
                 <span class="detail__section-icon" aria-hidden="true"><mat-icon>segment</mat-icon></span>
                 <h4 class="detail__section-name">{{ group.name }}</h4>
                 <span class="detail__section-count">{{ group.items.length }}</span>
-                @if (canManageSections() && group.sectionName) {
-                  <span class="detail__section-actions">
-                    <button
-                      matIconButton
-                      type="button"
-                      (click)="renameSection(group)"
-                      [attr.aria-label]="'audits.sections.renameAria' | t: { name: group.name }"
-                      [matTooltip]="'audits.sections.renameConfirm' | t"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    @if (!group.items.length) {
-                      <button
-                        matIconButton
-                        type="button"
-                        (click)="removeSection(group)"
-                        [attr.aria-label]="'audits.sections.removeAria' | t: { name: group.name }"
-                        [matTooltip]="'audits.actions.remove' | t"
-                      >
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    }
-                  </span>
-                }
               </header>
-              <ul
-                class="detail__items"
-                cdkDropList
-                [cdkDropListData]="group.items"
-                [cdkDropListDisabled]="!canEditChecklist()"
-                (cdkDropListDropped)="dropChecklistItem($event, group)"
-              >
-                @for (item of group.items; track item.id) {
-                  <li class="detail__item" cdkDrag [cdkDragData]="item">
-                    @if (canEditChecklist()) {
-                      <button
-                        matIconButton
-                        type="button"
-                        cdkDragHandle
-                        class="detail__drag"
-                        [attr.aria-label]="'audits.actions.reorderItemAria' | t"
-                        [matTooltip]="'audits.actions.dragToReorder' | t"
-                      >
-                        <mat-icon>drag_indicator</mat-icon>
-                      </button>
-                    }
-                    <div class="detail__item-main">
-                      <p class="detail__item-prompt">
-                        {{ item.prompt }}
-                        @if (item.isRequired) {
-                          <span class="detail__required">{{ 'audits.checklist.required' | t }}</span>
-                        }
-                      </p>
-                      @if (item.referenceNotes) {
-                        <p class="muted detail__item-notes">{{ item.referenceNotes }}</p>
-                      }
-                      <div class="detail__item-meta">
-                        <span class="status-badge" [attr.data-status]="item.itemState">
-                          {{ item.itemState.replace('_', ' ') }}
-                        </span>
-                        <span class="muted">{{ item.responseType.replace('_', '/') }}</span>
-                        <span class="muted">{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
-                      </div>
-                    </div>
-                    @if (canEditChecklist()) {
-                      <div class="detail__item-actions">
-                        <button
-                          matIconButton
-                          type="button"
-                          (click)="editChecklistItem(item)"
-                          [attr.aria-label]="'audits.actions.editItemAria' | t"
-                        >
-                          <mat-icon>edit</mat-icon>
-                        </button>
-                        <button
-                          matIconButton
-                          type="button"
-                          (click)="removeChecklistItem(item)"
-                          [attr.aria-label]="'audits.actions.removeItemAria' | t"
-                        >
-                          <mat-icon>delete</mat-icon>
-                        </button>
-                      </div>
-                    }
-                  </li>
-                }
-              </ul>
+              <ng-container [ngTemplateOutlet]="itemsTpl" [ngTemplateOutletContext]="{ $implicit: group }" />
             </section>
           }
         }
       </mat-card>
+
+      <ng-template #itemsTpl let-group>
+        <ul
+          class="detail__items"
+          cdkDropList
+          [id]="listId(group)"
+          [cdkDropListData]="group.items"
+          [cdkDropListConnectedTo]="connectedListIds()"
+          [cdkDropListDisabled]="!canReorderChecklist()"
+          (cdkDropListDropped)="dropChecklistItem($event)"
+        >
+          @for (item of group.items; track item.id) {
+            <li class="detail__item" cdkDrag [cdkDragData]="item" [cdkDragDisabled]="!canReorderChecklist()">
+              @if (canReorderChecklist()) {
+                <button
+                  matIconButton
+                  type="button"
+                  cdkDragHandle
+                  class="detail__drag"
+                  [attr.aria-label]="'audits.actions.reorderItemAria' | t"
+                  [matTooltip]="'audits.actions.dragToReorder' | t"
+                >
+                  <mat-icon>drag_indicator</mat-icon>
+                </button>
+              }
+              <div class="detail__item-main">
+                <p class="detail__item-prompt">
+                  {{ item.prompt }}
+                  @if (item.isRequired) {
+                    <span class="detail__required">{{ 'audits.checklist.required' | t }}</span>
+                  }
+                </p>
+                @if (item.referenceNotes) {
+                  <p class="muted detail__item-notes">{{ item.referenceNotes }}</p>
+                }
+                <div class="detail__item-meta">
+                  <span class="status-badge" [attr.data-status]="item.itemState">
+                    {{ item.itemState.replace('_', ' ') }}
+                  </span>
+                  <span class="muted">{{ item.responseType.replace('_', '/') }}</span>
+                  <span class="muted">{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
+                </div>
+              </div>
+              @if (canEditChecklist()) {
+                <div class="detail__item-actions">
+                  <button
+                    matIconButton
+                    type="button"
+                    (click)="editChecklistItem(item)"
+                    [attr.aria-label]="'audits.actions.editItemAria' | t"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    matIconButton
+                    type="button"
+                    (click)="removeChecklistItem(item)"
+                    [attr.aria-label]="'audits.actions.removeItemAria' | t"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      </ng-template>
 
       <!-- Exceptions (M6) — raised against this audit's findings -->
       @if (canViewExceptions() && showExecution()) {

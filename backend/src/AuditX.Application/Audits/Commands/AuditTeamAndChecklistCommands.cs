@@ -241,3 +241,20 @@ public sealed class ReorderAuditChecklistItemsCommandHandler(IAuditRepository au
         return entity.ToDto();
     }
 }
+
+/// <summary>Drag-drop arrange: reorder + cross-section move in one operation (Draft or In Progress).</summary>
+public sealed record ArrangeAuditChecklistItemsCommand(Guid AuditId, IReadOnlyList<ChecklistItemPlacement> Placements, string Version) : ICommand<AuditDto>;
+
+public sealed class ArrangeAuditChecklistItemsCommandHandler(IAuditRepository audits, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<ArrangeAuditChecklistItemsCommand, AuditDto>
+{
+    public async Task<AuditDto> Handle(ArrangeAuditChecklistItemsCommand command, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
+        entity.EnsureVersion(command.Version);
+        entity.ArrangeChecklistItems(command.Placements);
+        audit.Record(AuditEventTypes.AuditChecklistItemsReordered, AuditTargetTypes.AuditChecklistItem, entity.Id);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto();
+    }
+}

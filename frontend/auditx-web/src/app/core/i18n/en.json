@@ -534,6 +534,8 @@
   "audits.sections.removeMessage": "Remove the empty section \"{{name}}\"? This cannot be undone.",
   "audits.sections.duplicate": "A section with that name already exists.",
   "audits.sections.required": "A section name is required.",
+  "audits.sections.reorder": "Drag to reorder section",
+  "audits.sections.reorderAria": "Drag to reorder this section",
   "audits.sections.added": "Section added.",
   "audits.sections.renamed": "Section renamed.",
   "audits.sections.removed": "Section removed.",

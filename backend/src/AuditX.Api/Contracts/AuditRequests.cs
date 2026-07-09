@@ -30,6 +30,10 @@ public sealed record EditAuditChecklistItemRequest(string Prompt, string? Refere
 
 public sealed record ReorderAuditChecklistItemsRequest(IReadOnlyList<Guid> OrderedItemIds, string Version);
 
+public sealed record ChecklistItemPlacementRequest(Guid ItemId, string? SectionName);
+
+public sealed record ArrangeAuditChecklistItemsRequest(IReadOnlyList<ChecklistItemPlacementRequest> Placements, string Version);
+
 public sealed record AddAuditSectionRequest(string Name, string Version);
 
 public sealed record RenameAuditSectionRequest(string CurrentName, string NewName, string Version);

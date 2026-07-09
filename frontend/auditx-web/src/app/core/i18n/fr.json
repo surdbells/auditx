@@ -534,6 +534,8 @@
   "audits.sections.removeMessage": "Supprimer la section vide « {{name}} » ? Cette action est irréversible.",
   "audits.sections.duplicate": "Une section portant ce nom existe déjà.",
   "audits.sections.required": "Un nom de section est requis.",
+  "audits.sections.reorder": "Glisser pour réordonner la section",
+  "audits.sections.reorderAria": "Glisser pour réordonner cette section",
   "audits.sections.added": "Section ajoutée.",
   "audits.sections.renamed": "Section renommée.",
   "audits.sections.removed": "Section supprimée.",

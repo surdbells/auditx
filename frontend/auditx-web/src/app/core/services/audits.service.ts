@@ -133,6 +133,17 @@ export class AuditsService {
     return this.api.post<Audit>(`/audits/${id}/checklist/items/reorder`, body);
   }
 
+  /** Drag-drop arrange: reorder + cross-section move in one call (allowed in draft or in-progress). */
+  arrangeChecklistItems(
+    id: string,
+    body: {
+      placements: { itemId: string; sectionName: string | null }[];
+      version: string;
+    },
+  ): Observable<Audit> {
+    return this.api.post<Audit>(`/audits/${id}/checklist/items/arrange`, body);
+  }
+
   /* ---- Checklist sections (first-class CRUD) ---- */
 
   addSection(id: string, body: { name: string; version: string }): Observable<Audit> {

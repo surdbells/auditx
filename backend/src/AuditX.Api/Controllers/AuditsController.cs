@@ -5,6 +5,7 @@ using AuditX.Application.Audits.Queries;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Execution.Commands;
 using AuditX.Application.Execution.Queries;
+using AuditX.Domain.Audits;
 using AuditX.Domain.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -111,6 +112,12 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     [HttpPost("{id:guid}/checklist/items/reorder")]
     public async Task<IActionResult> ReorderChecklistItems(Guid id, [FromBody] ReorderAuditChecklistItemsRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new ReorderAuditChecklistItemsCommand(id, request.OrderedItemIds, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/checklist/items/arrange")]
+    public async Task<IActionResult> ArrangeChecklistItems(Guid id, [FromBody] ArrangeAuditChecklistItemsRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ArrangeAuditChecklistItemsCommand(
+            id, request.Placements.Select(p => new ChecklistItemPlacement(p.ItemId, p.SectionName)).ToArray(), request.Version), cancellationToken));
 
     // ---- Checklist sections (first-class CRUD) ----
 

@@ -2,6 +2,9 @@ using AuditX.Domain.Common;
 
 namespace AuditX.Domain.Audits;
 
+/// <summary>A drag-drop placement: the item and its (possibly null = ungrouped) target section, in final order.</summary>
+public sealed record ChecklistItemPlacement(Guid ItemId, string? SectionName);
+
 /// <summary>
 /// A named grouping of checklist items within an audit (e.g. "Cash Handling"). Mirrors
 /// <c>TemplateSection</c>: items reference a section by its (case-insensitive) <see cref="Name"/>, while the

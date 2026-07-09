@@ -80,6 +80,9 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
     /// <summary>Cascade a section rename (called from Audit.RenameSection).</summary>
     internal void RenameSection(string newSectionName) => SectionName = newSectionName;
 
+    /// <summary>Move the item to a (possibly null = ungrouped) section — used by drag-drop arrange.</summary>
+    internal void SetSection(string? sectionName) => SectionName = sectionName;
+
     internal void Assign(Guid? userId) => AssignedUserId = userId;
 
     /// <summary>Set by M5 when a response is recorded/cleared.</summary>

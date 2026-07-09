@@ -6,7 +6,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -97,6 +97,7 @@ const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatePipe,
+    NgTemplateOutlet,
     RouterLink,
     MatCardModule,
     MatButtonModule,
@@ -231,6 +232,27 @@ export class AuditDetailComponent {
       .map((s) => s.name),
   );
 
+  /** Entity-backed sections (draggable/reorderable); ungrouped is pinned separately. */
+  readonly entitySectionGroups = computed(() =>
+    this.checklistGroups().filter((g) => g.sectionName !== null),
+  );
+  readonly ungroupedGroup = computed(() =>
+    this.checklistGroups().find((g) => g.sectionName === null) ?? null,
+  );
+  /** cdkDropList ids so item lists connect for cross-section drag. */
+  readonly connectedListIds = computed(() =>
+    this.checklistGroups().map((g) => this.listId(g)),
+  );
+
+  listId(group: ChecklistGroup): string {
+    return (
+      'cl-' +
+      (group.sectionName
+        ? group.sectionName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+        : '__ungrouped__')
+    );
+  }
+
   private readonly auditorCount = computed(
     () =>
       this.activeMembers().filter((m) => m.teamRole === 'auditor').length,
@@ -301,6 +323,11 @@ export class AuditDetailComponent {
 
   /** Sections may be added / renamed / removed / reordered while the checklist is editable (draft or in progress). */
   readonly canManageSections = computed(
+    () => this.canManage() && (this.isDraft() || this.isInProgress()),
+  );
+
+  /** Items may be reordered / moved across sections in draft OR in progress (unlike edit/remove, which are draft-only). */
+  readonly canReorderChecklist = computed(
     () => this.canManage() && (this.isDraft() || this.isInProgress()),
   );
 
@@ -839,10 +866,61 @@ export class AuditDetailComponent {
   }
 
   /**
-   * Reorder checklist items within a section by dragging. Optimistically re-stamps orderIndex so the row
-   * doesn't snap back, sends the full ordered id list, and reverts on error.
+   * Drag a checklist item — within a section (reorder) or across sections (move). Rebuilds the full ordered
+   * placement list (item + its destination section), optimistically re-stamps order + section so the row
+   * doesn't snap back, sends one arrange call, and reverts on error. Works in draft and in progress.
    */
-  dropChecklistItem(event: CdkDragDrop<AuditChecklistItem[]>, group: ChecklistGroup): void {
+  dropChecklistItem(event: CdkDragDrop<AuditChecklistItem[]>): void {
+    const current = this.audit();
+    if (!current) {
+      return;
+    }
+    const groups = this.checklistGroups();
+    const source = groups.find((g) => this.listId(g) === event.previousContainer.id);
+    const target = groups.find((g) => this.listId(g) === event.container.id);
+    if (!source || !target) {
+      return;
+    }
+    if (source === target && event.previousIndex === event.currentIndex) {
+      return;
+    }
+
+    // Mutable copies keyed by list id; move the dragged item.
+    const arrays = new Map(groups.map((g) => [this.listId(g), [...g.items]]));
+    const [moved] = arrays.get(this.listId(source))!.splice(event.previousIndex, 1);
+    arrays.get(this.listId(target))!.splice(event.currentIndex, 0, moved);
+
+    // Full ordered placement list + optimistic re-stamp (order + destination section).
+    const placements: { itemId: string; sectionName: string | null }[] = [];
+    const restamp = new Map<string, { order: number; section: string | null }>();
+    let order = 0;
+    for (const g of groups) {
+      for (const item of arrays.get(this.listId(g))!) {
+        placements.push({ itemId: item.id, sectionName: g.sectionName });
+        restamp.set(item.id, { order: order++, section: g.sectionName });
+      }
+    }
+    this.audit.set({
+      ...current,
+      checklistItems: current.checklistItems.map((it) => {
+        const r = restamp.get(it.id);
+        return r ? { ...it, orderIndex: r.order, sectionName: r.section } : it;
+      }),
+    });
+
+    this.service
+      .arrangeChecklistItems(current.id, { placements, version: current.version })
+      .subscribe({
+        next: (updated) => this.audit.set(updated),
+        error: (err: unknown) => {
+          this.reload();
+          this.handleMutationError(err);
+        },
+      });
+  }
+
+  /** Reorder whole sections by dragging. Only entity-backed sections participate (ungrouped is pinned). */
+  dropSection(event: CdkDragDrop<ChecklistGroup[]>): void {
     if (event.previousIndex === event.currentIndex) {
       return;
     }
@@ -850,31 +928,24 @@ export class AuditDetailComponent {
     if (!current) {
       return;
     }
+    const groups = [...this.entitySectionGroups()];
+    moveItemInArray(groups, event.previousIndex, event.currentIndex);
+    const orderedSectionNames = groups
+      .map((g) => g.sectionName)
+      .filter((n): n is string => n !== null);
 
-    const reordered = [...group.items];
-    moveItemInArray(reordered, event.previousIndex, event.currentIndex);
-
-    // Full ordered id list across all sections (groups are already in orderIndex order).
-    const orderedIds: string[] = [];
-    for (const g of this.checklistGroups()) {
-      const list = g.name === group.name ? reordered : g.items;
-      for (const item of list) {
-        orderedIds.push(item.id);
-      }
-    }
-
-    // Optimistic re-stamp.
-    const rank = new Map(orderedIds.map((id, index) => [id, index]));
+    // Optimistic re-stamp of section order.
+    const rank = new Map(orderedSectionNames.map((n, i) => [n.toLowerCase(), i]));
     this.audit.set({
       ...current,
-      checklistItems: current.checklistItems.map((it) => ({
-        ...it,
-        orderIndex: rank.get(it.id) ?? it.orderIndex,
+      sections: current.sections.map((s) => ({
+        ...s,
+        orderIndex: rank.get(s.name.toLowerCase()) ?? s.orderIndex,
       })),
     });
 
     this.service
-      .reorderChecklistItems(current.id, { orderedItemIds: orderedIds, version: current.version })
+      .reorderSections(current.id, { orderedSectionNames, version: current.version })
       .subscribe({
         next: (updated) => this.audit.set(updated),
         error: (err: unknown) => {

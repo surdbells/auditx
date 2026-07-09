@@ -302,6 +302,29 @@ public sealed class Audit : AggregateRoot
         }
     }
 
+    /// <summary>
+    /// Drag-and-drop arrange: set each item's section and order from a full ordered placement list. Supports
+    /// both within-section reordering and cross-section moves in one operation (allowed while the checklist is
+    /// editable, i.e. Draft or In Progress). Sections are auto-created if a move targets a not-yet-existing name.
+    /// </summary>
+    public void ArrangeChecklistItems(IReadOnlyList<ChecklistItemPlacement> placements)
+    {
+        EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
+        if (placements.Count != _checklistItems.Count
+            || !placements.Select(p => p.ItemId).ToHashSet().SetEquals(_checklistItems.Select(i => i.Id)))
+        {
+            throw new DomainException("audit.reorder_mismatch", "The arrange must list exactly the current checklist items once each.");
+        }
+
+        for (var index = 0; index < placements.Count; index++)
+        {
+            var placement = placements[index];
+            var item = FindItem(placement.ItemId);
+            item.SetSection(EnsureSection(placement.SectionName));
+            item.SetOrder(index);
+        }
+    }
+
     // ---- State machine ----
 
     public void Plan()
