@@ -14,6 +14,7 @@ import {
   ExceptionPortfolio,
   FunctionPerformance,
   MaterialFinding,
+  OrgUnitScorecard,
   PerformanceScorecard,
   PlanStatusKpi,
   RecurrenceCluster,
@@ -128,6 +129,15 @@ export class AnalyticsService {
     return this.api.get<PerformanceScorecard[]>(
       '/analytics/performance-scorecards',
     );
+  }
+
+  /**
+   * Department / business-unit scorecards (ViewAnalytics). Each row aggregates
+   * the org unit plus all of its descendants; ordered pre-order with a `depth`
+   * for indented tree rendering.
+   */
+  orgUnitScorecards(): Observable<OrgUnitScorecard[]> {
+    return this.api.get<OrgUnitScorecard[]>('/analytics/org-units');
   }
 
   /* ---- Recurrence clusters (ViewAnalytics) ---- */

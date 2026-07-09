@@ -58,6 +58,7 @@ function listItem(overrides: Partial<ReportListItem> = {}): ReportListItem {
   return {
     id: 'r-1',
     auditId: 'au-1',
+    kind: 'audit_engagement',
     versionNumber: 1,
     status: 'completed',
     sha256Hash: 'deadbeefcafef00d',
@@ -73,6 +74,7 @@ function report(overrides: Partial<Report> = {}): Report {
   return {
     id: 'r-9',
     auditId: 'au-1',
+    kind: 'audit_engagement',
     versionNumber: 2,
     status: 'pending',
     sha256Hash: null,

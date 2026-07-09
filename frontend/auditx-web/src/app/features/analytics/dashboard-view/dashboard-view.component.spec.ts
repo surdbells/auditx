@@ -104,6 +104,16 @@ describe('DashboardViewComponent', () => {
       .flush({ data: dash });
     await fixture.whenStable();
     fixture.detectChanges();
+
+    // Table widgets resolve GUID columns via the user/entity lookup services,
+    // which lazily fetch the directory + entity list. Flush whichever fired
+    // (match() is a no-op when a dashboard has no id-bearing table widgets).
+    for (const req of http.match((r) => r.url === `${BASE}/users/directory`)) {
+      req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    }
+    for (const req of http.match((r) => r.url === `${BASE}/audit-universe/entities`)) {
+      req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    }
   }
 
   afterEach(() => http.verify());

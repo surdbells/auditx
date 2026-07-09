@@ -1,0 +1,112 @@
+<app-page-header
+  [title]="'orgUnit.list.title' | t"
+  [subtitle]="'orgUnit.list.subtitle' | t"
+>
+  <div actions class="orgunits__header-actions">
+    <a matButton routerLink="/audit-universe">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'orgUnit.list.backToUniverse' | t }}
+    </a>
+    @if (canManage()) {
+      <button matButton="filled" type="button" (click)="create()">
+        <mat-icon>add</mat-icon>
+        {{ 'orgUnit.actions.newUnit' | t }}
+      </button>
+    }
+  </div>
+</app-page-header>
+
+<mat-card appearance="outlined" class="orgunits__filters-card">
+  <form [formGroup]="filters" class="orgunits__filters">
+    <mat-checkbox formControlName="includeArchived">
+      {{ 'orgUnit.filter.includeArchived' | t }}
+    </mat-checkbox>
+  </form>
+</mat-card>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'orgUnit.list.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state
+      [message]="'orgUnit.list.error' | t"
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="account_tree"
+        [title]="'orgUnit.list.emptyTitle' | t"
+        [message]="'orgUnit.list.emptyMessage' | t"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="orgunits__table-card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="rows()" class="orgunits__table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>{{ 'orgUnit.field.name' | t }}</th>
+              <td mat-cell *matCellDef="let u">
+                <span [style.padding-left]="indent(u.depth)" class="orgunits__name">{{ u.name }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="code">
+              <th mat-header-cell *matHeaderCellDef>{{ 'orgUnit.field.code' | t }}</th>
+              <td mat-cell *matCellDef="let u" class="orgunits__code">{{ u.code }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'orgUnit.field.status' | t }}</th>
+              <td mat-cell *matCellDef="let u">
+                <span
+                  class="status-badge"
+                  [attr.data-status]="u.isArchived ? 'archived' : 'active'"
+                >
+                  {{ u.isArchived ? ('orgUnit.value.archived' | t) : ('orgUnit.value.active' | t) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'orgUnit.field.actionsAria' | t"></th>
+              <td mat-cell *matCellDef="let u">
+                @if (canManage()) {
+                  <button
+                    matIconButton
+                    type="button"
+                    [matMenuTriggerFor]="rowMenu"
+                    [attr.aria-label]="'orgUnit.actions.actionsForAria' | t: { name: u.name }"
+                  >
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #rowMenu="matMenu">
+                    @if (!u.isArchived) {
+                      <button mat-menu-item type="button" (click)="edit(u)">
+                        <mat-icon>edit</mat-icon>
+                        <span>{{ 'orgUnit.actions.edit' | t }}</span>
+                      </button>
+                      <button mat-menu-item type="button" (click)="archive(u)">
+                        <mat-icon>archive</mat-icon>
+                        <span>{{ 'orgUnit.actions.archive' | t }}</span>
+                      </button>
+                    } @else {
+                      <button mat-menu-item type="button" (click)="restore(u)">
+                        <mat-icon>unarchive</mat-icon>
+                        <span>{{ 'orgUnit.actions.restore' | t }}</span>
+                      </button>
+                    }
+                  </mat-menu>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

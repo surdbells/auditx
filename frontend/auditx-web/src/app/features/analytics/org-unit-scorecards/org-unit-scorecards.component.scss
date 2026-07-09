@@ -1,0 +1,59 @@
+.orgcards__summary-card {
+  margin-bottom: 1rem;
+}
+
+.orgcards__kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin: 0;
+
+  .kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+
+    dt {
+      font: var(--mat-sys-label-medium);
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    dd {
+      margin: 0;
+      font: var(--mat-sys-headline-small);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+.orgcards__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.orgcards__table-wrapper {
+  overflow-x: auto;
+}
+
+.orgcards__table {
+  width: 100%;
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.orgcards__unit {
+  font-size: 0.9rem;
+
+  .orgcards__unit-name {
+    font-weight: 500;
+  }
+
+  .orgcards__unit-code {
+    margin-left: 0.5rem;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.75rem;
+  }
+}

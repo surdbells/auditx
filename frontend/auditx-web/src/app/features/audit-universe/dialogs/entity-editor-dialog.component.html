@@ -46,6 +46,15 @@
         }
       </mat-select>
     </mat-form-field>
+
+    <app-searchable-select
+      class="full"
+      formControlName="orgUnitId"
+      [label]="'universe.field.orgUnit' | t"
+      [options]="orgUnitLookup.options()"
+      [clearable]="true"
+      [clearLabel]="'universe.value.noneDash' | t"
+    />
   </form>
 
   @if (canManage()) {

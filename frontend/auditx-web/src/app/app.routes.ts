@@ -245,6 +245,15 @@ export const routes: Routes = [
           ).then((m) => m.RiskDimensionsComponent),
       },
       {
+        path: 'audit-universe/org-units',
+        title: 'Org Units · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewUniverse)],
+        loadComponent: () =>
+          import(
+            './features/audit-universe/org-units/org-units.component'
+          ).then((m) => m.OrgUnitsComponent),
+      },
+      {
         path: 'planning',
         title: 'Annual Plans · AuditX',
         canActivate: [permissionGuard(Permissions.ViewPlan)],
@@ -396,6 +405,15 @@ export const routes: Routes = [
           import(
             './features/analytics/performance-scorecards/performance-scorecards.component'
           ).then((m) => m.PerformanceScorecardsComponent),
+      },
+      {
+        path: 'analytics/org-units',
+        title: 'Department Scorecards · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/org-unit-scorecards/org-unit-scorecards.component'
+          ).then((m) => m.OrgUnitScorecardsComponent),
       },
       {
         path: 'ac',

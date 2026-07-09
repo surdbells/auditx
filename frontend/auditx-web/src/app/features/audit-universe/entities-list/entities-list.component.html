@@ -3,6 +3,10 @@
   [subtitle]="'universe.list.subtitle' | t"
 >
   <div actions class="entities__header-actions">
+    <a matButton routerLink="/audit-universe/org-units">
+      <mat-icon>account_tree</mat-icon>
+      {{ 'universe.list.orgUnits' | t }}
+    </a>
     <a matButton routerLink="/audit-universe/risk-dimensions">
       <mat-icon>tune</mat-icon>
       {{ 'universe.list.riskDimensions' | t }}

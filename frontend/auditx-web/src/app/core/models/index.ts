@@ -5,6 +5,7 @@ export * from './integration.models';
 export * from './notification.models';
 export * from './administration.models';
 export * from './universe.models';
+export * from './organization.models';
 export * from './planning.models';
 export * from './coverage.models';
 export * from './audit.models';

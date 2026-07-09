@@ -13,6 +13,8 @@ export interface Entity {
   description: string | null;
   parentEntityId: string | null;
   ownerUserId: string | null;
+  /** Owning organisation unit (department / business unit); null when unassigned. */
+  orgUnitId: string | null;
   /** Dimension-name → inherent score. */
   inherentScores: Record<string, number>;
   /** Dimension-name → residual score. */
@@ -71,6 +73,7 @@ export interface CreateEntityRequest {
   description?: string | null;
   parentEntityId?: string | null;
   ownerUserId?: string | null;
+  orgUnitId?: string | null;
 }
 
 export interface UpdateEntityRequest {
@@ -79,6 +82,7 @@ export interface UpdateEntityRequest {
   description?: string | null;
   ownerUserId?: string | null;
   parentEntityId?: string | null;
+  orgUnitId?: string | null;
   version: number;
 }
 

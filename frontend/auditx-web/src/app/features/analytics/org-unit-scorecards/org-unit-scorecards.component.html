@@ -1,0 +1,122 @@
+<app-page-header
+  [title]="'analytics.orgUnits.title' | t"
+  [subtitle]="'analytics.orgUnits.subtitle' | t"
+>
+  <div actions>
+    <a matButton routerLink="/analytics">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'analytics.nav.allDashboards' | t }}
+    </a>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'analytics.actions.refresh' | t }}
+    </button>
+  </div>
+</app-page-header>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'analytics.orgUnits.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state
+      [message]="'analytics.orgUnits.error' | t"
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="account_tree"
+        [title]="'analytics.orgUnits.empty.title' | t"
+        [message]="'analytics.orgUnits.empty.message' | t"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="orgcards__summary-card">
+        <dl class="orgcards__kpis">
+          <div class="kpi">
+            <dt>{{ 'analytics.orgUnits.kpi.units' | t }}</dt>
+            <dd>{{ totals().units }}</dd>
+          </div>
+          <div class="kpi">
+            <dt>{{ 'analytics.orgUnits.kpi.entities' | t }}</dt>
+            <dd>{{ totals().entities }}</dd>
+          </div>
+          <div class="kpi">
+            <dt>{{ 'analytics.orgUnits.kpi.openFindings' | t }}</dt>
+            <dd>{{ totals().openFindings }}</dd>
+          </div>
+          <div class="kpi">
+            <dt>{{ 'analytics.orgUnits.kpi.criticalOpen' | t }}</dt>
+            <dd>{{ totals().criticalOpen }}</dd>
+          </div>
+        </dl>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="orgcards__table-card">
+        <div class="orgcards__table-wrapper">
+          <table mat-table [dataSource]="scorecards()" class="orgcards__table">
+            <ng-container matColumnDef="unit">
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.orgUnits.col.unit' | t }}</th>
+              <td mat-cell *matCellDef="let s" class="orgcards__unit">
+                <span [style.padding-left]="indent(s.depth)">
+                  <span class="orgcards__unit-name">{{ s.name }}</span>
+                  <span class="orgcards__unit-code">{{ s.code }}</span>
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="entities">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.orgUnits.col.entities' | t }}</th>
+              <td mat-cell *matCellDef="let s" class="num">{{ s.entities }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="auditsCompleted">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.orgUnits.col.auditsCompleted' | t }}</th>
+              <td mat-cell *matCellDef="let s" class="num">{{ s.auditsCompleted }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="auditsInFlight">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.orgUnits.col.auditsInFlight' | t }}</th>
+              <td mat-cell *matCellDef="let s" class="num">{{ s.auditsInFlight }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="openFindings">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.orgUnits.col.openFindings' | t }}</th>
+              <td mat-cell *matCellDef="let s" class="num">{{ s.openFindings }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="criticalOpen">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.orgUnits.col.criticalOpen' | t }}</th>
+              <td mat-cell *matCellDef="let s" class="num">
+                @if (s.criticalOpenFindings > 0) {
+                  <span class="severity-badge" data-severity="critical">{{ s.criticalOpenFindings }}</span>
+                } @else {
+                  0
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="highOpen">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.orgUnits.col.highOpen' | t }}</th>
+              <td mat-cell *matCellDef="let s" class="num">{{ s.highOpenFindings }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="closedFindings">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.orgUnits.col.closedFindings' | t }}</th>
+              <td mat-cell *matCellDef="let s" class="num">{{ s.closedFindings }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="closureDays">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.orgUnits.col.avgClosure' | t }}</th>
+              <td mat-cell *matCellDef="let s" class="num">{{ days(s.averageClosureDays) }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

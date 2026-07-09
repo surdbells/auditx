@@ -133,6 +133,7 @@ export class MainLayoutComponent {
       titleKey: 'nav.section.insights',
       items: [
         { labelKey: 'nav.analytics', icon: 'analytics', route: '/analytics', permissions: [Permissions.ViewAnalytics] },
+        { labelKey: 'nav.departmentScorecards', icon: 'account_tree', route: '/analytics/org-units', permissions: [Permissions.ViewAnalytics] },
         { labelKey: 'nav.standaloneReports', icon: 'summarize', route: '/reports', permissions: [Permissions.ViewAnalytics] },
       ],
     },
@@ -159,6 +160,7 @@ export class MainLayoutComponent {
     {
       titleKey: 'nav.section.configuration',
       items: [
+        { labelKey: 'nav.orgUnits', icon: 'account_tree', route: '/audit-universe/org-units', permissions: [Permissions.ViewUniverse] },
         { labelKey: 'nav.templates', icon: 'description', route: '/admin/templates', permissions: [Permissions.ViewTemplates] },
         { labelKey: 'nav.reportTemplates', icon: 'summarize', route: '/admin/report-templates', permissions: [Permissions.ConfigureReports] },
         { labelKey: 'nav.notifications', icon: 'notifications', route: '/admin/notifications', permissions: [Permissions.ConfigureNotifications] },

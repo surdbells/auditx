@@ -24,6 +24,7 @@ import { MatTableModule } from '@angular/material/table';
 
 import { UniverseService } from '../../../core/services/universe.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
+import { OrgUnitLookupService } from '../../../core/services/org-unit-lookup.service';
 import { RiskDimensionsService } from '../../../core/services/risk-dimensions.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -35,6 +36,7 @@ import {
 } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
+import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
 
 export interface EntityEditorDialogData {
   /** Present when editing; absent for create. */
@@ -75,6 +77,7 @@ interface ScoreRow {
     MatExpansionModule,
     MatProgressSpinnerModule,
     TranslatePipe,
+    SearchableSelectComponent,
   ],
   templateUrl: './entity-editor-dialog.component.html',
   styleUrl: './entity-editor-dialog.component.scss',
@@ -87,6 +90,8 @@ export class EntityEditorDialogComponent {
   private readonly universe = inject(UniverseService);
   /** Populates the owner select (lazy directory load). */
   readonly userLookup = inject(UserLookupService);
+  /** Populates the org-unit picker (lazy tree load). */
+  readonly orgUnitLookup = inject(OrgUnitLookupService);
   private readonly riskDimensions = inject(RiskDimensionsService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -116,6 +121,7 @@ export class EntityEditorDialogComponent {
     description: [this.data.entity?.description ?? ''],
     parentEntityId: [this.data.entity?.parentEntityId ?? ''],
     ownerUserId: [this.data.entity?.ownerUserId ?? ''],
+    orgUnitId: [this.data.entity?.orgUnitId ?? null as string | null],
   });
 
   readonly savingMeta = signal(false);
@@ -140,6 +146,7 @@ export class EntityEditorDialogComponent {
 
   constructor() {
     this.userLookup.ensureLoaded();
+    this.orgUnitLookup.ensureLoaded();
     if (this.isEdit) {
       this.loadScoreRows();
     }
@@ -219,6 +226,7 @@ export class EntityEditorDialogComponent {
           description: v.description.trim() || null,
           ownerUserId: v.ownerUserId.trim() || null,
           parentEntityId: v.parentEntityId || null,
+          orgUnitId: v.orgUnitId || null,
           version: current.version,
         })
         .subscribe({
@@ -241,6 +249,7 @@ export class EntityEditorDialogComponent {
           description: v.description.trim() || null,
           parentEntityId: v.parentEntityId || null,
           ownerUserId: v.ownerUserId.trim() || null,
+          orgUnitId: v.orgUnitId || null,
         })
         .subscribe({
           next: (created) => {

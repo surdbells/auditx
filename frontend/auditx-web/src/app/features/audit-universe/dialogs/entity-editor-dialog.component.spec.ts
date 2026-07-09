@@ -21,6 +21,7 @@ function entity(overrides: Partial<Entity> = {}): Entity {
     description: '',
     parentEntityId: null,
     ownerUserId: null,
+    orgUnitId: null,
     inherentScores: {},
     residualScores: {},
     compositeInherentScore: null,
@@ -108,6 +109,8 @@ describe('EntityEditorDialogComponent', () => {
     http.expectOne((r) => r.url === `${BASE}/users/directory`).flush({
       data: { items: [], nextCursor: null, hasMore: false },
     });
+    // The org-unit picker lazily loads the org-unit tree on construction.
+    http.expectOne((r) => r.url === `${BASE}/org-units`).flush({ data: [] });
   }
 
   afterEach(() => http.verify());

@@ -15,6 +15,7 @@ function entity(overrides: Partial<Entity> = {}): Entity {
     description: '',
     parentEntityId: null,
     ownerUserId: null,
+    orgUnitId: null,
     inherentScores: {},
     residualScores: {},
     compositeInherentScore: null,

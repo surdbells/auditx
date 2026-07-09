@@ -152,6 +152,27 @@ export interface PerformanceScorecard {
   averageExceptionClosureDays: number | null;
 }
 
+/**
+ * Department / business-unit scorecard: audit coverage and exception health
+ * aggregated over an org unit AND all of its descendants (subtree roll-up).
+ * `depth` is the tree depth (0 = root) for indented rendering.
+ */
+export interface OrgUnitScorecard {
+  orgUnitId: string;
+  code: string;
+  name: string;
+  parentOrgUnitId: string | null;
+  depth: number;
+  entities: number;
+  auditsCompleted: number;
+  auditsInFlight: number;
+  openFindings: number;
+  criticalOpenFindings: number;
+  highOpenFindings: number;
+  closedFindings: number;
+  averageClosureDays: number | null;
+}
+
 /** A single Critical/High open exception for the material-findings widget. */
 export interface MaterialFinding {
   exceptionId: string;

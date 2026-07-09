@@ -1,0 +1,33 @@
+.orgunits__header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.orgunits__filters-card {
+  margin-bottom: 1rem;
+}
+
+.orgunits__filters {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.orgunits__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.orgunits__table {
+  width: 100%;
+}
+
+.orgunits__name {
+  display: inline-block;
+  font-weight: 500;
+}
+
+.orgunits__code {
+  color: var(--mat-sys-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+}
