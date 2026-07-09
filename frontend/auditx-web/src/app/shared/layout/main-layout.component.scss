@@ -47,7 +47,7 @@
     var(--color-brand-500, #6366f1),
     var(--color-accent-600, #7c3aed)
   );
-  box-shadow: 0 8px 16px -6px rgb(79 70 229 / 0.55);
+  box-shadow: 0 6px 14px -8px rgb(79 70 229 / 0.26);
 }
 // When a custom logo image is present, let it own the chip (no gradient / shadow behind it).
 .nav__logo--image {
@@ -229,7 +229,7 @@
   color: #fff;
   font-size: 0.74rem;
   font-weight: 700;
-  box-shadow: 0 6px 14px -6px rgb(79 70 229 / 0.5);
+  box-shadow: 0 5px 12px -8px rgb(79 70 229 / 0.24);
 }
 .nav__profile-text {
   display: flex;

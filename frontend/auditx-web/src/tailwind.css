@@ -34,9 +34,9 @@
   --radius-2xl: 1.25rem;
 
   /* Soft, layered elevations tuned to a slate ink. */
-  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
-  --shadow-card: 0 1px 3px rgb(15 23 42 / 0.05), 0 10px 24px -12px rgb(15 23 42 / 0.12);
-  --shadow-lift: 0 16px 40px -12px rgb(15 23 42 / 0.22);
+  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.03), 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 20px -16px rgb(15 23 42 / 0.09);
+  --shadow-lift: 0 10px 28px -16px rgb(15 23 42 / 0.12);
   --shadow-ring: 0 0 0 1px rgb(15 23 42 / 0.04);
 }
 

@@ -140,7 +140,7 @@
 }
 
 .editor__item.cdk-drag-preview {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14);
   border-radius: 8px;
   opacity: 0.96;
 }
@@ -164,7 +164,7 @@
 }
 
 .editor__section.cdk-drag-preview {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
   border-radius: 10px;
   background: var(--mat-sys-surface, #fff);
 }
