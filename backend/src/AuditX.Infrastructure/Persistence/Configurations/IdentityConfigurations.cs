@@ -35,6 +35,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(u => u.AdSamAccountName).IsUnique().HasFilter("[is_deleted] = 0");
         builder.HasIndex(u => u.AdUserPrincipalName).IsUnique().HasFilter("[is_deleted] = 0");
         builder.HasIndex(u => u.Status);
+        builder.HasIndex(u => u.OrgUnitId); // per-department user rollups (analytics / utilisation)
 
         builder.HasQueryFilter(u => !u.IsDeleted);
     }

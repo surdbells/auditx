@@ -12,6 +12,7 @@ public static class UniverseMappings
         entity.Description,
         entity.ParentEntityId,
         entity.OwnerUserId,
+        entity.OrgUnitId,
         entity.InherentScores,
         entity.ResidualScores,
         entity.CompositeInherentScore,

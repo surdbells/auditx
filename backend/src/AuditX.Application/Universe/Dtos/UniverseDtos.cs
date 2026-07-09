@@ -7,6 +7,7 @@ public sealed record EntityDto(
     string? Description,
     Guid? ParentEntityId,
     Guid? OwnerUserId,
+    Guid? OrgUnitId,
     IReadOnlyDictionary<string, int> InherentScores,
     IReadOnlyDictionary<string, int> ResidualScores,
     decimal? CompositeInherentScore,

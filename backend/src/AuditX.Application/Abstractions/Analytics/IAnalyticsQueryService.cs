@@ -21,6 +21,13 @@ public interface IAnalyticsQueryService
     Task<IReadOnlyList<MaterialFindingDto>> MaterialFindingsAsync(CancellationToken cancellationToken = default);
 
     Task<PlanStatusDto> PlanStatusAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Department / business-unit scorecards: audits and findings rolled up the OrgUnit tree (each row aggregates the
+    /// unit itself PLUS every descendant unit). Findings/audits inherit their org unit via the auditable entity.
+    /// Powers the department-performance, risk-by-BU and coverage-by-BU board reports.
+    /// </summary>
+    Task<IReadOnlyList<OrgUnitScorecardDto>> OrgUnitScorecardsAsync(CancellationToken cancellationToken = default);
 }
 
 // ---- KPI DTOs (snake-cased at the API edge by the serializer; these are the shape the port returns) ----
@@ -100,3 +107,22 @@ public sealed record PlanStatusDto(
     int Completed,
     int Deferred,
     decimal CompletionPercent);
+
+/// <summary>
+/// A department / business-unit scorecard: audits + findings rolled up an OrgUnit and its whole subtree. <c>Depth</c>
+/// is the unit's depth in the tree (0 = a root) for indented rendering.
+/// </summary>
+public sealed record OrgUnitScorecardDto(
+    Guid OrgUnitId,
+    string Code,
+    string Name,
+    Guid? ParentOrgUnitId,
+    int Depth,
+    int Entities,
+    int AuditsCompleted,
+    int AuditsInFlight,
+    int OpenFindings,
+    int CriticalOpenFindings,
+    int HighOpenFindings,
+    int ClosedFindings,
+    double? AverageClosureDays);

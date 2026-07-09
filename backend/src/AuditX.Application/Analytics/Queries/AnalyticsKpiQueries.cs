@@ -63,6 +63,17 @@ public sealed class PlanStatusQueryHandler(IAnalyticsQueryService analytics)
         => analytics.PlanStatusAsync(cancellationToken);
 }
 
+// ---- Department / business-unit scorecards (ViewAnalytics) ----
+
+public sealed record OrgUnitScorecardsQuery : IQuery<IReadOnlyList<OrgUnitScorecardDto>>;
+
+public sealed class OrgUnitScorecardsQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<OrgUnitScorecardsQuery, IReadOnlyList<OrgUnitScorecardDto>>
+{
+    public Task<IReadOnlyList<OrgUnitScorecardDto>> Handle(OrgUnitScorecardsQuery query, CancellationToken cancellationToken)
+        => analytics.OrgUnitScorecardsAsync(cancellationToken);
+}
+
 // ---- Coverage matrix (reuse ICoverageQueryService — do NOT reimplement coverage) ----
 
 public sealed record AnalyticsCoverageQuery(int WindowMonths) : IQuery<CoverageMatrix>;

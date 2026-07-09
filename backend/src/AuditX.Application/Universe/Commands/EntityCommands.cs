@@ -12,7 +12,8 @@ using FluentValidation;
 
 namespace AuditX.Application.Universe.Commands;
 
-public sealed record CreateEntityCommand(string Name, string EntityType, string? Description, Guid? ParentEntityId, Guid? OwnerUserId)
+public sealed record CreateEntityCommand(
+    string Name, string EntityType, string? Description, Guid? ParentEntityId, Guid? OwnerUserId, Guid? OrgUnitId = null)
     : ICommand<EntityDto>;
 
 public sealed class CreateEntityCommandValidator : AbstractValidator<CreateEntityCommand>
@@ -27,6 +28,7 @@ public sealed class CreateEntityCommandValidator : AbstractValidator<CreateEntit
 public sealed class CreateEntityCommandHandler(
     IAuditUniverseRepository entities,
     ITaxonomyProvider taxonomy,
+    IOrgUnitRepository orgUnits,
     ICurrentUser currentUser,
     IAuditRecorder audit,
     IUnitOfWork unitOfWork)
@@ -48,23 +50,35 @@ public sealed class CreateEntityCommandHandler(
             }
         }
 
+        await EnsureOrgUnitExistsAsync(orgUnits, command.OrgUnitId, cancellationToken);
+
         var owner = command.OwnerUserId ?? currentUser.UserId;
         var entity = AuditableEntity.Create(command.EntityType.Trim(), command.Name.Trim(), command.Description, command.ParentEntityId, owner);
+        entity.SetOrgUnit(command.OrgUnitId);
         entities.Add(entity);
         audit.Record(AuditEventTypes.EntityCreated, AuditTargetTypes.AuditUniverseEntity, entity.Id,
-            after: new { entity.Name, entity.EntityType, entity.ParentEntityId, entity.OwnerUserId });
+            after: new { entity.Name, entity.EntityType, entity.ParentEntityId, entity.OwnerUserId, entity.OrgUnitId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return entity.ToDto();
+    }
+
+    internal static async Task EnsureOrgUnitExistsAsync(IOrgUnitRepository orgUnits, Guid? orgUnitId, CancellationToken cancellationToken)
+    {
+        if (orgUnitId is { } id && await orgUnits.GetByIdAsync(id, cancellationToken) is null)
+        {
+            throw new NotFoundException("Org unit", id);
+        }
     }
 }
 
 public sealed record UpdateEntityCommand(
-    Guid Id, string Name, string EntityType, string? Description, Guid? OwnerUserId, Guid? ParentEntityId, string Version)
+    Guid Id, string Name, string EntityType, string? Description, Guid? OwnerUserId, Guid? ParentEntityId, string Version, Guid? OrgUnitId = null)
     : ICommand<EntityDto>;
 
 public sealed class UpdateEntityCommandHandler(
     IAuditUniverseRepository entities,
     ITaxonomyProvider taxonomy,
+    IOrgUnitRepository orgUnits,
     IAuditRecorder audit,
     IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateEntityCommand, EntityDto>
@@ -83,7 +97,9 @@ public sealed class UpdateEntityCommandHandler(
             throw new ConflictException("universe.unknown_entity_type", $"Entity type '{command.EntityType}' is not in the active taxonomy.");
         }
 
-        var before = new { entity.Name, entity.EntityType, entity.ParentEntityId, entity.OwnerUserId };
+        await CreateEntityCommandHandler.EnsureOrgUnitExistsAsync(orgUnits, command.OrgUnitId, cancellationToken);
+
+        var before = new { entity.Name, entity.EntityType, entity.ParentEntityId, entity.OwnerUserId, entity.OrgUnitId };
 
         if (command.ParentEntityId != entity.ParentEntityId)
         {
@@ -102,8 +118,9 @@ public sealed class UpdateEntityCommandHandler(
         }
 
         entity.UpdateDetails(command.Name.Trim(), command.EntityType.Trim(), command.Description, command.OwnerUserId);
+        entity.SetOrgUnit(command.OrgUnitId);
         audit.Record(AuditEventTypes.EntityUpdated, AuditTargetTypes.AuditUniverseEntity, entity.Id,
-            before: before, after: new { entity.Name, entity.EntityType, entity.ParentEntityId, entity.OwnerUserId });
+            before: before, after: new { entity.Name, entity.EntityType, entity.ParentEntityId, entity.OwnerUserId, entity.OrgUnitId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return entity.ToDto();
     }

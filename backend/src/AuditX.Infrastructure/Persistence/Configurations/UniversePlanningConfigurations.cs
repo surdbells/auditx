@@ -29,6 +29,7 @@ public sealed class AuditableEntityConfiguration : IEntityTypeConfiguration<Audi
         builder.HasIndex(e => e.CompositeResidualScore); // high-risk-gaps ordering (coverage analytics)
         builder.HasIndex(e => e.Name);
         builder.HasIndex(e => e.ParentEntityId);
+        builder.HasIndex(e => e.OrgUnitId); // department / business-unit rollups (analytics)
 
         builder.HasOne<AuditableEntity>().WithMany().HasForeignKey(e => e.ParentEntityId).OnDelete(DeleteBehavior.Restrict);
 

@@ -222,6 +222,184 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
         return new PlanStatusDto(totalPlans, total, planned, inProgress, completed, deferred, Percent(completed, total));
     }
 
+    public async Task<IReadOnlyList<OrgUnitScorecardDto>> OrgUnitScorecardsAsync(CancellationToken cancellationToken = default)
+    {
+        var orgUnits = await db.OrgUnits.AsNoTracking()
+            .Where(o => !o.IsArchived)
+            .Select(o => new { o.Id, o.Code, o.Name, o.ParentOrgUnitId })
+            .ToListAsync(cancellationToken);
+        if (orgUnits.Count == 0)
+        {
+            return [];
+        }
+
+        // Findings/audits inherit their org unit via the auditable entity: entity → OrgUnitId.
+        var entityOrg = await db.AuditUniverseEntities.AsNoTracking()
+            .Where(e => e.OrgUnitId != null)
+            .Select(e => new { e.Id, OrgUnitId = e.OrgUnitId!.Value })
+            .ToDictionaryAsync(e => e.Id, e => e.OrgUnitId, cancellationToken);
+
+        // Direct (own-unit) aggregates, before the subtree roll-up.
+        var direct = orgUnits.ToDictionary(o => o.Id, _ => new OrgAgg());
+        foreach (var orgId in entityOrg.Values)
+        {
+            if (direct.TryGetValue(orgId, out var a))
+            {
+                a.Entities++;
+            }
+        }
+
+        var audits = await db.Audits.AsNoTracking()
+            .Where(a => a.AuditableEntityId != null)
+            .Select(a => new { EntityId = a.AuditableEntityId!.Value, a.Status })
+            .ToListAsync(cancellationToken);
+        foreach (var au in audits)
+        {
+            if (entityOrg.TryGetValue(au.EntityId, out var orgId) && direct.TryGetValue(orgId, out var a))
+            {
+                if (au.Status == AuditStatus.Completed)
+                {
+                    a.AuditsCompleted++;
+                }
+                else if (au.Status is AuditStatus.Planned or AuditStatus.InProgress or AuditStatus.UnderReview)
+                {
+                    a.AuditsInFlight++;
+                }
+            }
+        }
+
+        var findings = await db.Exceptions.AsNoTracking()
+            .Where(e => e.AuditableEntityId != null)
+            .Select(e => new { EntityId = e.AuditableEntityId!.Value, e.Status, e.Severity, e.RaisedAt, e.ClosedAt })
+            .ToListAsync(cancellationToken);
+        foreach (var f in findings)
+        {
+            if (!entityOrg.TryGetValue(f.EntityId, out var orgId) || !direct.TryGetValue(orgId, out var a))
+            {
+                continue;
+            }
+
+            if (OpenStatuses.Contains(f.Status))
+            {
+                a.OpenFindings++;
+                if (f.Severity == ExceptionSeverity.Critical)
+                {
+                    a.CriticalOpen++;
+                }
+                else if (f.Severity == ExceptionSeverity.High)
+                {
+                    a.HighOpen++;
+                }
+            }
+            else if (f.Status == ExceptionStatus.Closed && f.ClosedAt is { } closedAt)
+            {
+                a.ClosedFindings++;
+                a.ClosureDaysSum += (closedAt - f.RaisedAt).TotalDays;
+            }
+        }
+
+        // Roll each unit up its subtree (unit + all descendants) and emit in pre-order for tree rendering.
+        var childrenByParent = orgUnits.Where(o => o.ParentOrgUnitId != null)
+            .GroupBy(o => o.ParentOrgUnitId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderBy(o => o.Name).Select(o => o.Id).ToArray());
+        var byId = orgUnits.ToDictionary(o => o.Id);
+        var ids = byId.Keys.ToHashSet();
+
+        var result = new List<OrgUnitScorecardDto>();
+        var roots = orgUnits
+            .Where(o => o.ParentOrgUnitId is not { } p || !ids.Contains(p))
+            .OrderBy(o => o.Name)
+            .ToArray();
+        var stack = new Stack<(Guid Id, int Depth)>();
+        foreach (var root in roots.Reverse())
+        {
+            stack.Push((root.Id, 0));
+        }
+
+        var emitted = new HashSet<Guid>();
+        while (stack.Count > 0)
+        {
+            var (id, depth) = stack.Pop();
+            if (!emitted.Add(id) || !byId.TryGetValue(id, out var o))
+            {
+                continue;
+            }
+
+            var agg = RollUp(id, childrenByParent, direct);
+            result.Add(new OrgUnitScorecardDto(
+                o.Id, o.Code, o.Name, o.ParentOrgUnitId, depth,
+                agg.Entities, agg.AuditsCompleted, agg.AuditsInFlight, agg.OpenFindings,
+                agg.CriticalOpen, agg.HighOpen, agg.ClosedFindings,
+                agg.ClosedFindings > 0 ? agg.ClosureDaysSum / agg.ClosedFindings : null));
+
+            if (childrenByParent.TryGetValue(id, out var kids))
+            {
+                foreach (var kid in kids.Reverse())
+                {
+                    stack.Push((kid, depth + 1));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Sums a unit's own aggregate with every descendant's (DFS; cycle-guarded).</summary>
+    private static OrgAgg RollUp(Guid rootId, IReadOnlyDictionary<Guid, Guid[]> childrenByParent, IReadOnlyDictionary<Guid, OrgAgg> direct)
+    {
+        var total = new OrgAgg();
+        var stack = new Stack<Guid>();
+        stack.Push(rootId);
+        var seen = new HashSet<Guid>();
+        while (stack.Count > 0)
+        {
+            var id = stack.Pop();
+            if (!seen.Add(id))
+            {
+                continue;
+            }
+
+            if (direct.TryGetValue(id, out var d))
+            {
+                total.Add(d);
+            }
+
+            if (childrenByParent.TryGetValue(id, out var kids))
+            {
+                foreach (var kid in kids)
+                {
+                    stack.Push(kid);
+                }
+            }
+        }
+
+        return total;
+    }
+
+    private sealed class OrgAgg
+    {
+        public int Entities;
+        public int AuditsCompleted;
+        public int AuditsInFlight;
+        public int OpenFindings;
+        public int CriticalOpen;
+        public int HighOpen;
+        public int ClosedFindings;
+        public double ClosureDaysSum;
+
+        public void Add(OrgAgg other)
+        {
+            Entities += other.Entities;
+            AuditsCompleted += other.AuditsCompleted;
+            AuditsInFlight += other.AuditsInFlight;
+            OpenFindings += other.OpenFindings;
+            CriticalOpen += other.CriticalOpen;
+            HighOpen += other.HighOpen;
+            ClosedFindings += other.ClosedFindings;
+            ClosureDaysSum += other.ClosureDaysSum;
+        }
+    }
+
     private static IReadOnlyList<ExceptionAgeBucketDto> BuildAgeBuckets(IEnumerable<double> agesInDays)
     {
         int b0 = 0, b1 = 0, b2 = 0, b3 = 0;

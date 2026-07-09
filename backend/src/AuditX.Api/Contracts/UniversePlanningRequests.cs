@@ -1,9 +1,9 @@
 namespace AuditX.Api.Contracts;
 
 // Universe
-public sealed record CreateEntityRequest(string Name, string EntityType, string? Description, Guid? ParentEntityId, Guid? OwnerUserId);
+public sealed record CreateEntityRequest(string Name, string EntityType, string? Description, Guid? ParentEntityId, Guid? OwnerUserId, Guid? OrgUnitId = null);
 
-public sealed record UpdateEntityRequest(string Name, string EntityType, string? Description, Guid? OwnerUserId, Guid? ParentEntityId, string Version);
+public sealed record UpdateEntityRequest(string Name, string EntityType, string? Description, Guid? OwnerUserId, Guid? ParentEntityId, string Version, Guid? OrgUnitId = null);
 
 public sealed record RiskScoresRequest(IReadOnlyDictionary<string, int>? InherentScores, IReadOnlyDictionary<string, int>? ResidualScores, string Version);
 

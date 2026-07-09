@@ -53,6 +53,12 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> PerformanceScorecards(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new PerformanceScorecardsQuery(), cancellationToken));
 
+    /// <summary>Department / business-unit scorecards — audits + findings rolled up the OrgUnit tree.</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("org-units")]
+    public async Task<IActionResult> OrgUnitScorecards(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new OrgUnitScorecardsQuery(), cancellationToken));
+
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("recurrence-clusters")]
     public async Task<IActionResult> RecurrenceClusters([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
