@@ -46,6 +46,10 @@ public sealed record StandaloneReportModel(
         ReportKind.ExecutiveSummary => "executive-summary",
         ReportKind.AnnualPlanStatus => "annual-plan-status",
         ReportKind.KpiPack => "kpi-pack",
+        ReportKind.AuditCoverage => "audit-coverage",
+        ReportKind.FindingsRegister => "findings-register",
+        ReportKind.SanctionsConsistency => "sanctions-consistency",
+        ReportKind.PerformanceScorecards => "performance-scorecards",
         _ => "report",
     };
 
@@ -55,6 +59,10 @@ public sealed record StandaloneReportModel(
         ReportKind.ExecutiveSummary => "Executive Summary",
         ReportKind.AnnualPlanStatus => "Annual Plan Status",
         ReportKind.KpiPack => "KPI Pack",
+        ReportKind.AuditCoverage => "Audit Coverage",
+        ReportKind.FindingsRegister => "Findings Register",
+        ReportKind.SanctionsConsistency => "Sanctions Consistency",
+        ReportKind.PerformanceScorecards => "Auditor Performance Scorecards",
         _ => "Report",
     };
 }

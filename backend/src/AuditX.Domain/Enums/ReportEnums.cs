@@ -23,6 +23,10 @@ public enum ReportKind
     ExecutiveSummary,
     AnnualPlanStatus,
     KpiPack,
+    AuditCoverage,
+    FindingsRegister,
+    SanctionsConsistency,
+    PerformanceScorecards,
 }
 
 /// <summary>

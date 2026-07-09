@@ -20,7 +20,11 @@ export type ReportKind =
   | 'audit_engagement'
   | 'executive_summary'
   | 'annual_plan_status'
-  | 'kpi_pack';
+  | 'kpi_pack'
+  | 'audit_coverage'
+  | 'findings_register'
+  | 'sanctions_consistency'
+  | 'performance_scorecards';
 
 /** The standalone report kinds (everything except the per-audit engagement report). */
 export type StandaloneReportKind = Exclude<ReportKind, 'audit_engagement'>;

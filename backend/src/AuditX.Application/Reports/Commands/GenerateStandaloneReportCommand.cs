@@ -46,8 +46,9 @@ public sealed class GenerateStandaloneReportCommandHandler(
             throw new DomainException("report.kind_not_standalone", "An engagement report must be generated against an audit.");
         }
 
-        // Permission-only gate: the caller must hold ViewAnalytics (GenerateReport is gated at the controller).
-        await ReportAccess.EnsureCanAccessStandaloneAsync(currentUser.UserId, permissions, cancellationToken);
+        // Permission-only gate: the caller must hold ViewAnalytics (GenerateReport is gated at the controller); a
+        // scorecards report additionally requires PerformanceAnalyticsView.
+        await ReportAccess.EnsureCanAccessStandaloneAsync(currentUser.UserId, permissions, cancellationToken, command.Kind);
 
         // A standalone report snapshots the active template when one is configured (for traceability), otherwise a
         // minimal synthetic definition — the standalone renderers compose their own sections from the analytics model,

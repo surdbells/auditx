@@ -22,7 +22,7 @@
       <mat-form-field appearance="outline" class="std__kind-field" subscriptSizing="dynamic">
         <mat-label>{{ 'reports.standalone.kindLabel' | t }}</mat-label>
         <mat-select [value]="newKind()" (selectionChange)="newKind.set($event.value)" [disabled]="generating()">
-          @for (opt of kindOptions; track opt.value) {
+          @for (opt of generateKinds(); track opt.value) {
             <mat-option [value]="opt.value">
               <mat-icon class="std__opt-icon">{{ opt.icon }}</mat-icon>
               {{ opt.labelKey | t }}
@@ -84,7 +84,7 @@
             <ng-container matColumnDef="version">
               <th mat-header-cell *matHeaderCellDef>{{ 'reports.panel.column.version' | t }}</th>
               <td mat-cell *matCellDef="let r">
-                @if (canView()) {
+                @if (canView() && canOpenKind(r.kind)) {
                   <a class="std__link" [routerLink]="['/reports', r.id]">v{{ r.versionNumber }}</a>
                 } @else {
                   v{{ r.versionNumber }}
@@ -116,7 +116,7 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'reports.common.actions' | t"></th>
               <td mat-cell *matCellDef="let r" class="std__row-actions">
-                @if (r.status === 'completed') {
+                @if (r.status === 'completed' && canOpenKind(r.kind)) {
                   @for (fmt of r.producedFormats; track fmt) {
                     <button matButton type="button" (click)="download(r, fmt)">
                       <mat-icon>download</mat-icon>

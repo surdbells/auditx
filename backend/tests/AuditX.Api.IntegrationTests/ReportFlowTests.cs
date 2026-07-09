@@ -204,6 +204,33 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
         Assert.Contains(listed.GetProperty("items").EnumerateArray(), r => r.GetProperty("id").GetGuid() == reportId);
     }
 
+    [Theory]
+    [InlineData("annual_plan_status")]
+    [InlineData("kpi_pack")]
+    [InlineData("audit_coverage")]
+    [InlineData("findings_register")]
+    [InlineData("sanctions_consistency")]
+    [InlineData("performance_scorecards")]
+    public async Task Standalone_report_of_each_kind_generates_and_verifies(string kind)
+    {
+        var admin = await LoginAsync("admin");
+        var manager = await ReporterAsync(admin); // Audit Manager holds GenerateReport + ViewAnalytics + PerformanceAnalyticsView
+
+        var accepted = await manager.PostAsJsonAsync("/api/v1/reports/standalone", new { kind, docx = false });
+        Assert.Equal(HttpStatusCode.Accepted, accepted.StatusCode);
+        var reportId = JsonDocument.Parse(await accepted.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("data").GetProperty("reportId").GetGuid();
+
+        await NudgeGenerationAsync(reportId);
+
+        var report = await PollUntilSettledAsync(manager, reportId);
+        Assert.Equal("completed", report.GetProperty("status").GetString());
+        Assert.Equal(kind, report.GetProperty("kind").GetString());
+
+        var verify = await DataAsync(await manager.GetAsync($"/api/v1/reports/{reportId}/verify-hash"));
+        Assert.True(verify.GetProperty("match").GetBoolean());
+    }
+
     [Fact]
     public async Task Standalone_reports_require_the_analytics_permission()
     {

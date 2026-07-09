@@ -58,7 +58,7 @@ public sealed class DistributeReportCommandHandler(
         }
         else
         {
-            await ReportAccess.EnsureCanAccessStandaloneAsync(currentUser.UserId, permissions, cancellationToken);
+            await ReportAccess.EnsureCanAccessStandaloneAsync(currentUser.UserId, permissions, cancellationToken, report.Kind);
         }
 
         if (report.Status != ReportStatus.Completed)

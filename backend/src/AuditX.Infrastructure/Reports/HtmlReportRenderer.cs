@@ -39,7 +39,7 @@ public sealed class HtmlReportRenderer : IReportRenderer
         var sb = new StringBuilder();
         sb.Append("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">");
         sb.Append("<title>").Append(Html(title)).Append(" — ").Append(Html(c.AuditName)).Append("</title>");
-        sb.Append("<style>body{font-family:Segoe UI,Arial,sans-serif;margin:2rem;color:#1a1a1a}h1{font-size:1.5rem}h2{font-size:1.15rem;border-bottom:1px solid #ccc;padding-bottom:.25rem;margin-top:1.5rem}table{border-collapse:collapse;width:100%;margin-top:.5rem}td,th{border:1px solid #ccc;padding:.4rem .6rem;text-align:left;vertical-align:top}th{background:#f5f5f5}code{font-family:Consolas,monospace}.meta th{width:16rem}</style>");
+        sb.Append("<style>body{font-family:Segoe UI,Arial,sans-serif;margin:2rem;color:#1a1a1a}h1{font-size:1.5rem}h2{font-size:1.15rem;border-bottom:1px solid #ccc;padding-bottom:.25rem;margin-top:1.5rem}table{border-collapse:collapse;width:100%;margin-top:.5rem}td,th{border:1px solid #ccc;padding:.4rem .6rem;text-align:left;vertical-align:top;word-break:break-word;overflow-wrap:anywhere}th{background:#f5f5f5}code{font-family:Consolas,monospace}.meta th{width:16rem}</style>");
         sb.Append("</head><body>");
 
         // Cover
@@ -92,7 +92,7 @@ public sealed class HtmlReportRenderer : IReportRenderer
         var sb = new StringBuilder();
         sb.Append("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">");
         sb.Append("<title>").Append(Html(model.Title)).Append("</title>");
-        sb.Append("<style>body{font-family:Segoe UI,Arial,sans-serif;margin:2rem;color:#1a1a1a}h1{font-size:1.5rem}h2{font-size:1.15rem;border-bottom:1px solid #ccc;padding-bottom:.25rem;margin-top:1.5rem}table{border-collapse:collapse;width:100%;margin-top:.5rem}td,th{border:1px solid #ccc;padding:.4rem .6rem;text-align:left;vertical-align:top}th{background:#f5f5f5}.meta th{width:16rem}.sub{color:#555}</style>");
+        sb.Append("<style>body{font-family:Segoe UI,Arial,sans-serif;margin:2rem;color:#1a1a1a}h1{font-size:1.5rem}h2{font-size:1.15rem;border-bottom:1px solid #ccc;padding-bottom:.25rem;margin-top:1.5rem}table{border-collapse:collapse;width:100%;margin-top:.5rem}td,th{border:1px solid #ccc;padding:.4rem .6rem;text-align:left;vertical-align:top;word-break:break-word;overflow-wrap:anywhere}th{background:#f5f5f5}.meta th{width:16rem}.sub{color:#555}.tablewrap{overflow-x:auto;margin-top:.5rem}.tablewrap table{margin-top:0}</style>");
         sb.Append("</head><body>");
 
         sb.Append("<h1>").Append(Html(model.Title)).Append("</h1>");
@@ -119,7 +119,8 @@ public sealed class HtmlReportRenderer : IReportRenderer
 
             if (section.Table is { } table && table.Columns.Count > 0)
             {
-                sb.Append("<table><tr>");
+                // Wide tables (coverage matrix, scorecards) scroll within their own box, never the page body.
+                sb.Append("<div class=\"tablewrap\"><table><tr>");
                 foreach (var column in table.Columns)
                 {
                     sb.Append("<th>").Append(Html(column)).Append("</th>");
@@ -137,7 +138,7 @@ public sealed class HtmlReportRenderer : IReportRenderer
                     sb.Append("</tr>");
                 }
 
-                sb.Append("</table>");
+                sb.Append("</table></div>");
             }
 
             if (!string.IsNullOrWhiteSpace(section.Note))

@@ -3,6 +3,7 @@ using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Domain.Audits;
 using AuditX.Domain.Authorization;
+using AuditX.Domain.Enums;
 using AuditX.Domain.Reports;
 
 namespace AuditX.Application.Reports;
@@ -39,27 +40,34 @@ public static class ReportAccess
     /// Authorizes a STANDALONE (cross-audit) report operation. There is no audit to scope against, so access is
     /// permission-only: the caller must hold <see cref="PermissionKeys.ViewAnalytics"/> (in addition to the
     /// <c>ViewReport</c>/<c>GenerateReport</c> permission the controller gates globally), because a standalone report
-    /// exposes function-wide analytics. Throws 403 otherwise.
+    /// exposes function-wide analytics. A <see cref="ReportKind.PerformanceScorecards"/> report additionally requires
+    /// <see cref="PermissionKeys.PerformanceAnalyticsView"/> (mirrors the M9 scorecards gate — Auditors hold
+    /// ViewAnalytics but not PAV, so per-lead performance never leaks to them). Throws 403 otherwise.
     /// </summary>
-    public static async Task EnsureCanAccessStandaloneAsync(Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
+    public static async Task EnsureCanAccessStandaloneAsync(
+        Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken, ReportKind? kind = null)
     {
         if (userId is not { } uid)
         {
             throw new ForbiddenAccessException();
         }
 
-        if (await permissions.HasPermissionAsync(uid, PermissionKeys.ViewAnalytics, null, cancellationToken))
+        if (!await permissions.HasPermissionAsync(uid, PermissionKeys.ViewAnalytics, null, cancellationToken))
         {
-            return;
+            throw new ForbiddenAccessException("Standalone reports require the analytics permission.");
         }
 
-        throw new ForbiddenAccessException("Standalone reports require the analytics permission.");
+        if (kind == ReportKind.PerformanceScorecards
+            && !await permissions.HasPermissionAsync(uid, PermissionKeys.PerformanceAnalyticsView, null, cancellationToken))
+        {
+            throw new ForbiddenAccessException("Performance scorecards require the performance-analytics permission.");
+        }
     }
 
     /// <summary>
     /// Authorizes a read/download of an existing report by branching on its shape: an engagement report is
-    /// audit-scoped (member OR <c>ManageAudit</c>); a standalone report is permission-only (analytics). Centralises
-    /// the null-<c>AuditId</c> branch so every report read query gates identically.
+    /// audit-scoped (member OR <c>ManageAudit</c>); a standalone report is permission-only (analytics, plus PAV for
+    /// scorecards). Centralises the null-<c>AuditId</c> branch so every report read query gates identically.
     /// </summary>
     public static async Task EnsureCanReadAsync(
         Report report, IAuditRepository audits, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
@@ -71,7 +79,7 @@ public static class ReportAccess
         }
         else
         {
-            await EnsureCanAccessStandaloneAsync(userId, permissions, cancellationToken);
+            await EnsureCanAccessStandaloneAsync(userId, permissions, cancellationToken, report.Kind);
         }
     }
 }

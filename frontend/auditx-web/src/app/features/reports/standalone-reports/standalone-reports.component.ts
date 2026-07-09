@@ -56,7 +56,16 @@ const KIND_OPTIONS: KindOption[] = [
   { value: 'executive_summary', labelKey: 'reports.standalone.kind.executiveSummary', icon: 'summarize' },
   { value: 'annual_plan_status', labelKey: 'reports.standalone.kind.annualPlanStatus', icon: 'event_note' },
   { value: 'kpi_pack', labelKey: 'reports.standalone.kind.kpiPack', icon: 'insights' },
+  { value: 'audit_coverage', labelKey: 'reports.standalone.kind.auditCoverage', icon: 'grid_view' },
+  { value: 'findings_register', labelKey: 'reports.standalone.kind.findingsRegister', icon: 'report_problem' },
+  { value: 'sanctions_consistency', labelKey: 'reports.standalone.kind.sanctionsConsistency', icon: 'gavel' },
+  { value: 'performance_scorecards', labelKey: 'reports.standalone.kind.performanceScorecards', icon: 'leaderboard' },
 ];
+
+/** Kinds whose CONTENT is gated by an extra permission beyond ViewAnalytics. */
+const RESTRICTED_KINDS: Record<string, string> = {
+  performance_scorecards: Permissions.PerformanceAnalyticsView,
+};
 
 @Component({
   selector: 'app-standalone-reports',
@@ -121,6 +130,17 @@ export class StandaloneReportsComponent {
   readonly canView = computed(() =>
     this.auth.hasPermission(Permissions.ViewReport),
   );
+
+  /** Kinds the caller may generate — restricted kinds (e.g. scorecards) drop out without the extra permission. */
+  readonly generateKinds = computed(() =>
+    this.kindOptions.filter((o) => this.canOpenKind(o.value)),
+  );
+
+  /** True when the caller can open/download a report of this kind (restricted kinds need an extra permission). */
+  canOpenKind(kind: string): boolean {
+    const required = RESTRICTED_KINDS[kind];
+    return !required || this.auth.hasPermission(required);
+  }
 
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.reports().length === 0,
