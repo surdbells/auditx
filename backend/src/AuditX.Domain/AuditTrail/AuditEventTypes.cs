@@ -83,6 +83,9 @@ public static class AuditEventTypes
     public const string EntityLastAuditedUpdated = "entity_last_audited_updated";
     public const string EntityTypeAdded = "universe_entity_type_added";
     public const string EntityTypeRemoved = "universe_entity_type_removed";
+    public const string OrgUnitCreated = "org_unit_created";
+    public const string OrgUnitUpdated = "org_unit_updated";
+    public const string OrgUnitArchived = "org_unit_archived";
     public const string RiskDimensionConfigured = "risk_dimension_configured";
     public const string PlanCreated = "plan_created";
     public const string PlanUpdated = "plan_updated";
@@ -222,6 +225,7 @@ public static class AuditTargetTypes
     public const string RestoreDrill = "restore_drill";
     public const string ObjectRestore = "object_restore";
     public const string AuditUniverseEntity = "audit_universe_entity";
+    public const string OrgUnit = "org_unit";
     public const string RiskDimension = "risk_dimension";
     public const string EntityTypeTaxonomy = "entity_type_taxonomy";
     public const string AnnualPlan = "annual_plan";

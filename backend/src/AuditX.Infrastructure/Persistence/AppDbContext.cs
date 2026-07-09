@@ -116,6 +116,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<AnalyticsSnapshot> AnalyticsSnapshots => Set<AnalyticsSnapshot>();
 
+    public DbSet<AuditX.Domain.Organization.OrgUnit> OrgUnits => Set<AuditX.Domain.Organization.OrgUnit>();
+
     public DbSet<BankConfiguration> BankConfigurations => Set<BankConfiguration>();
 
     public DbSet<ReferenceDataItem> ReferenceDataItems => Set<ReferenceDataItem>();

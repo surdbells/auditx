@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<IMakerCheckerGateRepository, MakerCheckerGateRepository>();
         services.AddScoped<IBankSettingsRepository, BankSettingsRepository>();
         services.AddScoped<ITemplateRepository, TemplateRepository>();
+        services.AddScoped<IOrgUnitRepository, OrgUnitRepository>();
         services.AddScoped<IIntegrationRepository, IntegrationRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<IAdministrationRepository, AdministrationRepository>();

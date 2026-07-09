@@ -68,6 +68,7 @@ public sealed class DemoDataSeeder(
         var users = await SeedUsersAsync(cancellationToken);
         var templates = await SeedTemplatesAsync(cancellationToken);
         var (entities, plan) = await SeedUniverseAndPlanAsync(users, cancellationToken);
+        await SeedOrgUnitsAsync(cancellationToken);
         var audits = await SeedAuditsAsync(users, templates, plan, entities, cancellationToken);
         await SeedResponsesAndEvidenceAsync(audits, users, cancellationToken);
         var exceptions = await SeedExceptionsAndMapsAsync(audits, entities, users, cancellationToken);
@@ -323,6 +324,44 @@ public sealed class DemoDataSeeder(
         var inherent = specs.ToDictionary(s => s.Name, s => high ? Math.Min(s.ScaleMax, 4) : Math.Max(s.ScaleMin, 2));
         var residual = specs.ToDictionary(s => s.Name, s => high ? Math.Min(s.ScaleMax, 3) : Math.Max(s.ScaleMin, 2));
         entity.ApplyRiskScores(inherent, residual, specs);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+    // Org hierarchy — a small tree (Head Office → 3 divisions); auditable entities + users roll up to a unit so
+    // org-based reporting has data. Audits/findings inherit the org via their auditable-entity link.
+    // ---------------------------------------------------------------------------------------------------------
+    private async Task SeedOrgUnitsAsync(CancellationToken ct)
+    {
+        var headOffice = AuditX.Domain.Organization.OrgUnit.Create("Head Office", "HO", null);
+        db.OrgUnits.Add(headOffice);
+        var retail = AuditX.Domain.Organization.OrgUnit.Create("Retail Banking", "RETAIL", headOffice.Id);
+        var cib = AuditX.Domain.Organization.OrgUnit.Create("Corporate & Investment Banking", "CIB", headOffice.Id);
+        var tech = AuditX.Domain.Organization.OrgUnit.Create("Technology", "TECH", headOffice.Id);
+        db.OrgUnits.AddRange(retail, cib, tech);
+        await db.SaveChangesAsync(ct);
+
+        // Assign each auditable entity to a division by its type/name; everything else rolls up to Head Office.
+        foreach (var entity in await db.AuditUniverseEntities.ToListAsync(ct))
+        {
+            var name = entity.Name.ToLowerInvariant();
+            var type = entity.EntityType.ToLowerInvariant();
+            var unitId =
+                type == "branch" || name.Contains("branch") ? retail.Id
+                : name.Contains("treasury") || name.Contains("credit") ? cib.Id
+                : type == "system" || name.Contains("core banking") || name.Contains("data centre") || name.Contains("it ") ? tech.Id
+                : headOffice.Id;
+            entity.SetOrgUnit(unitId);
+        }
+
+        // Populate the auditors' org affiliation (utilisation-by-org reporting) — spread across the divisions.
+        var divisions = new[] { retail.Id, cib.Id, tech.Id };
+        var users = await db.Users.IgnoreQueryFilters().ToListAsync(ct);
+        for (var i = 0; i < users.Count; i++)
+        {
+            users[i].SetOrgUnit(divisions[i % divisions.Length]);
+        }
+
+        await db.SaveChangesAsync(ct);
     }
 
     // ---------------------------------------------------------------------------------------------------------

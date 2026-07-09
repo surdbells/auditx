@@ -24,6 +24,9 @@ public sealed class AuditableEntity : AggregateRoot, ISoftDeletable
 
     public Guid? ParentEntityId { get; private set; }
 
+    /// <summary>The organisational unit this entity rolls up to (for org-hierarchy reporting).</summary>
+    public Guid? OrgUnitId { get; private set; }
+
     public Guid? OwnerUserId { get; private set; }
 
     public string InherentRiskScoresJson { get; private set; } = "{}";
@@ -81,6 +84,9 @@ public sealed class AuditableEntity : AggregateRoot, ISoftDeletable
 
         ParentEntityId = parentEntityId;
     }
+
+    /// <summary>Assigns (or clears) the organisational unit this entity rolls up to.</summary>
+    public void SetOrgUnit(Guid? orgUnitId) => OrgUnitId = orgUnitId;
 
     /// <summary>
     /// Apply a complete set of inherent and/or residual scores and recompute the composites. Each side

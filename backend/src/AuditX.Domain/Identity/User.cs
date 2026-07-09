@@ -41,6 +41,9 @@ public sealed class User : AggregateRoot, ISoftDeletable
     /// <summary>Free-form JSON of per-user notification preferences (US-M15-006).</summary>
     public string? NotificationPreferencesJson { get; private set; }
 
+    /// <summary>The organisational unit the user belongs to (for utilisation/coverage reporting by org).</summary>
+    public Guid? OrgUnitId { get; private set; }
+
     public bool IsDeleted { get; private set; }
 
     public DateTimeOffset? DeletedAt { get; private set; }
@@ -125,6 +128,9 @@ public sealed class User : AggregateRoot, ISoftDeletable
     }
 
     public void UpdateNotificationPreferences(string? preferencesJson) => NotificationPreferencesJson = preferencesJson;
+
+    /// <summary>Assigns (or clears) the organisational unit the user belongs to.</summary>
+    public void SetOrgUnit(Guid? orgUnitId) => OrgUnitId = orgUnitId;
 
     public void SoftDelete(Guid? deletedBy, DateTimeOffset deletedAtUtc)
     {
