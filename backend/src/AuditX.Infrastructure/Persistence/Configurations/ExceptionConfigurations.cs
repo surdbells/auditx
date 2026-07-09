@@ -19,6 +19,8 @@ public sealed class AuditExceptionConfiguration : IEntityTypeConfiguration<Audit
         builder.Property(e => e.RootCause).IsRequired();
         builder.Property(e => e.Recommendation).IsRequired();
         builder.Property(e => e.Category).HasMaxLength(100);
+        builder.Property(e => e.FinancialImpact).HasPrecision(18, 2);
+        builder.Property(e => e.FinancialImpactCurrency).HasMaxLength(3);
         builder.Property(e => e.ConfigurationVersionsJson).IsRequired().HasDefaultValue("{}");
         builder.Property(e => e.Version).IsRowVersion();
         builder.Property(e => e.Severity).HasConversion(new SnakeCaseEnumConverter<ExceptionSeverity>()).HasMaxLength(20).IsRequired();

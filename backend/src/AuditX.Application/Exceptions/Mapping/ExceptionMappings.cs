@@ -20,6 +20,7 @@ public static class ExceptionMappings
     public static ExceptionDto ToDto(this AuditException e, DateOnly today) => new(
         e.Id, e.AuditId, e.ChecklistItemId, e.AuditableEntityId, e.Title, e.Severity.ToSnake(), e.StatusLabel(),
         e.RootCause, e.Recommendation, e.Category, e.OwnerUserId, e.RaisedByUserId, e.RaisedAt, e.TargetDate,
+        e.FinancialImpact, e.FinancialImpactCurrency,
         e.TargetDateOverridden, e.IsRecurrence, e.RecurrenceOfExceptionId, e.CiaPending,
         e.IsOverdue(today), e.DaysPastTarget(today), e.MapSubmittedAt, e.MapApprovedAt, e.MapRejectionReason,
         e.ClosureEvidenceNote, e.ClosedBy, e.ClosedAt, e.CiaCountersignedBy, e.CancellationReason,

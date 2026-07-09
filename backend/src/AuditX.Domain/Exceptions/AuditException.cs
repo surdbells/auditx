@@ -83,6 +83,12 @@ public sealed class AuditException : AggregateRoot
 
     public DateTimeOffset? CancelledAt { get; private set; }
 
+    /// <summary>Optional quantified financial exposure of the finding, for $-impact reporting.</summary>
+    public decimal? FinancialImpact { get; private set; }
+
+    /// <summary>ISO-4217 currency of <see cref="FinancialImpact"/> (e.g. <c>NGN</c>); null when no amount is set.</summary>
+    public string? FinancialImpactCurrency { get; private set; }
+
     public byte[] Version { get; private set; } = [];
 
     public IReadOnlyList<MapAction> MapActions => _mapActions.AsReadOnly();
@@ -118,6 +124,24 @@ public sealed class AuditException : AggregateRoot
         };
         exception.RaiseDomainEvent(new ExceptionRaisedEvent(exception.Id, auditId, checklistItemId, severity, ownerUserId, isRecurrence));
         return exception;
+    }
+
+    /// <summary>
+    /// Records (or clears) the finding's quantified financial exposure. A null amount clears both fields; a
+    /// non-null amount must be non-negative and carries a 3-letter ISO currency (defaults to the org base later).
+    /// </summary>
+    public void SetFinancialImpact(decimal? amount, string? currency)
+    {
+        if (amount is null)
+        {
+            FinancialImpact = null;
+            FinancialImpactCurrency = null;
+            return;
+        }
+
+        Guard.Against(amount < 0, "exception.financial_impact_negative", "Financial impact cannot be negative.");
+        FinancialImpact = amount;
+        FinancialImpactCurrency = string.IsNullOrWhiteSpace(currency) ? null : currency.Trim().ToUpperInvariant();
     }
 
     public void ChangeSeverity(ExceptionSeverity newSeverity, string reason, Guid actorUserId)

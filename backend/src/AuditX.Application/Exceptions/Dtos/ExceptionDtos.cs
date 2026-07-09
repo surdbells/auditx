@@ -19,6 +19,8 @@ public sealed record ExceptionDto(
     Guid RaisedByUserId,
     DateTimeOffset RaisedAt,
     DateOnly TargetDate,
+    decimal? FinancialImpact,
+    string? FinancialImpactCurrency,
     bool TargetDateOverridden,
     bool IsRecurrence,
     Guid? RecurrenceOfExceptionId,

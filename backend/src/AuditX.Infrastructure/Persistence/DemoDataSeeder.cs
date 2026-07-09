@@ -598,6 +598,13 @@ public sealed class DemoDataSeeder(
             ExceptionSeverity.Medium, "treasury_process", users.Auditee3Id, users.Auditor3Id, raisedOffsetDays: -10, ct);
         created.Add(exOpen2);
 
+        // Quantify financial exposure on the material findings (feeds $-exposure reporting; NGN base currency).
+        exPending.SetFinancialImpact(45_000_000m, "NGN");
+        exApproved.SetFinancialImpact(12_500_000m, "NGN");
+        exItgc.SetFinancialImpact(8_000_000m, "NGN");
+        exOpen2.SetFinancialImpact(30_000_000m, "NGN");
+        await db.SaveChangesAsync(ct);
+
         return created;
     }
 

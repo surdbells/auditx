@@ -59,6 +59,9 @@ export interface Exception {
   raisedByUserId: string;
   raisedAt: string;
   targetDate: string;
+  /** Quantified financial exposure (null when not assessed). */
+  financialImpact?: number | null;
+  financialImpactCurrency?: string | null;
   targetDateOverridden: boolean;
   isRecurrence: boolean;
   recurrenceOfExceptionId?: string | null;
