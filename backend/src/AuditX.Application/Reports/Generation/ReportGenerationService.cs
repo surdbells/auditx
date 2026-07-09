@@ -23,6 +23,7 @@ public sealed class ReportGenerationService(
     IReportRepository reports,
     IAuditRepository audits,
     ReportContentAssembler assembler,
+    StandaloneReportAssembler standaloneAssembler,
     IReportRenderer renderer,
     IFileStorage storage,
     IClock clock,
@@ -54,11 +55,21 @@ public sealed class ReportGenerationService(
             report.MarkRunning();
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var audit = await audits.GetByIdAsync(report.AuditId, cancellationToken)
-                ?? throw new InvalidOperationException($"Audit {report.AuditId} for report {reportId} no longer exists.");
-
-            var composition = await assembler.AssembleAsync(audit, report.VersionNumber, cancellationToken);
-            var context = new ReportRenderContext(composition, report.TemplateDefinitionSnapshotJson, report.TemplateVersionSnapshot);
+            ReportRenderContext context;
+            if (report.Kind == ReportKind.AuditEngagement)
+            {
+                var auditId = report.AuditId
+                    ?? throw new InvalidOperationException($"Engagement report {reportId} has no audit.");
+                var audit = await audits.GetByIdAsync(auditId, cancellationToken)
+                    ?? throw new InvalidOperationException($"Audit {auditId} for report {reportId} no longer exists.");
+                var composition = await assembler.AssembleAsync(audit, report.VersionNumber, cancellationToken);
+                context = ReportRenderContext.ForEngagement(composition, report.TemplateDefinitionSnapshotJson, report.TemplateVersionSnapshot);
+            }
+            else
+            {
+                var model = await standaloneAssembler.AssembleAsync(report.Kind, report.VersionNumber, cancellationToken);
+                context = ReportRenderContext.ForStandalone(model, report.TemplateDefinitionSnapshotJson, report.TemplateVersionSnapshot);
+            }
 
             var requestedFormats = ReportMappings.ParseFormats(report.RequestedFormatsJson);
             var produced = new List<ProducedArtefact>();

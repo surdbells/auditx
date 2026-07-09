@@ -1,9 +1,28 @@
 using AuditX.Application.Reports.Generation;
+using AuditX.Domain.Enums;
 
 namespace AuditX.Application.Abstractions.Reports;
 
-/// <summary>The full context a renderer needs to produce one artefact (assembled composition + the snapshotted template).</summary>
-public sealed record ReportRenderContext(ReportComposition Composition, string TemplateDefinitionJson, int TemplateVersion);
+/// <summary>
+/// The full context a renderer needs to produce one artefact (M8). Discriminated by <see cref="Kind"/>: an
+/// engagement report carries a <see cref="Composition"/> (per-audit); a standalone report carries a
+/// <see cref="Standalone"/> model (cross-audit analytics). Exactly one payload is non-null.
+/// </summary>
+public sealed record ReportRenderContext(
+    ReportKind Kind,
+    ReportComposition? Composition,
+    StandaloneReportModel? Standalone,
+    string TemplateDefinitionJson,
+    int TemplateVersion)
+{
+    /// <summary>Context for a per-audit engagement report.</summary>
+    public static ReportRenderContext ForEngagement(ReportComposition composition, string templateDefinitionJson, int templateVersion)
+        => new(ReportKind.AuditEngagement, composition, null, templateDefinitionJson, templateVersion);
+
+    /// <summary>Context for a standalone (cross-audit) report.</summary>
+    public static ReportRenderContext ForStandalone(StandaloneReportModel model, string templateDefinitionJson, int templateVersion)
+        => new(model.Kind, null, model, templateDefinitionJson, templateVersion);
+}
 
 /// <summary>A produced report artefact: its bytes, MIME type, suggested filename, format, and the artefact's own SHA-256.</summary>
 public sealed record RenderedArtefact(byte[] Content, string ContentType, string Filename, string Format, string Sha256Hash);

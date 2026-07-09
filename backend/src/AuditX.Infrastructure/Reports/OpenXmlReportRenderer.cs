@@ -21,7 +21,12 @@ public sealed class OpenXmlReportRenderer : IReportRenderer
 
     public RenderedArtefact Render(string format, ReportRenderContext context)
     {
-        var c = context.Composition;
+        if (context.Kind != Domain.Enums.ReportKind.AuditEngagement && context.Standalone is { } standalone)
+        {
+            return RenderStandalone(standalone);
+        }
+
+        var c = context.Composition!;
         var flags = ConditionalSectionEvaluator.BuildFlags(c);
         var sections = ReportTemplateDefinition.ReadSections(context.TemplateDefinitionJson);
         var title = ReportTemplateDefinition.ReadTitle(context.TemplateDefinitionJson) ?? "Audit Report";
@@ -72,6 +77,92 @@ public sealed class OpenXmlReportRenderer : IReportRenderer
             $"audit-report-{c.AuditId}-v{c.VersionNumber}.docx",
             "docx",
             sha256);
+    }
+
+    /// <summary>Renders a standalone (cross-audit) report from its generic section model (M8).</summary>
+    private static RenderedArtefact RenderStandalone(StandaloneReportModel model)
+    {
+        using var stream = new MemoryStream();
+        using (var wordDocument = WordprocessingDocument.Create(stream, WordprocessingDocumentType.Document))
+        {
+            var mainPart = wordDocument.AddMainDocumentPart();
+            mainPart.Document = new Document();
+            var body = mainPart.Document.AppendChild(new Body());
+
+            Heading(body, model.Title, 1);
+            Paragraph(body, model.Subtitle);
+            KeyValue(body, "Report version", model.VersionNumber.ToString());
+            KeyValue(body, "Generated (UTC)", model.GeneratedAtUtc.ToString("u"));
+
+            foreach (var section in model.Sections)
+            {
+                Heading(body, section.Heading, 2);
+                foreach (var metric in section.Metrics)
+                {
+                    KeyValue(body, metric.Label, metric.Value);
+                }
+
+                if (section.Table is { } table && table.Columns.Count > 0)
+                {
+                    AppendTable(body, table);
+                }
+
+                if (!string.IsNullOrWhiteSpace(section.Note))
+                {
+                    Paragraph(body, section.Note!);
+                }
+            }
+
+            mainPart.Document.Save();
+        }
+
+        var bytes = stream.ToArray();
+        var sha256 = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        return new RenderedArtefact(
+            bytes,
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            $"{model.FileStem}-v{model.VersionNumber}.docx",
+            "docx",
+            sha256);
+    }
+
+    private static void AppendTable(Body body, StandaloneTable model)
+    {
+        var table = new Table(new TableProperties(new TableBorders(
+            new TopBorder { Val = BorderValues.Single, Size = 4 },
+            new BottomBorder { Val = BorderValues.Single, Size = 4 },
+            new LeftBorder { Val = BorderValues.Single, Size = 4 },
+            new RightBorder { Val = BorderValues.Single, Size = 4 },
+            new InsideHorizontalBorder { Val = BorderValues.Single, Size = 4 },
+            new InsideVerticalBorder { Val = BorderValues.Single, Size = 4 })));
+
+        var header = new TableRow();
+        foreach (var column in model.Columns)
+        {
+            header.AppendChild(Cell(column, bold: true));
+        }
+
+        table.AppendChild(header);
+
+        foreach (var dataRow in model.Rows)
+        {
+            var row = new TableRow();
+            foreach (var cell in dataRow)
+            {
+                row.AppendChild(Cell(cell ?? string.Empty, bold: false));
+            }
+
+            table.AppendChild(row);
+        }
+
+        body.AppendChild(table);
+    }
+
+    private static TableCell Cell(string text, bool bold)
+    {
+        var runProps = bold ? new RunProperties(new Bold()) : new RunProperties();
+        var run = new Run(runProps, new Text(text) { Space = SpaceProcessingModeValues.Preserve });
+        return new TableCell(new Paragraph(run));
     }
 
     private static void AppendSection(Body body, ReportTemplateSection section, ReportComposition c)

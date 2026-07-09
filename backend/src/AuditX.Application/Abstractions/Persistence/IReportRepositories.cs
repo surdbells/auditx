@@ -1,4 +1,5 @@
 using AuditX.Application.Common.Models;
+using AuditX.Domain.Enums;
 using AuditX.Domain.Reports;
 
 namespace AuditX.Application.Abstractions.Persistence;
@@ -11,11 +12,20 @@ public interface IReportRepository
     /// <summary>Keyset-paginated report versions for an audit, newest version first (keyset on version number desc).</summary>
     Task<CursorPage<Report>> ListByAuditAsync(Guid auditId, PageRequest page, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Keyset-paginated standalone (cross-audit) reports, newest first. When <paramref name="kind"/> is supplied the
+    /// results are scoped to that single standalone kind; otherwise all standalone kinds are returned.
+    /// </summary>
+    Task<CursorPage<Report>> ListStandaloneAsync(ReportKind? kind, PageRequest page, CancellationToken cancellationToken = default);
+
     /// <summary>Keyset-paginated distribution log for a report, ordered by dispatch time.</summary>
     Task<CursorPage<ReportDistribution>> ListDistributionsAsync(Guid reportId, PageRequest page, CancellationToken cancellationToken = default);
 
     /// <summary>Highest version number assigned for the audit so far (0 if none), for computing the next version.</summary>
     Task<int> GetNextVersionAsync(Guid auditId, CancellationToken cancellationToken = default);
+
+    /// <summary>Highest version number assigned for a standalone kind so far (0 if none), for the next per-kind version.</summary>
+    Task<int> GetNextVersionForKindAsync(ReportKind kind, CancellationToken cancellationToken = default);
 
     void Add(Report report);
 }

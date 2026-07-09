@@ -12,6 +12,7 @@ public static class ReportMappings
     public static ReportDto ToDto(this Report r) => new(
         r.Id,
         r.AuditId,
+        r.Kind.ToSnake(),
         r.VersionNumber,
         r.Status.ToSnake(),
         r.Sha256Hash,
@@ -28,6 +29,7 @@ public static class ReportMappings
     public static ReportListItemDto ToListDto(this Report r) => new(
         r.Id,
         r.AuditId,
+        r.Kind.ToSnake(),
         r.VersionNumber,
         r.Status.ToSnake(),
         r.Sha256Hash,

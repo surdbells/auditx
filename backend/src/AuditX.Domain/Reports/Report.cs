@@ -5,10 +5,12 @@ using AuditX.Domain.Reports.Events;
 namespace AuditX.Domain.Reports;
 
 /// <summary>
-/// A generated audit report (M8). Aggregate root over its distribution log. Per-audit integer versioning
-/// (<see cref="VersionNumber"/>, unique with <see cref="AuditId"/>); the canonical HTML's SHA-256 is stored on
-/// <see cref="Sha256Hash"/> for verify-on-read. The template definition JSON is SNAPSHOTTED at <see cref="Start"/>
-/// so a historical report always renders as issued even after the active template moves on (B2/B3).
+/// A generated report (M8). Aggregate root over its distribution log. Two shapes, discriminated by <see cref="Kind"/>:
+/// the per-audit <b>engagement</b> report (<see cref="ReportKind.AuditEngagement"/>, <see cref="AuditId"/> set,
+/// versioned per audit); and <b>standalone</b> cross-audit reports (<see cref="AuditId"/> null, versioned per kind)
+/// rendered from the M9 analytics. The canonical HTML's SHA-256 is stored on <see cref="Sha256Hash"/> for
+/// verify-on-read. The template definition JSON is SNAPSHOTTED at <see cref="Start"/> so a historical report always
+/// renders as issued even after the active template moves on (B2/B3).
 ///
 /// Immutability (FR-M8-009): there is NO content mutation after <see cref="Complete"/>. The status guards throw
 /// <see cref="InvalidStateTransitionException"/> on illegal moves and the API exposes no mutating verb on a report.
@@ -22,7 +24,11 @@ public sealed class Report : AggregateRoot, ISoftDeletable
     {
     }
 
-    public Guid AuditId { get; private set; }
+    /// <summary>The engagement audit; null for standalone (cross-audit) reports.</summary>
+    public Guid? AuditId { get; private set; }
+
+    /// <summary>Discriminates engagement (per-audit) from the standalone analytics report kinds.</summary>
+    public ReportKind Kind { get; private set; }
 
     public int VersionNumber { get; private set; }
 
@@ -67,7 +73,7 @@ public sealed class Report : AggregateRoot, ISoftDeletable
 
     public IReadOnlyList<ReportDistribution> Distributions => _distributions.AsReadOnly();
 
-    /// <summary>The sole construction path: a manual generation request (status → pending).</summary>
+    /// <summary>The engagement construction path: a manual per-audit generation request (status → pending).</summary>
     public static Report Start(
         Guid auditId, int versionNumber, Guid templateId, int templateVersion, string templateDefinitionSnapshotJson,
         IReadOnlyList<string> requestedFormats, Guid actorId, DateTimeOffset nowUtc)
@@ -76,6 +82,7 @@ public sealed class Report : AggregateRoot, ISoftDeletable
         var report = new Report
         {
             AuditId = auditId,
+            Kind = ReportKind.AuditEngagement,
             VersionNumber = versionNumber,
             Status = ReportStatus.Pending,
             TemplateId = templateId,
@@ -87,6 +94,39 @@ public sealed class Report : AggregateRoot, ISoftDeletable
             RequestedAt = nowUtc,
         };
         report.RaiseDomainEvent(new ReportGenerationRequestedEvent(report.Id, auditId, versionNumber, actorId));
+        return report;
+    }
+
+    /// <summary>
+    /// The standalone construction path: a cross-audit report request (status → pending). No <see cref="AuditId"/>;
+    /// versioning is per <paramref name="kind"/>. <paramref name="kind"/> must not be
+    /// <see cref="ReportKind.AuditEngagement"/> — that shape is built through <see cref="Start"/>.
+    /// </summary>
+    public static Report StartStandalone(
+        ReportKind kind, int versionNumber, Guid templateId, int templateVersion, string templateDefinitionSnapshotJson,
+        IReadOnlyList<string> requestedFormats, Guid actorId, DateTimeOffset nowUtc)
+    {
+        if (kind == ReportKind.AuditEngagement)
+        {
+            throw new DomainException("report.kind_not_standalone", "An engagement report must be created through Start with an audit.");
+        }
+
+        var formats = NormaliseFormats(requestedFormats);
+        var report = new Report
+        {
+            AuditId = null,
+            Kind = kind,
+            VersionNumber = versionNumber,
+            Status = ReportStatus.Pending,
+            TemplateId = templateId,
+            TemplateVersionSnapshot = templateVersion,
+            TemplateDefinitionSnapshotJson = Guard.NotNullOrWhiteSpace(
+                templateDefinitionSnapshotJson, "report.template_definition_required", "A template definition snapshot is required."),
+            RequestedFormatsJson = SerializeFormats(formats),
+            GeneratedBy = actorId,
+            RequestedAt = nowUtc,
+        };
+        report.RaiseDomainEvent(new ReportGenerationRequestedEvent(report.Id, null, versionNumber, actorId));
         return report;
     }
 

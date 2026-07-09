@@ -1,9 +1,12 @@
 using AuditX.Api.Authorization;
 using AuditX.Api.Contracts;
+using AuditX.Application.Common.Enums;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Reports.Commands;
 using AuditX.Application.Reports.Queries;
 using AuditX.Domain.Authorization;
+using AuditX.Domain.Common;
+using AuditX.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,6 +32,28 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
     [HttpGet("api/v1/audits/{auditId:guid}/reports")]
     public async Task<IActionResult> ListForAudit(Guid auditId, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ListAuditReportsQuery(auditId, cursor, limit), cancellationToken));
+
+    [RequirePermission(PermissionKeys.GenerateReport)]
+    [HttpPost("api/v1/reports/standalone")]
+    public async Task<IActionResult> GenerateStandalone([FromBody] GenerateStandaloneReportRequest request, CancellationToken cancellationToken)
+    {
+        var kind = ParseStandaloneKind(request.Kind);
+        var result = await dispatcher.Send(new GenerateStandaloneReportCommand(kind, request.Docx ?? false), cancellationToken);
+        return Accepted(result);
+    }
+
+    [RequirePermission(PermissionKeys.ViewReport)]
+    [HttpGet("api/v1/reports/standalone")]
+    public async Task<IActionResult> ListStandalone([FromQuery] string? kind, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
+    {
+        ReportKind? kindFilter = null;
+        if (!string.IsNullOrWhiteSpace(kind))
+        {
+            kindFilter = ParseStandaloneKind(kind);
+        }
+
+        return Envelope(await dispatcher.Query(new ListStandaloneReportsQuery(kindFilter, cursor, limit), cancellationToken));
+    }
 
     [RequirePermission(PermissionKeys.ViewReport)]
     [HttpGet("api/v1/reports/{id:guid}")]
@@ -60,4 +85,16 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
     [HttpGet("api/v1/reports/{id:guid}/distributions")]
     public async Task<IActionResult> Distributions(Guid id, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ListReportDistributionsQuery(id, cursor, limit), cancellationToken));
+
+    /// <summary>Parses a standalone report kind, rejecting an unrecognised value or the engagement kind (400).</summary>
+    private static ReportKind ParseStandaloneKind(string? value)
+    {
+        if (!EnumExtensions.TryParseSnake<ReportKind>(value, out var kind) || kind == ReportKind.AuditEngagement)
+        {
+            throw new DomainException("report.invalid_kind",
+                "Kind must be one of: executive_summary, annual_plan_status, kpi_pack.");
+        }
+
+        return kind;
+    }
 }

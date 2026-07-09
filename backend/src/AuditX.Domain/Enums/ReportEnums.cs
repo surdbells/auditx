@@ -14,6 +14,18 @@ public enum ReportStatus
 }
 
 /// <summary>
+/// The kind of report (M8). <see cref="AuditEngagement"/> (default 0) is the per-audit engagement report; the
+/// remaining kinds are standalone / cross-audit reports (no single audit) rendered from the M9 analytics.
+/// </summary>
+public enum ReportKind
+{
+    AuditEngagement = 0,
+    ExecutiveSummary,
+    AnnualPlanStatus,
+    KpiPack,
+}
+
+/// <summary>
 /// The delivery outcome of a single report distribution (M8). Defaults to <see cref="Pending"/>; the inbound
 /// M14 relay callback that flips it to <see cref="Delivered"/>/<see cref="Bounced"/> is deferred.
 /// </summary>

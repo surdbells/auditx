@@ -6,10 +6,12 @@ public sealed record ReportGenerationAcceptedDto(Guid ReportId, string Status);
 /// <summary>One produced artefact descriptor surfaced on the report metadata.</summary>
 public sealed record ProducedArtefactDto(string Format, string ContentType, long SizeBytes, string Sha256);
 
-/// <summary>Report metadata / status surface (version, hash, template version, produced formats, timestamps).</summary>
+/// <summary>Report metadata / status surface (version, hash, template version, produced formats, timestamps).
+/// <c>AuditId</c> is null for standalone (cross-audit) reports; <c>Kind</c> discriminates the shape.</summary>
 public sealed record ReportDto(
     Guid Id,
-    Guid AuditId,
+    Guid? AuditId,
+    string Kind,
     int VersionNumber,
     string Status,
     string? Sha256Hash,
@@ -23,10 +25,11 @@ public sealed record ReportDto(
     DateTimeOffset? CompletedAt,
     string Version);
 
-/// <summary>Compact list item for the per-audit version list.</summary>
+/// <summary>Compact list item for the per-audit / per-kind version list. <c>AuditId</c> is null for standalone reports.</summary>
 public sealed record ReportListItemDto(
     Guid Id,
-    Guid AuditId,
+    Guid? AuditId,
+    string Kind,
     int VersionNumber,
     string Status,
     string? Sha256Hash,

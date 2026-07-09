@@ -174,6 +174,45 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     [Fact]
+    public async Task Standalone_report_generates_downloads_verifies_and_lists()
+    {
+        var admin = await LoginAsync("admin");
+        var manager = await ReporterAsync(admin); // Audit Manager holds GenerateReport + ViewAnalytics
+
+        var accepted = await manager.PostAsJsonAsync("/api/v1/reports/standalone", new { kind = "executive_summary", docx = false });
+        Assert.Equal(HttpStatusCode.Accepted, accepted.StatusCode);
+        var reportId = JsonDocument.Parse(await accepted.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("data").GetProperty("reportId").GetGuid();
+
+        await NudgeGenerationAsync(reportId);
+
+        var report = await PollUntilSettledAsync(manager, reportId);
+        Assert.Equal("completed", report.GetProperty("status").GetString());
+        Assert.Equal("executive_summary", report.GetProperty("kind").GetString());
+        // A standalone report has no audit.
+        Assert.True(report.GetProperty("auditId").ValueKind == JsonValueKind.Null);
+        Assert.Contains(report.GetProperty("producedArtefacts").EnumerateArray(), a => a.GetProperty("format").GetString() == "html");
+
+        var download = await manager.GetAsync($"/api/v1/reports/{reportId}/download?format=html");
+        download.EnsureSuccessStatusCode();
+        Assert.True((await download.Content.ReadAsByteArrayAsync()).Length > 0);
+
+        var verify = await DataAsync(await manager.GetAsync($"/api/v1/reports/{reportId}/verify-hash"));
+        Assert.True(verify.GetProperty("match").GetBoolean());
+
+        var listed = await DataAsync(await manager.GetAsync("/api/v1/reports/standalone?kind=executive_summary"));
+        Assert.Contains(listed.GetProperty("items").EnumerateArray(), r => r.GetProperty("id").GetGuid() == reportId);
+    }
+
+    [Fact]
+    public async Task Standalone_reports_require_the_analytics_permission()
+    {
+        var auditee = await LoginAsync("auditee"); // no analytics permission
+        var response = await auditee.GetAsync("/api/v1/reports/standalone");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Report_templates_have_a_single_active_version_after_activation()
     {
         var admin = await LoginAsync("admin");

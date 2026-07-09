@@ -16,6 +16,7 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
         builder.Property(r => r.Id).ValueGeneratedNever();
 
         builder.Property(r => r.Status).HasConversion(new SnakeCaseEnumConverter<ReportStatus>()).HasMaxLength(20).IsRequired();
+        builder.Property(r => r.Kind).HasConversion(new SnakeCaseEnumConverter<ReportKind>()).HasMaxLength(30).IsRequired();
         builder.Property(r => r.Sha256Hash).HasMaxLength(64);
         builder.Property(r => r.TemplateDefinitionSnapshotJson).IsRequired();
         builder.Property(r => r.RequestedFormatsJson).IsRequired();
@@ -24,16 +25,19 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
         builder.Property(r => r.DeletionReason);
         builder.Property(r => r.Version).IsRowVersion();
 
-        // FK to the audit, Restrict — generating/deleting a report never cascades into the audit.
-        builder.HasOne<Audit>().WithMany().HasForeignKey(r => r.AuditId).OnDelete(DeleteBehavior.Restrict);
+        // FK to the audit, Restrict — generating/deleting a report never cascades into the audit. Optional: standalone
+        // (cross-audit) reports have no audit.
+        builder.HasOne<Audit>().WithMany().HasForeignKey(r => r.AuditId).IsRequired(false).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(r => r.Distributions).WithOne().HasForeignKey(d => d.ReportId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(r => r.Distributions).HasField("_distributions").UsePropertyAccessMode(PropertyAccessMode.Field);
 
         builder.HasIndex(r => r.AuditId);
         builder.HasIndex(r => r.Status);
-        // Per-audit integer versioning is unique (BR — no two report rows share an (audit, version)).
-        builder.HasIndex(r => new { r.AuditId, r.VersionNumber }).IsUnique();
+        // Engagement reports: per-audit integer versioning is unique (no two engagement rows share an (audit, version)).
+        builder.HasIndex(r => new { r.AuditId, r.VersionNumber }).IsUnique().HasFilter("[audit_id] IS NOT NULL");
+        // Standalone reports: per-kind integer versioning is unique (no audit).
+        builder.HasIndex(r => new { r.Kind, r.VersionNumber }).IsUnique().HasFilter("[audit_id] IS NULL");
 
         builder.HasQueryFilter(r => !r.IsDeleted);
     }

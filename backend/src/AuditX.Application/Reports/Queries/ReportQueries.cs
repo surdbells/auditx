@@ -7,9 +7,11 @@ using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Common.Models;
 using AuditX.Application.Reports.Dtos;
+using AuditX.Application.Reports.Generation;
 using AuditX.Application.Reports.Mapping;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Common;
+using AuditX.Domain.Enums;
 using AuditX.Domain.Reports;
 
 namespace AuditX.Application.Reports.Queries;
@@ -33,6 +35,25 @@ public sealed class ListAuditReportsQueryHandler(
     }
 }
 
+// ---- List standalone (cross-audit) reports ----
+
+/// <summary>Lists standalone reports, newest first; optionally scoped to a single <paramref name="Kind"/>.</summary>
+public sealed record ListStandaloneReportsQuery(ReportKind? Kind, string? Cursor, int? Limit) : IQuery<CursorPage<ReportListItemDto>>;
+
+public sealed class ListStandaloneReportsQueryHandler(
+    IReportRepository reports, IPermissionResolver permissions, ICurrentUser currentUser)
+    : IQueryHandler<ListStandaloneReportsQuery, CursorPage<ReportListItemDto>>
+{
+    public async Task<CursorPage<ReportListItemDto>> Handle(ListStandaloneReportsQuery query, CancellationToken cancellationToken)
+    {
+        await ReportAccess.EnsureCanAccessStandaloneAsync(currentUser.UserId, permissions, cancellationToken);
+
+        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var result = await reports.ListStandaloneAsync(query.Kind, page, cancellationToken);
+        return new CursorPage<ReportListItemDto>(result.Items.Select(r => r.ToListDto()).ToArray(), result.NextCursor, result.HasMore);
+    }
+}
+
 // ---- Single report metadata / status surface ----
 
 public sealed record GetReportQuery(Guid Id) : IQuery<ReportDto>;
@@ -44,8 +65,7 @@ public sealed class GetReportQueryHandler(
     public async Task<ReportDto> Handle(GetReportQuery query, CancellationToken cancellationToken)
     {
         var report = await reports.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Report", query.Id);
-        var audit = await audits.GetByIdAsync(report.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", report.AuditId);
-        await ReportAccess.EnsureCanAccessAsync(audit, currentUser.UserId, permissions, cancellationToken);
+        await ReportAccess.EnsureCanReadAsync(report, audits, currentUser.UserId, permissions, cancellationToken);
         return report.ToDto();
     }
 }
@@ -62,8 +82,7 @@ public sealed class DownloadReportArtefactQueryHandler(
     public async Task<ReportArtefactResult> Handle(DownloadReportArtefactQuery query, CancellationToken cancellationToken)
     {
         var report = await reports.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Report", query.Id);
-        var auditEntity = await audits.GetByIdAsync(report.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", report.AuditId);
-        await ReportAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ReportAccess.EnsureCanReadAsync(report, audits, currentUser.UserId, permissions, cancellationToken);
 
         var format = (query.Format ?? string.Empty).Trim().ToLowerInvariant();
         var artefacts = ReportMappings.ParseArtefacts(report.ProducedArtefactsJson);
@@ -84,7 +103,9 @@ public sealed class DownloadReportArtefactQueryHandler(
             throw new ReportIntegrityException();
         }
 
-        var filename = $"audit-report-{report.AuditId}-v{report.VersionNumber}.{(format == "docx" ? "docx" : "html")}";
+        var ext = format == "docx" ? "docx" : "html";
+        var stem = report.AuditId is { } aid ? $"audit-report-{aid}" : StandaloneReportModel.FileStemFor(report.Kind);
+        var filename = $"{stem}-v{report.VersionNumber}.{ext}";
         return new ReportArtefactResult(content, artefact.ContentType, filename, artefact.Sha256);
     }
 }
@@ -101,8 +122,7 @@ public sealed class VerifyReportHashQueryHandler(
     public async Task<ReportHashVerificationDto> Handle(VerifyReportHashQuery query, CancellationToken cancellationToken)
     {
         var report = await reports.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Report", query.Id);
-        var auditEntity = await audits.GetByIdAsync(report.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", report.AuditId);
-        await ReportAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ReportAccess.EnsureCanReadAsync(report, audits, currentUser.UserId, permissions, cancellationToken);
 
         if (report.Sha256Hash is null)
         {
@@ -141,8 +161,7 @@ public sealed class ListReportDistributionsQueryHandler(
     public async Task<CursorPage<ReportDistributionDto>> Handle(ListReportDistributionsQuery query, CancellationToken cancellationToken)
     {
         var report = await reports.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Report", query.Id);
-        var audit = await audits.GetByIdAsync(report.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", report.AuditId);
-        await ReportAccess.EnsureCanAccessAsync(audit, currentUser.UserId, permissions, cancellationToken);
+        await ReportAccess.EnsureCanReadAsync(report, audits, currentUser.UserId, permissions, cancellationToken);
 
         var page = PageRequest.Of(query.Cursor, query.Limit);
         var result = await reports.ListDistributionsAsync(query.Id, page, cancellationToken);

@@ -33,4 +33,21 @@ public static class EnumExtensions
 
         return builder.ToString();
     }
+
+    /// <summary>
+    /// Parses a snake_case (or PascalCase) API value into an enum member, case-insensitively. Underscores are
+    /// stripped before matching, so <c>executive_summary</c> resolves to <c>ExecutiveSummary</c>. Returns false for a
+    /// null/blank/unrecognised value.
+    /// </summary>
+    public static bool TryParseSnake<TEnum>(string? value, out TEnum result) where TEnum : struct, Enum
+    {
+        result = default;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var compact = value.Replace("_", string.Empty);
+        return Enum.TryParse(compact, ignoreCase: true, out result) && Enum.IsDefined(result);
+    }
 }

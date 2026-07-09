@@ -87,6 +87,7 @@ public static class DependencyInjection
         // built from them explicitly — registering the composite into the IReportRenderer set it consumes would make
         // IEnumerable<IReportRenderer> circular and fail resolution of the whole generation path.
         services.AddScoped<Application.Reports.Generation.ReportContentAssembler>();
+        services.AddScoped<Application.Reports.Generation.StandaloneReportAssembler>();
         services.AddScoped<Application.Reports.Generation.ReportGenerationService>();
         services.AddScoped<Reports.HtmlReportRenderer>();
         services.AddScoped<Reports.OpenXmlReportRenderer>();

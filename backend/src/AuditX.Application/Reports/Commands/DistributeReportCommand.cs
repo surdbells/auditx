@@ -6,6 +6,7 @@ using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Reports.Dtos;
 using AuditX.Domain.AuditTrail;
+using AuditX.Domain.Audits;
 using AuditX.Domain.Common;
 using AuditX.Domain.Enums;
 using FluentValidation;
@@ -48,8 +49,17 @@ public sealed class DistributeReportCommandHandler(
         var actorId = currentUser.UserId ?? throw new UnauthorizedException();
 
         var report = await reports.GetByIdAsync(command.ReportId, cancellationToken) ?? throw new NotFoundException("Report", command.ReportId);
-        var auditEntity = await audits.GetByIdAsync(report.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", report.AuditId);
-        await ReportAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+
+        Audit? auditEntity = null;
+        if (report.AuditId is { } auditId)
+        {
+            auditEntity = await audits.GetByIdAsync(auditId, cancellationToken) ?? throw new NotFoundException("Audit", auditId);
+            await ReportAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        }
+        else
+        {
+            await ReportAccess.EnsureCanAccessStandaloneAsync(currentUser.UserId, permissions, cancellationToken);
+        }
 
         if (report.Status != ReportStatus.Completed)
         {
@@ -97,16 +107,36 @@ public sealed class DistributeReportCommandHandler(
             throw new DomainException("report.no_resolvable_recipients", "None of the supplied recipients could be resolved to an email address.");
         }
 
-        // Counts for the email body + the report_distributed event payload (E1).
-        var exceptionEntities = await exceptions.ListByAuditAsync(report.AuditId, status: null, cancellationToken);
-        var exceptionCount = exceptionEntities.Count;
-        var totalCount = auditEntity.ChecklistItems.Count;
-        var severitySummary = BuildSeveritySummary(exceptionEntities.GroupBy(e => e.Severity).ToDictionary(g => g.Key, g => g.Count()));
-        var subject = $"Audit report issued: {auditEntity.Name}";
-        var body =
-            $"Audit report \"{auditEntity.Name}\" (version {report.VersionNumber}) has been issued.\n\n" +
-            $"Conducted {auditEntity.StartDate:yyyy-MM-dd} to {auditEntity.ActualEndDate ?? auditEntity.TargetEndDate:yyyy-MM-dd}.\n" +
-            $"{totalCount} checks performed. {exceptionCount} exception(s) raised ({severitySummary}).";
+        // Counts for the email body + the report_distributed event payload (E1). Standalone (cross-audit) reports
+        // have no single audit — the body names the report kind and carries no per-audit checklist/exception counts.
+        string reportName;
+        int totalCount;
+        int exceptionCount;
+        string severitySummary;
+        string subject;
+        string body;
+        if (auditEntity is not null)
+        {
+            var exceptionEntities = await exceptions.ListByAuditAsync(auditEntity.Id, status: null, cancellationToken);
+            exceptionCount = exceptionEntities.Count;
+            totalCount = auditEntity.ChecklistItems.Count;
+            severitySummary = BuildSeveritySummary(exceptionEntities.GroupBy(e => e.Severity).ToDictionary(g => g.Key, g => g.Count()));
+            reportName = auditEntity.Name;
+            subject = $"Audit report issued: {auditEntity.Name}";
+            body =
+                $"Audit report \"{auditEntity.Name}\" (version {report.VersionNumber}) has been issued.\n\n" +
+                $"Conducted {auditEntity.StartDate:yyyy-MM-dd} to {auditEntity.ActualEndDate ?? auditEntity.TargetEndDate:yyyy-MM-dd}.\n" +
+                $"{totalCount} checks performed. {exceptionCount} exception(s) raised ({severitySummary}).";
+        }
+        else
+        {
+            reportName = Generation.StandaloneReportModel.TitleFor(report.Kind);
+            totalCount = 0;
+            exceptionCount = 0;
+            severitySummary = "no exceptions";
+            subject = $"Report issued: {reportName}";
+            body = $"The {reportName} report (version {report.VersionNumber}) has been issued.";
+        }
 
         var recorded = 0;
         var failed = 0;
@@ -135,7 +165,7 @@ public sealed class DistributeReportCommandHandler(
 
             report.RecordDistribution(
                 userId, adHocEmail, email, actorId, clock.UtcNow,
-                auditEntity.Name, totalCount, exceptionCount, severitySummary);
+                reportName, totalCount, exceptionCount, severitySummary);
 
             // Commit per recipient so a later recipient's failure can never roll back / lose an already-sent row.
             await unitOfWork.SaveChangesAsync(cancellationToken);

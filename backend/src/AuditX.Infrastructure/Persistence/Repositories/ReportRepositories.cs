@@ -1,5 +1,6 @@
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Models;
+using AuditX.Domain.Enums;
 using AuditX.Domain.Reports;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,6 +32,31 @@ public sealed class ReportRepository(AppDbContext db) : IReportRepository
         return new CursorPage<Report>(items, hasMore ? items[^1].VersionNumber.ToString() : null, hasMore);
     }
 
+    public async Task<CursorPage<Report>> ListStandaloneAsync(ReportKind? kind, PageRequest page, CancellationToken cancellationToken = default)
+    {
+        // Standalone reports have no audit; order newest first. Report ids are GUID v7 (time-ordered), so a keyset on
+        // the descending id is a stable, chronological total order without a tiebreaker (per-kind versions are not).
+        var query = db.Reports.AsNoTracking().Where(r => r.AuditId == null);
+        if (kind is { } k)
+        {
+            query = query.Where(r => r.Kind == k);
+        }
+
+        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
+        {
+            query = query.Where(r => r.Id.CompareTo(cursorId) < 0);
+        }
+
+        var items = await query.OrderByDescending(r => r.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
+        var hasMore = items.Count > page.Limit;
+        if (hasMore)
+        {
+            items.RemoveAt(items.Count - 1);
+        }
+
+        return new CursorPage<Report>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+    }
+
     public async Task<CursorPage<ReportDistribution>> ListDistributionsAsync(Guid reportId, PageRequest page, CancellationToken cancellationToken = default)
     {
         var query = db.Set<ReportDistribution>().AsNoTracking().Where(d => d.ReportId == reportId);
@@ -52,6 +78,11 @@ public sealed class ReportRepository(AppDbContext db) : IReportRepository
     public async Task<int> GetNextVersionAsync(Guid auditId, CancellationToken cancellationToken = default)
         => await db.Reports.Where(r => r.AuditId == auditId).AnyAsync(cancellationToken)
             ? await db.Reports.Where(r => r.AuditId == auditId).MaxAsync(r => r.VersionNumber, cancellationToken)
+            : 0;
+
+    public async Task<int> GetNextVersionForKindAsync(ReportKind kind, CancellationToken cancellationToken = default)
+        => await db.Reports.Where(r => r.AuditId == null && r.Kind == kind).AnyAsync(cancellationToken)
+            ? await db.Reports.Where(r => r.AuditId == null && r.Kind == kind).MaxAsync(r => r.VersionNumber, cancellationToken)
             : 0;
 
     public void Add(Report report) => db.Reports.Add(report);
