@@ -1423,6 +1423,7 @@
   "reports.viewer.title": "Rapport v{{version}}",
   "reports.viewer.subtitle": "Audit {{audit}}",
   "reports.viewer.action.distribute": "Diffuser",
+  "reports.viewer.action.print": "Imprimer / Enregistrer en PDF",
   "reports.viewer.overview": "Aperçu",
   "reports.viewer.field.version": "Version",
   "reports.viewer.field.status": "Statut",

@@ -30,6 +30,7 @@ import {
 } from '../../../core/models';
 import { humanise, shortHash } from '../humanise';
 import { downloadBlobResponse } from '../download';
+import { printReportHtml } from '../print';
 import {
   DistributeReportDialogComponent,
   DistributeReportDialogData,
@@ -94,6 +95,7 @@ export class ReportViewerComponent {
 
   readonly verification = signal<ReportHashVerification | null>(null);
   readonly verifying = signal(false);
+  readonly printing = signal(false);
 
   private usersCache: UserDto[] = [];
 
@@ -161,6 +163,31 @@ export class ReportViewerComponent {
         this.i18n.translate('reports.common.notify.downloadEmpty'),
       );
     }
+  }
+
+  /* ---- Print / Save as PDF ---- */
+
+  /** Prints the canonical HTML artefact (exact bytes) via the browser dialog — the user can Save as PDF. */
+  printReport(): void {
+    if (this.printing()) {
+      return;
+    }
+    this.printing.set(true);
+    this.service.download(this.id(), 'html').subscribe({
+      next: async (res) => {
+        this.printing.set(false);
+        const blob = res.body;
+        if (!blob) {
+          this.notify.error(this.i18n.translate('reports.common.notify.downloadEmpty'));
+          return;
+        }
+        printReportHtml(await blob.text());
+      },
+      error: () => {
+        this.printing.set(false);
+        this.notify.error(this.i18n.translate('reports.common.notify.downloadError'));
+      },
+    });
   }
 
   /* ---- Verify hash ---- */
