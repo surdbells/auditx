@@ -151,5 +151,11 @@ public sealed class BankSettingsConfiguration : IEntityTypeConfiguration<BankSet
         builder.Property(b => b.LocaleDefault).HasMaxLength(16).IsRequired();
         builder.Property(b => b.AdProvisioningFilterOuDn).HasMaxLength(512);
         builder.Property(b => b.AdProvisioningFilterGroupSid).HasMaxLength(200);
+
+        builder.Property(b => b.PrimaryColor).HasMaxLength(32).IsRequired();
+        builder.Property(b => b.AccentColor).HasMaxLength(32).IsRequired();
+        // Logo/icon are base64 data URIs — unbounded nvarchar(max) (no HasMaxLength).
+        builder.Property(b => b.LogoDataUri);
+        builder.Property(b => b.IconDataUri);
     }
 }

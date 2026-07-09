@@ -12,11 +12,19 @@
     <div class="nav">
       <!-- Brand -->
       <div class="nav__brand">
-        <span class="nav__logo" aria-hidden="true">
-          <mat-icon>verified_user</mat-icon>
+        <span
+          class="nav__logo"
+          [class.nav__logo--image]="logoDataUri()"
+          aria-hidden="true"
+        >
+          @if (logoDataUri(); as logo) {
+            <img class="nav__logo-img" [src]="logo" alt="" />
+          } @else {
+            <mat-icon>verified_user</mat-icon>
+          }
         </span>
         <span class="nav__brand-text">
-          <span class="nav__brand-name">AuditX</span>
+          <span class="nav__brand-name">{{ organizationName() }}</span>
           <span class="nav__brand-sub">{{ 'layout.brandSub' | t }}</span>
         </span>
         @if (!isHandset()) {

@@ -12,6 +12,10 @@ export interface BankSettings {
   maxAuditEvidenceGb: number;
   allowOverlappingPlanPeriods: boolean;
   allowAuditLaunchBeforeApproval: boolean;
+  primaryColor: string;
+  accentColor: string;
+  logoDataUri: string | null;
+  iconDataUri: string | null;
 }
 
 export interface UpdateBankSettingsRequest {
@@ -22,6 +26,19 @@ export interface UpdateBankSettingsRequest {
   adProvisioningFilterGroupSid: string | null;
   allowOverlappingPlanPeriods: boolean;
   allowAuditLaunchBeforeApproval: boolean;
+  primaryColor: string;
+  accentColor: string;
+  logoDataUri: string | null;
+  iconDataUri: string | null;
+}
+
+/** Public branding served anonymously from `/branding` — themes the shell before authentication. */
+export interface Branding {
+  organizationName: string;
+  primaryColor: string;
+  accentColor: string;
+  logoDataUri: string | null;
+  iconDataUri: string | null;
 }
 
 export interface ResourceLimits {

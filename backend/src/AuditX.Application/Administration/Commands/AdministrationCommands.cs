@@ -19,17 +19,33 @@ namespace AuditX.Application.Administration.Commands;
 
 public sealed record UpdateBankSettingsCommand(
     string BankDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
-    bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval)
+    bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval,
+    string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri)
     : ICommand<BankSettingsDto>;
 
 public sealed class UpdateBankSettingsCommandValidator : AbstractValidator<UpdateBankSettingsCommand>
 {
+    // ~512 KB decoded ⇒ base64 is ~4/3 of that; a generous cap keeps a logo/icon inline without bloating the row.
+    private const int MaxBrandingAssetChars = 700_000;
+
     public UpdateBankSettingsCommandValidator()
     {
         RuleFor(x => x.BankDisplayName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Timezone).NotEmpty();
         RuleFor(x => x.LocaleDefault).NotEmpty();
+        RuleFor(x => x.PrimaryColor).NotEmpty().Matches("^#[0-9a-fA-F]{6}$")
+            .WithMessage("Primary colour must be a 6-digit hex value like #4f46e5.");
+        RuleFor(x => x.AccentColor).NotEmpty().Matches("^#[0-9a-fA-F]{6}$")
+            .WithMessage("Accent colour must be a 6-digit hex value like #7c3aed.");
+        RuleFor(x => x.LogoDataUri).Must(BeValidImageDataUri).When(x => !string.IsNullOrWhiteSpace(x.LogoDataUri))
+            .WithMessage("Logo must be a data:image/* URI under 512 KB.");
+        RuleFor(x => x.IconDataUri).Must(BeValidImageDataUri).When(x => !string.IsNullOrWhiteSpace(x.IconDataUri))
+            .WithMessage("Icon must be a data:image/* URI under 512 KB.");
     }
+
+    private static bool BeValidImageDataUri(string? value)
+        => string.IsNullOrWhiteSpace(value)
+           || (value.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase) && value.Length <= MaxBrandingAssetChars);
 }
 
 public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
@@ -42,7 +58,13 @@ public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository set
         bank.SetAdProvisioningFilter(command.AdProvisioningFilterOuDn, command.AdProvisioningFilterGroupSid);
         bank.SetAllowOverlappingPlanPeriods(command.AllowOverlappingPlanPeriods);
         bank.SetAllowAuditLaunchBeforeApproval(command.AllowAuditLaunchBeforeApproval);
-        audit.Record(AuditEventTypes.BankSettingsUpdated, AuditTargetTypes.BankSettings, bank.Id, after: new { bank.BankDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval });
+        bank.SetBranding(command.PrimaryColor, command.AccentColor, command.LogoDataUri, command.IconDataUri);
+        // Keep the audit payload metadata-only — the logo/icon data URIs are deliberately excluded.
+        audit.Record(AuditEventTypes.BankSettingsUpdated, AuditTargetTypes.BankSettings, bank.Id, after: new
+        {
+            bank.BankDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval,
+            bank.PrimaryColor, bank.AccentColor, hasLogo = bank.LogoDataUri is not null, hasIcon = bank.IconDataUri is not null,
+        });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return bank.ToDto();
     }

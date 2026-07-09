@@ -23,6 +23,7 @@ import { routes } from './app.routes';
 import { credentialsInterceptor } from './core/interceptors/credentials.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { BrandingService } from './core/services/branding.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -48,6 +49,15 @@ export const appConfig: ApplicationConfig = {
         await firstValueFrom(auth.loadSession());
       } catch {
         // 401 / network error: app simply starts unauthenticated.
+      }
+    }),
+    // Load the organisation branding (anonymous) so the shell + login are themed before first paint.
+    provideAppInitializer(async () => {
+      const branding = inject(BrandingService);
+      try {
+        await firstValueFrom(branding.load());
+      } catch {
+        // Non-fatal: the app keeps its built-in default theme.
       }
     }),
     provideServiceWorker('ngsw-worker.js', {

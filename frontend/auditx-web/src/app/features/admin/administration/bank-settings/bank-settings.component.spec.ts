@@ -19,6 +19,10 @@ function settings(overrides: Partial<BankSettings> = {}): BankSettings {
     maxAuditEvidenceGb: 10,
     allowOverlappingPlanPeriods: false,
     allowAuditLaunchBeforeApproval: false,
+    primaryColor: '#4f46e5',
+    accentColor: '#7c3aed',
+    logoDataUri: null,
+    iconDataUri: null,
     ...overrides,
   };
 }
@@ -84,12 +88,43 @@ describe('BankSettingsComponent', () => {
     await fixture.whenStable();
 
     component.settingsForm.controls.bankDisplayName.setValue('Renamed Bank');
+    component.settingsForm.controls.primaryColor.setValue('#112233');
     component.saveSettings();
     const req = http.expectOne(`${BASE}/admin/bank-settings`);
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body.bankDisplayName).toBe('Renamed Bank');
+    expect(req.request.body.primaryColor).toBe('#112233');
+    expect(req.request.body.accentColor).toBe('#7c3aed');
     req.flush({ data: settings({ bankDisplayName: 'Renamed Bank' }) });
     expect(component.saving()).toBe(false);
+  });
+
+  it('loads branding into the colour controls and logo preview', async () => {
+    setup();
+    http
+      .expectOne(`${BASE}/admin/bank-settings`)
+      .flush({
+        data: settings({
+          primaryColor: '#abcdef',
+          logoDataUri: 'data:image/png;base64,AAA',
+        }),
+      });
+    await fixture.whenStable();
+
+    expect(component.settingsForm.controls.primaryColor.value).toBe('#abcdef');
+    expect(component.logoPreview()).toBe('data:image/png;base64,AAA');
+  });
+
+  it('clears the logo preview and control', async () => {
+    setup();
+    http
+      .expectOne(`${BASE}/admin/bank-settings`)
+      .flush({ data: settings({ logoDataUri: 'data:image/png;base64,AAA' }) });
+    await fixture.whenStable();
+
+    component.clearLogo();
+    expect(component.logoPreview()).toBeNull();
+    expect(component.settingsForm.controls.logoDataUri.value).toBe('');
   });
 
   it('disables forms without write permissions', async () => {

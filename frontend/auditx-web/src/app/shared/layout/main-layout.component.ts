@@ -19,6 +19,7 @@ import { filter, map } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { BrandingService } from '../../core/services/branding.service';
 import { Permissions } from '../../core/permissions';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../../core/i18n/language-switcher.component';
@@ -66,11 +67,16 @@ export class MainLayoutComponent {
   private readonly router = inject(Router);
   private readonly notify = inject(NotificationService);
   private readonly breakpoints = inject(BreakpointObserver);
+  private readonly branding = inject(BrandingService);
 
   private readonly sidenavContainer = viewChild(MatSidenavContainer);
 
   readonly displayName = this.auth.displayName;
   readonly session = this.auth.session;
+
+  /** Organisation branding for the sidebar brand block. */
+  readonly organizationName = this.branding.organizationName;
+  readonly logoDataUri = this.branding.logoDataUri;
 
   /** Personal account settings surface (the bottom profile menu's "Settings"). */
   readonly settingsRoute = '/account/notification-preferences';

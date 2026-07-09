@@ -9,9 +9,17 @@ public sealed record BankSettingsDto(
     int MaxEvidenceFileMb,
     int MaxAuditEvidenceGb,
     bool AllowOverlappingPlanPeriods,
-    bool AllowAuditLaunchBeforeApproval);
+    bool AllowAuditLaunchBeforeApproval,
+    string PrimaryColor,
+    string AccentColor,
+    string? LogoDataUri,
+    string? IconDataUri);
 
 public sealed record ResourceLimitsDto(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
+
+/// <summary>Public branding surface served anonymously so the shell/login can theme before authentication.</summary>
+public sealed record BrandingDto(
+    string OrganizationName, string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri);
 
 public sealed record BulkOperationErrorDto(string Identifier, string Message);
 

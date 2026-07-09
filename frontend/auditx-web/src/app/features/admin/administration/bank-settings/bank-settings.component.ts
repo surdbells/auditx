@@ -15,6 +15,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AdministrationService } from '../../../../core/services/administration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { BrandingService } from '../../../../core/services/branding.service';
 import { Permissions } from '../../../../core/permissions';
 import { BankSettings } from '../../../../core/models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -45,12 +46,19 @@ export class BankSettingsComponent {
   private readonly admin = inject(AdministrationService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
+  private readonly branding = inject(BrandingService);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+
+  /** Max branding image size, in bytes (mirrors the server-side cap). */
+  private readonly maxAssetBytes = 512 * 1024;
 
   readonly state = signal<ViewState>('loading');
   readonly saving = signal(false);
   readonly savingLimits = signal(false);
+  /** Data-URI previews for the logo/icon (mirror the form controls so OnPush re-renders on async reads). */
+  readonly logoPreview = signal<string | null>(null);
+  readonly iconPreview = signal<string | null>(null);
 
   readonly canManageSettings = computed(() =>
     this.auth.hasPermission(Permissions.ManageBankSettings),
@@ -67,6 +75,16 @@ export class BankSettingsComponent {
     adProvisioningFilterGroupSid: [''],
     allowOverlappingPlanPeriods: [false],
     allowAuditLaunchBeforeApproval: [false],
+    primaryColor: [
+      '#4f46e5',
+      [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
+    ],
+    accentColor: [
+      '#7c3aed',
+      [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
+    ],
+    logoDataUri: [''],
+    iconDataUri: [''],
   });
 
   readonly limitsForm = this.fb.nonNullable.group({
@@ -98,7 +116,13 @@ export class BankSettingsComponent {
       adProvisioningFilterGroupSid: s.adProvisioningFilterGroupSid ?? '',
       allowOverlappingPlanPeriods: s.allowOverlappingPlanPeriods,
       allowAuditLaunchBeforeApproval: s.allowAuditLaunchBeforeApproval,
+      primaryColor: s.primaryColor,
+      accentColor: s.accentColor,
+      logoDataUri: s.logoDataUri ?? '',
+      iconDataUri: s.iconDataUri ?? '',
     });
+    this.logoPreview.set(s.logoDataUri ?? null);
+    this.iconPreview.set(s.iconDataUri ?? null);
     this.limitsForm.patchValue({
       maxEvidenceFileMb: s.maxEvidenceFileMb,
       maxAuditEvidenceGb: s.maxAuditEvidenceGb,
@@ -117,6 +141,8 @@ export class BankSettingsComponent {
       return;
     }
     const v = this.settingsForm.getRawValue();
+    const logoDataUri = v.logoDataUri || null;
+    const iconDataUri = v.iconDataUri || null;
     this.saving.set(true);
     this.admin
       .updateBankSettings({
@@ -128,9 +154,21 @@ export class BankSettingsComponent {
           v.adProvisioningFilterGroupSid.trim() || null,
         allowOverlappingPlanPeriods: v.allowOverlappingPlanPeriods,
         allowAuditLaunchBeforeApproval: v.allowAuditLaunchBeforeApproval,
+        primaryColor: v.primaryColor,
+        accentColor: v.accentColor,
+        logoDataUri,
+        iconDataUri,
       })
       .subscribe({
         next: () => {
+          // Re-theme the running app in place so the change is visible without a reload.
+          this.branding.apply({
+            organizationName: v.bankDisplayName.trim(),
+            primaryColor: v.primaryColor,
+            accentColor: v.accentColor,
+            logoDataUri,
+            iconDataUri,
+          });
           this.notify.success(
             this.i18n.translate('administration.bankSettings.savedToast'),
           );
@@ -138,6 +176,57 @@ export class BankSettingsComponent {
         },
         error: () => this.saving.set(false),
       });
+  }
+
+  /** Reads a chosen logo file into the form as a data URI (with client-side type/size guards). */
+  onLogoSelected(event: Event): void {
+    this.readImageInto(event, 'logoDataUri');
+  }
+
+  /** Reads a chosen icon file into the form as a data URI (with client-side type/size guards). */
+  onIconSelected(event: Event): void {
+    this.readImageInto(event, 'iconDataUri');
+  }
+
+  clearLogo(): void {
+    this.settingsForm.controls.logoDataUri.setValue('');
+    this.settingsForm.controls.logoDataUri.markAsDirty();
+    this.logoPreview.set(null);
+  }
+
+  clearIcon(): void {
+    this.settingsForm.controls.iconDataUri.setValue('');
+    this.settingsForm.controls.iconDataUri.markAsDirty();
+    this.iconPreview.set(null);
+  }
+
+  private readImageInto(
+    event: Event,
+    control: 'logoDataUri' | 'iconDataUri',
+  ): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith('image/') || file.size > this.maxAssetBytes) {
+      this.notify.error(
+        this.i18n.translate('administration.branding.invalidImage'),
+      );
+      input.value = '';
+      return;
+    }
+    const preview = control === 'logoDataUri' ? this.logoPreview : this.iconPreview;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUri = reader.result as string;
+      this.settingsForm.controls[control].setValue(dataUri);
+      this.settingsForm.controls[control].markAsDirty();
+      preview.set(dataUri);
+    };
+    reader.readAsDataURL(file);
+    // Allow re-selecting the same file later.
+    input.value = '';
   }
 
   saveLimits(): void {

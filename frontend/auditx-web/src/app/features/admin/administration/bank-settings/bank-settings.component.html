@@ -52,6 +52,106 @@
             <p class="settings__toggle-hint">{{ 'administration.bankSettings.allowLaunchBeforeApprovalHint' | t }}</p>
           </div>
 
+          <section class="settings__branding full">
+            <h3 class="settings__subtitle">{{ 'administration.branding.title' | t }}</h3>
+
+            <div class="settings__colors">
+              <div class="settings__color">
+                <span class="settings__color-label">{{ 'administration.branding.primaryColor' | t }}</span>
+                <span class="settings__color-row">
+                  <input
+                    type="color"
+                    class="settings__swatch"
+                    formControlName="primaryColor"
+                    [attr.aria-label]="'administration.branding.primaryColor' | t"
+                  />
+                  <span class="settings__hex">{{ settingsForm.controls.primaryColor.value }}</span>
+                </span>
+              </div>
+
+              <div class="settings__color">
+                <span class="settings__color-label">{{ 'administration.branding.accentColor' | t }}</span>
+                <span class="settings__color-row">
+                  <input
+                    type="color"
+                    class="settings__swatch"
+                    formControlName="accentColor"
+                    [attr.aria-label]="'administration.branding.accentColor' | t"
+                  />
+                  <span class="settings__hex">{{ settingsForm.controls.accentColor.value }}</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="settings__assets">
+              <div class="settings__asset">
+                <span class="settings__asset-label">{{ 'administration.branding.logo' | t }}</span>
+                <div class="settings__asset-body">
+                  <span class="settings__asset-preview settings__asset-preview--logo">
+                    @if (logoPreview(); as logo) {
+                      <img [src]="logo" alt="" />
+                    } @else {
+                      <span class="settings__asset-placeholder">{{ 'administration.branding.noImage' | t }}</span>
+                    }
+                  </span>
+                  @if (canManageSettings()) {
+                    <span class="settings__asset-actions">
+                      <button matButton="outlined" type="button" (click)="logoInput.click()">
+                        {{ 'administration.branding.upload' | t }}
+                      </button>
+                      @if (logoPreview()) {
+                        <button matButton type="button" (click)="clearLogo()">
+                          {{ 'administration.branding.remove' | t }}
+                        </button>
+                      }
+                      <input
+                        #logoInput
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        (change)="onLogoSelected($event)"
+                      />
+                    </span>
+                  }
+                </div>
+                <p class="settings__asset-hint">{{ 'administration.branding.logoHint' | t }}</p>
+              </div>
+
+              <div class="settings__asset">
+                <span class="settings__asset-label">{{ 'administration.branding.icon' | t }}</span>
+                <div class="settings__asset-body">
+                  <span class="settings__asset-preview settings__asset-preview--icon">
+                    @if (iconPreview(); as icon) {
+                      <img [src]="icon" alt="" />
+                    } @else {
+                      <span class="settings__asset-placeholder">{{ 'administration.branding.noImage' | t }}</span>
+                    }
+                  </span>
+                  @if (canManageSettings()) {
+                    <span class="settings__asset-actions">
+                      <button matButton="outlined" type="button" (click)="iconInput.click()">
+                        {{ 'administration.branding.upload' | t }}
+                      </button>
+                      @if (iconPreview()) {
+                        <button matButton type="button" (click)="clearIcon()">
+                          {{ 'administration.branding.remove' | t }}
+                        </button>
+                      }
+                      <input
+                        #iconInput
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        (change)="onIconSelected($event)"
+                      />
+                    </span>
+                  }
+                </div>
+                <p class="settings__asset-hint">{{ 'administration.branding.iconHint' | t }}</p>
+              </div>
+            </div>
+          </section>
+
           @if (canManageSettings()) {
             <div class="settings__actions">
               <button

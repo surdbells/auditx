@@ -45,6 +45,10 @@ describe('AdministrationService', () => {
         adProvisioningFilterGroupSid: null,
         allowOverlappingPlanPeriods: false,
         allowAuditLaunchBeforeApproval: false,
+        primaryColor: '#4f46e5',
+        accentColor: '#7c3aed',
+        logoDataUri: null,
+        iconDataUri: null,
       })
       .subscribe();
     const req = http.expectOne(`${BASE}/admin/bank-settings`);

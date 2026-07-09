@@ -16,6 +16,19 @@ public sealed class GetBankSettingsQueryHandler(IBankSettingsRepository settings
         => (await settings.GetAsync(cancellationToken)).ToDto();
 }
 
+/// <summary>Public branding (name, colours, logo/icon) — served anonymously so the shell can theme pre-auth.</summary>
+public sealed record GetBrandingQuery : IQuery<BrandingDto>;
+
+public sealed class GetBrandingQueryHandler(IBankSettingsRepository settings)
+    : IQueryHandler<GetBrandingQuery, BrandingDto>
+{
+    public async Task<BrandingDto> Handle(GetBrandingQuery query, CancellationToken cancellationToken)
+    {
+        var bank = await settings.GetAsync(cancellationToken);
+        return new BrandingDto(bank.BankDisplayName, bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri);
+    }
+}
+
 public sealed record GetSupportChannelStatusQuery : IQuery<SupportChannelStatusDto>;
 
 public sealed class GetSupportChannelStatusQueryHandler(IAdministrationRepository admin, IClock clock)

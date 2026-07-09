@@ -10,7 +10,8 @@ public static class AdministrationMappings
         bank.BankDisplayName, bank.Timezone, bank.LocaleDefault,
         bank.AdProvisioningFilterOuDn, bank.AdProvisioningFilterGroupSid,
         bank.MaxEvidenceFileMb, bank.MaxAuditEvidenceGb, bank.AllowOverlappingPlanPeriods,
-        bank.AllowAuditLaunchBeforeApproval);
+        bank.AllowAuditLaunchBeforeApproval,
+        bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri);
 
     public static SupportChannelStatusDto ToStatusDto(this SupportChannelSession? session, DateTimeOffset nowUtc)
         => session is null

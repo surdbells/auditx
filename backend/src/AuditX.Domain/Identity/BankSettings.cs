@@ -47,6 +47,18 @@ public sealed class BankSettings : Entity
     /// </summary>
     public bool AllowAuditLaunchBeforeApproval { get; private set; }
 
+    /// <summary>Primary brand colour (hex, e.g. <c>#4f46e5</c>) applied to the UI theme.</summary>
+    public string PrimaryColor { get; private set; } = "#4f46e5";
+
+    /// <summary>Accent brand colour (hex, e.g. <c>#7c3aed</c>) applied to the UI theme.</summary>
+    public string AccentColor { get; private set; } = "#7c3aed";
+
+    /// <summary>Optional organisation logo as a <c>data:image/*</c> URI, shown in the app shell.</summary>
+    public string? LogoDataUri { get; private set; }
+
+    /// <summary>Optional favicon/app icon as a <c>data:image/*</c> URI, used as the browser-tab icon.</summary>
+    public string? IconDataUri { get; private set; }
+
     public static BankSettings CreateDefault(string bankDisplayName) => new()
     {
         BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
@@ -72,6 +84,15 @@ public sealed class BankSettings : Entity
     public void SetAllowOverlappingPlanPeriods(bool value) => AllowOverlappingPlanPeriods = value;
 
     public void SetAllowAuditLaunchBeforeApproval(bool value) => AllowAuditLaunchBeforeApproval = value;
+
+    /// <summary>Sets the branding: primary/accent colours are required; logo/icon are optional data URIs.</summary>
+    public void SetBranding(string primaryColor, string accentColor, string? logoDataUri, string? iconDataUri)
+    {
+        PrimaryColor = Guard.NotNullOrWhiteSpace(primaryColor, "bank.primary_color_required", "Primary colour is required.");
+        AccentColor = Guard.NotNullOrWhiteSpace(accentColor, "bank.accent_color_required", "Accent colour is required.");
+        LogoDataUri = string.IsNullOrWhiteSpace(logoDataUri) ? null : logoDataUri;
+        IconDataUri = string.IsNullOrWhiteSpace(iconDataUri) ? null : iconDataUri;
+    }
 
     public void SetResourceLimits(int maxEvidenceFileMb, int maxAuditEvidenceGb)
     {
