@@ -12,6 +12,19 @@
 /** Lifecycle status of a report generation. */
 export type ReportStatus = 'pending' | 'running' | 'completed' | 'failed';
 
+/**
+ * The kind of report. `audit_engagement` is the per-audit engagement report;
+ * the rest are standalone (cross-audit) analytics reports with no single audit.
+ */
+export type ReportKind =
+  | 'audit_engagement'
+  | 'executive_summary'
+  | 'annual_plan_status'
+  | 'kpi_pack';
+
+/** The standalone report kinds (everything except the per-audit engagement report). */
+export type StandaloneReportKind = Exclude<ReportKind, 'audit_engagement'>;
+
 /** A produced output artefact for a completed report version. */
 export interface ReportArtefact {
   format: string;
@@ -23,7 +36,9 @@ export interface ReportArtefact {
 /** Full report aggregate (metadata / status surface — polled while running). */
 export interface Report {
   id: string;
-  auditId: string;
+  /** Null for standalone (cross-audit) reports. */
+  auditId: string | null;
+  kind: ReportKind;
   versionNumber: number;
   status: ReportStatus;
   sha256Hash: string | null;
@@ -38,10 +53,12 @@ export interface Report {
   version: string;
 }
 
-/** Lightweight row for the per-audit report version list. */
+/** Lightweight row for the per-audit / per-kind report version list. */
 export interface ReportListItem {
   id: string;
-  auditId: string;
+  /** Null for standalone (cross-audit) reports. */
+  auditId: string | null;
+  kind: ReportKind;
   versionNumber: number;
   status: ReportStatus;
   sha256Hash: string | null;
@@ -89,6 +106,12 @@ export interface ReportTemplate {
 
 /** Body for POST /audits/{auditId}/reports. `docx` opts a DOCX artefact in. */
 export interface GenerateReportRequest {
+  docx?: boolean;
+}
+
+/** Body for POST /reports/standalone. `kind` is the standalone report kind. */
+export interface GenerateStandaloneReportRequest {
+  kind: StandaloneReportKind;
   docx?: boolean;
 }
 

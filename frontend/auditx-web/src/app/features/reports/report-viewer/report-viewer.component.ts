@@ -133,8 +133,14 @@ export class ReportViewerComponent {
     });
   }
 
-  /** Resolves the audit name for the subtitle; leaves null (→ id) on failure. */
-  private resolveAuditName(auditId: string): void {
+  /**
+   * Resolves the audit name for the subtitle; leaves null (→ id) on failure. Standalone (cross-audit) reports have
+   * no audit — the subtitle falls back to the report kind (see {@link subtitle}).
+   */
+  private resolveAuditName(auditId: string | null): void {
+    if (!auditId) {
+      return;
+    }
     this.audits.getById(auditId).subscribe({
       next: (audit) => this.auditName.set(audit.name),
       error: () => {
@@ -142,6 +148,20 @@ export class ReportViewerComponent {
       },
     });
   }
+
+  /** Header subtitle: the audit for engagement reports, or the humanised kind for standalone reports. */
+  readonly subtitle = computed(() => {
+    const r = this.report();
+    if (!r) {
+      return '';
+    }
+    if (r.auditId) {
+      return this.i18n.translate('reports.viewer.subtitle', {
+        audit: this.auditName() ?? r.auditId,
+      });
+    }
+    return humanise(r.kind);
+  });
 
   /* ---- Download ---- */
 

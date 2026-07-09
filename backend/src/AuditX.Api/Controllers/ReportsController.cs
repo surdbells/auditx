@@ -42,7 +42,7 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
         return Accepted(result);
     }
 
-    [RequirePermission(PermissionKeys.ViewReport)]
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("api/v1/reports/standalone")]
     public async Task<IActionResult> ListStandalone([FromQuery] string? kind, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
     {

@@ -133,6 +133,7 @@ export class MainLayoutComponent {
       titleKey: 'nav.section.insights',
       items: [
         { labelKey: 'nav.analytics', icon: 'analytics', route: '/analytics', permissions: [Permissions.ViewAnalytics] },
+        { labelKey: 'nav.standaloneReports', icon: 'summarize', route: '/reports', permissions: [Permissions.ViewAnalytics] },
       ],
     },
     {

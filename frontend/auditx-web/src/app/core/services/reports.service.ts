@@ -12,11 +12,13 @@ import {
   DistributeReportResult,
   GenerateReportRequest,
   GenerateReportResult,
+  GenerateStandaloneReportRequest,
   Report,
   ReportDistribution,
   ReportHashVerification,
   ReportListItem,
   ReportTemplate,
+  StandaloneReportKind,
 } from '../models';
 
 /**
@@ -68,6 +70,31 @@ export class ReportsService {
   /** Single report metadata/status surface — POLL this for generation status. */
   getById(id: string): Observable<Report> {
     return this.api.get<Report>(`/reports/${id}`);
+  }
+
+  /* ---- Standalone (cross-audit) reports ---- */
+
+  /**
+   * Requests a new standalone (cross-audit) report version. Returns the 202 body
+   * `{ reportId, status }`; the caller polls {@link getById} for completion.
+   */
+  generateStandalone(
+    body: GenerateStandaloneReportRequest,
+  ): Observable<GenerateReportResult> {
+    return this.api.post<GenerateReportResult>('/reports/standalone', body);
+  }
+
+  /** Cursor-paginated standalone report list (newest first), optionally by kind. */
+  listStandalone(
+    kind?: StandaloneReportKind | null,
+    cursor?: string | null,
+    limit?: number,
+  ): Observable<CursorPage<ReportListItem>> {
+    return this.api.get<CursorPage<ReportListItem>>('/reports/standalone', {
+      kind,
+      cursor,
+      limit,
+    });
   }
 
   /* ---- Download (raw file; 500 on integrity failure) ---- */

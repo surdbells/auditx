@@ -308,6 +308,15 @@ export const routes: Routes = [
           ).then((m) => m.ReportsPanelComponent),
       },
       {
+        path: 'reports',
+        title: 'Reports · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/reports/standalone-reports/standalone-reports.component'
+          ).then((m) => m.StandaloneReportsComponent),
+      },
+      {
         path: 'reports/:id',
         title: 'Report · AuditX',
         canActivate: [permissionGuard(Permissions.ViewReport)],

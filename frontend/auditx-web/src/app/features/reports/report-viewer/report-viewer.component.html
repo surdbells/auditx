@@ -9,7 +9,7 @@
     @if (report(); as r) {
       <app-page-header
         [title]="'reports.viewer.title' | t: { version: r.versionNumber }"
-        [subtitle]="'reports.viewer.subtitle' | t: { audit: auditName() ?? r.auditId }"
+        [subtitle]="subtitle()"
       >
         <div actions class="viewer__actions">
           @if (isCompleted()) {
