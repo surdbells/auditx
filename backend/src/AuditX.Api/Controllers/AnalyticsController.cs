@@ -71,6 +71,18 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> Utilisation(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new UtilisationByUserQuery(), cancellationToken));
 
+    /// <summary>Enterprise risk heatmap — open risks bucketed by their current likelihood×impact cell (P1-A).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("risk-heatmap")]
+    public async Task<IActionResult> RiskHeatmap(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new RiskHeatmapQuery(), cancellationToken));
+
+    /// <summary>Risk-register roll-up — totals + open risks by band / status / category / strategy (P1-A).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("risk-summary")]
+    public async Task<IActionResult> RiskSummary(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new RiskRegisterSummaryQuery(), cancellationToken));
+
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("recurrence-clusters")]
     public async Task<IActionResult> RecurrenceClusters([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)

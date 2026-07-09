@@ -45,6 +45,10 @@ public static class PermissionKeys
     public const string LogTime = "LogTime";
     public const string ViewTimeEntries = "ViewTimeEntries";
 
+    // Risk register (P1-A)
+    public const string ViewRisk = "ViewRisk";
+    public const string ManageRisk = "ManageRisk";
+
     // M6 — Exceptions
     public const string ViewExceptions = "ViewExceptions";
     public const string RaiseException = "RaiseException";

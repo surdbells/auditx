@@ -40,6 +40,15 @@ public interface IAnalyticsQueryService
     /// category. Powers the resource-utilisation board report.
     /// </summary>
     Task<IReadOnlyList<AuditorUtilisationDto>> UtilisationByUserAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Enterprise risk heatmap (P1-A): open (non-closed) risks bucketed by their CURRENT (residual, else inherent)
+    /// likelihood×impact cell on the 5×5 matrix. Powers the risk-heatmap board report.
+    /// </summary>
+    Task<RiskHeatmapDto> RiskHeatmapAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Risk-register roll-up (P1-A): totals + open risks split by band, status, category and treatment strategy.</summary>
+    Task<RiskRegisterSummaryDto> RiskSummaryAsync(CancellationToken cancellationToken = default);
 }
 
 // ---- KPI DTOs (snake-cased at the API edge by the serializer; these are the shape the port returns) ----
@@ -159,3 +168,23 @@ public sealed record AuditorUtilisationDto(
     decimal TotalHours,
     int AuditsContributed,
     IReadOnlyList<UtilisationCategoryDto> ByCategory);
+
+/// <summary>One populated cell of the risk heatmap: a likelihood×impact position with its band and risk count.</summary>
+public sealed record RiskHeatmapCellDto(int Likelihood, int Impact, int Score, string Band, int Count);
+
+/// <summary>The enterprise risk heatmap (P1-A): total open risks + the populated 5×5 cells.</summary>
+public sealed record RiskHeatmapDto(int TotalOpen, IReadOnlyList<RiskHeatmapCellDto> Cells);
+
+/// <summary>A labelled count in a risk roll-up (band / status / category / strategy).</summary>
+public sealed record RiskCountDto(string Key, int Count);
+
+/// <summary>Risk-register roll-up (P1-A).</summary>
+public sealed record RiskRegisterSummaryDto(
+    int Total,
+    int Open,
+    int Closed,
+    int OverdueReview,
+    IReadOnlyList<RiskCountDto> ByBand,
+    IReadOnlyList<RiskCountDto> ByStatus,
+    IReadOnlyList<RiskCountDto> ByCategory,
+    IReadOnlyList<RiskCountDto> ByStrategy);

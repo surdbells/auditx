@@ -116,6 +116,12 @@ public static class AuditEventTypes
     public const string AuditSectionRemoved = "audit_section_removed";
     public const string AuditSectionsReordered = "audit_sections_reordered";
 
+    // Risk register (P1-A)
+    public const string RiskRegistered = "risk_registered";
+    public const string RiskUpdated = "risk_updated";
+    public const string RiskStatusChanged = "risk_status_changed";
+    public const string RiskDeleted = "risk_deleted";
+
     // Time tracking (P0-B)
     public const string TimeLogged = "time_logged";
     public const string TimeEntryAmended = "time_entry_amended";
@@ -243,6 +249,7 @@ public static class AuditTargetTypes
     public const string AuditChecklistItem = "audit_checklist_item";
     public const string ChecklistResponse = "checklist_response";
     public const string TimeEntry = "time_entry";
+    public const string Risk = "risk";
     public const string EvidenceFile = "evidence_file";
     public const string Exception = "exception";
     public const string MapAction = "map_action";

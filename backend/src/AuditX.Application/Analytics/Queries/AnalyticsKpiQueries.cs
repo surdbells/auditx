@@ -94,6 +94,26 @@ public sealed class UtilisationByUserQueryHandler(IAnalyticsQueryService analyti
         => analytics.UtilisationByUserAsync(cancellationToken);
 }
 
+// ---- Risk analytics (ViewAnalytics) ----
+
+public sealed record RiskHeatmapQuery : IQuery<RiskHeatmapDto>;
+
+public sealed class RiskHeatmapQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<RiskHeatmapQuery, RiskHeatmapDto>
+{
+    public Task<RiskHeatmapDto> Handle(RiskHeatmapQuery query, CancellationToken cancellationToken)
+        => analytics.RiskHeatmapAsync(cancellationToken);
+}
+
+public sealed record RiskRegisterSummaryQuery : IQuery<RiskRegisterSummaryDto>;
+
+public sealed class RiskRegisterSummaryQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<RiskRegisterSummaryQuery, RiskRegisterSummaryDto>
+{
+    public Task<RiskRegisterSummaryDto> Handle(RiskRegisterSummaryQuery query, CancellationToken cancellationToken)
+        => analytics.RiskSummaryAsync(cancellationToken);
+}
+
 // ---- Coverage matrix (reuse ICoverageQueryService — do NOT reimplement coverage) ----
 
 public sealed record AnalyticsCoverageQuery(int WindowMonths) : IQuery<CoverageMatrix>;

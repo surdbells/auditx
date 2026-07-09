@@ -13,6 +13,7 @@ using AuditX.Domain.Planning;
 using AuditX.Domain.ReferenceData;
 using AuditX.Domain.Reports;
 using AuditX.Domain.Sanctions;
+using AuditX.Domain.Risks;
 using AuditX.Domain.Templates;
 using AuditX.Domain.TimeTracking;
 using AuditX.Domain.Universe;
@@ -90,6 +91,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<EvidenceFile> EvidenceFiles => Set<EvidenceFile>();
 
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+
+    public DbSet<Risk> Risks => Set<Risk>();
 
     public DbSet<AuditException> Exceptions => Set<AuditException>();
 

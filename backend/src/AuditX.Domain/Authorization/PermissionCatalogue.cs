@@ -47,6 +47,10 @@ public static class PermissionCatalogue
         new(PermissionKeys.LogTime, "Log time", "Record time/effort against an audit.", "M5", PermissionScopeType.Audit),
         new(PermissionKeys.ViewTimeEntries, "View time entries", "View logged time, budget-vs-actual and utilisation.", "M5", PermissionScopeType.Global),
 
+        // Risk register (P1-A)
+        new(PermissionKeys.ViewRisk, "View risks", "Browse the enterprise risk register and heatmap.", "M3", PermissionScopeType.Global),
+        new(PermissionKeys.ManageRisk, "Manage risks", "Register, assess, treat and close enterprise risks.", "M3", PermissionScopeType.Global),
+
         // M6 — Exceptions
         new(PermissionKeys.ViewExceptions, "View exceptions", "Browse the cross-audit exception tracker.", "M6", PermissionScopeType.Global),
         new(PermissionKeys.RaiseException, "Raise exception", "Raise an exception from a failed item.", "M6", PermissionScopeType.Audit),

@@ -1,6 +1,7 @@
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Analytics;
 using AuditX.Application.Common.Enums;
+using AuditX.Application.Risks;
 using AuditX.Domain.Enums;
 using AuditX.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -392,6 +393,71 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
                     .ToArray()))
             .OrderByDescending(u => u.TotalHours)
             .ToArray();
+    }
+
+    public async Task<RiskHeatmapDto> RiskHeatmapAsync(CancellationToken cancellationToken = default)
+    {
+        // Open risks only; the CURRENT position is residual when assessed, else inherent. Soft-deleted rows are
+        // excluded by the global query filter.
+        var risks = await db.Risks.AsNoTracking()
+            .Where(r => r.Status != RiskStatus.Closed)
+            .Select(r => new
+            {
+                L = r.ResidualLikelihood ?? r.InherentLikelihood,
+                I = r.ResidualImpact ?? r.InherentImpact,
+            })
+            .ToListAsync(cancellationToken);
+
+        var cells = risks
+            .GroupBy(r => new { r.L, r.I })
+            .Select(g =>
+            {
+                var score = g.Key.L * g.Key.I;
+                return new RiskHeatmapCellDto(g.Key.L, g.Key.I, score, RiskBands.Band(score).ToSnake(), g.Count());
+            })
+            .OrderBy(c => c.Impact).ThenBy(c => c.Likelihood)
+            .ToArray();
+
+        return new RiskHeatmapDto(risks.Count, cells);
+    }
+
+    public async Task<RiskRegisterSummaryDto> RiskSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        var all = await db.Risks.AsNoTracking()
+            .Select(r => new
+            {
+                r.Status,
+                r.Category,
+                r.TreatmentStrategy,
+                L = r.ResidualLikelihood ?? r.InherentLikelihood,
+                I = r.ResidualImpact ?? r.InherentImpact,
+                r.NextReviewDate,
+            })
+            .ToListAsync(cancellationToken);
+
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        var open = all.Where(r => r.Status != RiskStatus.Closed).ToArray();
+
+        var byBand = open
+            .GroupBy(r => RiskBands.Band(r.L * r.I))
+            .Select(g => new RiskCountDto(g.Key.ToSnake(), g.Count()))
+            .OrderByDescending(c => c.Count).ToArray();
+        var byStatus = all
+            .GroupBy(r => r.Status)
+            .Select(g => new RiskCountDto(g.Key.ToSnake(), g.Count()))
+            .OrderByDescending(c => c.Count).ToArray();
+        var byCategory = open
+            .GroupBy(r => r.Category)
+            .Select(g => new RiskCountDto(g.Key, g.Count()))
+            .OrderByDescending(c => c.Count).ToArray();
+        var byStrategy = open
+            .Where(r => r.TreatmentStrategy != null)
+            .GroupBy(r => r.TreatmentStrategy!.Value)
+            .Select(g => new RiskCountDto(g.Key.ToSnake(), g.Count()))
+            .OrderByDescending(c => c.Count).ToArray();
+        var overdueReview = open.Count(r => r.NextReviewDate is { } d && d < today);
+
+        return new RiskRegisterSummaryDto(all.Count, open.Length, all.Count - open.Length, overdueReview, byBand, byStatus, byCategory, byStrategy);
     }
 
     /// <summary>Sums a unit's own aggregate with every descendant's (DFS; cycle-guarded).</summary>

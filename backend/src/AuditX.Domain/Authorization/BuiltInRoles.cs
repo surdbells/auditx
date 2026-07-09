@@ -23,7 +23,7 @@ public static class BuiltInRoles
             PermissionKeys.ViewUniverse, PermissionKeys.RespondItem, PermissionKeys.UploadEvidence,
             PermissionKeys.ViewEvidence, PermissionKeys.ViewExceptions, PermissionKeys.RaiseException,
             PermissionKeys.SubmitMap, PermissionKeys.ViewReport, PermissionKeys.ViewAnalytics,
-            PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries,
+            PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries, PermissionKeys.ViewRisk,
         ]);
 
     public static readonly BuiltInRoleDefinition AuditManager = new(
@@ -38,7 +38,7 @@ public static class BuiltInRoles
             PermissionKeys.GenerateReport, PermissionKeys.ViewReport, PermissionKeys.DistributeReport,
             PermissionKeys.ViewSanctions, PermissionKeys.TriggerSanctions, PermissionKeys.RecommendSanction, PermissionKeys.ViewGrid,
             PermissionKeys.ViewAnalytics, PermissionKeys.AdHocQueryUse, PermissionKeys.PerformanceAnalyticsView, PermissionKeys.ViewAuditTrail,
-            PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries,
+            PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries, PermissionKeys.ViewRisk, PermissionKeys.ManageRisk,
         ]);
 
     public static readonly BuiltInRoleDefinition Auditee = new(
@@ -57,6 +57,7 @@ public static class BuiltInRoles
             PermissionKeys.ViewAuditTrail, PermissionKeys.ExportAuditTrail, PermissionKeys.ViewConfig,
             PermissionKeys.ManageConfiguration, PermissionKeys.ManageTemplates, PermissionKeys.ViewTemplates,
             PermissionKeys.ManageUniverse, PermissionKeys.ViewUniverse, PermissionKeys.ScoreRisk,
+            PermissionKeys.ViewRisk, PermissionKeys.ManageRisk,
             PermissionKeys.ManagePlan, PermissionKeys.ViewPlan, PermissionKeys.ViewCoverage,
             PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.CreateAudit, PermissionKeys.ManageAudit,
             PermissionKeys.RespondItem, PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ManageEvidence,
