@@ -20,6 +20,8 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
+import { EntityLookupService } from '../../../core/services/entity-lookup.service';
 import { Permissions } from '../../../core/permissions';
 import { DashboardDetail, DashboardWidget } from '../../../core/models';
 import {
@@ -92,6 +94,37 @@ export class DashboardViewComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+  private readonly userLookup = inject(UserLookupService);
+  private readonly entityLookup = inject(EntityLookupService);
+
+  /** Drilldown-only GUID id columns are not shown as text in a widget table. */
+  private readonly hiddenColumns: ReadonlySet<string> = new Set([
+    'id',
+    'exceptionId',
+    'auditId',
+    'dashboardId',
+    'widgetId',
+  ]);
+
+  /** GUID columns resolved to a human name via the shared lookups. */
+  private readonly resolvers: Record<string, (id: string) => string> = {
+    auditLeadUserId: (id) => this.userLookup.displayName(id),
+    ownerUserId: (id) => this.userLookup.displayName(id),
+    auditableEntityId: (id) => this.entityLookup.name(id),
+  };
+
+  private readonly headerOverrides: Record<string, string> = {
+    auditLeadUserId: 'Audit lead',
+    ownerUserId: 'Owner',
+    auditableEntityId: 'Entity',
+  };
+
+  /** Columns whose snake_case enum values read better title-cased. */
+  private readonly titleiseColumns: ReadonlySet<string> = new Set([
+    'severity',
+    'status',
+    'category',
+  ]);
 
   readonly state = signal<ViewState>('loading');
   readonly dashboard = signal<DashboardDetail | null>(null);
@@ -113,6 +146,9 @@ export class DashboardViewComponent {
   );
 
   constructor() {
+    // Warm the directories so widget-table GUIDs resolve to names (both are idempotent + reactive).
+    this.userLookup.ensureLoaded();
+    this.entityLookup.ensureLoaded();
     queueMicrotask(() => this.fetch());
   }
 
@@ -134,7 +170,40 @@ export class DashboardViewComponent {
   }
 
   table(widget: DashboardWidget): TableProjection {
-    return toTable(widget.data);
+    return toTable(widget.data, {
+      hidden: this.hiddenColumns,
+      headerOverrides: this.headerOverrides,
+    });
+  }
+
+  /** A `table` widget is a list — give it the full dashboard width, not a grid cell. */
+  isWideWidget(widget: DashboardWidget): boolean {
+    return widget.widgetType === 'table';
+  }
+
+  /**
+   * Renders a widget-table cell: GUID columns resolve to a name (reactively, once the
+   * directory loads), enum columns title-case, ISO dates shorten to the date, else plain text.
+   */
+  cellFor(column: string, value: unknown): string {
+    const resolve = this.resolvers[column];
+    if (resolve && typeof value === 'string' && value.length > 0) {
+      return resolve(value);
+    }
+    if (this.titleiseColumns.has(column) && typeof value === 'string') {
+      return this.titleCase(value);
+    }
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+      return value.slice(0, 10);
+    }
+    return cellText(value);
+  }
+
+  private titleCase(snake: string): string {
+    return snake
+      .split(/[_\s]+/)
+      .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+      .join(' ');
   }
 
   bars(widget: DashboardWidget): BarDatum[] {
@@ -200,10 +269,6 @@ export class DashboardViewComponent {
       .replace(/Percent$/, '')
       .replace(/([a-z0-9])([A-Z])/g, '$1 $2');
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-  }
-
-  cell(value: unknown): string {
-    return cellText(value);
   }
 
   /** True when the widget's data payload is null/absent (degraded/forbidden). */

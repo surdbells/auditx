@@ -5,6 +5,11 @@
   align-items: start;
 }
 
+/* A table widget is a list — span the full dashboard width rather than a grid cell. */
+.widget--wide {
+  grid-column: 1 / -1;
+}
+
 .widget__header {
   display: flex;
   align-items: center;
@@ -84,4 +89,16 @@
 
 .widget__table {
   width: 100%;
+}
+
+/* Mat-table cells can collapse to no padding in a dense card — give the list room. */
+.widget__table th.mat-mdc-header-cell,
+.widget__table td.mat-mdc-cell {
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+}
+
+.widget__table td.mat-mdc-cell:first-of-type,
+.widget__table th.mat-mdc-header-cell:first-of-type {
+  padding-left: 0.25rem;
 }

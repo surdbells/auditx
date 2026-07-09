@@ -32,6 +32,14 @@ export interface TableProjection {
   rows: Record<string, unknown>[];
 }
 
+/** Column-shaping options for {@link toTable}: drop id-only columns, override headers. */
+export interface TableOptions {
+  /** Column keys to omit entirely (e.g. drilldown-only GUID ids). */
+  hidden?: ReadonlySet<string>;
+  /** Per-column header text, overriding the derived title-cased key. */
+  headerOverrides?: Record<string, string>;
+}
+
 type Dict = Record<string, unknown>;
 
 function isObject(v: unknown): v is Dict {
@@ -73,7 +81,7 @@ function headerFor(key: string): string {
  * object exposing a single obvious array property (e.g. coverage cells, or a
  * portfolio breakdown). Falls back to a single-row object dump.
  */
-export function toTable(data: unknown): TableProjection {
+export function toTable(data: unknown, options: TableOptions = {}): TableProjection {
   // Coverage matrix special-case: rows/columns/cells → a labelled grid. Handled
   // here (not via toRows) so the column ORDER and headers are explicit — numeric
   // column labels like "2024" would otherwise be reordered ahead of "entity" by
@@ -87,21 +95,26 @@ export function toTable(data: unknown): TableProjection {
     return coverageProjection(data);
   }
 
+  const hidden = options.hidden ?? EMPTY_SET;
+  const overrides = options.headerOverrides ?? {};
+
   const rows = toRows(data);
   if (rows.length === 0) {
     return { columns: [], headers: [], rows: [] };
   }
-  // Union of keys across rows, preserving first-seen order.
+  // Union of keys across rows, preserving first-seen order; drop hidden id-only columns.
   const columns: string[] = [];
   for (const row of rows) {
     for (const k of Object.keys(row)) {
-      if (!columns.includes(k)) {
+      if (!columns.includes(k) && !hidden.has(k)) {
         columns.push(k);
       }
     }
   }
-  return { columns, headers: columns.map(headerFor), rows };
+  return { columns, headers: columns.map((c) => overrides[c] ?? headerFor(c)), rows };
 }
+
+const EMPTY_SET: ReadonlySet<string> = new Set<string>();
 
 function toRows(data: unknown): Dict[] {
   if (Array.isArray(data)) {
