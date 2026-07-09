@@ -130,6 +130,7 @@ public static class AuditEventTypes
 
     // M6 exceptions & MAP
     public const string ExceptionRaised = "exception_raised";
+    public const string FindingRegisterExported = "finding_register_exported";
     public const string ExceptionSeverityChanged = "exception_severity_changed";
     public const string ExceptionOwnerReassigned = "exception_owner_reassigned";
     public const string MapSubmitted = "map_submitted";

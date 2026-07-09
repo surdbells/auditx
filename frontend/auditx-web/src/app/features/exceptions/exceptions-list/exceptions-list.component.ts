@@ -28,6 +28,7 @@ import { AuditsService } from '../../../core/services/audits.service';
 import {
   AuditListItem,
   ExceptionListItem,
+  ExceptionQuery,
   ExceptionSeverity,
   ExceptionStatus,
   PlanListItem,
@@ -160,6 +161,7 @@ export class ExceptionsListComponent {
   readonly nextCursor = signal<string | null>(null);
   readonly hasMore = signal(false);
   readonly loadingMore = signal(false);
+  readonly exporting = signal(false);
   readonly userNames = signal<Record<string, string>>({});
   private readonly planList = signal<PlanListItem[]>([]);
   private readonly auditList = signal<AuditListItem[]>([]);
@@ -288,6 +290,47 @@ export class ExceptionsListComponent {
     });
   }
 
+  /** The current filter selection as an ExceptionQuery (no pagination) — shared by the list query and the CSV export. */
+  private buildFilter(): ExceptionQuery {
+    const { search, status, severity, plan, audit, overdue, recurrence, raisedFrom, raisedTo } =
+      this.filters.getRawValue();
+    return {
+      search: search.trim() || undefined,
+      status: status === 'all' ? '' : status,
+      severity: severity === 'all' ? '' : severity,
+      plan: plan || undefined,
+      audit: audit || undefined,
+      overdue: overdue === 'all' ? undefined : overdue === 'yes',
+      recurrence: recurrence === 'all' ? undefined : recurrence === 'yes',
+      raisedFrom: toIsoStart(raisedFrom),
+      raisedTo: toIsoEnd(raisedTo),
+    };
+  }
+
+  /** Downloads the current filtered finding register as a CSV file. */
+  exportCsv(): void {
+    if (this.exporting()) {
+      return;
+    }
+    this.exporting.set(true);
+    this.service.exportRegister(this.buildFilter()).subscribe({
+      next: (response) => {
+        this.exporting.set(false);
+        const blob = response.body;
+        if (!blob) {
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `finding-register-${new Date().toISOString().slice(0, 10)}.csv`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.exporting.set(false),
+    });
+  }
+
   private query(
     cursor: string | null,
     onSuccess: (
@@ -296,22 +339,8 @@ export class ExceptionsListComponent {
       more: boolean,
     ) => void,
   ): void {
-    const { search, status, severity, plan, audit, overdue, recurrence, raisedFrom, raisedTo } =
-      this.filters.getRawValue();
     this.service
-      .list({
-        search: search.trim() || undefined,
-        status: status === 'all' ? '' : status,
-        severity: severity === 'all' ? '' : severity,
-        plan: plan || undefined,
-        audit: audit || undefined,
-        overdue: overdue === 'all' ? undefined : overdue === 'yes',
-        recurrence: recurrence === 'all' ? undefined : recurrence === 'yes',
-        raisedFrom: toIsoStart(raisedFrom),
-        raisedTo: toIsoEnd(raisedTo),
-        cursor,
-        limit: PAGE_SIZE,
-      })
+      .list({ ...this.buildFilter(), cursor, limit: PAGE_SIZE })
       .subscribe({
         next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
         error: () => {

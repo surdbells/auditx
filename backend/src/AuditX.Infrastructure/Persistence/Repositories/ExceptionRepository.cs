@@ -29,10 +29,9 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
             .OrderBy(e => e.TargetDate).ThenBy(e => e.Id)
             .ToListAsync(cancellationToken);
 
-    public async Task<CursorPage<AuditException>> SearchAsync(ExceptionSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default)
+    /// <summary>Applies every <see cref="ExceptionSearchFilter"/> dimension (no pagination) — shared by search + export.</summary>
+    private IQueryable<AuditException> ApplyFilter(IQueryable<AuditException> query, ExceptionSearchFilter filter)
     {
-        var query = db.Exceptions.AsNoTracking().AsQueryable();
-
         if (filter.Status is { } s)
         {
             query = query.Where(e => e.Status == s);
@@ -101,6 +100,28 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
                 ? query.Where(e => e.Status != ExceptionStatus.Closed && e.Status != ExceptionStatus.Cancelled && e.TargetDate < filter.AsOfDate)
                 : query.Where(e => e.Status == ExceptionStatus.Closed || e.Status == ExceptionStatus.Cancelled || e.TargetDate >= filter.AsOfDate);
         }
+
+        return query;
+    }
+
+    public IAsyncEnumerable<ExceptionExportRow> StreamForExportAsync(ExceptionSearchFilter filter, CancellationToken cancellationToken = default)
+    {
+        var filtered = ApplyFilter(db.Exceptions.AsNoTracking(), filter);
+        return filtered
+            .OrderByDescending(e => e.RaisedAt).ThenBy(e => e.Id)
+            .Select(e => new ExceptionExportRow(
+                e.Id, e.AuditId,
+                db.Audits.Where(a => a.Id == e.AuditId).Select(a => a.Name).FirstOrDefault() ?? string.Empty,
+                e.Title, e.Severity, e.Category, e.Status, e.CiaPending, e.IsRecurrence, e.OwnerUserId,
+                e.AuditableEntityId, e.RaisedAt, e.TargetDate,
+                e.MapActions.Count, e.MapActions.Count(a => a.Status == MapActionStatus.Complete),
+                e.FinancialImpact, e.FinancialImpactCurrency))
+            .AsAsyncEnumerable();
+    }
+
+    public async Task<CursorPage<AuditException>> SearchAsync(ExceptionSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default)
+    {
+        var query = ApplyFilter(db.Exceptions.AsNoTracking(), filter);
 
         if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
         {

@@ -1,6 +1,9 @@
+using System.Globalization;
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Abstractions.Persistence;
+using AuditX.Application.Common.Csv;
+using AuditX.Application.Common.Enums;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Common.Models;
@@ -90,6 +93,77 @@ public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions
         var page = PageRequest.Of(query.Cursor, query.Limit);
         var result = await exceptions.SearchAsync(filter, page, cancellationToken);
         return new CursorPage<ExceptionListItemDto>(result.Items.Select(e => e.ToListItemDto(today)).ToArray(), result.NextCursor, result.HasMore);
+    }
+}
+
+// ---- Finding-register CSV export (cross-audit) ----
+
+public sealed record ExportFindingRegisterQuery(
+    string? Status, string? Severity, Guid? OwnerUserId, Guid? AuditableEntityId, Guid? AuditId,
+    string? Category, bool? IsRecurrence, bool? IsOverdue, string? Search,
+    Guid? AnnualPlanId, DateTimeOffset? RaisedFrom, DateTimeOffset? RaisedTo) : IQuery<CsvExportResult>;
+
+public sealed class ExportFindingRegisterQueryHandler(IExceptionRepository exceptions, IClock clock, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : IQueryHandler<ExportFindingRegisterQuery, CsvExportResult>
+{
+    private static readonly string[] Header =
+    [
+        "exception_id", "audit_id", "audit_name", "title", "severity", "category", "status", "cia_pending",
+        "is_recurrence", "owner_user_id", "auditable_entity_id", "raised_at_utc", "target_date", "is_overdue",
+        "financial_impact", "financial_impact_currency", "map_action_count", "completed_map_action_count",
+    ];
+
+    public async Task<CsvExportResult> Handle(ExportFindingRegisterQuery query, CancellationToken cancellationToken)
+    {
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        ExceptionSeverity? severity = string.IsNullOrWhiteSpace(query.Severity)
+            ? null
+            : Enum.TryParse<ExceptionSeverity>(query.Severity.Replace("_", string.Empty), ignoreCase: true, out var sv)
+                ? sv
+                : throw new ConflictException("exception.invalid_severity", $"Unknown severity '{query.Severity}'.");
+
+        var filter = new ExceptionSearchFilter(
+            ListExceptionsForAuditQueryHandler.ParseStatus(query.Status), severity, query.OwnerUserId,
+            query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search,
+            query.AnnualPlanId, query.RaisedFrom, query.RaisedTo);
+
+        var csv = new CsvWriter(Header);
+        await foreach (var r in exceptions.StreamForExportAsync(filter, cancellationToken))
+        {
+            var isOverdue = r.Status is not (ExceptionStatus.Closed or ExceptionStatus.Cancelled) && r.TargetDate < today;
+            var statusLabel = r.Status == ExceptionStatus.PendingClosure && r.CiaPending ? "pending_cia_approval" : r.Status.ToSnake();
+            csv.AppendRow(
+                r.Id.ToString(),
+                r.AuditId.ToString(),
+                r.AuditName,
+                r.Title,
+                r.Severity.ToSnake(),
+                r.Category,
+                statusLabel,
+                r.CiaPending ? "true" : "false",
+                r.IsRecurrence ? "true" : "false",
+                r.OwnerUserId.ToString(),
+                r.AuditableEntityId?.ToString(),
+                r.RaisedAt.ToString("o", CultureInfo.InvariantCulture),
+                r.TargetDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                isOverdue ? "true" : "false",
+                r.FinancialImpact?.ToString(CultureInfo.InvariantCulture),
+                r.FinancialImpactCurrency,
+                r.MapActionCount.ToString(CultureInfo.InvariantCulture),
+                r.CompletedMapActionCount.ToString(CultureInfo.InvariantCulture));
+        }
+
+        var result = csv.Build($"finding-register-{clock.UtcNow.UtcDateTime:yyyyMMddHHmmss}.csv");
+
+        // The export is auditable (who pulled what) — payload carries the filter + integrity hash, never row content.
+        audit.Record(AuditEventTypes.FindingRegisterExported, AuditTargetTypes.Exception, null, payload: new
+        {
+            format = "csv", row_count = result.RowCount, sha256 = result.Sha256,
+            query.Status, query.Severity, query.AuditId, query.AuditableEntityId, query.AnnualPlanId, query.Search,
+        });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return result;
     }
 }
 

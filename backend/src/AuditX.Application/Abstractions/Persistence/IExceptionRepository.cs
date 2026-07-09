@@ -10,9 +10,19 @@ public sealed record ExceptionSearchFilter(
     Guid? AuditId, string? Category, bool? IsRecurrence, bool? IsOverdue, DateOnly AsOfDate, string? Search = null,
     Guid? AnnualPlanId = null, DateTimeOffset? RaisedFrom = null, DateTimeOffset? RaisedTo = null);
 
+/// <summary>Flat, join-resolved export row for the cross-audit finding-register CSV.</summary>
+public sealed record ExceptionExportRow(
+    Guid Id, Guid AuditId, string AuditName, string Title, ExceptionSeverity Severity, string? Category,
+    ExceptionStatus Status, bool CiaPending, bool IsRecurrence, Guid OwnerUserId, Guid? AuditableEntityId,
+    DateTimeOffset RaisedAt, DateOnly TargetDate, int MapActionCount, int CompletedMapActionCount,
+    decimal? FinancialImpact, string? FinancialImpactCurrency);
+
 public interface IExceptionRepository
 {
     Task<AuditException?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>Streams every finding matching the filter (join-resolved, newest-first) for the register CSV export.</summary>
+    IAsyncEnumerable<ExceptionExportRow> StreamForExportAsync(ExceptionSearchFilter filter, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<AuditException>> ListByAuditAsync(Guid auditId, ExceptionStatus? status, CancellationToken cancellationToken = default);
 

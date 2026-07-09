@@ -1,10 +1,9 @@
 using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.AuditTrail.Dtos;
 using AuditX.Application.AuditTrail.Mapping;
+using AuditX.Application.Common.Csv;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Common.Models;
 using AuditX.Domain.AuditTrail;
@@ -89,52 +88,31 @@ public sealed class ExportAuditTrailQueryHandler(IAuditTrailReader reader, ICloc
     {
         var filter = new AuditTrailFilter(query.ActorUserId, query.EventType, query.TargetObjectType, query.TargetObjectId, query.From, query.To);
 
-        var sb = new StringBuilder();
-        // Use an explicit '\n' for every line (header + rows) so the byte stream — and thus the SHA-256
-        // integrity hash — is identical regardless of host OS (StringBuilder.AppendLine is platform-dependent).
-        sb.Append(string.Join(',', Header)).Append('\n');
-        var rows = 0;
+        var csv = new CsvWriter(Header);
         await foreach (var e in reader.StreamAsync(filter, cancellationToken))
         {
             var dto = e.ToDto();
-            sb.Append(Csv(dto.Id.ToString())).Append(',')
-              .Append(Csv(dto.OccurredAtUtc.ToString("o", CultureInfo.InvariantCulture))).Append(',')
-              .Append(Csv(dto.ActorType)).Append(',')
-              .Append(Csv(dto.ActorUserId?.ToString())).Append(',')
-              .Append(Csv(dto.EventType)).Append(',')
-              .Append(Csv(dto.TargetObjectType)).Append(',')
-              .Append(Csv(dto.TargetObjectId?.ToString())).Append(',')
-              .Append(Csv(dto.ActorSystemLabel)).Append(',')
-              .Append(Csv(dto.OriginatingTimezone)).Append('\n');
-            rows++;
+            csv.AppendRow(
+                dto.Id.ToString(),
+                dto.OccurredAtUtc.ToString("o", CultureInfo.InvariantCulture),
+                dto.ActorType,
+                dto.ActorUserId?.ToString(),
+                dto.EventType,
+                dto.TargetObjectType,
+                dto.TargetObjectId?.ToString(),
+                dto.ActorSystemLabel,
+                dto.OriginatingTimezone);
         }
 
-        var bytes = Encoding.UTF8.GetBytes(sb.ToString());
-        var sha = Convert.ToHexStringLower(SHA256.HashData(bytes));
-        var fileName = $"audit-trail-{clock.UtcNow.UtcDateTime:yyyyMMddHHmmss}.csv";
+        var result = csv.Build($"audit-trail-{clock.UtcNow.UtcDateTime:yyyyMMddHHmmss}.csv");
 
         audit.Record(AuditEventTypes.TrailExported, AuditTargetTypes.AuditTrail, null, payload: new
         {
-            format = "csv", row_count = rows, sha256 = sha,
+            format = "csv", row_count = result.RowCount, sha256 = result.Sha256,
             query.ActorUserId, query.EventType, query.TargetObjectType, query.TargetObjectId, query.From, query.To,
         });
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new AuditTrailExportDto(fileName, "text/csv", sha, rows, bytes);
-    }
-
-    private static string Csv(string? value)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return string.Empty;
-        }
-
-        if (value.Contains('"') || value.Contains(',') || value.Contains('\n') || value.Contains('\r'))
-        {
-            return $"\"{value.Replace("\"", "\"\"")}\"";
-        }
-
-        return value;
+        return new AuditTrailExportDto(result.FileName, result.ContentType, result.Sha256, result.RowCount, result.Content);
     }
 }

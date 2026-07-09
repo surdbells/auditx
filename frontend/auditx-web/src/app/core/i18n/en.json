@@ -763,6 +763,8 @@
   "dashboard.launch.analyticsDesc": "Dashboards, scorecards and trends.",
   "dashboard.launch.templates": "Templates",
   "dashboard.launch.templatesDesc": "Reusable checklist methodologies.",
+  "exceptions.export.csv": "Export CSV",
+  "exceptions.export.exporting": "Exporting…",
   "exceptions.list.title": "Exceptions",
   "exceptions.list.subtitle": "Cross-audit tracker of raised exceptions and their management action plans.",
   "exceptions.list.loading": "Loading exceptions…",

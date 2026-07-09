@@ -40,6 +40,22 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
             status, severity, owner, entity, audit, category, recurrence, overdue, search,
             plan, raisedFrom, raisedTo, cursor, limit), cancellationToken));
 
+    /// <summary>Cross-audit finding-register CSV export (same filters as the tracker). The SHA-256 is on the response header.</summary>
+    [RequirePermission(PermissionKeys.ViewExceptions)]
+    [HttpGet("api/v1/exceptions/export")]
+    public async Task<IActionResult> Export(
+        [FromQuery] string? status, [FromQuery] string? severity, [FromQuery] Guid? owner, [FromQuery] Guid? entity,
+        [FromQuery] Guid? audit, [FromQuery] string? category, [FromQuery] bool? recurrence, [FromQuery] bool? overdue,
+        [FromQuery] string? search, [FromQuery] Guid? plan, [FromQuery] DateTimeOffset? raisedFrom, [FromQuery] DateTimeOffset? raisedTo,
+        CancellationToken cancellationToken)
+    {
+        var export = await dispatcher.Query(new ExportFindingRegisterQuery(
+            status, severity, owner, entity, audit, category, recurrence, overdue, search, plan, raisedFrom, raisedTo), cancellationToken);
+        Response.Headers["X-Content-SHA256"] = export.Sha256;
+        Response.Headers["X-Row-Count"] = export.RowCount.ToString();
+        return File(export.Content, export.ContentType, export.FileName);
+    }
+
     [RequirePermission(PermissionKeys.ViewExceptions)]
     [HttpGet("api/v1/exceptions/{id:guid}")]
     public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
@@ -71,6 +71,34 @@ export class ExceptionsService {
       raisedTo: query.raisedTo,
       cursor: query.cursor,
       limit: query.limit,
+    });
+  }
+
+  /** Downloads the cross-audit finding register as a CSV blob (same filters as the tracker; SHA-256 on a header). */
+  exportRegister(query: ExceptionQuery): Observable<HttpResponse<Blob>> {
+    let params = new HttpParams();
+    const set = (key: string, value: unknown) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, String(value));
+      }
+    };
+    set('status', query.status);
+    set('severity', query.severity);
+    set('owner', query.owner);
+    set('entity', query.entity);
+    set('audit', query.audit);
+    set('plan', query.plan);
+    set('category', query.category);
+    set('search', query.search);
+    set('recurrence', query.recurrence);
+    set('overdue', query.overdue);
+    set('raisedFrom', query.raisedFrom);
+    set('raisedTo', query.raisedTo);
+    return this.http.get(`${this.baseUrl}/exceptions/export`, {
+      params,
+      responseType: 'blob',
+      observe: 'response',
+      withCredentials: true,
     });
   }
 

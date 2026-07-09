@@ -1,7 +1,18 @@
 <app-page-header
   [title]="'exceptions.list.title' | t"
   [subtitle]="'exceptions.list.subtitle' | t"
-/>
+>
+  <button
+    actions
+    matButton="outlined"
+    type="button"
+    (click)="exportCsv()"
+    [disabled]="exporting()"
+  >
+    <mat-icon>download</mat-icon>
+    {{ (exporting() ? 'exceptions.export.exporting' : 'exceptions.export.csv') | t }}
+  </button>
+</app-page-header>
 
 <mat-card appearance="outlined" class="exceptions__filters-card">
   <form [formGroup]="filters" class="exceptions__filters">

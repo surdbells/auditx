@@ -763,6 +763,8 @@
   "dashboard.launch.analyticsDesc": "Tableaux de bord, fiches et tendances.",
   "dashboard.launch.templates": "Modèles",
   "dashboard.launch.templatesDesc": "Méthodologies de listes de contrôle réutilisables.",
+  "exceptions.export.csv": "Exporter en CSV",
+  "exceptions.export.exporting": "Exportation…",
   "exceptions.list.title": "Anomalies",
   "exceptions.list.subtitle": "Suivi inter-audits des anomalies relevées et de leurs plans d'action de gestion.",
   "exceptions.list.loading": "Chargement des anomalies…",
