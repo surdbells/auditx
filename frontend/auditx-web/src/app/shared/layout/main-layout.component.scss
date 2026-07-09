@@ -333,7 +333,9 @@
   position: sticky;
   top: 0;
   z-index: 5;
-  height: 60px;
+  height: 76px;
+  // Never let the column-flex parent squish the bar on short viewports.
+  flex: 0 0 76px;
   gap: 1.5rem;
   background: rgb(255 255 255 / 0.72);
   backdrop-filter: saturate(1.4) blur(12px);
