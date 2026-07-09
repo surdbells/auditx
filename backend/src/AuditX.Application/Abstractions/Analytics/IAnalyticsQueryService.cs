@@ -49,6 +49,12 @@ public interface IAnalyticsQueryService
 
     /// <summary>Risk-register roll-up (P1-A): totals + open risks split by band, status, category and treatment strategy.</summary>
     Task<RiskRegisterSummaryDto> RiskSummaryAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Control-effectiveness roll-up (P1-B): active controls split by tested effectiveness and type.</summary>
+    Task<ControlEffectivenessSummaryDto> ControlEffectivenessAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Compliance-by-regulation (P1-B): per active regulation, the count of linked + open findings.</summary>
+    Task<IReadOnlyList<ComplianceByRegulationRowDto>> ComplianceByRegulationAsync(CancellationToken cancellationToken = default);
 }
 
 // ---- KPI DTOs (snake-cased at the API edge by the serializer; these are the shape the port returns) ----
@@ -188,3 +194,18 @@ public sealed record RiskRegisterSummaryDto(
     IReadOnlyList<RiskCountDto> ByStatus,
     IReadOnlyList<RiskCountDto> ByCategory,
     IReadOnlyList<RiskCountDto> ByStrategy);
+
+/// <summary>A labelled count in a control roll-up (effectiveness / type).</summary>
+public sealed record ControlCountDto(string Key, int Count);
+
+/// <summary>Control-effectiveness roll-up (P1-B), over ACTIVE controls.</summary>
+public sealed record ControlEffectivenessSummaryDto(
+    int TotalActive,
+    int Tested,
+    int Ineffective,
+    IReadOnlyList<ControlCountDto> ByEffectiveness,
+    IReadOnlyList<ControlCountDto> ByType);
+
+/// <summary>Compliance-by-regulation row (P1-B): one active regulation + its linked/open finding counts.</summary>
+public sealed record ComplianceByRegulationRowDto(
+    Guid RegulationId, string Code, string Name, string? Authority, int LinkedFindings, int OpenFindings);

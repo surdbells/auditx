@@ -83,6 +83,18 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> RiskSummary(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new RiskRegisterSummaryQuery(), cancellationToken));
 
+    /// <summary>Control-effectiveness roll-up — active controls by effectiveness + type (P1-B).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("control-effectiveness")]
+    public async Task<IActionResult> ControlEffectiveness(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ControlEffectivenessQuery(), cancellationToken));
+
+    /// <summary>Compliance-by-regulation — linked + open findings per active regulation (P1-B).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("compliance-by-regulation")]
+    public async Task<IActionResult> ComplianceByRegulation(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ComplianceByRegulationQuery(), cancellationToken));
+
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("recurrence-clusters")]
     public async Task<IActionResult> RecurrenceClusters([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)

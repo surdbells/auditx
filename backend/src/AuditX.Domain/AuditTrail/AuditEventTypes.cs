@@ -122,6 +122,18 @@ public static class AuditEventTypes
     public const string RiskStatusChanged = "risk_status_changed";
     public const string RiskDeleted = "risk_deleted";
 
+    // Controls & Compliance registers (P1-B)
+    public const string ControlRegistered = "control_registered";
+    public const string ControlUpdated = "control_updated";
+    public const string ControlStatusChanged = "control_status_changed";
+    public const string ControlDeleted = "control_deleted";
+    public const string RegulationRegistered = "regulation_registered";
+    public const string RegulationUpdated = "regulation_updated";
+    public const string RegulationStatusChanged = "regulation_status_changed";
+    public const string RegulationDeleted = "regulation_deleted";
+    public const string FindingLinkAdded = "finding_link_added";
+    public const string FindingLinkRemoved = "finding_link_removed";
+
     // Time tracking (P0-B)
     public const string TimeLogged = "time_logged";
     public const string TimeEntryAmended = "time_entry_amended";
@@ -250,6 +262,9 @@ public static class AuditTargetTypes
     public const string ChecklistResponse = "checklist_response";
     public const string TimeEntry = "time_entry";
     public const string Risk = "risk";
+    public const string Control = "control";
+    public const string Regulation = "regulation";
+    public const string FindingLink = "finding_link";
     public const string EvidenceFile = "evidence_file";
     public const string Exception = "exception";
     public const string MapAction = "map_action";

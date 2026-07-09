@@ -1,6 +1,8 @@
 using AuditX.Api.Authorization;
 using AuditX.Api.Contracts;
 using AuditX.Application.Common.Messaging;
+using AuditX.Application.Compliance.Commands;
+using AuditX.Application.Compliance.Queries;
 using AuditX.Application.Exceptions.Commands;
 using AuditX.Application.Exceptions.Dtos;
 using AuditX.Application.Exceptions.Queries;
@@ -65,6 +67,40 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
     [HttpGet("api/v1/exceptions/{id:guid}/history")]
     public async Task<IActionResult> History(Guid id, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetExceptionHistoryQuery(id), cancellationToken));
+
+    // ---- Control / regulation links (P1-B) ----
+
+    /// <summary>The controls + regulations linked to this finding (access-scoped to the finding's audit).</summary>
+    [RequirePermission(PermissionKeys.ViewExceptions)]
+    [HttpGet("api/v1/exceptions/{id:guid}/links")]
+    public async Task<IActionResult> Links(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListFindingLinksQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpPost("api/v1/exceptions/{id:guid}/controls")]
+    public async Task<IActionResult> LinkControl(Guid id, [FromBody] LinkControlRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(new LinkControlToFindingCommand(id, request.ControlId), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpDelete("api/v1/exceptions/{id:guid}/controls/{controlId:guid}")]
+    public async Task<IActionResult> UnlinkControl(Guid id, Guid controlId, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new UnlinkControlFromFindingCommand(id, controlId), cancellationToken);
+        return NoContent();
+    }
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpPost("api/v1/exceptions/{id:guid}/regulations")]
+    public async Task<IActionResult> LinkRegulation(Guid id, [FromBody] LinkRegulationRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(new LinkRegulationToFindingCommand(id, request.RegulationId), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpDelete("api/v1/exceptions/{id:guid}/regulations/{regulationId:guid}")]
+    public async Task<IActionResult> UnlinkRegulation(Guid id, Guid regulationId, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new UnlinkRegulationFromFindingCommand(id, regulationId), cancellationToken);
+        return NoContent();
+    }
 
     // ---- Exception mutations ----
 

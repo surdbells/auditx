@@ -51,6 +51,10 @@ public static class PermissionCatalogue
         new(PermissionKeys.ViewRisk, "View risks", "Browse the enterprise risk register and heatmap.", "M3", PermissionScopeType.Global),
         new(PermissionKeys.ManageRisk, "Manage risks", "Register, assess, treat and close enterprise risks.", "M3", PermissionScopeType.Global),
 
+        // Controls & Compliance registers (P1-B)
+        new(PermissionKeys.ViewControls, "View controls & compliance", "Browse the controls register, regulations and compliance analytics.", "M3", PermissionScopeType.Global),
+        new(PermissionKeys.ManageControls, "Manage controls & compliance", "Maintain the controls register and the regulation/compliance register.", "M3", PermissionScopeType.Global),
+
         // M6 — Exceptions
         new(PermissionKeys.ViewExceptions, "View exceptions", "Browse the cross-audit exception tracker.", "M6", PermissionScopeType.Global),
         new(PermissionKeys.RaiseException, "Raise exception", "Raise an exception from a failed item.", "M6", PermissionScopeType.Audit),

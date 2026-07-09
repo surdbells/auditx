@@ -49,6 +49,10 @@ public static class PermissionKeys
     public const string ViewRisk = "ViewRisk";
     public const string ManageRisk = "ManageRisk";
 
+    // Controls & Compliance registers (P1-B)
+    public const string ViewControls = "ViewControls";
+    public const string ManageControls = "ManageControls";
+
     // M6 — Exceptions
     public const string ViewExceptions = "ViewExceptions";
     public const string RaiseException = "RaiseException";

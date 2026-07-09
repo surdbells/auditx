@@ -460,6 +460,58 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
         return new RiskRegisterSummaryDto(all.Count, open.Length, all.Count - open.Length, overdueReview, byBand, byStatus, byCategory, byStrategy);
     }
 
+    public async Task<ControlEffectivenessSummaryDto> ControlEffectivenessAsync(CancellationToken cancellationToken = default)
+    {
+        // Active controls only (soft-deleted excluded by the global filter).
+        var controls = await db.Controls.AsNoTracking()
+            .Where(c => c.IsActive)
+            .Select(c => new { c.Effectiveness, c.ControlType })
+            .ToListAsync(cancellationToken);
+
+        var byEffectiveness = controls
+            .GroupBy(c => c.Effectiveness)
+            .Select(g => new ControlCountDto(g.Key.ToSnake(), g.Count()))
+            .OrderByDescending(c => c.Count).ToArray();
+        var byType = controls
+            .GroupBy(c => c.ControlType)
+            .Select(g => new ControlCountDto(g.Key.ToSnake(), g.Count()))
+            .OrderByDescending(c => c.Count).ToArray();
+
+        var tested = controls.Count(c => c.Effectiveness != ControlEffectiveness.NotTested);
+        var ineffective = controls.Count(c => c.Effectiveness == ControlEffectiveness.Ineffective);
+        return new ControlEffectivenessSummaryDto(controls.Count, tested, ineffective, byEffectiveness, byType);
+    }
+
+    public async Task<IReadOnlyList<ComplianceByRegulationRowDto>> ComplianceByRegulationAsync(CancellationToken cancellationToken = default)
+    {
+        var regulations = await db.Regulations.AsNoTracking()
+            .Where(r => r.IsActive)
+            .Select(r => new { r.Id, r.Code, r.Name, r.Authority })
+            .ToListAsync(cancellationToken);
+
+        // Linked + open finding counts per regulation, via the link table joined to the exception's status.
+        var linkAgg = await db.ExceptionRegulationLinks.AsNoTracking()
+            .Join(db.Exceptions, l => l.ExceptionId, e => e.Id, (l, e) => new { l.RegulationId, e.Status })
+            .GroupBy(x => x.RegulationId)
+            .Select(g => new
+            {
+                RegulationId = g.Key,
+                Linked = g.Count(),
+                Open = g.Count(x => OpenStatuses.Contains(x.Status)),
+            })
+            .ToListAsync(cancellationToken);
+        var byReg = linkAgg.ToDictionary(a => a.RegulationId);
+
+        return regulations
+            .Select(r =>
+            {
+                byReg.TryGetValue(r.Id, out var a);
+                return new ComplianceByRegulationRowDto(r.Id, r.Code, r.Name, r.Authority, a?.Linked ?? 0, a?.Open ?? 0);
+            })
+            .OrderByDescending(x => x.OpenFindings).ThenByDescending(x => x.LinkedFindings).ThenBy(x => x.Code)
+            .ToArray();
+    }
+
     /// <summary>Sums a unit's own aggregate with every descendant's (DFS; cycle-guarded).</summary>
     private static OrgAgg RollUp(Guid rootId, IReadOnlyDictionary<Guid, Guid[]> childrenByParent, IReadOnlyDictionary<Guid, OrgAgg> direct)
     {

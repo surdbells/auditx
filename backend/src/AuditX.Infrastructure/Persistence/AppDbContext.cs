@@ -3,7 +3,9 @@ using AuditX.Domain.Administration;
 using AuditX.Domain.Analytics;
 using AuditX.Domain.Audits;
 using AuditX.Domain.AuditTrail;
+using AuditX.Domain.Compliance;
 using AuditX.Domain.Configuration;
+using AuditX.Domain.Controls;
 using AuditX.Domain.Evidence;
 using AuditX.Domain.Exceptions;
 using AuditX.Domain.Identity;
@@ -93,6 +95,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
 
     public DbSet<Risk> Risks => Set<Risk>();
+
+    public DbSet<Control> Controls => Set<Control>();
+
+    public DbSet<Regulation> Regulations => Set<Regulation>();
+
+    public DbSet<ExceptionControlLink> ExceptionControlLinks => Set<ExceptionControlLink>();
+
+    public DbSet<ExceptionRegulationLink> ExceptionRegulationLinks => Set<ExceptionRegulationLink>();
 
     public DbSet<AuditException> Exceptions => Set<AuditException>();
 

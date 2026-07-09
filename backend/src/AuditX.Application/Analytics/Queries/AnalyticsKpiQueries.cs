@@ -114,6 +114,26 @@ public sealed class RiskRegisterSummaryQueryHandler(IAnalyticsQueryService analy
         => analytics.RiskSummaryAsync(cancellationToken);
 }
 
+// ---- Controls & Compliance analytics (ViewAnalytics) ----
+
+public sealed record ControlEffectivenessQuery : IQuery<ControlEffectivenessSummaryDto>;
+
+public sealed class ControlEffectivenessQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<ControlEffectivenessQuery, ControlEffectivenessSummaryDto>
+{
+    public Task<ControlEffectivenessSummaryDto> Handle(ControlEffectivenessQuery query, CancellationToken cancellationToken)
+        => analytics.ControlEffectivenessAsync(cancellationToken);
+}
+
+public sealed record ComplianceByRegulationQuery : IQuery<IReadOnlyList<ComplianceByRegulationRowDto>>;
+
+public sealed class ComplianceByRegulationQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<ComplianceByRegulationQuery, IReadOnlyList<ComplianceByRegulationRowDto>>
+{
+    public Task<IReadOnlyList<ComplianceByRegulationRowDto>> Handle(ComplianceByRegulationQuery query, CancellationToken cancellationToken)
+        => analytics.ComplianceByRegulationAsync(cancellationToken);
+}
+
 // ---- Coverage matrix (reuse ICoverageQueryService — do NOT reimplement coverage) ----
 
 public sealed record AnalyticsCoverageQuery(int WindowMonths) : IQuery<CoverageMatrix>;
