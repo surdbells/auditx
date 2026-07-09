@@ -59,8 +59,8 @@ type ViewState = 'loading' | 'ready' | 'error';
  * Renders one dashboard generically: each widget is dispatched by `widgetType`
  * (single_metric / table / chart) against its computed `data`. A widget with
  * null data renders an empty shell with a "not available" note (the backend
- * degrades a forbidden widget to null). Charts use inline CSS bars — no
- * charting dependency is added.
+ * degrades a forbidden widget to null). Charts are hand-rolled inline SVG
+ * (app-bar-chart / app-donut-chart / app-gauge-chart) — no charting dependency.
  */
 @Component({
   selector: 'app-dashboard-view',
