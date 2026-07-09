@@ -192,19 +192,24 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
         // A standalone report has no audit.
         Assert.True(report.GetProperty("auditId").ValueKind == JsonValueKind.Null);
 
-        // HTML (canonical) + CSV + XLSX are always produced for export.
+        // HTML (canonical) + PDF + CSV + XLSX are always produced for export.
         var formats = report.GetProperty("producedArtefacts").EnumerateArray()
             .Select(a => a.GetProperty("format").GetString()).ToArray();
         Assert.Contains("html", formats);
+        Assert.Contains("pdf", formats);
         Assert.Contains("csv", formats);
         Assert.Contains("xlsx", formats);
 
-        foreach (var fmt in new[] { "html", "csv", "xlsx" })
+        foreach (var fmt in new[] { "html", "pdf", "csv", "xlsx" })
         {
             var dl = await manager.GetAsync($"/api/v1/reports/{reportId}/download?format={fmt}");
             dl.EnsureSuccessStatusCode();
             Assert.True((await dl.Content.ReadAsByteArrayAsync()).Length > 0);
         }
+
+        // The PDF is a real, server-generated PDF (magic bytes %PDF-).
+        var pdf = await (await manager.GetAsync($"/api/v1/reports/{reportId}/download?format=pdf")).Content.ReadAsByteArrayAsync();
+        Assert.True(pdf.Length > 4 && pdf[0] == (byte)'%' && pdf[1] == (byte)'P' && pdf[2] == (byte)'D' && pdf[3] == (byte)'F');
 
         var download = await manager.GetAsync($"/api/v1/reports/{reportId}/download?format=html");
         download.EnsureSuccessStatusCode();

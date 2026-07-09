@@ -91,12 +91,14 @@ public static class DependencyInjection
         services.AddScoped<Application.Reports.Generation.ReportGenerationService>();
         services.AddScoped<Reports.HtmlReportRenderer>();
         services.AddScoped<Reports.OpenXmlReportRenderer>();
+        services.AddScoped<Reports.PdfReportRenderer>();
         services.AddScoped<Reports.CsvReportRenderer>();
         services.AddScoped<Reports.XlsxReportRenderer>();
         services.AddScoped<Application.Abstractions.Reports.IReportRenderer>(sp => new Reports.CompositeReportRenderer(
         [
             sp.GetRequiredService<Reports.HtmlReportRenderer>(),
             sp.GetRequiredService<Reports.OpenXmlReportRenderer>(),
+            sp.GetRequiredService<Reports.PdfReportRenderer>(),
             sp.GetRequiredService<Reports.CsvReportRenderer>(),
             sp.GetRequiredService<Reports.XlsxReportRenderer>(),
         ]));

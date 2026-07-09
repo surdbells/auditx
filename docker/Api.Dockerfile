@@ -17,6 +17,11 @@ RUN dotnet publish backend/src/AuditX.Api/AuditX.Api.csproj -c Release -o /app/p
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
+# Liberation Sans (metric-compatible with Arial) for the server-side PDF report renderer (PDFsharp reads the TTF
+# directly via a font resolver — the slim aspnet image ships no fonts).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/publish .
 # The evidence / report / AC-pack artefact store (default <content-root>/evidence-store) must be writable by the
 # non-root runtime user. Create + own it while still root, THEN drop privileges. In production point

@@ -205,9 +205,9 @@ public sealed class Report : AggregateRoot, ISoftDeletable
 
     private static IReadOnlyList<string> NormaliseFormats(IReadOnlyList<string> requested)
     {
-        // HTML is the canonical, always-produced artefact; CSV + XLSX are always produced too so every report can be
-        // exported to Excel/CSV from the viewer. DOCX (and any other requested format) is preserved on top.
-        var set = new List<string> { "html", "csv", "xlsx" };
+        // HTML is the canonical, always-produced artefact; PDF + CSV + XLSX are always produced too so every report can
+        // be exported (PDF/Excel/CSV) from the viewer. DOCX (and any other requested format) is preserved on top.
+        var set = new List<string> { "html", "pdf", "csv", "xlsx" };
         foreach (var format in requested)
         {
             var normalised = format?.Trim().ToLowerInvariant();

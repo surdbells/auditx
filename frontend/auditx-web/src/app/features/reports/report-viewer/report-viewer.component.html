@@ -135,18 +135,18 @@
             </div>
           }
 
-          <div class="viewer__downloads">
-            <button matButton="outlined" type="button" (click)="printReport()" [disabled]="printing()">
-              <mat-icon>picture_as_pdf</mat-icon>
-              {{ 'reports.viewer.export.pdf' | t }}
-            </button>
-            @for (a of artefacts(); track a.format) {
-              <button matButton type="button" (click)="download(a)">
-                <mat-icon>download</mat-icon>
-                {{ a.format | uppercase }}
-              </button>
-            }
-          </div>
+          @if (!artefacts().length) {
+            <p class="muted viewer__empty">{{ 'reports.viewer.artefacts.empty' | t }}</p>
+          } @else {
+            <div class="viewer__downloads">
+              @for (a of artefacts(); track a.format) {
+                <button matButton type="button" (click)="download(a)">
+                  <mat-icon>{{ a.format === 'pdf' ? 'picture_as_pdf' : 'download' }}</mat-icon>
+                  {{ a.format | uppercase }}
+                </button>
+              }
+            </div>
+          }
         </mat-card>
       }
 
