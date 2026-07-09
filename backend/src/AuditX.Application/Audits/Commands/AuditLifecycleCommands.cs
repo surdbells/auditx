@@ -1,4 +1,5 @@
 using AuditX.Application.Abstractions;
+using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Audits.Dtos;
 using AuditX.Application.Audits.Mapping;
@@ -6,6 +7,7 @@ using AuditX.Application.Common.Enums;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Domain.AuditTrail;
+using AuditX.Domain.Authorization;
 using AuditX.Domain.Enums;
 
 namespace AuditX.Application.Audits.Commands;
@@ -21,6 +23,34 @@ public sealed class UpdateAuditMetadataCommandHandler(IAuditRepository audits, I
         entity.EnsureVersion(command.Version);
         entity.UpdateMetadata(command.Name.Trim(), command.ScopeDescription, command.StartDate, command.TargetEndDate);
         audit.Record(AuditEventTypes.AuditMetadataUpdated, AuditTargetTypes.Audit, entity.Id);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto();
+    }
+}
+
+/// <summary>Sets (or clears) the audit's planned-effort budget in hours (P0-B budget-vs-actual baseline).</summary>
+public sealed record SetAuditBudgetCommand(Guid Id, decimal? BudgetedHours, string Version) : ICommand<AuditDto>;
+
+public sealed class SetAuditBudgetCommandHandler(
+    IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<SetAuditBudgetCommand, AuditDto>
+{
+    public async Task<AuditDto> Handle(SetAuditBudgetCommand command, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Audit", command.Id);
+
+        // Resource-scope check: [RequirePermission(ManageAudit)] only gates globally, so a per-audit-scoped grant
+        // could otherwise set another audit's budget. Re-check ManageAudit scoped to THIS audit (mirrors the
+        // time-entry write path's EnsureCanModifyAsync).
+        var uid = currentUser.UserId ?? throw new ForbiddenAccessException();
+        if (!await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, entity.Id.ToString(), cancellationToken))
+        {
+            throw new ForbiddenAccessException("You do not manage this audit.");
+        }
+
+        entity.EnsureVersion(command.Version);
+        entity.SetBudgetedHours(command.BudgetedHours);
+        audit.Record(AuditEventTypes.AuditBudgetSet, AuditTargetTypes.Audit, entity.Id, after: new { command.BudgetedHours });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return entity.ToDto();
     }

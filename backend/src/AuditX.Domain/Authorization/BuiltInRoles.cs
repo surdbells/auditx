@@ -23,6 +23,7 @@ public static class BuiltInRoles
             PermissionKeys.ViewUniverse, PermissionKeys.RespondItem, PermissionKeys.UploadEvidence,
             PermissionKeys.ViewEvidence, PermissionKeys.ViewExceptions, PermissionKeys.RaiseException,
             PermissionKeys.SubmitMap, PermissionKeys.ViewReport, PermissionKeys.ViewAnalytics,
+            PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries,
         ]);
 
     public static readonly BuiltInRoleDefinition AuditManager = new(
@@ -37,6 +38,7 @@ public static class BuiltInRoles
             PermissionKeys.GenerateReport, PermissionKeys.ViewReport, PermissionKeys.DistributeReport,
             PermissionKeys.ViewSanctions, PermissionKeys.TriggerSanctions, PermissionKeys.RecommendSanction, PermissionKeys.ViewGrid,
             PermissionKeys.ViewAnalytics, PermissionKeys.AdHocQueryUse, PermissionKeys.PerformanceAnalyticsView, PermissionKeys.ViewAuditTrail,
+            PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries,
         ]);
 
     public static readonly BuiltInRoleDefinition Auditee = new(
@@ -58,6 +60,7 @@ public static class BuiltInRoles
             PermissionKeys.ManagePlan, PermissionKeys.ViewPlan, PermissionKeys.ViewCoverage,
             PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.CreateAudit, PermissionKeys.ManageAudit,
             PermissionKeys.RespondItem, PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ManageEvidence,
+            PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries,
             PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException, PermissionKeys.SubmitMap,
             PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException, PermissionKeys.Cia,
             PermissionKeys.ConfigureNotifications, PermissionKeys.ConfigureReports, PermissionKeys.ConfigureExceptionWorkflow,

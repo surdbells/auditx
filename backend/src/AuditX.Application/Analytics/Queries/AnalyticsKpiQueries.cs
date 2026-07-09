@@ -74,6 +74,26 @@ public sealed class OrgUnitScorecardsQueryHandler(IAnalyticsQueryService analyti
         => analytics.OrgUnitScorecardsAsync(cancellationToken);
 }
 
+// ---- Time & effort: budget-vs-actual + utilisation (ViewAnalytics) ----
+
+public sealed record BudgetVsActualQuery : IQuery<IReadOnlyList<BudgetVsActualDto>>;
+
+public sealed class BudgetVsActualQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<BudgetVsActualQuery, IReadOnlyList<BudgetVsActualDto>>
+{
+    public Task<IReadOnlyList<BudgetVsActualDto>> Handle(BudgetVsActualQuery query, CancellationToken cancellationToken)
+        => analytics.BudgetVsActualAsync(cancellationToken);
+}
+
+public sealed record UtilisationByUserQuery : IQuery<IReadOnlyList<AuditorUtilisationDto>>;
+
+public sealed class UtilisationByUserQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<UtilisationByUserQuery, IReadOnlyList<AuditorUtilisationDto>>
+{
+    public Task<IReadOnlyList<AuditorUtilisationDto>> Handle(UtilisationByUserQuery query, CancellationToken cancellationToken)
+        => analytics.UtilisationByUserAsync(cancellationToken);
+}
+
 // ---- Coverage matrix (reuse ICoverageQueryService — do NOT reimplement coverage) ----
 
 public sealed record AnalyticsCoverageQuery(int WindowMonths) : IQuery<CoverageMatrix>;

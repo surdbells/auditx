@@ -41,6 +41,10 @@ public static class PermissionKeys
     public const string ViewEvidence = "ViewEvidence";
     public const string ManageEvidence = "ManageEvidence";
 
+    // Time tracking (P0-B)
+    public const string LogTime = "LogTime";
+    public const string ViewTimeEntries = "ViewTimeEntries";
+
     // M6 — Exceptions
     public const string ViewExceptions = "ViewExceptions";
     public const string RaiseException = "RaiseException";

@@ -14,6 +14,7 @@ using AuditX.Domain.ReferenceData;
 using AuditX.Domain.Reports;
 using AuditX.Domain.Sanctions;
 using AuditX.Domain.Templates;
+using AuditX.Domain.TimeTracking;
 using AuditX.Domain.Universe;
 using AuditX.Infrastructure.Persistence.Naming;
 using Microsoft.EntityFrameworkCore;
@@ -87,6 +88,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<ChecklistResponse> ChecklistResponses => Set<ChecklistResponse>();
 
     public DbSet<EvidenceFile> EvidenceFiles => Set<EvidenceFile>();
+
+    public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
 
     public DbSet<AuditException> Exceptions => Set<AuditException>();
 

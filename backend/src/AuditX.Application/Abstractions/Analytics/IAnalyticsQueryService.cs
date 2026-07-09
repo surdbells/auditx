@@ -28,6 +28,18 @@ public interface IAnalyticsQueryService
     /// Powers the department-performance, risk-by-BU and coverage-by-BU board reports.
     /// </summary>
     Task<IReadOnlyList<OrgUnitScorecardDto>> OrgUnitScorecardsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Budget-vs-actual per audit (P0-B): budgeted hours (baseline) vs the sum of logged time entries, with the
+    /// variance and % consumed. Only audits with either a budget or logged time appear. Powers effort/cost reporting.
+    /// </summary>
+    Task<IReadOnlyList<BudgetVsActualDto>> BudgetVsActualAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Utilisation per auditor (P0-B): total logged hours, audits contributed to, and the hours split by activity
+    /// category. Powers the resource-utilisation board report.
+    /// </summary>
+    Task<IReadOnlyList<AuditorUtilisationDto>> UtilisationByUserAsync(CancellationToken cancellationToken = default);
 }
 
 // ---- KPI DTOs (snake-cased at the API edge by the serializer; these are the shape the port returns) ----
@@ -126,3 +138,24 @@ public sealed record OrgUnitScorecardDto(
     int HighOpenFindings,
     int ClosedFindings,
     double? AverageClosureDays);
+
+/// <summary>Budget-vs-actual for one audit (P0-B). Variance/percent are null when no budget is set.</summary>
+public sealed record BudgetVsActualDto(
+    Guid AuditId,
+    string AuditName,
+    string Status,
+    Guid LeadUserId,
+    decimal? BudgetedHours,
+    decimal ActualHours,
+    decimal? VarianceHours,
+    double? PercentConsumed);
+
+/// <summary>Hours logged in one activity category (for a utilisation split).</summary>
+public sealed record UtilisationCategoryDto(string Category, decimal Hours);
+
+/// <summary>Total logged effort for one auditor, split by activity category (P0-B).</summary>
+public sealed record AuditorUtilisationDto(
+    Guid UserId,
+    decimal TotalHours,
+    int AuditsContributed,
+    IReadOnlyList<UtilisationCategoryDto> ByCategory);

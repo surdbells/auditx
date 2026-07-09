@@ -16,6 +16,8 @@ public sealed record CreateAuditRequest(
 
 public sealed record UpdateAuditRequest(string Name, string? ScopeDescription, DateOnly StartDate, DateOnly TargetEndDate, string Version);
 
+public sealed record SetAuditBudgetRequest(decimal? BudgetedHours, string Version);
+
 public sealed record TransitionAuditRequest(string TargetState, string? Reason, string Version);
 
 public sealed record CancelAuditRequest(string Reason, string Version);

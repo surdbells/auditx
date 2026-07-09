@@ -59,6 +59,18 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> OrgUnitScorecards(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new OrgUnitScorecardsQuery(), cancellationToken));
 
+    /// <summary>Budget-vs-actual per audit — budgeted hours vs logged time (P0-B).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("budget-vs-actual")]
+    public async Task<IActionResult> BudgetVsActual(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new BudgetVsActualQuery(), cancellationToken));
+
+    /// <summary>Utilisation per auditor — total logged hours split by activity category (P0-B).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("utilisation")]
+    public async Task<IActionResult> Utilisation(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new UtilisationByUserQuery(), cancellationToken));
+
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("recurrence-clusters")]
     public async Task<IActionResult> RecurrenceClusters([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)

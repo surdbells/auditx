@@ -43,6 +43,10 @@ public static class PermissionCatalogue
         new(PermissionKeys.ViewEvidence, "View evidence", "Download and view evidence files.", "M5", PermissionScopeType.Audit),
         new(PermissionKeys.ManageEvidence, "Manage evidence", "Soft-delete evidence with reason.", "M5", PermissionScopeType.Audit),
 
+        // Time tracking (P0-B)
+        new(PermissionKeys.LogTime, "Log time", "Record time/effort against an audit.", "M5", PermissionScopeType.Audit),
+        new(PermissionKeys.ViewTimeEntries, "View time entries", "View logged time, budget-vs-actual and utilisation.", "M5", PermissionScopeType.Global),
+
         // M6 — Exceptions
         new(PermissionKeys.ViewExceptions, "View exceptions", "Browse the cross-audit exception tracker.", "M6", PermissionScopeType.Global),
         new(PermissionKeys.RaiseException, "Raise exception", "Raise an exception from a failed item.", "M6", PermissionScopeType.Audit),

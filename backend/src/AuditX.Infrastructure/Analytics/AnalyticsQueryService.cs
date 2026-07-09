@@ -344,6 +344,56 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
         return result;
     }
 
+    public async Task<IReadOnlyList<BudgetVsActualDto>> BudgetVsActualAsync(CancellationToken cancellationToken = default)
+    {
+        // Actual = sum of live time entries per audit (the soft-delete filter excludes deleted rows).
+        var actualByAudit = await db.TimeEntries.AsNoTracking()
+            .GroupBy(t => t.AuditId)
+            .Select(g => new { AuditId = g.Key, Hours = g.Sum(t => t.Hours) })
+            .ToListAsync(cancellationToken);
+        var actualMap = actualByAudit.ToDictionary(a => a.AuditId, a => a.Hours);
+        var loggedIds = actualByAudit.Select(a => a.AuditId).ToList();
+
+        // Include audits with a budget OR any logged time.
+        var audits = await db.Audits.AsNoTracking()
+            .Where(a => a.BudgetedHours != null || loggedIds.Contains(a.Id))
+            .Select(a => new { a.Id, a.Name, a.Status, a.LeadUserId, a.BudgetedHours })
+            .ToListAsync(cancellationToken);
+
+        return audits
+            .Select(a =>
+            {
+                var actual = actualMap.TryGetValue(a.Id, out var h) ? h : 0m;
+                var budget = a.BudgetedHours;
+                return new BudgetVsActualDto(
+                    a.Id, a.Name, a.Status.ToSnake(), a.LeadUserId, budget, actual,
+                    budget is { } b ? b - actual : null,
+                    budget is { } bd && bd > 0 ? (double)(actual / bd) * 100d : null);
+            })
+            .OrderByDescending(r => r.ActualHours)
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<AuditorUtilisationDto>> UtilisationByUserAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await db.TimeEntries.AsNoTracking()
+            .Select(t => new { t.UserId, t.AuditId, t.Category, t.Hours })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .GroupBy(t => t.UserId)
+            .Select(g => new AuditorUtilisationDto(
+                g.Key,
+                g.Sum(t => t.Hours),
+                g.Select(t => t.AuditId).Distinct().Count(),
+                g.GroupBy(t => t.Category)
+                    .Select(c => new UtilisationCategoryDto(c.Key.ToSnake(), c.Sum(t => t.Hours)))
+                    .OrderByDescending(c => c.Hours)
+                    .ToArray()))
+            .OrderByDescending(u => u.TotalHours)
+            .ToArray();
+    }
+
     /// <summary>Sums a unit's own aggregate with every descendant's (DFS; cycle-guarded).</summary>
     private static OrgAgg RollUp(Guid rootId, IReadOnlyDictionary<Guid, Guid[]> childrenByParent, IReadOnlyDictionary<Guid, OrgAgg> direct)
     {

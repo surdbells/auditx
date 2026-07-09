@@ -54,6 +54,9 @@ public sealed class Audit : AggregateRoot
 
     public string? LastTransitionReason { get; private set; }
 
+    /// <summary>Planned effort in hours — the budget baseline for budget-vs-actual (P0-B). Null when unset.</summary>
+    public decimal? BudgetedHours { get; private set; }
+
     public byte[] Version { get; private set; } = [];
 
     public IReadOnlyList<AuditTeamMember> TeamMembers => _teamMembers.AsReadOnly();
@@ -116,6 +119,18 @@ public sealed class Audit : AggregateRoot
         ScopeDescription = scopeDescription;
         StartDate = startDate;
         TargetEndDate = targetEndDate;
+    }
+
+    /// <summary>Sets (or clears, with null) the planned effort budget in hours. Allowed at any status.</summary>
+    public void SetBudgetedHours(decimal? hours)
+    {
+        if (hours is { } h)
+        {
+            Guard.Against(h < 0, "audit.budget_negative", "Budgeted hours cannot be negative.");
+            Guard.Against(h > 1_000_000, "audit.budget_too_large", "Budgeted hours is implausibly large.");
+        }
+
+        BudgetedHours = hours;
     }
 
     // ---- Team management ----

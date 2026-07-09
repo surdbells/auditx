@@ -24,6 +24,7 @@ public sealed record AuditDto(
     Guid LeadUserId,
     Guid AuditeeUserId,
     string? CancellationReason,
+    decimal? BudgetedHours,
     string Version,
     IReadOnlyList<AuditTeamMemberDto> TeamMembers,
     IReadOnlyList<AuditSectionDto> Sections,

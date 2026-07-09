@@ -52,6 +52,11 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
         => Envelope(await dispatcher.Send(new UpdateAuditMetadataCommand(id, request.Name, request.ScopeDescription, request.StartDate, request.TargetEndDate, request.Version), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPatch("{id:guid}/budget")]
+    public async Task<IActionResult> SetBudget(Guid id, [FromBody] SetAuditBudgetRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SetAuditBudgetCommand(id, request.BudgetedHours, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpPost("{id:guid}/transition")]
     public async Task<IActionResult> Transition(Guid id, [FromBody] TransitionAuditRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new TransitionAuditCommand(id, request.TargetState, request.Reason, request.Version), cancellationToken));

@@ -116,6 +116,12 @@ public static class AuditEventTypes
     public const string AuditSectionRemoved = "audit_section_removed";
     public const string AuditSectionsReordered = "audit_sections_reordered";
 
+    // Time tracking (P0-B)
+    public const string TimeLogged = "time_logged";
+    public const string TimeEntryAmended = "time_entry_amended";
+    public const string TimeEntryDeleted = "time_entry_deleted";
+    public const string AuditBudgetSet = "audit_budget_set";
+
     // M5 execution / evidence
     public const string ItemResponded = "item_responded";
     public const string ItemResponseOverridden = "item_response_overridden";
@@ -236,6 +242,7 @@ public static class AuditTargetTypes
     public const string AuditSection = "audit_section";
     public const string AuditChecklistItem = "audit_checklist_item";
     public const string ChecklistResponse = "checklist_response";
+    public const string TimeEntry = "time_entry";
     public const string EvidenceFile = "evidence_file";
     public const string Exception = "exception";
     public const string MapAction = "map_action";
