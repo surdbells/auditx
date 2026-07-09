@@ -28,11 +28,17 @@ public sealed record AuditTrailFilter(
     DateTimeOffset? From = null,
     DateTimeOffset? To = null);
 
+/// <summary>Distinct event-type and target-type vocabularies actually present in the trail (for filter dropdowns).</summary>
+public sealed record AuditTrailFacets(IReadOnlyList<string> EventTypes, IReadOnlyList<string> TargetTypes);
+
 /// <summary>Reads the append-only audit trail: general filtered query (M11) + per-object history.</summary>
 public interface IAuditTrailReader
 {
     Task<IReadOnlyList<AuditTrailEntryView>> GetForTargetAsync(
         string targetObjectType, Guid targetObjectId, string? eventType, int limit, CancellationToken cancellationToken = default);
+
+    /// <summary>Distinct event/target types present in the trail, for populating filter dropdowns.</summary>
+    Task<AuditTrailFacets> GetFacetsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Filtered, keyset-cursor page over the trail, ordered newest-first.</summary>
     Task<CursorPage<AuditTrailEntryView>> QueryAsync(AuditTrailFilter filter, PageRequest page, CancellationToken cancellationToken = default);

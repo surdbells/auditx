@@ -20,9 +20,14 @@ import { MatTableModule } from '@angular/material/table';
 import { AuditTrailService } from '../../../core/services/audit-trail.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { Permissions } from '../../../core/permissions';
 import { AuditTrailEntry, AuditTrailFilter } from '../../../core/models';
 import { humaniseActorType, humaniseEventType } from './humanise';
+import {
+  SearchableSelectComponent,
+  SelectOption,
+} from '../../../shared/components/searchable-select/searchable-select.component';
 import {
   AuditTrailDetailDialogComponent,
   AuditTrailDetailDialogData,
@@ -72,6 +77,7 @@ function toIsoEnd(value: Date | null): string | undefined {
     MatDatepickerModule,
     MatButtonModule,
     MatIconModule,
+    SearchableSelectComponent,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -88,6 +94,7 @@ export class AuditTrailComponent {
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+  private readonly userLookup = inject(UserLookupService);
 
   readonly displayedColumns = [
     'occurredAt',
@@ -101,7 +108,6 @@ export class AuditTrailComponent {
     actorUserId: '',
     eventType: '',
     targetObjectType: '',
-    targetObjectId: '',
     dateFrom: null as Date | null,
     dateTo: null as Date | null,
   });
@@ -113,8 +119,32 @@ export class AuditTrailComponent {
   readonly loadingMore = signal(false);
   readonly exporting = signal(false);
 
+  /** Distinct event/target-type vocabularies from the backend, for the dropdowns. */
+  private readonly facets = signal<{ eventTypes: string[]; targetTypes: string[] }>({
+    eventTypes: [],
+    targetTypes: [],
+  });
+
   readonly humaniseActorType = humaniseActorType;
   readonly humaniseEventType = humaniseEventType;
+
+  /** Actor dropdown: an "all" sentinel plus every known user, resolved to a display name. */
+  readonly actorOptions = computed<SelectOption[]>(() => [
+    { value: '', label: this.i18n.translate('adminMisc.auditTrail.filter.allActors') },
+    ...this.userLookup
+      .options()
+      .map((u) => ({ value: u.id, label: u.displayName || u.id })),
+  ]);
+
+  readonly eventTypeOptions = computed<SelectOption[]>(() => [
+    { value: '', label: this.i18n.translate('adminMisc.auditTrail.filter.allEvents') },
+    ...this.facets().eventTypes.map((t) => ({ value: t, label: humaniseEventType(t) })),
+  ]);
+
+  readonly targetTypeOptions = computed<SelectOption[]>(() => [
+    { value: '', label: this.i18n.translate('adminMisc.auditTrail.filter.allTargets') },
+    ...this.facets().targetTypes.map((t) => ({ value: t, label: humaniseEventType(t) })),
+  ]);
 
   readonly canExport = computed(() =>
     this.auth.hasPermission(Permissions.ExportAuditTrail),
@@ -125,16 +155,42 @@ export class AuditTrailComponent {
   );
 
   constructor() {
+    this.userLookup.ensureLoaded();
+    this.loadFacets();
     this.fetchFirstPage();
+  }
+
+  /** Resolves the actor of an entry to a human-readable name (user directory → system label → id → em dash). */
+  actorName(entry: AuditTrailEntry): string {
+    if (entry.actorUserId) {
+      return this.userLookup.displayName(entry.actorUserId);
+    }
+    return entry.actorSystemLabel ?? '—';
+  }
+
+  /** Abbreviates a GUID target id to its leading segment; the detail dialog carries the full value. */
+  shortId(id: string | null): string {
+    if (!id) {
+      return '—';
+    }
+    const head = id.split('-')[0];
+    return head ? `${head}…` : id;
+  }
+
+  private loadFacets(): void {
+    this.service.facets().subscribe({
+      next: (f) => this.facets.set({ eventTypes: f.eventTypes, targetTypes: f.targetTypes }),
+      // Non-fatal: leave the dropdowns with just the "all" option on error.
+      error: () => undefined,
+    });
   }
 
   private currentFilter(): AuditTrailFilter {
     const v = this.filters.getRawValue();
     return {
-      actorUserId: v.actorUserId.trim() || undefined,
-      eventType: v.eventType.trim() || undefined,
-      targetObjectType: v.targetObjectType.trim() || undefined,
-      targetObjectId: v.targetObjectId.trim() || undefined,
+      actorUserId: v.actorUserId || undefined,
+      eventType: v.eventType || undefined,
+      targetObjectType: v.targetObjectType || undefined,
       dateFrom: toIsoStart(v.dateFrom),
       dateTo: toIsoEnd(v.dateTo),
     };
@@ -149,7 +205,6 @@ export class AuditTrailComponent {
       actorUserId: '',
       eventType: '',
       targetObjectType: '',
-      targetObjectId: '',
       dateFrom: null,
       dateTo: null,
     });

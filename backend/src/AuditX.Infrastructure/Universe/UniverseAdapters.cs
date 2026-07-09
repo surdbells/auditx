@@ -154,6 +154,15 @@ public sealed class AuditTrailReader(AppDbContext db) : IAuditTrailReader
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<AuditTrailFacets> GetFacetsAsync(CancellationToken cancellationToken = default)
+    {
+        var eventTypes = await db.AuditTrail.AsNoTracking()
+            .Select(e => e.EventType).Distinct().OrderBy(x => x).ToListAsync(cancellationToken);
+        var targetTypes = await db.AuditTrail.AsNoTracking()
+            .Select(e => e.TargetObjectType).Distinct().OrderBy(x => x).ToListAsync(cancellationToken);
+        return new AuditTrailFacets(eventTypes, targetTypes);
+    }
+
     public async Task<CursorPage<AuditTrailEntryView>> QueryAsync(AuditTrailFilter filter, PageRequest page, CancellationToken cancellationToken = default)
     {
         var query = Filtered(filter);

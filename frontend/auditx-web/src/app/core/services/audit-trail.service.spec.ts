@@ -84,6 +84,18 @@ describe('AuditTrailService', () => {
     expect(result?.items.length).toBe(1);
   });
 
+  it('fetches distinct filter facets and unwraps the envelope', () => {
+    let result: { eventTypes: string[]; targetTypes: string[] } | undefined;
+    service.facets().subscribe((r) => (result = r));
+    const req = http.expectOne(`${BASE}/audit-trail/facets`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      data: { eventTypes: ['audit.created'], targetTypes: ['Audit'] },
+    });
+    expect(result?.eventTypes).toEqual(['audit.created']);
+    expect(result?.targetTypes).toEqual(['Audit']);
+  });
+
   it('fetches paginated object history', () => {
     let result: { items: unknown[] } | undefined;
     service.objectHistory('Audit', 't-1').subscribe((r) => (result = r));

@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiService } from './api.service';
 import {
   AuditTrailEntry,
+  AuditTrailFacets,
   AuditTrailFilter,
   CursorPage,
   FlaggedEvidence,
@@ -24,6 +25,11 @@ export class AuditTrailService {
   private readonly api = inject(ApiService);
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiBaseUrl;
+
+  /** Distinct event/target types present in the trail, for the filter dropdowns. */
+  facets(): Observable<AuditTrailFacets> {
+    return this.api.get<AuditTrailFacets>('/audit-trail/facets');
+  }
 
   query(
     filter: AuditTrailFilter,

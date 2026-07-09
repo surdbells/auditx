@@ -27,6 +27,11 @@ public sealed class AuditTrailController(IDispatcher dispatcher) : ApiController
             new QueryAuditTrailQuery(actorUserId, eventType, targetObjectType, targetObjectId, dateFrom, dateTo, cursor, limit), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewAuditTrail)]
+    [HttpGet("facets")]
+    public async Task<IActionResult> Facets(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetAuditTrailFacetsQuery(), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAuditTrail)]
     [HttpGet("object/{objectType}/{objectId:guid}")]
     public async Task<IActionResult> ObjectHistory(
         string objectType, Guid objectId, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)

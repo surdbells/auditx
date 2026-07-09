@@ -48,3 +48,9 @@ export interface AuditTrailFilter {
   /** ISO datetime string. */
   dateTo?: string;
 }
+
+/** Distinct event/target-type vocabularies present in the trail, for filter dropdowns. */
+export interface AuditTrailFacets {
+  eventTypes: string[];
+  targetTypes: string[];
+}

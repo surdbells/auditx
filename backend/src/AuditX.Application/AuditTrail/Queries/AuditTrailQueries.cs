@@ -37,6 +37,17 @@ public sealed class QueryAuditTrailQueryHandler(IAuditTrailReader reader, IAudit
     }
 }
 
+// ---- Filter facets (distinct event/target types for dropdowns) ----
+
+public sealed record GetAuditTrailFacetsQuery : IQuery<AuditTrailFacets>;
+
+public sealed class GetAuditTrailFacetsQueryHandler(IAuditTrailReader reader)
+    : IQueryHandler<GetAuditTrailFacetsQuery, AuditTrailFacets>
+{
+    public Task<AuditTrailFacets> Handle(GetAuditTrailFacetsQuery query, CancellationToken cancellationToken)
+        => reader.GetFacetsAsync(cancellationToken);
+}
+
 // ---- Per-object history (US-M11-008) ----
 
 public sealed record GetObjectHistoryQuery(string TargetObjectType, Guid TargetObjectId, string? Cursor, int? Limit) : IQuery<CursorPage<AuditTrailEntryDto>>;
