@@ -50,6 +50,10 @@ export const Permissions = {
   ViewEvidence: 'ViewEvidence',
   ManageEvidence: 'ManageEvidence',
 
+  // P0-B — Time tracking
+  LogTime: 'LogTime',
+  ViewTimeEntries: 'ViewTimeEntries',
+
   // M10 — Notifications
   ConfigureNotifications: 'ConfigureNotifications',
 

@@ -236,3 +236,11 @@
     }
   }
 </mat-card>
+
+<!-- Time & effort (P0-B) — self-managing; only budget edits bump the audit version -->
+@if (canViewTime()) {
+  <app-audit-time-panel
+    [audit]="audit()"
+    (budgetChanged)="reloadRequested.emit()"
+  />
+}

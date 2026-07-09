@@ -416,6 +416,15 @@ export const routes: Routes = [
           ).then((m) => m.OrgUnitScorecardsComponent),
       },
       {
+        path: 'analytics/time-budget',
+        title: 'Time & Budget · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/time-budget/time-budget.component'
+          ).then((m) => m.TimeBudgetComponent),
+      },
+      {
         path: 'ac',
         title: 'Audit Committee · AuditX',
         canActivate: [

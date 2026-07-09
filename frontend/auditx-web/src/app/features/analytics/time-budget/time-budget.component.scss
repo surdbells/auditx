@@ -1,0 +1,35 @@
+.tb__section {
+  font: var(--mat-sys-title-medium);
+  margin: 1.25rem 0 0.5rem;
+}
+
+.tb__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.tb__table-wrapper {
+  overflow-x: auto;
+}
+
+.tb__table {
+  width: 100%;
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tb__audit {
+  font-weight: 500;
+}
+
+.tb__over {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.tb__split {
+  font-size: 0.85rem;
+}

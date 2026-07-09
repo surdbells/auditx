@@ -82,6 +82,8 @@ export interface Audit {
   leadUserId: string;
   auditeeUserId: string;
   cancellationReason: string | null;
+  /** Planned-effort budget in hours (P0-B budget-vs-actual baseline); null when unset. */
+  budgetedHours: number | null;
   version: string;
   teamMembers: AuditTeamMember[];
   sections: AuditSection[];

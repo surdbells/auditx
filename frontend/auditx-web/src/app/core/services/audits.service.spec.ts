@@ -23,6 +23,7 @@ function audit(overrides: Partial<Audit> = {}): Audit {
     leadUserId: 'u-lead',
     auditeeUserId: 'u-auditee',
     cancellationReason: null,
+    budgetedHours: null,
     version: 'v1',
     teamMembers: [],
     sections: [],

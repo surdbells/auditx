@@ -1,0 +1,146 @@
+.time-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.time-panel__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.time-panel__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+}
+
+.time-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  &__value {
+    font: var(--mat-sys-headline-small);
+    font-variant-numeric: tabular-nums;
+
+    &--over {
+      color: #c62828;
+    }
+  }
+
+  &__label {
+    font: var(--mat-sys-label-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.time-panel__gauge {
+  width: 160px;
+}
+
+.time-panel__budget {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.time-panel__budget-field {
+  width: 180px;
+}
+
+.time-panel__chart {
+  max-width: 520px;
+}
+
+.time-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+}
+
+.time-panel__form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.full {
+  width: 100%;
+}
+
+.time-panel__form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.time-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.time-entry {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'main actions'
+    'meta actions';
+  gap: 0.25rem 0.5rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__main {
+    grid-area: main;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  &__hours {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__date {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+  }
+
+  &__who {
+    font-size: 0.85rem;
+  }
+
+  &__meta {
+    grid-area: meta;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  &__actions {
+    grid-area: actions;
+    display: flex;
+    align-items: center;
+  }
+}

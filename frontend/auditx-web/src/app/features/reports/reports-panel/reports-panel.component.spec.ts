@@ -47,6 +47,7 @@ function audit(status: AuditStatus = 'under_review'): Audit {
     leadUserId: 'u-lead',
     auditeeUserId: 'u-auditee',
     cancellationReason: null,
+    budgetedHours: null,
     version: 'v1',
     teamMembers: [],
     sections: [],

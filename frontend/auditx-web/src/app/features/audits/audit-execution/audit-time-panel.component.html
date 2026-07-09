@@ -1,0 +1,137 @@
+<mat-card appearance="outlined" class="exec__card time-panel">
+  <h3 class="exec__card-title">{{ 'time.panel.title' | t }}</h3>
+
+  <!-- Budget-vs-actual summary -->
+  <div class="time-panel__summary">
+    <div class="time-panel__metrics">
+      <div class="time-metric">
+        <span class="time-metric__value">{{ summary()?.actualHours ?? 0 }}</span>
+        <span class="time-metric__label">{{ 'time.summary.logged' | t }}</span>
+      </div>
+      <div class="time-metric">
+        <span class="time-metric__value">{{ summary()?.budgetedHours ?? '—' }}</span>
+        <span class="time-metric__label">{{ 'time.summary.budget' | t }}</span>
+      </div>
+      <div class="time-metric">
+        <span class="time-metric__value" [class.time-metric__value--over]="overBudget()">
+          {{ summary()?.varianceHours ?? '—' }}
+        </span>
+        <span class="time-metric__label">{{ 'time.summary.remaining' | t }}</span>
+      </div>
+      <div class="time-metric">
+        <span class="time-metric__value" [class.time-metric__value--over]="overBudget()">{{ consumedLabel() }}</span>
+        <span class="time-metric__label">{{ 'time.summary.consumed' | t }}</span>
+      </div>
+      <div class="time-metric">
+        <span class="time-metric__value">{{ summary()?.entryCount ?? 0 }}</span>
+        <span class="time-metric__label">{{ 'time.summary.entries' | t }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget editor (managers only) -->
+  @if (canManageBudget()) {
+    <form [formGroup]="budgetForm" class="time-panel__budget" (ngSubmit)="saveBudget()">
+      <mat-form-field appearance="outline" class="time-panel__budget-field">
+        <mat-label>{{ 'time.budget.label' | t }}</mat-label>
+        <input matInput type="number" min="0" step="0.5" formControlName="budgetedHours" />
+        <span matTextSuffix>{{ 'time.unit.hours' | t }}</span>
+      </mat-form-field>
+      <button matButton type="submit" [disabled]="savingBudget() || budgetForm.invalid">
+        {{ savingBudget() ? ('time.actions.saving' | t) : ('time.budget.save' | t) }}
+      </button>
+    </form>
+  }
+
+  <!-- Category breakdown -->
+  @if (categoryChart().length) {
+    <div class="time-panel__chart">
+      <app-bar-chart [data]="categoryChart()" [label]="'time.summary.byCategory' | t" />
+    </div>
+  }
+
+  <!-- Log / edit form -->
+  @if (canLogNow()) {
+    <form [formGroup]="form" class="time-panel__form" (ngSubmit)="submit()">
+      <div class="time-panel__form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'time.field.date' | t }}</mat-label>
+          <input matInput type="date" formControlName="workDate" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'time.field.hours' | t }}</mat-label>
+          <input matInput type="number" min="0.1" max="24" step="0.5" formControlName="hours" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'time.field.category' | t }}</mat-label>
+          <mat-select formControlName="category">
+            @for (c of categories; track c) {
+              <mat-option [value]="c">{{ categoryLabel(c) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'time.field.checklistItem' | t }}</mat-label>
+          <mat-select formControlName="checklistItemId">
+            <mat-option [value]="''">{{ 'time.value.noItem' | t }}</mat-option>
+            @for (item of audit().checklistItems; track item.id) {
+              <mat-option [value]="item.id">{{ item.prompt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'time.field.notes' | t }}</mat-label>
+        <input matInput formControlName="notes" maxlength="1000" autocomplete="off" />
+      </mat-form-field>
+      <div class="time-panel__form-actions">
+        <button matButton="filled" type="submit" [disabled]="submitting() || form.invalid">
+          {{ submitting() ? ('time.actions.saving' | t) : (editing() ? ('time.actions.update' | t) : ('time.actions.log' | t)) }}
+        </button>
+        @if (editing()) {
+          <button matButton type="button" (click)="cancelEdit()">{{ 'time.actions.cancel' | t }}</button>
+        }
+      </div>
+    </form>
+  }
+
+  <!-- Entries list -->
+  @if (loading()) {
+    <p class="muted">{{ 'time.list.loading' | t }}</p>
+  } @else if (!entries().length) {
+    <p class="muted">{{ 'time.list.empty' | t }}</p>
+  } @else {
+    <ul class="time-panel__list">
+      @for (entry of entries(); track entry.id) {
+        <li class="time-entry">
+          <div class="time-entry__main">
+            <span class="time-entry__hours">{{ entry.hours }}{{ 'time.unit.h' | t }}</span>
+            <span class="time-entry__cat status-badge" [attr.data-status]="entry.category">{{ categoryLabel(entry.category) }}</span>
+            <span class="time-entry__date muted">{{ entry.workDate }}</span>
+            <span class="time-entry__who">{{ nameOf(entry.userId) }}</span>
+          </div>
+          @if (entry.notes || promptFor(entry.checklistItemId)) {
+            <div class="time-entry__meta muted">
+              @if (promptFor(entry.checklistItemId); as p) {
+                <span class="time-entry__item"><mat-icon inline>checklist</mat-icon>{{ p }}</span>
+              }
+              @if (entry.notes) {
+                <span class="time-entry__notes">{{ entry.notes }}</span>
+              }
+            </div>
+          }
+          @if (canModify(entry)) {
+            <div class="time-entry__actions">
+              <button matIconButton type="button" (click)="edit(entry)" [attr.aria-label]="'time.actions.edit' | t">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button matIconButton type="button" (click)="remove(entry)" [attr.aria-label]="'time.actions.delete' | t">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</mat-card>

@@ -1,0 +1,109 @@
+<app-page-header
+  [title]="'analytics.timeBudget.title' | t"
+  [subtitle]="'analytics.timeBudget.subtitle' | t"
+>
+  <div actions>
+    <a matButton routerLink="/analytics">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'analytics.nav.allDashboards' | t }}
+    </a>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'analytics.actions.refresh' | t }}
+    </button>
+  </div>
+</app-page-header>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'analytics.timeBudget.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'analytics.timeBudget.error' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="schedule"
+        [title]="'analytics.timeBudget.empty.title' | t"
+        [message]="'analytics.timeBudget.empty.message' | t"
+      />
+    } @else {
+      <h2 class="tb__section">{{ 'analytics.timeBudget.budgetTitle' | t }}</h2>
+      <mat-card appearance="outlined" class="tb__table-card">
+        <div class="tb__table-wrapper">
+          <table mat-table [dataSource]="budget()" class="tb__table">
+            <ng-container matColumnDef="audit">
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.timeBudget.col.audit' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="tb__audit">{{ r.auditName }}</td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.timeBudget.col.status' | t }}</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="status-badge" [attr.data-status]="r.status">{{ humanise(r.status) }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="lead">
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.timeBudget.col.lead' | t }}</th>
+              <td mat-cell *matCellDef="let r">{{ userLookup.displayName(r.leadUserId) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="budget">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.timeBudget.col.budget' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="num">{{ r.budgetedHours ?? '—' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="actual">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.timeBudget.col.actual' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="num">{{ r.actualHours }}</td>
+            </ng-container>
+            <ng-container matColumnDef="variance">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.timeBudget.col.variance' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="num" [class.tb__over]="r.varianceHours !== null && r.varianceHours < 0">
+                {{ r.varianceHours ?? '—' }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="consumed">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.timeBudget.col.consumed' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="num">{{ percent(r.percentConsumed) }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="budgetColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: budgetColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+
+      <h2 class="tb__section">{{ 'analytics.timeBudget.utilTitle' | t }}</h2>
+      @if (!utilisation().length) {
+        <app-empty-state
+          icon="person_off"
+          [title]="'analytics.timeBudget.utilEmpty.title' | t"
+          [message]="'analytics.timeBudget.utilEmpty.message' | t"
+        />
+      } @else {
+        <mat-card appearance="outlined" class="tb__table-card">
+          <div class="tb__table-wrapper">
+            <table mat-table [dataSource]="utilisation()" class="tb__table">
+              <ng-container matColumnDef="auditor">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.timeBudget.col.auditor' | t }}</th>
+                <td mat-cell *matCellDef="let r">{{ userLookup.displayName(r.userId) }}</td>
+              </ng-container>
+              <ng-container matColumnDef="total">
+                <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.timeBudget.col.totalHours' | t }}</th>
+                <td mat-cell *matCellDef="let r" class="num">{{ r.totalHours }}</td>
+              </ng-container>
+              <ng-container matColumnDef="audits">
+                <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.timeBudget.col.audits' | t }}</th>
+                <td mat-cell *matCellDef="let r" class="num">{{ r.auditsContributed }}</td>
+              </ng-container>
+              <ng-container matColumnDef="split">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.timeBudget.col.split' | t }}</th>
+                <td mat-cell *matCellDef="let r" class="tb__split muted">{{ splitLabel(r) }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="utilColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: utilColumns"></tr>
+            </table>
+          </div>
+        </mat-card>
+      }
+    }
+  }
+}

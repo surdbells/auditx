@@ -173,6 +173,32 @@ export interface OrgUnitScorecard {
   averageClosureDays: number | null;
 }
 
+/** Budget-vs-actual for one audit (P0-B): budgeted hours vs the sum of logged time. */
+export interface BudgetVsActualRow {
+  auditId: string;
+  auditName: string;
+  status: string;
+  leadUserId: string;
+  budgetedHours: number | null;
+  actualHours: number;
+  varianceHours: number | null;
+  percentConsumed: number | null;
+}
+
+/** Hours logged in one activity category (utilisation split). */
+export interface UtilisationCategory {
+  category: string;
+  hours: number;
+}
+
+/** Total logged effort for one auditor, split by activity category (P0-B). */
+export interface UtilisationRow {
+  userId: string;
+  totalHours: number;
+  auditsContributed: number;
+  byCategory: UtilisationCategory[];
+}
+
 /** A single Critical/High open exception for the material-findings widget. */
 export interface MaterialFinding {
   exceptionId: string;

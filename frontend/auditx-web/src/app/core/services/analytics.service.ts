@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiService } from './api.service';
 import {
   ApiResponse,
+  BudgetVsActualRow,
   CoverageMatrix,
   CursorPage,
   DashboardDetail,
@@ -21,6 +22,7 @@ import {
   RecurrenceClusterDetail,
   SanctionsConsistency,
   SaveDashboardWidgetRequest,
+  UtilisationRow,
 } from '../models';
 
 /**
@@ -138,6 +140,16 @@ export class AnalyticsService {
    */
   orgUnitScorecards(): Observable<OrgUnitScorecard[]> {
     return this.api.get<OrgUnitScorecard[]>('/analytics/org-units');
+  }
+
+  /** Budget-vs-actual per audit — budgeted hours vs logged time (P0-B, ViewAnalytics). */
+  budgetVsActual(): Observable<BudgetVsActualRow[]> {
+    return this.api.get<BudgetVsActualRow[]>('/analytics/budget-vs-actual');
+  }
+
+  /** Utilisation per auditor — logged hours split by activity category (P0-B, ViewAnalytics). */
+  utilisation(): Observable<UtilisationRow[]> {
+    return this.api.get<UtilisationRow[]>('/analytics/utilisation');
   }
 
   /* ---- Recurrence clusters (ViewAnalytics) ---- */

@@ -68,6 +68,7 @@ import {
   TransitionReasonResult,
 } from '../dialogs/transition-reason-dialog.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { AuditTimePanelComponent } from './audit-time-panel.component';
 
 const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
 
@@ -88,7 +89,7 @@ interface ProgressGroup {
 @Component({
   selector: 'app-audit-execution',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslatePipe, 
+  imports: [TranslatePipe,
     DatePipe,
     MatCardModule,
     MatButtonModule,
@@ -97,6 +98,7 @@ interface ProgressGroup {
     MatTooltipModule,
     MatProgressBarModule,
     MatExpansionModule,
+    AuditTimePanelComponent,
   ],
   templateUrl: './audit-execution.component.html',
   styleUrl: './audit-execution.component.scss',
@@ -163,6 +165,12 @@ export class AuditExecutionComponent {
   );
   readonly canRaiseException = computed(() =>
     this.auth.hasPermission(Permissions.RaiseException),
+  );
+  /** Show the time/effort panel to anyone who can log or view time entries. */
+  readonly canViewTime = computed(
+    () =>
+      this.auth.hasPermission(Permissions.LogTime) ||
+      this.auth.hasPermission(Permissions.ViewTimeEntries),
   );
 
   /** Responding / discarding needs RespondItem AND an in_progress audit. */

@@ -63,6 +63,7 @@ function audit(status: AuditStatus = 'draft', overrides: Partial<Audit> = {}): A
     leadUserId: 'u-lead',
     auditeeUserId: 'u-auditee',
     cancellationReason: null,
+    budgetedHours: null,
     version: 'v1',
     teamMembers: [],
     sections: [],
