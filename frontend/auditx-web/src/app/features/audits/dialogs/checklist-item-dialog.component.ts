@@ -21,6 +21,10 @@ import {
   ResponseType,
   UserDto,
 } from '../../../core/models';
+import {
+  SearchableSelectComponent,
+  SelectOption,
+} from '../../../shared/components/searchable-select/searchable-select.component';
 
 export interface ChecklistItemDialogData {
   /** Present when editing an existing item. */
@@ -67,6 +71,7 @@ const TYPE_OPTIONS: TypeOption[] = [
     MatSelectModule,
     MatCheckboxModule,
     MatButtonModule,
+    SearchableSelectComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ isEdit ? 'Edit checklist item' : 'Add checklist item' }}</h2>
@@ -86,15 +91,11 @@ const TYPE_OPTIONS: TypeOption[] = [
         </mat-form-field>
 
         <div class="row">
-          <mat-form-field appearance="outline">
-            <mat-label>Section</mat-label>
-            <mat-select formControlName="sectionName">
-              <mat-option [value]="''">Ungrouped</mat-option>
-              @for (s of data.sections; track s) {
-                <mat-option [value]="s">{{ s }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <app-searchable-select
+            formControlName="sectionName"
+            label="Section"
+            [options]="sectionOptions"
+          />
           <mat-form-field appearance="outline">
             <mat-label>Response type</mat-label>
             <mat-select
@@ -130,15 +131,12 @@ const TYPE_OPTIONS: TypeOption[] = [
           </mat-form-field>
         }
 
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Assignee</mat-label>
-          <mat-select formControlName="assignedUserId">
-            <mat-option [value]="''">Unassigned</mat-option>
-            @for (u of data.users; track u.id) {
-              <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <app-searchable-select
+          class="full"
+          formControlName="assignedUserId"
+          label="Assignee"
+          [options]="assigneeOptions"
+        />
 
         <mat-checkbox formControlName="isRequired">Required</mat-checkbox>
       </form>
@@ -161,7 +159,8 @@ const TYPE_OPTIONS: TypeOption[] = [
       display: flex;
       gap: 1rem;
     }
-    .row mat-form-field {
+    .row mat-form-field,
+    .row app-searchable-select {
       flex: 1;
     }
     .full {
@@ -186,6 +185,15 @@ export class ChecklistItemDialogComponent {
 
   readonly isEdit = !!this.data.item;
   readonly typeOptions = TYPE_OPTIONS;
+
+  readonly sectionOptions: SelectOption[] = [
+    { value: '', label: 'Ungrouped' },
+    ...this.data.sections.map((s) => ({ value: s, label: s })),
+  ];
+  readonly assigneeOptions: SelectOption[] = [
+    { value: '', label: 'Unassigned' },
+    ...this.data.users.map((u) => ({ value: u.id, label: u.displayName })),
+  ];
 
   private readonly config = parseConfig(this.data.item?.responseConfigJson ?? null);
   readonly currentType = signal<ResponseType>(this.data.item?.responseType ?? 'pass_fail_na');

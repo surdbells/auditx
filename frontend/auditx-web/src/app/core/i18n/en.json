@@ -13,6 +13,7 @@
   "common.close": "Close",
   "common.confirm": "Confirm",
   "common.search": "Search",
+  "common.noResults": "No matches",
   "common.refresh": "Refresh",
   "common.actions": "Actions",
   "common.status": "Status",
