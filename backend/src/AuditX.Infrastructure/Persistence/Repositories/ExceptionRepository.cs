@@ -58,6 +58,25 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
             query = query.Where(e => e.AuditId == auditId);
         }
 
+        // Plan filter: no navigation properties link these aggregates, so correlate through
+        // exception → audit (PlanItemId) → plan_item (AnnualPlanId) with an EXISTS subquery.
+        if (filter.AnnualPlanId is { } planId)
+        {
+            query = query.Where(e => db.Audits.Any(a =>
+                a.Id == e.AuditId && a.PlanItemId != null &&
+                db.PlanItems.Any(p => p.Id == a.PlanItemId && p.AnnualPlanId == planId)));
+        }
+
+        if (filter.RaisedFrom is { } raisedFrom)
+        {
+            query = query.Where(e => e.RaisedAt >= raisedFrom);
+        }
+
+        if (filter.RaisedTo is { } raisedTo)
+        {
+            query = query.Where(e => e.RaisedAt <= raisedTo);
+        }
+
         if (!string.IsNullOrWhiteSpace(filter.Category))
         {
             query = query.Where(e => e.Category == filter.Category);

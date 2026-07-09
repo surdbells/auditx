@@ -91,6 +91,26 @@ describe('ExceptionsService', () => {
     expect(result?.items.length).toBe(0);
   });
 
+  it('maps plan, audit, search and raised-date filters to query params', () => {
+    service
+      .list({
+        plan: 'p-1',
+        audit: 'a-1',
+        search: 'wire',
+        raisedFrom: '2026-01-01T00:00:00Z',
+        raisedTo: '2026-03-31T23:59:59Z',
+        limit: 20,
+      })
+      .subscribe();
+    const req = http.expectOne((r) => r.url === `${BASE}/exceptions`);
+    expect(req.request.params.get('plan')).toBe('p-1');
+    expect(req.request.params.get('audit')).toBe('a-1');
+    expect(req.request.params.get('search')).toBe('wire');
+    expect(req.request.params.get('raisedFrom')).toBe('2026-01-01T00:00:00Z');
+    expect(req.request.params.get('raisedTo')).toBe('2026-03-31T23:59:59Z');
+    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+  });
+
   it('gets an exception by id', () => {
     let result: Exception | undefined;
     service.getById('x-1').subscribe((e) => (result = e));

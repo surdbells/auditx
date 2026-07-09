@@ -32,5 +32,5 @@ public static class ExceptionMappings
 
     public static ExceptionListItemDto ToListItemDto(this AuditException e, DateOnly today) => new(
         e.Id, e.AuditId, e.Title, e.Severity.ToSnake(), e.StatusLabel(), e.OwnerUserId, e.TargetDate,
-        e.IsOverdue(today), e.DaysPastTarget(today), e.IsRecurrence);
+        e.IsOverdue(today), e.DaysPastTarget(today), e.IsRecurrence, e.RaisedAt);
 }

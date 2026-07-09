@@ -7,7 +7,8 @@ namespace AuditX.Application.Abstractions.Persistence;
 /// <summary>Filters for the cross-audit exception tracker (US-M6-019).</summary>
 public sealed record ExceptionSearchFilter(
     ExceptionStatus? Status, ExceptionSeverity? Severity, Guid? OwnerUserId, Guid? AuditableEntityId,
-    Guid? AuditId, string? Category, bool? IsRecurrence, bool? IsOverdue, DateOnly AsOfDate, string? Search = null);
+    Guid? AuditId, string? Category, bool? IsRecurrence, bool? IsOverdue, DateOnly AsOfDate, string? Search = null,
+    Guid? AnnualPlanId = null, DateTimeOffset? RaisedFrom = null, DateTimeOffset? RaisedTo = null);
 
 public interface IExceptionRepository
 {

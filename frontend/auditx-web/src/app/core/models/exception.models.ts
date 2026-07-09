@@ -89,6 +89,8 @@ export interface ExceptionListItem {
   isOverdue: boolean;
   daysPastTarget: number;
   isRecurrence: boolean;
+  /** ISO datetime the exception was raised. */
+  raisedAt: string;
 }
 
 /** A single entry in an exception's history timeline. */
@@ -167,9 +169,17 @@ export interface ExceptionQuery {
   owner?: string;
   entity?: string;
   audit?: string;
+  /** Annual-plan id: matches exceptions whose audit rolls up to this plan. */
+  plan?: string;
   category?: string;
+  /** Free-text search over title / root cause. */
+  search?: string;
   recurrence?: boolean;
   overdue?: boolean;
+  /** ISO datetime lower bound on raised-at (inclusive). */
+  raisedFrom?: string;
+  /** ISO datetime upper bound on raised-at (inclusive). */
+  raisedTo?: string;
   cursor?: string | null;
   limit?: number;
 }

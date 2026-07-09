@@ -66,7 +66,8 @@ public sealed class ListExceptionsForAuditQueryHandler(
 
 public sealed record SearchExceptionsQuery(
     string? Status, string? Severity, Guid? OwnerUserId, Guid? AuditableEntityId, Guid? AuditId,
-    string? Category, bool? IsRecurrence, bool? IsOverdue, string? Search, string? Cursor, int? Limit)
+    string? Category, bool? IsRecurrence, bool? IsOverdue, string? Search,
+    Guid? AnnualPlanId, DateTimeOffset? RaisedFrom, DateTimeOffset? RaisedTo, string? Cursor, int? Limit)
     : IQuery<CursorPage<ExceptionListItemDto>>;
 
 public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions, IClock clock)
@@ -83,7 +84,8 @@ public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions
 
         var filter = new ExceptionSearchFilter(
             ListExceptionsForAuditQueryHandler.ParseStatus(query.Status), severity, query.OwnerUserId,
-            query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search);
+            query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search,
+            query.AnnualPlanId, query.RaisedFrom, query.RaisedTo);
 
         var page = PageRequest.Of(query.Cursor, query.Limit);
         var result = await exceptions.SearchAsync(filter, page, cancellationToken);

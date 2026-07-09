@@ -5,6 +5,17 @@
 
 <mat-card appearance="outlined" class="exceptions__filters-card">
   <form [formGroup]="filters" class="exceptions__filters">
+    <mat-form-field appearance="outline" class="exceptions__search">
+      <mat-label>{{ 'exceptions.filter.search' | t }}</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        formControlName="search"
+        autocomplete="off"
+        [placeholder]="'exceptions.filter.searchPlaceholder' | t"
+      />
+    </mat-form-field>
+
     <mat-form-field appearance="outline">
       <mat-label>{{ 'exceptions.field.status' | t }}</mat-label>
       <mat-select formControlName="status">
@@ -23,6 +34,20 @@
       </mat-select>
     </mat-form-field>
 
+    <app-searchable-select
+      formControlName="plan"
+      [label]="'exceptions.field.plan' | t"
+      [options]="planOptions()"
+      [clearable]="false"
+    />
+
+    <app-searchable-select
+      formControlName="audit"
+      [label]="'exceptions.field.audit' | t"
+      [options]="auditOptions()"
+      [clearable]="false"
+    />
+
     <mat-form-field appearance="outline">
       <mat-label>{{ 'exceptions.field.overdue' | t }}</mat-label>
       <mat-select formControlName="overdue">
@@ -39,6 +64,20 @@
           <mat-option [value]="b.value">{{ b.label }}</mat-option>
         }
       </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'exceptions.filter.raisedFrom' | t }}</mat-label>
+      <input matInput [matDatepicker]="fromPicker" formControlName="raisedFrom" />
+      <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+      <mat-datepicker #fromPicker />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'exceptions.filter.raisedTo' | t }}</mat-label>
+      <input matInput [matDatepicker]="toPicker" formControlName="raisedTo" />
+      <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+      <mat-datepicker #toPicker />
     </mat-form-field>
   </form>
 </mat-card>
@@ -71,6 +110,13 @@
               </td>
             </ng-container>
 
+            <ng-container matColumnDef="audit">
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.audit' | t }}</th>
+              <td mat-cell *matCellDef="let e" class="exceptions__audit">
+                {{ auditNameOf(e.auditId) }}
+              </td>
+            </ng-container>
+
             <ng-container matColumnDef="severity">
               <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.severity' | t }}</th>
               <td mat-cell *matCellDef="let e">
@@ -92,6 +138,13 @@
             <ng-container matColumnDef="owner">
               <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.owner' | t }}</th>
               <td mat-cell *matCellDef="let e">{{ nameOf(e.ownerUserId) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="raised">
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptions.field.raised' | t }}</th>
+              <td mat-cell *matCellDef="let e">
+                {{ e.raisedAt | date: 'mediumDate' }}
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="targetDate">

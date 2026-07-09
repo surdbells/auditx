@@ -38,7 +38,7 @@ public sealed record ExceptionDto(
 
 public sealed record ExceptionListItemDto(
     Guid Id, Guid AuditId, string Title, string Severity, string Status, Guid OwnerUserId,
-    DateOnly TargetDate, bool IsOverdue, int DaysPastTarget, bool IsRecurrence);
+    DateOnly TargetDate, bool IsOverdue, int DaysPastTarget, bool IsRecurrence, DateTimeOffset RaisedAt);
 
 /// <summary>Result of a maker-checker-gateable action: either the updated exception or a captured pending-action id.</summary>
 public sealed record ExceptionActionResult(ExceptionDto? Exception, Guid? PendingActionId);

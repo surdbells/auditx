@@ -9,6 +9,11 @@
   align-items: center;
 }
 
+.exceptions__search {
+  flex: 1 1 16rem;
+  min-width: 14rem;
+}
+
 .exceptions__table-card {
   padding: 0;
   overflow: hidden;
@@ -16,6 +21,14 @@
 
 .exceptions__table {
   width: 100%;
+}
+
+.exceptions__audit {
+  color: var(--mat-sys-on-surface-variant);
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .exceptions__row {

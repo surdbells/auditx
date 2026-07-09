@@ -62,9 +62,13 @@ export class ExceptionsService {
       owner: query.owner,
       entity: query.entity,
       audit: query.audit,
+      plan: query.plan,
       category: query.category,
+      search: query.search,
       recurrence: query.recurrence,
       overdue: query.overdue,
+      raisedFrom: query.raisedFrom,
+      raisedTo: query.raisedTo,
       cursor: query.cursor,
       limit: query.limit,
     });
