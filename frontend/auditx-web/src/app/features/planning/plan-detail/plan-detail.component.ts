@@ -180,7 +180,7 @@ export class PlanDetailComponent {
 
   /** Real per-item checklist progress from the execution roll-up, indexed by plan-item id. */
   progressFor(item: PlanItem): PlanItemProgress | undefined {
-    return this.execution()?.itemProgress.find((p) => p.planItemId === item.id);
+    return this.execution()?.itemProgress?.find((p) => p.planItemId === item.id);
   }
 
   readonly statusCounts = computed(() => {

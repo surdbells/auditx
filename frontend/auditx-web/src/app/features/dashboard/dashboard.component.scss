@@ -1,111 +1,277 @@
-.dashboard__stats {
+// ---- Accent tokens (icon chips / left accents) -------------------------
+.kpi--indigo,
+.launch--indigo { --accent: #4f46e5; --accent-2: #6366f1; --accent-soft: #eef2ff; --accent-bd: #e0e7ff; }
+.kpi--violet,
+.launch--violet { --accent: #7c3aed; --accent-2: #8b5cf6; --accent-soft: #f5f3ff; --accent-bd: #ede9fe; }
+.kpi--emerald,
+.launch--emerald { --accent: #059669; --accent-2: #10b981; --accent-soft: #ecfdf5; --accent-bd: #d1fae5; }
+.kpi--amber,
+.launch--amber { --accent: #d97706; --accent-2: #f59e0b; --accent-soft: #fffbeb; --accent-bd: #fde68a; }
+.kpi--rose,
+.launch--rose { --accent: #e11d48; --accent-2: #f43f5e; --accent-soft: #fff1f2; --accent-bd: #fecdd3; }
+.kpi--sky,
+.launch--sky { --accent: #0284c7; --accent-2: #0ea5e9; --accent-soft: #f0f9ff; --accent-bd: #bae6fd; }
+
+// ---- KPI row -----------------------------------------------------------
+.dash__kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
-.stat__content {
+.kpi {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.25rem 0;
+  gap: 0.9rem;
+  padding: 1.15rem 1.2rem;
+  background: var(--mat-sys-surface, #fff);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: box-shadow 160ms ease, transform 160ms ease, border-color 160ms ease;
+}
+// A thin accent rail on the leading edge.
+.kpi::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+}
+a.kpi:hover {
+  box-shadow: var(--ax-shadow-2, 0 12px 28px -14px rgb(15 23 42 / 0.2));
+  transform: translateY(-2px);
+  border-color: var(--accent-bd);
 }
 
-// Gradient icon chip.
-.stat__icon {
+.kpi__chip {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
   color: #fff;
-  font-size: 26px;
-  background-image: linear-gradient(135deg, #6366f1, #7c3aed);
-  box-shadow: 0 8px 18px -8px rgb(79 70 229 / 0.55);
-  overflow: hidden;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 16px -8px color-mix(in srgb, var(--accent) 70%, transparent);
 }
-
-.stat__value {
-  font: var(--mat-sys-headline-medium);
-  font-weight: 600;
+.kpi__chip mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
 }
-
-.stat__value--small {
-  font: var(--mat-sys-title-large);
-  font-weight: 600;
-}
-
-.stat__label {
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-small);
-}
-
-.dashboard__access {
-  margin-bottom: 1.5rem;
-}
-
-.access-card {
-  max-width: 520px;
-}
-
-.access-card__title {
-  margin: 0 0 0.25rem;
-  font: var(--mat-sys-title-medium);
-}
-
-.access-card__hint {
-  margin: 0 0 1rem;
-  color: var(--mat-sys-on-surface-variant);
-  font: var(--mat-sys-body-small);
-}
-
-.dashboard__roles {
-  margin-bottom: 1.5rem;
-}
-
-.dashboard__section-title {
-  margin: 0 0 1rem;
-  font: var(--mat-sys-title-large);
-}
-
-.dashboard__cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-.feature {
+.kpi__body {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.kpi__value {
+  font-size: 1.85rem;
+  font-weight: 750;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+.kpi__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  margin-top: 0.15rem;
+}
+.kpi__hint {
+  font-size: 0.72rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin-top: 0.1rem;
+}
+.kpi__go {
+  flex: 0 0 auto;
+  color: #cbd5e1;
+  transition: color 160ms ease, transform 160ms ease;
+}
+a.kpi:hover .kpi__go {
+  color: var(--accent);
+  transform: translateX(2px);
 }
 
-.feature__content {
-  flex: 1;
+// ---- Panels (charts / attention / access) ------------------------------
+.panel {
+  padding: 1.2rem 1.25rem;
+  background: var(--mat-sys-surface, #fff);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 16px;
+  margin-bottom: 1.25rem;
+}
+.panel__title {
+  margin: 0 0 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+.panel__hint {
+  margin: -0.6rem 0 0.9rem;
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
 }
 
-.feature__icon {
+.dash__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  align-items: start;
+}
+.dash__charts .panel {
+  margin-bottom: 0;
+}
+.panel--narrow {
+  max-width: 440px;
+}
+
+// ---- Attention list ----------------------------------------------------
+.dash__attention-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.dash__attention-head .panel__title {
+  margin: 0;
+}
+.dash__filters {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.attention__list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.attention__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+.attention__row:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.attention__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attention__due {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.attention__go {
+  flex: 0 0 auto;
+  color: #cbd5e1;
+}
+.dash__empty {
+  padding: 1rem 0;
+}
+
+// ---- Quick-launch grid -------------------------------------------------
+.dash__section-title {
+  margin: 1.5rem 0 0.9rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+.dash__launch {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.launch {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  background: var(--mat-sys-surface, #fff);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 160ms ease, transform 160ms ease, border-color 160ms ease;
+}
+.launch:hover {
+  box-shadow: var(--ax-shadow-2, 0 12px 28px -14px rgb(15 23 42 / 0.2));
+  transform: translateY(-2px);
+  border-color: var(--accent-bd);
+}
+.launch__icon {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
-  font-size: 24px;
-  color: #4f46e5;
-  background: #eef2ff;
-  border: 1px solid #e0e7ff;
-  margin-bottom: 0.85rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-bd);
 }
-
-.feature__title {
-  margin: 0 0 0.5rem;
-  font: var(--mat-sys-title-medium);
+.launch__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
 }
-
-.feature__desc {
-  margin: 0;
+.launch__title {
+  font-weight: 650;
+  color: #0f172a;
+}
+.launch__desc {
+  font-size: 0.78rem;
   color: var(--mat-sys-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.launch__go {
+  flex: 0 0 auto;
+  color: #cbd5e1;
+  transition: color 160ms ease, transform 160ms ease;
+}
+.launch:hover .launch__go {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 599px) {
+  .kpi__value {
+    font-size: 1.6rem;
+  }
 }

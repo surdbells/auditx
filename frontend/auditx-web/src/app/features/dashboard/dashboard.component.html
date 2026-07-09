@@ -3,93 +3,148 @@
   [subtitle]="'dashboard.subtitle' | t"
 />
 
-<section class="dashboard__stats" [attr.aria-label]="'dashboard.stats.aria' | t">
-  <mat-card class="stat" appearance="outlined">
-    <mat-card-content class="stat__content">
-      <mat-icon class="stat__icon" aria-hidden="true">badge</mat-icon>
-      <div>
-        <div class="stat__value">{{ roleCount() }}</div>
-        <div class="stat__label">{{ 'dashboard.stats.activeRoles' | t }}</div>
+<!-- KPI row -->
+<section class="dash__kpis" [attr.aria-label]="'dashboard.stats.aria' | t">
+  @for (kpi of kpis(); track kpi.label) {
+    @if (kpi.route) {
+      <a class="kpi" [class]="'kpi--' + kpi.accent" [routerLink]="kpi.route">
+        <ng-container [ngTemplateOutlet]="kpiBody" [ngTemplateOutletContext]="{ $implicit: kpi }" />
+      </a>
+    } @else {
+      <div class="kpi" [class]="'kpi--' + kpi.accent">
+        <ng-container [ngTemplateOutlet]="kpiBody" [ngTemplateOutletContext]="{ $implicit: kpi }" />
       </div>
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card class="stat" appearance="outlined">
-    <mat-card-content class="stat__content">
-      <mat-icon class="stat__icon" aria-hidden="true">key</mat-icon>
-      <div>
-        <div class="stat__value">{{ permissionCount() }}</div>
-        <div class="stat__label">{{ 'dashboard.stats.permissionsGranted' | t }}</div>
-      </div>
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card class="stat" appearance="outlined">
-    <mat-card-content class="stat__content">
-      <mat-icon class="stat__icon" aria-hidden="true">schedule</mat-icon>
-      <div>
-        <div class="stat__value stat__value--small">
-          @if (sessionExpiry(); as exp) {
-            {{ exp | date: 'shortTime' }}
-          } @else {
-            —
-          }
-        </div>
-        <div class="stat__label">{{ 'dashboard.stats.sessionExpires' | t }}</div>
-      </div>
-    </mat-card-content>
-  </mat-card>
+    }
+  }
 </section>
 
-@if (accessProfile().length) {
-  <section class="dashboard__access" [attr.aria-label]="'dashboard.access.aria' | t">
-    <mat-card class="access-card" appearance="outlined">
-      <mat-card-content>
-        <h3 class="access-card__title">{{ 'dashboard.access.title' | t }}</h3>
-        <p class="access-card__hint">
-          {{ 'dashboard.access.hint' | t: { count: permissionCount() } }}
-        </p>
+<ng-template #kpiBody let-kpi>
+  <span class="kpi__chip" aria-hidden="true"><mat-icon>{{ kpi.icon }}</mat-icon></span>
+  <span class="kpi__body">
+    <span class="kpi__value">{{ kpi.value }}</span>
+    <span class="kpi__label">{{ kpi.label }}</span>
+    @if (kpi.hint) {
+      <span class="kpi__hint">{{ kpi.hint }}</span>
+    }
+  </span>
+  @if (kpi.route) {
+    <mat-icon class="kpi__go" aria-hidden="true">arrow_forward</mat-icon>
+  }
+</ng-template>
+
+<!-- Analytics charts -->
+@if (hasCharts()) {
+  <section class="dash__charts" [attr.aria-label]="'dashboard.charts.aria' | t">
+    @if (planPercent() !== null) {
+      <div class="panel panel--narrow">
+        <h3 class="panel__title">{{ 'dashboard.charts.planExecution' | t }}</h3>
+        <app-gauge-chart [value]="planPercent()" [label]="'dashboard.charts.planExecution' | t" />
+      </div>
+    }
+    @if (auditStatusData().length) {
+      <div class="panel">
+        <h3 class="panel__title">{{ 'dashboard.charts.auditsByStatus' | t }}</h3>
         <app-donut-chart
-          [data]="accessProfile()"
-          [label]="'dashboard.access.chartLabel' | t"
-          [centerLabel]="'dashboard.access.centerLabel' | t"
+          [data]="auditStatusData()"
+          [label]="'dashboard.charts.auditsByStatus' | t"
+          [centerLabel]="'dashboard.charts.auditsCenter' | t"
         />
-      </mat-card-content>
-    </mat-card>
+      </div>
+    }
+    @if (severityData().length) {
+      <div class="panel">
+        <h3 class="panel__title">{{ 'dashboard.charts.findingsBySeverity' | t }}</h3>
+        <app-donut-chart
+          [data]="severityData()"
+          [label]="'dashboard.charts.findingsBySeverity' | t"
+          [centerLabel]="'dashboard.charts.findingsCenter' | t"
+        />
+      </div>
+    }
+    @if (ageData().length) {
+      <div class="panel">
+        <h3 class="panel__title">{{ 'dashboard.charts.findingsByAge' | t }}</h3>
+        <app-bar-chart [data]="ageData()" [label]="'dashboard.charts.findingsByAge' | t" />
+      </div>
+    }
   </section>
 }
 
-@if (session()?.roles?.length) {
-  <section class="dashboard__roles" [attr.aria-label]="'dashboard.roles.aria' | t">
-    <mat-chip-set>
-      @for (role of session()?.roles; track role) {
-        <mat-chip>{{ role }}</mat-chip>
-      }
-    </mat-chip-set>
+<!-- Attention: open Critical/High findings, filterable -->
+@if (canSeeAnalytics()) {
+  <section class="panel dash__attention" [attr.aria-label]="'dashboard.attention.aria' | t">
+    <div class="dash__attention-head">
+      <h3 class="panel__title">{{ 'dashboard.attention.title' | t }}</h3>
+      <div class="dash__filters">
+        <mat-button-toggle-group
+          class="dash__toggle"
+          [value]="severityFilter()"
+          (change)="setSeverity($event.value)"
+          [attr.aria-label]="'dashboard.filter.severity' | t"
+        >
+          @for (s of severityOptions; track s) {
+            <mat-button-toggle [value]="s">{{ 'dashboard.filter.sev.' + s | t }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+        <mat-button-toggle-group
+          class="dash__toggle"
+          [value]="windowMonths()"
+          (change)="setWindow($event.value)"
+          [attr.aria-label]="'dashboard.filter.period' | t"
+        >
+          <mat-button-toggle [value]="6">{{ 'dashboard.filter.6m' | t }}</mat-button-toggle>
+          <mat-button-toggle [value]="12">{{ 'dashboard.filter.12m' | t }}</mat-button-toggle>
+          <mat-button-toggle [value]="0">{{ 'dashboard.filter.all' | t }}</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    </div>
+
+    @if (attentionFindings().length) {
+      <ul class="attention__list">
+        @for (f of attentionFindings(); track f.exceptionId) {
+          <a class="attention__row" [routerLink]="['/exceptions', f.exceptionId]">
+            <span class="severity-badge" [attr.data-severity]="f.severity">{{ f.severity }}</span>
+            <span class="attention__title">{{ f.title }}</span>
+            <span class="status-badge" [attr.data-status]="f.status">{{ f.status.replaceAll('_', ' ') }}</span>
+            <span class="attention__due muted">{{ 'dashboard.attention.due' | t: { date: (f.targetDate | date: 'mediumDate') } }}</span>
+            <mat-icon class="attention__go" aria-hidden="true">chevron_right</mat-icon>
+          </a>
+        }
+      </ul>
+    } @else {
+      <p class="muted dash__empty">{{ 'dashboard.attention.empty' | t }}</p>
+    }
   </section>
 }
 
-<h2 class="dashboard__section-title">{{ 'dashboard.section.administration' | t }}</h2>
+<!-- Access profile (always available) -->
+@if (accessProfile().length) {
+  <section class="panel panel--narrow dash__access" [attr.aria-label]="'dashboard.access.aria' | t">
+    <h3 class="panel__title">{{ 'dashboard.access.title' | t }}</h3>
+    <p class="panel__hint">{{ 'dashboard.access.hint' | t: { count: permissionCount() } }}</p>
+    <app-donut-chart
+      [data]="accessProfile()"
+      [label]="'dashboard.access.chartLabel' | t"
+      [centerLabel]="'dashboard.access.centerLabel' | t"
+    />
+  </section>
+}
 
-@if (cards().length) {
-  <section class="dashboard__cards">
-    @for (card of cards(); track card.route) {
-      <mat-card class="feature" appearance="outlined">
-        <mat-card-content class="feature__content">
-          <mat-icon class="feature__icon" aria-hidden="true">{{ card.icon }}</mat-icon>
-          <h3 class="feature__title">{{ card.title | t }}</h3>
-          <p class="feature__desc">{{ card.description | t }}</p>
-        </mat-card-content>
-        <mat-card-actions align="end">
-          <a matButton="filled" [routerLink]="card.route">{{ card.cta | t }}</a>
-        </mat-card-actions>
-      </mat-card>
+<!-- Quick-launch grid -->
+<h2 class="dash__section-title">{{ 'dashboard.launch.title' | t }}</h2>
+@if (quickLinks().length) {
+  <section class="dash__launch">
+    @for (link of quickLinks(); track link.route) {
+      <a class="launch" [class]="'launch--' + link.accent" [routerLink]="link.route">
+        <span class="launch__icon" aria-hidden="true"><mat-icon>{{ link.icon }}</mat-icon></span>
+        <span class="launch__text">
+          <span class="launch__title">{{ link.title | t }}</span>
+          <span class="launch__desc">{{ link.description | t }}</span>
+        </span>
+        <mat-icon class="launch__go" aria-hidden="true">arrow_forward</mat-icon>
+      </a>
     }
   </section>
 } @else {
-  <mat-card appearance="outlined">
-    <mat-card-content>
-      <p>{{ 'dashboard.noAdmin' | t }}</p>
-    </mat-card-content>
-  </mat-card>
+  <p class="muted">{{ 'dashboard.noAdmin' | t }}</p>
 }
