@@ -67,3 +67,21 @@ public sealed class RecurrenceClusterConfiguration : IEntityTypeConfiguration<Re
         builder.HasIndex(c => new { c.AuditableEntityId, c.Category }).IsUnique();
     }
 }
+
+public sealed class AnalyticsSnapshotConfiguration : IEntityTypeConfiguration<AnalyticsSnapshot>
+{
+    public void Configure(EntityTypeBuilder<AnalyticsSnapshot> builder)
+    {
+        builder.ToTable("analytics_snapshots");
+        builder.HasKey(s => s.Id);
+        builder.Property(s => s.Id).ValueGeneratedNever();
+
+        builder.Property(s => s.MetricKey).HasMaxLength(64).IsRequired();
+        builder.Property(s => s.Dimension).HasMaxLength(64);
+        builder.Property(s => s.Value).HasPrecision(18, 4);
+
+        // Trend lookups filter by (metric, dimension) over a date range; the day index backs the idempotent replace.
+        builder.HasIndex(s => new { s.MetricKey, s.Dimension, s.AsOfDate });
+        builder.HasIndex(s => s.AsOfDate);
+    }
+}

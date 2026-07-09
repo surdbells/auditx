@@ -108,6 +108,7 @@ builder.Services.AddScoped<AuditAutoStartJob>();
 builder.Services.AddScoped<NotificationRetryJob>();
 builder.Services.AddScoped<ReportGenerationJob>();
 builder.Services.AddScoped<RecurrenceClusterScanJob>();
+builder.Services.AddScoped<AnalyticsSnapshotJob>();
 builder.Services.AddScoped<AcPackGenerationJob>();
 builder.Services.AddScoped<AcPackRecurringGenerationJob>();
 builder.Services.AddScoped<AuditX.Application.Abstractions.Reports.IReportGenerationQueue, HangfireReportGenerationQueue>();
@@ -185,6 +186,12 @@ recurringJobs.AddOrUpdate<NotificationRetryJob>(
 // Daily exception-recurrence detection scan (US-M9 G6).
 recurringJobs.AddOrUpdate<RecurrenceClusterScanJob>(
     RecurrenceClusterScanJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Daily);
+
+// Daily KPI snapshot so trend/time-series reporting has a backing fact table (M9).
+recurringJobs.AddOrUpdate<AnalyticsSnapshotJob>(
+    AnalyticsSnapshotJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Daily);
 

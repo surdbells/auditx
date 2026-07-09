@@ -1,4 +1,5 @@
 using AuditX.Api.Authorization;
+using AuditX.Application.Analytics.Commands;
 using AuditX.Application.Analytics.Queries;
 using AuditX.Application.Common.Messaging;
 using AuditX.Domain.Authorization;
@@ -61,4 +62,18 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     [HttpGet("recurrence-clusters/{id:guid}")]
     public async Task<IActionResult> RecurrenceClusterDetail(Guid id, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetRecurrenceClusterDetailQuery(id), cancellationToken));
+
+    /// <summary>KPI time-series from the daily snapshot fact table (defaults to the trailing 90 days).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("trend")]
+    public async Task<IActionResult> Trend(
+        [FromQuery] string metric, [FromQuery] string? dimension,
+        [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetMetricTrendQuery(metric, dimension, from, to), cancellationToken));
+
+    /// <summary>Forces an immediate KPI snapshot for today (also captured daily by the background job).</summary>
+    [RequirePermission(PermissionKeys.ConfigureDashboards)]
+    [HttpPost("snapshots/capture")]
+    public async Task<IActionResult> CaptureSnapshot(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new CaptureAnalyticsSnapshotCommand(), cancellationToken));
 }

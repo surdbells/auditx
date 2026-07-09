@@ -110,7 +110,9 @@ public static class DependencyInjection
         services.AddScoped<Application.Abstractions.Universe.ITaxonomyProvider, Universe.TaxonomyProvider>();
         services.AddScoped<Application.Abstractions.Universe.ICoverageQueryService, Universe.CoverageQueryService>();
         services.AddScoped<Application.Abstractions.Analytics.IAnalyticsQueryService, Analytics.AnalyticsQueryService>();
+        services.AddScoped<Application.Abstractions.Analytics.IAnalyticsSnapshotStore, Analytics.AnalyticsSnapshotStore>();
         services.AddScoped<Application.Analytics.Services.RecurrenceClusterService>();
+        services.AddScoped<Application.Analytics.Services.AnalyticsSnapshotCaptureService>();
         services.AddScoped<IAuditTrailReader, Universe.AuditTrailReader>();
         services.AddScoped<DbSeeder>();
         // Rich, interconnected DEMO dataset seeder (gated behind Database:SeedDemoData; never in production by

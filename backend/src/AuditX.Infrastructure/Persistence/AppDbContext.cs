@@ -114,6 +114,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<RecurrenceCluster> RecurrenceClusters => Set<RecurrenceCluster>();
 
+    public DbSet<AnalyticsSnapshot> AnalyticsSnapshots => Set<AnalyticsSnapshot>();
+
     public DbSet<BankConfiguration> BankConfigurations => Set<BankConfiguration>();
 
     public DbSet<ReferenceDataItem> ReferenceDataItems => Set<ReferenceDataItem>();
