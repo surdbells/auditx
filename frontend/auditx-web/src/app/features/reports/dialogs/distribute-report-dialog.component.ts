@@ -18,6 +18,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { DistributeReportRequest, UserDto } from '../../../core/models';
+import { RolesService } from '../../../core/services/roles.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface DistributeReportDialogData {
@@ -59,6 +60,16 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             }
           </mat-select>
           <mat-hint>{{ 'reports.dialog.distribute.recipientsHint' | t }}</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'reports.dialog.distribute.rolesLabel' | t }}</mat-label>
+          <mat-select formControlName="roleNames" multiple>
+            @for (r of roles(); track r) {
+              <mat-option [value]="r">{{ r }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>{{ 'reports.dialog.distribute.rolesHint' | t }}</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full">
@@ -121,16 +132,27 @@ export class DistributeReportDialogComponent {
       MatDialogRef<DistributeReportDialogComponent, DistributeReportRequest>
     >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly rolesService = inject(RolesService);
 
   readonly emails = signal<string[]>([]);
   readonly emailError = signal(false);
+  readonly roles = signal<string[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     userIds: [[] as string[]],
+    roleNames: [[] as string[]],
   });
 
+  constructor() {
+    this.rolesService.list().subscribe({
+      next: (list) => this.roles.set(list.map((r) => r.name)),
+      error: () => undefined,
+    });
+  }
+
   canSubmit(): boolean {
-    return this.form.getRawValue().userIds.length > 0 || this.emails().length > 0;
+    const v = this.form.getRawValue();
+    return v.userIds.length > 0 || v.roleNames.length > 0 || this.emails().length > 0;
   }
 
   addEmail(event: MatChipInputEvent): void {
@@ -158,9 +180,11 @@ export class DistributeReportDialogComponent {
     if (!this.canSubmit()) {
       return;
     }
+    const v = this.form.getRawValue();
     this.dialogRef.close({
-      recipientUserIds: this.form.getRawValue().userIds,
+      recipientUserIds: v.userIds,
       recipientEmailAddresses: this.emails(),
+      recipientRoleNames: v.roleNames,
     });
   }
 

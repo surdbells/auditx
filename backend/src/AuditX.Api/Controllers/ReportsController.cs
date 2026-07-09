@@ -53,7 +53,8 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
     [HttpPost("api/v1/reports/{id:guid}/distribute")]
     public async Task<IActionResult> Distribute(Guid id, [FromBody] DistributeReportRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(
-            new DistributeReportCommand(id, request.RecipientUserIds ?? [], request.RecipientEmailAddresses ?? []), cancellationToken));
+            new DistributeReportCommand(id, request.RecipientUserIds ?? [], request.RecipientEmailAddresses ?? [], request.RecipientRoleNames),
+            cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewReport)]
     [HttpGet("api/v1/reports/{id:guid}/distributions")]

@@ -4,11 +4,12 @@ namespace AuditX.Api.Contracts;
 public sealed record GenerateReportRequest(bool? Docx);
 
 /// <summary>
-/// Body for POST /reports/{id}/distribute. Recipients are directory users (by id) and/or ad-hoc email addresses.
-/// NO distribution lists (deferred — A1), NO SMS.
+/// Body for POST /reports/{id}/distribute. Recipients are directory users (by id), role names (expanded to their
+/// active members), and/or ad-hoc email addresses. NO distribution-list entity (deferred — A1), NO SMS.
 /// </summary>
 public sealed record DistributeReportRequest(
-    IReadOnlyList<Guid>? RecipientUserIds, IReadOnlyList<string>? RecipientEmailAddresses);
+    IReadOnlyList<Guid>? RecipientUserIds, IReadOnlyList<string>? RecipientEmailAddresses,
+    IReadOnlyList<string>? RecipientRoleNames = null);
 
 public sealed record CreateReportTemplateRequest(string Name, string TemplateDefinition);
 

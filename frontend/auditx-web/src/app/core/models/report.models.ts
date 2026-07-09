@@ -102,6 +102,8 @@ export interface GenerateReportResult {
 export interface DistributeReportRequest {
   recipientUserIds: string[];
   recipientEmailAddresses: string[];
+  /** Role names; each is expanded server-side to its active members. */
+  recipientRoleNames?: string[];
 }
 
 /** Result of a distribute call. */

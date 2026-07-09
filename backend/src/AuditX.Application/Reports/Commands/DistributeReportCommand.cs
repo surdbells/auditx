@@ -20,7 +20,8 @@ namespace AuditX.Application.Reports.Commands;
 /// A2). NO SMS. Distribution lists are deferred (A1 — no entity exists). Audits <c>report_distributed</c> once.
 /// </summary>
 public sealed record DistributeReportCommand(
-    Guid ReportId, IReadOnlyList<Guid> RecipientUserIds, IReadOnlyList<string> RecipientEmailAddresses)
+    Guid ReportId, IReadOnlyList<Guid> RecipientUserIds, IReadOnlyList<string> RecipientEmailAddresses,
+    IReadOnlyList<string>? RecipientRoleNames = null)
     : ICommand<ReportDistributionResultDto>;
 
 public sealed class DistributeReportCommandValidator : AbstractValidator<DistributeReportCommand>
@@ -29,7 +30,7 @@ public sealed class DistributeReportCommandValidator : AbstractValidator<Distrib
     {
         RuleFor(x => x.ReportId).NotEmpty();
         RuleFor(x => x)
-            .Must(x => (x.RecipientUserIds?.Count ?? 0) + (x.RecipientEmailAddresses?.Count ?? 0) > 0)
+            .Must(x => (x.RecipientUserIds?.Count ?? 0) + (x.RecipientEmailAddresses?.Count ?? 0) + (x.RecipientRoleNames?.Count ?? 0) > 0)
             .WithMessage("At least one recipient is required.")
             .WithErrorCode("report.recipients_required");
         RuleForEach(x => x.RecipientEmailAddresses).EmailAddress().When(x => x.RecipientEmailAddresses is not null);
@@ -66,6 +67,19 @@ public sealed class DistributeReportCommandHandler(
             if (!string.IsNullOrWhiteSpace(userEmail) && seenEmails.Add(userEmail))
             {
                 recipients.Add((user.Id, null, userEmail));
+            }
+        }
+
+        // Role targets: expand each role to its active members (reuses the M10 recipient resolver), deduped by email.
+        foreach (var roleName in (command.RecipientRoleNames ?? []).Where(r => !string.IsNullOrWhiteSpace(r)).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            foreach (var member in await users.GetActiveByRoleNameAsync(roleName, cancellationToken))
+            {
+                var memberEmail = member.Email?.Trim();
+                if (!string.IsNullOrWhiteSpace(memberEmail) && seenEmails.Add(memberEmail))
+                {
+                    recipients.Add((member.Id, null, memberEmail));
+                }
             }
         }
 

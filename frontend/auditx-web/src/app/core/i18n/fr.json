@@ -1450,6 +1450,8 @@
   "reports.dialog.distribute.title": "Diffuser le rapport",
   "reports.dialog.distribute.recipientsLabel": "Destinataires (utilisateurs)",
   "reports.dialog.distribute.recipientsHint": "Sélectionnez un ou plusieurs destinataires internes.",
+  "reports.dialog.distribute.rolesLabel": "Destinataires (rôles)",
+  "reports.dialog.distribute.rolesHint": "Chaque membre actif des rôles sélectionnés reçoit le rapport.",
   "reports.dialog.distribute.emailsLabel": "Adresses e-mail externes",
   "reports.dialog.distribute.emailsAria": "Adresses e-mail",
   "reports.dialog.distribute.removeEmail": "Supprimer {{email}}",
