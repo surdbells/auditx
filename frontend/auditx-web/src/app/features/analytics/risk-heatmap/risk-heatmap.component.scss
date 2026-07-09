@@ -1,0 +1,83 @@
+.rh__summary-card {
+  margin-bottom: 1rem;
+}
+
+.rh__kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  align-items: flex-end;
+  margin: 0;
+
+  .kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    dt {
+      font: var(--mat-sys-label-medium);
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    dd {
+      margin: 0;
+      font: var(--mat-sys-headline-small);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+.rh__grid-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.rh__grid-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.rh__axis-y {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+  align-self: center;
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.rh__axis-x {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.rh__grid {
+  border-collapse: separate;
+  border-spacing: 4px;
+}
+
+.rh__cell {
+  width: 56px;
+  height: 52px;
+  text-align: center;
+  vertical-align: middle;
+  border-radius: 8px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.rh__axis-label {
+  width: 22px;
+  height: 22px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+  font-weight: 500;
+}
+
+.rh__corner {
+  width: 22px;
+}

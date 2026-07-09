@@ -254,6 +254,15 @@ export const routes: Routes = [
           ).then((m) => m.OrgUnitsComponent),
       },
       {
+        path: 'risks',
+        title: 'Risk Register · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewRisk)],
+        loadComponent: () =>
+          import('./features/risks/risk-register/risk-register.component').then(
+            (m) => m.RiskRegisterComponent,
+          ),
+      },
+      {
         path: 'planning',
         title: 'Annual Plans · AuditX',
         canActivate: [permissionGuard(Permissions.ViewPlan)],
@@ -423,6 +432,15 @@ export const routes: Routes = [
           import(
             './features/analytics/time-budget/time-budget.component'
           ).then((m) => m.TimeBudgetComponent),
+      },
+      {
+        path: 'analytics/risk-heatmap',
+        title: 'Risk Heatmap · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/risk-heatmap/risk-heatmap.component'
+          ).then((m) => m.RiskHeatmapComponent),
       },
       {
         path: 'ac',

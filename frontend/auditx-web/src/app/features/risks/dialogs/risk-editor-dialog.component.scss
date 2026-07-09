@@ -1,0 +1,48 @@
+.risk-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 460px;
+}
+
+.full {
+  width: 100%;
+}
+
+.risk-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.risk-form__rating {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  mat-form-field {
+    width: 96px;
+  }
+}
+
+.risk-form__times {
+  color: var(--mat-sys-on-surface-variant);
+  font-weight: 600;
+  align-self: center;
+  padding-bottom: 1.1rem;
+}
+
+.risk-form__section-label {
+  margin: 0.5rem 0 0.25rem;
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 520px) {
+  .risk-form {
+    min-width: auto;
+  }
+  .risk-form__row {
+    grid-template-columns: 1fr;
+  }
+}

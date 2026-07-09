@@ -1,0 +1,32 @@
+.risk-list__header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.risk-list__filters-card {
+  margin-bottom: 1rem;
+}
+
+.risk-list__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.risk-list__search {
+  flex: 1 1 240px;
+}
+
+.risk-list__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.risk-list__table {
+  width: 100%;
+}
+
+.risk-list__title {
+  font-weight: 500;
+}

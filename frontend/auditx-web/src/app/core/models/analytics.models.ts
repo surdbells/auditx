@@ -199,6 +199,39 @@ export interface UtilisationRow {
   byCategory: UtilisationCategory[];
 }
 
+/** One populated cell of the risk heatmap (P1-A). */
+export interface RiskHeatmapCell {
+  likelihood: number;
+  impact: number;
+  score: number;
+  band: string;
+  count: number;
+}
+
+/** The enterprise risk heatmap: total open risks + the populated 5×5 cells. */
+export interface RiskHeatmap {
+  totalOpen: number;
+  cells: RiskHeatmapCell[];
+}
+
+/** A labelled count in a risk roll-up (band / status / category / strategy). */
+export interface RiskCount {
+  key: string;
+  count: number;
+}
+
+/** Risk-register roll-up (P1-A). */
+export interface RiskRegisterSummary {
+  total: number;
+  open: number;
+  closed: number;
+  overdueReview: number;
+  byBand: RiskCount[];
+  byStatus: RiskCount[];
+  byCategory: RiskCount[];
+  byStrategy: RiskCount[];
+}
+
 /** A single Critical/High open exception for the material-findings widget. */
 export interface MaterialFinding {
   exceptionId: string;

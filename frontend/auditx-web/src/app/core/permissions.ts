@@ -54,6 +54,10 @@ export const Permissions = {
   LogTime: 'LogTime',
   ViewTimeEntries: 'ViewTimeEntries',
 
+  // P1-A — Risk register
+  ViewRisk: 'ViewRisk',
+  ManageRisk: 'ManageRisk',
+
   // M10 — Notifications
   ConfigureNotifications: 'ConfigureNotifications',
 

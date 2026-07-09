@@ -1,0 +1,143 @@
+<app-page-header
+  [title]="'risk.list.title' | t"
+  [subtitle]="'risk.list.subtitle' | t"
+>
+  <div actions class="risk-list__header-actions">
+    <a matButton routerLink="/analytics/risk-heatmap">
+      <mat-icon>grid_on</mat-icon>
+      {{ 'risk.list.heatmap' | t }}
+    </a>
+    @if (canManage()) {
+      <button matButton="filled" type="button" (click)="create()">
+        <mat-icon>add</mat-icon>
+        {{ 'risk.actions.register' | t }}
+      </button>
+    }
+  </div>
+</app-page-header>
+
+<mat-card appearance="outlined" class="risk-list__filters-card">
+  <form [formGroup]="filters" class="risk-list__filters">
+    <mat-form-field appearance="outline" class="risk-list__search">
+      <mat-label>{{ 'common.search' | t }}</mat-label>
+      <input matInput formControlName="search" autocomplete="off" />
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'risk.field.status' | t }}</mat-label>
+      <mat-select formControlName="status">
+        <mat-option [value]="''">{{ 'risk.filter.anyStatus' | t }}</mat-option>
+        @for (s of statuses; track s) {
+          <mat-option [value]="s">{{ 'risk.status.' + s | t }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'risk.field.band' | t }}</mat-label>
+      <mat-select formControlName="band">
+        <mat-option [value]="''">{{ 'risk.filter.anyBand' | t }}</mat-option>
+        @for (b of bands; track b) {
+          <mat-option [value]="b">{{ 'risk.band.' + b | t }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-checkbox formControlName="includeClosed">{{ 'risk.filter.includeClosed' | t }}</mat-checkbox>
+  </form>
+</mat-card>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'risk.list.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'risk.list.error' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="crisis_alert"
+        [title]="'risk.list.emptyTitle' | t"
+        [message]="'risk.list.emptyMessage' | t"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="risk-list__table-card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="risks()" class="risk-list__table">
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef>{{ 'risk.col.title' | t }}</th>
+              <td mat-cell *matCellDef="let r"><span class="risk-list__title">{{ r.title }}</span></td>
+            </ng-container>
+
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef>{{ 'risk.col.category' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="muted">{{ r.category }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="owner">
+              <th mat-header-cell *matHeaderCellDef>{{ 'risk.col.owner' | t }}</th>
+              <td mat-cell *matCellDef="let r">{{ ownerName(r.ownerUserId) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="rating">
+              <th mat-header-cell *matHeaderCellDef>{{ 'risk.col.rating' | t }}</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="severity-badge" [attr.data-severity]="r.currentBand">
+                  {{ r.currentLikelihood }}×{{ r.currentImpact }} = {{ r.currentScore }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'risk.col.status' | t }}</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="status-badge" [attr.data-status]="r.status">{{ 'risk.status.' + r.status | t }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="target">
+              <th mat-header-cell *matHeaderCellDef>{{ 'risk.col.target' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="muted">{{ r.targetDate ?? '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'risk.col.actions' | t"></th>
+              <td mat-cell *matCellDef="let r">
+                @if (canManage()) {
+                  <button matIconButton type="button" [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'risk.actions.menuAria' | t: { title: r.title }">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #rowMenu="matMenu">
+                    <button mat-menu-item type="button" (click)="edit(r)">
+                      <mat-icon>edit</mat-icon><span>{{ 'risk.actions.edit' | t }}</span>
+                    </button>
+                    @if (r.status !== 'mitigating' && r.status !== 'closed') {
+                      <button mat-menu-item type="button" (click)="setStatus(r, 'mitigating')">
+                        <mat-icon>engineering</mat-icon><span>{{ 'risk.actions.markMitigating' | t }}</span>
+                      </button>
+                    }
+                    @if (r.status !== 'monitoring' && r.status !== 'closed') {
+                      <button mat-menu-item type="button" (click)="setStatus(r, 'monitoring')">
+                        <mat-icon>visibility</mat-icon><span>{{ 'risk.actions.markMonitoring' | t }}</span>
+                      </button>
+                    }
+                    @if (r.status !== 'closed') {
+                      <button mat-menu-item type="button" (click)="setStatus(r, 'closed')">
+                        <mat-icon>check_circle</mat-icon><span>{{ 'risk.actions.close' | t }}</span>
+                      </button>
+                    }
+                    <button mat-menu-item type="button" (click)="remove(r)">
+                      <mat-icon>delete</mat-icon><span>{{ 'risk.actions.delete' | t }}</span>
+                    </button>
+                  </mat-menu>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

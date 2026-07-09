@@ -18,6 +18,8 @@ import {
   OrgUnitScorecard,
   PerformanceScorecard,
   PlanStatusKpi,
+  RiskHeatmap,
+  RiskRegisterSummary,
   RecurrenceCluster,
   RecurrenceClusterDetail,
   SanctionsConsistency,
@@ -150,6 +152,16 @@ export class AnalyticsService {
   /** Utilisation per auditor — logged hours split by activity category (P0-B, ViewAnalytics). */
   utilisation(): Observable<UtilisationRow[]> {
     return this.api.get<UtilisationRow[]>('/analytics/utilisation');
+  }
+
+  /** Enterprise risk heatmap — open risks by current likelihood×impact cell (P1-A, ViewAnalytics). */
+  riskHeatmap(): Observable<RiskHeatmap> {
+    return this.api.get<RiskHeatmap>('/analytics/risk-heatmap');
+  }
+
+  /** Risk-register roll-up — totals + open risks by band/status/category/strategy (P1-A, ViewAnalytics). */
+  riskSummary(): Observable<RiskRegisterSummary> {
+    return this.api.get<RiskRegisterSummary>('/analytics/risk-summary');
   }
 
   /* ---- Recurrence clusters (ViewAnalytics) ---- */

@@ -1,0 +1,85 @@
+<app-page-header
+  [title]="'risk.heatmap.title' | t"
+  [subtitle]="'risk.heatmap.subtitle' | t"
+>
+  <div actions>
+    <a matButton routerLink="/risks">
+      <mat-icon>list</mat-icon>
+      {{ 'risk.heatmap.register' | t }}
+    </a>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'analytics.actions.refresh' | t }}
+    </button>
+  </div>
+</app-page-header>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'risk.heatmap.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'risk.heatmap.error' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="crisis_alert"
+        [title]="'risk.heatmap.emptyTitle' | t"
+        [message]="'risk.heatmap.emptyMessage' | t"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="rh__summary-card">
+        <dl class="rh__kpis">
+          <div class="kpi">
+            <dt>{{ 'risk.summary.open' | t }}</dt>
+            <dd>{{ summary()?.open ?? 0 }}</dd>
+          </div>
+          <div class="kpi">
+            <dt>{{ 'risk.summary.overdue' | t }}</dt>
+            <dd>{{ summary()?.overdueReview ?? 0 }}</dd>
+          </div>
+          @for (b of summary()?.byBand ?? []; track b.key) {
+            <div class="kpi">
+              <dt>
+                <span class="severity-badge" [attr.data-severity]="b.key">{{ 'risk.band.' + b.key | t }}</span>
+              </dt>
+              <dd>{{ b.count }}</dd>
+            </div>
+          }
+        </dl>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="rh__grid-card">
+        <div class="rh__grid-wrap">
+          <div class="rh__axis-y">{{ 'risk.heatmap.impact' | t }}</div>
+          <table class="rh__grid" [attr.aria-label]="'risk.heatmap.title' | t">
+            <tbody>
+              @for (imp of impacts; track imp) {
+                <tr>
+                  <th scope="row" class="rh__axis-label">{{ imp }}</th>
+                  @for (lik of likelihoods; track lik) {
+                    <td
+                      class="rh__cell"
+                      [style]="cellStyle(lik, imp)"
+                      [matTooltip]="'risk.heatmap.cellTip' | t: { likelihood: lik, impact: imp, score: lik * imp, count: count(lik, imp) }"
+                    >
+                      {{ count(lik, imp) || '' }}
+                    </td>
+                  }
+                </tr>
+              }
+              <tr>
+                <th class="rh__corner"></th>
+                @for (lik of likelihoods; track lik) {
+                  <td class="rh__axis-label">{{ lik }}</td>
+                }
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rh__axis-x">{{ 'risk.heatmap.likelihood' | t }}</div>
+      </mat-card>
+    }
+  }
+}

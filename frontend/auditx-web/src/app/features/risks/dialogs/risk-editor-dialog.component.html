@@ -1,0 +1,125 @@
+<h2 mat-dialog-title>{{ (isEdit ? 'risk.dialog.editTitle' : 'risk.dialog.newTitle') | t }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="risk-form">
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'risk.field.title' | t }}</mat-label>
+      <input matInput formControlName="title" autocomplete="off" />
+      @if (form.controls.title.hasError('required') && form.controls.title.touched) {
+        <mat-error>{{ 'risk.error.titleRequired' | t }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'risk.field.description' | t }}</mat-label>
+      <textarea matInput formControlName="description" rows="2"></textarea>
+    </mat-form-field>
+
+    <div class="risk-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'risk.field.category' | t }}</mat-label>
+        <input matInput formControlName="category" autocomplete="off" />
+      </mat-form-field>
+      <app-searchable-select
+        formControlName="ownerUserId"
+        [label]="'risk.field.owner' | t"
+        [options]="ownerOptions()"
+      />
+    </div>
+
+    <app-searchable-select
+      class="full"
+      formControlName="auditableEntityId"
+      [label]="'risk.field.entity' | t"
+      [options]="entityOptions()"
+      [clearable]="true"
+      [clearLabel]="'risk.value.noEntity' | t"
+    />
+
+    <div class="risk-form__rating">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'risk.field.inherentLikelihood' | t }}</mat-label>
+        <mat-select formControlName="inherentLikelihood">
+          @for (n of ratings; track n) {
+            <mat-option [value]="n">{{ n }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <span class="risk-form__times">×</span>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'risk.field.inherentImpact' | t }}</mat-label>
+        <mat-select formControlName="inherentImpact">
+          @for (n of ratings; track n) {
+            <mat-option [value]="n">{{ n }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <span class="severity-badge" [attr.data-severity]="inherent().band">
+        {{ inherent().score }} · {{ 'risk.band.' + inherent().band | t }}
+      </span>
+    </div>
+
+    @if (isEdit) {
+      <p class="risk-form__section-label">{{ 'risk.dialog.residualSection' | t }}</p>
+      <div class="risk-form__rating">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'risk.field.residualLikelihood' | t }}</mat-label>
+          <mat-select formControlName="residualLikelihood">
+            <mat-option [value]="null">—</mat-option>
+            @for (n of ratings; track n) {
+              <mat-option [value]="n">{{ n }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <span class="risk-form__times">×</span>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'risk.field.residualImpact' | t }}</mat-label>
+          <mat-select formControlName="residualImpact">
+            <mat-option [value]="null">—</mat-option>
+            @for (n of ratings; track n) {
+              <mat-option [value]="n">{{ n }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (residual(); as r) {
+          <span class="severity-badge" [attr.data-severity]="r.band">
+            {{ r.score }} · {{ 'risk.band.' + r.band | t }}
+          </span>
+        }
+      </div>
+
+      <div class="risk-form__row">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'risk.field.strategy' | t }}</mat-label>
+          <mat-select formControlName="treatmentStrategy">
+            <mat-option [value]="null">—</mat-option>
+            @for (s of strategies; track s) {
+              <mat-option [value]="s">{{ 'risk.strategy.' + s | t }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'risk.field.nextReview' | t }}</mat-label>
+          <input matInput type="date" formControlName="nextReviewDate" />
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'risk.field.treatmentPlan' | t }}</mat-label>
+        <textarea matInput formControlName="treatmentPlan" rows="2"></textarea>
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'risk.field.targetDate' | t }}</mat-label>
+      <input matInput type="date" formControlName="targetDate" />
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="cancel()">{{ 'risk.actions.cancel' | t }}</button>
+  <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
+    {{ (isEdit ? 'risk.actions.save' : 'risk.actions.register') | t }}
+  </button>
+</mat-dialog-actions>
