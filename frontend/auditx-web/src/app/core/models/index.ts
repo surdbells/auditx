@@ -16,3 +16,4 @@ export * from './analytics.models';
 export * from './configuration.models';
 export * from './ac.models';
 export * from './reference-data.models';
+export * from './search.models';

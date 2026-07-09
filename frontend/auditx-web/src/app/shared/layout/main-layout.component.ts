@@ -23,6 +23,7 @@ import { BrandingService } from '../../core/services/branding.service';
 import { Permissions } from '../../core/permissions';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../../core/i18n/language-switcher.component';
+import { GlobalSearchComponent } from './global-search.component';
 
 interface NavItem {
   /** Translation key resolved with the `t` pipe. */
@@ -58,6 +59,7 @@ const COLLAPSE_KEY = 'auditx.nav.collapsed';
     MatTooltipModule,
     TranslatePipe,
     LanguageSwitcherComponent,
+    GlobalSearchComponent,
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',

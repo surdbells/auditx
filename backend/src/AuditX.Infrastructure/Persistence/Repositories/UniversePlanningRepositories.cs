@@ -156,6 +156,26 @@ public sealed class AnnualPlanRepository(AppDbContext db) : IAnnualPlanRepositor
         return new CursorPage<AnnualPlan>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
     }
 
+    public async Task<CursorPage<AnnualPlan>> SearchByLabelAsync(string term, PageRequest page, CancellationToken cancellationToken = default)
+    {
+        var query = db.AnnualPlans.AsNoTracking()
+            .Where(p => EF.Functions.Like(p.PeriodLabel, $"%{term}%"));
+
+        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
+        {
+            query = query.Where(p => p.Id.CompareTo(cursorId) > 0);
+        }
+
+        var items = await query.OrderBy(p => p.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
+        var hasMore = items.Count > page.Limit;
+        if (hasMore)
+        {
+            items.RemoveAt(items.Count - 1);
+        }
+
+        return new CursorPage<AnnualPlan>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+    }
+
     public Task<bool> AnyOverlappingAsync(DateOnly periodStart, DateOnly periodEnd, Guid? excludePlanId, CancellationToken cancellationToken = default)
         => db.AnnualPlans.AnyAsync(
             p => (excludePlanId == null || p.Id != excludePlanId) && p.PeriodStart <= periodEnd && p.PeriodEnd >= periodStart,

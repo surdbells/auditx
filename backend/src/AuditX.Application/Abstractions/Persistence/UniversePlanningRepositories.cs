@@ -57,6 +57,9 @@ public interface IAnnualPlanRepository
 
     Task<CursorPage<AnnualPlan>> SearchAsync(string? status, PageRequest page, CancellationToken cancellationToken = default);
 
+    /// <summary>Keyset-paginated search over plans by period label (for global search).</summary>
+    Task<CursorPage<AnnualPlan>> SearchByLabelAsync(string term, PageRequest page, CancellationToken cancellationToken = default);
+
     Task<bool> AnyOverlappingAsync(DateOnly periodStart, DateOnly periodEnd, Guid? excludePlanId, CancellationToken cancellationToken = default);
 
     void Add(AnnualPlan plan);
