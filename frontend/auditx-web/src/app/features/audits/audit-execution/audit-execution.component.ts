@@ -271,6 +271,7 @@ export class AuditExecutionComponent {
                 isRequired: false,
                 assignedUserId: f.assignedUserId ?? null,
                 hasException: false,
+                responseType: 'pass_fail_na',
               },
           ),
         );
@@ -320,7 +321,12 @@ export class AuditExecutionComponent {
     item: ChecklistProgressItem,
     current: ChecklistResponse | null,
   ): void {
-    const data: RespondItemDialogData = { prompt: item.prompt, current };
+    const data: RespondItemDialogData = {
+      prompt: item.prompt,
+      responseType: item.responseType,
+      responseConfigJson: item.responseConfigJson,
+      current,
+    };
     this.dialog
       .open(RespondItemDialogComponent, { data, width: '520px' })
       .afterClosed()
@@ -332,6 +338,7 @@ export class AuditExecutionComponent {
           .submitResponse(this.audit().id, item.itemId, {
             verdict: result.verdict,
             comment: result.comment,
+            valueJson: result.valueJson,
             isDraft: result.isDraft,
             version: this.version(),
           })

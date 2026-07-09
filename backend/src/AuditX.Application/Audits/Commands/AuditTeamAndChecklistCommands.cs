@@ -109,7 +109,7 @@ public sealed class TransferAuditLeadCommandHandler(
 }
 
 public sealed record AddAuditChecklistItemCommand(
-    Guid AuditId, string Prompt, string? ReferenceNotes, string ResponseType, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version) : ICommand<AuditDto>;
+    Guid AuditId, string Prompt, string? ReferenceNotes, string ResponseType, string? ResponseConfigJson, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version) : ICommand<AuditDto>;
 
 public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<AddAuditChecklistItemCommand, AuditDto>
@@ -119,7 +119,7 @@ public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits,
         var entity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
         entity.EnsureVersion(command.Version);
         await AuditParsing.EnsureAssigneeAsync(entity, command.AssignedUserId, users, cancellationToken);
-        var item = entity.AddChecklistItem(command.Prompt, command.ReferenceNotes, AuditParsing.ParseResponseType(command.ResponseType), command.SectionName, command.IsRequired, command.AssignedUserId);
+        var item = entity.AddChecklistItem(command.Prompt, command.ReferenceNotes, AuditParsing.ParseResponseType(command.ResponseType), command.SectionName, command.IsRequired, command.AssignedUserId, command.ResponseConfigJson);
         audit.Record(AuditEventTypes.AuditChecklistItemAdded, AuditTargetTypes.AuditChecklistItem, entity.Id, payload: new { itemId = item.Id });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return entity.ToDto();
@@ -127,7 +127,7 @@ public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits,
 }
 
 public sealed record EditAuditChecklistItemCommand(
-    Guid AuditId, Guid ItemId, string Prompt, string? ReferenceNotes, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version) : ICommand<AuditDto>;
+    Guid AuditId, Guid ItemId, string Prompt, string? ReferenceNotes, string ResponseType, string? ResponseConfigJson, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version) : ICommand<AuditDto>;
 
 public sealed class EditAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<EditAuditChecklistItemCommand, AuditDto>
@@ -137,7 +137,7 @@ public sealed class EditAuditChecklistItemCommandHandler(IAuditRepository audits
         var entity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
         entity.EnsureVersion(command.Version);
         await AuditParsing.EnsureAssigneeAsync(entity, command.AssignedUserId, users, cancellationToken);
-        entity.EditChecklistItem(command.ItemId, command.Prompt, command.ReferenceNotes, command.SectionName, command.IsRequired, command.AssignedUserId);
+        entity.EditChecklistItem(command.ItemId, command.Prompt, command.ReferenceNotes, AuditParsing.ParseResponseType(command.ResponseType), command.ResponseConfigJson, command.SectionName, command.IsRequired, command.AssignedUserId);
         audit.Record(AuditEventTypes.AuditChecklistItemEdited, AuditTargetTypes.AuditChecklistItem, entity.Id, payload: new { command.ItemId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return entity.ToDto();

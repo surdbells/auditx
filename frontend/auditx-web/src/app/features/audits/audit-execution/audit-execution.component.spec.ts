@@ -67,6 +67,7 @@ function progress(): ChecklistProgress {
         isRequired: true,
         assignedUserId: 'u-auditor',
         hasException: false,
+        responseType: 'pass_fail_na',
       },
       {
         itemId: 'i-2',
@@ -78,6 +79,7 @@ function progress(): ChecklistProgress {
         isRequired: false,
         assignedUserId: null,
         hasException: false,
+        responseType: 'pass_fail_na',
       },
     ],
   };

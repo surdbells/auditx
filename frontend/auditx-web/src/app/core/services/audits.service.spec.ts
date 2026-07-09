@@ -178,6 +178,7 @@ describe('AuditsService', () => {
     service
       .updateChecklistItem('a-1', 'i-1', {
         prompt: 'Updated',
+        responseType: 'pass_fail_na',
         isRequired: false,
         version: 'v1',
       })

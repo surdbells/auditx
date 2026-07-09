@@ -45,6 +45,48 @@ public sealed class ExecutionTests
         Assert.Throws<DomainException>(() => a.RecordResponse(item, ResponseVerdict.Na, null, false, Actor, false, Now));
     }
 
+    private static Audit InProgressAuditWith(ResponseType type)
+    {
+        var a = Audit.Create("Branch Audit", "branch", new DateOnly(2027, 1, 10), new DateOnly(2027, 2, 10), null, null, null, null, Lead, Auditee, null, Lead, Now);
+        a.AddTeamMember(Auditor, TeamRole.Auditor, Lead, Now);
+        a.AddChecklistItem("How many exceptions?", null, type, null, true, null);
+        a.Plan();
+        a.Start();
+        return a;
+    }
+
+    [Fact]
+    public void Value_type_requires_a_value_to_finalise()
+    {
+        var a = InProgressAuditWith(ResponseType.Numeric);
+        var item = FirstItemId(a);
+        var ex = Assert.Throws<DomainException>(
+            () => a.RecordResponse(item, verdict: null, comment: null, isDraft: false, Actor, false, Now, valueJson: null));
+        Assert.Equal("response.value_required", ex.Code);
+    }
+
+    [Fact]
+    public void Value_type_finalises_with_a_value_and_no_verdict()
+    {
+        var a = InProgressAuditWith(ResponseType.Numeric);
+        var item = FirstItemId(a);
+        var result = a.RecordResponse(item, verdict: null, comment: null, isDraft: false, Actor, false, Now, valueJson: "{\"number\":4}");
+        Assert.Equal(ChecklistItemState.Responded, a.ChecklistItems[0].ItemState);
+        Assert.Null(result.Response.Verdict);
+        Assert.Equal("{\"number\":4}", result.Response.ValueJson);
+    }
+
+    [Fact]
+    public void Response_type_can_change_while_draft()
+    {
+        var a = Audit.Create("Branch Audit", "branch", new DateOnly(2027, 1, 10), new DateOnly(2027, 2, 10), null, null, null, null, Lead, Auditee, null, Lead, Now);
+        a.AddChecklistItem("Q", null, ResponseType.PassFailNa, null, true, null);
+        var itemId = a.ChecklistItems[0].Id;
+        a.EditChecklistItem(itemId, "Q", null, ResponseType.Rating, "{\"max\":5}", null, true, null);
+        Assert.Equal(ResponseType.Rating, a.ChecklistItems[0].ResponseType);
+        Assert.Equal("{\"max\":5}", a.ChecklistItems[0].ResponseConfigJson);
+    }
+
     [Fact]
     public void Draft_keeps_item_in_progress_and_is_replaceable()
     {

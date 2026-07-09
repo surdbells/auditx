@@ -28,6 +28,9 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
 
     public ResponseType ResponseType { get; private set; }
 
+    /// <summary>Optional per-type configuration JSON (e.g. choice options, rating scale, numeric unit/bounds). Opaque to the domain.</summary>
+    public string? ResponseConfigJson { get; private set; }
+
     public Guid? AssignedUserId { get; private set; }
 
     public bool IsRequired { get; private set; }
@@ -46,26 +49,31 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
 
     internal AuditChecklistItem(
         Guid auditId, string prompt, string? referenceNotes, ResponseType responseType,
-        string? sectionName, int orderIndex, bool isRequired, Guid? assignedUserId)
+        string? sectionName, int orderIndex, bool isRequired, Guid? assignedUserId, string? responseConfigJson = null)
     {
         AuditId = auditId;
         Prompt = Guard.NotNullOrWhiteSpace(prompt, "audit.item_prompt_required", "Checklist item prompt is required.");
         ReferenceNotes = referenceNotes;
         ResponseType = responseType;
+        ResponseConfigJson = NormaliseConfig(responseConfigJson);
         SectionName = sectionName;
         OrderIndex = orderIndex;
         IsRequired = isRequired;
         AssignedUserId = assignedUserId;
     }
 
-    internal void Update(string prompt, string? referenceNotes, string? sectionName, bool isRequired, Guid? assignedUserId)
+    internal void Update(string prompt, string? referenceNotes, ResponseType responseType, string? responseConfigJson, string? sectionName, bool isRequired, Guid? assignedUserId)
     {
         Prompt = Guard.NotNullOrWhiteSpace(prompt, "audit.item_prompt_required", "Checklist item prompt is required.");
         ReferenceNotes = referenceNotes;
+        ResponseType = responseType;
+        ResponseConfigJson = NormaliseConfig(responseConfigJson);
         SectionName = sectionName;
         IsRequired = isRequired;
         AssignedUserId = assignedUserId;
     }
+
+    private static string? NormaliseConfig(string? json) => string.IsNullOrWhiteSpace(json) ? null : json.Trim();
 
     internal void SetOrder(int orderIndex) => OrderIndex = orderIndex;
 

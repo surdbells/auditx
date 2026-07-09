@@ -774,6 +774,7 @@ export class AuditDetailComponent {
             prompt: result.prompt,
             referenceNotes: result.referenceNotes,
             responseType: result.responseType,
+            responseConfigJson: result.responseConfigJson,
             sectionName: result.sectionName,
             isRequired: result.isRequired,
             assignedUserId: result.assignedUserId,
@@ -797,6 +798,8 @@ export class AuditDetailComponent {
           this.service.updateChecklistItem(this.id(), item.id, {
             prompt: result.prompt,
             referenceNotes: result.referenceNotes,
+            responseType: result.responseType,
+            responseConfigJson: result.responseConfigJson,
             sectionName: result.sectionName,
             isRequired: result.isRequired,
             assignedUserId: result.assignedUserId,

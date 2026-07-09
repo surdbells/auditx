@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -31,9 +36,25 @@ export interface ChecklistItemDialogResult {
   referenceNotes: string | null;
   sectionName: string | null;
   responseType: ResponseType;
+  responseConfigJson: string | null;
   isRequired: boolean;
   assignedUserId: string | null;
 }
+
+interface TypeOption {
+  value: ResponseType;
+  label: string;
+}
+
+const TYPE_OPTIONS: TypeOption[] = [
+  { value: 'pass_fail_na', label: 'Pass / Fail / N/A' },
+  { value: 'yes_no', label: 'Yes / No' },
+  { value: 'text', label: 'Free text' },
+  { value: 'numeric', label: 'Numeric' },
+  { value: 'date', label: 'Date' },
+  { value: 'rating', label: 'Rating (scale)' },
+  { value: 'multiple_choice', label: 'Multiple choice' },
+];
 
 @Component({
   selector: 'app-checklist-item-dialog',
@@ -76,11 +97,38 @@ export interface ChecklistItemDialogResult {
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Response type</mat-label>
-            <mat-select formControlName="responseType">
-              <mat-option value="pass_fail_na">Pass / Fail / N/A</mat-option>
+            <mat-select
+              formControlName="responseType"
+              (selectionChange)="currentType.set($event.value)"
+            >
+              @for (t of typeOptions; track t.value) {
+                <mat-option [value]="t.value">{{ t.label }}</mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </div>
+
+        @if (currentType() === 'multiple_choice') {
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Choices (one per line)</mat-label>
+            <textarea matInput formControlName="choices" rows="3" placeholder="Option A&#10;Option B"></textarea>
+            @if (form.controls.choices.hasError('required') && form.controls.choices.touched) {
+              <mat-error>Enter at least two choices.</mat-error>
+            }
+          </mat-form-field>
+        }
+        @if (currentType() === 'rating') {
+          <mat-form-field appearance="outline">
+            <mat-label>Maximum rating</mat-label>
+            <input matInput type="number" formControlName="ratingMax" min="2" max="10" />
+          </mat-form-field>
+        }
+        @if (currentType() === 'numeric') {
+          <mat-form-field appearance="outline">
+            <mat-label>Unit (optional)</mat-label>
+            <input matInput formControlName="unit" autocomplete="off" placeholder="e.g. days, %, USD" />
+          </mat-form-field>
+        }
 
         <mat-form-field appearance="outline" class="full">
           <mat-label>Assignee</mat-label>
@@ -137,6 +185,10 @@ export class ChecklistItemDialogComponent {
   private readonly fb = inject(FormBuilder);
 
   readonly isEdit = !!this.data.item;
+  readonly typeOptions = TYPE_OPTIONS;
+
+  private readonly config = parseConfig(this.data.item?.responseConfigJson ?? null);
+  readonly currentType = signal<ResponseType>(this.data.item?.responseType ?? 'pass_fail_na');
 
   readonly form = this.fb.nonNullable.group({
     prompt: [this.data.item?.prompt ?? '', [Validators.required]],
@@ -146,6 +198,9 @@ export class ChecklistItemDialogComponent {
       (this.data.item?.responseType ?? 'pass_fail_na') as ResponseType,
       [Validators.required],
     ],
+    choices: [(this.config.options ?? []).join('\n')],
+    ratingMax: [this.config.max ?? 5],
+    unit: [this.config.unit ?? ''],
     assignedUserId: [this.data.item?.assignedUserId ?? ''],
     isRequired: [this.data.item?.isRequired ?? true],
   });
@@ -161,12 +216,53 @@ export class ChecklistItemDialogComponent {
       referenceNotes: v.referenceNotes.trim() || null,
       sectionName: v.sectionName.trim() || null,
       responseType: v.responseType,
+      responseConfigJson: this.buildConfig(v.responseType, v.choices, v.ratingMax, v.unit),
       isRequired: v.isRequired,
       assignedUserId: v.assignedUserId || null,
     });
   }
 
+  private buildConfig(
+    type: ResponseType,
+    choices: string,
+    ratingMax: number,
+    unit: string,
+  ): string | null {
+    if (type === 'multiple_choice') {
+      const options = choices
+        .split('\n')
+        .map((o) => o.trim())
+        .filter((o) => o.length > 0);
+      return options.length ? JSON.stringify({ options }) : null;
+    }
+    if (type === 'rating') {
+      const max = Math.min(10, Math.max(2, Math.round(ratingMax || 5)));
+      return JSON.stringify({ max });
+    }
+    if (type === 'numeric' && unit.trim()) {
+      return JSON.stringify({ unit: unit.trim() });
+    }
+    return null;
+  }
+
   cancel(): void {
     this.dialogRef.close();
+  }
+}
+
+interface ParsedConfig {
+  options?: string[];
+  max?: number;
+  unit?: string;
+}
+
+function parseConfig(json: string | null): ParsedConfig {
+  if (!json) {
+    return {};
+  }
+  try {
+    return JSON.parse(json) as ParsedConfig;
+  } catch {
+    return {};
   }
 }

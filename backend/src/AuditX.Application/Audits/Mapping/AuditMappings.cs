@@ -29,7 +29,7 @@ public static class AuditMappings
 
     public static AuditChecklistItemDto ToDto(this AuditChecklistItem item) => new(
         item.Id, item.SectionName, item.OrderIndex, item.Prompt, item.ReferenceNotes,
-        item.ResponseType.ToSnake(), item.AssignedUserId, item.IsRequired, item.ItemState.ToSnake());
+        item.ResponseType.ToSnake(), item.ResponseConfigJson, item.AssignedUserId, item.IsRequired, item.ItemState.ToSnake());
 
     public static AuditListItemDto ToListItemDto(this Audit audit) => new(
         audit.Id, audit.Name, audit.AuditType, audit.Status.ToSnake(), audit.StartDate, audit.TargetEndDate,

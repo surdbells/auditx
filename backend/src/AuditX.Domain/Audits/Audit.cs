@@ -264,20 +264,20 @@ public sealed class Audit : AggregateRoot
 
     // ---- Checklist ----
 
-    public AuditChecklistItem AddChecklistItem(string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired, Guid? assignedUserId)
+    public AuditChecklistItem AddChecklistItem(string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired, Guid? assignedUserId, string? responseConfigJson = null)
     {
         EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
         var section = EnsureSection(sectionName);
-        var item = new AuditChecklistItem(Id, prompt, referenceNotes, responseType, section, _checklistItems.Count, isRequired, assignedUserId);
+        var item = new AuditChecklistItem(Id, prompt, referenceNotes, responseType, section, _checklistItems.Count, isRequired, assignedUserId, responseConfigJson);
         _checklistItems.Add(item);
         return item;
     }
 
-    public void EditChecklistItem(Guid itemId, string prompt, string? referenceNotes, string? sectionName, bool isRequired, Guid? assignedUserId)
+    public void EditChecklistItem(Guid itemId, string prompt, string? referenceNotes, ResponseType responseType, string? responseConfigJson, string? sectionName, bool isRequired, Guid? assignedUserId)
     {
         EnsureStatus("audit.checklist_locked", AuditStatus.Draft);
         var section = EnsureSection(sectionName);
-        FindItem(itemId).Update(prompt, referenceNotes, section, isRequired, assignedUserId);
+        FindItem(itemId).Update(prompt, referenceNotes, responseType, responseConfigJson, section, isRequired, assignedUserId);
     }
 
     public void RemoveChecklistItem(Guid itemId)
@@ -382,7 +382,7 @@ public sealed class Audit : AggregateRoot
     /// when the last item is finalised, auto-transitions the audit to Under Review (US-M4-009) in the same
     /// aggregate mutation. Authorisation (assignee / manager override) is enforced in the application layer.
     /// </summary>
-    public ResponseMutation RecordResponse(Guid itemId, ResponseVerdict? verdict, string? comment, bool isDraft, Guid actorUserId, bool requireCommentOnPass, DateTimeOffset nowUtc)
+    public ResponseMutation RecordResponse(Guid itemId, ResponseVerdict? verdict, string? comment, bool isDraft, Guid actorUserId, bool requireCommentOnPass, DateTimeOffset nowUtc, string? valueJson = null)
     {
         EnsureStatus("audit.responses_locked", AuditStatus.InProgress);
         var item = FindItem(itemId);
@@ -395,7 +395,7 @@ public sealed class Audit : AggregateRoot
             _responses.Add(response);
         }
 
-        response.Apply(verdict, comment, isDraft, actorUserId, requireCommentOnPass, nowUtc);
+        response.Apply(verdict, comment, valueJson, isDraft, actorUserId, requireCommentOnPass, item.ResponseType.IsValueType(), nowUtc);
         item.SetState(isDraft ? ChecklistItemState.InProgress : ChecklistItemState.Responded);
         RaiseDomainEvent(new ItemRespondedEvent(Id, itemId, response.Id, verdict, isDraft));
 

@@ -79,7 +79,8 @@ public sealed class GetChecklistProgressQueryHandler(IAuditRepository audits)
                 var finalised = entity.Responses.FirstOrDefault(r => r.ChecklistItemId == i.Id && !r.IsDraft);
                 return new ChecklistProgressItemDto(
                     i.Id, i.SectionName, i.OrderIndex, i.Prompt, i.ItemState.ToSnake(),
-                    finalised?.Verdict is { } v ? v.ToSnake() : null, i.IsRequired, i.AssignedUserId, i.HasException);
+                    finalised?.Verdict is { } v ? v.ToSnake() : null, i.IsRequired, i.AssignedUserId, i.HasException,
+                    i.ResponseType.ToSnake(), i.ResponseConfigJson, finalised?.ValueJson);
             })
             .ToArray();
 

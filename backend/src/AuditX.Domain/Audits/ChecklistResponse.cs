@@ -4,7 +4,7 @@ using AuditX.Domain.Enums;
 namespace AuditX.Domain.Audits;
 
 /// <summary>Immutable snapshot of a response's mutable state, used for the audit-trail before/after.</summary>
-public sealed record ResponseState(ResponseVerdict? Verdict, string? Comment, bool IsDraft, int Version);
+public sealed record ResponseState(ResponseVerdict? Verdict, string? Comment, string? ValueJson, bool IsDraft, int Version);
 
 /// <summary>Result of recording a response: the entity, its before/after snapshots, and whether the audit auto-transitioned to Under Review.</summary>
 public sealed record ResponseMutation(ChecklistResponse Response, ResponseState? Before, ResponseState After, bool AutoTransitioned);
@@ -31,6 +31,9 @@ public sealed class ChecklistResponse : Entity, IBelongsToAggregate
 
     public string? Comment { get; private set; }
 
+    /// <summary>Type-specific captured value JSON for value response types (text/number/date/rating/choice). Opaque to the domain.</summary>
+    public string? ValueJson { get; private set; }
+
     public Guid ResponderUserId { get; private set; }
 
     public bool IsDraft { get; private set; }
@@ -48,16 +51,28 @@ public sealed class ChecklistResponse : Entity, IBelongsToAggregate
         ResponseVersion = 0;
     }
 
-    public ResponseState ToState() => new(Verdict, Comment, IsDraft, ResponseVersion);
+    public ResponseState ToState() => new(Verdict, Comment, ValueJson, IsDraft, ResponseVersion);
 
-    /// <summary>Create-or-update the response. Enforces BR-M5-001/002 (final responses need a verdict; Fail/N/A need a comment).</summary>
-    internal void Apply(ResponseVerdict? verdict, string? comment, bool isDraft, Guid actorUserId, bool requireCommentOnPass, DateTimeOffset nowUtc)
+    /// <summary>
+    /// Create-or-update the response (BR-M5-001/002). Verdict types require a verdict on finalise; value types
+    /// (<paramref name="isValueType"/>) require a captured value instead, with the verdict optional so the item
+    /// can still be marked Fail to drive an exception. A Fail/N-A verdict always requires a comment.
+    /// </summary>
+    internal void Apply(ResponseVerdict? verdict, string? comment, string? valueJson, bool isDraft, Guid actorUserId, bool requireCommentOnPass, bool isValueType, DateTimeOffset nowUtc)
     {
         var trimmed = string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+        var value = string.IsNullOrWhiteSpace(valueJson) ? null : valueJson.Trim();
 
         if (!isDraft)
         {
-            if (verdict is null)
+            if (isValueType)
+            {
+                if (value is null)
+                {
+                    throw new DomainException("response.value_required", "A value is required for a final response.");
+                }
+            }
+            else if (verdict is null)
             {
                 throw new DomainException("response.verdict_required", "A final response must have a verdict.");
             }
@@ -80,6 +95,7 @@ public sealed class ChecklistResponse : Entity, IBelongsToAggregate
 
         Verdict = verdict;
         Comment = trimmed;
+        ValueJson = value;
         IsDraft = isDraft;
         ResponderUserId = actorUserId;
         RespondedAt = nowUtc;

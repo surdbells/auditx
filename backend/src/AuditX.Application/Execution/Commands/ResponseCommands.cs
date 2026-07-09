@@ -14,7 +14,7 @@ using FluentValidation;
 
 namespace AuditX.Application.Execution.Commands;
 
-public sealed record SubmitResponseCommand(Guid AuditId, Guid ItemId, string? Verdict, string? Comment, bool IsDraft, string Version) : ICommand<ChecklistResponseDto>;
+public sealed record SubmitResponseCommand(Guid AuditId, Guid ItemId, string? Verdict, string? Comment, string? ValueJson, bool IsDraft, string Version) : ICommand<ChecklistResponseDto>;
 
 public sealed class SubmitResponseCommandValidator : AbstractValidator<SubmitResponseCommand>
 {
@@ -23,8 +23,8 @@ public sealed class SubmitResponseCommandValidator : AbstractValidator<SubmitRes
         RuleFor(x => x.AuditId).NotEmpty();
         RuleFor(x => x.ItemId).NotEmpty();
         RuleFor(x => x.Version).NotEmpty();
-        // A final (non-draft) response must declare a verdict; the comment-on-fail/na rule lives in the domain.
-        RuleFor(x => x.Verdict).NotEmpty().When(x => !x.IsDraft).WithMessage("A verdict is required for a final response.");
+        // Finalise rules are type-aware and enforced in the domain (verdict types need a verdict; value types
+        // need a value). Both value + verdict are optional at the transport layer.
     }
 }
 
@@ -50,7 +50,7 @@ public sealed class SubmitResponseCommandHandler(
         var verdict = RespondAuthorization.ParseVerdict(command.Verdict, command.IsDraft);
         var settings = await bankSettings.GetAsync(cancellationToken);
 
-        var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, settings.RequireCommentOnPass, clock.UtcNow);
+        var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, settings.RequireCommentOnPass, clock.UtcNow, command.ValueJson);
 
         audit.Record(
             isOverride ? AuditEventTypes.ItemResponseOverridden : AuditEventTypes.ItemResponded,
@@ -69,7 +69,7 @@ public sealed class SubmitResponseCommandHandler(
     }
 
     private static object? Snapshot(ResponseState? state)
-        => state is null ? null : new { verdict = state.Verdict is { } v ? v.ToSnake() : null, state.Comment, state.IsDraft, state.Version };
+        => state is null ? null : new { verdict = state.Verdict is { } v ? v.ToSnake() : null, state.Comment, state.ValueJson, state.IsDraft, state.Version };
 }
 
 public sealed record DiscardDraftCommand(Guid AuditId, Guid ItemId, string Version) : ICommand<Unit>;

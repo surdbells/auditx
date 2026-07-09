@@ -92,12 +92,12 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpPost("{id:guid}/checklist/items")]
     public async Task<IActionResult> AddChecklistItem(Guid id, [FromBody] AddAuditChecklistItemRequest request, CancellationToken cancellationToken)
-        => Created(await dispatcher.Send(new AddAuditChecklistItemCommand(id, request.Prompt, request.ReferenceNotes, request.ResponseType, request.SectionName, request.IsRequired, request.AssignedUserId, request.Version), cancellationToken));
+        => Created(await dispatcher.Send(new AddAuditChecklistItemCommand(id, request.Prompt, request.ReferenceNotes, request.ResponseType, request.ResponseConfigJson, request.SectionName, request.IsRequired, request.AssignedUserId, request.Version), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpPatch("{id:guid}/checklist/items/{itemId:guid}")]
     public async Task<IActionResult> EditChecklistItem(Guid id, Guid itemId, [FromBody] EditAuditChecklistItemRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new EditAuditChecklistItemCommand(id, itemId, request.Prompt, request.ReferenceNotes, request.SectionName, request.IsRequired, request.AssignedUserId, request.Version), cancellationToken));
+        => Envelope(await dispatcher.Send(new EditAuditChecklistItemCommand(id, itemId, request.Prompt, request.ReferenceNotes, request.ResponseType, request.ResponseConfigJson, request.SectionName, request.IsRequired, request.AssignedUserId, request.Version), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpDelete("{id:guid}/checklist/items/{itemId:guid}")]
@@ -139,7 +139,7 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     [RequirePermission(PermissionKeys.RespondItem)]
     [HttpPost("{id:guid}/items/{itemId:guid}/responses")]
     public async Task<IActionResult> SubmitResponse(Guid id, Guid itemId, [FromBody] SubmitResponseRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new SubmitResponseCommand(id, itemId, request.Verdict, request.Comment, request.IsDraft, request.Version), cancellationToken));
+        => Envelope(await dispatcher.Send(new SubmitResponseCommand(id, itemId, request.Verdict, request.Comment, request.ValueJson, request.IsDraft, request.Version), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewAudit)]
     [HttpGet("{id:guid}/items/{itemId:guid}/responses")]

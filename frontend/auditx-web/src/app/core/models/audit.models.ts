@@ -59,6 +59,8 @@ export interface AuditChecklistItem {
   prompt: string;
   referenceNotes: string | null;
   responseType: ResponseType;
+  /** Per-type config JSON (choice options, rating scale, numeric unit/bounds). */
+  responseConfigJson?: string | null;
   assignedUserId: string | null;
   isRequired: boolean;
   itemState: ChecklistItemState;
@@ -156,6 +158,7 @@ export interface AddChecklistItemRequest {
   prompt: string;
   referenceNotes?: string | null;
   responseType: ResponseType;
+  responseConfigJson?: string | null;
   sectionName?: string | null;
   isRequired: boolean;
   assignedUserId?: string | null;
@@ -165,6 +168,8 @@ export interface AddChecklistItemRequest {
 export interface UpdateChecklistItemRequest {
   prompt: string;
   referenceNotes?: string | null;
+  responseType: ResponseType;
+  responseConfigJson?: string | null;
   sectionName?: string | null;
   isRequired: boolean;
   assignedUserId?: string | null;
@@ -199,6 +204,8 @@ export interface ChecklistResponse {
   checklistItemId: string;
   verdict: ResponseVerdict | null;
   comment?: string | null;
+  /** Type-specific captured value JSON (text/number/date/rating/choice). */
+  valueJson?: string | null;
   responderUserId: string;
   isDraft: boolean;
   responseVersion: number;
@@ -231,6 +238,9 @@ export interface ChecklistProgressItem {
   isRequired: boolean;
   assignedUserId?: string | null;
   hasException: boolean;
+  responseType: ResponseType;
+  responseConfigJson?: string | null;
+  valueJson?: string | null;
 }
 
 /** Aggregate progress across an audit's checklist. */
@@ -280,6 +290,7 @@ export interface FailWithoutExceptionResult {
 export interface SubmitResponseRequest {
   verdict?: ResponseVerdict | null;
   comment?: string | null;
+  valueJson?: string | null;
   isDraft: boolean;
   version: string;
 }

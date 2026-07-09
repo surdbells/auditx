@@ -155,6 +155,6 @@ public sealed class AuditTests
         var a = ReadyToPlan();
         var itemId = a.ChecklistItems[0].Id;
         a.Plan();
-        Assert.Throws<InvalidStateTransitionException>(() => a.EditChecklistItem(itemId, "x", null, null, true, null));
+        Assert.Throws<InvalidStateTransitionException>(() => a.EditChecklistItem(itemId, "x", null, ResponseType.PassFailNa, null, null, true, null));
     }
 }

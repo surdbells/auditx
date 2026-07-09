@@ -1,8 +1,27 @@
 /** Lifecycle state of an audit template. */
 export type TemplateStatus = 'draft' | 'published' | 'archived';
 
-/** Response capture type for a template item. Currently a single supported value. */
-export type ResponseType = 'pass_fail_na';
+/**
+ * Response capture type for a checklist item. Verdict types capture a Pass/Fail/N-A conclusion;
+ * value types capture a typed value (with an optional verdict for the exception workflow).
+ */
+export type ResponseType =
+  | 'pass_fail_na'
+  | 'yes_no'
+  | 'text'
+  | 'numeric'
+  | 'date'
+  | 'rating'
+  | 'multiple_choice';
+
+/** Response types that capture a typed value rather than only a verdict. */
+export const VALUE_RESPONSE_TYPES: readonly ResponseType[] = [
+  'text',
+  'numeric',
+  'date',
+  'rating',
+  'multiple_choice',
+];
 
 /** Lightweight row for the templates list view. */
 export interface TemplateListItem {
