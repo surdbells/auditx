@@ -17,8 +17,8 @@ public sealed class AuditUniverseController(IDispatcher dispatcher) : ApiControl
     [HttpGet("entities")]
     public async Task<IActionResult> ListEntities(
         [FromQuery] string? entityType, [FromQuery] Guid? owner, [FromQuery] bool archived,
-        [FromQuery] string? search, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListEntitiesQuery(entityType, owner, archived, search, cursor, limit), cancellationToken));
+        [FromQuery] string? search, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListEntitiesQuery(entityType, owner, archived, search, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewUniverse)]
     [HttpGet("entities/{id:guid}")]

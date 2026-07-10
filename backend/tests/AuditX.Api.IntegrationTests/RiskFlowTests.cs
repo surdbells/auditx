@@ -83,7 +83,7 @@ public sealed class RiskFlowTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.Equal("mitigate", assessed.GetProperty("treatmentStrategy").GetString());
 
         // It appears in the register.
-        var list = await DataAsync(await admin.GetAsync("/api/v1/risks?category=Technology&limit=100"));
+        var list = await DataAsync(await admin.GetAsync("/api/v1/risks?category=Technology&pageSize=100"));
         Assert.Contains(list.GetProperty("items").EnumerateArray(), r => r.GetProperty("id").GetGuid() == riskId);
 
         // Close (rationale required) → terminal: a further edit is rejected.

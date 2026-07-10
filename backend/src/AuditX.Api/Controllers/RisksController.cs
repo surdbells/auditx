@@ -18,9 +18,9 @@ public sealed class RisksController(IDispatcher dispatcher) : ApiControllerBase
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] string? status, [FromQuery] string? category, [FromQuery] Guid? owner, [FromQuery] string? band,
-        [FromQuery] bool? includeClosed, [FromQuery] string? search, [FromQuery] string? cursor, [FromQuery] int? limit,
+        [FromQuery] bool? includeClosed, [FromQuery] string? search, [FromQuery] int? page, [FromQuery] int? pageSize,
         CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListRisksQuery(status, category, owner, band, includeClosed ?? true, search, cursor, limit), cancellationToken));
+        => Envelope(await dispatcher.Query(new ListRisksQuery(status, category, owner, band, includeClosed ?? true, search, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewRisk)]
     [HttpGet("{id:guid}")]

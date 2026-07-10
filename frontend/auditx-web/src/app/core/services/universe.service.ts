@@ -7,7 +7,7 @@ import {
   BulkImportRequest,
   BulkImportResult,
   CreateEntityRequest,
-  CursorPage,
+  PagedResult,
   Entity,
   EntityListItem,
   EntityQuery,
@@ -20,14 +20,14 @@ import {
 export class UniverseService {
   private readonly api = inject(ApiService);
 
-  list(query: EntityQuery): Observable<CursorPage<EntityListItem>> {
-    return this.api.get<CursorPage<EntityListItem>>('/audit-universe/entities', {
+  list(query: EntityQuery): Observable<PagedResult<EntityListItem>> {
+    return this.api.get<PagedResult<EntityListItem>>('/audit-universe/entities', {
       entityType: query.entityType,
       owner: query.owner,
       archived: query.archived,
       search: query.search,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 

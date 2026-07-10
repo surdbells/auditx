@@ -76,7 +76,7 @@ export class AcRestrictVisibilityComponent {
 
   load(): void {
     this.state.set('loading');
-    this.users.list({ status: 'active', limit: 200 }).subscribe({
+    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
       next: (page) => {
         this.userList.set(page.items);
         this.state.set('ready');

@@ -53,11 +53,11 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
         return result;
     }
 
-    public async Task<CursorPage<User>> SearchAsync(
+    public async Task<PagedResult<User>> SearchAsync(
         string? search,
         string? roleName,
         UserStatus? status,
-        PageRequest page,
+        PageSpec page,
         CancellationToken cancellationToken = default)
     {
         var query = db.Users.AsNoTracking().AsQueryable();
@@ -84,21 +84,7 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
                 ur.UserId == u.Id && db.Roles.Any(r => r.Id == ur.RoleId && r.Name == name)));
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(u => u.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(u => u.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        var nextCursor = hasMore ? items[^1].Id.ToString() : null;
-        return new CursorPage<User>(items, nextCursor, hasMore);
+        return await query.OrderBy(u => u.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public void Add(User user) => db.Users.Add(user);

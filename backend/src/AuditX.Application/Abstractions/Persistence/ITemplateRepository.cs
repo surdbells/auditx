@@ -12,11 +12,11 @@ public interface ITemplateRepository
 
     Task<Template?> GetByNameAndTypeAsync(string name, string auditType, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<Template>> SearchAsync(
+    Task<PagedResult<Template>> SearchAsync(
         string? auditType,
         TemplateStatus? status,
         string? search,
-        PageRequest page,
+        PageSpec page,
         CancellationToken cancellationToken = default);
 
     void Add(Template template);

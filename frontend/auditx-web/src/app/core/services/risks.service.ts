@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   ChangeRiskStatusRequest,
-  CursorPage,
+  PagedResult,
   RegisterRiskRequest,
   Risk,
   RiskListItem,
@@ -17,16 +17,16 @@ import {
 export class RisksService {
   private readonly api = inject(ApiService);
 
-  list(query: RiskQuery): Observable<CursorPage<RiskListItem>> {
-    return this.api.get<CursorPage<RiskListItem>>('/risks', {
+  list(query: RiskQuery): Observable<PagedResult<RiskListItem>> {
+    return this.api.get<PagedResult<RiskListItem>>('/risks', {
       status: query.status,
       category: query.category,
       owner: query.owner,
       band: query.band,
       includeClosed: query.includeClosed,
       search: query.search,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 

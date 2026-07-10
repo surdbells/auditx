@@ -70,13 +70,13 @@ public sealed class ListExceptionsForAuditQueryHandler(
 public sealed record SearchExceptionsQuery(
     string? Status, string? Severity, Guid? OwnerUserId, Guid? AuditableEntityId, Guid? AuditId,
     string? Category, bool? IsRecurrence, bool? IsOverdue, string? Search,
-    Guid? AnnualPlanId, DateTimeOffset? RaisedFrom, DateTimeOffset? RaisedTo, string? Cursor, int? Limit)
-    : IQuery<CursorPage<ExceptionListItemDto>>;
+    Guid? AnnualPlanId, DateTimeOffset? RaisedFrom, DateTimeOffset? RaisedTo, int? Page, int? PageSize)
+    : IQuery<PagedResult<ExceptionListItemDto>>;
 
 public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions, IClock clock)
-    : IQueryHandler<SearchExceptionsQuery, CursorPage<ExceptionListItemDto>>
+    : IQueryHandler<SearchExceptionsQuery, PagedResult<ExceptionListItemDto>>
 {
-    public async Task<CursorPage<ExceptionListItemDto>> Handle(SearchExceptionsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<ExceptionListItemDto>> Handle(SearchExceptionsQuery query, CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
         ExceptionSeverity? severity = string.IsNullOrWhiteSpace(query.Severity)
@@ -90,9 +90,9 @@ public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions
             query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search,
             query.AnnualPlanId, query.RaisedFrom, query.RaisedTo);
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await exceptions.SearchAsync(filter, page, cancellationToken);
-        return new CursorPage<ExceptionListItemDto>(result.Items.Select(e => e.ToListItemDto(today)).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(e => e.ToListItemDto(today));
     }
 }
 

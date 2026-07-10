@@ -8,8 +8,8 @@ public interface IAuditUniverseRepository
 {
     Task<AuditableEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<AuditableEntity>> SearchAsync(
-        string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<AuditableEntity>> SearchAsync(
+        string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageSpec page, CancellationToken cancellationToken = default);
 
     /// <summary>Whole-universe (id → parentId) map for in-memory acyclicity checks.</summary>
     Task<IReadOnlyDictionary<Guid, Guid?>> GetParentMapAsync(CancellationToken cancellationToken = default);
@@ -55,10 +55,10 @@ public interface IAnnualPlanRepository
     /// <summary>Load the plan that owns a given plan item (M4 completion wiring → M3).</summary>
     Task<AnnualPlan?> GetByPlanItemIdAsync(Guid planItemId, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<AnnualPlan>> SearchAsync(string? status, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<AnnualPlan>> SearchAsync(string? status, PageSpec page, CancellationToken cancellationToken = default);
 
-    /// <summary>Keyset-paginated search over plans by period label (for global search).</summary>
-    Task<CursorPage<AnnualPlan>> SearchByLabelAsync(string term, PageRequest page, CancellationToken cancellationToken = default);
+    /// <summary>Paginated search over plans by period label (for global search).</summary>
+    Task<PagedResult<AnnualPlan>> SearchByLabelAsync(string term, PageSpec page, CancellationToken cancellationToken = default);
 
     Task<bool> AnyOverlappingAsync(DateOnly periodStart, DateOnly periodEnd, Guid? excludePlanId, CancellationToken cancellationToken = default);
 

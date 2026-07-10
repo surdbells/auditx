@@ -8,13 +8,13 @@ using AuditX.Application.Controls.Mapping;
 namespace AuditX.Application.Controls.Queries;
 
 public sealed record ListControlsQuery(
-    string? Type, string? Effectiveness, Guid? Owner, bool IncludeRetired, string? Search, string? Cursor, int? Limit)
-    : IQuery<CursorPage<ControlListItemDto>>;
+    string? Type, string? Effectiveness, Guid? Owner, bool IncludeRetired, string? Search, int? Page, int? PageSize)
+    : IQuery<PagedResult<ControlListItemDto>>;
 
 public sealed class ListControlsQueryHandler(IControlRepository controls)
-    : IQueryHandler<ListControlsQuery, CursorPage<ControlListItemDto>>
+    : IQueryHandler<ListControlsQuery, PagedResult<ControlListItemDto>>
 {
-    public async Task<CursorPage<ControlListItemDto>> Handle(ListControlsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<ControlListItemDto>> Handle(ListControlsQuery query, CancellationToken cancellationToken)
     {
         var filter = new ControlSearchFilter(
             ControlParsing.ParseTypeFilter(query.Type),
@@ -23,8 +23,8 @@ public sealed class ListControlsQueryHandler(IControlRepository controls)
             query.IncludeRetired,
             query.Search);
 
-        var page = await controls.SearchAsync(filter, PageRequest.Of(query.Cursor, query.Limit), cancellationToken);
-        return new CursorPage<ControlListItemDto>(page.Items.Select(c => c.ToListItemDto()).ToArray(), page.NextCursor, page.HasMore);
+        var result = await controls.SearchAsync(filter, PageSpec.Of(query.Page, query.PageSize), cancellationToken);
+        return result.Map(c => c.ToListItemDto());
     }
 }
 

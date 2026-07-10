@@ -12,7 +12,7 @@ public sealed class RiskRepository(AppDbContext db) : IRiskRepository
     public Task<Risk?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.Risks.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
-    public async Task<CursorPage<Risk>> SearchAsync(RiskSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Risk>> SearchAsync(RiskSearchFilter filter, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.Risks.AsNoTracking();
 
@@ -53,19 +53,7 @@ public sealed class RiskRepository(AppDbContext db) : IRiskRepository
             query = query.Where(r => r.Title.Contains(term) || r.Category.Contains(term));
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(r => r.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(r => r.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<Risk>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(r => r.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public void Add(Risk risk) => db.Risks.Add(risk);

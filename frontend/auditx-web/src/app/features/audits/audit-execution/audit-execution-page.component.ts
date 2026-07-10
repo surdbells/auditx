@@ -122,7 +122,7 @@ export class AuditExecutionPageComponent {
     if (Object.keys(this.userNames()).length) {
       return;
     }
-    this.users.list({ status: 'active', limit: 200 }).subscribe({
+    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
       next: (page) => {
         const map: Record<string, string> = {};
         for (const u of page.items as UserDto[]) {

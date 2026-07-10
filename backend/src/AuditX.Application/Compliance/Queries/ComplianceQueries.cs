@@ -12,18 +12,18 @@ namespace AuditX.Application.Compliance.Queries;
 
 // ---- Regulation register ----
 
-public sealed record ListRegulationsQuery(string? Category, bool IncludeRetired, string? Search, string? Cursor, int? Limit)
-    : IQuery<CursorPage<RegulationListItemDto>>;
+public sealed record ListRegulationsQuery(string? Category, bool IncludeRetired, string? Search, int? Page, int? PageSize)
+    : IQuery<PagedResult<RegulationListItemDto>>;
 
 public sealed class ListRegulationsQueryHandler(IRegulationRepository regulations)
-    : IQueryHandler<ListRegulationsQuery, CursorPage<RegulationListItemDto>>
+    : IQueryHandler<ListRegulationsQuery, PagedResult<RegulationListItemDto>>
 {
-    public async Task<CursorPage<RegulationListItemDto>> Handle(ListRegulationsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<RegulationListItemDto>> Handle(ListRegulationsQuery query, CancellationToken cancellationToken)
     {
         var filter = new RegulationSearchFilter(
             string.IsNullOrWhiteSpace(query.Category) ? null : query.Category.Trim(), query.IncludeRetired, query.Search);
-        var page = await regulations.SearchAsync(filter, PageRequest.Of(query.Cursor, query.Limit), cancellationToken);
-        return new CursorPage<RegulationListItemDto>(page.Items.Select(r => r.ToListItemDto()).ToArray(), page.NextCursor, page.HasMore);
+        var result = await regulations.SearchAsync(filter, PageSpec.Of(query.Page, query.PageSize), cancellationToken);
+        return result.Map(r => r.ToListItemDto());
     }
 }
 

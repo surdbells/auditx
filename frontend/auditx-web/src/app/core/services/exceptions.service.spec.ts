@@ -81,7 +81,7 @@ describe('ExceptionsService', () => {
   it('lists exceptions across audits with filters and unwraps the page', () => {
     let result: { items: unknown[] } | undefined;
     service
-      .list({ status: 'open', severity: 'high', overdue: true, recurrence: false, limit: 20 })
+      .list({ status: 'open', severity: 'high', overdue: true, recurrence: false, page: 1, pageSize: 25 })
       .subscribe((p) => (result = p));
     const req = http.expectOne((r) => r.url === `${BASE}/exceptions`);
     expect(req.request.method).toBe('GET');
@@ -89,7 +89,8 @@ describe('ExceptionsService', () => {
     expect(req.request.params.get('severity')).toBe('high');
     expect(req.request.params.get('overdue')).toBe('true');
     expect(req.request.params.get('recurrence')).toBe('false');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: { items: [], total: 0, page: 1, pageSize: 25, totalPages: 1, hasPrevious: false, hasNext: false } });
     expect(result?.items.length).toBe(0);
   });
 
@@ -101,7 +102,8 @@ describe('ExceptionsService', () => {
         search: 'wire',
         raisedFrom: '2026-01-01T00:00:00Z',
         raisedTo: '2026-03-31T23:59:59Z',
-        limit: 20,
+        page: 1,
+        pageSize: 25,
       })
       .subscribe();
     const req = http.expectOne((r) => r.url === `${BASE}/exceptions`);
@@ -110,7 +112,7 @@ describe('ExceptionsService', () => {
     expect(req.request.params.get('search')).toBe('wire');
     expect(req.request.params.get('raisedFrom')).toBe('2026-01-01T00:00:00Z');
     expect(req.request.params.get('raisedTo')).toBe('2026-03-31T23:59:59Z');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    req.flush({ data: { items: [], total: 0, page: 1, pageSize: 25, totalPages: 1, hasPrevious: false, hasNext: false } });
   });
 
   it('gets an exception by id', () => {

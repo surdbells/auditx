@@ -18,7 +18,7 @@ public interface IRiskRepository
 {
     Task<Risk?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<Risk>> SearchAsync(RiskSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<Risk>> SearchAsync(RiskSearchFilter filter, PageSpec page, CancellationToken cancellationToken = default);
 
     void Add(Risk risk);
 }

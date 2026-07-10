@@ -19,13 +19,14 @@ describe('RisksService', () => {
   afterEach(() => http.verify());
 
   it('lists risks with filters', () => {
-    service.list({ status: 'open', band: 'high', includeClosed: false, search: 'cyber', limit: 100 }).subscribe();
+    service.list({ status: 'open', band: 'high', includeClosed: false, search: 'cyber', page: 1, pageSize: 25 }).subscribe();
     const req = http.expectOne((r) => r.url === `${BASE}/risks`);
     expect(req.request.params.get('status')).toBe('open');
     expect(req.request.params.get('band')).toBe('high');
     expect(req.request.params.get('includeClosed')).toBe('false');
     expect(req.request.params.get('search')).toBe('cyber');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: { items: [], total: 0, page: 1, pageSize: 25, totalPages: 1, hasPrevious: false, hasNext: false } });
   });
 
   it('registers a risk', () => {

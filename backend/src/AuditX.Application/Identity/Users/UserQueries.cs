@@ -28,13 +28,13 @@ public sealed class GetMeQueryHandler(ICurrentUser currentUser, IUserRepository 
 }
 
 /// <summary>Paginated user search for the admin surface (US-M15-004).</summary>
-public sealed record ListUsersQuery(string? Search, string? Role, string? Status, string? Cursor, int? Limit)
-    : IQuery<CursorPage<UserDto>>;
+public sealed record ListUsersQuery(string? Search, string? Role, string? Status, int? Page, int? PageSize)
+    : IQuery<PagedResult<UserDto>>;
 
 public sealed class ListUsersQueryHandler(IUserRepository users)
-    : IQueryHandler<ListUsersQuery, CursorPage<UserDto>>
+    : IQueryHandler<ListUsersQuery, PagedResult<UserDto>>
 {
-    public async Task<CursorPage<UserDto>> Handle(ListUsersQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<UserDto>> Handle(ListUsersQuery query, CancellationToken cancellationToken)
     {
         UserStatus? status = query.Status is null
             ? null
@@ -42,26 +42,23 @@ public sealed class ListUsersQueryHandler(IUserRepository users)
                 ? parsed
                 : throw new ConflictException("invalid_status", $"Unknown user status '{query.Status}'.");
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await users.SearchAsync(query.Search, query.Role, status, page, cancellationToken);
-        return new CursorPage<UserDto>(result.Items.Select(u => u.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(u => u.ToDto());
     }
 }
 
 /// <summary>Lightweight id→name directory (any authenticated user) for resolving user references in views.</summary>
-public sealed record ListUserDirectoryQuery(string? Cursor, int? Limit) : IQuery<CursorPage<UserDirectoryEntryDto>>;
+public sealed record ListUserDirectoryQuery(int? Page, int? PageSize) : IQuery<PagedResult<UserDirectoryEntryDto>>;
 
 public sealed class ListUserDirectoryQueryHandler(IUserRepository users)
-    : IQueryHandler<ListUserDirectoryQuery, CursorPage<UserDirectoryEntryDto>>
+    : IQueryHandler<ListUserDirectoryQuery, PagedResult<UserDirectoryEntryDto>>
 {
-    public async Task<CursorPage<UserDirectoryEntryDto>> Handle(ListUserDirectoryQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<UserDirectoryEntryDto>> Handle(ListUserDirectoryQuery query, CancellationToken cancellationToken)
     {
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await users.SearchAsync(null, null, null, page, cancellationToken);
-        return new CursorPage<UserDirectoryEntryDto>(
-            result.Items.Select(u => new UserDirectoryEntryDto(u.Id, u.DisplayName)).ToArray(),
-            result.NextCursor,
-            result.HasMore);
+        return result.Map(u => new UserDirectoryEntryDto(u.Id, u.DisplayName));
     }
 }
 

@@ -42,8 +42,6 @@ public sealed class SearchQueryHandler(
 
         var effective = await permissions.GetEffectivePermissionsAsync(userId, cancellationToken);
         var granted = effective.Select(p => p.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var page = PageRequest.Of(null, PerModule);
-        // Offset spec for repositories already migrated to PagedResult (cursor `page` above covers the rest during the migration).
         var pageSpec = PageSpec.Of(1, PerModule);
         var hits = new List<SearchHitDto>();
 
@@ -55,7 +53,7 @@ public sealed class SearchQueryHandler(
 
         if (granted.Contains(PermissionKeys.ViewPlan))
         {
-            var result = await plans.SearchByLabelAsync(term, page, cancellationToken);
+            var result = await plans.SearchByLabelAsync(term, pageSpec, cancellationToken);
             hits.AddRange(result.Items.Select(p => new SearchHitDto("plan", p.Id.ToString(), p.PeriodLabel, p.Status.ToString())));
         }
 
@@ -64,19 +62,19 @@ public sealed class SearchQueryHandler(
             var filter = new ExceptionSearchFilter(
                 null, null, null, null, null, null, null, null,
                 DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), term);
-            var result = await exceptions.SearchAsync(filter, page, cancellationToken);
+            var result = await exceptions.SearchAsync(filter, pageSpec, cancellationToken);
             hits.AddRange(result.Items.Select(e => new SearchHitDto("exception", e.Id.ToString(), e.Title, e.Severity.ToString())));
         }
 
         if (granted.Contains(PermissionKeys.ViewTemplates))
         {
-            var result = await templates.SearchAsync(null, null, term, page, cancellationToken);
+            var result = await templates.SearchAsync(null, null, term, pageSpec, cancellationToken);
             hits.AddRange(result.Items.Select(t => new SearchHitDto("template", t.Id.ToString(), t.Name, t.AuditType)));
         }
 
         if (granted.Contains(PermissionKeys.ManageUsers))
         {
-            var result = await users.SearchAsync(term, null, null, page, cancellationToken);
+            var result = await users.SearchAsync(term, null, null, pageSpec, cancellationToken);
             hits.AddRange(result.Items.Select(u => new SearchHitDto("user", u.Id.ToString(), u.DisplayName, u.Email)));
         }
 

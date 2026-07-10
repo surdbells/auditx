@@ -9,16 +9,16 @@ using AuditX.Domain.Enums;
 
 namespace AuditX.Application.Planning.Queries;
 
-public sealed record ListPlansQuery(string? Status, string? Cursor, int? Limit) : IQuery<CursorPage<PlanListItemDto>>;
+public sealed record ListPlansQuery(string? Status, int? Page, int? PageSize) : IQuery<PagedResult<PlanListItemDto>>;
 
 public sealed class ListPlansQueryHandler(IAnnualPlanRepository plans)
-    : IQueryHandler<ListPlansQuery, CursorPage<PlanListItemDto>>
+    : IQueryHandler<ListPlansQuery, PagedResult<PlanListItemDto>>
 {
-    public async Task<CursorPage<PlanListItemDto>> Handle(ListPlansQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<PlanListItemDto>> Handle(ListPlansQuery query, CancellationToken cancellationToken)
     {
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await plans.SearchAsync(query.Status, page, cancellationToken);
-        return new CursorPage<PlanListItemDto>(result.Items.Select(p => p.ToListItemDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(p => p.ToListItemDto());
     }
 }
 

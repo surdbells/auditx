@@ -156,6 +156,6 @@ export interface TemplateQuery {
   /** Backend defaults to published; pass 'all' for every state. */
   status?: TemplateStatus | 'all' | '';
   search?: string;
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }

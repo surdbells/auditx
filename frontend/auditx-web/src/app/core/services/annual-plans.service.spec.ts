@@ -54,11 +54,12 @@ describe('AnnualPlansService', () => {
   it('lists plans with a status filter and unwraps the page', () => {
     let result: { items: unknown[] } | undefined;
     service
-      .list({ status: 'submitted', limit: 20 })
+      .list({ status: 'submitted', page: 1, pageSize: 25 })
       .subscribe((page) => (result = page));
     const req = http.expectOne((r) => r.url === `${BASE}/annual-plans`);
     expect(req.request.params.get('status')).toBe('submitted');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: { items: [], total: 0, page: 1, pageSize: 25, totalPages: 1, hasPrevious: false, hasNext: false } });
     expect(result?.items.length).toBe(0);
   });
 

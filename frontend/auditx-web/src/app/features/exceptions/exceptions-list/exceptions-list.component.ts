@@ -38,6 +38,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import {
   SearchableSelectComponent,
   SelectOption,
@@ -48,11 +49,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 7;
-/** Page size while eagerly caching the plan/audit directories for the dropdowns (max allowed by the API). */
-const LOOKUP_LIMIT = 100;
-/** Safety cap so a runaway cursor never loops forever. */
-const MAX_LOOKUP_PAGES = 25;
+const DEFAULT_PAGE_SIZE = 25;
 
 /** Converts a Date to the start-of-day ISO datetime string. */
 function toIsoStart(value: Date | null): string | undefined {
@@ -96,6 +93,7 @@ function toIsoEnd(value: Date | null): string | undefined {
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './exceptions-list.component.html',
@@ -160,9 +158,11 @@ export class ExceptionsListComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly exceptions = signal<ExceptionListItem[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
   readonly exporting = signal(false);
   readonly userNames = signal<Record<string, string>>({});
   private readonly planList = signal<PlanListItem[]>([]);
@@ -196,16 +196,16 @@ export class ExceptionsListComponent {
 
   constructor() {
     this.ensureUsers();
-    this.loadPlans(null, 0);
+    this.loadPlans();
     this.loadAudits();
-    this.fetchFirstPage();
+    this.fetchPage(1);
     this.filters.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed())
-      .subscribe(() => this.fetchFirstPage());
+      .subscribe(() => this.fetchPage(1));
   }
 
   private ensureUsers(): void {
-    this.users.list({ status: 'active', limit: 200 }).subscribe({
+    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
       next: (page) => {
         this.usersCache = page.items;
         const map: Record<string, string> = {};
@@ -220,18 +220,10 @@ export class ExceptionsListComponent {
     });
   }
 
-  /** Eagerly pages the annual-plan directory into the plan dropdown. Non-fatal on error. */
-  private loadPlans(cursor: string | null, pageIndex: number): void {
-    if (pageIndex >= MAX_LOOKUP_PAGES) {
-      return;
-    }
-    this.plans.list({ limit: LOOKUP_LIMIT, cursor }).subscribe({
-      next: (page) => {
-        this.planList.update((prev) => [...prev, ...page.items]);
-        if (page.hasMore && page.nextCursor) {
-          this.loadPlans(page.nextCursor, pageIndex + 1);
-        }
-      },
+  /** Eagerly loads the annual-plan directory into the plan dropdown (one capped "load all" call). Non-fatal on error. */
+  private loadPlans(): void {
+    this.plans.list({ pageSize: 0 }).subscribe({
+      next: (result) => this.planList.set(result.items),
       error: () => undefined,
     });
   }
@@ -259,29 +251,34 @@ export class ExceptionsListComponent {
     return this.auditNames()[auditId] ?? auditId;
   }
 
-  fetchFirstPage(): void {
-    this.state.set('loading');
-    this.exceptions.set([]);
-    this.nextCursor.set(null);
-    this.query(null, (items, cursor, more) => {
-      this.exceptions.set(items);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.state.set('ready');
-    });
+  fetchPage(page: number): void {
+    this.loading.set(true);
+    this.service
+      .list({ ...this.buildFilter(), page, pageSize: this.pageSize() })
+      .subscribe({
+        next: (result) => {
+          this.exceptions.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
+          this.state.set('ready');
+          this.loading.set(false);
+        },
+        error: () => {
+          if (this.state() === 'loading') {
+            this.state.set('error');
+          }
+          this.loading.set(false);
+        },
+      });
   }
 
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.query(this.nextCursor(), (items, cursor, more) => {
-      this.exceptions.update((current) => [...current, ...items]);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.loadingMore.set(false);
-    });
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   /** The current filter selection as an ExceptionQuery (no pagination) — shared by the list query and the CSV export. */
@@ -323,28 +320,6 @@ export class ExceptionsListComponent {
       },
       error: () => this.exporting.set(false),
     });
-  }
-
-  private query(
-    cursor: string | null,
-    onSuccess: (
-      items: ExceptionListItem[],
-      cursor: string | null,
-      more: boolean,
-    ) => void,
-  ): void {
-    this.service
-      .list({ ...this.buildFilter(), cursor, limit: PAGE_SIZE })
-      .subscribe({
-        next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
-        error: () => {
-          if (cursor === null) {
-            this.state.set('error');
-          } else {
-            this.loadingMore.set(false);
-          }
-        },
-      });
   }
 
   /** The current filter selection as a JSON-safe object for a saved view (dates serialised to ISO strings). */

@@ -67,12 +67,12 @@ export class LinkFindingDialogComponent {
 
   constructor() {
     if (this.isControl) {
-      this.controls.list({ includeRetired: false, limit: 100 }).subscribe({
-        next: (page) => this.allOptions.set(page.items.map((c) => ({ value: c.id, label: `${c.code} — ${c.title}` }))),
+      this.controls.list({ includeRetired: false, pageSize: 0 }).subscribe({
+        next: (result) => this.allOptions.set(result.items.map((c) => ({ value: c.id, label: `${c.code} — ${c.title}` }))),
       });
     } else {
-      this.regulations.list({ includeRetired: false, limit: 100 }).subscribe({
-        next: (page) => this.allOptions.set(page.items.map((r) => ({ value: r.id, label: `${r.code} — ${r.name}` }))),
+      this.regulations.list({ includeRetired: false, pageSize: 0 }).subscribe({
+        next: (result) => this.allOptions.set(result.items.map((r) => ({ value: r.id, label: `${r.code} — ${r.name}` }))),
       });
     }
   }

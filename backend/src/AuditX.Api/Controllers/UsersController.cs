@@ -34,10 +34,10 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
     // display user references (owners, leads, authors, recipients) as names instead of raw ids.
     [HttpGet("directory")]
     public async Task<IActionResult> Directory(
-        [FromQuery] string? cursor,
-        [FromQuery] int? limit,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListUserDirectoryQuery(cursor, limit), cancellationToken));
+        => Envelope(await dispatcher.Query(new ListUserDirectoryQuery(page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpGet]
@@ -45,10 +45,10 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
         [FromQuery] string? search,
         [FromQuery] string? role,
         [FromQuery] string? status,
-        [FromQuery] string? cursor,
-        [FromQuery] int? limit,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListUsersQuery(search, role, status, cursor, limit), cancellationToken));
+        => Envelope(await dispatcher.Query(new ListUsersQuery(search, role, status, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpGet("{id:guid}")]

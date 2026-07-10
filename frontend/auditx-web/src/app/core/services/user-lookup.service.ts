@@ -1,21 +1,17 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { UsersService } from './users.service';
-import { CursorPage, UserDirectoryEntry } from '../models';
-
-/** Max users pulled per page while eagerly caching the directory. */
-const PAGE_LIMIT = 200;
-/** Safety cap so a runaway cursor never loops forever. */
-const MAX_PAGES = 25;
+import { UserDirectoryEntry } from '../models';
 
 /**
  * Shared, lazily-populated directory of users keyed by id.
  *
  * The first call to {@link displayName} or {@link options} kicks off a
- * fire-and-forget load of every user (paginated). It is idempotent and never
- * throws: on error the cache is simply left empty, so consumers fall back to
- * the raw id. This means a component can inject the service without forcing
- * specs to flush the `/users` GET unless they actually exercise the lookup.
+ * fire-and-forget load of every user (a single capped 'load all' page). It is
+ * idempotent and never throws: on error the cache is simply left empty, so
+ * consumers fall back to the raw id. This means a component can inject the
+ * service without forcing specs to flush the `/users` GET unless they actually
+ * exercise the lookup.
  */
 @Injectable({ providedIn: 'root' })
 export class UserLookupService {
@@ -50,15 +46,8 @@ export class UserLookupService {
       return;
     }
     this.loadStarted = true;
-    this.loadPage(null, 0);
-  }
-
-  private loadPage(cursor: string | null, pageIndex: number): void {
-    if (pageIndex >= MAX_PAGES) {
-      return;
-    }
-    this.users.directory({ limit: PAGE_LIMIT, cursor }).subscribe({
-      next: (page: CursorPage<UserDirectoryEntry>) => {
+    this.users.directory({ pageSize: 0 }).subscribe({
+      next: (page) => {
         this.usersById.update((prev) => {
           const next = new Map(prev);
           for (const u of page.items) {
@@ -66,9 +55,6 @@ export class UserLookupService {
           }
           return next;
         });
-        if (page.hasMore && page.nextCursor) {
-          this.loadPage(page.nextCursor, pageIndex + 1);
-        }
       },
       error: () => {
         // Non-fatal: leave the cache as-is; callers fall back to the raw id.

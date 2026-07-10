@@ -476,7 +476,7 @@ export class AuditExecutionComponent {
       this.openRaiseDialog(item, this.usersCache);
       return;
     }
-    this.users.list({ status: 'active', limit: 200 }).subscribe({
+    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
       next: (page) => {
         this.usersCache = page.items;
         this.openRaiseDialog(item, page.items);

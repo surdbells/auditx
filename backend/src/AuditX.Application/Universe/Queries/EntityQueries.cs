@@ -8,17 +8,17 @@ using AuditX.Domain.AuditTrail;
 
 namespace AuditX.Application.Universe.Queries;
 
-public sealed record ListEntitiesQuery(string? EntityType, Guid? Owner, bool IncludeArchived, string? Search, string? Cursor, int? Limit)
-    : IQuery<CursorPage<EntityDto>>;
+public sealed record ListEntitiesQuery(string? EntityType, Guid? Owner, bool IncludeArchived, string? Search, int? Page, int? PageSize)
+    : IQuery<PagedResult<EntityDto>>;
 
 public sealed class ListEntitiesQueryHandler(IAuditUniverseRepository entities)
-    : IQueryHandler<ListEntitiesQuery, CursorPage<EntityDto>>
+    : IQueryHandler<ListEntitiesQuery, PagedResult<EntityDto>>
 {
-    public async Task<CursorPage<EntityDto>> Handle(ListEntitiesQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<EntityDto>> Handle(ListEntitiesQuery query, CancellationToken cancellationToken)
     {
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await entities.SearchAsync(query.EntityType, query.Owner, query.IncludeArchived, query.Search, page, cancellationToken);
-        return new CursorPage<EntityDto>(result.Items.Select(e => e.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(e => e.ToDto());
     }
 }
 

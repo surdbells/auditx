@@ -19,13 +19,14 @@ describe('ControlsService', () => {
   afterEach(() => http.verify());
 
   it('lists controls with filters', () => {
-    service.list({ type: 'preventive', effectiveness: 'ineffective', includeRetired: false, search: 'wire', limit: 100 }).subscribe();
+    service.list({ type: 'preventive', effectiveness: 'ineffective', includeRetired: false, search: 'wire', page: 1, pageSize: 25 }).subscribe();
     const req = http.expectOne((r) => r.url === `${BASE}/controls`);
     expect(req.request.params.get('type')).toBe('preventive');
     expect(req.request.params.get('effectiveness')).toBe('ineffective');
     expect(req.request.params.get('includeRetired')).toBe('false');
     expect(req.request.params.get('search')).toBe('wire');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: { items: [], total: 0, page: 1, pageSize: 25, totalPages: 1, hasPrevious: false, hasNext: false } });
   });
 
   it('registers a control', () => {

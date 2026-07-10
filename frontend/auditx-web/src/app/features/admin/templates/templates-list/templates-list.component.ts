@@ -42,10 +42,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-templates-list',
@@ -66,6 +67,7 @@ const PAGE_SIZE = 7;
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
   ],
   templateUrl: './templates-list.component.html',
   styleUrl: './templates-list.component.scss',
@@ -107,9 +109,11 @@ export class TemplatesListComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly templates = signal<TemplateListItem[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly canManage = computed(() =>
     this.auth.hasPermission(Permissions.ManageTemplates),
@@ -120,59 +124,42 @@ export class TemplatesListComponent {
   );
 
   constructor() {
-    this.fetchFirstPage();
+    this.fetchPage(1);
 
     this.filters.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed())
-      .subscribe(() => this.fetchFirstPage());
+      .subscribe(() => this.fetchPage(1));
   }
 
-  fetchFirstPage(): void {
-    this.state.set('loading');
-    this.templates.set([]);
-    this.nextCursor.set(null);
-    this.query(null, (items, cursor, more) => {
-      this.templates.set(items);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.state.set('ready');
-    });
-  }
-
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.query(this.nextCursor(), (items, cursor, more) => {
-      this.templates.update((current) => [...current, ...items]);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.loadingMore.set(false);
-    });
-  }
-
-  private query(
-    cursor: string | null,
-    onSuccess: (
-      items: TemplateListItem[],
-      cursor: string | null,
-      more: boolean,
-    ) => void,
-  ): void {
+  fetchPage(page: number): void {
+    this.loading.set(true);
     const { auditType, status, search } = this.filters.getRawValue();
     this.templatesService
-      .list({ auditType, status, search, cursor, limit: PAGE_SIZE })
+      .list({ auditType, status, search, page, pageSize: this.pageSize() })
       .subscribe({
-        next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
+        next: (result) => {
+          this.templates.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
+          this.state.set('ready');
+          this.loading.set(false);
+        },
         error: () => {
-          if (cursor === null) {
+          if (this.state() === 'loading') {
             this.state.set('error');
-          } else {
-            this.loadingMore.set(false);
           }
+          this.loading.set(false);
         },
       });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   clearFilters(): void {
@@ -234,7 +221,7 @@ export class TemplatesListComponent {
                 name: template.name,
               }),
             );
-            this.fetchFirstPage();
+            this.fetchPage(this.page());
           },
         });
       });
@@ -249,7 +236,7 @@ export class TemplatesListComponent {
             name: template.name,
           }),
         );
-        this.fetchFirstPage();
+        this.fetchPage(this.page());
       },
     });
   }

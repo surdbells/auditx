@@ -83,7 +83,7 @@ export class ReportSchedulesComponent {
   constructor() {
     this.fetch();
     // Active users for the recipient picker (fire-and-forget; the dialog still works with ad-hoc emails only).
-    this.usersService.list({ status: 'active', limit: 200 }).subscribe({
+    this.usersService.list({ status: 'active', pageSize: 0 }).subscribe({
       next: (page) => this.users.set(page.items),
       error: () => undefined,
     });

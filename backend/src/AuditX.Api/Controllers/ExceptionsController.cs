@@ -37,10 +37,10 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
         [FromQuery] string? status, [FromQuery] string? severity, [FromQuery] Guid? owner, [FromQuery] Guid? entity,
         [FromQuery] Guid? audit, [FromQuery] string? category, [FromQuery] bool? recurrence, [FromQuery] bool? overdue,
         [FromQuery] string? search, [FromQuery] Guid? plan, [FromQuery] DateTimeOffset? raisedFrom, [FromQuery] DateTimeOffset? raisedTo,
-        [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
+        [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new SearchExceptionsQuery(
             status, severity, owner, entity, audit, category, recurrence, overdue, search,
-            plan, raisedFrom, raisedTo, cursor, limit), cancellationToken));
+            plan, raisedFrom, raisedTo, page, pageSize), cancellationToken));
 
     /// <summary>Cross-audit finding-register CSV export (same filters as the tracker). The SHA-256 is on the response header.</summary>
     [RequirePermission(PermissionKeys.ViewExceptions)]

@@ -32,10 +32,13 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+const DEFAULT_PAGE_SIZE = 25;
 
 /** The regulation / compliance register (P1-B): filterable list + register/edit/retire/delete. */
 @Component({
@@ -55,6 +58,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './regulation-register.component.html',
@@ -78,32 +82,55 @@ export class RegulationRegisterComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly regulations = signal<RegulationListItem[]>([]);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly canManage = computed(() => this.auth.hasPermission(Permissions.ManageControls));
   readonly isEmpty = computed(() => this.state() === 'ready' && this.regulations().length === 0);
 
   constructor() {
-    this.fetch();
-    this.filters.valueChanges.pipe(debounceTime(250), takeUntilDestroyed()).subscribe(() => this.fetch());
+    this.fetchPage(1);
+    this.filters.valueChanges.pipe(debounceTime(250), takeUntilDestroyed()).subscribe(() => this.fetchPage(1));
   }
 
-  fetch(): void {
-    this.state.set('loading');
+  fetchPage(page: number): void {
+    this.loading.set(true);
     const f = this.filters.getRawValue();
     this.service
       .list({
         category: f.category.trim() || undefined,
         includeRetired: f.includeRetired,
         search: f.search.trim() || undefined,
-        limit: 100,
+        page,
+        pageSize: this.pageSize(),
       })
       .subscribe({
-        next: (page) => {
-          this.regulations.set(page.items);
+        next: (result) => {
+          this.regulations.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
           this.state.set('ready');
+          this.loading.set(false);
         },
-        error: () => this.state.set('error'),
+        error: () => {
+          if (this.state() === 'loading') {
+            this.state.set('error');
+          }
+          this.loading.set(false);
+        },
       });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   create(): void {
@@ -118,7 +145,7 @@ export class RegulationRegisterComponent {
         this.service.register(result.body).subscribe({
           next: (r) => {
             this.notify.success(this.i18n.translate('compliance.notify.registered', { code: r.code }));
-            this.fetch();
+            this.fetchPage(this.page());
           },
         });
       });
@@ -142,7 +169,7 @@ export class RegulationRegisterComponent {
         this.service.update(result.id, result.body).subscribe({
           next: (r) => {
             this.notify.success(this.i18n.translate('compliance.notify.updated', { code: r.code }));
-            this.fetch();
+            this.fetchPage(this.page());
           },
         });
       });
@@ -154,7 +181,7 @@ export class RegulationRegisterComponent {
         this.service.setStatus(regulation.id, { isActive: !regulation.isActive, version: regulation.version }).subscribe({
           next: () => {
             this.notify.success(this.i18n.translate('compliance.notify.statusChanged'));
-            this.fetch();
+            this.fetchPage(this.page());
           },
         }),
     });
@@ -166,7 +193,7 @@ export class RegulationRegisterComponent {
         this.service.delete(regulation.id, regulation.version).subscribe({
           next: () => {
             this.notify.success(this.i18n.translate('compliance.notify.deleted'));
-            this.fetch();
+            this.fetchPage(this.page());
           },
         }),
     });

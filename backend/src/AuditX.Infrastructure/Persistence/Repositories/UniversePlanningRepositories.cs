@@ -12,8 +12,8 @@ public sealed class AuditUniverseRepository(AppDbContext db) : IAuditUniverseRep
     public Task<AuditableEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.AuditUniverseEntities.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
-    public async Task<CursorPage<AuditableEntity>> SearchAsync(
-        string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<AuditableEntity>> SearchAsync(
+        string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = (includeArchived ? db.AuditUniverseEntities.IgnoreQueryFilters() : db.AuditUniverseEntities).AsNoTracking();
 
@@ -33,19 +33,7 @@ public sealed class AuditUniverseRepository(AppDbContext db) : IAuditUniverseRep
             query = query.Where(e => e.Name.Contains(term));
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(e => e.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(e => e.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<AuditableEntity>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(e => e.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public async Task<IReadOnlyDictionary<Guid, Guid?>> GetParentMapAsync(CancellationToken cancellationToken = default)
@@ -128,7 +116,7 @@ public sealed class AnnualPlanRepository(AppDbContext db) : IAnnualPlanRepositor
     public Task<AnnualPlan?> GetByPlanItemIdAsync(Guid planItemId, CancellationToken cancellationToken = default)
         => db.AnnualPlans.Include(p => p.Items).FirstOrDefaultAsync(p => p.Items.Any(i => i.Id == planItemId), cancellationToken);
 
-    public async Task<CursorPage<AnnualPlan>> SearchAsync(string? status, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<AnnualPlan>> SearchAsync(string? status, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.AnnualPlans.AsNoTracking().Include(p => p.Items).AsQueryable();
 
@@ -141,39 +129,15 @@ public sealed class AnnualPlanRepository(AppDbContext db) : IAnnualPlanRepositor
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(p => p.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(p => p.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<AnnualPlan>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(p => p.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
-    public async Task<CursorPage<AnnualPlan>> SearchByLabelAsync(string term, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<AnnualPlan>> SearchByLabelAsync(string term, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.AnnualPlans.AsNoTracking()
             .Where(p => p.PeriodLabel.Contains(term));
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(p => p.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(p => p.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<AnnualPlan>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(p => p.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public Task<bool> AnyOverlappingAsync(DateOnly periodStart, DateOnly periodEnd, Guid? excludePlanId, CancellationToken cancellationToken = default)

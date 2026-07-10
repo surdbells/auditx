@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { ExceptionsListComponent } from './exceptions-list.component';
 import { provideTestEnv } from '../../../../testing/test-providers';
-import { ExceptionListItem } from '../../../core/models';
+import { ExceptionListItem, PagedResult } from '../../../core/models';
 
 const BASE = '/api/v1';
 
@@ -25,12 +25,30 @@ function item(overrides: Partial<ExceptionListItem> = {}): ExceptionListItem {
   };
 }
 
+function page(
+  items: ExceptionListItem[],
+  total = items.length,
+  pageNum = 1,
+  pageSize = 25,
+): PagedResult<ExceptionListItem> {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    items,
+    total,
+    page: pageNum,
+    pageSize,
+    totalPages,
+    hasPrevious: pageNum > 1,
+    hasNext: pageNum < totalPages,
+  };
+}
+
 describe('ExceptionsListComponent', () => {
   let fixture: ComponentFixture<ExceptionsListComponent>;
   let component: ExceptionsListComponent;
   let http: HttpTestingController;
 
-  async function setup(): Promise<void> {
+  async function setup(total = 50): Promise<void> {
     TestBed.configureTestingModule({
       imports: [ExceptionsListComponent],
       providers: [provideTestEnv(), provideRouter([])],
@@ -50,7 +68,7 @@ describe('ExceptionsListComponent', () => {
         hasMore: false,
       },
     });
-    // The plan + audit directories back the dropdown filters (+ audit-name column).
+    // The plan directory backs the plan dropdown filter (still cursor-paged).
     http.expectOne((r) => r.url === `${BASE}/annual-plans`).flush({
       data: {
         items: [{ id: 'p-1', periodLabel: 'FY2026' }],
@@ -58,19 +76,22 @@ describe('ExceptionsListComponent', () => {
         hasMore: false,
       },
     });
+    // The audit directory backs the audit dropdown filter (+ audit-name column) — one capped "load all".
     http.expectOne((r) => r.url === `${BASE}/audits`).flush({
       data: {
         items: [{ id: 'a-1', name: 'Treasury Controls Audit' }],
-        nextCursor: null,
-        hasMore: false,
+        total: 1,
+        page: 1,
+        pageSize: 5000,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
       },
     });
     // The first page of exceptions.
     http
       .expectOne((r) => r.url === `${BASE}/exceptions`)
-      .flush({
-        data: { items: [item()], nextCursor: 'c2', hasMore: true },
-      });
+      .flush({ data: page([item()], total) });
     // The saved-views bar loads this screen's views on init.
     http.expectOne((r) => r.url === `${BASE}/saved-views`).flush({ data: [] });
     fixture.detectChanges();
@@ -83,34 +104,45 @@ describe('ExceptionsListComponent', () => {
     await setup();
     expect(component.state()).toBe('ready');
     expect(component.exceptions().length).toBe(1);
-    expect(component.hasMore()).toBe(true);
+    expect(component.total()).toBe(50);
     expect(component.nameOf('u-owner')).toBe('Olive Owner');
   });
 
-  it('appends a second page on load more', async () => {
+  it('navigates to another page via the paginator, carrying page + pageSize', async () => {
     await setup();
-    component.loadMore();
+    component.onPageChange(2);
 
     const req = http.expectOne((r) => r.url === `${BASE}/exceptions`);
-    expect(req.request.params.get('cursor')).toBe('c2');
-    req.flush({
-      data: { items: [item({ id: 'x-2' })], nextCursor: null, hasMore: false },
-    });
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: page([item({ id: 'x-2' })], 50, 2) });
 
-    expect(component.exceptions().length).toBe(2);
-    expect(component.hasMore()).toBe(false);
+    expect(component.exceptions().map((e) => e.id)).toEqual(['x-2']);
+    expect(component.page()).toBe(2);
+  });
+
+  it('changing the page size re-queries from page 1', async () => {
+    await setup();
+    component.onPageSizeChange(100);
+
+    const req = http.expectOne((r) => r.url === `${BASE}/exceptions`);
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('100');
+    req.flush({ data: page([item()], 50, 1, 100) });
+
+    expect(component.pageSize()).toBe(100);
   });
 
   it('sends overdue and recurrence filters to the query', async () => {
     await setup();
     component.filters.patchValue({ overdue: 'yes', recurrence: 'no' });
     // Re-query directly (the form's valueChanges is debounced).
-    component.fetchFirstPage();
+    component.fetchPage(1);
 
     const req = http.expectOne((r) => r.url === `${BASE}/exceptions`);
     expect(req.request.params.get('overdue')).toBe('true');
     expect(req.request.params.get('recurrence')).toBe('false');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    req.flush({ data: page([]) });
     expect(component.exceptions().length).toBe(0);
   });
 
@@ -123,7 +155,7 @@ describe('ExceptionsListComponent', () => {
       raisedFrom: new Date(2026, 0, 1),
       raisedTo: new Date(2026, 2, 31),
     });
-    component.fetchFirstPage();
+    component.fetchPage(1);
 
     const req = http.expectOne((r) => r.url === `${BASE}/exceptions`);
     expect(req.request.params.get('search')).toBe('wire transfer');
@@ -132,7 +164,7 @@ describe('ExceptionsListComponent', () => {
     // Dates are serialized to ISO datetimes (exact value is timezone-dependent).
     expect(req.request.params.get('raisedFrom')).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(req.request.params.get('raisedTo')).toMatch(/^\d{4}-\d{2}-\d{2}T/);
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    req.flush({ data: page([]) });
     expect(component.exceptions().length).toBe(0);
   });
 
@@ -171,9 +203,7 @@ describe('ExceptionsListComponent', () => {
     expect(restored.raisedFrom instanceof Date).toBe(true);
 
     // patchValue's debounced watcher issues a refetch — satisfy it so http.verify() passes.
-    component.fetchFirstPage();
-    http.expectOne((r) => r.url === `${BASE}/exceptions`).flush({
-      data: { items: [], nextCursor: null, hasMore: false },
-    });
+    component.fetchPage(1);
+    http.expectOne((r) => r.url === `${BASE}/exceptions`).flush({ data: page([]) });
   });
 });

@@ -101,6 +101,6 @@ export interface RiskQuery {
   band?: RiskBand;
   includeClosed?: boolean;
   search?: string;
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }

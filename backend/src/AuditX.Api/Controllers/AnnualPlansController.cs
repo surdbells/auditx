@@ -15,8 +15,8 @@ public sealed class AnnualPlansController(IDispatcher dispatcher) : ApiControlle
 {
     [RequirePermission(PermissionKeys.ViewPlan)]
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListPlansQuery(status, cursor, limit), cancellationToken));
+    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListPlansQuery(status, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewPlan)]
     [HttpGet("{id:guid}")]

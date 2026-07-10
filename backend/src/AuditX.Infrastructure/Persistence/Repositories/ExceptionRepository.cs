@@ -122,23 +122,10 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
             .AsAsyncEnumerable();
     }
 
-    public async Task<CursorPage<AuditException>> SearchAsync(ExceptionSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<AuditException>> SearchAsync(ExceptionSearchFilter filter, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = ApplyFilter(db.Exceptions.AsNoTracking(), filter);
-
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(e => e.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(e => e.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<AuditException>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(e => e.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public async Task<AuditException?> FindClosedForRecurrenceAsync(Guid auditableEntityId, string? category, DateTimeOffset sinceUtc, CancellationToken cancellationToken = default)

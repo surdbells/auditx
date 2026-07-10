@@ -19,12 +19,13 @@ describe('RegulationsService', () => {
   afterEach(() => http.verify());
 
   it('lists regulations with filters', () => {
-    service.list({ category: 'AML', includeRetired: false, search: 'cbn', limit: 100 }).subscribe();
+    service.list({ category: 'AML', includeRetired: false, search: 'cbn', page: 1, pageSize: 25 }).subscribe();
     const req = http.expectOne((r) => r.url === `${BASE}/regulations`);
     expect(req.request.params.get('category')).toBe('AML');
     expect(req.request.params.get('includeRetired')).toBe('false');
     expect(req.request.params.get('search')).toBe('cbn');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: { items: [], total: 0, page: 1, pageSize: 25, totalPages: 1, hasPrevious: false, hasNext: false } });
   });
 
   it('registers a regulation', () => {

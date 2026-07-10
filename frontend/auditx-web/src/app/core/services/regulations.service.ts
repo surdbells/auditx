@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ApiService } from './api.service';
 import {
-  CursorPage,
+  PagedResult,
   Regulation,
   RegulationListItem,
   RegulationQuery,
@@ -17,13 +17,13 @@ import {
 export class RegulationsService {
   private readonly api = inject(ApiService);
 
-  list(query: RegulationQuery): Observable<CursorPage<RegulationListItem>> {
-    return this.api.get<CursorPage<RegulationListItem>>('/regulations', {
+  list(query: RegulationQuery): Observable<PagedResult<RegulationListItem>> {
+    return this.api.get<PagedResult<RegulationListItem>>('/regulations', {
       category: query.category,
       includeRetired: query.includeRetired,
       search: query.search,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 

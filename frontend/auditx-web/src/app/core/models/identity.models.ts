@@ -144,6 +144,6 @@ export interface UserQuery {
   search?: string;
   role?: string;
   status?: UserStatus | '';
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }

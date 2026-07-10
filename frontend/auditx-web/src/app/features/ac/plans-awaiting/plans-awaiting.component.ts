@@ -81,7 +81,7 @@ export class AcPlansAwaitingComponent {
     // The plans list filters by a single status, so fetch each awaiting bucket.
     forkJoin(
       AWAITING.map((status) =>
-        this.service.list({ status, limit: 50 }),
+        this.service.list({ status, pageSize: 0 }),
       ),
     ).subscribe({
       next: (pages) => {

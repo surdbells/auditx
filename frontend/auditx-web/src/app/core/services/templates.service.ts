@@ -9,7 +9,7 @@ import {
   CloneTemplateRequest,
   CreateSectionRequest,
   CreateTemplateRequest,
-  CursorPage,
+  PagedResult,
   PendingActionDto,
   RenameSectionRequest,
   ReorderItemsRequest,
@@ -38,13 +38,13 @@ export class TemplatesService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiBaseUrl;
 
-  list(query: TemplateQuery): Observable<CursorPage<TemplateListItem>> {
-    return this.api.get<CursorPage<TemplateListItem>>('/templates', {
+  list(query: TemplateQuery): Observable<PagedResult<TemplateListItem>> {
+    return this.api.get<PagedResult<TemplateListItem>>('/templates', {
       auditType: query.auditType,
       status: query.status,
       search: query.search,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 

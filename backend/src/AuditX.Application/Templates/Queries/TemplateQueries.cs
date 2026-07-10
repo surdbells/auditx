@@ -11,13 +11,13 @@ using AuditX.Domain.Templates;
 namespace AuditX.Application.Templates.Queries;
 
 /// <summary>List templates. Defaults to Published only; pass status="all" to include every state (US-M2-017).</summary>
-public sealed record ListTemplatesQuery(string? AuditType, string? Status, string? Search, string? Cursor, int? Limit)
-    : IQuery<CursorPage<TemplateListItemDto>>;
+public sealed record ListTemplatesQuery(string? AuditType, string? Status, string? Search, int? Page, int? PageSize)
+    : IQuery<PagedResult<TemplateListItemDto>>;
 
 public sealed class ListTemplatesQueryHandler(ITemplateRepository templates)
-    : IQueryHandler<ListTemplatesQuery, CursorPage<TemplateListItemDto>>
+    : IQueryHandler<ListTemplatesQuery, PagedResult<TemplateListItemDto>>
 {
-    public async Task<CursorPage<TemplateListItemDto>> Handle(ListTemplatesQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<TemplateListItemDto>> Handle(ListTemplatesQuery query, CancellationToken cancellationToken)
     {
         TemplateStatus? status;
         if (string.IsNullOrWhiteSpace(query.Status))
@@ -37,9 +37,9 @@ public sealed class ListTemplatesQueryHandler(ITemplateRepository templates)
             throw new ConflictException("invalid_status", $"Unknown template status '{query.Status}'.");
         }
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await templates.SearchAsync(query.AuditType, status, query.Search, page, cancellationToken);
-        return new CursorPage<TemplateListItemDto>(result.Items.Select(t => t.ToListItemDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(t => t.ToListItemDto());
     }
 }
 

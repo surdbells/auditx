@@ -40,12 +40,13 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 /** Heat-map band keyed off a composite residual score (typical scale 1–5). */
 export type HeatBand = 'none' | 'low' | 'moderate' | 'high' | 'critical';
@@ -71,6 +72,7 @@ export type HeatBand = 'none' | 'low' | 'moderate' | 'high' | 'critical';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './entities-list.component.html',
@@ -106,9 +108,11 @@ export class EntitiesListComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly entities = signal<EntityListItem[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly canManage = computed(() =>
     this.auth.hasPermission(Permissions.ManageUniverse),
@@ -126,11 +130,11 @@ export class EntitiesListComponent {
 
   constructor() {
     this.loadEntityTypes();
-    this.fetchFirstPage();
+    this.fetchPage(1);
 
     this.filters.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed())
-      .subscribe(() => this.fetchFirstPage());
+      .subscribe(() => this.fetchPage(1));
   }
 
   private loadEntityTypes(): void {
@@ -142,39 +146,8 @@ export class EntitiesListComponent {
     });
   }
 
-  fetchFirstPage(): void {
-    this.state.set('loading');
-    this.entities.set([]);
-    this.nextCursor.set(null);
-    this.query(null, (items, cursor, more) => {
-      this.entities.set(items);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.state.set('ready');
-    });
-  }
-
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.query(this.nextCursor(), (items, cursor, more) => {
-      this.entities.update((current) => [...current, ...items]);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.loadingMore.set(false);
-    });
-  }
-
-  private query(
-    cursor: string | null,
-    onSuccess: (
-      items: EntityListItem[],
-      cursor: string | null,
-      more: boolean,
-    ) => void,
-  ): void {
+  fetchPage(page: number): void {
+    this.loading.set(true);
     const { entityType, owner, search, archived } = this.filters.getRawValue();
     this.universe
       .list({
@@ -182,19 +155,33 @@ export class EntitiesListComponent {
         owner,
         search,
         archived: archived ? true : undefined,
-        cursor,
-        limit: PAGE_SIZE,
+        page,
+        pageSize: this.pageSize(),
       })
       .subscribe({
-        next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
+        next: (result) => {
+          this.entities.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
+          this.state.set('ready');
+          this.loading.set(false);
+        },
         error: () => {
-          if (cursor === null) {
+          if (this.state() === 'loading') {
             this.state.set('error');
-          } else {
-            this.loadingMore.set(false);
           }
+          this.loading.set(false);
         },
       });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   clearFilters(): void {
@@ -233,7 +220,7 @@ export class EntitiesListComponent {
       .afterClosed()
       .subscribe((changed) => {
         if (changed) {
-          this.fetchFirstPage();
+          this.fetchPage(this.page());
         }
       });
   }
@@ -252,7 +239,7 @@ export class EntitiesListComponent {
       .afterClosed()
       .subscribe((changed) => {
         if (changed) {
-          this.fetchFirstPage();
+          this.fetchPage(this.page());
         }
       });
   }
@@ -266,7 +253,7 @@ export class EntitiesListComponent {
           this.notify.success(
             this.i18n.translate('universe.notify.imported', { count: created }),
           );
-          this.fetchFirstPage();
+          this.fetchPage(this.page());
         }
       });
   }
@@ -295,7 +282,7 @@ export class EntitiesListComponent {
                 name: entity.name,
               }),
             );
-            this.fetchFirstPage();
+            this.fetchPage(this.page());
           },
         });
       });

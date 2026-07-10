@@ -4,10 +4,10 @@ import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   CreateDelegationRequest,
-  CursorPage,
   DelegationDto,
   GrantRoleRequest,
   NotificationPreferencesRequest,
+  PagedResult,
   UserDetailDto,
   UserDirectoryEntry,
   UserDto,
@@ -29,21 +29,21 @@ export class UsersService {
     return this.api.patchVoid('/users/me/notification-preferences', body);
   }
 
-  list(query: UserQuery): Observable<CursorPage<UserDto>> {
-    return this.api.get<CursorPage<UserDto>>('/users', {
+  list(query: UserQuery): Observable<PagedResult<UserDto>> {
+    return this.api.get<PagedResult<UserDto>>('/users', {
       search: query.search,
       role: query.role,
       status: query.status,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 
   /** Authenticated-only id→name directory (no admin permission required) for resolving user references. */
-  directory(query: { cursor?: string | null; limit?: number } = {}): Observable<CursorPage<UserDirectoryEntry>> {
-    return this.api.get<CursorPage<UserDirectoryEntry>>('/users/directory', {
-      cursor: query.cursor,
-      limit: query.limit,
+  directory(query: { page?: number; pageSize?: number } = {}): Observable<PagedResult<UserDirectoryEntry>> {
+    return this.api.get<PagedResult<UserDirectoryEntry>>('/users/directory', {
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 

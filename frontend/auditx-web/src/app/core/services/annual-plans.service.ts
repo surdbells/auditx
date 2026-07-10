@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   AddPlanItemRequest,
-  CursorPage,
+  PagedResult,
   Plan,
   PlanDecisionRequest,
   PlanExecution,
@@ -22,11 +22,11 @@ import {
 export class AnnualPlansService {
   private readonly api = inject(ApiService);
 
-  list(query: PlanQuery): Observable<CursorPage<PlanListItem>> {
-    return this.api.get<CursorPage<PlanListItem>>('/annual-plans', {
+  list(query: PlanQuery): Observable<PagedResult<PlanListItem>> {
+    return this.api.get<PagedResult<PlanListItem>>('/annual-plans', {
       status: query.status,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 

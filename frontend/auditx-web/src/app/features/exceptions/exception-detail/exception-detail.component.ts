@@ -243,7 +243,7 @@ export class ExceptionDetailComponent {
       this.indexUsers(this.usersCache);
       return;
     }
-    this.users.list({ status: 'active', limit: 200 }).subscribe({
+    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
       next: (page) => {
         this.usersCache = page.items;
         this.indexUsers(page.items);

@@ -23,10 +23,10 @@ public sealed class TemplatesController(IDispatcher dispatcher) : ApiControllerB
         [FromQuery] string? auditType,
         [FromQuery] string? status,
         [FromQuery] string? search,
-        [FromQuery] string? cursor,
-        [FromQuery] int? limit,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListTemplatesQuery(auditType, status, search, cursor, limit), cancellationToken));
+        => Envelope(await dispatcher.Query(new ListTemplatesQuery(auditType, status, search, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewTemplates)]
     [HttpGet("{id:guid}")]

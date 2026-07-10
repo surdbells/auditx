@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { UsersListComponent } from './users-list.component';
 import { provideTestEnv } from '../../../../../testing/test-providers';
-import { CursorPage, RoleDto, UserDto } from '../../../../core/models';
+import { PagedResult, RoleDto, UserDto } from '../../../../core/models';
 
 const BASE = '/api/v1';
 
@@ -20,8 +20,22 @@ function user(id: string, name: string): UserDto {
   };
 }
 
-function page(items: UserDto[], hasMore = false): CursorPage<UserDto> {
-  return { items, nextCursor: hasMore ? 'cursor-2' : null, hasMore };
+function page(
+  items: UserDto[],
+  total = items.length,
+  pageNum = 1,
+  pageSize = 25,
+): PagedResult<UserDto> {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    items,
+    total,
+    page: pageNum,
+    pageSize,
+    totalPages,
+    hasPrevious: pageNum > 1,
+    hasNext: pageNum < totalPages,
+  };
 }
 
 describe('UsersListComponent', () => {
@@ -29,11 +43,11 @@ describe('UsersListComponent', () => {
   let component: UsersListComponent;
   let http: HttpTestingController;
 
-  function flushInitial(users: UserDto[], roles: RoleDto[] = [], hasMore = false): void {
+  function flushInitial(users: UserDto[], roles: RoleDto[] = [], total = users.length): void {
     // roles request (filter dropdown)
     http.expectOne((r) => r.url === `${BASE}/roles`).flush({ data: roles });
     // first page of users
-    http.expectOne((r) => r.url === `${BASE}/users`).flush({ data: page(users, hasMore) });
+    http.expectOne((r) => r.url === `${BASE}/users`).flush({ data: page(users, total) });
   }
 
   beforeEach(async () => {
@@ -56,6 +70,7 @@ describe('UsersListComponent', () => {
     fixture.detectChanges();
 
     expect(component.users().length).toBe(2);
+    expect(component.total()).toBe(2);
     expect(component.state()).toBe('ready');
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -73,20 +88,19 @@ describe('UsersListComponent', () => {
     expect(text).toContain('No users found');
   });
 
-  it('appends results when loadMore is invoked', async () => {
-    flushInitial([user('1', 'Alice')], [], true);
+  it('navigates to another page via the paginator, carrying page + pageSize', async () => {
+    flushInitial([user('1', 'Alice')], [], 50);
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(component.hasMore()).toBe(true);
-
-    component.loadMore();
+    component.onPageChange(2);
     const req = http.expectOne((r) => r.url === `${BASE}/users`);
-    expect(req.request.params.get('cursor')).toBe('cursor-2');
-    req.flush({ data: page([user('2', 'Bob')], false) });
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: page([user('2', 'Bob')], 50, 2) });
 
-    expect(component.users().length).toBe(2);
-    expect(component.hasMore()).toBe(false);
+    expect(component.users().map((u) => u.id)).toEqual(['2']);
+    expect(component.page()).toBe(2);
   });
 
   it('enters the error state when the first page fails', async () => {

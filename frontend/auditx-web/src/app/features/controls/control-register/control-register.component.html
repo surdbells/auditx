@@ -50,7 +50,7 @@
     <app-loading [message]="'control.list.loading' | t" />
   }
   @case ('error') {
-    <app-error-state [message]="'control.list.error' | t" (retry)="fetch()" />
+    <app-error-state [message]="'control.list.error' | t" (retry)="fetchPage(1)" />
   }
   @case ('ready') {
     @if (isEmpty()) {
@@ -131,6 +131,15 @@
             <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
           </table>
         </div>
+
+        <app-paginator
+          [total]="total()"
+          [page]="page()"
+          [pageSize]="pageSize()"
+          [disabled]="loading()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
       </mat-card>
     }
   }

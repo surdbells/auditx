@@ -66,7 +66,7 @@
   @case ('error') {
     <app-error-state
       [message]="'universe.error.load' | t"
-      (retry)="fetchFirstPage()"
+      (retry)="fetchPage(1)"
     />
   }
   @case ('ready') {
@@ -163,18 +163,14 @@
           </table>
         </div>
 
-        @if (hasMore()) {
-          <div class="entities__load-more">
-            <button
-              matButton="outlined"
-              type="button"
-              (click)="loadMore()"
-              [disabled]="loadingMore()"
-            >
-              {{ loadingMore() ? ('universe.actions.loading' | t) : ('universe.actions.loadMore' | t) }}
-            </button>
-          </div>
-        }
+        <app-paginator
+          [total]="total()"
+          [page]="page()"
+          [pageSize]="pageSize()"
+          [disabled]="loading()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
       </mat-card>
     }
   }

@@ -8,13 +8,13 @@ using AuditX.Application.Risks.Mapping;
 namespace AuditX.Application.Risks.Queries;
 
 public sealed record ListRisksQuery(
-    string? Status, string? Category, Guid? Owner, string? Band, bool IncludeClosed, string? Search, string? Cursor, int? Limit)
-    : IQuery<CursorPage<RiskListItemDto>>;
+    string? Status, string? Category, Guid? Owner, string? Band, bool IncludeClosed, string? Search, int? Page, int? PageSize)
+    : IQuery<PagedResult<RiskListItemDto>>;
 
 public sealed class ListRisksQueryHandler(IRiskRepository risks)
-    : IQueryHandler<ListRisksQuery, CursorPage<RiskListItemDto>>
+    : IQueryHandler<ListRisksQuery, PagedResult<RiskListItemDto>>
 {
-    public async Task<CursorPage<RiskListItemDto>> Handle(ListRisksQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<RiskListItemDto>> Handle(ListRisksQuery query, CancellationToken cancellationToken)
     {
         var filter = new RiskSearchFilter(
             RiskParsing.ParseStatusFilter(query.Status),
@@ -24,8 +24,8 @@ public sealed class ListRisksQueryHandler(IRiskRepository risks)
             query.IncludeClosed,
             query.Search);
 
-        var page = await risks.SearchAsync(filter, PageRequest.Of(query.Cursor, query.Limit), cancellationToken);
-        return new CursorPage<RiskListItemDto>(page.Items.Select(r => r.ToListItemDto()).ToArray(), page.NextCursor, page.HasMore);
+        var result = await risks.SearchAsync(filter, PageSpec.Of(query.Page, query.PageSize), cancellationToken);
+        return result.Map(r => r.ToListItemDto());
     }
 }
 

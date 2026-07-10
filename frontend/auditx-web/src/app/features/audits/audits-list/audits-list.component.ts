@@ -232,7 +232,7 @@ export class AuditsListComponent {
         openDialog(users, this.templatesCache);
         return;
       }
-      this.templates.list({ status: 'published', limit: 200 }).subscribe({
+      this.templates.list({ status: 'published', pageSize: 0 }).subscribe({
         next: (page) => {
           this.templatesCache = page.items;
           openDialog(users, page.items);
@@ -245,7 +245,7 @@ export class AuditsListComponent {
       withTemplates(this.usersCache);
       return;
     }
-    this.users.list({ status: 'active', limit: 200 }).subscribe({
+    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
       next: (page) => {
         this.usersCache = page.items;
         withTemplates(page.items);

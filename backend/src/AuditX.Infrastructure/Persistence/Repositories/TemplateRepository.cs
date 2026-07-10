@@ -18,11 +18,11 @@ public sealed class TemplateRepository(AppDbContext db) : ITemplateRepository
     public Task<Template?> GetByNameAndTypeAsync(string name, string auditType, CancellationToken cancellationToken = default)
         => db.Templates.FirstOrDefaultAsync(t => t.Name == name && t.AuditType == auditType, cancellationToken);
 
-    public async Task<CursorPage<Template>> SearchAsync(
+    public async Task<PagedResult<Template>> SearchAsync(
         string? auditType,
         TemplateStatus? status,
         string? search,
-        PageRequest page,
+        PageSpec page,
         CancellationToken cancellationToken = default)
     {
         var query = db.Templates.AsNoTracking().Include(t => t.Items).AsQueryable();
@@ -43,21 +43,7 @@ public sealed class TemplateRepository(AppDbContext db) : ITemplateRepository
             query = query.Where(t => t.Name.Contains(term) || t.Description.Contains(term));
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(t => t.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(t => t.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        var nextCursor = hasMore ? items[^1].Id.ToString() : null;
-        return new CursorPage<Template>(items, nextCursor, hasMore);
+        return await query.OrderBy(t => t.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public void Add(Template template) => db.Templates.Add(template);

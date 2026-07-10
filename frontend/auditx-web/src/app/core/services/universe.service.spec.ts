@@ -41,14 +41,15 @@ describe('UniverseService', () => {
   it('lists entities with query params and unwraps the page', () => {
     let result: { items: unknown[] } | undefined;
     service
-      .list({ entityType: 'Process', search: 'wire', archived: false, limit: 20 })
+      .list({ entityType: 'Process', search: 'wire', archived: false, page: 1, pageSize: 25 })
       .subscribe((page) => (result = page));
 
     const req = http.expectOne((r) => r.url === `${BASE}/audit-universe/entities`);
     expect(req.request.params.get('entityType')).toBe('Process');
     expect(req.request.params.get('search')).toBe('wire');
     expect(req.request.params.get('archived')).toBe('false');
-    req.flush({ data: { items: [entity()], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: { items: [entity()], total: 1, page: 1, pageSize: 25, totalPages: 1, hasPrevious: false, hasNext: false } });
 
     expect(result?.items.length).toBe(1);
   });

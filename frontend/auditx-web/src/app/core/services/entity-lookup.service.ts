@@ -1,12 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { UniverseService } from './universe.service';
-import { CursorPage, EntityListItem } from '../models';
-
-/** Max entities pulled per page while eagerly caching the universe. */
-const PAGE_LIMIT = 200;
-/** Safety cap so a runaway cursor never loops forever. */
-const MAX_PAGES = 25;
+import { EntityListItem } from '../models';
 
 /**
  * Shared, lazily-populated directory of auditable entities keyed by id.
@@ -49,25 +44,19 @@ export class EntityLookupService {
       return;
     }
     this.loadStarted = true;
-    this.loadPage(null, 0);
+    this.loadPage();
   }
 
-  private loadPage(cursor: string | null, pageIndex: number): void {
-    if (pageIndex >= MAX_PAGES) {
-      return;
-    }
-    this.universe.list({ limit: PAGE_LIMIT, cursor }).subscribe({
-      next: (page: CursorPage<EntityListItem>) => {
+  private loadPage(): void {
+    this.universe.list({ pageSize: 0 }).subscribe({
+      next: (result) => {
         this.entitiesById.update((prev) => {
           const next = new Map(prev);
-          for (const e of page.items) {
+          for (const e of result.items) {
             next.set(e.id, e);
           }
           return next;
         });
-        if (page.hasMore && page.nextCursor) {
-          this.loadPage(page.nextCursor, pageIndex + 1);
-        }
       },
       error: () => {
         // Non-fatal: leave the cache as-is; callers fall back to the raw id.

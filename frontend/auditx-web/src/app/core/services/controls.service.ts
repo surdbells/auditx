@@ -6,7 +6,7 @@ import {
   Control,
   ControlListItem,
   ControlQuery,
-  CursorPage,
+  PagedResult,
   RegisterControlRequest,
   SetControlStatusRequest,
   UpdateControlRequest,
@@ -17,15 +17,15 @@ import {
 export class ControlsService {
   private readonly api = inject(ApiService);
 
-  list(query: ControlQuery): Observable<CursorPage<ControlListItem>> {
-    return this.api.get<CursorPage<ControlListItem>>('/controls', {
+  list(query: ControlQuery): Observable<PagedResult<ControlListItem>> {
+    return this.api.get<PagedResult<ControlListItem>>('/controls', {
       type: query.type,
       effectiveness: query.effectiveness,
       owner: query.owner,
       includeRetired: query.includeRetired,
       search: query.search,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 

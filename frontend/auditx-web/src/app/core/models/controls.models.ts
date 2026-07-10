@@ -100,8 +100,8 @@ export interface ControlQuery {
   owner?: string;
   includeRetired?: boolean;
   search?: string;
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 /* ---- Regulation / compliance register ---- */
@@ -151,8 +151,8 @@ export interface RegulationQuery {
   category?: string;
   includeRetired?: boolean;
   search?: string;
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 /* ---- Finding <-> control / regulation links ---- */

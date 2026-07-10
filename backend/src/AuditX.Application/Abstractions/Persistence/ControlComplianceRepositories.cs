@@ -17,7 +17,7 @@ public interface IControlRepository
 {
     Task<Control?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<Control>> SearchAsync(ControlSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<Control>> SearchAsync(ControlSearchFilter filter, PageSpec page, CancellationToken cancellationToken = default);
 
     /// <summary>True if another live control already uses this code (unique business key).</summary>
     Task<bool> CodeExistsAsync(string code, Guid? excludingId, CancellationToken cancellationToken = default);
@@ -35,7 +35,7 @@ public interface IRegulationRepository
 {
     Task<Regulation?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<Regulation>> SearchAsync(RegulationSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<Regulation>> SearchAsync(RegulationSearchFilter filter, PageSpec page, CancellationToken cancellationToken = default);
 
     Task<bool> CodeExistsAsync(string code, Guid? excludingId, CancellationToken cancellationToken = default);
 

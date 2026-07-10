@@ -40,14 +40,15 @@ describe('TemplatesService', () => {
   it('lists templates with query params and unwraps the page', () => {
     let result: { items: unknown[] } | undefined;
     service
-      .list({ auditType: 'AML', status: 'all', search: 'x', limit: 20 })
+      .list({ auditType: 'AML', status: 'all', search: 'x', page: 1, pageSize: 25 })
       .subscribe((page) => (result = page));
 
     const req = http.expectOne((r) => r.url === `${BASE}/templates`);
     expect(req.request.params.get('auditType')).toBe('AML');
     expect(req.request.params.get('status')).toBe('all');
     expect(req.request.params.get('search')).toBe('x');
-    req.flush({ data: { items: [template()], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: { items: [template()], total: 1, page: 1, pageSize: 25, totalPages: 1, hasPrevious: false, hasNext: false } });
 
     expect(result?.items.length).toBe(1);
   });

@@ -141,6 +141,6 @@ export interface PlanDecisionRequest {
 
 export interface PlanQuery {
   status?: PlanStatus | '';
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }

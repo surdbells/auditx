@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { TemplatesListComponent } from './templates-list.component';
 import { provideTestEnv } from '../../../../../testing/test-providers';
 import { AuthService } from '../../../../core/services/auth.service';
-import { CursorPage, SessionDto, TemplateListItem } from '../../../../core/models';
+import { PagedResult, SessionDto, TemplateListItem } from '../../../../core/models';
 
 const BASE = '/api/v1';
 
@@ -23,9 +23,20 @@ function item(id: string, name: string): TemplateListItem {
 
 function page(
   items: TemplateListItem[],
-  hasMore = false,
-): CursorPage<TemplateListItem> {
-  return { items, nextCursor: hasMore ? 'cursor-2' : null, hasMore };
+  total = items.length,
+  pageNum = 1,
+  pageSize = 25,
+): PagedResult<TemplateListItem> {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    items,
+    total,
+    page: pageNum,
+    pageSize,
+    totalPages,
+    hasPrevious: pageNum > 1,
+    hasNext: pageNum < totalPages,
+  };
 }
 
 function session(permissions: string[]): SessionDto {
@@ -106,22 +117,38 @@ describe('TemplatesListComponent', () => {
     expect(text).toContain('No templates found');
   });
 
-  it('appends results when loadMore is invoked', async () => {
+  it('navigates to another page via the paginator, carrying page + pageSize', async () => {
     setup();
     http
       .expectOne((r) => r.url === `${BASE}/templates`)
-      .flush({ data: page([item('1', 'AML Review')], true) });
+      .flush({ data: page([item('1', 'AML Review')], 50) }); // total 50 → more pages
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(component.hasMore()).toBe(true);
-    component.loadMore();
+    component.onPageChange(2);
     const req = http.expectOne((r) => r.url === `${BASE}/templates`);
-    expect(req.request.params.get('cursor')).toBe('cursor-2');
-    req.flush({ data: page([item('2', 'IT Audit')], false) });
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: page([item('2', 'IT Audit')], 50, 2) });
 
-    expect(component.templates().length).toBe(2);
-    expect(component.hasMore()).toBe(false);
+    expect(component.templates().map((t) => t.id)).toEqual(['2']);
+    expect(component.page()).toBe(2);
+  });
+
+  it('changing the page size re-queries from page 1', async () => {
+    setup();
+    http
+      .expectOne((r) => r.url === `${BASE}/templates`)
+      .flush({ data: page([item('1', 'AML Review')], 50) });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.onPageSizeChange(100);
+    const req = http.expectOne((r) => r.url === `${BASE}/templates`);
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('100');
+    req.flush({ data: page([item('1', 'AML Review')], 50, 1, 100) });
+    expect(component.pageSize()).toBe(100);
   });
 
   it('enters the error state when the first page fails', async () => {

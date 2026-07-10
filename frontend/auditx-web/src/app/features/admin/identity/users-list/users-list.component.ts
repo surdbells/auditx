@@ -36,13 +36,14 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 import { UserStatusLabelPipe } from '../../../../shared/pipes/user-status-label.pipe';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-users-list',
@@ -64,6 +65,7 @@ const PAGE_SIZE = 7;
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     UserStatusLabelPipe,
     TranslatePipe,
   ],
@@ -103,9 +105,11 @@ export class UsersListComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly users = signal<UserDto[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
   readonly roles = signal<RoleDto[]>([]);
 
   readonly isEmpty = computed(
@@ -124,12 +128,12 @@ export class UsersListComponent {
 
   constructor() {
     this.loadRoles();
-    this.fetchFirstPage();
+    this.fetchPage(1);
 
     // React to debounced filter changes after the initial load.
     this.filters.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed())
-      .subscribe(() => this.fetchFirstPage());
+      .subscribe(() => this.fetchPage(1));
     // Reference signal so it is retained (used for change detection consistency).
     void this.filterValues;
   }
@@ -141,48 +145,35 @@ export class UsersListComponent {
     });
   }
 
-  fetchFirstPage(): void {
-    this.state.set('loading');
-    this.users.set([]);
-    this.nextCursor.set(null);
-    this.query(null, (items, cursor, more) => {
-      this.users.set(items);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.state.set('ready');
-    });
-  }
-
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.query(this.nextCursor(), (items, cursor, more) => {
-      this.users.update((current) => [...current, ...items]);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.loadingMore.set(false);
-    });
-  }
-
-  private query(
-    cursor: string | null,
-    onSuccess: (items: UserDto[], cursor: string | null, more: boolean) => void,
-  ): void {
+  fetchPage(page: number): void {
+    this.loading.set(true);
     const { search, role, status } = this.filters.getRawValue();
     this.usersService
-      .list({ search, role, status, cursor, limit: PAGE_SIZE })
+      .list({ search, role, status, page, pageSize: this.pageSize() })
       .subscribe({
-        next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
+        next: (result) => {
+          this.users.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
+          this.state.set('ready');
+          this.loading.set(false);
+        },
         error: () => {
-          if (cursor === null) {
+          if (this.state() === 'loading') {
             this.state.set('error');
-          } else {
-            this.loadingMore.set(false);
           }
+          this.loading.set(false);
         },
       });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   clearFilters(): void {

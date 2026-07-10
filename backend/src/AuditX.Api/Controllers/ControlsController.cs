@@ -20,9 +20,9 @@ public sealed class ControlsController(IDispatcher dispatcher) : ApiControllerBa
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] string? type, [FromQuery] string? effectiveness, [FromQuery] Guid? owner,
-        [FromQuery] bool? includeRetired, [FromQuery] string? search, [FromQuery] string? cursor, [FromQuery] int? limit,
+        [FromQuery] bool? includeRetired, [FromQuery] string? search, [FromQuery] int? page, [FromQuery] int? pageSize,
         CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListControlsQuery(type, effectiveness, owner, includeRetired ?? true, search, cursor, limit), cancellationToken));
+        => Envelope(await dispatcher.Query(new ListControlsQuery(type, effectiveness, owner, includeRetired ?? true, search, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewControls)]
     [HttpGet("{id:guid}")]
@@ -66,8 +66,8 @@ public sealed class RegulationsController(IDispatcher dispatcher) : ApiControlle
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] string? category, [FromQuery] bool? includeRetired, [FromQuery] string? search,
-        [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListRegulationsQuery(category, includeRetired ?? true, search, cursor, limit), cancellationToken));
+        [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListRegulationsQuery(category, includeRetired ?? true, search, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewControls)]
     [HttpGet("{id:guid}")]

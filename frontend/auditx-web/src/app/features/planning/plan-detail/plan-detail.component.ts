@@ -255,7 +255,7 @@ export class PlanDetailComponent {
       openDialog(this.entitiesCache);
       return;
     }
-    this.universe.list({ limit: 100 }).subscribe({
+    this.universe.list({ pageSize: 0 }).subscribe({
       next: (page) => {
         this.entitiesCache = page.items;
         openDialog(page.items);
@@ -315,10 +315,10 @@ export class PlanDetailComponent {
     forkJoin({
       entities: this.entitiesCache.length
         ? of(this.entitiesCache)
-        : this.universe.list({ limit: 100 }).pipe(map((p) => p.items)),
-      users: this.users.list({ status: 'active', limit: 200 }).pipe(map((p) => p.items)),
+        : this.universe.list({ pageSize: 0 }).pipe(map((p) => p.items)),
+      users: this.users.list({ status: 'active', pageSize: 0 }).pipe(map((p) => p.items)),
       templates: this.templates
-        .list({ status: 'published', limit: 200 })
+        .list({ status: 'published', pageSize: 0 })
         .pipe(map((p) => p.items)),
       auditTypes: this.refData.list('audit_type'),
     }).subscribe({

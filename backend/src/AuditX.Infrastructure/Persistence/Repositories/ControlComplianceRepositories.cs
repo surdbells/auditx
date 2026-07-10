@@ -11,7 +11,7 @@ public sealed class ControlRepository(AppDbContext db) : IControlRepository
     public Task<Control?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.Controls.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
-    public async Task<CursorPage<Control>> SearchAsync(ControlSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Control>> SearchAsync(ControlSearchFilter filter, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.Controls.AsNoTracking();
 
@@ -41,19 +41,7 @@ public sealed class ControlRepository(AppDbContext db) : IControlRepository
             query = query.Where(c => c.Code.Contains(term) || c.Title.Contains(term));
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(c => c.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(c => c.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<Control>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(c => c.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public Task<bool> CodeExistsAsync(string code, Guid? excludingId, CancellationToken cancellationToken = default)
@@ -67,7 +55,7 @@ public sealed class RegulationRepository(AppDbContext db) : IRegulationRepositor
     public Task<Regulation?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.Regulations.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
-    public async Task<CursorPage<Regulation>> SearchAsync(RegulationSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Regulation>> SearchAsync(RegulationSearchFilter filter, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.Regulations.AsNoTracking();
 
@@ -87,19 +75,7 @@ public sealed class RegulationRepository(AppDbContext db) : IRegulationRepositor
             query = query.Where(r => r.Code.Contains(term) || r.Name.Contains(term));
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(r => r.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(r => r.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<Regulation>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(r => r.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public Task<bool> CodeExistsAsync(string code, Guid? excludingId, CancellationToken cancellationToken = default)

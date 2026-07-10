@@ -42,10 +42,13 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+const DEFAULT_PAGE_SIZE = 25;
 
 /** The internal-controls register (P1-B): filterable list + register/edit/retire/delete. */
 @Component({
@@ -67,6 +70,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './control-register.component.html',
@@ -94,18 +98,23 @@ export class ControlRegisterComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly controls = signal<ControlListItem[]>([]);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly canManage = computed(() => this.auth.hasPermission(Permissions.ManageControls));
   readonly isEmpty = computed(() => this.state() === 'ready' && this.controls().length === 0);
 
   constructor() {
     this.userLookup.ensureLoaded();
-    this.fetch();
-    this.filters.valueChanges.pipe(debounceTime(250), takeUntilDestroyed()).subscribe(() => this.fetch());
+    this.fetchPage(1);
+    this.filters.valueChanges.pipe(debounceTime(250), takeUntilDestroyed()).subscribe(() => this.fetchPage(1));
   }
 
-  fetch(): void {
-    this.state.set('loading');
+  fetchPage(page: number): void {
+    this.loading.set(true);
     const f = this.filters.getRawValue();
     this.service
       .list({
@@ -113,15 +122,33 @@ export class ControlRegisterComponent {
         effectiveness: f.effectiveness || undefined,
         includeRetired: f.includeRetired,
         search: f.search.trim() || undefined,
-        limit: 100,
+        page,
+        pageSize: this.pageSize(),
       })
       .subscribe({
-        next: (page) => {
-          this.controls.set(page.items);
+        next: (result) => {
+          this.controls.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
           this.state.set('ready');
+          this.loading.set(false);
         },
-        error: () => this.state.set('error'),
+        error: () => {
+          if (this.state() === 'loading') {
+            this.state.set('error');
+          }
+          this.loading.set(false);
+        },
       });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   ownerName(id: string): string {
@@ -140,7 +167,7 @@ export class ControlRegisterComponent {
         this.service.register(result.body).subscribe({
           next: (c) => {
             this.notify.success(this.i18n.translate('control.notify.registered', { code: c.code }));
-            this.fetch();
+            this.fetchPage(this.page());
           },
         });
       });
@@ -165,7 +192,7 @@ export class ControlRegisterComponent {
         this.service.update(result.id, result.body).subscribe({
           next: (c) => {
             this.notify.success(this.i18n.translate('control.notify.updated', { code: c.code }));
-            this.fetch();
+            this.fetchPage(this.page());
           },
         });
       });
@@ -177,7 +204,7 @@ export class ControlRegisterComponent {
         this.service.setStatus(control.id, { isActive: !control.isActive, version: control.version }).subscribe({
           next: () => {
             this.notify.success(this.i18n.translate('control.notify.statusChanged'));
-            this.fetch();
+            this.fetchPage(this.page());
           },
         }),
     });
@@ -189,7 +216,7 @@ export class ControlRegisterComponent {
         this.service.delete(control.id, control.version).subscribe({
           next: () => {
             this.notify.success(this.i18n.translate('control.notify.deleted'));
-            this.fetch();
+            this.fetchPage(this.page());
           },
         }),
     });

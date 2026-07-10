@@ -29,7 +29,7 @@ public interface IExceptionRepository
     /// <summary>All exceptions for an audit WITH their MAP actions eagerly loaded (for report assembly — M8).</summary>
     Task<IReadOnlyList<AuditException>> ListByAuditWithMapActionsAsync(Guid auditId, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<AuditException>> SearchAsync(ExceptionSearchFilter filter, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<AuditException>> SearchAsync(ExceptionSearchFilter filter, PageSpec page, CancellationToken cancellationToken = default);
 
     /// <summary>Most recent closed exception for the same entity + category within the recurrence window (US-M6-017).</summary>
     Task<AuditException?> FindClosedForRecurrenceAsync(Guid auditableEntityId, string? category, DateTimeOffset sinceUtc, CancellationToken cancellationToken = default);

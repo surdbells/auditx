@@ -26,11 +26,11 @@ public interface IUserRepository
     Task<IReadOnlyDictionary<string, Guid>> GetIdsByEmailsAsync(IReadOnlyCollection<string> emails, CancellationToken cancellationToken = default);
 
     /// <summary>Keyset-paginated search over users (US-M1/US-M15-004).</summary>
-    Task<CursorPage<User>> SearchAsync(
+    Task<PagedResult<User>> SearchAsync(
         string? search,
         string? roleName,
         UserStatus? status,
-        PageRequest page,
+        PageSpec page,
         CancellationToken cancellationToken = default);
 
     void Add(User user);

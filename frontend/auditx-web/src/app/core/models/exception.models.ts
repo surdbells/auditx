@@ -231,6 +231,6 @@ export interface ExceptionQuery {
   raisedFrom?: string;
   /** ISO datetime upper bound on raised-at (inclusive). */
   raisedTo?: string;
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }

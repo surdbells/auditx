@@ -117,8 +117,8 @@ export interface EntityQuery {
   owner?: string;
   archived?: boolean;
   search?: string;
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 /** Filter for the risk-dimensions list. */

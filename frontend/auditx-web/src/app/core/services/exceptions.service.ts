@@ -9,7 +9,7 @@ import {
   ApproveMapResult,
   ChangeSeverityRequest,
   CloseExceptionRequest,
-  CursorPage,
+  PagedResult,
   EvidenceFile,
   Exception,
   ExceptionHistoryEntry,
@@ -59,9 +59,9 @@ export class ExceptionsService {
     );
   }
 
-  /** Cross-audit cursor-paged tracker. */
-  list(query: ExceptionQuery): Observable<CursorPage<ExceptionListItem>> {
-    return this.api.get<CursorPage<ExceptionListItem>>('/exceptions', {
+  /** Cross-audit offset-paged tracker. */
+  list(query: ExceptionQuery): Observable<PagedResult<ExceptionListItem>> {
+    return this.api.get<PagedResult<ExceptionListItem>>('/exceptions', {
       status: query.status,
       severity: query.severity,
       owner: query.owner,
@@ -74,8 +74,8 @@ export class ExceptionsService {
       overdue: query.overdue,
       raisedFrom: query.raisedFrom,
       raisedTo: query.raisedTo,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 
