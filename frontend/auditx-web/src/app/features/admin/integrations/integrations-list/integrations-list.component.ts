@@ -36,8 +36,39 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the integrations console (drives the walkthrough + the About panel). */
+const INTEGRATIONS_GUIDE: PageGuide = {
+  id: 'integrations-list',
+  titleKey: 'integrations.list.title',
+  purposeKey: 'integrations.guide.purpose',
+  descriptionKey: 'integrations.guide.description',
+  actionKeys: [
+    'integrations.guide.action.create',
+    'integrations.guide.action.test',
+    'integrations.guide.action.edit',
+    'integrations.guide.action.deactivate',
+  ],
+  sections: [
+    { selector: '[data-guide="create"]', titleKey: 'integrations.guide.section.create.title', bodyKey: 'integrations.guide.section.create.body' },
+    { selector: '.integrations__table', titleKey: 'integrations.guide.section.table.title', bodyKey: 'integrations.guide.section.table.body' },
+    { selector: '.status-badge', titleKey: 'integrations.guide.section.health.title', bodyKey: 'integrations.guide.section.health.body' },
+  ],
+  workflowKeys: ['integrations.guide.flow.configure', 'integrations.guide.flow.test', 'integrations.guide.flow.activate', 'integrations.guide.flow.emit', 'integrations.guide.flow.monitor'],
+  dependsOnKeys: ['integrations.guide.dep.permissions', 'integrations.guide.dep.endpoints', 'integrations.guide.dep.credentials', 'integrations.guide.dep.events'],
+  usedByKeys: ['integrations.guide.use.notifications', 'integrations.guide.use.webhooks', 'integrations.guide.use.siem', 'integrations.guide.use.reports'],
+  businessRuleKeys: ['integrations.guide.rule.primary', 'integrations.guide.rule.test', 'integrations.guide.rule.deactivate', 'integrations.guide.rule.health'],
+  tipKeys: ['integrations.guide.tip.test', 'integrations.guide.tip.health', 'integrations.guide.tip.primary'],
+  permissionKeys: ['integrations.guide.perm.admin', 'integrations.guide.perm.configure', 'integrations.guide.perm.health'],
+  faq: [
+    { questionKey: 'integrations.guide.faq.manage.q', answerKey: 'integrations.guide.faq.manage.a' },
+    { questionKey: 'integrations.guide.faq.health.q', answerKey: 'integrations.guide.faq.health.a' },
+  ],
+};
 
 @Component({
   selector: 'app-integrations-list',
@@ -53,6 +84,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './integrations-list.component.html',
   styleUrl: './integrations-list.component.scss',
@@ -78,6 +110,8 @@ export class IntegrationsListComponent {
   readonly health = signal<Record<string, IntegrationHealthState>>({});
 
   readonly humaniseType = humaniseIntegrationType;
+
+  readonly guide = INTEGRATIONS_GUIDE;
 
   readonly canManage = computed(() =>
     this.auth.hasPermission(Permissions.ConfigureIntegrations),

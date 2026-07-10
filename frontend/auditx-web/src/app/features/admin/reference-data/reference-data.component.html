@@ -3,12 +3,14 @@
   subtitle="Managed lookups (audit types, exception categories, …) that back dropdowns across the app."
 >
   @if (canManage() && selectedCategory()) {
-    <button actions matButton="filled" type="button" (click)="create()">
+    <button actions matButton="filled" type="button" (click)="create()" data-guide="create">
       <mat-icon>add</mat-icon>
       New item
     </button>
   }
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 @switch (categoriesState()) {
   @case ('loading') {

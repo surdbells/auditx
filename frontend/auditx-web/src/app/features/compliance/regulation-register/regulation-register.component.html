@@ -4,13 +4,15 @@
 >
   <div actions>
     @if (canManage()) {
-      <button matButton="filled" type="button" (click)="create()">
+      <button matButton="filled" type="button" (click)="create()" data-guide="register">
         <mat-icon>add</mat-icon>
         {{ 'compliance.actions.register' | t }}
       </button>
     }
   </div>
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 <mat-card appearance="outlined" class="reg-list__filters-card">
   <form [formGroup]="filters" class="reg-list__filters">

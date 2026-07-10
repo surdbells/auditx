@@ -33,12 +33,43 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the regulation register (drives the walkthrough + the About panel). */
+const REGULATION_GUIDE: PageGuide = {
+  id: 'regulation-register',
+  titleKey: 'compliance.list.title',
+  purposeKey: 'compliance.guide.purpose',
+  descriptionKey: 'compliance.guide.description',
+  actionKeys: [
+    'compliance.guide.action.register',
+    'compliance.guide.action.filter',
+    'compliance.guide.action.edit',
+    'compliance.guide.action.retire',
+  ],
+  sections: [
+    { selector: '[data-guide="register"]', titleKey: 'compliance.guide.section.register.title', bodyKey: 'compliance.guide.section.register.body' },
+    { selector: '.reg-list__filters-card', titleKey: 'compliance.guide.section.filters.title', bodyKey: 'compliance.guide.section.filters.body' },
+    { selector: '.reg-list__table', titleKey: 'compliance.guide.section.table.title', bodyKey: 'compliance.guide.section.table.body' },
+  ],
+  workflowKeys: ['compliance.guide.flow.identify', 'compliance.guide.flow.register', 'compliance.guide.flow.map', 'compliance.guide.flow.assess', 'compliance.guide.flow.report'],
+  dependsOnKeys: ['compliance.guide.dep.authority', 'compliance.guide.dep.category', 'compliance.guide.dep.permission'],
+  usedByKeys: ['compliance.guide.use.findings', 'compliance.guide.use.controls', 'compliance.guide.use.reports'],
+  businessRuleKeys: ['compliance.guide.rule.code', 'compliance.guide.rule.retire', 'compliance.guide.rule.delete', 'compliance.guide.rule.version'],
+  tipKeys: ['compliance.guide.tip.authority', 'compliance.guide.tip.category', 'compliance.guide.tip.retire'],
+  permissionKeys: ['compliance.guide.perm.manage', 'compliance.guide.perm.view'],
+  faq: [
+    { questionKey: 'compliance.guide.faq.retireDelete.q', answerKey: 'compliance.guide.faq.retireDelete.a' },
+    { questionKey: 'compliance.guide.faq.mapping.q', answerKey: 'compliance.guide.faq.mapping.a' },
+  ],
+};
 
 /** The regulation / compliance register (P1-B): filterable list + register/edit/retire/delete. */
 @Component({
@@ -59,6 +90,7 @@ const DEFAULT_PAGE_SIZE = 25;
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './regulation-register.component.html',
@@ -71,6 +103,8 @@ export class RegulationRegisterComponent {
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = REGULATION_GUIDE;
 
   readonly displayedColumns = ['code', 'name', 'authority', 'category', 'status', 'actions'];
 

@@ -34,10 +34,66 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the report-schedules admin — drives the walkthrough + About panel. */
+const REPORT_SCHEDULES_GUIDE: PageGuide = {
+  id: 'report-schedules',
+  titleKey: 'reportSchedules.title',
+  purposeKey: 'reportSchedules.guide.purpose',
+  descriptionKey: 'reportSchedules.guide.description',
+  actionKeys: [
+    'reportSchedules.guide.action.new',
+    'reportSchedules.guide.action.edit',
+    'reportSchedules.guide.action.pause',
+    'reportSchedules.guide.action.delete',
+  ],
+  sections: [
+    { selector: '[data-guide="create"]', titleKey: 'reportSchedules.guide.section.create.title', bodyKey: 'reportSchedules.guide.section.create.body' },
+    { selector: '.schedules__table', titleKey: 'reportSchedules.guide.section.table.title', bodyKey: 'reportSchedules.guide.section.table.body' },
+    { selector: '.status-badge', titleKey: 'reportSchedules.guide.section.status.title', bodyKey: 'reportSchedules.guide.section.status.body' },
+  ],
+  workflowKeys: [
+    'reportSchedules.guide.flow.pick',
+    'reportSchedules.guide.flow.cadence',
+    'reportSchedules.guide.flow.recipients',
+    'reportSchedules.guide.flow.generate',
+    'reportSchedules.guide.flow.deliver',
+  ],
+  dependsOnKeys: [
+    'reportSchedules.guide.dep.reports',
+    'reportSchedules.guide.dep.users',
+    'reportSchedules.guide.dep.email',
+  ],
+  usedByKeys: [
+    'reportSchedules.guide.use.recipients',
+    'reportSchedules.guide.use.reports',
+    'reportSchedules.guide.use.audit',
+  ],
+  businessRuleKeys: [
+    'reportSchedules.guide.rule.kind',
+    'reportSchedules.guide.rule.pause',
+    'reportSchedules.guide.rule.recipients',
+    'reportSchedules.guide.rule.nextRun',
+  ],
+  tipKeys: [
+    'reportSchedules.guide.tip.email',
+    'reportSchedules.guide.tip.pause',
+  ],
+  permissionKeys: [
+    'reportSchedules.guide.perm.manage',
+    'reportSchedules.guide.perm.view',
+  ],
+  faq: [
+    { questionKey: 'reportSchedules.guide.faq.when.q', answerKey: 'reportSchedules.guide.faq.when.a' },
+    { questionKey: 'reportSchedules.guide.faq.kind.q', answerKey: 'reportSchedules.guide.faq.kind.a' },
+  ],
+};
 
 /** Admin console for recurring report schedules (D3-C). */
 @Component({
@@ -55,6 +111,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './report-schedules.component.html',
@@ -75,6 +132,8 @@ export class ReportSchedulesComponent {
   private readonly users = signal<UserDto[]>([]);
 
   readonly humanise = humanise;
+
+  readonly guide = REPORT_SCHEDULES_GUIDE;
 
   readonly canManage = computed(() => this.auth.hasPermission(Permissions.ScheduleReports));
 

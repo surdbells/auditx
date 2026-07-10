@@ -23,8 +23,39 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the metric-trends view (drives the walkthrough + the About panel). */
+const TRENDS_GUIDE: PageGuide = {
+  id: 'metric-trends',
+  titleKey: 'trends.title',
+  purposeKey: 'trends.guide.purpose',
+  descriptionKey: 'trends.guide.description',
+  actionKeys: [
+    'trends.guide.action.metric',
+    'trends.guide.action.period',
+    'trends.guide.action.forecast',
+    'trends.guide.action.refresh',
+  ],
+  sections: [
+    { selector: '.mt__controls', titleKey: 'trends.guide.section.controls.title', bodyKey: 'trends.guide.section.controls.body' },
+    { selector: '.mt__stats', titleKey: 'trends.guide.section.stats.title', bodyKey: 'trends.guide.section.stats.body' },
+    { selector: '.mt__chart-card', titleKey: 'trends.guide.section.chart.title', bodyKey: 'trends.guide.section.chart.body' },
+  ],
+  workflowKeys: ['trends.guide.flow.capture', 'trends.guide.flow.bucket', 'trends.guide.flow.compare', 'trends.guide.flow.forecast', 'trends.guide.flow.decide'],
+  dependsOnKeys: ['trends.guide.dep.snapshots', 'trends.guide.dep.audits', 'trends.guide.dep.exceptions'],
+  usedByKeys: ['trends.guide.use.dashboards', 'trends.guide.use.reports', 'trends.guide.use.review'],
+  businessRuleKeys: ['trends.guide.rule.snapshot', 'trends.guide.rule.forecast', 'trends.guide.rule.series', 'trends.guide.rule.grain'],
+  tipKeys: ['trends.guide.tip.grain', 'trends.guide.tip.metric', 'trends.guide.tip.delta'],
+  permissionKeys: ['trends.guide.perm.viewer', 'trends.guide.perm.manager', 'trends.guide.perm.admin'],
+  faq: [
+    { questionKey: 'trends.guide.faq.empty.q', answerKey: 'trends.guide.faq.empty.a' },
+    { questionKey: 'trends.guide.faq.forecast.q', answerKey: 'trends.guide.faq.forecast.a' },
+  ],
+};
 
 /** A selectable snapshot metric (backend AnalyticsMetricKeys) with its display label. */
 interface MetricOption {
@@ -55,12 +86,16 @@ interface MetricOption {
     ErrorStateComponent,
     EmptyStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './metric-trends.component.html',
   styleUrl: './metric-trends.component.scss',
 })
 export class MetricTrendsComponent {
   private readonly service = inject(AnalyticsService);
+
+  /** Contextual guide metadata (walkthrough + About panel). */
+  readonly guide = TRENDS_GUIDE;
 
   /** The snapshot metrics offered in the selector (must exist in the backend AnalyticsMetricKeys). */
   readonly metrics: readonly MetricOption[] = [

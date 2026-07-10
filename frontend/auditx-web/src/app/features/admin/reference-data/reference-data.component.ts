@@ -38,8 +38,66 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the reference-data admin (drives the walkthrough + the About panel). */
+const REFERENCE_DATA_GUIDE: PageGuide = {
+  id: 'reference-data',
+  titleKey: 'referenceData.guide.title',
+  purposeKey: 'referenceData.guide.purpose',
+  descriptionKey: 'referenceData.guide.description',
+  actionKeys: [
+    'referenceData.guide.action.select',
+    'referenceData.guide.action.create',
+    'referenceData.guide.action.edit',
+    'referenceData.guide.action.archive',
+  ],
+  sections: [
+    { selector: '[data-guide="create"]', titleKey: 'referenceData.guide.section.create.title', bodyKey: 'referenceData.guide.section.create.body' },
+    { selector: '.ref__filters-card', titleKey: 'referenceData.guide.section.filters.title', bodyKey: 'referenceData.guide.section.filters.body' },
+    { selector: '.ref__table', titleKey: 'referenceData.guide.section.table.title', bodyKey: 'referenceData.guide.section.table.body' },
+  ],
+  workflowKeys: [
+    'referenceData.guide.flow.category',
+    'referenceData.guide.flow.add',
+    'referenceData.guide.flow.order',
+    'referenceData.guide.flow.dropdown',
+    'referenceData.guide.flow.use',
+  ],
+  dependsOnKeys: [
+    'referenceData.guide.dep.categories',
+    'referenceData.guide.dep.permission',
+    'referenceData.guide.dep.setup',
+  ],
+  usedByKeys: [
+    'referenceData.guide.use.audits',
+    'referenceData.guide.use.exceptions',
+    'referenceData.guide.use.documents',
+    'referenceData.guide.use.forms',
+  ],
+  businessRuleKeys: [
+    'referenceData.guide.rule.code',
+    'referenceData.guide.rule.archive',
+    'referenceData.guide.rule.sort',
+    'referenceData.guide.rule.permission',
+  ],
+  tipKeys: [
+    'referenceData.guide.tip.inactive',
+    'referenceData.guide.tip.sort',
+    'referenceData.guide.tip.archive',
+  ],
+  permissionKeys: [
+    'referenceData.guide.perm.admin',
+    'referenceData.guide.perm.all',
+  ],
+  faq: [
+    { questionKey: 'referenceData.guide.faq.edit.q', answerKey: 'referenceData.guide.faq.edit.a' },
+    { questionKey: 'referenceData.guide.faq.archive.q', answerKey: 'referenceData.guide.faq.archive.a' },
+  ],
+};
 
 @Component({
   selector: 'app-reference-data',
@@ -57,6 +115,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './reference-data.component.html',
   styleUrl: './reference-data.component.scss',
@@ -68,6 +127,8 @@ export class ReferenceDataComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+
+  readonly guide = REFERENCE_DATA_GUIDE;
 
   readonly displayedColumns = [
     'code',
