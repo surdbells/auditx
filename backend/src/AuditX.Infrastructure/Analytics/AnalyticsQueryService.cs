@@ -567,6 +567,27 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
         return new ProcedureSummaryDto(procs.Count, byType, sampling.Count, totalTested, totalExceptions, errorRate);
     }
 
+    public async Task<EvidenceSummaryDto> EvidenceSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        var requests = await db.EvidenceRequests.AsNoTracking()
+            .Select(r => new { r.Status, r.DueDate, r.DocumentType })
+            .ToListAsync(cancellationToken);
+
+        var outstanding = requests.Count(r => r.Status == EvidenceRequestStatus.Requested);
+        var received = requests.Count(r => r.Status == EvidenceRequestStatus.Received);
+        var waived = requests.Count(r => r.Status == EvidenceRequestStatus.Waived);
+        var overdue = requests.Count(r => r.Status == EvidenceRequestStatus.Requested && r.DueDate is { } due && due < today);
+
+        var byType = requests
+            .GroupBy(r => string.IsNullOrWhiteSpace(r.DocumentType) ? "unspecified" : r.DocumentType!.Trim())
+            .Select(g => new EvidenceTypeCountDto(g.Key, g.Count()))
+            .OrderByDescending(x => x.Count).ThenBy(x => x.DocumentType)
+            .ToArray();
+
+        return new EvidenceSummaryDto(requests.Count, outstanding, received, waived, overdue, byType);
+    }
+
     /// <summary>Sums a unit's own aggregate with every descendant's (DFS; cycle-guarded).</summary>
     private static OrgAgg RollUp(Guid rootId, IReadOnlyDictionary<Guid, Guid[]> childrenByParent, IReadOnlyDictionary<Guid, OrgAgg> direct)
     {

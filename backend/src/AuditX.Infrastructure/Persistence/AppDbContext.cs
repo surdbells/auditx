@@ -97,6 +97,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<AuditProcedure> AuditProcedures => Set<AuditProcedure>();
 
+    public DbSet<EvidenceRequest> EvidenceRequests => Set<EvidenceRequest>();
+
     public DbSet<Risk> Risks => Set<Risk>();
 
     public DbSet<Control> Controls => Set<Control>();

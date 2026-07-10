@@ -152,6 +152,15 @@ public sealed class ProcedureSummaryQueryHandler(IAnalyticsQueryService analytic
         => analytics.ProcedureSummaryAsync(cancellationToken);
 }
 
+public sealed record EvidenceSummaryQuery : IQuery<EvidenceSummaryDto>;
+
+public sealed class EvidenceSummaryQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<EvidenceSummaryQuery, EvidenceSummaryDto>
+{
+    public Task<EvidenceSummaryDto> Handle(EvidenceSummaryQuery query, CancellationToken cancellationToken)
+        => analytics.EvidenceSummaryAsync(cancellationToken);
+}
+
 // ---- Coverage matrix (reuse ICoverageQueryService — do NOT reimplement coverage) ----
 
 public sealed record AnalyticsCoverageQuery(int WindowMonths) : IQuery<CoverageMatrix>;

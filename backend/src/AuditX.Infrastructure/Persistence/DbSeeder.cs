@@ -261,6 +261,16 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             (ReferenceDataCategories.RootCauseCategory, "third_party", "Third-party / vendor failure"),
             (ReferenceDataCategories.RootCauseCategory, "wilful_violation", "Wilful violation / override"),
 
+            // Evidence document types (P2-D) — categorises requested evidence for evidence-by-type reporting.
+            (ReferenceDataCategories.EvidenceDocumentType, "policy_procedure", "Policy / procedure"),
+            (ReferenceDataCategories.EvidenceDocumentType, "screenshot", "Screenshot"),
+            (ReferenceDataCategories.EvidenceDocumentType, "system_report", "System report / extract"),
+            (ReferenceDataCategories.EvidenceDocumentType, "reconciliation", "Reconciliation"),
+            (ReferenceDataCategories.EvidenceDocumentType, "contract_agreement", "Contract / agreement"),
+            (ReferenceDataCategories.EvidenceDocumentType, "approval_signoff", "Approval / sign-off"),
+            (ReferenceDataCategories.EvidenceDocumentType, "attendance_register", "Attendance register"),
+            (ReferenceDataCategories.EvidenceDocumentType, "correspondence", "Correspondence / email"),
+
             // Entity types — the CODE is the value stored on auditable_entity.entity_type, so these codes must
             // match the historical taxonomy names (branch/process/system/vendor/product) for existing data.
             (ReferenceDataCategories.EntityType, "branch", "Branch"),

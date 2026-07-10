@@ -16,6 +16,9 @@ public static class ReferenceDataCategories
     /// <summary>Root-cause categories (process gap, human error, system limitation, …) — the finding root-cause taxonomy (P2-A).</summary>
     public const string RootCauseCategory = "root_cause_category";
 
+    /// <summary>Evidence document types (policy, screenshot, report, contract, …) — categorises requested evidence (P2-D).</summary>
+    public const string EvidenceDocumentType = "evidence_document_type";
+
     /// <summary>Auditable-entity types (branch, process, system, vendor, …) used across the audit universe.</summary>
     public const string EntityType = "entity_type";
 
@@ -28,6 +31,7 @@ public static class ReferenceDataCategories
         new(AuditType, "Audit types"),
         new(ExceptionCategory, "Exception categories"),
         new(RootCauseCategory, "Root-cause categories"),
+        new(EvidenceDocumentType, "Evidence document types"),
         new(EntityType, "Entity types"),
         new(SanctionCategory, "Sanction categories"),
     ];

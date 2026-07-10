@@ -144,6 +144,12 @@ public static class AuditEventTypes
     public const string ProcedureRecorded = "procedure_recorded";
     public const string ProcedureDeleted = "procedure_deleted";
 
+    // P2-D expected / requested evidence
+    public const string EvidenceRequested = "evidence_requested";
+    public const string EvidenceReceived = "evidence_received";
+    public const string EvidenceWaived = "evidence_waived";
+    public const string EvidenceRequestDeleted = "evidence_request_deleted";
+
     // M5 execution / evidence
     public const string ItemResponded = "item_responded";
     public const string ItemResponseOverridden = "item_response_overridden";
@@ -269,6 +275,7 @@ public static class AuditTargetTypes
     public const string ChecklistResponse = "checklist_response";
     public const string TimeEntry = "time_entry";
     public const string AuditProcedure = "audit_procedure";
+    public const string EvidenceRequest = "evidence_request";
     public const string Risk = "risk";
     public const string Control = "control";
     public const string Regulation = "regulation";

@@ -68,6 +68,7 @@ public static class DependencyInjection
         services.AddScoped<IEvidenceRepository, EvidenceRepository>();
         services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
         services.AddScoped<IAuditProcedureRepository, AuditProcedureRepository>();
+        services.AddScoped<IEvidenceRequestRepository, EvidenceRequestRepository>();
         services.AddScoped<IRiskRepository, RiskRepository>();
         services.AddScoped<IControlRepository, ControlRepository>();
         services.AddScoped<IRegulationRepository, RegulationRepository>();

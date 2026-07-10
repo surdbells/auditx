@@ -61,6 +61,9 @@ public interface IAnalyticsQueryService
 
     /// <summary>Execution-procedure coverage + sampling error-rate (P2-C).</summary>
     Task<ProcedureSummaryDto> ProcedureSummaryAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Requested-vs-received evidence: outstanding / overdue / waived counts + by document type (P2-D).</summary>
+    Task<EvidenceSummaryDto> EvidenceSummaryAsync(CancellationToken cancellationToken = default);
 }
 
 // ---- KPI DTOs (snake-cased at the API edge by the serializer; these are the shape the port returns) ----
@@ -249,3 +252,15 @@ public sealed record ProcedureSummaryDto(
     int TotalItemsTested,
     int TotalExceptionsFound,
     double? SampleErrorRatePercent);
+
+/// <summary>One document-type count for the evidence summary (P2-D); "unspecified" collects blanks.</summary>
+public sealed record EvidenceTypeCountDto(string DocumentType, int Count);
+
+/// <summary>Requested-vs-received evidence summary (P2-D): outstanding / overdue / waived + by document type.</summary>
+public sealed record EvidenceSummaryDto(
+    int TotalRequests,
+    int Outstanding,
+    int Received,
+    int Waived,
+    int Overdue,
+    IReadOnlyList<EvidenceTypeCountDto> ByDocumentType);

@@ -107,6 +107,12 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> Procedures(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ProcedureSummaryQuery(), cancellationToken));
 
+    /// <summary>Requested-vs-received evidence — outstanding / overdue / waived + by document type (P2-D).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("evidence")]
+    public async Task<IActionResult> Evidence(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new EvidenceSummaryQuery(), cancellationToken));
+
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("recurrence-clusters")]
     public async Task<IActionResult> RecurrenceClusters([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
