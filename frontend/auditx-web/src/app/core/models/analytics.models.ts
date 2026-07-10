@@ -148,6 +148,15 @@ export interface SanctionsConsistency {
   byBusinessUnit: SanctionsConsistencyRow[];
 }
 
+/** Per-auditor throughput across the whole team (not just leads): finalised responses, evidence, findings raised, assignments. */
+export interface AuditorThroughputRow {
+  userId: string;
+  itemsResponded: number;
+  evidenceUploaded: number;
+  exceptionsRaised: number;
+  itemsAssigned: number;
+}
+
 /** Per-audit-lead performance scorecard: throughput, cycle time, closure metrics. */
 export interface PerformanceScorecard {
   auditLeadUserId: string;

@@ -212,3 +212,34 @@ public sealed class PerformanceScorecardsQueryHandler(
             : scorecards.Where(s => s.AuditLeadUserId != userId).ToArray();
     }
 }
+
+// ---- Auditor throughput (non-lead productivity; PerformanceAnalyticsView + self-coverage suppression) ----
+
+public sealed record AuditorThroughputQuery : IQuery<IReadOnlyList<AuditorThroughputDto>>;
+
+public sealed class AuditorThroughputQueryHandler(
+    IAnalyticsQueryService analytics, IPermissionResolver permissions, ICurrentUser currentUser)
+    : IQueryHandler<AuditorThroughputQuery, IReadOnlyList<AuditorThroughputDto>>
+{
+    public async Task<IReadOnlyList<AuditorThroughputDto>> Handle(AuditorThroughputQuery query, CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } userId)
+        {
+            throw new UnauthorizedException();
+        }
+
+        // Personnel-sensitive productivity data — same gate + self-suppression as the lead scorecards: re-check the
+        // permission in-handler and never let a holder see their own throughput unless they hold CIA oversight.
+        if (!await permissions.HasPermissionAsync(userId, PermissionKeys.PerformanceAnalyticsView, cancellationToken: cancellationToken))
+        {
+            throw new ForbiddenAccessException();
+        }
+
+        var rows = await analytics.AuditorThroughputAsync(cancellationToken);
+
+        var canSeeSelf = await permissions.HasPermissionAsync(userId, PermissionKeys.Cia, cancellationToken: cancellationToken);
+        return canSeeSelf
+            ? rows
+            : rows.Where(r => r.UserId != userId).ToArray();
+    }
+}

@@ -17,6 +17,13 @@ public interface IAnalyticsQueryService
     /// <summary>Per-audit-lead performance scorecards. The caller filters self-coverage in the handler.</summary>
     Task<IReadOnlyList<PerformanceScorecardDto>> PerformanceScorecardsAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Per-auditor throughput across the whole team — NOT just leads: finalised checklist responses, evidence
+    /// uploaded, exceptions raised, and checklist items assigned, keyed by the acting user. Complements the
+    /// lead-only <see cref="PerformanceScorecardsAsync"/>. Personnel-sensitive; the caller filters self-coverage.
+    /// </summary>
+    Task<IReadOnlyList<AuditorThroughputDto>> AuditorThroughputAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Critical + High severity OPEN exceptions (the audit-committee material-findings widget).</summary>
     Task<IReadOnlyList<MaterialFindingDto>> MaterialFindingsAsync(CancellationToken cancellationToken = default);
 
@@ -124,6 +131,17 @@ public sealed record SanctionsConsistencyDto(
     decimal OverallGridAdherencePercent,
     decimal OverallAppealRatePercent,
     IReadOnlyList<SanctionsConsistencyRowDto> ByBusinessUnit);
+
+/// <summary>
+/// Per-auditor throughput (whole team, not just leads): finalised checklist responses, evidence uploaded,
+/// exceptions raised, and checklist items assigned — the substrate for non-lead auditor productivity reporting.
+/// </summary>
+public sealed record AuditorThroughputDto(
+    Guid UserId,
+    int ItemsResponded,
+    int EvidenceUploaded,
+    int ExceptionsRaised,
+    int ItemsAssigned);
 
 /// <summary>Per-audit-lead performance scorecard (US-M9 G4): throughput, cycle time and closure metrics.</summary>
 public sealed record PerformanceScorecardDto(

@@ -1,0 +1,21 @@
+.throughput__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.throughput__table-wrapper {
+  overflow-x: auto;
+}
+
+.throughput__table {
+  width: 100%;
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.throughput__auditor {
+  font-weight: 500;
+}

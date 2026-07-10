@@ -1,0 +1,66 @@
+<app-page-header
+  [title]="'analytics.throughput.title' | t"
+  [subtitle]="'analytics.throughput.subtitle' | t"
+>
+  <div actions data-guide="controls">
+    <a matButton routerLink="/analytics">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'analytics.nav.allDashboards' | t }}
+    </a>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'analytics.actions.refresh' | t }}
+    </button>
+  </div>
+</app-page-header>
+
+<app-page-guide [guide]="guide" />
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'analytics.throughput.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'analytics.throughput.error' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="groups"
+        [title]="'analytics.throughput.empty.title' | t"
+        [message]="'analytics.throughput.empty.message' | t"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="throughput__table-card">
+        <div class="throughput__table-wrapper">
+          <table mat-table [dataSource]="rows()" class="throughput__table">
+            <ng-container matColumnDef="auditor">
+              <th mat-header-cell *matHeaderCellDef>{{ 'analytics.throughput.col.auditor' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="throughput__auditor">
+                {{ userLookup.displayName(r.userId) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="responded">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.throughput.col.responded' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="num">{{ r.itemsResponded }}</td>
+            </ng-container>
+            <ng-container matColumnDef="evidence">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.throughput.col.evidence' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="num">{{ r.evidenceUploaded }}</td>
+            </ng-container>
+            <ng-container matColumnDef="raised">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.throughput.col.raised' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="num">{{ r.exceptionsRaised }}</td>
+            </ng-container>
+            <ng-container matColumnDef="assigned">
+              <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.throughput.col.assigned' | t }}</th>
+              <td mat-cell *matCellDef="let r" class="num">{{ r.itemsAssigned }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

@@ -194,6 +194,50 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
             .ToArray();
     }
 
+    public async Task<IReadOnlyList<AuditorThroughputDto>> AuditorThroughputAsync(CancellationToken cancellationToken = default)
+    {
+        // Finalised (non-draft) checklist responses per responder — the core of hands-on audit work.
+        var responded = (await db.ChecklistResponses.AsNoTracking()
+            .Where(r => !r.IsDraft)
+            .GroupBy(r => r.ResponderUserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken))
+            .ToDictionary(x => x.UserId, x => x.Count);
+
+        // Evidence uploaded per uploader (the global soft-delete filter excludes deleted files).
+        var evidence = (await db.EvidenceFiles.AsNoTracking()
+            .GroupBy(e => e.UploadedBy)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken))
+            .ToDictionary(x => x.UserId, x => x.Count);
+
+        // Exceptions raised per raiser.
+        var raised = (await db.Exceptions.AsNoTracking()
+            .GroupBy(e => e.RaisedByUserId)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken))
+            .ToDictionary(x => x.UserId, x => x.Count);
+
+        // Checklist items assigned per assignee (forward workload signal).
+        var assigned = (await db.AuditChecklistItems.AsNoTracking()
+            .Where(i => i.AssignedUserId != null)
+            .GroupBy(i => i.AssignedUserId!.Value)
+            .Select(g => new { UserId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken))
+            .ToDictionary(x => x.UserId, x => x.Count);
+
+        return responded.Keys.Union(evidence.Keys).Union(raised.Keys).Union(assigned.Keys)
+            .Select(id => new AuditorThroughputDto(
+                id,
+                responded.GetValueOrDefault(id),
+                evidence.GetValueOrDefault(id),
+                raised.GetValueOrDefault(id),
+                assigned.GetValueOrDefault(id)))
+            .OrderByDescending(t => t.ItemsResponded + t.EvidenceUploaded + t.ExceptionsRaised)
+            .ThenBy(t => t.UserId)
+            .ToArray();
+    }
+
     public async Task<IReadOnlyList<MaterialFindingDto>> MaterialFindingsAsync(CancellationToken cancellationToken = default)
     {
         var rows = await db.Exceptions.AsNoTracking()

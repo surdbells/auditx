@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiService } from './api.service';
 import {
   ApiResponse,
+  AuditorThroughputRow,
   AuditorWorkloadRow,
   BudgetVsActualRow,
   ComplianceByRegulationRow,
@@ -138,6 +139,11 @@ export class AnalyticsService {
   }
 
   /** Per-audit-lead performance scorecards (PerformanceAnalyticsView). */
+  /** Per-auditor throughput across the whole team — non-lead productivity (PerformanceAnalyticsView). */
+  auditorThroughput(): Observable<AuditorThroughputRow[]> {
+    return this.api.get<AuditorThroughputRow[]>('/analytics/auditor-throughput');
+  }
+
   performanceScorecards(): Observable<PerformanceScorecard[]> {
     return this.api.get<PerformanceScorecard[]>(
       '/analytics/performance-scorecards',

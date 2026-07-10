@@ -453,6 +453,15 @@ export const routes: Routes = [
           ).then((m) => m.PerformanceScorecardsComponent),
       },
       {
+        path: 'analytics/auditor-throughput',
+        title: 'Auditor Throughput · AuditX',
+        canActivate: [permissionGuard(Permissions.PerformanceAnalyticsView)],
+        loadComponent: () =>
+          import(
+            './features/analytics/auditor-throughput/auditor-throughput.component'
+          ).then((m) => m.AuditorThroughputComponent),
+      },
+      {
         path: 'analytics/org-units',
         title: 'Department Scorecards · AuditX',
         canActivate: [permissionGuard(Permissions.ViewAnalytics)],

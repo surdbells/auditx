@@ -53,6 +53,12 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> PerformanceScorecards(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new PerformanceScorecardsQuery(), cancellationToken));
 
+    /// <summary>Per-auditor throughput across the whole team (non-lead productivity); self-suppresses the caller's row unless CIA.</summary>
+    [RequirePermission(PermissionKeys.PerformanceAnalyticsView)]
+    [HttpGet("auditor-throughput")]
+    public async Task<IActionResult> AuditorThroughput(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new AuditorThroughputQuery(), cancellationToken));
+
     /// <summary>Department / business-unit scorecards — audits + findings rolled up the OrgUnit tree.</summary>
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("org-units")]
