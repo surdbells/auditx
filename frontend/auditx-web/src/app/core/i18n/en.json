@@ -1119,6 +1119,8 @@
   "coverage.highRisk.empty": "No high-risk gaps for this window.",
   "coverage.matrix.title": "Coverage matrix",
   "coverage.matrix.empty": "No coverage data for this window.",
+  "coverage.matrix.legend.less": "Fewer audits",
+  "coverage.matrix.legend.more": "More audits",
   "coverage.field.months": "Months",
   "coverage.field.months.error": "Enter a number of months.",
   "coverage.field.entityType": "Entity type (optional)",

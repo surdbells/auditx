@@ -1119,6 +1119,8 @@
   "coverage.highRisk.empty": "Aucune lacune à risque élevé pour cette période.",
   "coverage.matrix.title": "Matrice de couverture",
   "coverage.matrix.empty": "Aucune donnée de couverture pour cette période.",
+  "coverage.matrix.legend.less": "Moins d'audits",
+  "coverage.matrix.legend.more": "Plus d'audits",
   "coverage.field.months": "Mois",
   "coverage.field.months.error": "Saisissez un nombre de mois.",
   "coverage.field.entityType": "Type d'entité (facultatif)",

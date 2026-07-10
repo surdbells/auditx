@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -121,6 +122,29 @@ export class CoverageComponent {
   });
   readonly matrixState = signal<ReportState>('idle');
   readonly matrix = signal<CoverageMatrix | null>(null);
+
+  /** The busiest cell's audit count — the top of the heat scale. */
+  readonly matrixMax = computed(() => {
+    const m = this.matrix();
+    if (!m) {
+      return 0;
+    }
+    let max = 0;
+    for (const row of m.cells) {
+      for (const value of row) {
+        if (value > max) {
+          max = value;
+        }
+      }
+    }
+    return max;
+  });
+
+  /** Heat intensity (0–1) for a cell relative to the busiest cell; 0 for empty cells (which render as a gap tint). */
+  heat(value: number): number {
+    const max = this.matrixMax();
+    return max > 0 && value > 0 ? value / max : 0;
+  }
 
   runNotAudited(): void {
     if (this.notAuditedForm.invalid) {

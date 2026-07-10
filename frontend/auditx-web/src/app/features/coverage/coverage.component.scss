@@ -54,11 +54,42 @@
 
 .cov__matrix-cell {
   font-variant-numeric: tabular-nums;
+  // Sequential heat: transparent (no audits) → primary at the busiest cell. --heat (0–1) is set per cell.
+  // Capped at 52% so the number stays legible over the tint in both light and dark themes.
+  background: color-mix(in srgb, var(--mat-sys-primary) calc(var(--heat, 0) * 52%), transparent);
+  transition: background 120ms ease;
 }
 
+// Covered cells emphasise the count against the tint.
+.cov__matrix-cell:not(.cov__matrix-cell--zero) {
+  font-weight: 600;
+}
+
+// Empty cells stay a faint gap tint (defined after the heat rule so it wins for zero cells).
 .cov__matrix-cell--zero {
   color: var(--mat-sys-on-surface-variant);
   background: color-mix(in srgb, var(--mat-sys-error) 8%, transparent);
+}
+
+.cov__legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.cov__legend-bar {
+  flex: 0 0 120px;
+  height: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--mat-sys-primary) 0%, transparent),
+    color-mix(in srgb, var(--mat-sys-primary) 52%, transparent)
+  );
 }
 
 .muted {

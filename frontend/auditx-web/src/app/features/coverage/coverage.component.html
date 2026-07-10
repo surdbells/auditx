@@ -183,6 +183,8 @@
                       <td
                         class="cov__matrix-cell"
                         [class.cov__matrix-cell--zero]="m.cells[ri][ci] === 0"
+                        [style.--heat]="heat(m.cells[ri][ci])"
+                        [attr.title]="row + ' × ' + col + ': ' + m.cells[ri][ci]"
                       >
                         {{ m.cells[ri][ci] }}
                       </td>
@@ -191,6 +193,11 @@
                 }
               </tbody>
             </table>
+          </div>
+          <div class="cov__legend" aria-hidden="true">
+            <span>{{ 'coverage.matrix.legend.less' | t }}</span>
+            <span class="cov__legend-bar"></span>
+            <span>{{ 'coverage.matrix.legend.more' | t }}</span>
           </div>
         }
       }
