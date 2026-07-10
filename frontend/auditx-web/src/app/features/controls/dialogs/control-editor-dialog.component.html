@@ -1,0 +1,90 @@
+<h2 mat-dialog-title>{{ (isEdit ? 'control.dialog.editTitle' : 'control.dialog.newTitle') | t }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="control-form">
+    @if (!isEdit) {
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'control.field.code' | t }}</mat-label>
+        <input matInput formControlName="code" autocomplete="off" />
+        @if (form.controls.code.hasError('required') && form.controls.code.touched) {
+          <mat-error>{{ 'control.error.codeRequired' | t }}</mat-error>
+        }
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'control.field.title' | t }}</mat-label>
+      <input matInput formControlName="title" autocomplete="off" />
+      @if (form.controls.title.hasError('required') && form.controls.title.touched) {
+        <mat-error>{{ 'control.error.titleRequired' | t }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'control.field.description' | t }}</mat-label>
+      <textarea matInput formControlName="description" rows="2"></textarea>
+    </mat-form-field>
+
+    <div class="control-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'control.field.type' | t }}</mat-label>
+        <mat-select formControlName="controlType">
+          @for (t of types; track t) {
+            <mat-option [value]="t">{{ 'control.type.' + t | t }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'control.field.frequency' | t }}</mat-label>
+        <mat-select formControlName="frequency">
+          @for (f of frequencies; track f) {
+            <mat-option [value]="f">{{ 'control.frequency.' + f | t }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <app-searchable-select
+      class="full"
+      formControlName="ownerUserId"
+      [label]="'control.field.owner' | t"
+      [options]="ownerOptions()"
+    />
+
+    <app-searchable-select
+      class="full"
+      formControlName="auditableEntityId"
+      [label]="'control.field.entity' | t"
+      [options]="entityOptions()"
+      [clearable]="true"
+      [clearLabel]="'control.value.noEntity' | t"
+    />
+
+    @if (isEdit) {
+      <p class="control-form__section-label">{{ 'control.dialog.testSection' | t }}</p>
+      <div class="control-form__row">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'control.field.effectiveness' | t }}</mat-label>
+          <mat-select formControlName="effectiveness">
+            @for (e of effectivenessOptions; track e) {
+              <mat-option [value]="e">{{ 'control.effectiveness.' + e | t }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (form.controls.effectiveness.value !== 'not_tested') {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'control.field.lastTested' | t }}</mat-label>
+            <input matInput type="date" formControlName="lastTestedDate" />
+          </mat-form-field>
+        }
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="cancel()">{{ 'control.actions.cancel' | t }}</button>
+  <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
+    {{ (isEdit ? 'control.actions.save' : 'control.actions.register') | t }}
+  </button>
+</mat-dialog-actions>

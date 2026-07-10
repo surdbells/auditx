@@ -1,0 +1,46 @@
+<h2 mat-dialog-title>{{ (isEdit ? 'compliance.dialog.editTitle' : 'compliance.dialog.newTitle') | t }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="reg-form">
+    @if (!isEdit) {
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'compliance.field.code' | t }}</mat-label>
+        <input matInput formControlName="code" autocomplete="off" />
+        @if (form.controls.code.hasError('required') && form.controls.code.touched) {
+          <mat-error>{{ 'compliance.error.codeRequired' | t }}</mat-error>
+        }
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'compliance.field.name' | t }}</mat-label>
+      <input matInput formControlName="name" autocomplete="off" />
+      @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+        <mat-error>{{ 'compliance.error.nameRequired' | t }}</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="reg-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'compliance.field.authority' | t }}</mat-label>
+        <input matInput formControlName="authority" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'compliance.field.category' | t }}</mat-label>
+        <input matInput formControlName="category" autocomplete="off" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'compliance.field.description' | t }}</mat-label>
+      <textarea matInput formControlName="description" rows="2"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="cancel()">{{ 'compliance.actions.cancel' | t }}</button>
+  <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
+    {{ (isEdit ? 'compliance.actions.save' : 'compliance.actions.register') | t }}
+  </button>
+</mat-dialog-actions>

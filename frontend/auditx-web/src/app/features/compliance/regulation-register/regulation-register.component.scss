@@ -1,0 +1,33 @@
+.reg-list__filters-card {
+  margin-bottom: 1rem;
+}
+
+.reg-list__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.reg-list__search {
+  flex: 1 1 240px;
+}
+
+.reg-list__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.reg-list__table {
+  width: 100%;
+}
+
+.reg-list__code {
+  font-family: var(--mat-sys-typescale-body-medium-font, monospace);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.reg-list__name {
+  font-weight: 500;
+}

@@ -1,0 +1,25 @@
+.reg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 440px;
+}
+
+.full {
+  width: 100%;
+}
+
+.reg-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 520px) {
+  .reg-form {
+    min-width: auto;
+  }
+  .reg-form__row {
+    grid-template-columns: 1fr;
+  }
+}

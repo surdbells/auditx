@@ -58,6 +58,10 @@ export const Permissions = {
   ViewRisk: 'ViewRisk',
   ManageRisk: 'ManageRisk',
 
+  // P1-B — Controls & Compliance registers
+  ViewControls: 'ViewControls',
+  ManageControls: 'ManageControls',
+
   // M10 — Notifications
   ConfigureNotifications: 'ConfigureNotifications',
 

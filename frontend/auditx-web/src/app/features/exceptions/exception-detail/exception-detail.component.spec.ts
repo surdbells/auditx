@@ -105,6 +105,8 @@ describe('ExceptionDetailComponent', () => {
         hasMore: false,
       },
     });
+    // P1-B: the detail page also loads the finding's control/regulation links.
+    http.expectOne(`${BASE}/exceptions/x-1/links`).flush({ data: { controls: [], regulations: [] } });
     fixture.detectChanges();
     await fixture.whenStable();
   }

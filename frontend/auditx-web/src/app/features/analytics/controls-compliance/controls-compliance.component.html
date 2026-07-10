@@ -1,0 +1,121 @@
+<app-page-header
+  [title]="'analytics.controlsCompliance.title' | t"
+  [subtitle]="'analytics.controlsCompliance.subtitle' | t"
+>
+  <div actions>
+    <a matButton routerLink="/controls">
+      <mat-icon>list</mat-icon>
+      {{ 'analytics.controlsCompliance.registerLink' | t }}
+    </a>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'analytics.actions.refresh' | t }}
+    </button>
+  </div>
+</app-page-header>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'analytics.controlsCompliance.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'analytics.controlsCompliance.error' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="fact_check"
+        [title]="'analytics.controlsCompliance.empty.title' | t"
+        [message]="'analytics.controlsCompliance.empty.message' | t"
+      />
+    } @else {
+      <h2 class="cc__section">{{ 'analytics.controlsCompliance.effectivenessTitle' | t }}</h2>
+      <mat-card appearance="outlined" class="cc__summary-card">
+        <dl class="cc__kpis">
+          <div class="kpi">
+            <dt>{{ 'analytics.controlsCompliance.kpi.active' | t }}</dt>
+            <dd>{{ effectiveness()?.totalActive ?? 0 }}</dd>
+          </div>
+          <div class="kpi">
+            <dt>{{ 'analytics.controlsCompliance.kpi.tested' | t }}</dt>
+            <dd>{{ effectiveness()?.tested ?? 0 }}</dd>
+          </div>
+          <div class="kpi">
+            <dt>{{ 'analytics.controlsCompliance.kpi.ineffective' | t }}</dt>
+            <dd [class.cc__alert]="(effectiveness()?.ineffective ?? 0) > 0">{{ effectiveness()?.ineffective ?? 0 }}</dd>
+          </div>
+          @if (effectiveShare() !== null) {
+            <div class="kpi">
+              <dt>{{ 'analytics.controlsCompliance.kpi.effectiveShare' | t }}</dt>
+              <dd>{{ effectiveShare() }}%</dd>
+            </div>
+          }
+        </dl>
+      </mat-card>
+
+      <div class="cc__breakdowns">
+        <mat-card appearance="outlined" class="cc__breakdown-card">
+          <h3 class="cc__breakdown-title">{{ 'analytics.controlsCompliance.byEffectiveness' | t }}</h3>
+          @for (c of effectiveness()?.byEffectiveness ?? []; track c.key) {
+            <div class="cc__row">
+              <span class="status-badge" [attr.data-status]="c.key">{{ effectivenessLabel(c.key) }}</span>
+              <span class="cc__count">{{ c.count }}</span>
+            </div>
+          } @empty {
+            <p class="muted">{{ 'analytics.controlsCompliance.none' | t }}</p>
+          }
+        </mat-card>
+
+        <mat-card appearance="outlined" class="cc__breakdown-card">
+          <h3 class="cc__breakdown-title">{{ 'analytics.controlsCompliance.byType' | t }}</h3>
+          @for (c of effectiveness()?.byType ?? []; track c.key) {
+            <div class="cc__row">
+              <span class="cc__type">{{ typeLabel(c.key) }}</span>
+              <span class="cc__count">{{ c.count }}</span>
+            </div>
+          } @empty {
+            <p class="muted">{{ 'analytics.controlsCompliance.none' | t }}</p>
+          }
+        </mat-card>
+      </div>
+
+      <h2 class="cc__section">{{ 'analytics.controlsCompliance.complianceTitle' | t }}</h2>
+      @if (!compliance().length) {
+        <app-empty-state
+          icon="account_balance"
+          [title]="'analytics.controlsCompliance.complianceEmpty.title' | t"
+          [message]="'analytics.controlsCompliance.complianceEmpty.message' | t"
+        />
+      } @else {
+        <mat-card appearance="outlined" class="cc__table-card">
+          <div class="table-scroll">
+            <table mat-table [dataSource]="compliance()" class="cc__table">
+              <ng-container matColumnDef="code">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.controlsCompliance.col.code' | t }}</th>
+                <td mat-cell *matCellDef="let r" class="cc__code">{{ r.code }}</td>
+              </ng-container>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.controlsCompliance.col.name' | t }}</th>
+                <td mat-cell *matCellDef="let r">{{ r.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="authority">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.controlsCompliance.col.authority' | t }}</th>
+                <td mat-cell *matCellDef="let r" class="muted">{{ r.authority ?? '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="linked">
+                <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.controlsCompliance.col.linked' | t }}</th>
+                <td mat-cell *matCellDef="let r" class="num">{{ r.linkedFindings }}</td>
+              </ng-container>
+              <ng-container matColumnDef="open">
+                <th mat-header-cell *matHeaderCellDef class="num">{{ 'analytics.controlsCompliance.col.open' | t }}</th>
+                <td mat-cell *matCellDef="let r" class="num" [class.cc__alert]="r.openFindings > 0">{{ r.openFindings }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="regulationColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: regulationColumns"></tr>
+            </table>
+          </div>
+        </mat-card>
+      }
+    }
+  }
+}

@@ -1,0 +1,137 @@
+<app-page-header
+  [title]="'control.list.title' | t"
+  [subtitle]="'control.list.subtitle' | t"
+>
+  <div actions class="control-list__header-actions">
+    <a matButton routerLink="/analytics/controls-compliance">
+      <mat-icon>fact_check</mat-icon>
+      {{ 'control.list.analytics' | t }}
+    </a>
+    @if (canManage()) {
+      <button matButton="filled" type="button" (click)="create()">
+        <mat-icon>add</mat-icon>
+        {{ 'control.actions.register' | t }}
+      </button>
+    }
+  </div>
+</app-page-header>
+
+<mat-card appearance="outlined" class="control-list__filters-card">
+  <form [formGroup]="filters" class="control-list__filters">
+    <mat-form-field appearance="outline" class="control-list__search">
+      <mat-label>{{ 'common.search' | t }}</mat-label>
+      <input matInput formControlName="search" autocomplete="off" />
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'control.field.type' | t }}</mat-label>
+      <mat-select formControlName="type">
+        <mat-option [value]="''">{{ 'control.filter.anyType' | t }}</mat-option>
+        @for (t of types; track t) {
+          <mat-option [value]="t">{{ 'control.type.' + t | t }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'control.field.effectiveness' | t }}</mat-label>
+      <mat-select formControlName="effectiveness">
+        <mat-option [value]="''">{{ 'control.filter.anyEffectiveness' | t }}</mat-option>
+        @for (e of effectivenessOptions; track e) {
+          <mat-option [value]="e">{{ 'control.effectiveness.' + e | t }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-checkbox formControlName="includeRetired">{{ 'control.filter.includeRetired' | t }}</mat-checkbox>
+  </form>
+</mat-card>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'control.list.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'control.list.error' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="fact_check"
+        [title]="'control.list.emptyTitle' | t"
+        [message]="'control.list.emptyMessage' | t"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="control-list__table-card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="controls()" class="control-list__table">
+            <ng-container matColumnDef="code">
+              <th mat-header-cell *matHeaderCellDef>{{ 'control.col.code' | t }}</th>
+              <td mat-cell *matCellDef="let c" class="control-list__code">{{ c.code }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef>{{ 'control.col.title' | t }}</th>
+              <td mat-cell *matCellDef="let c"><span class="control-list__title">{{ c.title }}</span></td>
+            </ng-container>
+
+            <ng-container matColumnDef="owner">
+              <th mat-header-cell *matHeaderCellDef>{{ 'control.col.owner' | t }}</th>
+              <td mat-cell *matCellDef="let c">{{ ownerName(c.ownerUserId) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef>{{ 'control.col.type' | t }}</th>
+              <td mat-cell *matCellDef="let c" class="muted">{{ 'control.type.' + c.controlType | t }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="frequency">
+              <th mat-header-cell *matHeaderCellDef>{{ 'control.col.frequency' | t }}</th>
+              <td mat-cell *matCellDef="let c" class="muted">{{ 'control.frequency.' + c.frequency | t }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="effectiveness">
+              <th mat-header-cell *matHeaderCellDef>{{ 'control.col.effectiveness' | t }}</th>
+              <td mat-cell *matCellDef="let c">
+                <span class="status-badge" [attr.data-status]="c.effectiveness">{{ 'control.effectiveness.' + c.effectiveness | t }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'control.col.status' | t }}</th>
+              <td mat-cell *matCellDef="let c">
+                <span class="status-badge" [attr.data-status]="c.isActive ? 'active' : 'retired'">
+                  {{ (c.isActive ? 'control.status.active' : 'control.status.retired') | t }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'control.col.actions' | t"></th>
+              <td mat-cell *matCellDef="let c">
+                @if (canManage()) {
+                  <button matIconButton type="button" [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'control.actions.menuAria' | t: { code: c.code }">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #rowMenu="matMenu">
+                    <button mat-menu-item type="button" (click)="edit(c)">
+                      <mat-icon>edit</mat-icon><span>{{ 'control.actions.edit' | t }}</span>
+                    </button>
+                    <button mat-menu-item type="button" (click)="toggleActive(c)">
+                      <mat-icon>{{ c.isActive ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                      <span>{{ (c.isActive ? 'control.actions.retire' : 'control.actions.reactivate') | t }}</span>
+                    </button>
+                    <button mat-menu-item type="button" (click)="remove(c)">
+                      <mat-icon>delete</mat-icon><span>{{ 'control.actions.delete' | t }}</span>
+                    </button>
+                  </mat-menu>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

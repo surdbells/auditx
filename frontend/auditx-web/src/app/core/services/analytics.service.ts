@@ -7,6 +7,8 @@ import { ApiService } from './api.service';
 import {
   ApiResponse,
   BudgetVsActualRow,
+  ComplianceByRegulationRow,
+  ControlEffectivenessSummary,
   CoverageMatrix,
   CursorPage,
   DashboardDetail,
@@ -162,6 +164,16 @@ export class AnalyticsService {
   /** Risk-register roll-up — totals + open risks by band/status/category/strategy (P1-A, ViewAnalytics). */
   riskSummary(): Observable<RiskRegisterSummary> {
     return this.api.get<RiskRegisterSummary>('/analytics/risk-summary');
+  }
+
+  /** Control-effectiveness roll-up — active controls by effectiveness + type (P1-B, ViewAnalytics). */
+  controlEffectiveness(): Observable<ControlEffectivenessSummary> {
+    return this.api.get<ControlEffectivenessSummary>('/analytics/control-effectiveness');
+  }
+
+  /** Compliance-by-regulation — linked + open findings per active regulation (P1-B, ViewAnalytics). */
+  complianceByRegulation(): Observable<ComplianceByRegulationRow[]> {
+    return this.api.get<ComplianceByRegulationRow[]>('/analytics/compliance-by-regulation');
   }
 
   /* ---- Recurrence clusters (ViewAnalytics) ---- */

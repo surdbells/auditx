@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>{{ (isControl ? 'links.dialog.controlTitle' : 'links.dialog.regulationTitle') | t }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" style="min-width: 380px">
+    <app-searchable-select
+      class="full"
+      formControlName="id"
+      [label]="(isControl ? 'links.dialog.controlLabel' : 'links.dialog.regulationLabel') | t"
+      [options]="options()"
+    />
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="cancel()">{{ 'links.actions.cancel' | t }}</button>
+  <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid">
+    {{ 'links.actions.link' | t }}
+  </button>
+</mat-dialog-actions>

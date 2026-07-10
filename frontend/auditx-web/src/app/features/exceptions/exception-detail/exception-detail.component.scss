@@ -157,3 +157,52 @@
 .detail__file-name {
   font-weight: 500;
 }
+
+/* P1-B — control / regulation link chips */
+.detail__links-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.35rem 0;
+
+  & + .detail__links-group {
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+.detail__links-label {
+  min-width: 6.5rem;
+  font: var(--mat-sys-label-medium);
+}
+
+.detail__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.detail__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.35rem 0.15rem 0.7rem;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface-variant);
+  max-width: 22rem;
+}
+
+.detail__chip-code {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.detail__chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

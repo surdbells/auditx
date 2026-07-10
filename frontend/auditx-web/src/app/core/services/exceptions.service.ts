@@ -15,6 +15,9 @@ import {
   ExceptionHistoryEntry,
   ExceptionListItem,
   ExceptionQuery,
+  FindingControlLink,
+  FindingLinks,
+  FindingRegulationLink,
   RaiseExceptionRequest,
   ReassignOwnerRequest,
   ReasonVersionRequest,
@@ -108,6 +111,33 @@ export class ExceptionsService {
 
   getHistory(id: string): Observable<ExceptionHistoryEntry[]> {
     return this.api.get<ExceptionHistoryEntry[]>(`/exceptions/${id}/history`);
+  }
+
+  /* ---- Control / regulation links (P1-B) ---- */
+
+  /** The controls + regulations linked to this finding (ViewExceptions). */
+  getLinks(id: string): Observable<FindingLinks> {
+    return this.api.get<FindingLinks>(`/exceptions/${id}/links`);
+  }
+
+  /** Links a control to this finding (ManageException). Idempotent. */
+  linkControl(id: string, controlId: string): Observable<FindingControlLink> {
+    return this.api.post<FindingControlLink>(`/exceptions/${id}/controls`, { controlId });
+  }
+
+  /** Removes a control link (ManageException). No version — the link is a join row. */
+  unlinkControl(id: string, controlId: string): Observable<void> {
+    return this.api.deleteVoid(`/exceptions/${id}/controls/${controlId}`);
+  }
+
+  /** Links a regulation to this finding (ManageException). Idempotent. */
+  linkRegulation(id: string, regulationId: string): Observable<FindingRegulationLink> {
+    return this.api.post<FindingRegulationLink>(`/exceptions/${id}/regulations`, { regulationId });
+  }
+
+  /** Removes a regulation link (ManageException). No version — the link is a join row. */
+  unlinkRegulation(id: string, regulationId: string): Observable<void> {
+    return this.api.deleteVoid(`/exceptions/${id}/regulations/${regulationId}`);
   }
 
   /* ---- Management ---- */

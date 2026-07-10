@@ -1,0 +1,38 @@
+.control-list__header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.control-list__filters-card {
+  margin-bottom: 1rem;
+}
+
+.control-list__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.control-list__search {
+  flex: 1 1 240px;
+}
+
+.control-list__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.control-list__table {
+  width: 100%;
+}
+
+.control-list__code {
+  font-family: var(--mat-sys-typescale-body-medium-font, monospace);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.control-list__title {
+  font-weight: 500;
+}

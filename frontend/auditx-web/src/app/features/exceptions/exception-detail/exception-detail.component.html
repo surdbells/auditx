@@ -114,6 +114,67 @@
         }
       </mat-card>
 
+      <!-- Controls & regulations linked to this finding (P1-B) -->
+      <mat-card appearance="outlined" class="detail__card">
+        <div class="detail__card-head">
+          <h3 class="detail__card-title">{{ 'links.title' | t }}</h3>
+          @if (canManage()) {
+            <div class="detail__card-actions">
+              <button matButton type="button" (click)="addControlLink()">
+                <mat-icon>add_link</mat-icon>
+                {{ 'links.action.linkControl' | t }}
+              </button>
+              <button matButton type="button" (click)="addRegulationLink()">
+                <mat-icon>add_link</mat-icon>
+                {{ 'links.action.linkRegulation' | t }}
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="detail__links-group">
+          <span class="detail__links-label muted">{{ 'links.controls' | t }}</span>
+          @if (links()?.controls?.length) {
+            <ul class="detail__chips">
+              @for (c of links()!.controls; track c.linkId) {
+                <li class="detail__chip">
+                  <span class="detail__chip-code">{{ c.code }}</span>
+                  <span class="detail__chip-label">{{ c.title }}</span>
+                  @if (canManage()) {
+                    <button matIconButton type="button" (click)="removeControlLink(c)" [attr.aria-label]="'links.action.unlink' | t: { name: c.code }">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          } @else {
+            <span class="muted">{{ 'links.noControls' | t }}</span>
+          }
+        </div>
+
+        <div class="detail__links-group">
+          <span class="detail__links-label muted">{{ 'links.regulations' | t }}</span>
+          @if (links()?.regulations?.length) {
+            <ul class="detail__chips">
+              @for (r of links()!.regulations; track r.linkId) {
+                <li class="detail__chip">
+                  <span class="detail__chip-code">{{ r.code }}</span>
+                  <span class="detail__chip-label">{{ r.name }}</span>
+                  @if (canManage()) {
+                    <button matIconButton type="button" (click)="removeRegulationLink(r)" [attr.aria-label]="'links.action.unlink' | t: { name: r.code }">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          } @else {
+            <span class="muted">{{ 'links.noRegulations' | t }}</span>
+          }
+        </div>
+      </mat-card>
+
       <!-- Management Action Plan -->
       <mat-card appearance="outlined" class="detail__card">
         <div class="detail__card-head">

@@ -25,6 +25,9 @@ import { Permissions } from '../../../core/permissions';
 import {
   EvidenceFile,
   Exception,
+  FindingControlLink,
+  FindingLinks,
+  FindingRegulationLink,
   MapAction,
   ProblemDetails,
   UserDto,
@@ -58,6 +61,12 @@ import {
   ExceptionHistoryDialogComponent,
   ExceptionHistoryDialogData,
 } from '../dialogs/exception-history-dialog.component';
+import {
+  LinkFindingDialogComponent,
+  LinkFindingDialogData,
+  LinkFindingKind,
+  LinkFindingResult,
+} from '../dialogs/link-finding-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -98,6 +107,8 @@ export class ExceptionDetailComponent {
   readonly userNames = signal<Record<string, string>>({});
   /** actionId → evidence list (lazy). */
   readonly evidence = signal<Record<string, EvidenceFile[]>>({});
+  /** Linked controls + regulations (P1-B). */
+  readonly links = signal<FindingLinks | null>(null);
 
   private usersCache: UserDto[] = [];
 
@@ -188,8 +199,17 @@ export class ExceptionDetailComponent {
         this.exception.set(ex);
         this.state.set('ready');
         this.ensureUsers();
+        this.loadLinks();
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  private loadLinks(): void {
+    this.service.getLinks(this.id()).subscribe({
+      next: (links) => this.links.set(links),
+      // Non-fatal: the links panel just stays empty if it can't load.
+      error: () => this.links.set({ controls: [], regulations: [] }),
     });
   }
 
@@ -457,6 +477,65 @@ export class ExceptionDetailComponent {
       userNames: this.userNames(),
     };
     this.dialog.open(ExceptionHistoryDialogComponent, { data, width: '520px' });
+  }
+
+  /* ---- Control / regulation links (P1-B) ---- */
+
+  addControlLink(): void {
+    this.openLinkPicker('control', (id) =>
+      this.service.linkControl(this.id(), id).subscribe({
+        next: () => {
+          this.notify.success(this.i18n.translate('links.notify.controlLinked'));
+          this.loadLinks();
+        },
+      }),
+    );
+  }
+
+  addRegulationLink(): void {
+    this.openLinkPicker('regulation', (id) =>
+      this.service.linkRegulation(this.id(), id).subscribe({
+        next: () => {
+          this.notify.success(this.i18n.translate('links.notify.regulationLinked'));
+          this.loadLinks();
+        },
+      }),
+    );
+  }
+
+  removeControlLink(link: FindingControlLink): void {
+    this.service.unlinkControl(this.id(), link.controlId).subscribe({
+      next: () => {
+        this.notify.success(this.i18n.translate('links.notify.controlUnlinked'));
+        this.loadLinks();
+      },
+    });
+  }
+
+  removeRegulationLink(link: FindingRegulationLink): void {
+    this.service.unlinkRegulation(this.id(), link.regulationId).subscribe({
+      next: () => {
+        this.notify.success(this.i18n.translate('links.notify.regulationUnlinked'));
+        this.loadLinks();
+      },
+    });
+  }
+
+  private openLinkPicker(kind: LinkFindingKind, onResult: (id: string) => void): void {
+    const current = this.links();
+    const existingIds =
+      kind === 'control'
+        ? (current?.controls ?? []).map((c) => c.controlId)
+        : (current?.regulations ?? []).map((r) => r.regulationId);
+    const data: LinkFindingDialogData = { kind, existingIds };
+    this.dialog
+      .open(LinkFindingDialogComponent, { data, width: '440px' })
+      .afterClosed()
+      .subscribe((result?: LinkFindingResult) => {
+        if (result) {
+          onResult(result.id);
+        }
+      });
   }
 
   private openReason(

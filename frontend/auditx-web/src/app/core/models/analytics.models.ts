@@ -232,6 +232,31 @@ export interface RiskRegisterSummary {
   byStrategy: RiskCount[];
 }
 
+/** A labelled count in a control roll-up (effectiveness / type). */
+export interface ControlCount {
+  key: string;
+  count: number;
+}
+
+/** Control-effectiveness roll-up over ACTIVE controls (P1-B). */
+export interface ControlEffectivenessSummary {
+  totalActive: number;
+  tested: number;
+  ineffective: number;
+  byEffectiveness: ControlCount[];
+  byType: ControlCount[];
+}
+
+/** Compliance-by-regulation row: one active regulation + its linked/open finding counts (P1-B). */
+export interface ComplianceByRegulationRow {
+  regulationId: string;
+  code: string;
+  name: string;
+  authority: string | null;
+  linkedFindings: number;
+  openFindings: number;
+}
+
 /** A single Critical/High open exception for the material-findings widget. */
 export interface MaterialFinding {
   exceptionId: string;

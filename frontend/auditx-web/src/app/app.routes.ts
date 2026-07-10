@@ -263,6 +263,24 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'controls',
+        title: 'Controls · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewControls)],
+        loadComponent: () =>
+          import('./features/controls/control-register/control-register.component').then(
+            (m) => m.ControlRegisterComponent,
+          ),
+      },
+      {
+        path: 'compliance',
+        title: 'Regulations · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewControls)],
+        loadComponent: () =>
+          import('./features/compliance/regulation-register/regulation-register.component').then(
+            (m) => m.RegulationRegisterComponent,
+          ),
+      },
+      {
         path: 'planning',
         title: 'Annual Plans · AuditX',
         canActivate: [permissionGuard(Permissions.ViewPlan)],
@@ -441,6 +459,15 @@ export const routes: Routes = [
           import(
             './features/analytics/risk-heatmap/risk-heatmap.component'
           ).then((m) => m.RiskHeatmapComponent),
+      },
+      {
+        path: 'analytics/controls-compliance',
+        title: 'Controls & Compliance · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/controls-compliance/controls-compliance.component'
+          ).then((m) => m.ControlsComplianceComponent),
       },
       {
         path: 'ac',
