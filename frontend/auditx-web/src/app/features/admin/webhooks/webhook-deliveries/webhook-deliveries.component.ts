@@ -29,10 +29,11 @@ import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_LIMIT = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-webhook-deliveries',
@@ -50,6 +51,7 @@ const PAGE_LIMIT = 7;
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
+    PaginatorComponent,
   ],
   templateUrl: './webhook-deliveries.component.html',
   styleUrl: './webhook-deliveries.component.scss',
@@ -83,9 +85,11 @@ export class WebhookDeliveriesComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly deliveries = signal<WebhookDelivery[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly humanise = humaniseStatus;
 
@@ -98,61 +102,44 @@ export class WebhookDeliveriesComponent {
   );
 
   constructor() {
-    this.fetch();
+    this.fetchPage(1);
     this.statusFilter.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe(() => this.fetch());
+      .subscribe(() => this.fetchPage(1));
   }
 
-  fetch(): void {
-    this.state.set('loading');
-    this.deliveries.set([]);
-    this.nextCursor.set(null);
-    this.query(null, (items, cursor, more) => {
-      this.deliveries.set(items);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.state.set('ready');
-    });
-  }
-
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.query(this.nextCursor(), (items, cursor, more) => {
-      this.deliveries.update((current) => [...current, ...items]);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.loadingMore.set(false);
-    });
-  }
-
-  private query(
-    cursor: string | null,
-    onSuccess: (
-      items: WebhookDelivery[],
-      cursor: string | null,
-      more: boolean,
-    ) => void,
-  ): void {
+  fetchPage(page: number): void {
+    this.loading.set(true);
     this.webhooksService
       .listDeliveries({
         status: this.statusFilter.value,
-        cursor: cursor ?? undefined,
-        limit: PAGE_LIMIT,
+        page,
+        pageSize: this.pageSize(),
       })
       .subscribe({
-        next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
+        next: (result) => {
+          this.deliveries.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
+          this.state.set('ready');
+          this.loading.set(false);
+        },
         error: () => {
-          if (cursor === null) {
+          if (this.state() === 'loading') {
             this.state.set('error');
-          } else {
-            this.loadingMore.set(false);
           }
+          this.loading.set(false);
         },
       });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   canRetryRow(delivery: WebhookDelivery): boolean {
@@ -166,7 +153,7 @@ export class WebhookDeliveriesComponent {
     this.webhooksService.retryDelivery(delivery.id).subscribe({
       next: () => {
         this.notify.success(this.i18n.translate('integrations.deliveries.retry.success'));
-        this.fetch();
+        this.fetchPage(this.page());
       },
     });
   }

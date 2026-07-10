@@ -40,8 +40,8 @@ public interface IAuditTrailReader
     /// <summary>Distinct event/target types present in the trail, for populating filter dropdowns.</summary>
     Task<AuditTrailFacets> GetFacetsAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>Filtered, keyset-cursor page over the trail, ordered newest-first.</summary>
-    Task<CursorPage<AuditTrailEntryView>> QueryAsync(AuditTrailFilter filter, PageRequest page, CancellationToken cancellationToken = default);
+    /// <summary>Filtered, offset page over the trail, ordered newest-first.</summary>
+    Task<PagedResult<AuditTrailEntryView>> QueryAsync(AuditTrailFilter filter, PageSpec page, CancellationToken cancellationToken = default);
 
     /// <summary>Stream all entries matching the filter, newest-first, for export (no buffering).</summary>
     IAsyncEnumerable<AuditTrailEntryView> StreamAsync(AuditTrailFilter filter, CancellationToken cancellationToken = default);

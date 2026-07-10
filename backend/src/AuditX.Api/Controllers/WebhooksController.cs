@@ -34,8 +34,8 @@ public sealed class WebhooksController(IDispatcher dispatcher) : ApiControllerBa
     [RequirePermission(PermissionKeys.ViewIntegrations)]
     [HttpGet("webhook-deliveries")]
     public async Task<IActionResult> ListDeliveries(
-        [FromQuery] string? status, [FromQuery] Guid? subscriptionId, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListWebhookDeliveriesQuery(status, subscriptionId, cursor, limit), cancellationToken));
+        [FromQuery] string? status, [FromQuery] Guid? subscriptionId, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListWebhookDeliveriesQuery(status, subscriptionId, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.AdminOps)]
     [HttpPost("webhook-deliveries/{id:guid}/retry")]

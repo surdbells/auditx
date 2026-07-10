@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   CreateWebhookSubscriptionRequest,
-  CursorPage,
+  PagedResult,
   WebhookDelivery,
   WebhookDeliveryStatus,
   WebhookSubscription,
@@ -30,20 +30,20 @@ export class WebhooksService {
   }
 
   /**
-   * Cursor-paginated delivery log. Optional `subscriptionId` / `status` filters
-   * and `cursor` / `limit` page controls are forwarded as query params.
+   * Offset-paginated delivery log. Optional `subscriptionId` / `status` filters
+   * and `page` / `pageSize` controls are forwarded as query params.
    */
   listDeliveries(params: {
     subscriptionId?: string;
     status?: WebhookDeliveryStatus | '';
-    cursor?: string;
-    limit?: number;
-  }): Observable<CursorPage<WebhookDelivery>> {
-    return this.api.get<CursorPage<WebhookDelivery>>('/webhook-deliveries', {
+    page?: number;
+    pageSize?: number;
+  }): Observable<PagedResult<WebhookDelivery>> {
+    return this.api.get<PagedResult<WebhookDelivery>>('/webhook-deliveries', {
       subscriptionId: params.subscriptionId,
       status: params.status,
-      cursor: params.cursor,
-      limit: params.limit,
+      page: params.page,
+      pageSize: params.pageSize,
     });
   }
 

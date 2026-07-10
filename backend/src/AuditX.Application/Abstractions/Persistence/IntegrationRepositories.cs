@@ -30,7 +30,7 @@ public interface IWebhookRepository
 
     Task<WebhookDelivery?> GetDeliveryAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<WebhookDelivery>> GetDeliveriesAsync(WebhookDeliveryStatus? status, Guid? subscriptionId, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<WebhookDelivery>> GetDeliveriesAsync(WebhookDeliveryStatus? status, Guid? subscriptionId, PageSpec page, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<WebhookDelivery>> GetDueForRetryAsync(DateTimeOffset asOfUtc, int limit, CancellationToken cancellationToken = default);
 

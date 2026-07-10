@@ -64,7 +64,7 @@ describe('AuditTrailService', () => {
           dateFrom: '2026-01-01T00:00:00Z',
           dateTo: '2026-12-31T23:59:59Z',
         },
-        'cur-1',
+        2,
         50,
       )
       .subscribe((page) => (result = page));
@@ -76,10 +76,10 @@ describe('AuditTrailService', () => {
     expect(req.request.params.get('target_object_id')).toBe('t-1');
     expect(req.request.params.get('date_from')).toBe('2026-01-01T00:00:00Z');
     expect(req.request.params.get('date_to')).toBe('2026-12-31T23:59:59Z');
-    expect(req.request.params.get('cursor')).toBe('cur-1');
-    expect(req.request.params.get('limit')).toBe('50');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('50');
     req.flush({
-      data: { items: [entry()], nextCursor: null, hasMore: false },
+      data: { items: [entry()], total: 1, page: 2, pageSize: 50, totalPages: 2, hasPrevious: true, hasNext: false },
     });
     expect(result?.items.length).toBe(1);
   });

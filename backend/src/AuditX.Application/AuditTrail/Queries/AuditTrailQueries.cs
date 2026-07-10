@@ -14,15 +14,15 @@ namespace AuditX.Application.AuditTrail.Queries;
 
 public sealed record QueryAuditTrailQuery(
     Guid? ActorUserId, string? EventType, string? TargetObjectType, Guid? TargetObjectId,
-    DateTimeOffset? From, DateTimeOffset? To, string? Cursor, int? Limit) : IQuery<CursorPage<AuditTrailEntryDto>>;
+    DateTimeOffset? From, DateTimeOffset? To, int? Page, int? PageSize) : IQuery<PagedResult<AuditTrailEntryDto>>;
 
 public sealed class QueryAuditTrailQueryHandler(IAuditTrailReader reader, IAuditRecorder audit, IUnitOfWork unitOfWork)
-    : IQueryHandler<QueryAuditTrailQuery, CursorPage<AuditTrailEntryDto>>
+    : IQueryHandler<QueryAuditTrailQuery, PagedResult<AuditTrailEntryDto>>
 {
-    public async Task<CursorPage<AuditTrailEntryDto>> Handle(QueryAuditTrailQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<AuditTrailEntryDto>> Handle(QueryAuditTrailQuery query, CancellationToken cancellationToken)
     {
         var filter = new AuditTrailFilter(query.ActorUserId, query.EventType, query.TargetObjectType, query.TargetObjectId, query.From, query.To);
-        var page = await reader.QueryAsync(filter, PageRequest.Of(query.Cursor, query.Limit), cancellationToken);
+        var page = await reader.QueryAsync(filter, PageSpec.Of(query.Page, query.PageSize), cancellationToken);
 
         // The trail access is itself auditable (who viewed what). Targets `audit_trail` so it is never re-queried inline.
         audit.Record(AuditEventTypes.TrailQueried, AuditTargetTypes.AuditTrail, null, payload: new
@@ -32,7 +32,7 @@ public sealed class QueryAuditTrailQueryHandler(IAuditTrailReader reader, IAudit
         });
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new CursorPage<AuditTrailEntryDto>(page.Items.Select(e => e.ToDto()).ToArray(), page.NextCursor, page.HasMore);
+        return page.Map(e => e.ToDto());
     }
 }
 
@@ -49,16 +49,16 @@ public sealed class GetAuditTrailFacetsQueryHandler(IAuditTrailReader reader)
 
 // ---- Per-object history (US-M11-008) ----
 
-public sealed record GetObjectHistoryQuery(string TargetObjectType, Guid TargetObjectId, string? Cursor, int? Limit) : IQuery<CursorPage<AuditTrailEntryDto>>;
+public sealed record GetObjectHistoryQuery(string TargetObjectType, Guid TargetObjectId, int? Page, int? PageSize) : IQuery<PagedResult<AuditTrailEntryDto>>;
 
 public sealed class GetObjectHistoryQueryHandler(IAuditTrailReader reader, IAuditRecorder audit, IUnitOfWork unitOfWork)
-    : IQueryHandler<GetObjectHistoryQuery, CursorPage<AuditTrailEntryDto>>
+    : IQueryHandler<GetObjectHistoryQuery, PagedResult<AuditTrailEntryDto>>
 {
-    public async Task<CursorPage<AuditTrailEntryDto>> Handle(GetObjectHistoryQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<AuditTrailEntryDto>> Handle(GetObjectHistoryQuery query, CancellationToken cancellationToken)
     {
-        // Reuse the keyset-paginated query so a long object history is never silently truncated.
+        // Reuse the offset-paginated query so a long object history is never silently truncated.
         var filter = new AuditTrailFilter(TargetObjectType: query.TargetObjectType, TargetObjectId: query.TargetObjectId);
-        var page = await reader.QueryAsync(filter, PageRequest.Of(query.Cursor, query.Limit), cancellationToken);
+        var page = await reader.QueryAsync(filter, PageSpec.Of(query.Page, query.PageSize), cancellationToken);
 
         // Self-audit targets `audit_trail` with a null id (the queried object id lives in the payload, so the
         // (target_type, target_id) pair stays internally consistent).
@@ -66,7 +66,7 @@ public sealed class GetObjectHistoryQueryHandler(IAuditTrailReader reader, IAudi
             payload: new { query.TargetObjectType, queried_object_id = query.TargetObjectId, returned = page.Items.Count });
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new CursorPage<AuditTrailEntryDto>(page.Items.Select(e => e.ToDto()).ToArray(), page.NextCursor, page.HasMore);
+        return page.Map(e => e.ToDto());
     }
 }
 

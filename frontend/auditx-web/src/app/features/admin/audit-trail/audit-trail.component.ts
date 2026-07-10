@@ -36,12 +36,13 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 /** Converts a Date to the start-of-day ISO datetime string. */
 function toIsoStart(value: Date | null): string | undefined {
@@ -82,6 +83,7 @@ function toIsoEnd(value: Date | null): string | undefined {
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './audit-trail.component.html',
@@ -114,9 +116,11 @@ export class AuditTrailComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly entries = signal<AuditTrailEntry[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
   readonly exporting = signal(false);
 
   /** Distinct event/target-type vocabularies from the backend, for the dropdowns. */
@@ -157,7 +161,7 @@ export class AuditTrailComponent {
   constructor() {
     this.userLookup.ensureLoaded();
     this.loadFacets();
-    this.fetchFirstPage();
+    this.fetchPage(1);
   }
 
   /** Resolves the actor of an entry to a human-readable name (user directory → system label → id → em dash). */
@@ -197,7 +201,7 @@ export class AuditTrailComponent {
   }
 
   apply(): void {
-    this.fetchFirstPage();
+    this.fetchPage(1);
   }
 
   clear(): void {
@@ -208,54 +212,37 @@ export class AuditTrailComponent {
       dateFrom: null,
       dateTo: null,
     });
-    this.fetchFirstPage();
+    this.fetchPage(1);
   }
 
-  fetchFirstPage(): void {
-    this.state.set('loading');
-    this.entries.set([]);
-    this.nextCursor.set(null);
-    this.query(null, (items, cursor, more) => {
-      this.entries.set(items);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.state.set('ready');
-    });
-  }
-
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.query(this.nextCursor(), (items, cursor, more) => {
-      this.entries.update((current) => [...current, ...items]);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.loadingMore.set(false);
-    });
-  }
-
-  private query(
-    cursor: string | null,
-    onSuccess: (
-      items: AuditTrailEntry[],
-      cursor: string | null,
-      more: boolean,
-    ) => void,
-  ): void {
+  fetchPage(page: number): void {
+    this.loading.set(true);
     this.service
-      .query(this.currentFilter(), cursor ?? undefined, PAGE_SIZE)
+      .query(this.currentFilter(), page, this.pageSize())
       .subscribe({
-        next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
+        next: (result) => {
+          this.entries.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
+          this.state.set('ready');
+          this.loading.set(false);
+        },
         error: () => {
-          if (cursor === null) {
+          if (this.state() === 'loading') {
             this.state.set('error');
-          } else {
-            this.loadingMore.set(false);
           }
+          this.loading.set(false);
         },
       });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   open(entry: AuditTrailEntry): void {

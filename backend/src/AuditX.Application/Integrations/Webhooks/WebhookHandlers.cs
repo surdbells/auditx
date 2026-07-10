@@ -103,13 +103,13 @@ public sealed class ListWebhookSubscriptionsQueryHandler(IWebhookRepository webh
         => (await webhooks.GetAllSubscriptionsAsync(cancellationToken)).Select(s => s.ToDto()).ToArray();
 }
 
-public sealed record ListWebhookDeliveriesQuery(string? Status, Guid? SubscriptionId, string? Cursor, int? Limit)
-    : IQuery<CursorPage<WebhookDeliveryDto>>;
+public sealed record ListWebhookDeliveriesQuery(string? Status, Guid? SubscriptionId, int? Page, int? PageSize)
+    : IQuery<PagedResult<WebhookDeliveryDto>>;
 
 public sealed class ListWebhookDeliveriesQueryHandler(IWebhookRepository webhooks)
-    : IQueryHandler<ListWebhookDeliveriesQuery, CursorPage<WebhookDeliveryDto>>
+    : IQueryHandler<ListWebhookDeliveriesQuery, PagedResult<WebhookDeliveryDto>>
 {
-    public async Task<CursorPage<WebhookDeliveryDto>> Handle(ListWebhookDeliveriesQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<WebhookDeliveryDto>> Handle(ListWebhookDeliveriesQuery query, CancellationToken cancellationToken)
     {
         WebhookDeliveryStatus? status = query.Status is null
             ? null
@@ -117,8 +117,8 @@ public sealed class ListWebhookDeliveriesQueryHandler(IWebhookRepository webhook
                 ? parsed
                 : throw new ConflictException("invalid_delivery_status", $"Unknown delivery status '{query.Status}'.");
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await webhooks.GetDeliveriesAsync(status, query.SubscriptionId, page, cancellationToken);
-        return new CursorPage<WebhookDeliveryDto>(result.Items.Select(d => d.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(d => d.ToDto());
     }
 }

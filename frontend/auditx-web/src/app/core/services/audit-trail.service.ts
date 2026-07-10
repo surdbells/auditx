@@ -8,7 +8,7 @@ import {
   AuditTrailEntry,
   AuditTrailFacets,
   AuditTrailFilter,
-  CursorPage,
+  PagedResult,
   FlaggedEvidence,
 } from '../models';
 
@@ -33,30 +33,30 @@ export class AuditTrailService {
 
   query(
     filter: AuditTrailFilter,
-    cursor?: string,
-    limit?: number,
-  ): Observable<CursorPage<AuditTrailEntry>> {
-    return this.api.get<CursorPage<AuditTrailEntry>>('/audit-trail', {
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<AuditTrailEntry>> {
+    return this.api.get<PagedResult<AuditTrailEntry>>('/audit-trail', {
       actor_user_id: filter.actorUserId,
       event_type: filter.eventType,
       target_object_type: filter.targetObjectType,
       target_object_id: filter.targetObjectId,
       date_from: filter.dateFrom,
       date_to: filter.dateTo,
-      cursor,
-      limit,
+      page,
+      pageSize,
     });
   }
 
   objectHistory(
     type: string,
     id: string,
-    cursor?: string,
-    limit?: number,
-  ): Observable<CursorPage<AuditTrailEntry>> {
-    return this.api.get<CursorPage<AuditTrailEntry>>(
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<AuditTrailEntry>> {
+    return this.api.get<PagedResult<AuditTrailEntry>>(
       `/audit-trail/object/${type}/${id}`,
-      { cursor, limit },
+      { page, pageSize },
     );
   }
 

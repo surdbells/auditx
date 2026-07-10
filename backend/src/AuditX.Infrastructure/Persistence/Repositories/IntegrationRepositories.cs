@@ -44,7 +44,7 @@ public sealed class WebhookRepository(AppDbContext db) : IWebhookRepository
     public Task<WebhookDelivery?> GetDeliveryAsync(Guid id, CancellationToken cancellationToken = default)
         => db.WebhookDeliveries.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
 
-    public async Task<CursorPage<WebhookDelivery>> GetDeliveriesAsync(WebhookDeliveryStatus? status, Guid? subscriptionId, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<WebhookDelivery>> GetDeliveriesAsync(WebhookDeliveryStatus? status, Guid? subscriptionId, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.WebhookDeliveries.AsNoTracking().AsQueryable();
         if (status is { } s)
@@ -57,57 +57,12 @@ public sealed class WebhookRepository(AppDbContext db) : IWebhookRepository
             query = query.Where(d => d.SubscriptionId == sub);
         }
 
-        if (TryDecodeCursor(page.Cursor, out var afterCreated, out var afterId))
-        {
-            // Keyset: rows strictly older than the cursor in the (created_at desc, id desc) total order.
-            query = query.Where(d => d.CreatedAt < afterCreated || (d.CreatedAt == afterCreated && d.Id.CompareTo(afterId) < 0));
-        }
-
+        var total = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderByDescending(d => d.CreatedAt).ThenByDescending(d => d.Id)
-            .Take(page.Limit + 1)
+            .Skip(page.Skip).Take(page.PageSize)
             .ToListAsync(cancellationToken);
-
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        var next = hasMore ? EncodeCursor(items[^1].CreatedAt, items[^1].Id) : null;
-        return new CursorPage<WebhookDelivery>(items, next, hasMore);
-    }
-
-    // Base64Url (not standard Base64) so the cursor survives a raw ?cursor= query string unchanged — standard Base64's
-    // '+' is decoded to a space by ASP.NET query parsing, which would corrupt the cursor for non-URL-encoding clients.
-    private static string EncodeCursor(DateTimeOffset createdAt, Guid id)
-        => System.Buffers.Text.Base64Url.EncodeToString(System.Text.Encoding.UTF8.GetBytes($"{createdAt.UtcTicks}:{id}"));
-
-    private static bool TryDecodeCursor(string? cursor, out DateTimeOffset createdAt, out Guid id)
-    {
-        createdAt = default;
-        id = default;
-        if (string.IsNullOrWhiteSpace(cursor))
-        {
-            return false;
-        }
-
-        try
-        {
-            var parts = System.Text.Encoding.UTF8.GetString(System.Buffers.Text.Base64Url.DecodeFromChars(cursor)).Split(':', 2);
-            if (parts.Length == 2 && long.TryParse(parts[0], out var ticks) && Guid.TryParse(parts[1], out id)
-                && ticks >= DateTimeOffset.MinValue.UtcTicks && ticks <= DateTimeOffset.MaxValue.UtcTicks)
-            {
-                createdAt = new DateTimeOffset(ticks, TimeSpan.Zero);
-                return true;
-            }
-        }
-        catch (FormatException)
-        {
-            // Malformed cursor → treat as no cursor (first page).
-        }
-
-        return false;
+        return new PagedResult<WebhookDelivery>(items, total, page.Page, page.PageSize);
     }
 
     public async Task<IReadOnlyList<WebhookDelivery>> GetDueForRetryAsync(DateTimeOffset asOfUtc, int limit, CancellationToken cancellationToken = default)

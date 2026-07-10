@@ -20,11 +20,11 @@ public sealed class AuditTrailController(IDispatcher dispatcher) : ApiController
         [FromQuery(Name = "target_object_id")] Guid? targetObjectId,
         [FromQuery(Name = "date_from")] DateTimeOffset? dateFrom,
         [FromQuery(Name = "date_to")] DateTimeOffset? dateTo,
-        [FromQuery] string? cursor,
-        [FromQuery] int? limit,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
         CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(
-            new QueryAuditTrailQuery(actorUserId, eventType, targetObjectType, targetObjectId, dateFrom, dateTo, cursor, limit), cancellationToken));
+            new QueryAuditTrailQuery(actorUserId, eventType, targetObjectType, targetObjectId, dateFrom, dateTo, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewAuditTrail)]
     [HttpGet("facets")]
@@ -34,8 +34,8 @@ public sealed class AuditTrailController(IDispatcher dispatcher) : ApiController
     [RequirePermission(PermissionKeys.ViewAuditTrail)]
     [HttpGet("object/{objectType}/{objectId:guid}")]
     public async Task<IActionResult> ObjectHistory(
-        string objectType, Guid objectId, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new GetObjectHistoryQuery(objectType, objectId, cursor, limit), cancellationToken));
+        string objectType, Guid objectId, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetObjectHistoryQuery(objectType, objectId, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ExportAuditTrail)]
     [HttpGet("export")]

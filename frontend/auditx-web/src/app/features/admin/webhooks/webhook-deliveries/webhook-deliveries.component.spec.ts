@@ -26,10 +26,22 @@ function delivery(overrides: Partial<WebhookDelivery> = {}): WebhookDelivery {
 
 function page(
   items: WebhookDelivery[],
-  nextCursor: string | null = null,
-  hasMore = false,
+  total = items.length,
+  pageNum = 1,
+  pageSize = 25,
 ) {
-  return { data: { items, nextCursor, hasMore } };
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    data: {
+      items,
+      total,
+      page: pageNum,
+      pageSize,
+      totalPages,
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < totalPages,
+    },
+  };
 }
 
 function session(permissions: string[]): SessionDto {
@@ -98,21 +110,20 @@ describe('WebhookDeliveriesComponent', () => {
     req.flush(page([delivery()]));
   });
 
-  it('loads more via the next cursor and appends the page', async () => {
+  it('navigates to another page via the paginator', async () => {
     setup();
     const first = http.expectOne((r) => r.url === `${BASE}/webhook-deliveries`);
-    expect(first.request.params.has('cursor')).toBe(false);
-    first.flush(page([delivery()], 'cur-2', true));
+    expect(first.request.params.get('page')).toBe('1');
+    first.flush(page([delivery()], 50));
     await fixture.whenStable();
 
-    expect(component.hasMore()).toBe(true);
-    component.loadMore();
+    component.onPageChange(2);
     const next = http.expectOne((r) => r.url === `${BASE}/webhook-deliveries`);
-    expect(next.request.params.get('cursor')).toBe('cur-2');
-    next.flush(page([delivery({ id: 'd-2' })], null, false));
+    expect(next.request.params.get('page')).toBe('2');
+    next.flush(page([delivery({ id: 'd-2' })], 50, 2));
 
-    expect(component.deliveries().length).toBe(2);
-    expect(component.hasMore()).toBe(false);
+    expect(component.deliveries().map((d) => d.id)).toEqual(['d-2']);
+    expect(component.page()).toBe(2);
   });
 
   it('retries a dead-lettered delivery via AdminOps', async () => {

@@ -68,21 +68,21 @@ describe('WebhooksService', () => {
     expect(done).toBe(true);
   });
 
-  it('lists deliveries with filters, cursor + limit and unwraps the page', () => {
-    let result: { items: unknown[]; hasMore: boolean } | undefined;
+  it('lists deliveries with filters, page + pageSize and unwraps the page', () => {
+    let result: { items: unknown[]; total: number } | undefined;
     service
       .listDeliveries({
         subscriptionId: 's-1',
         status: 'dead_letter',
-        cursor: 'cur-1',
-        limit: 50,
+        page: 2,
+        pageSize: 50,
       })
       .subscribe((page) => (result = page));
     const req = http.expectOne((r) => r.url === `${BASE}/webhook-deliveries`);
     expect(req.request.params.get('subscriptionId')).toBe('s-1');
     expect(req.request.params.get('status')).toBe('dead_letter');
-    expect(req.request.params.get('cursor')).toBe('cur-1');
-    expect(req.request.params.get('limit')).toBe('50');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('50');
     req.flush({
       data: {
         items: [
@@ -99,12 +99,16 @@ describe('WebhooksService', () => {
             createdAt: '',
           },
         ],
-        nextCursor: 'cur-2',
-        hasMore: true,
+        total: 60,
+        page: 2,
+        pageSize: 50,
+        totalPages: 2,
+        hasPrevious: true,
+        hasNext: false,
       },
     });
     expect(result?.items.length).toBe(1);
-    expect(result?.hasMore).toBe(true);
+    expect(result?.total).toBe(60);
   });
 
   it('retries a delivery via void POST', () => {

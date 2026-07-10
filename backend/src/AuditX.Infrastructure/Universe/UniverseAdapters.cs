@@ -163,30 +163,16 @@ public sealed class AuditTrailReader(AppDbContext db) : IAuditTrailReader
         return new AuditTrailFacets(eventTypes, targetTypes);
     }
 
-    public async Task<CursorPage<AuditTrailEntryView>> QueryAsync(AuditTrailFilter filter, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<AuditTrailEntryView>> QueryAsync(AuditTrailFilter filter, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = Filtered(filter);
-
-        if (TryDecodeCursor(page.Cursor, out var afterTime, out var afterId))
-        {
-            // Keyset: rows strictly older than the cursor in the (occurred_at desc, id desc) total order.
-            query = query.Where(e => e.OccurredAtUtc < afterTime || (e.OccurredAtUtc == afterTime && e.Id.CompareTo(afterId) < 0));
-        }
-
+        var total = await query.CountAsync(cancellationToken);
         var rows = await query
             .OrderByDescending(e => e.OccurredAtUtc).ThenByDescending(e => e.Id)
-            .Take(page.Limit + 1)
+            .Skip(page.Skip).Take(page.PageSize)
             .Select(Projection)
             .ToListAsync(cancellationToken);
-
-        var hasMore = rows.Count > page.Limit;
-        if (hasMore)
-        {
-            rows.RemoveAt(rows.Count - 1);
-        }
-
-        var next = hasMore ? EncodeCursor(rows[^1].OccurredAtUtc, rows[^1].Id) : null;
-        return new CursorPage<AuditTrailEntryView>(rows, next, hasMore);
+        return new PagedResult<AuditTrailEntryView>(rows, total, page.Page, page.PageSize);
     }
 
     public IAsyncEnumerable<AuditTrailEntryView> StreamAsync(AuditTrailFilter filter, CancellationToken cancellationToken = default)
@@ -236,36 +222,4 @@ public sealed class AuditTrailReader(AppDbContext db) : IAuditTrailReader
             e.Id, e.EventType, e.TargetObjectType, e.TargetObjectId, e.ActorUserId, e.ActorType.ToString(),
             e.ActorSystemLabel, e.OccurredAtUtc, e.OriginatingTimezone, e.BeforeStateJson, e.AfterStateJson,
             e.RequestContextJson, e.EventPayloadJson);
-
-    // Base64Url (not standard Base64) so the cursor survives a raw ?cursor= query string unchanged — standard Base64's
-    // '+' is decoded to a space by ASP.NET query parsing, which would corrupt the cursor for non-URL-encoding clients.
-    private static string EncodeCursor(DateTimeOffset occurredAt, Guid id)
-        => System.Buffers.Text.Base64Url.EncodeToString(System.Text.Encoding.UTF8.GetBytes($"{occurredAt.UtcTicks}:{id}"));
-
-    private static bool TryDecodeCursor(string? cursor, out DateTimeOffset occurredAt, out Guid id)
-    {
-        occurredAt = default;
-        id = default;
-        if (string.IsNullOrWhiteSpace(cursor))
-        {
-            return false;
-        }
-
-        try
-        {
-            var parts = System.Text.Encoding.UTF8.GetString(System.Buffers.Text.Base64Url.DecodeFromChars(cursor)).Split(':', 2);
-            if (parts.Length == 2 && long.TryParse(parts[0], out var ticks) && Guid.TryParse(parts[1], out id)
-                && ticks >= DateTimeOffset.MinValue.UtcTicks && ticks <= DateTimeOffset.MaxValue.UtcTicks)
-            {
-                occurredAt = new DateTimeOffset(ticks, TimeSpan.Zero);
-                return true;
-            }
-        }
-        catch (FormatException)
-        {
-            // Malformed cursor → treat as no cursor (first page).
-        }
-
-        return false;
-    }
 }

@@ -44,16 +44,17 @@ public sealed class AuditTrailFlowTests(ApiFactory factory) : IClassFixture<ApiF
     {
         var admin = await AdminAsync();
 
-        var first = await DataAsync(await admin.GetAsync("/api/v1/audit-trail?limit=1"));
-        Assert.Equal(1, first.GetProperty("items").GetArrayLength());
-
-        if (first.GetProperty("hasMore").GetBoolean())
+        // Offset paging over a single snapshot: a 2-row page must hold two DISTINCT rows (no gap/dupe within the page).
+        // Cross-request page comparison is deliberately avoided — every trail read itself appends a `trail_query` row,
+        // so the dataset shifts by one between requests (an inherent property of offset paging over a growing table).
+        var page = await DataAsync(await admin.GetAsync("/api/v1/audit-trail?page=1&pageSize=2"));
+        var items = page.GetProperty("items");
+        Assert.True(items.GetArrayLength() >= 1);
+        Assert.True(page.GetProperty("total").GetInt32() >= 1);
+        Assert.Equal(1, page.GetProperty("page").GetInt32());
+        if (items.GetArrayLength() == 2)
         {
-            var cursor = first.GetProperty("nextCursor").GetString();
-            var second = await DataAsync(await admin.GetAsync($"/api/v1/audit-trail?limit=1&cursor={Uri.EscapeDataString(cursor!)}"));
-            var firstId = first.GetProperty("items")[0].GetProperty("id").GetString();
-            var secondId = second.GetProperty("items")[0].GetProperty("id").GetString();
-            Assert.NotEqual(firstId, secondId);
+            Assert.NotEqual(items[0].GetProperty("id").GetString(), items[1].GetProperty("id").GetString());
         }
     }
 
@@ -90,10 +91,10 @@ public sealed class AuditTrailFlowTests(ApiFactory factory) : IClassFixture<ApiF
     {
         var admin = await AdminAsync();
 
-        // Any object type works; use a random id — the endpoint must return a CursorPage shape (possibly empty).
+        // Any object type works; use a random id — the endpoint must return a PagedResult shape (possibly empty).
         var page = await DataAsync(await admin.GetAsync($"/api/v1/audit-trail/object/audit/{Guid.NewGuid()}"));
         Assert.True(page.TryGetProperty("items", out _));
-        Assert.True(page.TryGetProperty("hasMore", out _));
+        Assert.True(page.TryGetProperty("total", out _));
     }
 
     [Fact]
