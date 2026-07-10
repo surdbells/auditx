@@ -24,11 +24,67 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
 const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
+
+/** Contextual page guide for the DC queue (drives the walkthrough + the About panel). */
+const DC_QUEUE_GUIDE: PageGuide = {
+  id: 'sanctions-dc-queue',
+  titleKey: 'sanctions.dcQueue.title',
+  purposeKey: 'sanctions.dcQueue.guide.purpose',
+  descriptionKey: 'sanctions.dcQueue.guide.description',
+  actionKeys: [
+    'sanctions.dcQueue.guide.action.review',
+    'sanctions.dcQueue.guide.action.open',
+    'sanctions.dcQueue.guide.action.decide',
+    'sanctions.dcQueue.guide.action.page',
+  ],
+  sections: [
+    { selector: '.dc-queue__table', titleKey: 'sanctions.dcQueue.guide.section.queue.title', bodyKey: 'sanctions.dcQueue.guide.section.queue.body' },
+    { selector: '.dc-queue__masked', titleKey: 'sanctions.dcQueue.guide.section.subject.title', bodyKey: 'sanctions.dcQueue.guide.section.subject.body' },
+    { selector: '.severity-badge', titleKey: 'sanctions.dcQueue.guide.section.severity.title', bodyKey: 'sanctions.dcQueue.guide.section.severity.body' },
+  ],
+  workflowKeys: [
+    'sanctions.dcQueue.guide.flow.trigger',
+    'sanctions.dcQueue.guide.flow.recommend',
+    'sanctions.dcQueue.guide.flow.refer',
+    'sanctions.dcQueue.guide.flow.decide',
+    'sanctions.dcQueue.guide.flow.outcome',
+  ],
+  dependsOnKeys: [
+    'sanctions.dcQueue.guide.dep.cases',
+    'sanctions.dcQueue.guide.dep.grid',
+    'sanctions.dcQueue.guide.dep.identity',
+  ],
+  usedByKeys: [
+    'sanctions.dcQueue.guide.use.case',
+    'sanctions.dcQueue.guide.use.hr',
+    'sanctions.dcQueue.guide.use.analytics',
+  ],
+  businessRuleKeys: [
+    'sanctions.dcQueue.guide.rule.referred',
+    'sanctions.dcQueue.guide.rule.masked',
+    'sanctions.dcQueue.guide.rule.recurrence',
+    'sanctions.dcQueue.guide.rule.member',
+  ],
+  tipKeys: [
+    'sanctions.dcQueue.guide.tip.severity',
+    'sanctions.dcQueue.guide.tip.recurrence',
+  ],
+  permissionKeys: [
+    'sanctions.dcQueue.guide.perm.member',
+    'sanctions.dcQueue.guide.perm.view',
+  ],
+  faq: [
+    { questionKey: 'sanctions.dcQueue.guide.faq.here.q', answerKey: 'sanctions.dcQueue.guide.faq.here.a' },
+    { questionKey: 'sanctions.dcQueue.guide.faq.masked.q', answerKey: 'sanctions.dcQueue.guide.faq.masked.a' },
+  ],
+};
 
 @Component({
   selector: 'app-dc-queue',
@@ -46,6 +102,7 @@ const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
   ],
   templateUrl: './dc-queue.component.html',
   styleUrl: './dc-queue.component.scss',
@@ -75,6 +132,8 @@ export class DcQueueComponent {
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.cases().length === 0,
   );
+
+  readonly guide = DC_QUEUE_GUIDE;
 
   readonly humanise = humanise;
   readonly maskedSubject = MASKED_SUBJECT;

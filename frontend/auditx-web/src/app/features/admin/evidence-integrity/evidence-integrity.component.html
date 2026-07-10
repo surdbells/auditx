@@ -3,6 +3,8 @@
   [subtitle]="'adminMisc.evidence.subtitle' | t"
 />
 
+<app-page-guide [guide]="guide" />
+
 @switch (state()) {
   @case ('loading') {
     <app-loading [message]="'adminMisc.evidence.loading' | t" />
@@ -69,7 +71,12 @@
                 [attr.aria-label]="'adminMisc.evidence.column.actions' | t"
               ></th>
               <td mat-cell *matCellDef="let e">
-                <button matButton type="button" (click)="unflag(e)">
+                <button
+                  matButton
+                  type="button"
+                  data-guide="unflag"
+                  (click)="unflag(e)"
+                >
                   <mat-icon>flag_off</mat-icon>
                   {{ 'adminMisc.evidence.actions.unflag' | t }}
                 </button>

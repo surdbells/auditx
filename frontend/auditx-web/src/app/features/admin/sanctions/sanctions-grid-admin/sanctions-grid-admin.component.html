@@ -3,6 +3,8 @@
   [subtitle]="'sanctions.grid.subtitle' | t"
 />
 
+<app-page-guide [guide]="guide" />
+
 @if (pendingBanner(); as banner) {
   <mat-card appearance="outlined" class="grid__banner">
     <mat-icon>hourglass_top</mat-icon>

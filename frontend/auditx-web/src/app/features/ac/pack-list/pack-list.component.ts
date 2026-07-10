@@ -31,6 +31,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { GeneratePackDialogComponent } from '../dialogs/generate-pack-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
@@ -38,6 +40,64 @@ type ViewState = 'loading' | 'ready' | 'error';
 /** Poll interval (ms) while a generation is pending/generating. */
 const POLL_INTERVAL = 2000;
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the AC pack list (drives the walkthrough + the About panel). */
+const AC_PACK_LIST_GUIDE: PageGuide = {
+  id: 'ac-pack-list',
+  titleKey: 'ac.packs.title',
+  purposeKey: 'ac.packList.guide.purpose',
+  descriptionKey: 'ac.packList.guide.description',
+  actionKeys: [
+    'ac.packList.guide.action.generate',
+    'ac.packList.guide.action.filter',
+    'ac.packList.guide.action.open',
+    'ac.packList.guide.action.verify',
+  ],
+  sections: [
+    { selector: '.pack-list__actions', titleKey: 'ac.packList.guide.section.generate.title', bodyKey: 'ac.packList.guide.section.generate.body' },
+    { selector: '.pack-list__filter', titleKey: 'ac.packList.guide.section.filter.title', bodyKey: 'ac.packList.guide.section.filter.body' },
+    { selector: '.pack-list__table', titleKey: 'ac.packList.guide.section.table.title', bodyKey: 'ac.packList.guide.section.table.body' },
+  ],
+  workflowKeys: [
+    'ac.packList.guide.flow.generate',
+    'ac.packList.guide.flow.build',
+    'ac.packList.guide.flow.review',
+    'ac.packList.guide.flow.approve',
+    'ac.packList.guide.flow.distribute',
+  ],
+  dependsOnKeys: [
+    'ac.packList.guide.dep.findings',
+    'ac.packList.guide.dep.reports',
+    'ac.packList.guide.dep.analytics',
+    'ac.packList.guide.dep.identity',
+  ],
+  usedByKeys: [
+    'ac.packList.guide.use.detail',
+    'ac.packList.guide.use.distribution',
+    'ac.packList.guide.use.dashboard',
+    'ac.packList.guide.use.actions',
+  ],
+  businessRuleKeys: [
+    'ac.packList.guide.rule.async',
+    'ac.packList.guide.rule.immutable',
+    'ac.packList.guide.rule.lifecycle',
+    'ac.packList.guide.rule.restrict',
+  ],
+  tipKeys: [
+    'ac.packList.guide.tip.poll',
+    'ac.packList.guide.tip.hash',
+    'ac.packList.guide.tip.filter',
+  ],
+  permissionKeys: [
+    'ac.packList.guide.perm.generate',
+    'ac.packList.guide.perm.cia',
+    'ac.packList.guide.perm.view',
+  ],
+  faq: [
+    { questionKey: 'ac.packList.guide.faq.status.q', answerKey: 'ac.packList.guide.faq.status.a' },
+    { questionKey: 'ac.packList.guide.faq.distribute.q', answerKey: 'ac.packList.guide.faq.distribute.a' },
+  ],
+};
 
 /** Pack statuses the filter offers. */
 const STATUS_OPTIONS = [
@@ -68,6 +128,7 @@ const STATUS_OPTIONS = [
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './pack-list.component.html',
@@ -81,6 +142,7 @@ export class AcPackListComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly i18n = inject(TranslationService);
 
+  readonly guide = AC_PACK_LIST_GUIDE;
   readonly statusOptions = STATUS_OPTIONS;
   readonly displayedColumns = [
     'version',

@@ -28,6 +28,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import {
   CreateActionItemDialogComponent,
   CreateActionItemDialogData,
@@ -38,6 +40,61 @@ type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
 const STATUS_OPTIONS = ['', 'open', 'in_progress', 'closed', 'acknowledged'];
+
+/** Contextual page guide for the AC action-items workspace (walkthrough + About panel). */
+const AC_ACTION_ITEMS_GUIDE: PageGuide = {
+  id: 'ac-action-items',
+  titleKey: 'ac.items.title',
+  purposeKey: 'ac.actionItems.guide.purpose',
+  descriptionKey: 'ac.actionItems.guide.description',
+  actionKeys: [
+    'ac.actionItems.guide.action.create',
+    'ac.actionItems.guide.action.filter',
+    'ac.actionItems.guide.action.progress',
+    'ac.actionItems.guide.action.acknowledge',
+  ],
+  sections: [
+    { selector: '[data-guide="create"]', titleKey: 'ac.actionItems.guide.section.create.title', bodyKey: 'ac.actionItems.guide.section.create.body' },
+    { selector: '.items__filter', titleKey: 'ac.actionItems.guide.section.filter.title', bodyKey: 'ac.actionItems.guide.section.filter.body' },
+    { selector: '.items__table', titleKey: 'ac.actionItems.guide.section.table.title', bodyKey: 'ac.actionItems.guide.section.table.body' },
+  ],
+  workflowKeys: [
+    'ac.actionItems.guide.flow.meeting',
+    'ac.actionItems.guide.flow.raise',
+    'ac.actionItems.guide.flow.progress',
+    'ac.actionItems.guide.flow.close',
+    'ac.actionItems.guide.flow.acknowledge',
+  ],
+  dependsOnKeys: [
+    'ac.actionItems.guide.dep.committee',
+    'ac.actionItems.guide.dep.users',
+    'ac.actionItems.guide.dep.audits',
+  ],
+  usedByKeys: [
+    'ac.actionItems.guide.use.minutes',
+    'ac.actionItems.guide.use.reports',
+    'ac.actionItems.guide.use.analytics',
+  ],
+  businessRuleKeys: [
+    'ac.actionItems.guide.rule.lifecycle',
+    'ac.actionItems.guide.rule.closure',
+    'ac.actionItems.guide.rule.acknowledge',
+    'ac.actionItems.guide.rule.roles',
+  ],
+  tipKeys: [
+    'ac.actionItems.guide.tip.due',
+    'ac.actionItems.guide.tip.filter',
+  ],
+  permissionKeys: [
+    'ac.actionItems.guide.perm.member',
+    'ac.actionItems.guide.perm.cia',
+    'ac.actionItems.guide.perm.chair',
+  ],
+  faq: [
+    { questionKey: 'ac.actionItems.guide.faq.actions.q', answerKey: 'ac.actionItems.guide.faq.actions.a' },
+    { questionKey: 'ac.actionItems.guide.faq.acknowledge.q', answerKey: 'ac.actionItems.guide.faq.acknowledge.a' },
+  ],
+};
 
 @Component({
   selector: 'app-ac-action-items',
@@ -55,6 +112,7 @@ const STATUS_OPTIONS = ['', 'open', 'in_progress', 'closed', 'acknowledged'];
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './action-items.component.html',
@@ -89,6 +147,8 @@ export class AcActionItemsComponent {
   private usersCache: UserDto[] = [];
 
   readonly humanise = humanise;
+
+  readonly guide = AC_ACTION_ITEMS_GUIDE;
 
   /** ACMember: create items. CIA: progress/close. ACChair: acknowledge. */
   readonly canCreate = computed(() =>

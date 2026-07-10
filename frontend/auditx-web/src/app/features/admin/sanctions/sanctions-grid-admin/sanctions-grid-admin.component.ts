@@ -29,6 +29,8 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import {
   SanctionsReasonDialogComponent,
   SanctionsReasonDialogData,
@@ -36,6 +38,64 @@ import {
 } from '../dialogs/sanctions-reason-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error' | 'empty';
+
+/** Contextual page guide for the sanctions grid admin (walkthrough + About panel). */
+const SANCTIONS_GRID_GUIDE: PageGuide = {
+  id: 'sanctions-grid-admin',
+  titleKey: 'sanctions.grid.title',
+  purposeKey: 'sanctions.grid.guide.purpose',
+  descriptionKey: 'sanctions.grid.guide.description',
+  actionKeys: [
+    'sanctions.grid.guide.action.add',
+    'sanctions.grid.guide.action.range',
+    'sanctions.grid.guide.action.save',
+    'sanctions.grid.guide.action.activate',
+  ],
+  sections: [
+    { selector: '.grid__table', titleKey: 'sanctions.grid.guide.section.matrix.title', bodyKey: 'sanctions.grid.guide.section.matrix.body' },
+    { selector: '.grid__add', titleKey: 'sanctions.grid.guide.section.add.title', bodyKey: 'sanctions.grid.guide.section.add.body' },
+    { selector: '.grid__actions', titleKey: 'sanctions.grid.guide.section.actions.title', bodyKey: 'sanctions.grid.guide.section.actions.body' },
+  ],
+  workflowKeys: [
+    'sanctions.grid.guide.flow.finding',
+    'sanctions.grid.guide.flow.classify',
+    'sanctions.grid.guide.flow.grid',
+    'sanctions.grid.guide.flow.recommend',
+    'sanctions.grid.guide.flow.apply',
+  ],
+  dependsOnKeys: [
+    'sanctions.grid.guide.dep.categories',
+    'sanctions.grid.guide.dep.severity',
+    'sanctions.grid.guide.dep.approval',
+    'sanctions.grid.guide.dep.findings',
+  ],
+  usedByKeys: [
+    'sanctions.grid.guide.use.recommend',
+    'sanctions.grid.guide.use.findings',
+    'sanctions.grid.guide.use.actions',
+    'sanctions.grid.guide.use.reports',
+  ],
+  businessRuleKeys: [
+    'sanctions.grid.guide.rule.version',
+    'sanctions.grid.guide.rule.makerchecker',
+    'sanctions.grid.guide.rule.key',
+    'sanctions.grid.guide.rule.reason',
+  ],
+  tipKeys: [
+    'sanctions.grid.guide.tip.recurrence',
+    'sanctions.grid.guide.tip.range',
+    'sanctions.grid.guide.tip.activate',
+  ],
+  permissionKeys: [
+    'sanctions.grid.guide.perm.view',
+    'sanctions.grid.guide.perm.manage',
+    'sanctions.grid.guide.perm.approve',
+  ],
+  faq: [
+    { questionKey: 'sanctions.grid.guide.faq.pending.q', answerKey: 'sanctions.grid.guide.faq.pending.a' },
+    { questionKey: 'sanctions.grid.guide.faq.active.q', answerKey: 'sanctions.grid.guide.faq.active.a' },
+  ],
+};
 
 /** One editable row of the grid matrix. */
 interface GridRow {
@@ -63,6 +123,7 @@ interface GridRow {
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './sanctions-grid-admin.component.html',
   styleUrl: './sanctions-grid-admin.component.scss',
@@ -98,6 +159,8 @@ export class SanctionsGridAdminComponent {
   newRecurrence = false;
 
   readonly humanise = humanise;
+
+  readonly guide = SANCTIONS_GRID_GUIDE;
 
   readonly canActivate = computed(() => {
     const g = this.grid();

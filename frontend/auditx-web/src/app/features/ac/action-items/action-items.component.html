@@ -4,13 +4,15 @@
 >
   <div actions>
     @if (canCreate()) {
-      <button matButton="filled" type="button" (click)="create()">
+      <button matButton="filled" type="button" (click)="create()" data-guide="create">
         <mat-icon>add</mat-icon>
         {{ 'ac.items.new' | t }}
       </button>
     }
   </div>
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 <div class="items__filter">
   <mat-form-field appearance="outline">

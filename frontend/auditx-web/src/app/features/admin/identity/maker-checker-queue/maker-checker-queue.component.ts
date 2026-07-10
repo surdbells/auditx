@@ -30,12 +30,68 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import {
   RejectActionDialogComponent,
   RejectActionDialogData,
 } from '../dialogs/reject-action-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the maker-checker queue (drives the walkthrough + the About panel). */
+const MAKER_CHECKER_GUIDE: PageGuide = {
+  id: 'maker-checker-queue',
+  titleKey: 'identity.mc.title',
+  purposeKey: 'identity.makerChecker.guide.purpose',
+  descriptionKey: 'identity.makerChecker.guide.description',
+  actionKeys: [
+    'identity.makerChecker.guide.action.filter',
+    'identity.makerChecker.guide.action.approve',
+    'identity.makerChecker.guide.action.reject',
+    'identity.makerChecker.guide.action.refresh',
+  ],
+  sections: [
+    { selector: '.mc__filter-card', titleKey: 'identity.makerChecker.guide.section.filter.title', bodyKey: 'identity.makerChecker.guide.section.filter.body' },
+    { selector: '.mc__table', titleKey: 'identity.makerChecker.guide.section.table.title', bodyKey: 'identity.makerChecker.guide.section.table.body' },
+    { selector: '.mc__actions-col', titleKey: 'identity.makerChecker.guide.section.decision.title', bodyKey: 'identity.makerChecker.guide.section.decision.body' },
+  ],
+  workflowKeys: [
+    'identity.makerChecker.guide.flow.raise',
+    'identity.makerChecker.guide.flow.queue',
+    'identity.makerChecker.guide.flow.review',
+    'identity.makerChecker.guide.flow.decide',
+    'identity.makerChecker.guide.flow.apply',
+  ],
+  dependsOnKeys: [
+    'identity.makerChecker.guide.dep.roles',
+    'identity.makerChecker.guide.dep.users',
+    'identity.makerChecker.guide.dep.policy',
+  ],
+  usedByKeys: [
+    'identity.makerChecker.guide.use.roles',
+    'identity.makerChecker.guide.use.users',
+    'identity.makerChecker.guide.use.audit',
+  ],
+  businessRuleKeys: [
+    'identity.makerChecker.guide.rule.selfApproval',
+    'identity.makerChecker.guide.rule.immediate',
+    'identity.makerChecker.guide.rule.reason',
+    'identity.makerChecker.guide.rule.scope',
+  ],
+  tipKeys: [
+    'identity.makerChecker.guide.tip.filter',
+    'identity.makerChecker.guide.tip.verify',
+  ],
+  permissionKeys: [
+    'identity.makerChecker.guide.perm.authoriser',
+    'identity.makerChecker.guide.perm.maker',
+  ],
+  faq: [
+    { questionKey: 'identity.makerChecker.guide.faq.self.q', answerKey: 'identity.makerChecker.guide.faq.self.a' },
+    { questionKey: 'identity.makerChecker.guide.faq.approve.q', answerKey: 'identity.makerChecker.guide.faq.approve.a' },
+  ],
+};
 
 @Component({
   selector: 'app-maker-checker-queue',
@@ -55,6 +111,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './maker-checker-queue.component.html',
   styleUrl: './maker-checker-queue.component.scss',
@@ -64,6 +121,8 @@ export class MakerCheckerQueueComponent {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
   private readonly userLookup = inject(UserLookupService);
+
+  readonly guide = MAKER_CHECKER_GUIDE;
 
   readonly displayedColumns = [
     'actionType',

@@ -34,6 +34,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { AcAnalyticsSectionsComponent } from '../components/analytics-sections/analytics-sections.component';
 import { AcCommentsComponent } from '../components/ac-comments/ac-comments.component';
 import {
@@ -48,6 +50,62 @@ import {
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the AC pack viewer (drives the walkthrough + the About panel). */
+const PACK_VIEWER_GUIDE: PageGuide = {
+  id: 'ac-pack-viewer',
+  titleKey: 'ac.viewer.title',
+  purposeKey: 'ac.packViewer.guide.purpose',
+  descriptionKey: 'ac.packViewer.guide.description',
+  actionKeys: [
+    'ac.packViewer.guide.action.download',
+    'ac.packViewer.guide.action.narrative',
+    'ac.packViewer.guide.action.approve',
+    'ac.packViewer.guide.action.distribute',
+  ],
+  sections: [
+    { selector: '.viewer__actions', titleKey: 'ac.packViewer.guide.section.actions.title', bodyKey: 'ac.packViewer.guide.section.actions.body' },
+    { selector: '.viewer__card', titleKey: 'ac.packViewer.guide.section.overview.title', bodyKey: 'ac.packViewer.guide.section.overview.body' },
+    { selector: 'app-ac-analytics-sections', titleKey: 'ac.packViewer.guide.section.analytics.title', bodyKey: 'ac.packViewer.guide.section.analytics.body' },
+    { selector: '.viewer__table-card', titleKey: 'ac.packViewer.guide.section.distribution.title', bodyKey: 'ac.packViewer.guide.section.distribution.body' },
+  ],
+  workflowKeys: [
+    'ac.packViewer.guide.flow.generate',
+    'ac.packViewer.guide.flow.review',
+    'ac.packViewer.guide.flow.approve',
+    'ac.packViewer.guide.flow.distribute',
+    'ac.packViewer.guide.flow.comment',
+  ],
+  dependsOnKeys: [
+    'ac.packViewer.guide.dep.exceptions',
+    'ac.packViewer.guide.dep.sanctions',
+    'ac.packViewer.guide.dep.analytics',
+  ],
+  usedByKeys: [
+    'ac.packViewer.guide.use.committee',
+    'ac.packViewer.guide.use.distribution',
+    'ac.packViewer.guide.use.comments',
+  ],
+  businessRuleKeys: [
+    'ac.packViewer.guide.rule.editState',
+    'ac.packViewer.guide.rule.approveState',
+    'ac.packViewer.guide.rule.distributeState',
+    'ac.packViewer.guide.rule.hash',
+  ],
+  tipKeys: [
+    'ac.packViewer.guide.tip.narrative',
+    'ac.packViewer.guide.tip.hash',
+    'ac.packViewer.guide.tip.log',
+  ],
+  permissionKeys: [
+    'ac.packViewer.guide.perm.cia',
+    'ac.packViewer.guide.perm.viewer',
+  ],
+  faq: [
+    { questionKey: 'ac.packViewer.guide.faq.disabled.q', answerKey: 'ac.packViewer.guide.faq.disabled.a' },
+    { questionKey: 'ac.packViewer.guide.faq.hash.q', answerKey: 'ac.packViewer.guide.faq.hash.a' },
+  ],
+};
 
 @Component({
   selector: 'app-ac-pack-viewer',
@@ -64,6 +122,7 @@ const DEFAULT_PAGE_SIZE = 25;
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     AcAnalyticsSectionsComponent,
     AcCommentsComponent,
     TranslatePipe,
@@ -82,6 +141,8 @@ export class AcPackViewerComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = PACK_VIEWER_GUIDE;
 
   readonly distributionColumns = ['recipient', 'version', 'dispatchedAt', 'outcome'];
 
