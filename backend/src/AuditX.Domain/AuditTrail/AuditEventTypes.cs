@@ -210,6 +210,7 @@ public static class AuditEventTypes
     public const string ReportGenerated = "report_generated";
     public const string ReportGenerationFailed = "report_generation_failed";
     public const string ReportDistributed = "report_distributed";
+    public const string ReportDownloaded = "report_downloaded";
     public const string ReportHashMismatch = "report_hash_mismatch";
     public const string ReportTemplateCreated = "report_template_created";
     public const string ReportTemplateActivated = "report_template_activated";

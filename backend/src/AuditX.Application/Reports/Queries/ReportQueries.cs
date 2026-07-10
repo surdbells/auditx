@@ -106,6 +106,13 @@ public sealed class DownloadReportArtefactQueryHandler(
         // The format string IS the extension for every supported format (html/docx/csv/xlsx).
         var stem = report.AuditId is { } aid ? $"audit-report-{aid}" : StandaloneReportModel.FileStemFor(report.Kind);
         var filename = $"{stem}-v{report.VersionNumber}.{format}";
+
+        // Audit-log the download (who / which report + format / when). The actor + request context (IP, user agent)
+        // are resolved automatically; the entry is append-only and surfaces in the M11 audit-trail viewer.
+        audit.Record(AuditEventTypes.ReportDownloaded, AuditTargetTypes.Report, report.Id,
+            payload: new { format, report.VersionNumber, kind = report.Kind.ToString(), artefact.SizeBytes });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
         return new ReportArtefactResult(content, artefact.ContentType, filename, artefact.Sha256);
     }
 }

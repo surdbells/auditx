@@ -147,6 +147,11 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
 
         var verify = await DataAsync(await manager.GetAsync($"/api/v1/reports/{reportId}/verify-hash"));
         Assert.True(verify.GetProperty("match").GetBoolean());
+
+        // D2: the download is written to the append-only audit trail — visible on the report's object history.
+        var trail = await DataAsync(await admin.GetAsync($"/api/v1/audit-trail/object/report/{reportId}"));
+        Assert.Contains(trail.GetProperty("items").EnumerateArray(),
+            e => e.GetProperty("eventType").GetString() == "report_downloaded");
     }
 
     [Fact]
