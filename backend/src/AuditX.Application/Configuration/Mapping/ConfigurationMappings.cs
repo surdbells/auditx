@@ -16,5 +16,5 @@ public static class ConfigurationMappings
         c.CreatedAtUtc,
         c.ActivatedBy,
         c.ActivatedAt,
-        Convert.ToBase64String(c.Version ?? []));
+        RowVersionToken.Encode(c.Version));
 }

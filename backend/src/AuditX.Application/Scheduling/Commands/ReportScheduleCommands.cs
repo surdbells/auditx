@@ -19,7 +19,7 @@ internal static class ReportScheduleConcurrency
 {
     public static void EnsureVersion(this ReportSchedule schedule, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(schedule.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(schedule.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("report_schedule.concurrency_conflict", "The schedule was modified elsewhere; reload and retry.");
         }

@@ -13,5 +13,5 @@ internal static class SavedViewMappings
         view.ParametersJson,
         view.IsShared,
         requestingUserId is { } uid && view.OwnerUserId == uid,
-        Convert.ToBase64String(view.Version));
+        RowVersionToken.Encode(view.Version));
 }

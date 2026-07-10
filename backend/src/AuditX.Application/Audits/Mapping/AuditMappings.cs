@@ -24,7 +24,7 @@ public static class AuditMappings
         audit.AuditeeUserId,
         audit.CancellationReason,
         audit.BudgetedHours,
-        Convert.ToBase64String(audit.Version ?? []),
+        RowVersionToken.Encode(audit.Version),
         audit.TeamMembers.Select(m => new AuditTeamMemberDto(m.Id, m.UserId, m.TeamRole.ToSnake(), m.IsActive, m.AddedAt, m.RemovedAt)).ToArray(),
         audit.Sections.OrderBy(s => s.OrderIndex).Select(s => new AuditSectionDto(s.Id, s.Name, s.OrderIndex)).ToArray(),
         audit.ChecklistItems.OrderBy(i => i.OrderIndex).Select(i => i.ToDto()).ToArray());

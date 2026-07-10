@@ -24,7 +24,7 @@ public static class ReportMappings
         r.GeneratedBy,
         r.RequestedAt,
         r.CompletedAt,
-        Convert.ToBase64String(r.Version ?? []));
+        RowVersionToken.Encode(r.Version));
 
     public static ReportListItemDto ToListDto(this Report r) => new(
         r.Id,
@@ -44,7 +44,7 @@ public static class ReportMappings
 
     public static ReportTemplateDto ToDto(this ReportTemplate t) => new(
         t.Id, t.Name, t.VersionNumber, t.TemplateDefinitionJson, t.IsActive, t.ActivationReason,
-        t.CreatedByUserId, t.CreatedAtUtc, t.ActivatedBy, t.ActivatedAt, Convert.ToBase64String(t.Version ?? []));
+        t.CreatedByUserId, t.CreatedAtUtc, t.ActivatedBy, t.ActivatedAt, RowVersionToken.Encode(t.Version));
 
     public static IReadOnlyList<string> ParseFormats(string? json)
     {

@@ -10,7 +10,7 @@ internal static class ControlConcurrency
 {
     public static void EnsureVersion(this Control control, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(control.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(control.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("control.concurrency_conflict", "The control was modified by someone else; reload and retry.");
         }

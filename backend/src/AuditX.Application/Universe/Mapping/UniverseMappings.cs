@@ -18,7 +18,7 @@ public static class UniverseMappings
         entity.CompositeInherentScore,
         entity.CompositeResidualScore,
         entity.LastAuditedAt,
-        Convert.ToBase64String(entity.Version ?? []));
+        RowVersionToken.Encode(entity.Version));
 
     public static RiskDimensionDto ToDto(this RiskDimension dimension) => new(
         dimension.Id, dimension.Name, dimension.Weight, dimension.ScaleMin, dimension.ScaleMax, dimension.IsActive, dimension.ScaleLabelOverridesJson);

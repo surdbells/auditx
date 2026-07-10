@@ -88,8 +88,8 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
         {
             var term = filter.Search.Trim();
             query = query.Where(e =>
-                EF.Functions.Like(e.Title, $"%{term}%") ||
-                EF.Functions.Like(e.RootCause, $"%{term}%"));
+                e.Title.Contains(term) ||
+                e.RootCause.Contains(term));
         }
 
         if (filter.IsRecurrence is { } rec)

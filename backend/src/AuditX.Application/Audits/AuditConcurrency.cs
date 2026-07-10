@@ -12,7 +12,7 @@ internal static class AuditConcurrency
     /// </summary>
     public static void EnsureVersion(this Audit audit, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(audit.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(audit.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("audit.concurrency_conflict", "The audit was modified by someone else; reload and retry.");
         }

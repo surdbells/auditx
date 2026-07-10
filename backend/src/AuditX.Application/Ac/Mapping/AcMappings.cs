@@ -31,7 +31,7 @@ public static class AcMappings
         p.CompletedAt,
         p.ApprovedBy,
         p.ApprovedAt,
-        Convert.ToBase64String(p.Version ?? []));
+        RowVersionToken.Encode(p.Version));
 
     public static AcPackListItemDto ToListDto(this AcPack p) => new(
         p.Id,
@@ -54,7 +54,7 @@ public static class AcMappings
     public static AcActionItemDto ToDto(this AcActionItem i) => new(
         i.Id, i.Title, i.Description, i.Status.ToSnake(), i.AssignedToUserId, i.DueDate, i.ClosureResponse,
         i.CreatedByUserId, i.ClosedAt, i.ClosedByUserId, i.AcknowledgedAt, i.AcknowledgedByUserId,
-        Convert.ToBase64String(i.Version ?? []));
+        RowVersionToken.Encode(i.Version));
 
     public static AcCommentDto ToDto(this AcComment c) => new(
         c.Id, c.TargetType.ToSnake(), c.TargetId, c.CommentText, c.AuthorUserId, c.CommentedAt);

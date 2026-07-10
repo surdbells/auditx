@@ -74,7 +74,7 @@ public sealed class GetSanctionsCaseByIdQueryHandler(
             {
                 LatestAppealId = latestAppeal.Id,
                 LatestAppealStatus = latestAppeal.Status.ToSnake(),
-                LatestAppealVersion = Convert.ToBase64String(latestAppeal.Version ?? []),
+                LatestAppealVersion = RowVersionToken.Encode(latestAppeal.Version),
             };
         }
 

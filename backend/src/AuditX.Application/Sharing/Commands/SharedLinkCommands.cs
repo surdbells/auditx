@@ -64,7 +64,7 @@ public sealed class RevokeSharedLinkCommandHandler(
             throw new ForbiddenAccessException("Only the link's creator can revoke it.");
         }
 
-        if (!string.Equals(Convert.ToBase64String(link.Version), command.Version, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(link.Version), command.Version, StringComparison.Ordinal))
         {
             throw new ConflictException("shared_link.concurrency_conflict", "The shared link was modified elsewhere; reload and retry.");
         }

@@ -23,7 +23,7 @@ public sealed class SanctionsCaseRepository(AppDbContext db) : ISanctionsCaseRep
         {
             // Subject-free search only: case Category. The subject identity is masked and is never searched.
             var term = search.Trim();
-            query = query.Where(c => c.Category != null && EF.Functions.Like(c.Category, $"%{term}%"));
+            query = query.Where(c => c.Category != null && c.Category.Contains(term));
         }
 
         return await PageAsync(query, page, cancellationToken);

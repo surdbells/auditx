@@ -20,10 +20,10 @@ public static class AnalyticsMappings
         w.Position,
         w.ConfigJson,
         data,
-        Convert.ToBase64String(w.Version ?? []));
+        RowVersionToken.Encode(w.Version));
 
     public static DashboardDetailDto ToDetailDto(this Dashboard d, IReadOnlyList<DashboardWidgetDto> widgets) => new(
-        d.Id, d.Slug, d.Name, d.Description, d.PermissionRequired, d.ConfigurationVersion, widgets, Convert.ToBase64String(d.Version ?? []));
+        d.Id, d.Slug, d.Name, d.Description, d.PermissionRequired, d.ConfigurationVersion, widgets, RowVersionToken.Encode(d.Version));
 
     public static RecurrenceClusterDto ToDto(this RecurrenceCluster c) => new(
         c.Id, c.AuditableEntityId, c.Category, c.ClosedExceptionCount, c.WindowMonths,

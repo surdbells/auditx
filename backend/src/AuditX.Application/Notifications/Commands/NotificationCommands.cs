@@ -56,7 +56,7 @@ public sealed class UpdateNotificationRuleCommandHandler(INotificationRuleReposi
     public async Task<NotificationRuleDto> Handle(UpdateNotificationRuleCommand command, CancellationToken cancellationToken)
     {
         var rule = await rules.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Notification rule", command.Id);
-        if (!string.Equals(Convert.ToBase64String(rule.Version ?? []), command.Version, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(rule.Version), command.Version, StringComparison.Ordinal))
         {
             throw new ConflictException("notification.concurrency_conflict", "The rule was modified by someone else; reload and retry.");
         }

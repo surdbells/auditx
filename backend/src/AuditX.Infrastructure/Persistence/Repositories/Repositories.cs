@@ -66,10 +66,10 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
         {
             var term = search.Trim();
             query = query.Where(u =>
-                EF.Functions.Like(u.FirstName, $"%{term}%") ||
-                EF.Functions.Like(u.LastName, $"%{term}%") ||
-                EF.Functions.Like(u.DisplayName, $"%{term}%") ||
-                EF.Functions.Like(u.Email, $"%{term}%"));
+                u.FirstName.Contains(term) ||
+                u.LastName.Contains(term) ||
+                u.DisplayName.Contains(term) ||
+                u.Email.Contains(term));
         }
 
         if (status is { } s)

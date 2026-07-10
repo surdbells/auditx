@@ -9,5 +9,5 @@ public static class EvidenceRequestMappings
     public static EvidenceRequestDto ToDto(this EvidenceRequest r, DateOnly today) => new(
         r.Id, r.AuditId, r.ChecklistItemId, r.Title, r.DocumentType, r.RequestedByUserId, r.RequestedOn, r.DueDate,
         r.Status.ToSnake(), r.ReceivedByUserId, r.ReceivedAt, r.WaiveReason, r.Notes, r.IsOverdue(today),
-        Convert.ToBase64String(r.Version ?? []));
+        RowVersionToken.Encode(r.Version));
 }

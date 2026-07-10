@@ -31,8 +31,8 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
         {
             var term = search.Trim();
             query = query.Where(a =>
-                EF.Functions.Like(a.Name, $"%{term}%") ||
-                (a.ScopeDescription != null && EF.Functions.Like(a.ScopeDescription, $"%{term}%")));
+                a.Name.Contains(term) ||
+                (a.ScopeDescription != null && a.ScopeDescription.Contains(term)));
         }
 
         if (!string.IsNullOrWhiteSpace(auditType))

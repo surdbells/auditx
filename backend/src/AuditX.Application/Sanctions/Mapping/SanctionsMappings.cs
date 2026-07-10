@@ -32,7 +32,7 @@ public static class SanctionsMappings
         c.DcDecisionAt,
         c.ClosedBy,
         c.ClosedAt,
-        Convert.ToBase64String(c.Version ?? []),
+        RowVersionToken.Encode(c.Version),
         unmask ? c.TeamMembers.Select(m => m.UserId).ToArray() : []);
 
     /// <summary>List item DTO — the subject is ALWAYS masked in lists (A1).</summary>
@@ -41,9 +41,9 @@ public static class SanctionsMappings
 
     public static SanctionsGridVersionDto ToDto(this SanctionsGridVersion g) => new(
         g.Id, g.VersionNumber, g.GridDefinitionJson, g.IsActive, g.ActivationReason,
-        g.CreatedByUserId, g.CreatedAtUtc, g.ActivatedBy, g.ActivatedAt, Convert.ToBase64String(g.Version ?? []));
+        g.CreatedByUserId, g.CreatedAtUtc, g.ActivatedBy, g.ActivatedAt, RowVersionToken.Encode(g.Version));
 
     public static SanctionsAppealDto ToDto(this SanctionsAppeal a) => new(
         a.Id, a.SanctionsCaseId, a.AppellantUserId, a.RoutedToUserId, a.Basis,
-        a.Status.ToSnake(), a.DecisionJson, a.FiledAt, a.DecidedAt, Convert.ToBase64String(a.Version ?? []));
+        a.Status.ToSnake(), a.DecisionJson, a.FiledAt, a.DecidedAt, RowVersionToken.Encode(a.Version));
 }

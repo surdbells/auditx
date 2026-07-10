@@ -33,7 +33,7 @@ internal static class ProcedureConcurrency
 {
     public static void EnsureVersion(this AuditProcedure procedure, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(procedure.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(procedure.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("procedure.concurrency_conflict", "The procedure was modified by someone else; reload and retry.");
         }

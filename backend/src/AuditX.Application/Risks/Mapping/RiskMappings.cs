@@ -32,7 +32,7 @@ public static class RiskMappings
         risk.IdentifiedAt,
         risk.IdentifiedByUserId,
         risk.ClosureRationale,
-        Convert.ToBase64String(risk.Version ?? []));
+        RowVersionToken.Encode(risk.Version));
 
     public static RiskListItemDto ToListItemDto(this Risk risk) => new(
         risk.Id,

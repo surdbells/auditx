@@ -87,7 +87,7 @@ public sealed class UpdateEntityCommandHandler(
     {
         var entity = await entities.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Entity", command.Id);
 
-        if (!string.Equals(Convert.ToBase64String(entity.Version ?? []), command.Version, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(entity.Version), command.Version, StringComparison.Ordinal))
         {
             throw new ConflictException("universe.concurrency_conflict", "The entity was modified by someone else; reload and retry.");
         }
@@ -154,7 +154,7 @@ public sealed class ApplyRiskScoresCommandHandler(
     {
         var entity = await entities.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Entity", command.Id);
 
-        if (!string.Equals(Convert.ToBase64String(entity.Version ?? []), command.Version, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(entity.Version), command.Version, StringComparison.Ordinal))
         {
             throw new ConflictException("universe.concurrency_conflict", "The entity was modified by someone else; reload and retry.");
         }

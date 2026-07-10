@@ -21,6 +21,6 @@ internal static class ReportScheduleMappings
             schedule.LastRunAt,
             schedule.LastReportId,
             schedule.CreatedByUserId,
-            Convert.ToBase64String(schedule.Version));
+            RowVersionToken.Encode(schedule.Version));
     }
 }

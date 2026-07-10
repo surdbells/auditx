@@ -16,5 +16,5 @@ internal static class SharedLinkMappings
         link.ExpiresAt,
         link.RevokedAt,
         link.IsActive(nowUtc),
-        Convert.ToBase64String(link.Version));
+        RowVersionToken.Encode(link.Version));
 }

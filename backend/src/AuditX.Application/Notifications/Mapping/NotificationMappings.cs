@@ -8,7 +8,7 @@ public static class NotificationMappings
 {
     public static NotificationRuleDto ToDto(this NotificationRule r) => new(
         r.Id, r.EventType, r.Name, r.RecipientResolutionJson, r.ChannelsJson, r.TemplateKey, r.IsActive, r.IsSystemDefault,
-        Convert.ToBase64String(r.Version ?? []));
+        RowVersionToken.Encode(r.Version));
 
     public static NotificationTemplateDto ToDto(this NotificationTemplate t) => new(
         t.Id, t.TemplateKey, t.Channel.ToSnake(), t.Scope.ToSnake(), t.SubjectTemplate, t.BodyTemplate, t.Version);

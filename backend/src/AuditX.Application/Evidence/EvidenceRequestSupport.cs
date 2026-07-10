@@ -11,7 +11,7 @@ internal static class EvidenceRequestConcurrency
 {
     public static void EnsureVersion(this EvidenceRequest request, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(request.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(request.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("evidence_request.concurrency_conflict", "The evidence request was modified by someone else; reload and retry.");
         }

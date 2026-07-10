@@ -16,7 +16,7 @@ internal static class DashboardConcurrency
     /// <summary>Optimistic-concurrency guard: the caller echoes the dashboard rowversion it last read (409 on mismatch).</summary>
     public static void EnsureVersion(this Dashboard dashboard, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(dashboard.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(dashboard.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("dashboard.concurrency_conflict", "The dashboard was modified by someone else; reload and retry.");
         }

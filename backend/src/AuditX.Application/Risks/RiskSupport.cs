@@ -30,7 +30,7 @@ internal static class RiskConcurrency
 {
     public static void EnsureVersion(this Risk risk, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(risk.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(risk.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("risk.concurrency_conflict", "The risk was modified by someone else; reload and retry.");
         }

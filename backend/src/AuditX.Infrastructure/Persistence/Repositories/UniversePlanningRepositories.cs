@@ -30,7 +30,7 @@ public sealed class AuditUniverseRepository(AppDbContext db) : IAuditUniverseRep
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(e => EF.Functions.Like(e.Name, $"%{term}%"));
+            query = query.Where(e => e.Name.Contains(term));
         }
 
         if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
@@ -159,7 +159,7 @@ public sealed class AnnualPlanRepository(AppDbContext db) : IAnnualPlanRepositor
     public async Task<CursorPage<AnnualPlan>> SearchByLabelAsync(string term, PageRequest page, CancellationToken cancellationToken = default)
     {
         var query = db.AnnualPlans.AsNoTracking()
-            .Where(p => EF.Functions.Like(p.PeriodLabel, $"%{term}%"));
+            .Where(p => p.PeriodLabel.Contains(term));
 
         if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
         {

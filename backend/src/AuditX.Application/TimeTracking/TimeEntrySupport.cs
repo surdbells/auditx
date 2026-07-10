@@ -22,7 +22,7 @@ internal static class TimeEntryConcurrency
 {
     public static void EnsureVersion(this TimeEntry entry, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(entry.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(entry.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("time_entry.concurrency_conflict", "The time entry was modified by someone else; reload and retry.");
         }

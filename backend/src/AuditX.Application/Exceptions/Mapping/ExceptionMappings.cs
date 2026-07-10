@@ -26,7 +26,7 @@ public static class ExceptionMappings
         e.ClosureEvidenceNote, e.ClosedBy, e.ClosedAt, e.CiaCountersignedBy, e.CancellationReason,
         e.ManagementResponseDecision?.ToSnake(), e.ManagementResponseComment, e.ManagementRespondedBy, e.ManagementRespondedAt,
         e.ReopenCount, e.ReopenedBy, e.ReopenedAt, e.ReopenReason,
-        Convert.ToBase64String(e.Version ?? []),
+        RowVersionToken.Encode(e.Version),
         e.MapActions.Select(a => a.ToDto()).ToArray(),
         e.Verifications.OrderByDescending(v => v.VerifiedAt).Select(v => v.ToDto()).ToArray());
 

@@ -7,7 +7,7 @@ internal static class SavedViewConcurrency
 {
     public static void EnsureVersion(this SavedView view, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(view.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(view.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("saved_view.concurrency_conflict", "The saved view was modified elsewhere; reload and retry.");
         }

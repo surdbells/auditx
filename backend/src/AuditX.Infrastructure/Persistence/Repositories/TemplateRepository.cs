@@ -40,7 +40,7 @@ public sealed class TemplateRepository(AppDbContext db) : ITemplateRepository
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(t => EF.Functions.Like(t.Name, $"%{term}%") || EF.Functions.Like(t.Description, $"%{term}%"));
+            query = query.Where(t => t.Name.Contains(term) || t.Description.Contains(term));
         }
 
         if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))

@@ -15,5 +15,5 @@ public static class TimeEntryMappings
         entry.Hours,
         entry.Category.ToSnake(),
         entry.Notes,
-        Convert.ToBase64String(entry.Version ?? []));
+        RowVersionToken.Encode(entry.Version));
 }

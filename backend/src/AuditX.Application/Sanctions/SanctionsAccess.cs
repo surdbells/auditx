@@ -57,7 +57,7 @@ internal static class SanctionsConcurrency
 {
     public static void EnsureVersion(this SanctionsCase c, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(c.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(c.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("sanctions.concurrency_conflict", "The case was modified by someone else; reload and retry.");
         }
@@ -65,7 +65,7 @@ internal static class SanctionsConcurrency
 
     public static void EnsureVersion(this SanctionsAppeal a, string expectedVersion)
     {
-        if (!string.Equals(Convert.ToBase64String(a.Version ?? []), expectedVersion, StringComparison.Ordinal))
+        if (!string.Equals(RowVersionToken.Encode(a.Version), expectedVersion, StringComparison.Ordinal))
         {
             throw new ConflictException("sanctions.concurrency_conflict", "The appeal was modified by someone else; reload and retry.");
         }

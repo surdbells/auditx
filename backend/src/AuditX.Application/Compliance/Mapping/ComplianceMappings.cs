@@ -7,7 +7,7 @@ public static class ComplianceMappings
 {
     public static RegulationDto ToDto(this Regulation r) => new(
         r.Id, r.Code, r.Name, r.Authority, r.Description, r.Category, r.IsActive,
-        Convert.ToBase64String(r.Version ?? []));
+        RowVersionToken.Encode(r.Version));
 
     public static RegulationListItemDto ToListItemDto(this Regulation r) => new(
         r.Id, r.Code, r.Name, r.Authority, r.Category, r.IsActive);
