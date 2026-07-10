@@ -23,6 +23,12 @@
               {{ 'reports.viewer.action.print' | t }}
             </button>
           }
+          @if (isCompleted()) {
+            <button matButton="outlined" type="button" (click)="share()">
+              <mat-icon>link</mat-icon>
+              {{ 'reports.viewer.action.share' | t }}
+            </button>
+          }
           @if (canDistribute() && isCompleted()) {
             <button matButton="filled" type="button" (click)="distribute()">
               <mat-icon>send</mat-icon>

@@ -362,6 +362,16 @@ export const routes: Routes = [
           ).then((m) => m.ReportViewerComponent),
       },
       {
+        // Shareable-link resolver (D3-B). Authenticated but NOT permission-gated at the route: the resolve endpoint
+        // enforces ViewReport + the report's own scope, and the component shows a clear forbidden/expired message.
+        path: 's/:slug',
+        title: 'Shared link · AuditX',
+        loadComponent: () =>
+          import(
+            './features/reports/shared-link-resolve/shared-link-resolve.component'
+          ).then((m) => m.SharedLinkResolveComponent),
+      },
+      {
         path: 'admin/report-templates',
         title: 'Report Templates · AuditX',
         canActivate: [permissionGuard(Permissions.ConfigureReports)],

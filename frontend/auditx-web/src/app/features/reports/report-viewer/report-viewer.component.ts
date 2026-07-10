@@ -37,6 +37,7 @@ import {
   DistributeReportDialogComponent,
   DistributeReportDialogData,
 } from '../dialogs/distribute-report-dialog.component';
+import { ReportShareDialogComponent } from '../dialogs/report-share-dialog.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -261,6 +262,16 @@ export class ReportViewerComponent {
           this.i18n.translate('reports.viewer.notify.verifyError'),
         );
       },
+    });
+  }
+
+  /* ---- Share links (D3-B) ---- */
+
+  /** Opens the share dialog to create / copy / revoke shareable links for this report. */
+  share(): void {
+    this.dialog.open(ReportShareDialogComponent, {
+      data: { reportId: this.id() },
+      width: '560px',
     });
   }
 

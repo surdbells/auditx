@@ -1,0 +1,61 @@
+<h2 mat-dialog-title>{{ 'reports.share.title' | t }}</h2>
+<mat-dialog-content>
+  <p class="rsd__hint">{{ 'reports.share.hint' | t }}</p>
+
+  <!-- Create a new link -->
+  <div class="rsd__create">
+    <mat-form-field appearance="outline" class="rsd__expiry">
+      <mat-label>{{ 'reports.share.expiryLabel' | t }}</mat-label>
+      <mat-select [formControl]="form.controls.expiresInDays">
+        @for (o of expiryOptions; track o.value) {
+          <mat-option [value]="o.value">{{ o.labelKey | t }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button matButton="filled" type="button" (click)="create()" [disabled]="creating()">
+      <mat-icon>add_link</mat-icon>
+      {{ 'reports.share.create' | t }}
+    </button>
+  </div>
+
+  <!-- Existing links -->
+  @if (loading()) {
+    <p class="rsd__muted">{{ 'reports.share.loading' | t }}</p>
+  } @else if (!links().length) {
+    <p class="rsd__muted">{{ 'reports.share.empty' | t }}</p>
+  } @else {
+    <ul class="rsd__list">
+      @for (link of links(); track link.id) {
+        <li class="rsd__item" [class.rsd__item--inactive]="!link.isActive">
+          <div class="rsd__item-main">
+            <code class="rsd__url">{{ linkUrl(link) }}</code>
+            <span class="rsd__meta">
+              @if (link.revokedAt) {
+                <span class="rsd__badge rsd__badge--revoked">{{ 'reports.share.status.revoked' | t }}</span>
+              } @else if (!link.isActive) {
+                <span class="rsd__badge rsd__badge--expired">{{ 'reports.share.status.expired' | t }}</span>
+              } @else if (link.expiresAt) {
+                {{ 'reports.share.expiresOn' | t: { date: (link.expiresAt | date: 'mediumDate') } }}
+              } @else {
+                {{ 'reports.share.noExpiry' | t }}
+              }
+            </span>
+          </div>
+          <div class="rsd__item-actions">
+            @if (link.isActive) {
+              <button matIconButton type="button" [matTooltip]="'reports.share.actions.copy' | t" (click)="copy(link)">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              <button matIconButton type="button" [matTooltip]="'reports.share.actions.revoke' | t" (click)="revoke(link)">
+                <mat-icon>link_off</mat-icon>
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button matButton type="button" mat-dialog-close>{{ 'reports.share.actions.close' | t }}</button>
+</mat-dialog-actions>
