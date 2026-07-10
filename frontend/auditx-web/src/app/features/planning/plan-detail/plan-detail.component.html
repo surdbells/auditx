@@ -43,6 +43,8 @@
         </div>
       </app-page-header>
 
+      <app-page-guide [guide]="guide" />
+
       <div class="detail__status-row">
         <span class="status-badge" [attr.data-status]="p.status">
           {{ p.status.replace('_', ' ') }}

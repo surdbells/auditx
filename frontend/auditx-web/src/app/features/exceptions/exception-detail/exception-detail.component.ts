@@ -35,6 +35,8 @@ import {
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import {
@@ -81,6 +83,63 @@ type ViewState = 'loading' | 'ready' | 'error';
 
 const CONCURRENCY_CONFLICT = 'exception.concurrency_conflict';
 
+/** Contextual page guide for a single exception/finding (walkthrough + About panel). */
+const EXCEPTION_DETAIL_GUIDE: PageGuide = {
+  id: 'exception-detail',
+  titleKey: 'exceptions.detail.guide.pageTitle',
+  purposeKey: 'exceptions.detail.guide.purpose',
+  descriptionKey: 'exceptions.detail.guide.description',
+  actionKeys: [
+    'exceptions.detail.guide.action.map',
+    'exceptions.detail.guide.action.evidence',
+    'exceptions.detail.guide.action.close',
+    'exceptions.detail.guide.action.links',
+  ],
+  sections: [
+    { selector: '.detail__status-row', titleKey: 'exceptions.detail.guide.section.status.title', bodyKey: 'exceptions.detail.guide.section.status.body' },
+    { selector: '[data-guide="overview"]', titleKey: 'exceptions.detail.guide.section.overview.title', bodyKey: 'exceptions.detail.guide.section.overview.body' },
+    { selector: '[data-guide="map"]', titleKey: 'exceptions.detail.guide.section.map.title', bodyKey: 'exceptions.detail.guide.section.map.body' },
+    { selector: '[data-guide="links"]', titleKey: 'exceptions.detail.guide.section.links.title', bodyKey: 'exceptions.detail.guide.section.links.body' },
+  ],
+  workflowKeys: [
+    'exceptions.detail.guide.flow.raise',
+    'exceptions.detail.guide.flow.map',
+    'exceptions.detail.guide.flow.remediate',
+    'exceptions.detail.guide.flow.close',
+    'exceptions.detail.guide.flow.verify',
+  ],
+  dependsOnKeys: [
+    'exceptions.detail.guide.dep.audit',
+    'exceptions.detail.guide.dep.owner',
+    'exceptions.detail.guide.dep.controls',
+  ],
+  usedByKeys: [
+    'exceptions.detail.guide.use.reports',
+    'exceptions.detail.guide.use.analytics',
+    'exceptions.detail.guide.use.recurrence',
+  ],
+  businessRuleKeys: [
+    'exceptions.detail.guide.rule.lifecycle',
+    'exceptions.detail.guide.rule.mapApproval',
+    'exceptions.detail.guide.rule.evidence',
+    'exceptions.detail.guide.rule.readonly',
+  ],
+  tipKeys: [
+    'exceptions.detail.guide.tip.rootCause',
+    'exceptions.detail.guide.tip.history',
+    'exceptions.detail.guide.tip.reopen',
+  ],
+  permissionKeys: [
+    'exceptions.detail.guide.perm.owner',
+    'exceptions.detail.guide.perm.approver',
+    'exceptions.detail.guide.perm.cia',
+  ],
+  faq: [
+    { questionKey: 'exceptions.detail.guide.faq.close.q', answerKey: 'exceptions.detail.guide.faq.close.a' },
+    { questionKey: 'exceptions.detail.guide.faq.reject.q', answerKey: 'exceptions.detail.guide.faq.reject.a' },
+  ],
+};
+
 @Component({
   selector: 'app-exception-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -95,6 +154,7 @@ const CONCURRENCY_CONFLICT = 'exception.concurrency_conflict';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './exception-detail.component.html',
@@ -110,6 +170,8 @@ export class ExceptionDetailComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = EXCEPTION_DETAIL_GUIDE;
 
   readonly state = signal<ViewState>('loading');
   readonly exception = signal<Exception | null>(null);

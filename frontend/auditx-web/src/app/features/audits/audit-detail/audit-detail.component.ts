@@ -77,10 +77,71 @@ import {
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the audit-detail engagement view (walkthrough + About panel). */
+const AUDIT_DETAIL_GUIDE: PageGuide = {
+  id: 'audit-detail',
+  titleKey: 'audits.detail.guide.pageTitle',
+  purposeKey: 'audits.detail.guide.purpose',
+  descriptionKey: 'audits.detail.guide.description',
+  actionKeys: [
+    'audits.detail.guide.action.transition',
+    'audits.detail.guide.action.team',
+    'audits.detail.guide.action.checklist',
+    'audits.detail.guide.action.fieldwork',
+  ],
+  sections: [
+    { selector: '.detail__actions', titleKey: 'audits.detail.guide.section.lifecycle.title', bodyKey: 'audits.detail.guide.section.lifecycle.body' },
+    { selector: '[data-guide="overview"]', titleKey: 'audits.detail.guide.section.overview.title', bodyKey: 'audits.detail.guide.section.overview.body' },
+    { selector: '[data-guide="team"]', titleKey: 'audits.detail.guide.section.team.title', bodyKey: 'audits.detail.guide.section.team.body' },
+    { selector: '[data-guide="checklist"]', titleKey: 'audits.detail.guide.section.checklist.title', bodyKey: 'audits.detail.guide.section.checklist.body' },
+  ],
+  workflowKeys: [
+    'audits.detail.guide.flow.create',
+    'audits.detail.guide.flow.draft',
+    'audits.detail.guide.flow.plan',
+    'audits.detail.guide.flow.execute',
+    'audits.detail.guide.flow.review',
+  ],
+  dependsOnKeys: [
+    'audits.detail.guide.dep.template',
+    'audits.detail.guide.dep.users',
+    'audits.detail.guide.dep.plan',
+    'audits.detail.guide.dep.refdata',
+  ],
+  usedByKeys: [
+    'audits.detail.guide.use.fieldwork',
+    'audits.detail.guide.use.exceptions',
+    'audits.detail.guide.use.reports',
+    'audits.detail.guide.use.analytics',
+  ],
+  businessRuleKeys: [
+    'audits.detail.guide.rule.plan',
+    'audits.detail.guide.rule.checklist',
+    'audits.detail.guide.rule.review',
+    'audits.detail.guide.rule.readonly',
+  ],
+  tipKeys: [
+    'audits.detail.guide.tip.drag',
+    'audits.detail.guide.tip.transfer',
+    'audits.detail.guide.tip.timeline',
+  ],
+  permissionKeys: [
+    'audits.detail.guide.perm.manage',
+    'audits.detail.guide.perm.report',
+    'audits.detail.guide.perm.exceptions',
+  ],
+  faq: [
+    { questionKey: 'audits.detail.guide.faq.plan.q', answerKey: 'audits.detail.guide.faq.plan.a' },
+    { questionKey: 'audits.detail.guide.faq.findings.q', answerKey: 'audits.detail.guide.faq.findings.a' },
+  ],
+};
 
 /** A checklist section grouping for the template. */
 interface ChecklistGroup {
@@ -111,6 +172,7 @@ const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './audit-detail.component.html',
@@ -131,6 +193,9 @@ export class AuditDetailComponent {
   private readonly i18n = inject(TranslationService);
   /** Resolves the stored audit-type code to its human label (lazy-loaded). */
   readonly refLookup = inject(ReferenceDataLookupService);
+
+  /** Contextual page guide (walkthrough + About panel). */
+  readonly guide = AUDIT_DETAIL_GUIDE;
 
   readonly state = signal<ViewState>('loading');
   readonly audit = signal<Audit | null>(null);

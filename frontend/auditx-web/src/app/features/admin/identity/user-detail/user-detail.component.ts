@@ -34,6 +34,8 @@ import {
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import { UserStatusLabelPipe } from '../../../../shared/pipes/user-status-label.pipe';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
@@ -47,6 +49,60 @@ import {
 } from '../dialogs/create-delegation-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the user-detail page (drives the walkthrough + the About panel). */
+const USER_DETAIL_GUIDE: PageGuide = {
+  id: 'identity-user-detail',
+  titleKey: 'identity.userDetail.guide.pageTitle',
+  purposeKey: 'identity.userDetail.guide.purpose',
+  descriptionKey: 'identity.userDetail.guide.description',
+  actionKeys: [
+    'identity.userDetail.guide.action.grant',
+    'identity.userDetail.guide.action.revoke',
+    'identity.userDetail.guide.action.delegate',
+    'identity.userDetail.guide.action.back',
+  ],
+  sections: [
+    { selector: '.detail__profile', titleKey: 'identity.userDetail.guide.section.profile.title', bodyKey: 'identity.userDetail.guide.section.profile.body' },
+    { selector: '.detail__roles', titleKey: 'identity.userDetail.guide.section.roles.title', bodyKey: 'identity.userDetail.guide.section.roles.body' },
+    { selector: '.detail__delegations', titleKey: 'identity.userDetail.guide.section.delegations.title', bodyKey: 'identity.userDetail.guide.section.delegations.body' },
+  ],
+  workflowKeys: [
+    'identity.userDetail.guide.flow.create',
+    'identity.userDetail.guide.flow.grant',
+    'identity.userDetail.guide.flow.delegate',
+    'identity.userDetail.guide.flow.access',
+  ],
+  dependsOnKeys: [
+    'identity.userDetail.guide.dep.users',
+    'identity.userDetail.guide.dep.roles',
+    'identity.userDetail.guide.dep.scopes',
+  ],
+  usedByKeys: [
+    'identity.userDetail.guide.use.audits',
+    'identity.userDetail.guide.use.approvals',
+    'identity.userDetail.guide.use.audittrail',
+  ],
+  businessRuleKeys: [
+    'identity.userDetail.guide.rule.scope',
+    'identity.userDetail.guide.rule.delegationWindow',
+    'identity.userDetail.guide.rule.status',
+    'identity.userDetail.guide.rule.selfService',
+  ],
+  tipKeys: [
+    'identity.userDetail.guide.tip.scope',
+    'identity.userDetail.guide.tip.delegation',
+    'identity.userDetail.guide.tip.review',
+  ],
+  permissionKeys: [
+    'identity.userDetail.guide.perm.admin',
+    'identity.userDetail.guide.perm.manager',
+  ],
+  faq: [
+    { questionKey: 'identity.userDetail.guide.faq.scope.q', answerKey: 'identity.userDetail.guide.faq.scope.a' },
+    { questionKey: 'identity.userDetail.guide.faq.delegation.q', answerKey: 'identity.userDetail.guide.faq.delegation.a' },
+  ],
+};
 
 @Component({
   selector: 'app-user-detail',
@@ -64,6 +120,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     UserStatusLabelPipe,
     TranslatePipe,
   ],
@@ -80,6 +137,8 @@ export class UserDetailComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = USER_DETAIL_GUIDE;
 
   readonly state = signal<ViewState>('loading');
   readonly user = signal<UserDetailDto | null>(null);

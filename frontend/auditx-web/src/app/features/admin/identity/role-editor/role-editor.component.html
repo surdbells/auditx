@@ -24,6 +24,8 @@
       </button>
     </app-page-header>
 
+    <app-page-guide [guide]="guide" />
+
     @if (isReadOnly()) {
       <div class="editor__readonly-banner" role="note">
         <mat-icon aria-hidden="true">lock</mat-icon>
@@ -32,7 +34,7 @@
     }
 
     <form [formGroup]="form" (ngSubmit)="save()">
-      <mat-card appearance="outlined" class="editor__card">
+      <mat-card appearance="outlined" class="editor__card" data-guide="details">
         <mat-card-header><mat-card-title>{{ 'identity.roleEditor.details' | t }}</mat-card-title></mat-card-header>
         <mat-card-content>
           <mat-form-field appearance="outline" class="full">
@@ -60,7 +62,7 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card appearance="outlined" class="editor__card">
+      <mat-card appearance="outlined" class="editor__card" data-guide="permissions">
         <mat-card-header class="editor__perm-header">
           <mat-card-title>{{ 'identity.roles.col.permissions' | t }}</mat-card-title>
           <span class="editor__count">{{ 'identity.roleEditor.selectedCount' | t: { count: selectedCount() } }}</span>

@@ -69,10 +69,68 @@ import {
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for a single annual plan (walkthrough + "About this page" panel). */
+const PLAN_DETAIL_GUIDE: PageGuide = {
+  id: 'planning-plan-detail',
+  titleKey: 'planning.detail.guide.pageTitle',
+  purposeKey: 'planning.detail.guide.purpose',
+  descriptionKey: 'planning.detail.guide.description',
+  actionKeys: [
+    'planning.detail.guide.action.items',
+    'planning.detail.guide.action.workflow',
+    'planning.detail.guide.action.launch',
+    'planning.detail.guide.action.track',
+  ],
+  sections: [
+    { selector: '.detail__actions', titleKey: 'planning.detail.guide.section.actions.title', bodyKey: 'planning.detail.guide.section.actions.body' },
+    { selector: '.detail__status-row', titleKey: 'planning.detail.guide.section.status.title', bodyKey: 'planning.detail.guide.section.status.body' },
+    { selector: '.detail__exec-card', titleKey: 'planning.detail.guide.section.execution.title', bodyKey: 'planning.detail.guide.section.execution.body' },
+    { selector: '.detail__items-card', titleKey: 'planning.detail.guide.section.items.title', bodyKey: 'planning.detail.guide.section.items.body' },
+  ],
+  workflowKeys: [
+    'planning.detail.guide.flow.draft',
+    'planning.detail.guide.flow.submit',
+    'planning.detail.guide.flow.decide',
+    'planning.detail.guide.flow.launch',
+    'planning.detail.guide.flow.close',
+  ],
+  dependsOnKeys: [
+    'planning.detail.guide.dep.universe',
+    'planning.detail.guide.dep.users',
+    'planning.detail.guide.dep.refdata',
+  ],
+  usedByKeys: [
+    'planning.detail.guide.use.audits',
+    'planning.detail.guide.use.coverage',
+    'planning.detail.guide.use.reports',
+  ],
+  businessRuleKeys: [
+    'planning.detail.guide.rule.editable',
+    'planning.detail.guide.rule.approval',
+    'planning.detail.guide.rule.launch',
+    'planning.detail.guide.rule.revision',
+  ],
+  tipKeys: [
+    'planning.detail.guide.tip.reorder',
+    'planning.detail.guide.tip.effort',
+    'planning.detail.guide.tip.behind',
+  ],
+  permissionKeys: [
+    'planning.detail.guide.perm.manager',
+    'planning.detail.guide.perm.chair',
+  ],
+  faq: [
+    { questionKey: 'planning.detail.guide.faq.launch.q', answerKey: 'planning.detail.guide.faq.launch.a' },
+    { questionKey: 'planning.detail.guide.faq.revision.q', answerKey: 'planning.detail.guide.faq.revision.a' },
+  ],
+};
 
 @Component({
   selector: 'app-plan-detail',
@@ -91,6 +149,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './plan-detail.component.html',
@@ -120,6 +179,8 @@ export class PlanDetailComponent {
       ? ['drag', 'auditType', 'planned', 'effort', 'lead', 'status', 'actions']
       : ['auditType', 'planned', 'effort', 'lead', 'status', 'actions'],
   );
+
+  readonly guide = PLAN_DETAIL_GUIDE;
 
   readonly state = signal<ViewState>('loading');
   readonly plan = signal<Plan | null>(null);

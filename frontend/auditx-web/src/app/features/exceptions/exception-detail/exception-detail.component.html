@@ -38,6 +38,8 @@
         </div>
       </app-page-header>
 
+      <app-page-guide [guide]="guide" />
+
       <div class="detail__status-row">
         <span class="severity-badge" [attr.data-severity]="e.severity">
           {{ e.severity }}
@@ -72,7 +74,7 @@
       }
 
       <!-- Overview -->
-      <mat-card appearance="outlined" class="detail__card">
+      <mat-card appearance="outlined" class="detail__card" data-guide="overview">
         <h3 class="detail__card-title">{{ 'exceptions.detail.overview' | t }}</h3>
         <dl class="detail__grid">
           <div>
@@ -130,7 +132,7 @@
       </mat-card>
 
       <!-- Controls & regulations linked to this finding (P1-B) -->
-      <mat-card appearance="outlined" class="detail__card">
+      <mat-card appearance="outlined" class="detail__card" data-guide="links">
         <div class="detail__card-head">
           <h3 class="detail__card-title">{{ 'links.title' | t }}</h3>
           @if (canManage()) {
@@ -217,7 +219,7 @@
       </mat-card>
 
       <!-- Management Action Plan -->
-      <mat-card appearance="outlined" class="detail__card">
+      <mat-card appearance="outlined" class="detail__card" data-guide="map">
         <div class="detail__card-head">
           <h3 class="detail__card-title">{{ 'exceptions.detail.mapTitle' | t }}</h3>
           <div class="detail__card-actions">

@@ -29,6 +29,8 @@ import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import {
   RecommendationDialogComponent,
   RecommendationDialogData,
@@ -57,6 +59,61 @@ type ViewState = 'loading' | 'ready' | 'error';
 const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
 const CONCURRENCY_CONFLICT = 'sanctions.concurrency_conflict';
 
+/** Contextual page guide for a single sanctions case (walkthrough + "About this page" panel). */
+const SANCTIONS_CASE_GUIDE: PageGuide = {
+  id: 'sanctions-case-detail',
+  titleKey: 'sanctions.caseDetail.guide.pageTitle',
+  purposeKey: 'sanctions.caseDetail.guide.purpose',
+  descriptionKey: 'sanctions.caseDetail.guide.description',
+  actionKeys: [
+    'sanctions.caseDetail.guide.action.recommend',
+    'sanctions.caseDetail.guide.action.outcome',
+    'sanctions.caseDetail.guide.action.appeal',
+    'sanctions.caseDetail.guide.action.dossier',
+  ],
+  sections: [
+    { selector: '.detail__status-row', titleKey: 'sanctions.caseDetail.guide.section.status.title', bodyKey: 'sanctions.caseDetail.guide.section.status.body' },
+    { selector: '.detail__card', titleKey: 'sanctions.caseDetail.guide.section.overview.title', bodyKey: 'sanctions.caseDetail.guide.section.overview.body' },
+    { selector: '.detail__actions', titleKey: 'sanctions.caseDetail.guide.section.dossier.title', bodyKey: 'sanctions.caseDetail.guide.section.dossier.body' },
+  ],
+  workflowKeys: [
+    'sanctions.caseDetail.guide.flow.trigger',
+    'sanctions.caseDetail.guide.flow.recommend',
+    'sanctions.caseDetail.guide.flow.decision',
+    'sanctions.caseDetail.guide.flow.appeal',
+    'sanctions.caseDetail.guide.flow.close',
+  ],
+  dependsOnKeys: [
+    'sanctions.caseDetail.guide.dep.exception',
+    'sanctions.caseDetail.guide.dep.grid',
+    'sanctions.caseDetail.guide.dep.directory',
+  ],
+  usedByKeys: [
+    'sanctions.caseDetail.guide.use.dossier',
+    'sanctions.caseDetail.guide.use.analytics',
+    'sanctions.caseDetail.guide.use.audit',
+  ],
+  businessRuleKeys: [
+    'sanctions.caseDetail.guide.rule.lifecycle',
+    'sanctions.caseDetail.guide.rule.deviation',
+    'sanctions.caseDetail.guide.rule.masking',
+    'sanctions.caseDetail.guide.rule.appeal',
+  ],
+  tipKeys: [
+    'sanctions.caseDetail.guide.tip.grid',
+    'sanctions.caseDetail.guide.tip.dossier',
+  ],
+  permissionKeys: [
+    'sanctions.caseDetail.guide.perm.recommend',
+    'sanctions.caseDetail.guide.perm.decide',
+    'sanctions.caseDetail.guide.perm.view',
+  ],
+  faq: [
+    { questionKey: 'sanctions.caseDetail.guide.faq.masked.q', answerKey: 'sanctions.caseDetail.guide.faq.masked.a' },
+    { questionKey: 'sanctions.caseDetail.guide.faq.appeal.q', answerKey: 'sanctions.caseDetail.guide.faq.appeal.a' },
+  ],
+};
+
 @Component({
   selector: 'app-sanctions-case-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -71,6 +128,7 @@ const CONCURRENCY_CONFLICT = 'sanctions.concurrency_conflict';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './sanctions-case-detail.component.html',
   styleUrl: './sanctions-case-detail.component.scss',
@@ -93,6 +151,7 @@ export class SanctionsCaseDetailComponent {
 
   readonly humanise = humanise;
   readonly maskedSubject = MASKED_SUBJECT;
+  readonly guide = SANCTIONS_CASE_GUIDE;
 
   readonly status = computed(() => this.sanctionsCase()?.status ?? null);
 

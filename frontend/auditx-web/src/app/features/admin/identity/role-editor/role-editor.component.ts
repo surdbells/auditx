@@ -35,6 +35,8 @@ import {
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 
@@ -66,6 +68,60 @@ const SCOPE_LABELS: Record<PermissionScopeType, string> = {
   self: 'identity.scope.self',
 };
 
+/** Contextual page guide for the role editor (drives the walkthrough + the About panel). */
+const ROLE_EDITOR_GUIDE: PageGuide = {
+  id: 'identity-role-editor',
+  titleKey: 'identity.roleEditor.guide.pageTitle',
+  purposeKey: 'identity.roleEditor.guide.purpose',
+  descriptionKey: 'identity.roleEditor.guide.description',
+  actionKeys: [
+    'identity.roleEditor.guide.action.details',
+    'identity.roleEditor.guide.action.inherit',
+    'identity.roleEditor.guide.action.permissions',
+    'identity.roleEditor.guide.action.save',
+  ],
+  sections: [
+    { selector: '[data-guide="details"]', titleKey: 'identity.roleEditor.guide.section.details.title', bodyKey: 'identity.roleEditor.guide.section.details.body' },
+    { selector: '[data-guide="permissions"]', titleKey: 'identity.roleEditor.guide.section.permissions.title', bodyKey: 'identity.roleEditor.guide.section.permissions.body' },
+    { selector: '.editor__actions', titleKey: 'identity.roleEditor.guide.section.actions.title', bodyKey: 'identity.roleEditor.guide.section.actions.body' },
+  ],
+  workflowKeys: [
+    'identity.roleEditor.guide.flow.catalogue',
+    'identity.roleEditor.guide.flow.define',
+    'identity.roleEditor.guide.flow.assign',
+    'identity.roleEditor.guide.flow.approve',
+  ],
+  dependsOnKeys: [
+    'identity.roleEditor.guide.dep.catalogue',
+    'identity.roleEditor.guide.dep.roles',
+    'identity.roleEditor.guide.dep.scopes',
+  ],
+  usedByKeys: [
+    'identity.roleEditor.guide.use.users',
+    'identity.roleEditor.guide.use.access',
+    'identity.roleEditor.guide.use.audit',
+  ],
+  businessRuleKeys: [
+    'identity.roleEditor.guide.rule.builtIn',
+    'identity.roleEditor.guide.rule.permission',
+    'identity.roleEditor.guide.rule.scope',
+    'identity.roleEditor.guide.rule.makerChecker',
+  ],
+  tipKeys: [
+    'identity.roleEditor.guide.tip.inherit',
+    'identity.roleEditor.guide.tip.leastPrivilege',
+    'identity.roleEditor.guide.tip.scope',
+  ],
+  permissionKeys: [
+    'identity.roleEditor.guide.perm.admin',
+    'identity.roleEditor.guide.perm.viewer',
+  ],
+  faq: [
+    { questionKey: 'identity.roleEditor.guide.faq.builtIn.q', answerKey: 'identity.roleEditor.guide.faq.builtIn.a' },
+    { questionKey: 'identity.roleEditor.guide.faq.inherit.q', answerKey: 'identity.roleEditor.guide.faq.inherit.a' },
+  ],
+};
+
 @Component({
   selector: 'app-role-editor',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,6 +139,7 @@ const SCOPE_LABELS: Record<PermissionScopeType, string> = {
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './role-editor.component.html',
@@ -113,6 +170,7 @@ export class RoleEditorComponent {
   });
   readonly isReadOnly = computed(() => this.editingRole()?.isBuiltIn ?? false);
   readonly scopeLabels = SCOPE_LABELS;
+  readonly guide = ROLE_EDITOR_GUIDE;
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],

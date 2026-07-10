@@ -21,6 +21,8 @@
         </div>
       </app-page-header>
 
+      <app-page-guide [guide]="guide" />
+
       <div class="detail__status-row">
         <span class="severity-badge" [attr.data-severity]="c.severity">
           {{ humanise(c.severity) }}
