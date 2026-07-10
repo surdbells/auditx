@@ -17,6 +17,7 @@ using AuditX.Domain.Reports;
 using AuditX.Domain.Sanctions;
 using AuditX.Domain.Risks;
 using AuditX.Domain.Templates;
+using AuditX.Domain.Execution;
 using AuditX.Domain.TimeTracking;
 using AuditX.Domain.Universe;
 using AuditX.Infrastructure.Persistence.Naming;
@@ -93,6 +94,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<EvidenceFile> EvidenceFiles => Set<EvidenceFile>();
 
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+
+    public DbSet<AuditProcedure> AuditProcedures => Set<AuditProcedure>();
 
     public DbSet<Risk> Risks => Set<Risk>();
 

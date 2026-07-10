@@ -101,6 +101,12 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> FindingFollowUp(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new FindingFollowUpQuery(), cancellationToken));
 
+    /// <summary>Execution-procedure coverage + sampling error-rate (P2-C).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("procedures")]
+    public async Task<IActionResult> Procedures(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ProcedureSummaryQuery(), cancellationToken));
+
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("recurrence-clusters")]
     public async Task<IActionResult> RecurrenceClusters([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)

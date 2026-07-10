@@ -143,6 +143,15 @@ public sealed class FindingFollowUpQueryHandler(IAnalyticsQueryService analytics
         => analytics.FindingFollowUpAsync(cancellationToken);
 }
 
+public sealed record ProcedureSummaryQuery : IQuery<ProcedureSummaryDto>;
+
+public sealed class ProcedureSummaryQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<ProcedureSummaryQuery, ProcedureSummaryDto>
+{
+    public Task<ProcedureSummaryDto> Handle(ProcedureSummaryQuery query, CancellationToken cancellationToken)
+        => analytics.ProcedureSummaryAsync(cancellationToken);
+}
+
 // ---- Coverage matrix (reuse ICoverageQueryService — do NOT reimplement coverage) ----
 
 public sealed record AnalyticsCoverageQuery(int WindowMonths) : IQuery<CoverageMatrix>;

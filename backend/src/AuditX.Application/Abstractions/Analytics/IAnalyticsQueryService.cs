@@ -58,6 +58,9 @@ public interface IAnalyticsQueryService
 
     /// <summary>Finding follow-up summary (P2-B): management-response coverage, reopen count and verification outcomes.</summary>
     Task<FindingFollowUpSummaryDto> FindingFollowUpAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Execution-procedure coverage + sampling error-rate (P2-C).</summary>
+    Task<ProcedureSummaryDto> ProcedureSummaryAsync(CancellationToken cancellationToken = default);
 }
 
 // ---- KPI DTOs (snake-cased at the API edge by the serializer; these are the shape the port returns) ----
@@ -231,3 +234,18 @@ public sealed record FindingFollowUpSummaryDto(
     int WithManagementResponse,
     int VerifiedFindings,
     IReadOnlyList<VerificationResultCountDto> ByVerificationResult);
+
+/// <summary>One procedure-type count for the procedure summary (P2-C).</summary>
+public sealed record ProcedureTypeCountDto(string Type, int Count);
+
+/// <summary>
+/// Execution-procedure summary (P2-C): coverage by type plus the aggregate sampling error-rate
+/// (total exceptions found / total items tested across all sampling procedures).
+/// </summary>
+public sealed record ProcedureSummaryDto(
+    int TotalProcedures,
+    IReadOnlyList<ProcedureTypeCountDto> ByType,
+    int SamplingProcedures,
+    int TotalItemsTested,
+    int TotalExceptionsFound,
+    double? SampleErrorRatePercent);

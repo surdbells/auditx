@@ -3,6 +3,7 @@ using AuditX.Application.Abstractions.Analytics;
 using AuditX.Application.Common.Enums;
 using AuditX.Application.Risks;
 using AuditX.Domain.Enums;
+using AuditX.Domain.Execution;
 using AuditX.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -544,6 +545,26 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
             .ToArray();
 
         return new FindingFollowUpSummaryDto(total, closed, reopened, withResponse, verifiedFindings, byVerificationResult);
+    }
+
+    public async Task<ProcedureSummaryDto> ProcedureSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        var procs = await db.AuditProcedures.AsNoTracking()
+            .Select(p => new { p.Type, p.ItemsTested, p.ExceptionsFound })
+            .ToListAsync(cancellationToken);
+
+        var byType = procs
+            .GroupBy(p => p.Type)
+            .Select(g => new ProcedureTypeCountDto(g.Key.ToSnake(), g.Count()))
+            .OrderByDescending(x => x.Count).ThenBy(x => x.Type)
+            .ToArray();
+
+        var sampling = procs.Where(p => p.Type == ProcedureType.Sampling).ToList();
+        var totalTested = sampling.Sum(p => p.ItemsTested ?? 0);
+        var totalExceptions = sampling.Sum(p => p.ExceptionsFound ?? 0);
+        var errorRate = totalTested > 0 ? Math.Round((double)totalExceptions / totalTested * 100, 1) : (double?)null;
+
+        return new ProcedureSummaryDto(procs.Count, byType, sampling.Count, totalTested, totalExceptions, errorRate);
     }
 
     /// <summary>Sums a unit's own aggregate with every descendant's (DFS; cycle-guarded).</summary>

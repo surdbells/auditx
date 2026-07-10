@@ -140,6 +140,10 @@ public static class AuditEventTypes
     public const string TimeEntryDeleted = "time_entry_deleted";
     public const string AuditBudgetSet = "audit_budget_set";
 
+    // P2-C execution procedures (sampling / interview / walkthrough)
+    public const string ProcedureRecorded = "procedure_recorded";
+    public const string ProcedureDeleted = "procedure_deleted";
+
     // M5 execution / evidence
     public const string ItemResponded = "item_responded";
     public const string ItemResponseOverridden = "item_response_overridden";
@@ -264,6 +268,7 @@ public static class AuditTargetTypes
     public const string AuditChecklistItem = "audit_checklist_item";
     public const string ChecklistResponse = "checklist_response";
     public const string TimeEntry = "time_entry";
+    public const string AuditProcedure = "audit_procedure";
     public const string Risk = "risk";
     public const string Control = "control";
     public const string Regulation = "regulation";
