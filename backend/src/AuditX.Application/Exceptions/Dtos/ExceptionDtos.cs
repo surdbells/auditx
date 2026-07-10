@@ -15,6 +15,7 @@ public sealed record ExceptionDto(
     string? RootCause,
     string? Recommendation,
     string? Category,
+    string? RootCauseCategory,
     Guid OwnerUserId,
     Guid RaisedByUserId,
     DateTimeOffset RaisedAt,

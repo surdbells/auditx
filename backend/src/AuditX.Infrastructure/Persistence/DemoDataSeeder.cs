@@ -665,10 +665,14 @@ public sealed class DemoDataSeeder(
         var raisedAt = _now.AddDays(raisedOffsetDays);
         var targetDate = DateOnly.FromDateTime(raisedAt.UtcDateTime).AddDays(TargetDaysFor(severity));
 
+        // Spread demo findings across a few root-cause categories (deterministic) so the pareto has shape.
+        var rootCauses = new[] { "process_gap", "control_not_operating", "human_error", "system_limitation", "policy_gap" };
+        var rootCauseCategory = rootCauses[Math.Abs(raisedOffsetDays) % rootCauses.Length];
+
         var exception = AuditException.Raise(
             auditId, checklistItemId, auditableEntityId, title, severity,
             rootCause: "Root cause established during fieldwork.", recommendation: "Implement the recommended control.",
-            category, ownerUserId, raisedBy, targetDate, targetDateOverridden: false, overrideRationale: null,
+            category, rootCauseCategory, ownerUserId, raisedBy, targetDate, targetDateOverridden: false, overrideRationale: null,
             isRecurrence: false, recurrenceOfExceptionId: null, configurationVersionsJson: null, raisedAt);
 
         db.Exceptions.Add(exception);

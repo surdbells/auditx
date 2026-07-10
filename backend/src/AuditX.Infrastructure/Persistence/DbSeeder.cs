@@ -251,6 +251,16 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             (ReferenceDataCategories.ExceptionCategory, "operational", "Operational"),
             (ReferenceDataCategories.ExceptionCategory, "regulatory", "Regulatory"),
 
+            // Root-cause taxonomy (P2-A) — the categorical cause behind a finding, for pareto/trend analysis.
+            (ReferenceDataCategories.RootCauseCategory, "process_gap", "Process gap / no control"),
+            (ReferenceDataCategories.RootCauseCategory, "control_not_operating", "Control not operating"),
+            (ReferenceDataCategories.RootCauseCategory, "human_error", "Human error"),
+            (ReferenceDataCategories.RootCauseCategory, "inadequate_training", "Inadequate training"),
+            (ReferenceDataCategories.RootCauseCategory, "system_limitation", "System limitation"),
+            (ReferenceDataCategories.RootCauseCategory, "policy_gap", "Policy / procedure gap"),
+            (ReferenceDataCategories.RootCauseCategory, "third_party", "Third-party / vendor failure"),
+            (ReferenceDataCategories.RootCauseCategory, "wilful_violation", "Wilful violation / override"),
+
             // Entity types — the CODE is the value stored on auditable_entity.entity_type, so these codes must
             // match the historical taxonomy names (branch/process/system/vendor/product) for existing data.
             (ReferenceDataCategories.EntityType, "branch", "Branch"),

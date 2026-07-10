@@ -17,7 +17,7 @@ public sealed class AuditExceptionTests
 
     private static AuditException New(ExceptionSeverity severity = ExceptionSeverity.Medium) => AuditException.Raise(
         AuditId, ItemId, Guid.NewGuid(), "Cash control gap", severity, "no segregation", "add maker-checker",
-        "controls", Owner, Raiser, Target, targetDateOverridden: false, null, isRecurrence: false, null, "{}", Now);
+        "controls", "process_gap", Owner, Raiser, Target, targetDateOverridden: false, null, isRecurrence: false, null, "{}", Now);
 
     private static AuditException Approved()
     {

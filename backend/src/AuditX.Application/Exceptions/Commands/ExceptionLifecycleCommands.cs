@@ -25,7 +25,7 @@ internal static class ExceptionParsing
 
 public sealed record RaiseExceptionCommand(
     Guid AuditId, Guid ChecklistItemId, string Title, string Severity, string RootCause, string Recommendation,
-    string? Category, Guid OwnerUserId, DateOnly? TargetDateOverride, string? OverrideRationale) : ICommand<ExceptionDto>;
+    string? Category, string? RootCauseCategory, Guid OwnerUserId, DateOnly? TargetDateOverride, string? OverrideRationale) : ICommand<ExceptionDto>;
 
 public sealed class RaiseExceptionCommandValidator : AbstractValidator<RaiseExceptionCommand>
 {
@@ -101,6 +101,7 @@ public sealed class RaiseExceptionCommandHandler(
 
         // Normalise the category the same way the domain persists it, so the recurrence lookup keys match.
         var normalizedCategory = string.IsNullOrWhiteSpace(command.Category) ? null : command.Category.Trim();
+        var normalizedRootCauseCategory = string.IsNullOrWhiteSpace(command.RootCauseCategory) ? null : command.RootCauseCategory.Trim();
 
         var isRecurrence = false;
         Guid? recurrenceOf = null;
@@ -121,7 +122,7 @@ public sealed class RaiseExceptionCommandHandler(
 
         var exception = AuditException.Raise(
             command.AuditId, command.ChecklistItemId, auditableEntityId, command.Title, severity, command.RootCause,
-            command.Recommendation, normalizedCategory, command.OwnerUserId, userId, targetDate, overridden,
+            command.Recommendation, normalizedCategory, normalizedRootCauseCategory, command.OwnerUserId, userId, targetDate, overridden,
             command.OverrideRationale, isRecurrence, recurrenceOf, configSnapshot, clock.UtcNow);
 
         exceptions.Add(exception);

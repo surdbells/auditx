@@ -39,7 +39,7 @@ public sealed class AnalyticsSnapshotCaptureServiceTests
     [Fact]
     public async Task Captures_headline_metrics_for_today()
     {
-        var (svc, store) = Build(new ExceptionPortfolioDto(9, [], [], [], 4.5));
+        var (svc, store) = Build(new ExceptionPortfolioDto(9, [], [], [], [], 4.5));
 
         var count = await svc.CaptureAsync();
 
@@ -59,7 +59,7 @@ public sealed class AnalyticsSnapshotCaptureServiceTests
         var (svc, store) = Build(new ExceptionPortfolioDto(
             9,
             [new ExceptionSeverityCountDto("critical", 2), new ExceptionSeverityCountDto("high", 4)],
-            [], [], 4.5));
+            [], [], [], 4.5));
 
         await svc.CaptureAsync();
         var rows = Captured(store);
@@ -72,7 +72,7 @@ public sealed class AnalyticsSnapshotCaptureServiceTests
     [Fact]
     public async Task Omits_average_closure_when_no_exception_has_closed()
     {
-        var (svc, store) = Build(new ExceptionPortfolioDto(9, [], [], [], AverageClosureDays: null));
+        var (svc, store) = Build(new ExceptionPortfolioDto(9, [], [], [], [], AverageClosureDays: null));
 
         await svc.CaptureAsync();
         var rows = Captured(store);

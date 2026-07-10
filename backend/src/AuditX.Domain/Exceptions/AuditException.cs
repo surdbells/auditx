@@ -35,6 +35,9 @@ public sealed class AuditException : AggregateRoot
 
     public string? Category { get; private set; }
 
+    /// <summary>Structured root-cause taxonomy code (from the <c>root_cause_category</c> reference-data list, P2-A). Free-text detail stays in <see cref="RootCause"/>.</summary>
+    public string? RootCauseCategory { get; private set; }
+
     public Guid OwnerUserId { get; private set; }
 
     public Guid RaisedByUserId { get; private set; }
@@ -97,7 +100,7 @@ public sealed class AuditException : AggregateRoot
 
     public static AuditException Raise(
         Guid auditId, Guid checklistItemId, Guid? auditableEntityId, string title, ExceptionSeverity severity,
-        string rootCause, string recommendation, string? category, Guid ownerUserId, Guid raisedBy,
+        string rootCause, string recommendation, string? category, string? rootCauseCategory, Guid ownerUserId, Guid raisedBy,
         DateOnly targetDate, bool targetDateOverridden, string? overrideRationale,
         bool isRecurrence, Guid? recurrenceOfExceptionId, string? configurationVersionsJson, DateTimeOffset nowUtc)
     {
@@ -111,6 +114,7 @@ public sealed class AuditException : AggregateRoot
             RootCause = Guard.NotNullOrWhiteSpace(rootCause, "exception.root_cause_required", "A root cause is required."),
             Recommendation = Guard.NotNullOrWhiteSpace(recommendation, "exception.recommendation_required", "A recommendation is required."),
             Category = string.IsNullOrWhiteSpace(category) ? null : category.Trim(),
+            RootCauseCategory = string.IsNullOrWhiteSpace(rootCauseCategory) ? null : rootCauseCategory.Trim(),
             OwnerUserId = ownerUserId,
             RaisedByUserId = raisedBy,
             RaisedAt = nowUtc,

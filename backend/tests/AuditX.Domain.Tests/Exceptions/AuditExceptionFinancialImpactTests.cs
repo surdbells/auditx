@@ -8,7 +8,7 @@ public sealed class AuditExceptionFinancialImpactTests
 {
     private static AuditException Raise() => AuditException.Raise(
         Guid.NewGuid(), Guid.NewGuid(), null, "Finding", ExceptionSeverity.High,
-        "root", "reco", null, Guid.NewGuid(), Guid.NewGuid(),
+        "root", "reco", null, null, Guid.NewGuid(), Guid.NewGuid(),
         new DateOnly(2026, 8, 1), targetDateOverridden: false, overrideRationale: null,
         isRecurrence: false, recurrenceOfExceptionId: null, configurationVersionsJson: null,
         nowUtc: new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero));

@@ -13,6 +13,9 @@ public static class ReferenceDataCategories
     /// <summary>Exception categories (cash handling, credit, AML/KYC, …) used when raising exceptions.</summary>
     public const string ExceptionCategory = "exception_category";
 
+    /// <summary>Root-cause categories (process gap, human error, system limitation, …) — the finding root-cause taxonomy (P2-A).</summary>
+    public const string RootCauseCategory = "root_cause_category";
+
     /// <summary>Auditable-entity types (branch, process, system, vendor, …) used across the audit universe.</summary>
     public const string EntityType = "entity_type";
 
@@ -24,6 +27,7 @@ public static class ReferenceDataCategories
     [
         new(AuditType, "Audit types"),
         new(ExceptionCategory, "Exception categories"),
+        new(RootCauseCategory, "Root-cause categories"),
         new(EntityType, "Entity types"),
         new(SanctionCategory, "Sanction categories"),
     ];

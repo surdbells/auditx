@@ -102,6 +102,25 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     }
 
     [Fact]
+    public async Task Raise_captures_the_root_cause_taxonomy()
+    {
+        var admin = await AdminAsync();
+        var (auditId, failItem, _, owner) = await SeedAuditWithResponsesAsync(admin);
+
+        var raised = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = failItem, title = "Segregation gap", severity = "high",
+            rootCause = "no maker-checker", recommendation = "introduce dual control",
+            category = "operational", rootCauseCategory = "process_gap", ownerUserId = owner,
+        }));
+        Assert.Equal("process_gap", raised.GetProperty("rootCauseCategory").GetString());
+
+        // It survives a re-read of the detail.
+        var reread = await DataAsync(await admin.GetAsync($"/api/v1/exceptions/{raised.GetProperty("id").GetGuid()}"));
+        Assert.Equal("process_gap", reread.GetProperty("rootCauseCategory").GetString());
+    }
+
+    [Fact]
     public async Task Map_submit_then_gated_approve_returns_pending_action()
     {
         var admin = await AdminAsync();
