@@ -9,6 +9,7 @@ export * from './organization.models';
 export * from './time.models';
 export * from './risk.models';
 export * from './controls.models';
+export * from './procedure.models';
 export * from './planning.models';
 export * from './coverage.models';
 export * from './audit.models';

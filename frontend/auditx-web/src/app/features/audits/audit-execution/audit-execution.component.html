@@ -244,3 +244,6 @@
     (budgetChanged)="reloadRequested.emit()"
   />
 }
+
+<!-- Typed execution procedures (P2-C) — self-managing; a separate aggregate (no version coupling) -->
+<app-audit-procedures-panel [audit]="audit()" />

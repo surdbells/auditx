@@ -148,6 +148,8 @@ describe('AuditExecutionComponent', () => {
       .flush({
         data: { totalItems: 2, responded: 1, pass: 1, fail: 0, na: 0, exceptions: 0 },
       });
+    // P2-C: the self-managing procedures panel loads its list on init.
+    http.expectOne(`${BASE}/audits/a-1/procedures`).flush({ data: [] });
     if (a.status === 'under_review' && perms.includes('ManageAudit')) {
       http
         .expectOne(`${BASE}/audits/a-1/review/fail-without-exception`)

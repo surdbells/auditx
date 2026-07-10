@@ -27,6 +27,7 @@ import {
 import {
   ExceptionPortfolio,
   FindingFollowUpSummary,
+  ProcedureSummary,
   FunctionPerformance,
   MaterialFinding,
   PlanStatusKpi,
@@ -101,6 +102,7 @@ export class DashboardComponent {
   readonly performance = signal<FunctionPerformance | null>(null);
   readonly portfolio = signal<ExceptionPortfolio | null>(null);
   readonly followUp = signal<FindingFollowUpSummary | null>(null);
+  readonly procedures = signal<ProcedureSummary | null>(null);
   readonly planStatus = signal<PlanStatusKpi | null>(null);
   readonly auditCounts = signal<Record<string, number> | null>(null);
   readonly materialFindings = signal<MaterialFinding[]>([]);
@@ -127,6 +129,7 @@ export class DashboardComponent {
     this.analytics.functionPerformance().subscribe({ next: (p) => this.performance.set(p), error: () => undefined });
     this.analytics.exceptionPortfolio().subscribe({ next: (p) => this.portfolio.set(p), error: () => undefined });
     this.analytics.findingFollowUp().subscribe({ next: (f) => this.followUp.set(f), error: () => undefined });
+    this.analytics.procedureSummary().subscribe({ next: (p) => this.procedures.set(p), error: () => undefined });
     this.analytics.planStatus().subscribe({ next: (p) => this.planStatus.set(p), error: () => undefined });
     this.analytics.materialFindings().subscribe({ next: (f) => this.materialFindings.set(f), error: () => undefined });
   }
@@ -236,6 +239,13 @@ export class DashboardComponent {
     (this.followUp()?.byVerificationResult ?? [])
       .filter((r) => r.count > 0)
       .map((r) => ({ label: this.humanise(r.result), value: r.count })),
+  );
+
+  /** Execution procedures by type (P2-C). */
+  readonly procedureData = computed<ChartDatum[]>(() =>
+    (this.procedures()?.byType ?? [])
+      .filter((r) => r.count > 0)
+      .map((r) => ({ label: this.humanise(r.type), value: r.count })),
   );
 
   readonly planPercent = computed(() => this.planStatus()?.completionPercent ?? null);

@@ -1,0 +1,131 @@
+<mat-card appearance="outlined" class="proc">
+  <div class="proc__head">
+    <h3 class="proc__title">{{ 'procedure.title' | t }}</h3>
+    @if (canRecordNow() && !adding()) {
+      <button matButton="filled" type="button" (click)="startAdd()">
+        <mat-icon>add</mat-icon>
+        {{ 'procedure.actions.record' | t }}
+      </button>
+    }
+  </div>
+
+  @if (adding()) {
+    <form [formGroup]="form" class="proc__form">
+      <div class="proc__row">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'procedure.field.type' | t }}</mat-label>
+          <mat-select formControlName="type">
+            @for (t of types; track t) {
+              <mat-option [value]="t">{{ 'procedure.type.' + t | t }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'procedure.field.performedOn' | t }}</mat-label>
+          <input matInput type="date" formControlName="performedOn" />
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'procedure.field.checklistItem' | t }}</mat-label>
+        <mat-select formControlName="checklistItemId">
+          <mat-option [value]="''">{{ 'procedure.value.noItem' | t }}</mat-option>
+          @for (i of audit().checklistItems; track i.id) {
+            <mat-option [value]="i.id">{{ i.prompt }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'procedure.field.summary' | t }}</mat-label>
+        <textarea matInput formControlName="summary" rows="2"></textarea>
+        @if (form.controls.summary.hasError('required') && form.controls.summary.touched) {
+          <mat-error>{{ 'procedure.error.summaryRequired' | t }}</mat-error>
+        }
+      </mat-form-field>
+
+      @if (isSampling()) {
+        <div class="proc__sampling">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'procedure.field.population' | t }}</mat-label>
+            <input matInput type="number" min="0" formControlName="population" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'procedure.field.sampleSize' | t }}</mat-label>
+            <input matInput type="number" min="0" formControlName="sampleSize" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'procedure.field.itemsTested' | t }}</mat-label>
+            <input matInput type="number" min="0" formControlName="itemsTested" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'procedure.field.exceptionsFound' | t }}</mat-label>
+            <input matInput type="number" min="0" formControlName="exceptionsFound" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'procedure.field.method' | t }}</mat-label>
+            <mat-select formControlName="method">
+              <mat-option [value]="''">{{ 'procedure.value.noMethod' | t }}</mat-option>
+              @for (m of methods; track m) {
+                <mat-option [value]="m">{{ 'procedure.method.' + m | t }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      } @else {
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'procedure.field.counterparty' | t }}</mat-label>
+          <input matInput formControlName="counterparty" autocomplete="off" />
+        </mat-form-field>
+      }
+
+      <div class="proc__form-actions">
+        <button matButton type="button" (click)="cancelAdd()">{{ 'procedure.actions.cancel' | t }}</button>
+        <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid || submitting()">
+          {{ 'procedure.actions.save' | t }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (!procedures().length && !loading()) {
+    <p class="muted proc__empty">{{ 'procedure.empty' | t }}</p>
+  } @else {
+    <ul class="proc__list">
+      @for (p of procedures(); track p.id) {
+        <li class="proc__item">
+          <div class="proc__item-head">
+            <span class="status-badge" [attr.data-status]="p.type === 'sampling' ? 'in_progress' : (p.type === 'interview' ? 'bank' : 'system')">
+              {{ 'procedure.type.' + p.type | t }}
+            </span>
+            <span class="muted proc__item-meta">{{ nameOf(p.performedByUserId) }} · {{ p.performedOn }}</span>
+            @if (canModify(p)) {
+              <button matIconButton type="button" (click)="remove(p)" [attr.aria-label]="'procedure.actions.delete' | t">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+          </div>
+          <p class="proc__item-summary">{{ p.summary }}</p>
+          @if (promptFor(p.checklistItemId); as prompt) {
+            <p class="muted proc__item-item">↳ {{ prompt }}</p>
+          }
+          @if (p.type === 'sampling') {
+            <p class="muted proc__item-sampling">
+              {{ 'procedure.field.sampleSize' | t }} {{ p.sampleSize ?? '—' }} / {{ p.population ?? '—' }} ·
+              {{ 'procedure.field.itemsTested' | t }} {{ p.itemsTested ?? '—' }} ·
+              {{ 'procedure.field.exceptionsFound' | t }} {{ p.exceptionsFound ?? '—' }}
+              @if (errorRate(p) !== null) {
+                · <span [class.proc__over]="(p.exceptionsFound ?? 0) > 0">{{ errorRate(p) }}% {{ 'procedure.errorRate' | t }}</span>
+              }
+              @if (p.method) {
+                · {{ 'procedure.method.' + p.method | t }}
+              }
+            </p>
+          } @else if (p.counterparty) {
+            <p class="muted proc__item-item">{{ 'procedure.field.counterparty' | t }}: {{ p.counterparty }}</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</mat-card>

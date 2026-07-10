@@ -17,6 +17,7 @@ import {
   ExceptionPortfolio,
   FindingFollowUpSummary,
   FunctionPerformance,
+  ProcedureSummary,
   MaterialFinding,
   OrgUnitScorecard,
   PerformanceScorecard,
@@ -180,6 +181,11 @@ export class AnalyticsService {
   /** Finding follow-up — management-response coverage, reopen count + verification outcomes (P2-B, ViewAnalytics). */
   findingFollowUp(): Observable<FindingFollowUpSummary> {
     return this.api.get<FindingFollowUpSummary>('/analytics/finding-followup');
+  }
+
+  /** Execution-procedure coverage + sampling error-rate (P2-C, ViewAnalytics). */
+  procedureSummary(): Observable<ProcedureSummary> {
+    return this.api.get<ProcedureSummary>('/analytics/procedures');
   }
 
   /* ---- Recurrence clusters (ViewAnalytics) ---- */

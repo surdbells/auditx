@@ -83,6 +83,12 @@
         />
       </div>
     }
+    @if (procedureData().length) {
+      <div class="panel">
+        <h3 class="panel__title">{{ 'dashboard.charts.proceduresByType' | t }}</h3>
+        <app-bar-chart [data]="procedureData()" [label]="'dashboard.charts.proceduresByType' | t" />
+      </div>
+    }
   </section>
 }
 

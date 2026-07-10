@@ -280,6 +280,22 @@ export interface FindingFollowUpSummary {
   byVerificationResult: VerificationResultCount[];
 }
 
+/** One procedure-type count for the procedure summary (P2-C). */
+export interface ProcedureTypeCount {
+  type: string;
+  count: number;
+}
+
+/** Execution-procedure summary (P2-C): coverage by type + aggregate sampling error-rate. */
+export interface ProcedureSummary {
+  totalProcedures: number;
+  byType: ProcedureTypeCount[];
+  samplingProcedures: number;
+  totalItemsTested: number;
+  totalExceptionsFound: number;
+  sampleErrorRatePercent: number | null;
+}
+
 /** A single Critical/High open exception for the material-findings widget. */
 export interface MaterialFinding {
   exceptionId: string;
