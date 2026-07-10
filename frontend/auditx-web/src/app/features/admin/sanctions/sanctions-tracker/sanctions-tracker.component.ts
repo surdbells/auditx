@@ -32,12 +32,67 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
 
 const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
+
+/** Contextual page guide for the sanctions tracker (drives the walkthrough + the About panel). */
+const SANCTIONS_GUIDE: PageGuide = {
+  id: 'sanctions-tracker',
+  titleKey: 'sanctions.tracker.title',
+  purposeKey: 'sanctions.guide.purpose',
+  descriptionKey: 'sanctions.guide.description',
+  actionKeys: [
+    'sanctions.guide.action.filter',
+    'sanctions.guide.action.open',
+    'sanctions.guide.action.track',
+  ],
+  sections: [
+    { selector: '.sanctions__filters-card', titleKey: 'sanctions.guide.section.filters.title', bodyKey: 'sanctions.guide.section.filters.body' },
+    { selector: '.sanctions__table', titleKey: 'sanctions.guide.section.table.title', bodyKey: 'sanctions.guide.section.table.body' },
+    { selector: '.sanctions__masked', titleKey: 'sanctions.guide.section.masked.title', bodyKey: 'sanctions.guide.section.masked.body' },
+  ],
+  workflowKeys: [
+    'sanctions.guide.flow.finding',
+    'sanctions.guide.flow.recommendation',
+    'sanctions.guide.flow.hr',
+    'sanctions.guide.flow.dc',
+    'sanctions.guide.flow.appeal',
+  ],
+  dependsOnKeys: [
+    'sanctions.guide.dep.findings',
+    'sanctions.guide.dep.audits',
+    'sanctions.guide.dep.identity',
+  ],
+  usedByKeys: [
+    'sanctions.guide.use.reports',
+    'sanctions.guide.use.analytics',
+    'sanctions.guide.use.notifications',
+  ],
+  businessRuleKeys: [
+    'sanctions.guide.rule.masking',
+    'sanctions.guide.rule.lifecycle',
+    'sanctions.guide.rule.recurrence',
+    'sanctions.guide.rule.appeal',
+  ],
+  tipKeys: [
+    'sanctions.guide.tip.status',
+    'sanctions.guide.tip.recurrence',
+  ],
+  permissionKeys: [
+    'sanctions.guide.perm.hr',
+    'sanctions.guide.perm.admin',
+  ],
+  faq: [
+    { questionKey: 'sanctions.guide.faq.masking.q', answerKey: 'sanctions.guide.faq.masking.a' },
+    { questionKey: 'sanctions.guide.faq.origin.q', answerKey: 'sanctions.guide.faq.origin.a' },
+  ],
+};
 
 @Component({
   selector: 'app-sanctions-tracker',
@@ -58,6 +113,7 @@ const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
   ],
   templateUrl: './sanctions-tracker.component.html',
   styleUrl: './sanctions-tracker.component.scss',
@@ -134,6 +190,7 @@ export class SanctionsTrackerComponent {
 
   readonly humanise = humanise;
   readonly maskedSubject = MASKED_SUBJECT;
+  readonly guide = SANCTIONS_GUIDE;
 
   constructor() {
     this.fetchPage(1);

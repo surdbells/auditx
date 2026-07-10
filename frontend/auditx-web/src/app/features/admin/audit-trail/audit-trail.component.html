@@ -5,6 +5,7 @@
   @if (canExport()) {
     <button
       actions
+      data-guide="export"
       matButton="filled"
       type="button"
       (click)="exportCsv()"
@@ -19,6 +20,8 @@
     </button>
   }
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 <mat-card appearance="outlined" class="trail__filters-card">
   <form [formGroup]="filters" class="trail__filters">

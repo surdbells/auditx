@@ -2,11 +2,13 @@
   [title]="'identity.roles.title' | t"
   [subtitle]="'identity.roles.subtitle' | t"
 >
-  <button actions matButton="filled" type="button" (click)="createRole()">
+  <button actions matButton="filled" type="button" (click)="createRole()" data-guide="create">
     <mat-icon>add</mat-icon>
     {{ 'identity.roles.newRole' | t }}
   </button>
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 <div class="roles__toolbar">
   <mat-slide-toggle

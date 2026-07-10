@@ -38,6 +38,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -70,6 +72,63 @@ const RESTRICTED_KINDS: Record<string, string> = {
   performance_scorecards: Permissions.PerformanceAnalyticsView,
 };
 
+/** Contextual page guide for the standalone (cross-audit) reports page — drives the walkthrough + About panel. */
+const STANDALONE_REPORTS_GUIDE: PageGuide = {
+  id: 'standalone-reports',
+  titleKey: 'reports.standalone.title',
+  purposeKey: 'reports.guide.purpose',
+  descriptionKey: 'reports.guide.description',
+  actionKeys: [
+    'reports.guide.action.generate',
+    'reports.guide.action.filter',
+    'reports.guide.action.open',
+    'reports.guide.action.download',
+  ],
+  sections: [
+    { selector: '.std__generate', titleKey: 'reports.guide.section.generate.title', bodyKey: 'reports.guide.section.generate.body' },
+    { selector: '.std__filters', titleKey: 'reports.guide.section.filters.title', bodyKey: 'reports.guide.section.filters.body' },
+    { selector: '.std__table', titleKey: 'reports.guide.section.table.title', bodyKey: 'reports.guide.section.table.body' },
+  ],
+  workflowKeys: [
+    'reports.guide.flow.capture',
+    'reports.guide.flow.analytics',
+    'reports.guide.flow.generate',
+    'reports.guide.flow.review',
+    'reports.guide.flow.distribute',
+  ],
+  dependsOnKeys: [
+    'reports.guide.dep.analytics',
+    'reports.guide.dep.audits',
+    'reports.guide.dep.findings',
+    'reports.guide.dep.sanctions',
+  ],
+  usedByKeys: [
+    'reports.guide.use.stakeholders',
+    'reports.guide.use.schedules',
+    'reports.guide.use.audit',
+  ],
+  businessRuleKeys: [
+    'reports.guide.rule.versioned',
+    'reports.guide.rule.async',
+    'reports.guide.rule.hash',
+    'reports.guide.rule.restricted',
+  ],
+  tipKeys: [
+    'reports.guide.tip.docx',
+    'reports.guide.tip.filter',
+    'reports.guide.tip.hash',
+  ],
+  permissionKeys: [
+    'reports.guide.perm.generate',
+    'reports.guide.perm.view',
+    'reports.guide.perm.restricted',
+  ],
+  faq: [
+    { questionKey: 'reports.guide.faq.kinds.q', answerKey: 'reports.guide.faq.kinds.a' },
+    { questionKey: 'reports.guide.faq.pending.q', answerKey: 'reports.guide.faq.pending.a' },
+  ],
+};
+
 @Component({
   selector: 'app-standalone-reports',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,6 +152,7 @@ const RESTRICTED_KINDS: Record<string, string> = {
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './standalone-reports.component.html',
@@ -106,6 +166,7 @@ export class StandaloneReportsComponent {
   private readonly i18n = inject(TranslationService);
 
   readonly kindOptions = KIND_OPTIONS;
+  readonly guide = STANDALONE_REPORTS_GUIDE;
   readonly displayedColumns = ['kind', 'version', 'status', 'requestedAt', 'hash', 'actions'];
 
   readonly state = signal<ViewState>('loading');

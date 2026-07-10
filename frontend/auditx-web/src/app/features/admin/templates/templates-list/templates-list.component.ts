@@ -43,10 +43,67 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the checklist-templates admin list (drives the walkthrough + the About panel). */
+const TEMPLATES_GUIDE: PageGuide = {
+  id: 'templates-list',
+  titleKey: 'templatesAdmin.list.title',
+  purposeKey: 'templatesAdmin.guide.purpose',
+  descriptionKey: 'templatesAdmin.guide.description',
+  actionKeys: [
+    'templatesAdmin.guide.action.create',
+    'templatesAdmin.guide.action.filter',
+    'templatesAdmin.guide.action.clone',
+    'templatesAdmin.guide.action.archive',
+  ],
+  sections: [
+    { selector: '[data-guide="create"]', titleKey: 'templatesAdmin.guide.section.create.title', bodyKey: 'templatesAdmin.guide.section.create.body' },
+    { selector: '.templates__filters-card', titleKey: 'templatesAdmin.guide.section.filters.title', bodyKey: 'templatesAdmin.guide.section.filters.body' },
+    { selector: '.templates__table', titleKey: 'templatesAdmin.guide.section.table.title', bodyKey: 'templatesAdmin.guide.section.table.body' },
+  ],
+  workflowKeys: [
+    'templatesAdmin.guide.flow.draft',
+    'templatesAdmin.guide.flow.items',
+    'templatesAdmin.guide.flow.publish',
+    'templatesAdmin.guide.flow.preload',
+    'templatesAdmin.guide.flow.revise',
+  ],
+  dependsOnKeys: [
+    'templatesAdmin.guide.dep.auditType',
+    'templatesAdmin.guide.dep.permissions',
+    'templatesAdmin.guide.dep.bank',
+  ],
+  usedByKeys: [
+    'templatesAdmin.guide.use.audits',
+    'templatesAdmin.guide.use.checklist',
+    'templatesAdmin.guide.use.findings',
+  ],
+  businessRuleKeys: [
+    'templatesAdmin.guide.rule.versioning',
+    'templatesAdmin.guide.rule.publish',
+    'templatesAdmin.guide.rule.archive',
+    'templatesAdmin.guide.rule.clone',
+  ],
+  tipKeys: [
+    'templatesAdmin.guide.tip.clone',
+    'templatesAdmin.guide.tip.status',
+    'templatesAdmin.guide.tip.auditType',
+  ],
+  permissionKeys: [
+    'templatesAdmin.guide.perm.manage',
+    'templatesAdmin.guide.perm.view',
+  ],
+  faq: [
+    { questionKey: 'templatesAdmin.guide.faq.publish.q', answerKey: 'templatesAdmin.guide.faq.publish.a' },
+    { questionKey: 'templatesAdmin.guide.faq.edit.q', answerKey: 'templatesAdmin.guide.faq.edit.a' },
+  ],
+};
 
 @Component({
   selector: 'app-templates-list',
@@ -68,6 +125,7 @@ const DEFAULT_PAGE_SIZE = 25;
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
   ],
   templateUrl: './templates-list.component.html',
   styleUrl: './templates-list.component.scss',
@@ -82,6 +140,8 @@ export class TemplatesListComponent {
   private readonly i18n = inject(TranslationService);
   /** Backs the audit-type filter dropdown and column labels (lazy-loaded). */
   readonly refLookup = inject(ReferenceDataLookupService);
+
+  readonly guide = TEMPLATES_GUIDE;
 
   readonly auditTypes = this.refLookup.options('audit_type');
 

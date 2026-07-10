@@ -27,10 +27,41 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the roles admin list (drives the walkthrough + the About panel). */
+const ROLES_GUIDE: PageGuide = {
+  id: 'roles-list',
+  titleKey: 'identity.roles.title',
+  purposeKey: 'roles.guide.purpose',
+  descriptionKey: 'roles.guide.description',
+  actionKeys: [
+    'roles.guide.action.create',
+    'roles.guide.action.edit',
+    'roles.guide.action.archive',
+    'roles.guide.action.showArchived',
+  ],
+  sections: [
+    { selector: '[data-guide="create"]', titleKey: 'roles.guide.section.create.title', bodyKey: 'roles.guide.section.create.body' },
+    { selector: '.roles__toolbar', titleKey: 'roles.guide.section.toolbar.title', bodyKey: 'roles.guide.section.toolbar.body' },
+    { selector: '.roles__table', titleKey: 'roles.guide.section.table.title', bodyKey: 'roles.guide.section.table.body' },
+  ],
+  workflowKeys: ['roles.guide.flow.define', 'roles.guide.flow.permissions', 'roles.guide.flow.inherit', 'roles.guide.flow.assign', 'roles.guide.flow.enforce'],
+  dependsOnKeys: ['roles.guide.dep.permissions', 'roles.guide.dep.builtin', 'roles.guide.dep.parents'],
+  usedByKeys: ['roles.guide.use.users', 'roles.guide.use.audits', 'roles.guide.use.access'],
+  businessRuleKeys: ['roles.guide.rule.builtin', 'roles.guide.rule.inherit', 'roles.guide.rule.archive', 'roles.guide.rule.assigned'],
+  tipKeys: ['roles.guide.tip.inherit', 'roles.guide.tip.least', 'roles.guide.tip.showArchived'],
+  permissionKeys: ['roles.guide.perm.admin', 'roles.guide.perm.viewer'],
+  faq: [
+    { questionKey: 'roles.guide.faq.builtin.q', answerKey: 'roles.guide.faq.builtin.a' },
+    { questionKey: 'roles.guide.faq.inherit.q', answerKey: 'roles.guide.faq.inherit.a' },
+  ],
+};
 
 @Component({
   selector: 'app-roles-list',
@@ -49,6 +80,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './roles-list.component.html',
@@ -60,6 +92,8 @@ export class RolesListComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = ROLES_GUIDE;
 
   readonly displayedColumns = [
     'name',

@@ -18,6 +18,8 @@ import { AnalyticsService } from '../../core/services/analytics.service';
 import { AuditsService } from '../../core/services/audits.service';
 import { Permissions } from '../../core/permissions';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../core/models/page-guide.models';
 import {
   BarChartComponent,
   ChartDatum,
@@ -57,6 +59,65 @@ interface QuickLink {
   permissions: string[];
 }
 
+/** Contextual page guide for the home dashboard (drives the walkthrough + the About panel). */
+const DASHBOARD_GUIDE: PageGuide = {
+  id: 'dashboard',
+  titleKey: 'dashboard.welcome',
+  purposeKey: 'dashboard.guide.purpose',
+  descriptionKey: 'dashboard.guide.description',
+  actionKeys: [
+    'dashboard.guide.action.kpis',
+    'dashboard.guide.action.charts',
+    'dashboard.guide.action.attention',
+    'dashboard.guide.action.launch',
+  ],
+  sections: [
+    { selector: '.dash__kpis', titleKey: 'dashboard.guide.section.kpis.title', bodyKey: 'dashboard.guide.section.kpis.body' },
+    { selector: '.dash__charts', titleKey: 'dashboard.guide.section.charts.title', bodyKey: 'dashboard.guide.section.charts.body' },
+    { selector: '.dash__attention', titleKey: 'dashboard.guide.section.attention.title', bodyKey: 'dashboard.guide.section.attention.body' },
+    { selector: '.dash__launch', titleKey: 'dashboard.guide.section.launch.title', bodyKey: 'dashboard.guide.section.launch.body' },
+  ],
+  workflowKeys: [
+    'dashboard.guide.flow.plan',
+    'dashboard.guide.flow.audit',
+    'dashboard.guide.flow.findings',
+    'dashboard.guide.flow.analytics',
+    'dashboard.guide.flow.dashboard',
+  ],
+  dependsOnKeys: [
+    'dashboard.guide.dep.analytics',
+    'dashboard.guide.dep.audits',
+    'dashboard.guide.dep.exceptions',
+    'dashboard.guide.dep.identity',
+  ],
+  usedByKeys: [
+    'dashboard.guide.use.audits',
+    'dashboard.guide.use.planning',
+    'dashboard.guide.use.exceptions',
+    'dashboard.guide.use.analytics',
+  ],
+  businessRuleKeys: [
+    'dashboard.guide.rule.readonly',
+    'dashboard.guide.rule.permission',
+    'dashboard.guide.rule.attention',
+    'dashboard.guide.rule.launch',
+  ],
+  tipKeys: [
+    'dashboard.guide.tip.filter',
+    'dashboard.guide.tip.kpi',
+    'dashboard.guide.tip.analytics',
+  ],
+  permissionKeys: [
+    'dashboard.guide.perm.everyone',
+    'dashboard.guide.perm.audits',
+    'dashboard.guide.perm.analytics',
+  ],
+  faq: [
+    { questionKey: 'dashboard.guide.faq.charts.q', answerKey: 'dashboard.guide.faq.charts.a' },
+    { questionKey: 'dashboard.guide.faq.attention.q', answerKey: 'dashboard.guide.faq.attention.a' },
+  ],
+};
+
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +131,7 @@ interface QuickLink {
     MatButtonToggleModule,
     MatTooltipModule,
     PageHeaderComponent,
+    PageGuideComponent,
     BarChartComponent,
     DonutChartComponent,
     GaugeChartComponent,
@@ -90,6 +152,8 @@ export class DashboardComponent {
   readonly permissionCount = computed(
     () => this.session()?.permissions.length ?? 0,
   );
+
+  readonly guide = DASHBOARD_GUIDE;
 
   /** Whether the signed-in user may see the audit-analytics surface. */
   readonly canSeeAnalytics = computed(() =>

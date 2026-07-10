@@ -3,6 +3,8 @@
   [subtitle]="'dashboard.subtitle' | t"
 />
 
+<app-page-guide [guide]="guide" />
+
 <!-- KPI row -->
 <section class="dash__kpis" [attr.aria-label]="'dashboard.stats.aria' | t">
   @for (kpi of kpis(); track kpi.label) {

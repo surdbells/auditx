@@ -3,12 +3,14 @@
   [subtitle]="'templatesAdmin.list.subtitle' | t"
 >
   @if (canManage()) {
-    <button actions matButton="filled" type="button" (click)="createTemplate()">
+    <button actions matButton="filled" type="button" (click)="createTemplate()" data-guide="create">
       <mat-icon>add</mat-icon>
       {{ 'templatesAdmin.list.newTemplate' | t }}
     </button>
   }
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 <mat-card appearance="outlined" class="templates__filters-card">
   <form [formGroup]="filters" class="templates__filters">

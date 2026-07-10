@@ -37,12 +37,43 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the audit-trail viewer (drives the walkthrough + the About panel). */
+const AUDIT_TRAIL_GUIDE: PageGuide = {
+  id: 'admin-audit-trail',
+  titleKey: 'adminMisc.auditTrail.title',
+  purposeKey: 'adminMisc.auditTrail.guide.purpose',
+  descriptionKey: 'adminMisc.auditTrail.guide.description',
+  actionKeys: [
+    'adminMisc.auditTrail.guide.action.filter',
+    'adminMisc.auditTrail.guide.action.open',
+    'adminMisc.auditTrail.guide.action.export',
+    'adminMisc.auditTrail.guide.action.verify',
+  ],
+  sections: [
+    { selector: '[data-guide="export"]', titleKey: 'adminMisc.auditTrail.guide.section.export.title', bodyKey: 'adminMisc.auditTrail.guide.section.export.body' },
+    { selector: '.trail__filters-card', titleKey: 'adminMisc.auditTrail.guide.section.filters.title', bodyKey: 'adminMisc.auditTrail.guide.section.filters.body' },
+    { selector: '.trail__table', titleKey: 'adminMisc.auditTrail.guide.section.table.title', bodyKey: 'adminMisc.auditTrail.guide.section.table.body' },
+  ],
+  workflowKeys: ['adminMisc.auditTrail.guide.flow.act', 'adminMisc.auditTrail.guide.flow.capture', 'adminMisc.auditTrail.guide.flow.store', 'adminMisc.auditTrail.guide.flow.review', 'adminMisc.auditTrail.guide.flow.export'],
+  dependsOnKeys: ['adminMisc.auditTrail.guide.dep.modules', 'adminMisc.auditTrail.guide.dep.identity', 'adminMisc.auditTrail.guide.dep.permissions'],
+  usedByKeys: ['adminMisc.auditTrail.guide.use.compliance', 'adminMisc.auditTrail.guide.use.investigations', 'adminMisc.auditTrail.guide.use.reports', 'adminMisc.auditTrail.guide.use.external'],
+  businessRuleKeys: ['adminMisc.auditTrail.guide.rule.immutable', 'adminMisc.auditTrail.guide.rule.retention', 'adminMisc.auditTrail.guide.rule.integrity', 'adminMisc.auditTrail.guide.rule.access'],
+  tipKeys: ['adminMisc.auditTrail.guide.tip.filter', 'adminMisc.auditTrail.guide.tip.detail', 'adminMisc.auditTrail.guide.tip.hash'],
+  permissionKeys: ['adminMisc.auditTrail.guide.perm.admin', 'adminMisc.auditTrail.guide.perm.compliance', 'adminMisc.auditTrail.guide.perm.export'],
+  faq: [
+    { questionKey: 'adminMisc.auditTrail.guide.faq.edit.q', answerKey: 'adminMisc.auditTrail.guide.faq.edit.a' },
+    { questionKey: 'adminMisc.auditTrail.guide.faq.export.q', answerKey: 'adminMisc.auditTrail.guide.faq.export.a' },
+  ],
+};
 
 /** Converts a Date to the start-of-day ISO datetime string. */
 function toIsoStart(value: Date | null): string | undefined {
@@ -84,6 +115,7 @@ function toIsoEnd(value: Date | null): string | undefined {
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './audit-trail.component.html',
@@ -128,6 +160,8 @@ export class AuditTrailComponent {
     eventTypes: [],
     targetTypes: [],
   });
+
+  readonly guide = AUDIT_TRAIL_GUIDE;
 
   readonly humaniseActorType = humaniseActorType;
   readonly humaniseEventType = humaniseEventType;
