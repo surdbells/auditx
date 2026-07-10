@@ -237,8 +237,10 @@ public sealed class AuditTrailReader(AppDbContext db) : IAuditTrailReader
             e.ActorSystemLabel, e.OccurredAtUtc, e.OriginatingTimezone, e.BeforeStateJson, e.AfterStateJson,
             e.RequestContextJson, e.EventPayloadJson);
 
+    // Base64Url (not standard Base64) so the cursor survives a raw ?cursor= query string unchanged — standard Base64's
+    // '+' is decoded to a space by ASP.NET query parsing, which would corrupt the cursor for non-URL-encoding clients.
     private static string EncodeCursor(DateTimeOffset occurredAt, Guid id)
-        => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{occurredAt.UtcTicks}:{id}"));
+        => System.Buffers.Text.Base64Url.EncodeToString(System.Text.Encoding.UTF8.GetBytes($"{occurredAt.UtcTicks}:{id}"));
 
     private static bool TryDecodeCursor(string? cursor, out DateTimeOffset occurredAt, out Guid id)
     {
@@ -251,7 +253,7 @@ public sealed class AuditTrailReader(AppDbContext db) : IAuditTrailReader
 
         try
         {
-            var parts = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(cursor)).Split(':', 2);
+            var parts = System.Text.Encoding.UTF8.GetString(System.Buffers.Text.Base64Url.DecodeFromChars(cursor)).Split(':', 2);
             if (parts.Length == 2 && long.TryParse(parts[0], out var ticks) && Guid.TryParse(parts[1], out id)
                 && ticks >= DateTimeOffset.MinValue.UtcTicks && ticks <= DateTimeOffset.MaxValue.UtcTicks)
             {
