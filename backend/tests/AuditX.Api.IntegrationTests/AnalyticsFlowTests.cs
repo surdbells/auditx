@@ -134,4 +134,41 @@ public sealed class AnalyticsFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         Assert.True(widgets.GetArrayLength() >= 1);
         Assert.Contains(widgets.EnumerateArray(), w => w.GetProperty("metricKey").GetString() == "material_findings");
     }
+
+    [Fact]
+    public async Task Risk_metrics_are_captured_into_the_snapshot_and_read_back_as_a_trend()
+    {
+        var admin = await LoginAsync("admin");    // Administrator → ManageRisk
+        var analyst = await AnalystAsync(admin);  // Audit Manager → ViewAnalytics
+
+        // Seed a distinctive open risk (inherent 4×4 = 16, Critical) so the register is non-empty.
+        var users = await DataAsync(await admin.GetAsync("/api/v1/users?limit=100"));
+        var ownerId = users.GetProperty("items").EnumerateArray()
+            .First(u => u.GetProperty("email").GetString() == "manager@auditx.local").GetProperty("id").GetGuid();
+        await DataAsync(await admin.PostAsJsonAsync("/api/v1/risks", new
+        {
+            title = $"Trend probe {Guid.NewGuid():N}", category = "Strategic",
+            ownerUserId = ownerId, inherentLikelihood = 4, inherentImpact = 4,
+        }));
+
+        // Capture today's KPI snapshot (the daily job's work) through the real service against SQL.
+        int captured;
+        using (var scope = factory.Services.CreateScope())
+        {
+            captured = await scope.ServiceProvider
+                .GetRequiredService<AnalyticsSnapshotCaptureService>().CaptureAsync();
+        }
+        Assert.True(captured > 0);
+
+        // The open-risk count is now a readable trend metric (today's bucket carries the current value).
+        var openTrend = await DataAsync(await analyst.GetAsync(
+            "/api/v1/analytics/metric-comparison?metric=risk.open_total&period=month"));
+        Assert.Equal("risk.open_total", openTrend.GetProperty("metricKey").GetString());
+        Assert.True(openTrend.GetProperty("current").GetDecimal() >= 1);
+
+        // The mean current-score metric is captured too (a risk is open, so the row is not omitted).
+        var scoreTrend = await DataAsync(await analyst.GetAsync(
+            "/api/v1/analytics/metric-comparison?metric=risk.avg_current_score&period=month"));
+        Assert.True(scoreTrend.GetProperty("current").GetDecimal() >= 1);
+    }
 }

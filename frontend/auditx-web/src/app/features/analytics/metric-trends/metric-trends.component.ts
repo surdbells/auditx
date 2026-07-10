@@ -108,6 +108,9 @@ export class MetricTrendsComponent {
     { key: 'function.audits_completed', labelKey: 'trends.metric.auditsCompleted' },
     { key: 'function.plan_execution_pct', labelKey: 'trends.metric.planExecution' },
     { key: 'plan.completion_pct', labelKey: 'trends.metric.planCompletion' },
+    { key: 'risk.open_total', labelKey: 'trends.metric.riskOpen' },
+    { key: 'risk.overdue_review', labelKey: 'trends.metric.riskOverdue' },
+    { key: 'risk.avg_current_score', labelKey: 'trends.metric.riskAvgScore' },
   ];
 
   readonly periods: readonly ComparisonPeriodType[] = ['month', 'quarter', 'year'];

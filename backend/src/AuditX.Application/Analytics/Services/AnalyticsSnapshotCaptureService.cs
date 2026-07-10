@@ -21,6 +21,8 @@ public sealed class AnalyticsSnapshotCaptureService(
         var function = await analytics.FunctionPerformanceAsync(cancellationToken);
         var portfolio = await analytics.ExceptionPortfolioAsync(cancellationToken);
         var plan = await analytics.PlanStatusAsync(cancellationToken);
+        var risk = await analytics.RiskSummaryAsync(cancellationToken);
+        var riskHeatmap = await analytics.RiskHeatmapAsync(cancellationToken);
 
         var rows = new List<AnalyticsSnapshot>
         {
@@ -37,6 +39,10 @@ public sealed class AnalyticsSnapshotCaptureService(
             AnalyticsSnapshot.Capture(AnalyticsMetricKeys.PlanItemsTotal, null, plan.TotalItems, asOf),
             AnalyticsSnapshot.Capture(AnalyticsMetricKeys.PlanItemsCompleted, null, plan.Completed, asOf),
             AnalyticsSnapshot.Capture(AnalyticsMetricKeys.PlanItemsInProgress, null, plan.InProgress, asOf),
+
+            // Enterprise risk register (P1-A): headline open count + overdue reviews give the risk trend its backbone.
+            AnalyticsSnapshot.Capture(AnalyticsMetricKeys.RiskOpenTotal, null, risk.Open, asOf),
+            AnalyticsSnapshot.Capture(AnalyticsMetricKeys.RiskOverdueReview, null, risk.OverdueReview, asOf),
         };
 
         // Average closure time is optional (null until an exception closes).
@@ -49,6 +55,21 @@ public sealed class AnalyticsSnapshotCaptureService(
         foreach (var tier in portfolio.BySeverity)
         {
             rows.Add(AnalyticsSnapshot.Capture(AnalyticsMetricKeys.ExceptionsOpenBySeverity, tier.Severity, tier.Count, asOf));
+        }
+
+        // Open risks sliced by band — one row per band (mirrors the by-severity slice).
+        foreach (var band in risk.ByBand)
+        {
+            rows.Add(AnalyticsSnapshot.Capture(AnalyticsMetricKeys.RiskOpenByBand, band.Key, band.Count, asOf));
+        }
+
+        // Mean current (residual-else-inherent) score across open risks — the severity-drift line. Undefined when no
+        // risk is open, so omit the row (like average closure) rather than record a misleading zero.
+        if (riskHeatmap.TotalOpen > 0)
+        {
+            var weightedScore = riskHeatmap.Cells.Sum(c => (decimal)c.Score * c.Count);
+            rows.Add(AnalyticsSnapshot.Capture(
+                AnalyticsMetricKeys.RiskAvgCurrentScore, null, Math.Round(weightedScore / riskHeatmap.TotalOpen, 2), asOf));
         }
 
         await store.ReplaceForDateAsync(asOf, rows, cancellationToken);

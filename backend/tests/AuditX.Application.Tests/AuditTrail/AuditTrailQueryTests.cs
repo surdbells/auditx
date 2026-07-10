@@ -21,18 +21,18 @@ public sealed class AuditTrailQueryTests
         var audit = Substitute.For<IAuditRecorder>();
         var uow = Substitute.For<IUnitOfWork>();
         var actor = Guid.NewGuid();
-        reader.QueryAsync(Arg.Any<AuditTrailFilter>(), Arg.Any<PageRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new CursorPage<AuditTrailEntryView>([View()], "next", true));
+        reader.QueryAsync(Arg.Any<AuditTrailFilter>(), Arg.Any<PageSpec>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<AuditTrailEntryView>([View()], 1, 1, 50));
 
         var handler = new QueryAuditTrailQueryHandler(reader, audit, uow);
         var result = await handler.Handle(
-            new QueryAuditTrailQuery(actor, "audit_created", "audit", null, null, null, null, 50), CancellationToken.None);
+            new QueryAuditTrailQuery(actor, "audit_created", "audit", null, null, null, 1, 50), CancellationToken.None);
 
         Assert.Single(result.Items);
-        Assert.Equal("next", result.NextCursor);
+        Assert.Equal(1, result.Total);
         await reader.Received(1).QueryAsync(
             Arg.Is<AuditTrailFilter>(f => f.ActorUserId == actor && f.EventType == "audit_created" && f.TargetObjectType == "audit"),
-            Arg.Any<PageRequest>(), Arg.Any<CancellationToken>());
+            Arg.Any<PageSpec>(), Arg.Any<CancellationToken>());
         audit.Received(1).Record(AuditEventTypes.TrailQueried, AuditTargetTypes.AuditTrail, null,
             Arg.Any<object?>(), Arg.Any<object?>(), Arg.Any<object?>());
         await uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());

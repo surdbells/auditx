@@ -26,4 +26,14 @@ public static class AnalyticsMetricKeys
     public const string PlanItemsTotal = "plan.items_total";
     public const string PlanItemsCompleted = "plan.items_completed";
     public const string PlanItemsInProgress = "plan.items_in_progress";
+
+    // ---- Enterprise risk register (P1-A) ----
+    public const string RiskOpenTotal = "risk.open_total";
+    public const string RiskOverdueReview = "risk.overdue_review";
+
+    /// <summary>Mean current (residual-else-inherent) score across open risks — the severity-drift trend line.</summary>
+    public const string RiskAvgCurrentScore = "risk.avg_current_score";
+
+    /// <summary>Open risks sliced by band — the <c>Dimension</c> carries the band (e.g. <c>critical</c>).</summary>
+    public const string RiskOpenByBand = "risk.open_by_band";
 }
