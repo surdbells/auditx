@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiService } from './api.service';
 import {
   ApiResponse,
+  AuditorWorkloadRow,
   BudgetVsActualRow,
   ComplianceByRegulationRow,
   ControlEffectivenessSummary,
@@ -160,6 +161,12 @@ export class AnalyticsService {
   /** Utilisation per auditor — logged hours split by activity category (P0-B, ViewAnalytics). */
   utilisation(): Observable<UtilisationRow[]> {
     return this.api.get<UtilisationRow[]>('/analytics/utilisation');
+  }
+
+  /** Auditor workload vs capacity — open planned effort per lead against declared capacity (ViewAnalytics). */
+  auditorWorkload(annualPlanId?: string): Observable<AuditorWorkloadRow[]> {
+    const query = annualPlanId ? `?annualPlanId=${annualPlanId}` : '';
+    return this.api.get<AuditorWorkloadRow[]>(`/analytics/auditor-workload${query}`);
   }
 
   /** Enterprise risk heatmap — open risks by current likelihood×impact cell (P1-A, ViewAnalytics). */

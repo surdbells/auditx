@@ -44,6 +44,12 @@ public sealed class User : AggregateRoot, ISoftDeletable
     /// <summary>The organisational unit the user belongs to (for utilisation/coverage reporting by org).</summary>
     public Guid? OrgUnitId { get; private set; }
 
+    /// <summary>
+    /// Annual audit capacity in person-days — the substrate for planned-load-vs-capacity workload reporting.
+    /// Null when the user is not an auditor or has no declared capacity.
+    /// </summary>
+    public decimal? CapacityDays { get; private set; }
+
     public bool IsDeleted { get; private set; }
 
     public DateTimeOffset? DeletedAt { get; private set; }
@@ -131,6 +137,25 @@ public sealed class User : AggregateRoot, ISoftDeletable
 
     /// <summary>Assigns (or clears) the organisational unit the user belongs to.</summary>
     public void SetOrgUnit(Guid? orgUnitId) => OrgUnitId = orgUnitId;
+
+    /// <summary>Set (or clear) the user's annual audit capacity in person-days. Bounded to a single year.</summary>
+    public void SetCapacityDays(decimal? days)
+    {
+        if (days is { } d)
+        {
+            if (d < 0m)
+            {
+                throw new DomainException("user.capacity_negative", "Capacity days cannot be negative.");
+            }
+
+            if (d > 366m)
+            {
+                throw new DomainException("user.capacity_too_large", "Capacity days cannot exceed 366 (one year).");
+            }
+        }
+
+        CapacityDays = days;
+    }
 
     public void SoftDelete(Guid? deletedBy, DateTimeOffset deletedAtUtc)
     {

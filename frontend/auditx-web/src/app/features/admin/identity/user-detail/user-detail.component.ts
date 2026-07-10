@@ -47,6 +47,10 @@ import {
   CreateDelegationDialogComponent,
   CreateDelegationDialogData,
 } from '../dialogs/create-delegation-dialog.component';
+import {
+  SetCapacityDialogComponent,
+  SetCapacityDialogData,
+} from '../dialogs/set-capacity-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -181,6 +185,31 @@ export class UserDetailComponent {
 
   goBack(): void {
     void this.router.navigate(['/admin/users']);
+  }
+
+  openSetCapacity(): void {
+    const current = this.user();
+    if (!current) {
+      return;
+    }
+    const data: SetCapacityDialogData = {
+      userDisplayName: current.displayName,
+      capacityDays: current.capacityDays,
+    };
+    this.dialog
+      .open(SetCapacityDialogComponent, { data })
+      .afterClosed()
+      .subscribe((result) => {
+        if (!result) {
+          return;
+        }
+        this.usersService.setCapacity(current.id, result.capacityDays).subscribe({
+          next: () => {
+            this.notify.success(this.i18n.translate('identity.capacity.saved'));
+            this.fetch();
+          },
+        });
+      });
   }
 
   openGrantRole(): void {

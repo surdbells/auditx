@@ -41,6 +41,7 @@ public sealed record UserDetailDto(
     string DisplayName,
     string Status,
     DateTimeOffset? LastLoginAt,
+    decimal? CapacityDays,
     IReadOnlyList<UserRoleDto> Roles,
     IReadOnlyList<DelegationDto> Delegations);
 

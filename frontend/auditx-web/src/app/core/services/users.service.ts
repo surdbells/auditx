@@ -55,6 +55,11 @@ export class UsersService {
     return this.api.patchVoid(`/users/${id}`, { status: 'deactivated' });
   }
 
+  /** Set (or clear, with null) a user's annual audit capacity in person-days. */
+  setCapacity(id: string, capacityDays: number | null): Observable<void> {
+    return this.api.patchVoid(`/users/${id}/capacity`, { capacityDays });
+  }
+
   grantRole(userId: string, body: GrantRoleRequest): Observable<UserRoleDto> {
     return this.api.post<UserRoleDto>(`/users/${userId}/roles`, body);
   }

@@ -1,0 +1,46 @@
+.wl__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.wl__table-wrapper {
+  overflow-x: auto;
+}
+
+.wl__table {
+  width: 100%;
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.wl__over {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.wl__badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &[data-tone='over'] {
+    background: color-mix(in srgb, #c62828 16%, transparent);
+    color: #c62828;
+  }
+
+  &[data-tone='ok'] {
+    background: color-mix(in srgb, #2e7d32 16%, transparent);
+    color: #2e7d32;
+  }
+
+  &[data-tone='none'] {
+    background: var(--mat-sys-surface-variant);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

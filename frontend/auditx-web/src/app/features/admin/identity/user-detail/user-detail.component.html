@@ -47,6 +47,18 @@
                   <span class="muted">{{ 'identity.common.never' | t }}</span>
                 }
               </dd>
+              <dt>{{ 'identity.field.capacity' | t }}</dt>
+              <dd class="profile__capacity">
+                @if (u.capacityDays !== null) {
+                  <span>{{ 'identity.capacity.value' | t: { days: u.capacityDays } }}</span>
+                } @else {
+                  <span class="muted">{{ 'identity.capacity.unset' | t }}</span>
+                }
+                <button matButton type="button" class="profile__capacity-edit" (click)="openSetCapacity()">
+                  <mat-icon>edit</mat-icon>
+                  {{ 'identity.capacity.edit' | t }}
+                </button>
+              </dd>
               <dt>{{ 'identity.field.userId' | t }}</dt>
               <dd class="mono">{{ u.id }}</dd>
             </dl>

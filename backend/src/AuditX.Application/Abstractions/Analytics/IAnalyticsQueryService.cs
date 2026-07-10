@@ -42,6 +42,14 @@ public interface IAnalyticsQueryService
     Task<IReadOnlyList<AuditorUtilisationDto>> UtilisationByUserAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Auditor workload vs capacity: open (Planned / InProgress) plan-item effort rolled up by assigned lead and
+    /// compared against the lead's declared capacity (person-days). Every lead with open work AND every user with a
+    /// declared capacity appears (so under-committed auditors surface too). Optionally scoped to one annual plan.
+    /// Powers the resource-planning / over-commitment board report.
+    /// </summary>
+    Task<IReadOnlyList<AuditorWorkloadDto>> AuditorWorkloadAsync(Guid? annualPlanId = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Enterprise risk heatmap (P1-A): open (non-closed) risks bucketed by their CURRENT (residual, else inherent)
     /// likelihood×impact cell on the 5×5 matrix. Powers the risk-heatmap board report.
     /// </summary>
@@ -187,6 +195,18 @@ public sealed record AuditorUtilisationDto(
     decimal TotalHours,
     int AuditsContributed,
     IReadOnlyList<UtilisationCategoryDto> ByCategory);
+
+/// <summary>
+/// Planned workload vs capacity for one auditor: open planned effort led (person-days) against the lead's declared
+/// capacity. <c>UtilisationPercent</c>/<c>OverCommitted</c> are null/false when no capacity is declared.
+/// </summary>
+public sealed record AuditorWorkloadDto(
+    Guid LeadUserId,
+    int PlanItemCount,
+    decimal PlannedEffortDays,
+    decimal? CapacityDays,
+    double? UtilisationPercent,
+    bool OverCommitted);
 
 /// <summary>One populated cell of the risk heatmap: a likelihood×impact position with its band and risk count.</summary>
 public sealed record RiskHeatmapCellDto(int Likelihood, int Impact, int Score, string Band, int Count);

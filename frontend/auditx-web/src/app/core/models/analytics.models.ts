@@ -206,6 +206,16 @@ export interface UtilisationRow {
   byCategory: UtilisationCategory[];
 }
 
+/** Planned workload vs capacity for one auditor — open planned effort led against declared capacity (person-days). */
+export interface AuditorWorkloadRow {
+  leadUserId: string;
+  planItemCount: number;
+  plannedEffortDays: number;
+  capacityDays: number | null;
+  utilisationPercent: number | null;
+  overCommitted: boolean;
+}
+
 /** One populated cell of the risk heatmap (P1-A). */
 export interface RiskHeatmapCell {
   likelihood: number;

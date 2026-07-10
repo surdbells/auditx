@@ -13,6 +13,7 @@ public static class AuditEventTypes
     // User lifecycle
     public const string UserDeactivated = "user_deactivated";
     public const string UserReactivated = "user_reactivated";
+    public const string UserCapacityUpdated = "user_capacity_updated";
     public const string NotificationPreferencesUpdated = "notification_preferences_updated";
 
     // Roles & permissions

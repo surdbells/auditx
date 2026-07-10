@@ -69,6 +69,14 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
     }
 
     [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpPatch("{id:guid}/capacity")]
+    public async Task<IActionResult> SetCapacity(Guid id, [FromBody] SetUserCapacityRequest request, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new SetUserCapacityCommand(id, request.CapacityDays), cancellationToken);
+        return NoContent();
+    }
+
+    [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpPost("{userId:guid}/roles")]
     public async Task<IActionResult> GrantRole(Guid userId, [FromBody] GrantRoleRequest request, CancellationToken cancellationToken)
         => Created(await dispatcher.Send(new GrantRoleCommand(userId, request.RoleId, request.ScopeValue), cancellationToken));

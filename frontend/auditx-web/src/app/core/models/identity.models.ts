@@ -33,6 +33,8 @@ export interface UserDto {
 }
 
 export interface UserDetailDto extends UserDto {
+  /** Annual audit capacity in person-days (for workload-vs-capacity planning); null when unset. */
+  capacityDays: number | null;
   roles: UserRoleDto[];
   delegations: DelegationDto[];
 }

@@ -37,6 +37,40 @@ public sealed class DeactivateUserCommandHandler(
     }
 }
 
+/// <summary>Set (or clear) a user's annual audit capacity in person-days, for workload-vs-capacity planning.</summary>
+public sealed record SetUserCapacityCommand(Guid UserId, decimal? CapacityDays) : ICommand<Unit>;
+
+public sealed class SetUserCapacityCommandValidator : AbstractValidator<SetUserCapacityCommand>
+{
+    public SetUserCapacityCommandValidator()
+    {
+        RuleFor(x => x.UserId).NotEmpty();
+        // Domain also enforces this; validating here yields a clean 422 instead of a domain exception.
+        RuleFor(x => x.CapacityDays).InclusiveBetween(0m, 366m).When(x => x.CapacityDays is not null);
+    }
+}
+
+public sealed class SetUserCapacityCommandHandler(
+    IUserRepository users,
+    IAuditRecorder audit,
+    IUnitOfWork unitOfWork)
+    : ICommandHandler<SetUserCapacityCommand, Unit>
+{
+    public async Task<Unit> Handle(SetUserCapacityCommand command, CancellationToken cancellationToken)
+    {
+        var user = await users.GetByIdAsync(command.UserId, cancellationToken)
+            ?? throw new NotFoundException("User", command.UserId);
+
+        var before = new { capacityDays = user.CapacityDays };
+        user.SetCapacityDays(command.CapacityDays);
+        audit.Record(AuditEventTypes.UserCapacityUpdated, AuditTargetTypes.User, user.Id,
+            before: before, after: new { capacityDays = user.CapacityDays });
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Unit.Value;
+    }
+}
+
 /// <summary>Update the current user's notification preferences (US-M15-006).</summary>
 public sealed record UpdateNotificationPreferencesCommand(string? PreferencesJson) : ICommand<Unit>;
 

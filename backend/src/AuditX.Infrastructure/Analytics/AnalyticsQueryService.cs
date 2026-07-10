@@ -404,6 +404,54 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
             .ToArray();
     }
 
+    public async Task<IReadOnlyList<AuditorWorkloadDto>> AuditorWorkloadAsync(Guid? annualPlanId = null, CancellationToken cancellationToken = default)
+    {
+        // Forward-looking commitment = open (Planned / InProgress) plan items that carry a lead assignment.
+        var itemsQuery = db.PlanItems.AsNoTracking()
+            .Where(i => i.AssignedLeadUserId != null
+                && (i.Status == PlanItemStatus.Planned || i.Status == PlanItemStatus.InProgress));
+        if (annualPlanId is { } planId)
+        {
+            itemsQuery = itemsQuery.Where(i => i.AnnualPlanId == planId);
+        }
+
+        var loadByLead = (await itemsQuery
+            .GroupBy(i => i.AssignedLeadUserId!.Value)
+            .Select(g => new
+            {
+                LeadUserId = g.Key,
+                PlanItemCount = g.Count(),
+                // A null estimate contributes zero days rather than dropping the item from the count.
+                PlannedEffortDays = g.Sum(i => i.EstimatedEffortDays ?? 0m),
+            })
+            .ToListAsync(cancellationToken))
+            .ToDictionary(x => x.LeadUserId);
+
+        // Every user with a declared capacity — so an auditor with capacity but no current load still appears.
+        var capacityMap = (await db.Users.AsNoTracking()
+            .Where(u => u.CapacityDays != null)
+            .Select(u => new { u.Id, u.CapacityDays })
+            .ToListAsync(cancellationToken))
+            .ToDictionary(x => x.Id, x => x.CapacityDays);
+
+        return loadByLead.Keys.Union(capacityMap.Keys)
+            .Select(id =>
+            {
+                var load = loadByLead.GetValueOrDefault(id);
+                var plannedDays = load?.PlannedEffortDays ?? 0m;
+                var capacity = capacityMap.GetValueOrDefault(id);
+                var utilisation = capacity is { } cap && cap > 0m
+                    ? (double?)(double)Math.Round(plannedDays / cap * 100m, 1)
+                    : null;
+                return new AuditorWorkloadDto(
+                    id, load?.PlanItemCount ?? 0, plannedDays, capacity, utilisation,
+                    capacity is { } c && plannedDays > c);
+            })
+            .OrderByDescending(w => w.PlannedEffortDays)
+            .ThenBy(w => w.LeadUserId)
+            .ToArray();
+    }
+
     public async Task<RiskHeatmapDto> RiskHeatmapAsync(CancellationToken cancellationToken = default)
     {
         // Open risks only; the CURRENT position is residual when assessed, else inherent. Soft-deleted rows are

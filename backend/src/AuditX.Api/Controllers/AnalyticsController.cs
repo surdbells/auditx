@@ -71,6 +71,12 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> Utilisation(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new UtilisationByUserQuery(), cancellationToken));
 
+    /// <summary>Auditor workload vs capacity: open planned effort per lead against declared capacity (person-days).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("auditor-workload")]
+    public async Task<IActionResult> AuditorWorkload([FromQuery] Guid? annualPlanId, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new AuditorWorkloadQuery(annualPlanId), cancellationToken));
+
     /// <summary>Enterprise risk heatmap — open risks bucketed by their current likelihood×impact cell (P1-A).</summary>
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("risk-heatmap")]

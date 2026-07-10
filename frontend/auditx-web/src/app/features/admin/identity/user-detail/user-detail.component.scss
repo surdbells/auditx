@@ -32,6 +32,17 @@
   margin: 0;
 }
 
+.profile__capacity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.profile__capacity-edit {
+  --mat-text-button-horizontal-padding: 0.5rem;
+}
+
 .mono {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.85em;

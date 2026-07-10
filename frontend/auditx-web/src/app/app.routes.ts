@@ -471,6 +471,15 @@ export const routes: Routes = [
           ).then((m) => m.TimeBudgetComponent),
       },
       {
+        path: 'analytics/auditor-workload',
+        title: 'Auditor Workload · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/auditor-workload/auditor-workload.component'
+          ).then((m) => m.AuditorWorkloadComponent),
+      },
+      {
         path: 'analytics/trends',
         title: 'Metric Trends · AuditX',
         canActivate: [permissionGuard(Permissions.ViewAnalytics)],

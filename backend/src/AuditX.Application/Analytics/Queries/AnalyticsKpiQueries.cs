@@ -94,6 +94,15 @@ public sealed class UtilisationByUserQueryHandler(IAnalyticsQueryService analyti
         => analytics.UtilisationByUserAsync(cancellationToken);
 }
 
+public sealed record AuditorWorkloadQuery(Guid? AnnualPlanId) : IQuery<IReadOnlyList<AuditorWorkloadDto>>;
+
+public sealed class AuditorWorkloadQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<AuditorWorkloadQuery, IReadOnlyList<AuditorWorkloadDto>>
+{
+    public Task<IReadOnlyList<AuditorWorkloadDto>> Handle(AuditorWorkloadQuery query, CancellationToken cancellationToken)
+        => analytics.AuditorWorkloadAsync(query.AnnualPlanId, cancellationToken);
+}
+
 // ---- Risk analytics (ViewAnalytics) ----
 
 public sealed record RiskHeatmapQuery : IQuery<RiskHeatmapDto>;

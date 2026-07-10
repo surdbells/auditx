@@ -24,6 +24,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Timezone).HasMaxLength(64).IsRequired();
         builder.Property(u => u.Locale).HasMaxLength(16).IsRequired();
         builder.Property(u => u.NotificationPreferencesJson);
+        builder.Property(u => u.CapacityDays).HasPrecision(6, 1); // person-days, mirrors PlanItem.EstimatedEffortDays
         builder.Property(u => u.Status)
             .HasConversion(new SnakeCaseEnumConverter<UserStatus>())
             .HasMaxLength(40)
