@@ -43,11 +43,13 @@ public sealed class SearchQueryHandler(
         var effective = await permissions.GetEffectivePermissionsAsync(userId, cancellationToken);
         var granted = effective.Select(p => p.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var page = PageRequest.Of(null, PerModule);
+        // Offset spec for repositories already migrated to PagedResult (cursor `page` above covers the rest during the migration).
+        var pageSpec = PageSpec.Of(1, PerModule);
         var hits = new List<SearchHitDto>();
 
         if (granted.Contains(PermissionKeys.ViewAudits))
         {
-            var result = await audits.SearchAsync(null, null, null, null, term, page, cancellationToken);
+            var result = await audits.SearchAsync(null, null, null, null, term, pageSpec, cancellationToken);
             hits.AddRange(result.Items.Select(a => new SearchHitDto("audit", a.Id.ToString(), a.Name, a.Status.ToString())));
         }
 

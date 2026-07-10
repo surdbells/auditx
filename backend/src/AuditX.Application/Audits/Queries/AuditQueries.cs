@@ -9,13 +9,13 @@ using AuditX.Domain.Enums;
 
 namespace AuditX.Application.Audits.Queries;
 
-public sealed record ListAuditsQuery(string? Status, string? AuditType, Guid? Lead, Guid? PlanItem, string? Search, string? Cursor, int? Limit)
-    : IQuery<CursorPage<AuditListItemDto>>;
+public sealed record ListAuditsQuery(string? Status, string? AuditType, Guid? Lead, Guid? PlanItem, string? Search, int? Page, int? PageSize)
+    : IQuery<PagedResult<AuditListItemDto>>;
 
 public sealed class ListAuditsQueryHandler(IAuditRepository audits)
-    : IQueryHandler<ListAuditsQuery, CursorPage<AuditListItemDto>>
+    : IQueryHandler<ListAuditsQuery, PagedResult<AuditListItemDto>>
 {
-    public async Task<CursorPage<AuditListItemDto>> Handle(ListAuditsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<AuditListItemDto>> Handle(ListAuditsQuery query, CancellationToken cancellationToken)
     {
         AuditStatus? status = null;
         if (!string.IsNullOrWhiteSpace(query.Status))
@@ -25,9 +25,9 @@ public sealed class ListAuditsQueryHandler(IAuditRepository audits)
                 : throw new ConflictException("invalid_status", $"Unknown audit status '{query.Status}'.");
         }
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await audits.SearchAsync(status, query.AuditType, query.Lead, query.PlanItem, query.Search, page, cancellationToken);
-        return new CursorPage<AuditListItemDto>(result.Items.Select(a => a.ToListItemDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(a => a.ToListItemDto());
     }
 }
 

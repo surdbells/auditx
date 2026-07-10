@@ -194,8 +194,8 @@ export interface AuditQuery {
   auditType?: string;
   lead?: string;
   planItem?: string;
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 /* =========================================================================

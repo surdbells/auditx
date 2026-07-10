@@ -50,7 +50,7 @@
   @case ('error') {
     <app-error-state
       [message]="'audits.list.error' | t"
-      (retry)="fetchFirstPage()"
+      (retry)="fetchPage(1)"
     />
   }
   @case ('ready') {
@@ -112,18 +112,14 @@
           </table>
         </div>
 
-        @if (hasMore()) {
-          <div class="audits__load-more">
-            <button
-              matButton="outlined"
-              type="button"
-              (click)="loadMore()"
-              [disabled]="loadingMore()"
-            >
-              {{ (loadingMore() ? 'audits.actions.loadingMore' : 'audits.actions.loadMore') | t }}
-            </button>
-          </div>
-        }
+        <app-paginator
+          [total]="total()"
+          [page]="page()"
+          [pageSize]="pageSize()"
+          [disabled]="loading()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
       </mat-card>
     }
   }

@@ -18,6 +18,17 @@ export interface CursorPage<T> {
   hasMore: boolean;
 }
 
+/** Offset/page-paginated collection envelope (first/prev/next/last + page-size navigation). */
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+}
+
 /** RFC 7807 problem-details error body returned by the backend. */
 export interface ProblemDetails {
   type?: string;

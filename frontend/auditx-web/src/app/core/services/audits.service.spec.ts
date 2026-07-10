@@ -47,13 +47,14 @@ describe('AuditsService', () => {
   it('lists audits with status + type filters and unwraps the page', () => {
     let result: { items: unknown[] } | undefined;
     service
-      .list({ status: 'in_progress', auditType: 'AML', limit: 20 })
+      .list({ status: 'in_progress', auditType: 'AML', page: 1, pageSize: 25 })
       .subscribe((page) => (result = page));
     const req = http.expectOne((r) => r.url === `${BASE}/audits`);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('status')).toBe('in_progress');
     expect(req.request.params.get('auditType')).toBe('AML');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: { items: [], total: 0, page: 1, pageSize: 25, totalPages: 1, hasPrevious: false, hasNext: false } });
     expect(result?.items.length).toBe(0);
   });
 

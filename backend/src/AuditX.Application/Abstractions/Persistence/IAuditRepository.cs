@@ -11,8 +11,8 @@ public interface IAuditRepository
 {
     Task<Audit?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<Audit>> SearchAsync(
-        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<Audit>> SearchAsync(
+        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageSpec page, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyDictionary<string, int>> CountsByStatusAsync(CancellationToken cancellationToken = default);
 

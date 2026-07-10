@@ -197,7 +197,7 @@ export class ExceptionsListComponent {
   constructor() {
     this.ensureUsers();
     this.loadPlans(null, 0);
-    this.loadAudits(null, 0);
+    this.loadAudits();
     this.fetchFirstPage();
     this.filters.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed())
@@ -236,18 +236,10 @@ export class ExceptionsListComponent {
     });
   }
 
-  /** Eagerly pages the audit directory into the audit dropdown + name map. Non-fatal on error. */
-  private loadAudits(cursor: string | null, pageIndex: number): void {
-    if (pageIndex >= MAX_LOOKUP_PAGES) {
-      return;
-    }
-    this.audits.list({ limit: LOOKUP_LIMIT, cursor }).subscribe({
-      next: (page) => {
-        this.auditList.update((prev) => [...prev, ...page.items]);
-        if (page.hasMore && page.nextCursor) {
-          this.loadAudits(page.nextCursor, pageIndex + 1);
-        }
-      },
+  /** Eagerly loads the audit directory into the audit dropdown + name map (one capped "load all" call). Non-fatal on error. */
+  private loadAudits(): void {
+    this.audits.list({ pageSize: 0 }).subscribe({
+      next: (result) => this.auditList.set(result.items),
       error: () => undefined,
     });
   }

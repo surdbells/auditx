@@ -17,8 +17,8 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
             .Include(a => a.Responses)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
-    public async Task<CursorPage<Audit>> SearchAsync(
-        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Audit>> SearchAsync(
+        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.Audits.AsNoTracking().Include(a => a.ChecklistItems).AsQueryable();
 
@@ -50,19 +50,7 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
             query = query.Where(a => a.PlanItemId == planItem);
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(a => a.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(a => a.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<Audit>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(a => a.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public async Task<IReadOnlyDictionary<string, int>> CountsByStatusAsync(CancellationToken cancellationToken = default)

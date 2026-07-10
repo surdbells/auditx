@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { AuditsListComponent } from './audits-list.component';
 import { provideTestEnv } from '../../../../testing/test-providers';
 import { AuthService } from '../../../core/services/auth.service';
-import { AuditListItem, CursorPage, SessionDto } from '../../../core/models';
+import { AuditListItem, PagedResult, SessionDto } from '../../../core/models';
 
 const BASE = '/api/v1';
 
@@ -25,9 +25,20 @@ function item(id: string, name: string): AuditListItem {
 
 function page(
   items: AuditListItem[],
-  hasMore = false,
-): CursorPage<AuditListItem> {
-  return { items, nextCursor: hasMore ? 'cursor-2' : null, hasMore };
+  total = items.length,
+  pageNum = 1,
+  pageSize = 25,
+): PagedResult<AuditListItem> {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    items,
+    total,
+    page: pageNum,
+    pageSize,
+    totalPages,
+    hasPrevious: pageNum > 1,
+    hasNext: pageNum < totalPages,
+  };
 }
 
 function session(permissions: string[]): SessionDto {
@@ -65,13 +76,13 @@ describe('AuditsListComponent', () => {
   }
 
   /** Flushes the two requests the constructor fires: counts then first page. */
-  function flushInitial(items: AuditListItem[], hasMore = false): void {
+  function flushInitial(items: AuditListItem[], total = items.length): void {
     http
       .expectOne(`${BASE}/audits/counts`)
       .flush({ data: { byStatus: { draft: 2, planned: 1 } } });
     http
       .expectOne((r) => r.url === `${BASE}/audits`)
-      .flush({ data: page(items, hasMore) });
+      .flush({ data: page(items, total) });
   }
 
   /**
@@ -99,6 +110,7 @@ describe('AuditsListComponent', () => {
     fixture.detectChanges();
 
     expect(component.audits().length).toBe(2);
+    expect(component.total()).toBe(2);
     expect(component.state()).toBe('ready');
     expect(component.counts().length).toBe(2);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -117,7 +129,7 @@ describe('AuditsListComponent', () => {
     expect(text).toContain('No audits found');
   });
 
-  it('filters by status, re-querying with the chosen status', async () => {
+  it('filters by status, re-querying at page 1 with the chosen status', async () => {
     setup();
     flushInitial([item('1', 'AML Review')]);
     await fixture.whenStable();
@@ -129,24 +141,39 @@ describe('AuditsListComponent', () => {
 
     const req = http.expectOne((r) => r.url === `${BASE}/audits`);
     expect(req.request.params.get('status')).toBe('in_progress');
+    expect(req.request.params.get('page')).toBe('1');
     req.flush({ data: page([]) });
     expect(component.audits().length).toBe(0);
   });
 
-  it('appends results when loadMore is invoked', async () => {
+  it('navigates to another page via the paginator, carrying page + pageSize', async () => {
     setup();
-    flushInitial([item('1', 'AML Review')], true);
+    flushInitial([item('1', 'AML Review')], 50); // total 50 → more pages
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(component.hasMore()).toBe(true);
-    component.loadMore();
+    component.onPageChange(2);
     const req = http.expectOne((r) => r.url === `${BASE}/audits`);
-    expect(req.request.params.get('cursor')).toBe('cursor-2');
-    req.flush({ data: page([item('2', 'IT Audit')], false) });
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: page([item('2', 'IT Audit')], 50, 2) });
 
-    expect(component.audits().length).toBe(2);
-    expect(component.hasMore()).toBe(false);
+    expect(component.audits().map((a) => a.id)).toEqual(['2']);
+    expect(component.page()).toBe(2);
+  });
+
+  it('changing the page size re-queries from page 1', async () => {
+    setup();
+    flushInitial([item('1', 'AML Review')], 50);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    component.onPageSizeChange(100);
+    const req = http.expectOne((r) => r.url === `${BASE}/audits`);
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('100');
+    req.flush({ data: page([item('1', 'AML Review')], 50, 1, 100) });
+    expect(component.pageSize()).toBe(100);
   });
 
   it('enters the error state when the first page fails', async () => {

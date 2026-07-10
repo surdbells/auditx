@@ -19,7 +19,7 @@ import {
   ChecklistProgress,
   ChecklistResponse,
   CreateAuditRequest,
-  CursorPage,
+  PagedResult,
   EvidenceFile,
   FailJudgementRequest,
   FailWithoutExceptionResult,
@@ -39,14 +39,14 @@ export class AuditsService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiBaseUrl;
 
-  list(query: AuditQuery): Observable<CursorPage<AuditListItem>> {
-    return this.api.get<CursorPage<AuditListItem>>('/audits', {
+  list(query: AuditQuery): Observable<PagedResult<AuditListItem>> {
+    return this.api.get<PagedResult<AuditListItem>>('/audits', {
       status: query.status,
       auditType: query.auditType,
       lead: query.lead,
       planItem: query.planItem,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 

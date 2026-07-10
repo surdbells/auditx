@@ -41,12 +41,13 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-audits-list',
@@ -65,6 +66,7 @@ const PAGE_SIZE = 7;
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './audits-list.component.html',
@@ -124,9 +126,11 @@ export class AuditsListComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly audits = signal<AuditListItem[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
   readonly counts = signal<{ status: string; count: number }[]>([]);
 
   readonly canCreate = computed(() =>
@@ -142,10 +146,10 @@ export class AuditsListComponent {
 
   constructor() {
     this.loadCounts();
-    this.fetchFirstPage();
+    this.fetchPage(1);
     this.filters.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed())
-      .subscribe(() => this.fetchFirstPage());
+      .subscribe(() => this.fetchPage(1));
   }
 
   private loadCounts(): void {
@@ -163,57 +167,40 @@ export class AuditsListComponent {
     });
   }
 
-  fetchFirstPage(): void {
-    this.state.set('loading');
-    this.audits.set([]);
-    this.nextCursor.set(null);
-    this.query(null, (items, cursor, more) => {
-      this.audits.set(items);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.state.set('ready');
-    });
-  }
-
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.query(this.nextCursor(), (items, cursor, more) => {
-      this.audits.update((current) => [...current, ...items]);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.loadingMore.set(false);
-    });
-  }
-
-  private query(
-    cursor: string | null,
-    onSuccess: (
-      items: AuditListItem[],
-      cursor: string | null,
-      more: boolean,
-    ) => void,
-  ): void {
+  fetchPage(page: number): void {
+    this.loading.set(true);
     const { status, auditType } = this.filters.getRawValue();
     this.service
       .list({
         status: status === 'all' ? '' : status,
         auditType: auditType.trim() || undefined,
-        cursor,
-        limit: PAGE_SIZE,
+        page,
+        pageSize: this.pageSize(),
       })
       .subscribe({
-        next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
+        next: (result) => {
+          this.audits.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
+          this.state.set('ready');
+          this.loading.set(false);
+        },
         error: () => {
-          if (cursor === null) {
+          if (this.state() === 'loading') {
             this.state.set('error');
-          } else {
-            this.loadingMore.set(false);
           }
+          this.loading.set(false);
         },
       });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   create(): void {

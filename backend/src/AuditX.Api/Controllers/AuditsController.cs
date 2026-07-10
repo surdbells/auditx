@@ -20,8 +20,8 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] string? status, [FromQuery] string? auditType, [FromQuery] Guid? lead, [FromQuery] Guid? planItem,
-        [FromQuery] string? search, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListAuditsQuery(status, auditType, lead, planItem, search, cursor, limit), cancellationToken));
+        [FromQuery] string? search, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListAuditsQuery(status, auditType, lead, planItem, search, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewAudits)]
     [HttpGet("counts")]
