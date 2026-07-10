@@ -70,6 +70,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditProcedureRepository, AuditProcedureRepository>();
         services.AddScoped<IEvidenceRequestRepository, EvidenceRequestRepository>();
         services.AddScoped<ISavedViewRepository, SavedViewRepository>();
+        services.AddScoped<ISharedLinkRepository, SharedLinkRepository>();
         services.AddScoped<IRiskRepository, RiskRepository>();
         services.AddScoped<IControlRepository, ControlRepository>();
         services.AddScoped<IRegulationRepository, RegulationRepository>();
@@ -153,6 +154,7 @@ public static class DependencyInjection
 
         // Cross-cutting
         services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<Application.Abstractions.ISlugGenerator, Sharing.SlugGenerator>();
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             // Resolve the connection string lazily from options (not the value captured at registration time)

@@ -211,6 +211,8 @@ public static class AuditEventTypes
     public const string ReportGenerationFailed = "report_generation_failed";
     public const string ReportDistributed = "report_distributed";
     public const string ReportDownloaded = "report_downloaded";
+    public const string ReportShareLinkCreated = "report_share_link_created";
+    public const string ReportShareLinkRevoked = "report_share_link_revoked";
     public const string ReportHashMismatch = "report_hash_mismatch";
     public const string ReportTemplateCreated = "report_template_created";
     public const string ReportTemplateActivated = "report_template_activated";
@@ -294,6 +296,7 @@ public static class AuditTargetTypes
     public const string SanctionsGridVersion = "sanctions_grid_version";
     public const string Report = "report";
     public const string ReportTemplate = "report_template";
+    public const string SharedLink = "shared_link";
     public const string Dashboard = "dashboard";
     public const string RecurrenceCluster = "recurrence_cluster";
     public const string BankConfiguration = "bank_configuration";
