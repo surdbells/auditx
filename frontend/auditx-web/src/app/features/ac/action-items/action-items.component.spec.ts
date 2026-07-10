@@ -4,9 +4,40 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { AcActionItemsComponent } from './action-items.component';
 import { provideTestEnv } from '../../../../testing/test-providers';
 import { AuthService } from '../../../core/services/auth.service';
-import { AcActionItem, SessionDto } from '../../../core/models';
+import { AcActionItem, PagedResult, SessionDto } from '../../../core/models';
 
 const BASE = '/api/v1';
+
+function page(
+  items: AcActionItem[],
+  total = items.length,
+  pageNum = 1,
+  pageSize = 25,
+): PagedResult<AcActionItem> {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    items,
+    total,
+    page: pageNum,
+    pageSize,
+    totalPages,
+    hasPrevious: pageNum > 1,
+    hasNext: pageNum < totalPages,
+  };
+}
+
+/** Empty offset page envelope for the active-user directory lookup. */
+function emptyUserPage(): unknown {
+  return {
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 5000,
+    totalPages: 1,
+    hasPrevious: false,
+    hasNext: false,
+  };
+}
 
 function session(permissions: string[]): SessionDto {
   return {
@@ -66,12 +97,12 @@ describe('AcActionItemsComponent', () => {
     await fixture.whenStable();
     http
       .expectOne((r) => r.url === `${BASE}/ac-action-items`)
-      .flush({ data: { items, nextCursor: null, hasMore: false } });
+      .flush({ data: page(items) });
     await fixture.whenStable();
     // Component fetches the active-user directory for assignee labels.
     http
       .expectOne((r) => r.url === `${BASE}/users`)
-      .flush({ data: { items: [], nextCursor: null, hasMore: false } });
+      .flush({ data: emptyUserPage() });
     await fixture.whenStable();
     fixture.detectChanges();
   }
@@ -114,18 +145,36 @@ describe('AcActionItemsComponent', () => {
     req.flush({ data: actionItem({ status: 'closed', closureResponse: 'Done.' }) });
   });
 
-  it('re-queries with the status filter', async () => {
+  it('re-queries with the status filter at page 1', async () => {
     await setup(['ACMember'], [actionItem()]);
     component.onStatusChange('closed');
     const req = http.expectOne((r) => r.url === `${BASE}/ac-action-items`);
     expect(req.request.params.get('status')).toBe('closed');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('page')).toBe('1');
+    req.flush({ data: page([]) });
     await fixture.whenStable();
     // The reload re-attempts the directory fetch (cache still empty from setup).
     http
       .expectOne((r) => r.url === `${BASE}/users`)
-      .flush({ data: { items: [], nextCursor: null, hasMore: false } });
+      .flush({ data: emptyUserPage() });
     await fixture.whenStable();
     expect(component.items().length).toBe(0);
+  });
+
+  it('navigates to another page via the paginator, carrying page + pageSize', async () => {
+    await setup(['ACMember'], [actionItem()]);
+    component.onPageChange(2);
+    const req = http.expectOne((r) => r.url === `${BASE}/ac-action-items`);
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: page([actionItem({ id: 'a-2' })], 50, 2) });
+    await fixture.whenStable();
+    // The reload re-attempts the directory fetch (cache still empty from setup).
+    http
+      .expectOne((r) => r.url === `${BASE}/users`)
+      .flush({ data: emptyUserPage() });
+    await fixture.whenStable();
+    expect(component.page()).toBe(2);
+    expect(component.total()).toBe(50);
   });
 });

@@ -67,13 +67,13 @@ public sealed class NotificationsController(IDispatcher dispatcher) : ApiControl
     [RequirePermission(PermissionKeys.ConfigureNotifications)]
     [HttpGet("notification-dispatches")]
     public async Task<IActionResult> ListDispatches(
-        [FromQuery] string? status, [FromQuery] string? eventType, [FromQuery] Guid? recipient, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListDispatchesQuery(status, eventType, recipient, cursor, limit), cancellationToken));
+        [FromQuery] string? status, [FromQuery] string? eventType, [FromQuery] Guid? recipient, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListDispatchesQuery(status, eventType, recipient, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.AdminOps)]
     [HttpGet("notification-dispatches/dead-letter")]
-    public async Task<IActionResult> ListDeadLetter([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListDeadLetterQuery(cursor, limit), cancellationToken));
+    public async Task<IActionResult> ListDeadLetter([FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListDeadLetterQuery(page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.AdminOps)]
     [HttpPost("notification-dispatches/{id:guid}/retry")]

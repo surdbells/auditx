@@ -19,7 +19,7 @@ public interface IBankConfigurationRepository
     Task<int> GetMaxVersionNumberAsync(string domain, CancellationToken cancellationToken = default);
 
     /// <summary>Keyset-paginated version timeline for a domain, newest version first (includes the change reason).</summary>
-    Task<CursorPage<BankConfiguration>> ListVersionsAsync(string domain, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<BankConfiguration>> ListVersionsAsync(string domain, PageSpec page, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Clear the active flag on whichever version is currently active for a domain, as an immediate set-based UPDATE.

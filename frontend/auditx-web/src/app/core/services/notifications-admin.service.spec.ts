@@ -187,28 +187,49 @@ describe('NotificationAdminService', () => {
       .listDispatches({
         status: 'dead_letter',
         eventType: 'audit.created',
-        limit: 100,
+        page: 1,
+        pageSize: 25,
       })
-      .subscribe((page) => (items = page.items));
+      .subscribe((result) => (items = result.items));
     const req = http.expectOne(
       (r) => r.url === `${BASE}/notification-dispatches`,
     );
     expect(req.request.params.get('status')).toBe('dead_letter');
     expect(req.request.params.get('eventType')).toBe('audit.created');
-    expect(req.request.params.get('limit')).toBe('100');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('25');
     req.flush({
-      data: { items: [dispatch()], nextCursor: null, hasMore: false },
+      data: {
+        items: [dispatch()],
+        total: 1,
+        page: 1,
+        pageSize: 25,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
+      },
     });
     expect(items?.length).toBe(1);
   });
 
   it('lists the dead-letter queue', () => {
-    service.listDeadLetter(undefined, 100).subscribe();
+    service.listDeadLetter(1, 25).subscribe();
     const req = http.expectOne(
       (r) => r.url === `${BASE}/notification-dispatches/dead-letter`,
     );
-    expect(req.request.params.get('limit')).toBe('100');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({
+      data: {
+        items: [],
+        total: 0,
+        page: 1,
+        pageSize: 25,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
+      },
+    });
   });
 
   it('retries a dispatch via POST', () => {

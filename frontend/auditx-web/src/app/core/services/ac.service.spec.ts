@@ -108,19 +108,27 @@ describe('AcService', () => {
     expect(result?.status).toBe('pending');
   });
 
-  it('lists packs with status + cursor + limit and unwraps the page', () => {
+  it('lists packs with status + page + pageSize and unwraps the page', () => {
     let result: { items: unknown[] } | undefined;
     service
-      .listPacks({ status: 'distributed', cursor: 'cur-1', limit: 25 })
+      .listPacks({ status: 'distributed', page: 2, pageSize: 25 })
       .subscribe((page) => (result = page));
 
     const req = http.expectOne((r) => r.url === `${BASE}/ac-packs`);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('status')).toBe('distributed');
-    expect(req.request.params.get('cursor')).toBe('cur-1');
-    expect(req.request.params.get('limit')).toBe('25');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
     req.flush({
-      data: { items: [listItem()], nextCursor: null, hasMore: false },
+      data: {
+        items: [listItem()],
+        total: 1,
+        page: 2,
+        pageSize: 25,
+        totalPages: 1,
+        hasPrevious: true,
+        hasNext: false,
+      },
     });
     expect(result?.items.length).toBe(1);
   });
@@ -210,16 +218,16 @@ describe('AcService', () => {
     expect(count).toBe(5);
   });
 
-  it('lists pack distributions with cursor + limit', () => {
+  it('lists pack distributions with page + pageSize', () => {
     let result: { items: unknown[] } | undefined;
     service
-      .packDistributions('p-1', 'cur-1', 20)
+      .packDistributions('p-1', 2, 20)
       .subscribe((page) => (result = page));
     const req = http.expectOne(
       (r) => r.url === `${BASE}/ac-packs/p-1/distributions`,
     );
-    expect(req.request.params.get('cursor')).toBe('cur-1');
-    expect(req.request.params.get('limit')).toBe('20');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('20');
     req.flush({
       data: {
         items: [
@@ -233,8 +241,12 @@ describe('AcService', () => {
             outcome: 'sent',
           },
         ],
-        nextCursor: null,
-        hasMore: false,
+        total: 1,
+        page: 2,
+        pageSize: 20,
+        totalPages: 1,
+        hasPrevious: true,
+        hasNext: false,
       },
     });
     expect(result?.items.length).toBe(1);
@@ -286,7 +298,17 @@ describe('AcService', () => {
     const req = http.expectOne((r) => r.url === `${BASE}/ac-action-items`);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('status')).toBe('open');
-    req.flush({ data: { items: [actionItem()], nextCursor: null, hasMore: false } });
+    req.flush({
+      data: {
+        items: [actionItem()],
+        total: 1,
+        page: 1,
+        pageSize: 25,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
+      },
+    });
     expect(result?.items.length).toBe(1);
   });
 

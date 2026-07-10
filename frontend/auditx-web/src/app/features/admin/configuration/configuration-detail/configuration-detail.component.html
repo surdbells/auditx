@@ -256,18 +256,14 @@
           <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
       </div>
-      @if (hasMore()) {
-        <mat-card-actions align="end">
-          <button
-            matButton
-            type="button"
-            (click)="loadMore()"
-            [disabled]="loadingMore()"
-          >
-            {{ 'config.detail.history.loadMore' | t }}
-          </button>
-        </mat-card-actions>
-      }
+      <app-paginator
+        [total]="total()"
+        [page]="page()"
+        [pageSize]="pageSize()"
+        [disabled]="loading()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
     </mat-card>
   }
 }

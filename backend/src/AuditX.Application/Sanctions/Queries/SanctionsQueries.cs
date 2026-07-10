@@ -29,17 +29,17 @@ internal static class SanctionsStatusParsing
 
 // ---- List (always masks subject — A1) ----
 
-public sealed record ListSanctionsCasesQuery(string? Status, string? Search, string? Cursor, int? Limit) : IQuery<CursorPage<SanctionsCaseListDto>>;
+public sealed record ListSanctionsCasesQuery(string? Status, string? Search, int? Page, int? PageSize) : IQuery<PagedResult<SanctionsCaseListDto>>;
 
 public sealed class ListSanctionsCasesQueryHandler(ISanctionsCaseRepository cases)
-    : IQueryHandler<ListSanctionsCasesQuery, CursorPage<SanctionsCaseListDto>>
+    : IQueryHandler<ListSanctionsCasesQuery, PagedResult<SanctionsCaseListDto>>
 {
-    public async Task<CursorPage<SanctionsCaseListDto>> Handle(ListSanctionsCasesQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<SanctionsCaseListDto>> Handle(ListSanctionsCasesQuery query, CancellationToken cancellationToken)
     {
         var status = SanctionsStatusParsing.Parse(query.Status);
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await cases.ListPagedAsync(status, query.Search, page, cancellationToken);
-        return new CursorPage<SanctionsCaseListDto>(result.Items.Select(c => c.ToListDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(c => c.ToListDto());
     }
 }
 
@@ -84,16 +84,16 @@ public sealed class GetSanctionsCaseByIdQueryHandler(
 
 // ---- DC queue (referred cases only) ----
 
-public sealed record ListDcQueueQuery(string? Cursor, int? Limit) : IQuery<CursorPage<SanctionsCaseListDto>>;
+public sealed record ListDcQueueQuery(int? Page, int? PageSize) : IQuery<PagedResult<SanctionsCaseListDto>>;
 
 public sealed class ListDcQueueQueryHandler(ISanctionsCaseRepository cases)
-    : IQueryHandler<ListDcQueueQuery, CursorPage<SanctionsCaseListDto>>
+    : IQueryHandler<ListDcQueueQuery, PagedResult<SanctionsCaseListDto>>
 {
-    public async Task<CursorPage<SanctionsCaseListDto>> Handle(ListDcQueueQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<SanctionsCaseListDto>> Handle(ListDcQueueQuery query, CancellationToken cancellationToken)
     {
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await cases.ListReferredAsync(page, cancellationToken);
-        return new CursorPage<SanctionsCaseListDto>(result.Items.Select(c => c.ToListDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(c => c.ToListDto());
     }
 }
 

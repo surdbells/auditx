@@ -31,7 +31,7 @@ public interface INotificationDispatchRepository
 {
     Task<NotificationDispatch?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<CursorPage<NotificationDispatch>> SearchAsync(DispatchStatus? status, string? eventType, Guid? recipientUserId, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<NotificationDispatch>> SearchAsync(DispatchStatus? status, string? eventType, Guid? recipientUserId, PageSpec page, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<NotificationDispatch>> GetDueForRetryAsync(DateTimeOffset asOf, int max, CancellationToken cancellationToken = default);
 

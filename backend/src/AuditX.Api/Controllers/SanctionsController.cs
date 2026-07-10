@@ -16,8 +16,8 @@ public sealed class SanctionsController(IDispatcher dispatcher) : ApiControllerB
 
     [RequirePermission(PermissionKeys.ViewSanctions)]
     [HttpGet("api/v1/sanctions/cases")]
-    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] string? search, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListSanctionsCasesQuery(status, search, cursor, limit), cancellationToken));
+    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] string? search, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListSanctionsCasesQuery(status, search, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewSanctions)]
     [HttpGet("api/v1/sanctions/cases/{id:guid}")]
@@ -26,8 +26,8 @@ public sealed class SanctionsController(IDispatcher dispatcher) : ApiControllerB
 
     [RequirePermission(PermissionKeys.DcMember)]
     [HttpGet("api/v1/sanctions/dc-queue")]
-    public async Task<IActionResult> DcQueue([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListDcQueueQuery(cursor, limit), cancellationToken));
+    public async Task<IActionResult> DcQueue([FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListDcQueueQuery(page, pageSize), cancellationToken));
 
     // ---- Trigger (exception-scoped route) ----
 

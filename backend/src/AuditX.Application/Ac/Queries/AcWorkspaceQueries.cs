@@ -11,20 +11,20 @@ using AuditX.Domain.Enums;
 
 namespace AuditX.Application.Ac.Queries;
 
-// ---- List AC action items (ACMember/CIA; cursor + ?status) ----
+// ---- List AC action items (ACMember/CIA; offset + ?status) ----
 
-public sealed record ListAcActionItemsQuery(string? Status, string? Cursor, int? Limit) : IQuery<CursorPage<AcActionItemDto>>;
+public sealed record ListAcActionItemsQuery(string? Status, int? Page, int? PageSize) : IQuery<PagedResult<AcActionItemDto>>;
 
 public sealed class ListAcActionItemsQueryHandler(IAcActionItemRepository items, ICurrentUser currentUser)
-    : IQueryHandler<ListAcActionItemsQuery, CursorPage<AcActionItemDto>>
+    : IQueryHandler<ListAcActionItemsQuery, PagedResult<AcActionItemDto>>
 {
-    public async Task<CursorPage<AcActionItemDto>> Handle(ListAcActionItemsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<AcActionItemDto>> Handle(ListAcActionItemsQuery query, CancellationToken cancellationToken)
     {
         _ = currentUser.UserId ?? throw new UnauthorizedException();
         var status = ParseStatus(query.Status);
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await items.ListAsync(status, page, cancellationToken);
-        return new CursorPage<AcActionItemDto>(result.Items.Select(i => i.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(i => i.ToDto());
     }
 
     private static AcActionItemStatus? ParseStatus(string? status)

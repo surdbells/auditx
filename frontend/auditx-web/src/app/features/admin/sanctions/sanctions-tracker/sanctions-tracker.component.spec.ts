@@ -25,8 +25,19 @@ function listItem(
   };
 }
 
-function page(items: SanctionsCaseListItem[]) {
-  return { data: { items, nextCursor: null, hasMore: false } };
+function page(items: SanctionsCaseListItem[], total = items.length, pageNum = 1, pageSize = 25) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    data: {
+      items,
+      total,
+      page: pageNum,
+      pageSize,
+      totalPages,
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < totalPages,
+    },
+  };
 }
 
 describe('SanctionsTrackerComponent', () => {
@@ -78,6 +89,8 @@ describe('SanctionsTrackerComponent', () => {
     component.filters.controls.status.setValue('dc_referral');
     const req = http.expectOne((r) => r.url === `${BASE}/sanctions/cases`);
     expect(req.request.params.get('status')).toBe('dc_referral');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('25');
     req.flush(page([listItem({ status: 'dc_referral' })]));
   });
 

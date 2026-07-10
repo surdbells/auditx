@@ -7,7 +7,7 @@
       <mat-icon>arrow_back</mat-icon>
       {{ 'analytics.nav.allDashboards' | t }}
     </a>
-    <button matButton type="button" (click)="fetch()">
+    <button matButton type="button" (click)="fetchPage(1)">
       <mat-icon>refresh</mat-icon>
       {{ 'analytics.actions.refresh' | t }}
     </button>
@@ -21,7 +21,7 @@
   @case ('error') {
     <app-error-state
       [message]="'analytics.clusters.error' | t"
-      (retry)="fetch()"
+      (retry)="fetchPage(1)"
     />
   }
   @case ('ready') {
@@ -89,18 +89,14 @@
         </div>
       </mat-card>
 
-      @if (hasMore()) {
-        <div class="clusters__more">
-          <button
-            matButton
-            type="button"
-            [disabled]="loadingMore()"
-            (click)="loadMore()"
-          >
-            {{ loadingMore() ? ('analytics.actions.loadingMore' | t) : ('analytics.actions.loadMore' | t) }}
-          </button>
-        </div>
-      }
+      <app-paginator
+        [total]="total()"
+        [page]="page()"
+        [pageSize]="pageSize()"
+        [disabled]="loading()"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
     }
   }
 }

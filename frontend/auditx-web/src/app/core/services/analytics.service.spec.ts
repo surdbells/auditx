@@ -232,18 +232,28 @@ describe('AnalyticsService', () => {
     expect(result).toEqual([]);
   });
 
-  it('lists recurrence clusters with cursor + limit and unwraps the page', () => {
+  it('lists recurrence clusters with page + pageSize and unwraps the page', () => {
     let result: { items: RecurrenceCluster[] } | undefined;
     service
-      .recurrenceClusters('cur-1', 20)
+      .recurrenceClusters(2, 20)
       .subscribe((page) => (result = page));
     const req = http.expectOne(
       (r) => r.url === `${BASE}/analytics/recurrence-clusters`,
     );
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.get('cursor')).toBe('cur-1');
-    expect(req.request.params.get('limit')).toBe('20');
-    req.flush({ data: { items: [cluster()], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('20');
+    req.flush({
+      data: {
+        items: [cluster()],
+        total: 1,
+        page: 2,
+        pageSize: 20,
+        totalPages: 1,
+        hasPrevious: true,
+        hasNext: false,
+      },
+    });
     expect(result?.items.length).toBe(1);
   });
 

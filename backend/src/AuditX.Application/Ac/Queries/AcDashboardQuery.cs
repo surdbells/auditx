@@ -29,7 +29,7 @@ public sealed class AcDashboardQueryHandler(
         var portfolio = await analytics.ExceptionPortfolioAsync(cancellationToken);
         var materialFindings = await analytics.MaterialFindingsAsync(cancellationToken);
         var sanctions = await analytics.SanctionsConsistencyAsync(cancellationToken);
-        var recurrencePage = await clusters.ListPagedAsync(new Common.Models.PageRequest(null, 50), cancellationToken);
+        var recurrencePage = await clusters.ListPagedAsync(new Common.Models.PageSpec(1, 50), cancellationToken);
 
         var allowLists = await AcVisibility.LoadExceptionAllowListsAsync(restrictions, cancellationToken);
 

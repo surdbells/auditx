@@ -33,6 +33,7 @@ import { downloadBlobResponse } from '../../reports/download';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { AcAnalyticsSectionsComponent } from '../components/analytics-sections/analytics-sections.component';
 import { AcCommentsComponent } from '../components/ac-comments/ac-comments.component';
 import {
@@ -46,7 +47,7 @@ import {
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const DISTRIBUTIONS_PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-ac-pack-viewer',
@@ -62,6 +63,7 @@ const DISTRIBUTIONS_PAGE_SIZE = 7;
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     AcAnalyticsSectionsComponent,
     AcCommentsComponent,
     TranslatePipe,
@@ -88,9 +90,11 @@ export class AcPackViewerComponent {
   readonly analytics = signal<AcPackAnalytics | null>(null);
 
   readonly distributions = signal<AcPackDistribution[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly distributionsTotal = signal(0);
+  readonly distributionsPage = signal(1);
+  readonly distributionsPageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight distribution-log fetch — disables that paginator without clearing the table. */
+  readonly distributionsLoading = signal(false);
 
   readonly busy = signal(false);
 
@@ -126,7 +130,7 @@ export class AcPackViewerComponent {
         this.pack.set(pack);
         this.state.set('ready');
         this.loadAnalytics();
-        this.loadDistributions();
+        this.fetchDistributionsPage(1);
       },
       error: () => this.state.set('error'),
     });
@@ -258,7 +262,7 @@ export class AcPackViewerComponent {
               `AC pack distributed to ${result.recipientCount} recipient(s).`,
             );
             this.reloadPack();
-            this.reloadDistributions();
+            this.fetchDistributionsPage(1);
           },
           error: () => {
             this.busy.set(false);
@@ -270,43 +274,30 @@ export class AcPackViewerComponent {
 
   /* ---- Distribution log ---- */
 
-  private reloadDistributions(): void {
-    this.distributions.set([]);
-    this.nextCursor.set(null);
-    this.hasMore.set(false);
-    this.loadDistributions();
-  }
-
-  private loadDistributions(): void {
+  fetchDistributionsPage(page: number): void {
+    this.distributionsLoading.set(true);
     this.service
-      .packDistributions(this.id(), null, DISTRIBUTIONS_PAGE_SIZE)
+      .packDistributions(this.id(), page, this.distributionsPageSize())
       .subscribe({
-        next: (page) => {
-          this.distributions.set(page.items);
-          this.nextCursor.set(page.nextCursor);
-          this.hasMore.set(page.hasMore);
+        next: (result) => {
+          this.distributions.set(result.items);
+          this.distributionsTotal.set(result.total);
+          this.distributionsPage.set(result.page);
+          this.distributionsLoading.set(false);
         },
         error: () => {
           // Non-fatal: leave the log empty.
+          this.distributionsLoading.set(false);
         },
       });
   }
 
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.service
-      .packDistributions(this.id(), this.nextCursor(), DISTRIBUTIONS_PAGE_SIZE)
-      .subscribe({
-        next: (page) => {
-          this.distributions.update((current) => [...current, ...page.items]);
-          this.nextCursor.set(page.nextCursor);
-          this.hasMore.set(page.hasMore);
-          this.loadingMore.set(false);
-        },
-        error: () => this.loadingMore.set(false),
-      });
+  onDistributionsPageChange(page: number): void {
+    this.fetchDistributionsPage(page);
+  }
+
+  onDistributionsPageSizeChange(size: number): void {
+    this.distributionsPageSize.set(size);
+    this.fetchDistributionsPage(1);
   }
 }

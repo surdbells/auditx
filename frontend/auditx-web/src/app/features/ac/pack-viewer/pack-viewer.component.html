@@ -167,18 +167,14 @@
             </table>
           </div>
 
-          @if (hasMore()) {
-            <div class="viewer__load-more">
-              <button
-                matButton
-                type="button"
-                (click)="loadMore()"
-                [disabled]="loadingMore()"
-              >
-                {{ (loadingMore() ? 'ac.common.loadingShort' : 'ac.common.loadMore') | t }}
-              </button>
-            </div>
-          }
+          <app-paginator
+            [total]="distributionsTotal()"
+            [page]="distributionsPage()"
+            [pageSize]="distributionsPageSize()"
+            [disabled]="distributionsLoading()"
+            (pageChange)="onDistributionsPageChange($event)"
+            (pageSizeChange)="onDistributionsPageSizeChange($event)"
+          />
         }
       </mat-card>
 

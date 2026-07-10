@@ -111,9 +111,17 @@ describe('AcPackViewerComponent', () => {
     await fixture.whenStable();
     // analytics + distributions + comments fire after the pack resolves.
     http.expectOne(`${BASE}/ac-packs/p-1/analytics`).flush({ data: a });
-    http
-      .expectOne((r) => r.url === `${BASE}/ac-packs/p-1/distributions`)
-      .flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    http.expectOne((r) => r.url === `${BASE}/ac-packs/p-1/distributions`).flush({
+      data: {
+        items: [],
+        total: 0,
+        page: 1,
+        pageSize: 25,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
+      },
+    });
     http
       .expectOne((r) => r.url === `${BASE}/ac-comments`)
       .flush({ data: [] });

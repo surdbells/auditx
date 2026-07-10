@@ -24,25 +24,11 @@ public sealed class BankConfigurationRepository(AppDbContext db) : IBankConfigur
             ? await db.BankConfigurations.Where(c => c.Domain == domain).MaxAsync(c => c.VersionNumber, cancellationToken)
             : 0;
 
-    public async Task<CursorPage<BankConfiguration>> ListVersionsAsync(string domain, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<BankConfiguration>> ListVersionsAsync(string domain, PageSpec page, CancellationToken cancellationToken = default)
     {
-        // Newest version first. Keyset over the integer version_number (per-domain unique, monotonically increasing)
-        // so the cursor is the last-seen version number.
+        // Newest version first, ordered by the integer version_number (per-domain unique, monotonically increasing).
         var query = db.BankConfigurations.AsNoTracking().Where(c => c.Domain == domain);
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && int.TryParse(page.Cursor, out var cursorVersion))
-        {
-            query = query.Where(c => c.VersionNumber < cursorVersion);
-        }
-
-        var items = await query.OrderByDescending(c => c.VersionNumber).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<BankConfiguration>(
-            items, hasMore ? items[^1].VersionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture) : null, hasMore);
+        return await query.OrderByDescending(c => c.VersionNumber).ToPagedResultAsync(page, cancellationToken);
     }
 
     public Task DeactivateActiveAsync(string domain, CancellationToken cancellationToken = default)

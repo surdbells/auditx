@@ -29,8 +29,8 @@ public sealed class AcPacksController(IDispatcher dispatcher) : ApiControllerBas
 
     [RequirePermission(PermissionKeys.ViewAcPacks)]
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListAcPacksQuery(status, cursor, limit), cancellationToken));
+    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListAcPacksQuery(status, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewAcPacks)]
     [HttpGet("{id:guid}")]
@@ -68,6 +68,6 @@ public sealed class AcPacksController(IDispatcher dispatcher) : ApiControllerBas
 
     [RequirePermission(PermissionKeys.ViewAcPacks)]
     [HttpGet("{id:guid}/distributions")]
-    public async Task<IActionResult> Distributions(Guid id, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListAcPackDistributionsQuery(id, cursor, limit), cancellationToken));
+    public async Task<IActionResult> Distributions(Guid id, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListAcPackDistributionsQuery(id, page, pageSize), cancellationToken));
 }

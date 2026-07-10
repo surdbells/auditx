@@ -7,7 +7,6 @@ import { ApiService } from './api.service';
 import {
   ActivateGridVersionRequest,
   ApiResponse,
-  CursorPage,
   DecideAppealRequest,
   FileAppealRequest,
   RecordDcDecisionRequest,
@@ -20,6 +19,7 @@ import {
   SanctionsGridActionResult,
   SanctionsGridVersion,
   SaveGridVersionRequest,
+  PagedResult,
   TriggerSanctionsRequest,
   VersionRequest,
 } from '../models';
@@ -46,16 +46,16 @@ export class SanctionsService {
 
   /* ---- Tracker + detail ---- */
 
-  /** Cursor-paged case tracker (subject ALWAYS masked). */
+  /** Offset-paged case tracker (subject ALWAYS masked). */
   list(
     status?: string,
-    cursor?: string | null,
-    limit?: number,
-  ): Observable<CursorPage<SanctionsCaseListItem>> {
-    return this.api.get<CursorPage<SanctionsCaseListItem>>('/sanctions/cases', {
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<SanctionsCaseListItem>> {
+    return this.api.get<PagedResult<SanctionsCaseListItem>>('/sanctions/cases', {
       status,
-      cursor,
-      limit,
+      page,
+      pageSize,
     });
   }
 
@@ -65,12 +65,12 @@ export class SanctionsService {
 
   /** DC member queue: referred cases awaiting a committee decision. */
   dcQueue(
-    cursor?: string | null,
-    limit?: number,
-  ): Observable<CursorPage<SanctionsCaseListItem>> {
-    return this.api.get<CursorPage<SanctionsCaseListItem>>(
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<SanctionsCaseListItem>> {
+    return this.api.get<PagedResult<SanctionsCaseListItem>>(
       '/sanctions/dc-queue',
-      { cursor, limit },
+      { page, pageSize },
     );
   }
 

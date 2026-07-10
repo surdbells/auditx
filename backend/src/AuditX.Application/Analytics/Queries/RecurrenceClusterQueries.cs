@@ -9,16 +9,15 @@ namespace AuditX.Application.Analytics.Queries;
 
 // ---- List recurrence clusters (cursor-paged; ViewAnalytics) ----
 
-public sealed record GetRecurrenceClustersQuery(string? Cursor, int? Limit) : IQuery<CursorPage<RecurrenceClusterDto>>;
+public sealed record GetRecurrenceClustersQuery(int? Page, int? PageSize) : IQuery<PagedResult<RecurrenceClusterDto>>;
 
 public sealed class GetRecurrenceClustersQueryHandler(IRecurrenceClusterRepository clusters)
-    : IQueryHandler<GetRecurrenceClustersQuery, CursorPage<RecurrenceClusterDto>>
+    : IQueryHandler<GetRecurrenceClustersQuery, PagedResult<RecurrenceClusterDto>>
 {
-    public async Task<CursorPage<RecurrenceClusterDto>> Handle(GetRecurrenceClustersQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<RecurrenceClusterDto>> Handle(GetRecurrenceClustersQuery query, CancellationToken cancellationToken)
     {
-        var page = PageRequest.Of(query.Cursor, query.Limit);
-        var result = await clusters.ListPagedAsync(page, cancellationToken);
-        return new CursorPage<RecurrenceClusterDto>(result.Items.Select(c => c.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        var result = await clusters.ListPagedAsync(PageSpec.Of(query.Page, query.PageSize), cancellationToken);
+        return result.Map(c => c.ToDto());
     }
 }
 

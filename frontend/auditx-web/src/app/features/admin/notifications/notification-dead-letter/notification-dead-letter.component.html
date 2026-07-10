@@ -1,5 +1,5 @@
 <div class="dead-letter__toolbar">
-  <button matButton type="button" (click)="fetch()">
+  <button matButton type="button" (click)="fetchPage(1)">
     <mat-icon>refresh</mat-icon>
     {{ 'notifications.actions.refresh' | t }}
   </button>
@@ -12,7 +12,7 @@
   @case ('error') {
     <app-error-state
       [message]="'notifications.deadLetter.error.load' | t"
-      (retry)="fetch()"
+      (retry)="fetchPage(1)"
     />
   }
   @case ('ready') {
@@ -78,6 +78,15 @@
             <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
           </table>
         </div>
+
+        <app-paginator
+          [total]="total()"
+          [page]="page()"
+          [pageSize]="pageSize()"
+          [disabled]="loading()"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
       </mat-card>
     }
   }

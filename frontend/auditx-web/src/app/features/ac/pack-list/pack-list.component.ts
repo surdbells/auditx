@@ -30,13 +30,14 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { GeneratePackDialogComponent } from '../dialogs/generate-pack-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 /** Poll interval (ms) while a generation is pending/generating. */
 const POLL_INTERVAL = 2000;
-const PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 /** Pack statuses the filter offers. */
 const STATUS_OPTIONS = [
@@ -66,6 +67,7 @@ const STATUS_OPTIONS = [
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './pack-list.component.html',
@@ -92,9 +94,11 @@ export class AcPackListComponent {
   readonly state = signal<ViewState>('loading');
   readonly packs = signal<AcPackListItem[]>([]);
   readonly statusFilter = signal('');
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
   readonly generating = signal(false);
 
   private pollSub: Subscription | null = null;
@@ -111,50 +115,47 @@ export class AcPackListComponent {
   );
 
   constructor() {
-    queueMicrotask(() => this.load());
+    queueMicrotask(() => this.fetchPage(1));
     this.destroyRef.onDestroy(() => this.pollSub?.unsubscribe());
   }
 
-  load(): void {
-    this.state.set('loading');
+  fetchPage(page: number): void {
+    this.loading.set(true);
     this.service
-      .listPacks({ status: this.statusFilter() || null, limit: PAGE_SIZE })
+      .listPacks({
+        status: this.statusFilter() || null,
+        page,
+        pageSize: this.pageSize(),
+      })
       .subscribe({
-        next: (page) => {
-          this.packs.set(page.items);
-          this.nextCursor.set(page.nextCursor);
-          this.hasMore.set(page.hasMore);
+        next: (result) => {
+          this.packs.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
           this.state.set('ready');
+          this.loading.set(false);
         },
-        error: () => this.state.set('error'),
+        error: () => {
+          if (this.state() === 'loading') {
+            this.state.set('error');
+          }
+          this.loading.set(false);
+        },
       });
   }
 
   onStatusChange(status: string): void {
     this.statusFilter.set(status);
-    this.load();
+    this.fetchPage(1);
   }
 
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.service
-      .listPacks({
-        status: this.statusFilter() || null,
-        cursor: this.nextCursor(),
-        limit: PAGE_SIZE,
-      })
-      .subscribe({
-        next: (page) => {
-          this.packs.update((current) => [...current, ...page.items]);
-          this.nextCursor.set(page.nextCursor);
-          this.hasMore.set(page.hasMore);
-          this.loadingMore.set(false);
-        },
-        error: () => this.loadingMore.set(false),
-      });
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   generate(): void {
@@ -192,7 +193,7 @@ export class AcPackListComponent {
           this.pollSub?.unsubscribe();
           this.generating.set(false);
           this.notify.error(this.i18n.translate('ac.packs.notify.lostTrack'));
-          this.load();
+          this.fetchPage(1);
         },
       });
     });
@@ -205,7 +206,7 @@ export class AcPackListComponent {
       this.notify.error(
         pack.failureReason || this.i18n.translate('ac.packs.notify.failed'),
       );
-      this.load();
+      this.fetchPage(1);
     } else if (pack.status !== 'pending' && pack.status !== 'generating') {
       // pending_review (or beyond): ready for CIA review.
       this.pollSub?.unsubscribe();
@@ -215,7 +216,7 @@ export class AcPackListComponent {
           version: pack.versionNumber,
         }),
       );
-      this.load();
+      this.fetchPage(1);
     }
     // pending / generating: keep polling.
   }

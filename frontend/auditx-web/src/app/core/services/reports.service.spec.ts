@@ -101,23 +101,43 @@ describe('ReportsService', () => {
     expect(result?.status).toBe('pending');
   });
 
-  it('lists the report versions for an audit as a cursor page', () => {
-    let result: { items: ReportListItem[]; hasMore: boolean } | undefined;
+  it('lists the report versions for an audit as an offset page', () => {
+    let result: { items: ReportListItem[]; total: number } | undefined;
     service.listForAudit('au-1').subscribe((page) => (result = page));
     const req = http.expectOne((r) => r.url === `${BASE}/audits/au-1/reports`);
     expect(req.request.method).toBe('GET');
-    req.flush({ data: { items: [listItem()], nextCursor: null, hasMore: false } });
+    req.flush({
+      data: {
+        items: [listItem()],
+        total: 1,
+        page: 1,
+        pageSize: 25,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
+      },
+    });
     expect(result?.items.length).toBe(1);
     expect(result?.items[0].versionNumber).toBe(1);
-    expect(result?.hasMore).toBe(false);
+    expect(result?.total).toBe(1);
   });
 
-  it('forwards cursor + limit when paging the audit report list', () => {
-    service.listForAudit('au-1', 'cur-1', 20).subscribe();
+  it('forwards page + pageSize when paging the audit report list', () => {
+    service.listForAudit('au-1', 2, 20).subscribe();
     const req = http.expectOne((r) => r.url === `${BASE}/audits/au-1/reports`);
-    expect(req.request.params.get('cursor')).toBe('cur-1');
-    expect(req.request.params.get('limit')).toBe('20');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('20');
+    req.flush({
+      data: {
+        items: [],
+        total: 0,
+        page: 2,
+        pageSize: 20,
+        totalPages: 0,
+        hasPrevious: true,
+        hasNext: false,
+      },
+    });
   });
 
   it('fetches a single report (status surface) and unwraps the envelope', () => {
@@ -189,17 +209,17 @@ describe('ReportsService', () => {
     expect(count).toBe(2);
   });
 
-  it('lists distributions with cursor + limit and unwraps the page', () => {
+  it('lists distributions with page + pageSize and unwraps the page', () => {
     let result: { items: unknown[] } | undefined;
     service
-      .distributions('r-1', 'cur-1', 20)
+      .distributions('r-1', 2, 20)
       .subscribe((page) => (result = page));
     const req = http.expectOne(
       (r) => r.url === `${BASE}/reports/r-1/distributions`,
     );
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.get('cursor')).toBe('cur-1');
-    expect(req.request.params.get('limit')).toBe('20');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('20');
     req.flush({
       data: {
         items: [
@@ -214,8 +234,12 @@ describe('ReportsService', () => {
             outcome: 'sent',
           },
         ],
-        nextCursor: null,
-        hasMore: false,
+        total: 1,
+        page: 2,
+        pageSize: 20,
+        totalPages: 1,
+        hasPrevious: true,
+        hasNext: false,
       },
     });
     expect(result?.items.length).toBe(1);

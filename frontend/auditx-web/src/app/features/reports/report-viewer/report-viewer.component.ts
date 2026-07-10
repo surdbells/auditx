@@ -41,12 +41,13 @@ import { ReportShareDialogComponent } from '../dialogs/report-share-dialog.compo
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const DISTRIBUTIONS_PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-report-viewer',
@@ -63,6 +64,7 @@ const DISTRIBUTIONS_PAGE_SIZE = 7;
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './report-viewer.component.html',
@@ -94,9 +96,11 @@ export class ReportViewerComponent {
   readonly auditName = signal<string | null>(null);
 
   readonly distributions = signal<ReportDistribution[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight distribution-log fetch — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly verification = signal<ReportHashVerification | null>(null);
   readonly verifying = signal(false);
@@ -137,7 +141,7 @@ export class ReportViewerComponent {
         this.state.set('ready');
         this.resolveAuditName(report.auditId);
         this.loadPreview(report);
-        this.ensureUsers(() => this.loadDistributions());
+        this.ensureUsers(() => this.fetchDistributions(1));
       },
       error: () => this.state.set('error'),
     });
@@ -294,7 +298,7 @@ export class ReportViewerComponent {
                   count: res.recipientCount,
                 }),
               );
-              this.reloadDistributions();
+              this.fetchDistributions(1);
             },
             error: () =>
               this.notify.error(
@@ -305,42 +309,29 @@ export class ReportViewerComponent {
     });
   }
 
-  private reloadDistributions(): void {
-    this.distributions.set([]);
-    this.nextCursor.set(null);
-    this.hasMore.set(false);
-    this.loadDistributions();
-  }
-
-  private loadDistributions(): void {
-    this.service.distributions(this.id(), null, DISTRIBUTIONS_PAGE_SIZE).subscribe({
-      next: (page) => {
-        this.distributions.set(page.items);
-        this.nextCursor.set(page.nextCursor);
-        this.hasMore.set(page.hasMore);
+  fetchDistributions(page: number): void {
+    this.loading.set(true);
+    this.service.distributions(this.id(), page, this.pageSize()).subscribe({
+      next: (result) => {
+        this.distributions.set(result.items);
+        this.total.set(result.total);
+        this.page.set(result.page);
+        this.loading.set(false);
       },
       error: () => {
-        // Non-fatal: leave the log empty.
+        // Non-fatal: leave the log as-is.
+        this.loading.set(false);
       },
     });
   }
 
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.service
-      .distributions(this.id(), this.nextCursor(), DISTRIBUTIONS_PAGE_SIZE)
-      .subscribe({
-        next: (page) => {
-          this.distributions.update((current) => [...current, ...page.items]);
-          this.nextCursor.set(page.nextCursor);
-          this.hasMore.set(page.hasMore);
-          this.loadingMore.set(false);
-        },
-        error: () => this.loadingMore.set(false),
-      });
+  onPageChange(page: number): void {
+    this.fetchDistributions(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchDistributions(1);
   }
 
   /* ---- Recipient name resolution ---- */

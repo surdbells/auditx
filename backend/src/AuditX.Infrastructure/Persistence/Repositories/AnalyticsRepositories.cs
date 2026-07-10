@@ -58,25 +58,14 @@ public sealed class RecurrenceClusterRepository(AppDbContext db) : IRecurrenceCl
     public async Task<IReadOnlyList<RecurrenceCluster>> ListTrackedAsync(CancellationToken cancellationToken = default)
         => await db.RecurrenceClusters.ToListAsync(cancellationToken);
 
-    public async Task<CursorPage<RecurrenceCluster>> ListPagedAsync(PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<RecurrenceCluster>> ListPagedAsync(PageSpec page, CancellationToken cancellationToken = default)
     {
         // Only ACTIVE clusters (still at/above the threshold). The daily scan downgrades a cluster's count when its
         // members age out of the window; such retired rows are kept (for re-cross re-detection) but hidden here.
         var query = db.RecurrenceClusters.AsNoTracking()
             .Where(c => c.ClosedExceptionCount >= RecurrenceCluster.DetectionThreshold);
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(c => c.Id.CompareTo(cursorId) > 0);
-        }
 
-        var items = await query.OrderBy(c => c.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<RecurrenceCluster>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(c => c.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public Task<RecurrenceCluster?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

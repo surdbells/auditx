@@ -38,7 +38,7 @@ public sealed class SanctionsFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     }
 
     [Fact]
-    public async Task Cases_list_returns_a_cursor_page_with_subjects_masked()
+    public async Task Cases_list_returns_a_page_with_subjects_masked()
     {
         // Administrator does NOT hold ViewSanctions (deliberately segregated) — grant the Audit Manager role to
         // the seeded 'manager' user, then query as that authorized persona.
@@ -53,7 +53,7 @@ public sealed class SanctionsFlowTests(ApiFactory factory) : IClassFixture<ApiFa
             .EnsureSuccessStatusCode();
 
         var manager = await LoginAsync("manager");
-        var page = await DataAsync(await manager.GetAsync("/api/v1/sanctions/cases?limit=50"));
+        var page = await DataAsync(await manager.GetAsync("/api/v1/sanctions/cases?pageSize=50"));
         Assert.True(page.TryGetProperty("items", out var items));
         Assert.All(items.EnumerateArray(), c => Assert.True(c.GetProperty("subjectMasked").GetBoolean()));
     }
@@ -62,7 +62,7 @@ public sealed class SanctionsFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     public async Task Sanctions_require_the_view_permission()
     {
         var auditee = await LoginAsync("auditee"); // Auditee role does not hold ViewSanctions
-        var response = await auditee.GetAsync("/api/v1/sanctions/cases?limit=10");
+        var response = await auditee.GetAsync("/api/v1/sanctions/cases?pageSize=10");
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 

@@ -9,12 +9,32 @@ import { NotificationService } from '../../../core/services/notification.service
 import {
   Audit,
   AuditStatus,
+  PagedResult,
   Report,
   ReportListItem,
   SessionDto,
 } from '../../../core/models';
 
 const BASE = '/api/v1';
+
+/** Builds an offset-paged envelope mirroring the backend `PagedResult<T>`. */
+function pagedResult<T>(
+  items: T[],
+  total = items.length,
+  pageNum = 1,
+  pageSize = 25,
+): PagedResult<T> {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    items,
+    total,
+    page: pageNum,
+    pageSize,
+    totalPages,
+    hasPrevious: pageNum > 1,
+    hasNext: pageNum < totalPages,
+  };
+}
 
 function session(permissions: string[]): SessionDto {
   return {
@@ -132,8 +152,8 @@ describe('ReportsPanelComponent', () => {
     http.expectOne(`${BASE}/audits/au-1`).flush({ data: audit(auditStatus) });
     await fixture.whenStable();
     http
-      .expectOne(`${BASE}/audits/au-1/reports`)
-      .flush({ data: { items, nextCursor: null, hasMore: false } });
+      .expectOne((r) => r.url === `${BASE}/audits/au-1/reports`)
+      .flush({ data: pagedResult(items) });
     await fixture.whenStable();
     fixture.detectChanges();
   }
@@ -184,13 +204,9 @@ describe('ReportsPanelComponent', () => {
         .expectOne(`${BASE}/reports/r-9`)
         .flush({ data: report({ status: 'completed' }) });
       http
-        .expectOne(`${BASE}/audits/au-1/reports`)
+        .expectOne((r) => r.url === `${BASE}/audits/au-1/reports`)
         .flush({
-          data: {
-            items: [listItem({ id: 'r-9', versionNumber: 2 })],
-            nextCursor: null,
-            hasMore: false,
-          },
+          data: pagedResult([listItem({ id: 'r-9', versionNumber: 2 })]),
         });
     } finally {
       jasmine.clock().uninstall();
@@ -201,26 +217,30 @@ describe('ReportsPanelComponent', () => {
     expect(component.reports().length).toBe(1);
   });
 
-  it('loads more report versions via the next cursor', async () => {
+  it('navigates to another page via the paginator, carrying page + pageSize', async () => {
     await setup(['ViewReport'], 'completed', [listItem()]);
 
-    // setup() flushed hasMore: false; simulate a first page that has more.
-    component.hasMore.set(true);
-    component.nextCursor.set('cur-2');
-
-    component.loadMore();
+    component.onPageChange(2);
     const req = http.expectOne((r) => r.url === `${BASE}/audits/au-1/reports`);
-    expect(req.request.params.get('cursor')).toBe('cur-2');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
     req.flush({
-      data: {
-        items: [listItem({ id: 'r-2', versionNumber: 2 })],
-        nextCursor: null,
-        hasMore: false,
-      },
+      data: pagedResult([listItem({ id: 'r-2', versionNumber: 2 })], 50, 2),
     });
 
-    expect(component.reports().length).toBe(2);
-    expect(component.hasMore()).toBe(false);
+    expect(component.reports().map((r) => r.id)).toEqual(['r-2']);
+    expect(component.page()).toBe(2);
+  });
+
+  it('changing the page size re-queries from page 1', async () => {
+    await setup(['ViewReport'], 'completed', [listItem()]);
+
+    component.onPageSizeChange(100);
+    const req = http.expectOne((r) => r.url === `${BASE}/audits/au-1/reports`);
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('100');
+    req.flush({ data: pagedResult([listItem()], 50, 1, 100) });
+    expect(component.pageSize()).toBe(100);
   });
 
   it('humanises report statuses', async () => {

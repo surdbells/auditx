@@ -118,7 +118,7 @@ public sealed class NotificationFlowTests(ApiFactory factory) : IClassFixture<Ap
             await ingest.ProcessAsync(envelope, CancellationToken.None);
         }
 
-        var dispatches = await DataAsync(await admin.GetAsync("/api/v1/notification-dispatches?eventType=exception_raised&limit=100"));
+        var dispatches = await DataAsync(await admin.GetAsync("/api/v1/notification-dispatches?eventType=exception_raised&pageSize=100"));
         var mine = dispatches.GetProperty("items").EnumerateArray()
             .Where(d => d.GetProperty("recipientAddress").GetString() == "auditee@auditx.local")
             .ToArray();

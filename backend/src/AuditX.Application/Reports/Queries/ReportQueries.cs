@@ -18,39 +18,39 @@ namespace AuditX.Application.Reports.Queries;
 
 // ---- List versions for an audit ----
 
-public sealed record ListAuditReportsQuery(Guid AuditId, string? Cursor, int? Limit) : IQuery<CursorPage<ReportListItemDto>>;
+public sealed record ListAuditReportsQuery(Guid AuditId, int? Page, int? PageSize) : IQuery<PagedResult<ReportListItemDto>>;
 
 public sealed class ListAuditReportsQueryHandler(
     IReportRepository reports, IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser)
-    : IQueryHandler<ListAuditReportsQuery, CursorPage<ReportListItemDto>>
+    : IQueryHandler<ListAuditReportsQuery, PagedResult<ReportListItemDto>>
 {
-    public async Task<CursorPage<ReportListItemDto>> Handle(ListAuditReportsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<ReportListItemDto>> Handle(ListAuditReportsQuery query, CancellationToken cancellationToken)
     {
         var audit = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
         await ReportAccess.EnsureCanAccessAsync(audit, currentUser.UserId, permissions, cancellationToken);
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await reports.ListByAuditAsync(query.AuditId, page, cancellationToken);
-        return new CursorPage<ReportListItemDto>(result.Items.Select(r => r.ToListDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(r => r.ToListDto());
     }
 }
 
 // ---- List standalone (cross-audit) reports ----
 
 /// <summary>Lists standalone reports, newest first; optionally scoped to a single <paramref name="Kind"/>.</summary>
-public sealed record ListStandaloneReportsQuery(ReportKind? Kind, string? Cursor, int? Limit) : IQuery<CursorPage<ReportListItemDto>>;
+public sealed record ListStandaloneReportsQuery(ReportKind? Kind, int? Page, int? PageSize) : IQuery<PagedResult<ReportListItemDto>>;
 
 public sealed class ListStandaloneReportsQueryHandler(
     IReportRepository reports, IPermissionResolver permissions, ICurrentUser currentUser)
-    : IQueryHandler<ListStandaloneReportsQuery, CursorPage<ReportListItemDto>>
+    : IQueryHandler<ListStandaloneReportsQuery, PagedResult<ReportListItemDto>>
 {
-    public async Task<CursorPage<ReportListItemDto>> Handle(ListStandaloneReportsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<ReportListItemDto>> Handle(ListStandaloneReportsQuery query, CancellationToken cancellationToken)
     {
         await ReportAccess.EnsureCanAccessStandaloneAsync(currentUser.UserId, permissions, cancellationToken);
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await reports.ListStandaloneAsync(query.Kind, page, cancellationToken);
-        return new CursorPage<ReportListItemDto>(result.Items.Select(r => r.ToListDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(r => r.ToListDto());
     }
 }
 
@@ -157,22 +157,22 @@ public sealed class VerifyReportHashQueryHandler(
     }
 }
 
-// ---- Distribution log (cursor) ----
+// ---- Distribution log (offset) ----
 
-public sealed record ListReportDistributionsQuery(Guid Id, string? Cursor, int? Limit) : IQuery<CursorPage<ReportDistributionDto>>;
+public sealed record ListReportDistributionsQuery(Guid Id, int? Page, int? PageSize) : IQuery<PagedResult<ReportDistributionDto>>;
 
 public sealed class ListReportDistributionsQueryHandler(
     IReportRepository reports, IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser)
-    : IQueryHandler<ListReportDistributionsQuery, CursorPage<ReportDistributionDto>>
+    : IQueryHandler<ListReportDistributionsQuery, PagedResult<ReportDistributionDto>>
 {
-    public async Task<CursorPage<ReportDistributionDto>> Handle(ListReportDistributionsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<ReportDistributionDto>> Handle(ListReportDistributionsQuery query, CancellationToken cancellationToken)
     {
         var report = await reports.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Report", query.Id);
         await ReportAccess.EnsureCanReadAsync(report, audits, currentUser.UserId, permissions, cancellationToken);
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await reports.ListDistributionsAsync(query.Id, page, cancellationToken);
-        return new CursorPage<ReportDistributionDto>(result.Items.Select(d => d.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(d => d.ToDto());
     }
 }
 

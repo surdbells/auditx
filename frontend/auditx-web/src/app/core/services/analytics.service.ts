@@ -10,7 +10,6 @@ import {
   ComplianceByRegulationRow,
   ControlEffectivenessSummary,
   CoverageMatrix,
-  CursorPage,
   DashboardDetail,
   DashboardListItem,
   DeleteDashboardWidgetRequest,
@@ -30,6 +29,7 @@ import {
   RiskRegisterSummary,
   RecurrenceCluster,
   RecurrenceClusterDetail,
+  PagedResult,
   SanctionsConsistency,
   SaveDashboardWidgetRequest,
   UtilisationRow,
@@ -229,14 +229,14 @@ export class AnalyticsService {
 
   /* ---- Recurrence clusters (ViewAnalytics) ---- */
 
-  /** Cursor-paged list of detected recurrence clusters. */
+  /** Offset-paged list of detected recurrence clusters. */
   recurrenceClusters(
-    cursor?: string | null,
-    limit?: number,
-  ): Observable<CursorPage<RecurrenceCluster>> {
-    return this.api.get<CursorPage<RecurrenceCluster>>(
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<RecurrenceCluster>> {
+    return this.api.get<PagedResult<RecurrenceCluster>>(
       '/analytics/recurrence-clusters',
-      { cursor, limit },
+      { page, pageSize },
     );
   }
 

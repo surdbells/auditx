@@ -73,19 +73,27 @@ describe('SanctionsService', () => {
 
   afterEach(() => http.verify());
 
-  it('lists cases with status/cursor/limit params and unwraps the page', () => {
+  it('lists cases with status/page/pageSize params and unwraps the page', () => {
     let result: { items: unknown[] } | undefined;
     service
-      .list('recommendation_submitted', 'cur-1', 20)
+      .list('recommendation_submitted', 1, 25)
       .subscribe((page) => (result = page));
 
     const req = http.expectOne((r) => r.url === `${BASE}/sanctions/cases`);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('status')).toBe('recommendation_submitted');
-    expect(req.request.params.get('cursor')).toBe('cur-1');
-    expect(req.request.params.get('limit')).toBe('20');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('25');
     req.flush({
-      data: { items: [sanctionsCase()], nextCursor: null, hasMore: false },
+      data: {
+        items: [sanctionsCase()],
+        total: 1,
+        page: 1,
+        pageSize: 25,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
+      },
     });
     expect(result?.items.length).toBe(1);
   });
@@ -101,12 +109,21 @@ describe('SanctionsService', () => {
 
   it('lists the DC queue', () => {
     let result: { items: unknown[] } | undefined;
-    service.dcQueue('cur-2', 10).subscribe((page) => (result = page));
+    service.dcQueue(1, 25).subscribe((page) => (result = page));
     const req = http.expectOne((r) => r.url === `${BASE}/sanctions/dc-queue`);
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.get('cursor')).toBe('cur-2');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('25');
     req.flush({
-      data: { items: [sanctionsCase({ status: 'dc_referral' })], nextCursor: null, hasMore: false },
+      data: {
+        items: [sanctionsCase({ status: 'dc_referral' })],
+        total: 1,
+        page: 1,
+        pageSize: 25,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
+      },
     });
     expect(result?.items.length).toBe(1);
   });

@@ -264,8 +264,8 @@ export interface GenerateAcPackRequest {
 /** Query for GET /ac-packs. */
 export interface AcPackQuery {
   status?: string | null;
-  cursor?: string | null;
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 /** Body for PATCH /ac-packs/{id}/cia-text. */

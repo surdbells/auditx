@@ -7,12 +7,12 @@ import { ApiService } from './api.service';
 import {
   ActivateReportTemplateRequest,
   CreateReportTemplateRequest,
-  CursorPage,
   DistributeReportRequest,
   DistributeReportResult,
   GenerateReportRequest,
   GenerateReportResult,
   GenerateStandaloneReportRequest,
+  PagedResult,
   Report,
   ReportDistribution,
   ReportHashVerification,
@@ -55,15 +55,15 @@ export class ReportsService {
     );
   }
 
-  /** Cursor-paginated version list (newest first) for an audit. */
+  /** Offset-paginated version list (newest first) for an audit. */
   listForAudit(
     auditId: string,
-    cursor?: string | null,
-    limit?: number,
-  ): Observable<CursorPage<ReportListItem>> {
-    return this.api.get<CursorPage<ReportListItem>>(
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<ReportListItem>> {
+    return this.api.get<PagedResult<ReportListItem>>(
       `/audits/${auditId}/reports`,
-      { cursor, limit },
+      { page, pageSize },
     );
   }
 
@@ -84,16 +84,16 @@ export class ReportsService {
     return this.api.post<GenerateReportResult>('/reports/standalone', body);
   }
 
-  /** Cursor-paginated standalone report list (newest first), optionally by kind. */
+  /** Offset-paginated standalone report list (newest first), optionally by kind. */
   listStandalone(
     kind?: StandaloneReportKind | null,
-    cursor?: string | null,
-    limit?: number,
-  ): Observable<CursorPage<ReportListItem>> {
-    return this.api.get<CursorPage<ReportListItem>>('/reports/standalone', {
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<ReportListItem>> {
+    return this.api.get<PagedResult<ReportListItem>>('/reports/standalone', {
       kind,
-      cursor,
-      limit,
+      page,
+      pageSize,
     });
   }
 
@@ -133,12 +133,12 @@ export class ReportsService {
 
   distributions(
     id: string,
-    cursor?: string | null,
-    limit?: number,
-  ): Observable<CursorPage<ReportDistribution>> {
-    return this.api.get<CursorPage<ReportDistribution>>(
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<ReportDistribution>> {
+    return this.api.get<PagedResult<ReportDistribution>>(
       `/reports/${id}/distributions`,
-      { cursor, limit },
+      { page, pageSize },
     );
   }
 

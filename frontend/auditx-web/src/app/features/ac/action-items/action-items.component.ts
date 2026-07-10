@@ -27,6 +27,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import {
   CreateActionItemDialogComponent,
   CreateActionItemDialogData,
@@ -35,7 +36,7 @@ import { CloseActionItemDialogComponent } from '../dialogs/close-action-item-dia
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 const STATUS_OPTIONS = ['', 'open', 'in_progress', 'closed', 'acknowledged'];
 
 @Component({
@@ -53,6 +54,7 @@ const STATUS_OPTIONS = ['', 'open', 'in_progress', 'closed', 'acknowledged'];
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './action-items.component.html',
@@ -78,9 +80,11 @@ export class AcActionItemsComponent {
   readonly state = signal<ViewState>('loading');
   readonly items = signal<AcActionItem[]>([]);
   readonly statusFilter = signal('');
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   private usersCache: UserDto[] = [];
 
@@ -100,46 +104,43 @@ export class AcActionItemsComponent {
   );
 
   constructor() {
-    queueMicrotask(() => this.load());
+    queueMicrotask(() => this.fetchPage(1));
   }
 
-  load(): void {
-    this.state.set('loading');
+  fetchPage(page: number): void {
+    this.loading.set(true);
     this.service
-      .listActionItems(this.statusFilter() || null, null, PAGE_SIZE)
+      .listActionItems(this.statusFilter() || null, page, this.pageSize())
       .subscribe({
-        next: (page) => {
-          this.items.set(page.items);
-          this.nextCursor.set(page.nextCursor);
-          this.hasMore.set(page.hasMore);
+        next: (result) => {
+          this.items.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
           this.state.set('ready');
+          this.loading.set(false);
           this.ensureUsers();
         },
-        error: () => this.state.set('error'),
+        error: () => {
+          if (this.state() === 'loading') {
+            this.state.set('error');
+          }
+          this.loading.set(false);
+        },
       });
   }
 
   onStatusChange(status: string): void {
     this.statusFilter.set(status);
-    this.load();
+    this.fetchPage(1);
   }
 
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.service
-      .listActionItems(this.statusFilter() || null, this.nextCursor(), PAGE_SIZE)
-      .subscribe({
-        next: (page) => {
-          this.items.update((current) => [...current, ...page.items]);
-          this.nextCursor.set(page.nextCursor);
-          this.hasMore.set(page.hasMore);
-          this.loadingMore.set(false);
-        },
-        error: () => this.loadingMore.set(false),
-      });
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   /* ---- Create (ACMember) ---- */
@@ -157,7 +158,7 @@ export class AcActionItemsComponent {
           this.service.createActionItem(request).subscribe({
             next: () => {
               this.notify.success(this.i18n.translate('ac.items.notify.created'));
-              this.load();
+              this.fetchPage(1);
             },
             error: () =>
               this.notify.error(

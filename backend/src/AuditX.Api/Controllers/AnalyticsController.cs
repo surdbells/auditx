@@ -115,8 +115,8 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
 
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("recurrence-clusters")]
-    public async Task<IActionResult> RecurrenceClusters([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new GetRecurrenceClustersQuery(cursor, limit), cancellationToken));
+    public async Task<IActionResult> RecurrenceClusters([FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetRecurrenceClustersQuery(page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("recurrence-clusters/{id:guid}")]

@@ -45,7 +45,7 @@ public sealed class NotificationDispatchRepository(AppDbContext db) : INotificat
     public Task<NotificationDispatch?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.NotificationDispatches.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
 
-    public async Task<CursorPage<NotificationDispatch>> SearchAsync(DispatchStatus? status, string? eventType, Guid? recipientUserId, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<NotificationDispatch>> SearchAsync(DispatchStatus? status, string? eventType, Guid? recipientUserId, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.NotificationDispatches.AsNoTracking().AsQueryable();
         if (status is { } s)
@@ -63,19 +63,7 @@ public sealed class NotificationDispatchRepository(AppDbContext db) : INotificat
             query = query.Where(d => d.RecipientUserId == rid);
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(d => d.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(d => d.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<NotificationDispatch>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(d => d.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public async Task<IReadOnlyList<NotificationDispatch>> GetDueForRetryAsync(DateTimeOffset asOf, int max, CancellationToken cancellationToken = default)

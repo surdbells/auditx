@@ -11,7 +11,7 @@ public sealed class SanctionsCaseRepository(AppDbContext db) : ISanctionsCaseRep
     public Task<SanctionsCase?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.SanctionsCases.Include(c => c.TeamMembers).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
-    public async Task<CursorPage<SanctionsCase>> ListPagedAsync(SanctionsCaseStatus? status, string? search, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<SanctionsCase>> ListPagedAsync(SanctionsCaseStatus? status, string? search, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.SanctionsCases.AsNoTracking().AsQueryable();
         if (status is { } s)
@@ -26,33 +26,16 @@ public sealed class SanctionsCaseRepository(AppDbContext db) : ISanctionsCaseRep
             query = query.Where(c => c.Category != null && c.Category.Contains(term));
         }
 
-        return await PageAsync(query, page, cancellationToken);
+        return await query.OrderBy(c => c.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
-    public async Task<CursorPage<SanctionsCase>> ListReferredAsync(PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<SanctionsCase>> ListReferredAsync(PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.SanctionsCases.AsNoTracking().Where(c => c.Status == SanctionsCaseStatus.DcReferral);
-        return await PageAsync(query, page, cancellationToken);
+        return await query.OrderBy(c => c.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public void Add(SanctionsCase sanctionsCase) => db.SanctionsCases.Add(sanctionsCase);
-
-    private static async Task<CursorPage<SanctionsCase>> PageAsync(IQueryable<SanctionsCase> query, PageRequest page, CancellationToken cancellationToken)
-    {
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(c => c.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(c => c.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<SanctionsCase>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
-    }
 }
 
 public sealed class SanctionsGridRepository(AppDbContext db) : ISanctionsGridRepository

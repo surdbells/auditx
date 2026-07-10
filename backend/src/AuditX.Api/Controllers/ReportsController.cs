@@ -30,8 +30,8 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
 
     [RequirePermission(PermissionKeys.ViewReport)]
     [HttpGet("api/v1/audits/{auditId:guid}/reports")]
-    public async Task<IActionResult> ListForAudit(Guid auditId, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListAuditReportsQuery(auditId, cursor, limit), cancellationToken));
+    public async Task<IActionResult> ListForAudit(Guid auditId, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListAuditReportsQuery(auditId, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.GenerateReport)]
     [HttpPost("api/v1/reports/standalone")]
@@ -44,7 +44,7 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
 
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("api/v1/reports/standalone")]
-    public async Task<IActionResult> ListStandalone([FromQuery] string? kind, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
+    public async Task<IActionResult> ListStandalone([FromQuery] string? kind, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
     {
         ReportKind? kindFilter = null;
         if (!string.IsNullOrWhiteSpace(kind))
@@ -52,7 +52,7 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
             kindFilter = ParseStandaloneKind(kind);
         }
 
-        return Envelope(await dispatcher.Query(new ListStandaloneReportsQuery(kindFilter, cursor, limit), cancellationToken));
+        return Envelope(await dispatcher.Query(new ListStandaloneReportsQuery(kindFilter, page, pageSize), cancellationToken));
     }
 
     [RequirePermission(PermissionKeys.ViewReport)]
@@ -83,8 +83,8 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
 
     [RequirePermission(PermissionKeys.ViewReport)]
     [HttpGet("api/v1/reports/{id:guid}/distributions")]
-    public async Task<IActionResult> Distributions(Guid id, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListReportDistributionsQuery(id, cursor, limit), cancellationToken));
+    public async Task<IActionResult> Distributions(Guid id, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListReportDistributionsQuery(id, page, pageSize), cancellationToken));
 
     /// <summary>Parses a standalone report kind, rejecting an unrecognised value or the engagement kind (400).</summary>
     private static ReportKind ParseStandaloneKind(string? value)

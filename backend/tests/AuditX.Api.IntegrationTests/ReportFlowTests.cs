@@ -175,7 +175,7 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
         Assert.True(v2 > v1);
 
         var versions = await DataAsync(await manager.GetAsync($"/api/v1/audits/{auditId}/reports"));
-        Assert.True(versions.GetProperty("items").GetArrayLength() >= 2); // per-audit reports are now cursor-paged
+        Assert.True(versions.GetProperty("items").GetArrayLength() >= 2); // per-audit reports are now offset-paged
     }
 
     [Fact]

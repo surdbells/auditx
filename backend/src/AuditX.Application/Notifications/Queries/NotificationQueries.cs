@@ -26,11 +26,11 @@ public sealed class ListNotificationTemplatesQueryHandler(INotificationTemplateR
         => (await templates.ListAsync(cancellationToken)).Select(t => t.ToDto()).ToArray();
 }
 
-public sealed record ListDispatchesQuery(string? Status, string? EventType, Guid? RecipientUserId, string? Cursor, int? Limit) : IQuery<CursorPage<NotificationDispatchDto>>;
+public sealed record ListDispatchesQuery(string? Status, string? EventType, Guid? RecipientUserId, int? Page, int? PageSize) : IQuery<PagedResult<NotificationDispatchDto>>;
 
-public sealed class ListDispatchesQueryHandler(INotificationDispatchRepository dispatches) : IQueryHandler<ListDispatchesQuery, CursorPage<NotificationDispatchDto>>
+public sealed class ListDispatchesQueryHandler(INotificationDispatchRepository dispatches) : IQueryHandler<ListDispatchesQuery, PagedResult<NotificationDispatchDto>>
 {
-    public async Task<CursorPage<NotificationDispatchDto>> Handle(ListDispatchesQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<NotificationDispatchDto>> Handle(ListDispatchesQuery query, CancellationToken cancellationToken)
     {
         DispatchStatus? status = null;
         if (!string.IsNullOrWhiteSpace(query.Status))
@@ -40,21 +40,19 @@ public sealed class ListDispatchesQueryHandler(INotificationDispatchRepository d
                 : throw new DomainException("notification.invalid_status", $"Unknown status '{query.Status}'.");
         }
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
-        var result = await dispatches.SearchAsync(status, query.EventType, query.RecipientUserId, page, cancellationToken);
-        return new CursorPage<NotificationDispatchDto>(result.Items.Select(d => d.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        var result = await dispatches.SearchAsync(status, query.EventType, query.RecipientUserId, PageSpec.Of(query.Page, query.PageSize), cancellationToken);
+        return result.Map(d => d.ToDto());
     }
 }
 
-public sealed record ListDeadLetterQuery(string? Cursor, int? Limit) : IQuery<CursorPage<NotificationDispatchDto>>;
+public sealed record ListDeadLetterQuery(int? Page, int? PageSize) : IQuery<PagedResult<NotificationDispatchDto>>;
 
-public sealed class ListDeadLetterQueryHandler(INotificationDispatchRepository dispatches) : IQueryHandler<ListDeadLetterQuery, CursorPage<NotificationDispatchDto>>
+public sealed class ListDeadLetterQueryHandler(INotificationDispatchRepository dispatches) : IQueryHandler<ListDeadLetterQuery, PagedResult<NotificationDispatchDto>>
 {
-    public async Task<CursorPage<NotificationDispatchDto>> Handle(ListDeadLetterQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<NotificationDispatchDto>> Handle(ListDeadLetterQuery query, CancellationToken cancellationToken)
     {
-        var page = PageRequest.Of(query.Cursor, query.Limit);
-        var result = await dispatches.SearchAsync(DispatchStatus.DeadLetter, null, null, page, cancellationToken);
-        return new CursorPage<NotificationDispatchDto>(result.Items.Select(d => d.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        var result = await dispatches.SearchAsync(DispatchStatus.DeadLetter, null, null, PageSpec.Of(query.Page, query.PageSize), cancellationToken);
+        return result.Map(d => d.ToDto());
     }
 }
 

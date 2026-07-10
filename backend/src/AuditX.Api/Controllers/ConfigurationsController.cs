@@ -24,8 +24,8 @@ public sealed class ConfigurationsController(IDispatcher dispatcher) : ApiContro
 
     [RequirePermission(PermissionKeys.ViewConfig)]
     [HttpGet("api/v1/configurations/{domain}/versions")]
-    public async Task<IActionResult> ListVersions(string domain, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new GetConfigurationVersionsQuery(domain, cursor, limit), cancellationToken));
+    public async Task<IActionResult> ListVersions(string domain, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetConfigurationVersionsQuery(domain, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageConfiguration)]
     [HttpPost("api/v1/configurations/{domain}")]

@@ -24,10 +24,11 @@ import { humaniseStatus } from '../humanise-status';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_LIMIT = 7;
+const DEFAULT_PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-notification-dispatches',
@@ -46,6 +47,7 @@ const PAGE_LIMIT = 7;
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
+    PaginatorComponent,
   ],
   templateUrl: './notification-dispatches.component.html',
   styleUrl: './notification-dispatches.component.scss',
@@ -106,6 +108,11 @@ export class NotificationDispatchesComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly dispatches = signal<NotificationDispatch[]>([]);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly humanise = humaniseStatus;
 
@@ -114,26 +121,44 @@ export class NotificationDispatchesComponent {
   );
 
   constructor() {
-    this.fetch();
+    this.fetchPage(1);
     this.statusFilter.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe(() => this.fetch());
+      .subscribe(() => this.fetchPage(1));
   }
 
-  fetch(): void {
-    this.state.set('loading');
+  fetchPage(page: number): void {
+    this.loading.set(true);
     this.notifications
       .listDispatches({
         status: this.statusFilter.value,
         eventType: this.eventTypeFilter.value.trim(),
-        limit: PAGE_LIMIT,
+        page,
+        pageSize: this.pageSize(),
       })
       .subscribe({
-        next: (page) => {
-          this.dispatches.set(page.items);
+        next: (result) => {
+          this.dispatches.set(result.items);
+          this.total.set(result.total);
+          this.page.set(result.page);
           this.state.set('ready');
+          this.loading.set(false);
         },
-        error: () => this.state.set('error'),
+        error: () => {
+          if (this.state() === 'loading') {
+            this.state.set('error');
+          }
+          this.loading.set(false);
+        },
       });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 }

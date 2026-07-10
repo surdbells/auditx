@@ -37,6 +37,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -44,6 +45,8 @@ type ViewState = 'loading' | 'ready' | 'error';
 
 /** Poll interval (ms) while a generation is pending/running. */
 const POLL_INTERVAL = 2000;
+
+const DEFAULT_PAGE_SIZE = 25;
 
 /** The selectable standalone report kinds, with their nav/label metadata. */
 interface KindOption {
@@ -89,6 +92,7 @@ const RESTRICTED_KINDS: Record<string, string> = {
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './standalone-reports.component.html',
@@ -106,9 +110,11 @@ export class StandaloneReportsComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly reports = signal<ReportListItem[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
   /** Set while a generation is pending/running and being polled. */
   readonly generating = signal(false);
 
@@ -147,44 +153,42 @@ export class StandaloneReportsComponent {
   );
 
   constructor() {
-    queueMicrotask(() => this.loadList());
+    queueMicrotask(() => this.fetchPage(1));
     this.destroyRef.onDestroy(() => this.pollSub?.unsubscribe());
   }
 
   /** Re-filter the list to a single kind, or all kinds when value is null. */
   applyFilter(kind: StandaloneReportKind | null): void {
     this.filterKind.set(kind);
-    this.loadList();
+    this.fetchPage(1);
   }
 
-  loadList(): void {
-    this.state.set('loading');
-    this.nextCursor.set(null);
-    this.service.listStandalone(this.filterKind()).subscribe({
-      next: (page) => {
-        this.reports.set(page.items);
-        this.nextCursor.set(page.nextCursor);
-        this.hasMore.set(page.hasMore);
+  fetchPage(page: number): void {
+    this.loading.set(true);
+    this.service.listStandalone(this.filterKind(), page, this.pageSize()).subscribe({
+      next: (result) => {
+        this.reports.set(result.items);
+        this.total.set(result.total);
+        this.page.set(result.page);
         this.state.set('ready');
+        this.loading.set(false);
       },
-      error: () => this.state.set('error'),
+      error: () => {
+        if (this.state() === 'loading') {
+          this.state.set('error');
+        }
+        this.loading.set(false);
+      },
     });
   }
 
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.service.listStandalone(this.filterKind(), this.nextCursor()).subscribe({
-      next: (page) => {
-        this.reports.update((current) => [...current, ...page.items]);
-        this.nextCursor.set(page.nextCursor);
-        this.hasMore.set(page.hasMore);
-        this.loadingMore.set(false);
-      },
-      error: () => this.loadingMore.set(false),
-    });
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   generate(): void {
@@ -220,7 +224,7 @@ export class StandaloneReportsComponent {
           this.pollSub?.unsubscribe();
           this.generating.set(false);
           this.notify.error(this.i18n.translate('reports.panel.notify.lostTrack'));
-          this.loadList();
+          this.fetchPage(1);
         },
       });
     });
@@ -235,7 +239,7 @@ export class StandaloneReportsComponent {
           version: report.versionNumber,
         }),
       );
-      this.loadList();
+      this.fetchPage(1);
     } else if (report.status === 'failed') {
       this.pollSub?.unsubscribe();
       this.generating.set(false);
@@ -243,7 +247,7 @@ export class StandaloneReportsComponent {
         report.failureReason ||
           this.i18n.translate('reports.panel.notify.generationFailed'),
       );
-      this.loadList();
+      this.fetchPage(1);
     }
     // pending / running: keep polling.
   }

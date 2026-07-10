@@ -28,22 +28,21 @@ public sealed class GetActiveConfigurationQueryHandler(IBankConfigurationReposit
     }
 }
 
-// ---- Version timeline for a domain (newest first, cursor-paged) ----
+// ---- Version timeline for a domain (newest first, offset-paged) ----
 
-public sealed record GetConfigurationVersionsQuery(string Domain, string? Cursor, int? Limit) : IQuery<CursorPage<ConfigurationVersionDto>>;
+public sealed record GetConfigurationVersionsQuery(string Domain, int? Page, int? PageSize) : IQuery<PagedResult<ConfigurationVersionDto>>;
 
 public sealed class GetConfigurationVersionsQueryHandler(IBankConfigurationRepository configurations)
-    : IQueryHandler<GetConfigurationVersionsQuery, CursorPage<ConfigurationVersionDto>>
+    : IQueryHandler<GetConfigurationVersionsQuery, PagedResult<ConfigurationVersionDto>>
 {
-    public async Task<CursorPage<ConfigurationVersionDto>> Handle(GetConfigurationVersionsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<ConfigurationVersionDto>> Handle(GetConfigurationVersionsQuery query, CancellationToken cancellationToken)
     {
         if (!ConfigurationDomains.IsKnown(query.Domain))
         {
             throw new DomainException("configuration.unknown_domain", $"Unknown configuration domain '{query.Domain}'.");
         }
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
-        var result = await configurations.ListVersionsAsync(query.Domain, page, cancellationToken);
-        return new CursorPage<ConfigurationVersionDto>(result.Items.Select(c => c.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        var result = await configurations.ListVersionsAsync(query.Domain, PageSpec.Of(query.Page, query.PageSize), cancellationToken);
+        return result.Map(c => c.ToDto());
     }
 }

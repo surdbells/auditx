@@ -35,8 +35,8 @@ public sealed class AcActionItemsController(IDispatcher dispatcher) : ApiControl
 
     [RequirePermission(PermissionKeys.AcMember)]
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new ListAcActionItemsQuery(status, cursor, limit), cancellationToken));
+    public async Task<IActionResult> List([FromQuery] string? status, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListAcActionItemsQuery(status, page, pageSize), cancellationToken));
 
     [RequirePermission(PermissionKeys.Cia)]
     [HttpPatch("{id:guid}")]

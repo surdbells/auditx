@@ -42,6 +42,27 @@ function version(
   };
 }
 
+/** Offset-paginated version-history envelope payload. */
+function historyPage(items: ConfigurationVersion[]): {
+  items: ConfigurationVersion[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+} {
+  return {
+    items,
+    total: items.length,
+    page: 1,
+    pageSize: 25,
+    totalPages: 1,
+    hasPrevious: false,
+    hasNext: false,
+  };
+}
+
 function session(permissions: string[]): SessionDto {
   return {
     userId: 'u1',
@@ -100,7 +121,7 @@ describe('ConfigurationDetailComponent', () => {
     });
     http
       .expectOne((r) => r.url === `${BASE}/configurations/${DOMAIN}/versions`)
-      .flush({ data: { items: versions, nextCursor: null, hasMore: false } });
+      .flush({ data: historyPage(versions) });
     await fixture.whenStable();
     fixture.detectChanges();
   }
@@ -135,7 +156,7 @@ describe('ConfigurationDetailComponent', () => {
     // history reload
     http
       .expectOne((r) => r.url === `${BASE}/configurations/${DOMAIN}/versions`)
-      .flush({ data: { items: [], nextCursor: null, hasMore: false } });
+      .flush({ data: historyPage([]) });
 
     expect(notify.success).toHaveBeenCalled();
   });
@@ -209,7 +230,7 @@ describe('ConfigurationDetailComponent', () => {
     // history reload
     http
       .expectOne((r) => r.url === `${BASE}/configurations/${DOMAIN}/versions`)
-      .flush({ data: { items: [], nextCursor: null, hasMore: false } });
+      .flush({ data: historyPage([]) });
 
     expect(component.active()?.versionNumber).toBe(2);
     expect(notify.success).toHaveBeenCalled();

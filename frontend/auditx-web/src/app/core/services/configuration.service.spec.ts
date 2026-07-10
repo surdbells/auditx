@@ -58,19 +58,25 @@ describe('ConfigurationService', () => {
     expect(result?.versionNumber).toBe(1);
   });
 
-  it('lists versions with cursor/limit params and unwraps the page', () => {
+  it('lists versions with page/pageSize params and unwraps the page', () => {
     let result: { items: ConfigurationVersion[] } | undefined;
-    service
-      .listVersions(DOMAIN, 'cur-1', 25)
-      .subscribe((page) => (result = page));
+    service.listVersions(DOMAIN, 2, 25).subscribe((page) => (result = page));
     const req = http.expectOne(
       (r) => r.url === `${BASE}/configurations/${DOMAIN}/versions`,
     );
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.get('cursor')).toBe('cur-1');
-    expect(req.request.params.get('limit')).toBe('25');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
     req.flush({
-      data: { items: [version()], nextCursor: 'cur-2', hasMore: true },
+      data: {
+        items: [version()],
+        total: 1,
+        page: 2,
+        pageSize: 25,
+        totalPages: 1,
+        hasPrevious: true,
+        hasNext: false,
+      },
     });
     expect(result?.items.length).toBe(1);
   });

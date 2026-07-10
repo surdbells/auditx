@@ -21,10 +21,13 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-/** Cursor-paged table of detected recurrence clusters; rows drill into detail. */
+const DEFAULT_PAGE_SIZE = 25;
+
+/** Offset-paged table of detected recurrence clusters; rows drill into detail. */
 @Component({
   selector: 'app-recurrence-clusters',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +43,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
   ],
   templateUrl: './recurrence-clusters.component.html',
   styleUrl: './recurrence-clusters.component.scss',
@@ -61,9 +65,11 @@ export class RecurrenceClustersComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly clusters = signal<RecurrenceCluster[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly humanise = humanise;
 
@@ -72,36 +78,34 @@ export class RecurrenceClustersComponent {
   );
 
   constructor() {
-    this.fetch();
+    this.fetchPage(1);
   }
 
-  fetch(): void {
-    this.state.set('loading');
-    this.clusters.set([]);
-    this.service.recurrenceClusters().subscribe({
-      next: (page) => {
-        this.clusters.set(page.items);
-        this.nextCursor.set(page.nextCursor);
-        this.hasMore.set(page.hasMore);
+  fetchPage(page: number): void {
+    this.loading.set(true);
+    this.service.recurrenceClusters(page, this.pageSize()).subscribe({
+      next: (result) => {
+        this.clusters.set(result.items);
+        this.total.set(result.total);
+        this.page.set(result.page);
         this.state.set('ready');
+        this.loading.set(false);
       },
-      error: () => this.state.set('error'),
+      error: () => {
+        if (this.state() === 'loading') {
+          this.state.set('error');
+        }
+        this.loading.set(false);
+      },
     });
   }
 
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.service.recurrenceClusters(this.nextCursor()).subscribe({
-      next: (page) => {
-        this.clusters.update((rows) => [...rows, ...page.items]);
-        this.nextCursor.set(page.nextCursor);
-        this.hasMore.set(page.hasMore);
-        this.loadingMore.set(false);
-      },
-      error: () => this.loadingMore.set(false),
-    });
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 }

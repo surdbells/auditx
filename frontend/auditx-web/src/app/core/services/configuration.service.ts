@@ -10,9 +10,9 @@ import {
   ConfigurationReasonRequest,
   ConfigurationVersion,
   CreateConfigurationVersionRequest,
-  CursorPage,
   ExceptionDefaultsDefinition,
   ExceptionDefaultsDefinitionJson,
+  PagedResult,
   PendingActionDto,
   RollbackConfigurationRequest,
 } from '../models';
@@ -40,15 +40,15 @@ export class ConfigurationService {
     return this.api.get<ConfigurationVersion>(`/configurations/${domain}`);
   }
 
-  /** Cursor-paged version history (newest first). */
+  /** Offset-paged version history (newest first). */
   listVersions(
     domain: string,
-    cursor?: string | null,
-    limit?: number,
-  ): Observable<CursorPage<ConfigurationVersion>> {
-    return this.api.get<CursorPage<ConfigurationVersion>>(
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<ConfigurationVersion>> {
+    return this.api.get<PagedResult<ConfigurationVersion>>(
       `/configurations/${domain}/versions`,
-      { cursor, limit },
+      { page, pageSize },
     );
   }
 

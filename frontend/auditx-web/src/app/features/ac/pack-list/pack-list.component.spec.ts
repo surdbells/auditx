@@ -5,9 +5,27 @@ import { provideRouter } from '@angular/router';
 import { AcPackListComponent } from './pack-list.component';
 import { provideTestEnv } from '../../../../testing/test-providers';
 import { AuthService } from '../../../core/services/auth.service';
-import { AcPackListItem, SessionDto } from '../../../core/models';
+import { AcPackListItem, PagedResult, SessionDto } from '../../../core/models';
 
 const BASE = '/api/v1';
+
+function page(
+  items: AcPackListItem[],
+  total = items.length,
+  pageNum = 1,
+  pageSize = 25,
+): PagedResult<AcPackListItem> {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    items,
+    total,
+    page: pageNum,
+    pageSize,
+    totalPages,
+    hasPrevious: pageNum > 1,
+    hasNext: pageNum < totalPages,
+  };
+}
 
 function session(permissions: string[]): SessionDto {
   return {
@@ -65,7 +83,7 @@ describe('AcPackListComponent', () => {
     await fixture.whenStable();
     http
       .expectOne((r) => r.url === `${BASE}/ac-packs`)
-      .flush({ data: { items, nextCursor: null, hasMore: false } });
+      .flush({ data: page(items) });
     await fixture.whenStable();
     fixture.detectChanges();
   }
@@ -96,13 +114,26 @@ describe('AcPackListComponent', () => {
     expect(component.canGenerate()).toBe(true);
   });
 
-  it('re-queries with the status filter', async () => {
+  it('re-queries with the status filter at page 1', async () => {
     await setup(['ViewACPacks'], [listItem()]);
     component.onStatusChange('approved');
     const req = http.expectOne((r) => r.url === `${BASE}/ac-packs`);
     expect(req.request.params.get('status')).toBe('approved');
-    req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+    expect(req.request.params.get('page')).toBe('1');
+    req.flush({ data: page([]) });
     await fixture.whenStable();
     expect(component.packs().length).toBe(0);
+  });
+
+  it('navigates to another page via the paginator, carrying page + pageSize', async () => {
+    await setup(['ViewACPacks'], [listItem()]);
+    component.onPageChange(2);
+    const req = http.expectOne((r) => r.url === `${BASE}/ac-packs`);
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: page([listItem({ id: 'p-2', versionNumber: 2 })], 50, 2) });
+    await fixture.whenStable();
+    expect(component.page()).toBe(2);
+    expect(component.total()).toBe(50);
   });
 });

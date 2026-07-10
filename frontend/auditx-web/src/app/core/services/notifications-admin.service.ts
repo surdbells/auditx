@@ -4,12 +4,12 @@ import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   CreateNotificationRuleRequest,
-  CursorPage,
   NotificationDispatch,
   NotificationPreferences,
   NotificationRule,
   NotificationTemplate,
   NotificationTemplateRequest,
+  PagedResult,
   PreviewNotificationRuleRequest,
   RulePreview,
   UpdateNotificationPreferencesRequest,
@@ -77,28 +77,28 @@ export class NotificationAdminService {
     status?: string | '';
     eventType?: string | '';
     recipient?: string | '';
-    cursor?: string;
-    limit?: number;
-  }): Observable<CursorPage<NotificationDispatch>> {
-    return this.api.get<CursorPage<NotificationDispatch>>(
+    page?: number;
+    pageSize?: number;
+  }): Observable<PagedResult<NotificationDispatch>> {
+    return this.api.get<PagedResult<NotificationDispatch>>(
       '/notification-dispatches',
       {
         status: params.status,
         eventType: params.eventType,
         recipient: params.recipient,
-        cursor: params.cursor,
-        limit: params.limit,
+        page: params.page,
+        pageSize: params.pageSize,
       },
     );
   }
 
   listDeadLetter(
-    cursor?: string,
-    limit?: number,
-  ): Observable<CursorPage<NotificationDispatch>> {
-    return this.api.get<CursorPage<NotificationDispatch>>(
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<NotificationDispatch>> {
+    return this.api.get<PagedResult<NotificationDispatch>>(
       '/notification-dispatches/dead-letter',
-      { cursor, limit },
+      { page, pageSize },
     );
   }
 

@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { RecurrenceClustersComponent } from './recurrence-clusters.component';
 import { provideTestEnv } from '../../../../testing/test-providers';
-import { RecurrenceCluster } from '../../../core/models';
+import { PagedResult, RecurrenceCluster } from '../../../core/models';
 
 const BASE = '/api/v1';
 
@@ -23,16 +23,30 @@ function cluster(overrides: Partial<RecurrenceCluster> = {}): RecurrenceCluster 
   };
 }
 
+function page(
+  items: RecurrenceCluster[],
+  total = items.length,
+  pageNum = 1,
+  pageSize = 25,
+): PagedResult<RecurrenceCluster> {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    items,
+    total,
+    page: pageNum,
+    pageSize,
+    totalPages,
+    hasPrevious: pageNum > 1,
+    hasNext: pageNum < totalPages,
+  };
+}
+
 describe('RecurrenceClustersComponent', () => {
   let fixture: ComponentFixture<RecurrenceClustersComponent>;
   let component: RecurrenceClustersComponent;
   let http: HttpTestingController;
 
-  async function setup(
-    items: RecurrenceCluster[],
-    nextCursor: string | null,
-    hasMore: boolean,
-  ): Promise<void> {
+  async function setup(result: PagedResult<RecurrenceCluster>): Promise<void> {
     TestBed.configureTestingModule({
       imports: [RecurrenceClustersComponent],
       providers: [provideTestEnv(), provideRouter([])],
@@ -44,7 +58,7 @@ describe('RecurrenceClustersComponent', () => {
 
     http
       .expectOne((r) => r.url === `${BASE}/analytics/recurrence-clusters`)
-      .flush({ data: { items, nextCursor, hasMore } });
+      .flush({ data: result });
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -55,7 +69,7 @@ describe('RecurrenceClustersComponent', () => {
   /** Flushes the (at most one) lazy entity-directory GET the entity label triggers. */
   function flushEntityDirectory(): void {
     for (const req of http.match((r) => r.url === `${BASE}/audit-universe/entities`)) {
-      req.flush({ data: { items: [], nextCursor: null, hasMore: false } });
+      req.flush({ data: { items: [], total: 0, page: 1, pageSize: 5000, totalPages: 1, hasPrevious: false, hasNext: false } });
     }
   }
 
@@ -65,32 +79,45 @@ describe('RecurrenceClustersComponent', () => {
   });
 
   it('lists the first page of clusters', async () => {
-    await setup([cluster()], null, false);
+    await setup(page([cluster()]));
     expect(component.clusters().length).toBe(1);
-    expect(component.hasMore()).toBe(false);
+    expect(component.total()).toBe(1);
+    expect(component.page()).toBe(1);
+    expect(component.state()).toBe('ready');
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Aml');
   });
 
-  it('appends the next page on loadMore using the cursor', async () => {
-    await setup([cluster({ id: 'c-1' })], 'cur-2', true);
-    expect(component.hasMore()).toBe(true);
+  it('navigates to another page via the paginator, carrying page + pageSize', async () => {
+    await setup(page([cluster({ id: 'c-1' })], 50));
 
-    component.loadMore();
+    component.onPageChange(2);
     const req = http.expectOne(
       (r) => r.url === `${BASE}/analytics/recurrence-clusters`,
     );
-    expect(req.request.params.get('cursor')).toBe('cur-2');
-    req.flush({
-      data: { items: [cluster({ id: 'c-2' })], nextCursor: null, hasMore: false },
-    });
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('25');
+    req.flush({ data: page([cluster({ id: 'c-2' })], 50, 2) });
 
-    expect(component.clusters().map((c) => c.id)).toEqual(['c-1', 'c-2']);
-    expect(component.hasMore()).toBe(false);
+    expect(component.clusters().map((c) => c.id)).toEqual(['c-2']);
+    expect(component.page()).toBe(2);
+  });
+
+  it('changing the page size re-queries from page 1', async () => {
+    await setup(page([cluster({ id: 'c-1' })], 50));
+
+    component.onPageSizeChange(100);
+    const req = http.expectOne(
+      (r) => r.url === `${BASE}/analytics/recurrence-clusters`,
+    );
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('100');
+    req.flush({ data: page([cluster({ id: 'c-1' })], 50, 1, 100) });
+    expect(component.pageSize()).toBe(100);
   });
 
   it('shows the empty state when there are no clusters', async () => {
-    await setup([], null, false);
+    await setup(page([]));
     expect(component.isEmpty()).toBe(true);
   });
 });

@@ -23,7 +23,7 @@ public sealed class AcPackContentAssembler(IAnalyticsQueryService analytics, IRe
         var portfolio = await analytics.ExceptionPortfolioAsync(cancellationToken);
         var materialFindings = await analytics.MaterialFindingsAsync(cancellationToken);
         var sanctions = await analytics.SanctionsConsistencyAsync(cancellationToken);
-        var recurrencePage = await clusters.ListPagedAsync(new Common.Models.PageRequest(null, 100), cancellationToken);
+        var recurrencePage = await clusters.ListPagedAsync(new Common.Models.PageSpec(1, 100), cancellationToken);
 
         return new AcPackComposition(
             pack.PeriodStart,

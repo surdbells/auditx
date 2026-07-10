@@ -11,68 +11,31 @@ public sealed class ReportRepository(AppDbContext db) : IReportRepository
     public Task<Report?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.Reports.Include(r => r.Distributions).FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
-    public async Task<CursorPage<Report>> ListByAuditAsync(Guid auditId, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Report>> ListByAuditAsync(Guid auditId, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.Reports.AsNoTracking().Where(r => r.AuditId == auditId);
 
-        // Newest version first; keyset on the descending version number using an encoded int cursor (per-audit
-        // versions are a dense incrementing int, so this is a stable total order without a tiebreaker).
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && int.TryParse(page.Cursor, out var cursorVersion))
-        {
-            query = query.Where(r => r.VersionNumber < cursorVersion);
-        }
-
-        var items = await query.OrderByDescending(r => r.VersionNumber).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<Report>(items, hasMore ? items[^1].VersionNumber.ToString() : null, hasMore);
+        // Newest version first (per-audit versions are a dense incrementing int, a stable total order).
+        return await query.OrderByDescending(r => r.VersionNumber).ToPagedResultAsync(page, cancellationToken);
     }
 
-    public async Task<CursorPage<Report>> ListStandaloneAsync(ReportKind? kind, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Report>> ListStandaloneAsync(ReportKind? kind, PageSpec page, CancellationToken cancellationToken = default)
     {
-        // Standalone reports have no audit; order newest first. Report ids are GUID v7 (time-ordered), so a keyset on
-        // the descending id is a stable, chronological total order without a tiebreaker (per-kind versions are not).
+        // Standalone reports have no audit; order newest first. Report ids are GUID v7 (time-ordered), so ordering by
+        // the descending id is a stable, chronological total order.
         var query = db.Reports.AsNoTracking().Where(r => r.AuditId == null);
         if (kind is { } k)
         {
             query = query.Where(r => r.Kind == k);
         }
 
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(r => r.Id.CompareTo(cursorId) < 0);
-        }
-
-        var items = await query.OrderByDescending(r => r.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<Report>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderByDescending(r => r.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
-    public async Task<CursorPage<ReportDistribution>> ListDistributionsAsync(Guid reportId, PageRequest page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<ReportDistribution>> ListDistributionsAsync(Guid reportId, PageSpec page, CancellationToken cancellationToken = default)
     {
         var query = db.Set<ReportDistribution>().AsNoTracking().Where(d => d.ReportId == reportId);
-        if (!string.IsNullOrWhiteSpace(page.Cursor) && Guid.TryParse(page.Cursor, out var cursorId))
-        {
-            query = query.Where(d => d.Id.CompareTo(cursorId) > 0);
-        }
-
-        var items = await query.OrderBy(d => d.Id).Take(page.Limit + 1).ToListAsync(cancellationToken);
-        var hasMore = items.Count > page.Limit;
-        if (hasMore)
-        {
-            items.RemoveAt(items.Count - 1);
-        }
-
-        return new CursorPage<ReportDistribution>(items, hasMore ? items[^1].Id.ToString() : null, hasMore);
+        return await query.OrderBy(d => d.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
     public async Task<int> GetNextVersionAsync(Guid auditId, CancellationToken cancellationToken = default)

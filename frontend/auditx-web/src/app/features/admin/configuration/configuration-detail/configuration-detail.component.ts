@@ -37,10 +37,13 @@ import {
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+const DEFAULT_PAGE_SIZE = 25;
 
 /** Translation key for the title shown for each known domain. */
 const DOMAIN_TITLE_KEYS: Record<string, string> = {
@@ -72,6 +75,7 @@ const MIN_REASON = 20;
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './configuration-detail.component.html',
@@ -101,9 +105,11 @@ export class ConfigurationDetailComponent {
   readonly active = signal<ConfigurationVersion | null>(null);
   readonly activeDefinition = signal<ExceptionDefaultsDefinition | null>(null);
   readonly versions = signal<ConfigurationVersion[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight version-history fetch (page navigation) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly saving = signal(false);
   /** Banner text when an action was routed to a second approver. */
@@ -150,7 +156,7 @@ export class ConfigurationDetailComponent {
     this.service.getActive(this.domain()).subscribe({
       next: (v) => {
         this.applyActive(v);
-        this.loadVersions();
+        this.fetchPage(1);
         this.state.set('ready');
       },
       error: () => this.state.set('error'),
@@ -173,30 +179,26 @@ export class ConfigurationDetailComponent {
     }
   }
 
-  loadVersions(): void {
-    this.service.listVersions(this.domain()).subscribe({
-      next: (page) => {
-        this.versions.set(page.items);
-        this.nextCursor.set(page.nextCursor);
-        this.hasMore.set(page.hasMore);
+  fetchPage(page: number): void {
+    this.loading.set(true);
+    this.service.listVersions(this.domain(), page, this.pageSize()).subscribe({
+      next: (result) => {
+        this.versions.set(result.items);
+        this.total.set(result.total);
+        this.page.set(result.page);
+        this.loading.set(false);
       },
+      error: () => this.loading.set(false),
     });
   }
 
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.service.listVersions(this.domain(), this.nextCursor()).subscribe({
-      next: (page) => {
-        this.versions.update((rows) => [...rows, ...page.items]);
-        this.nextCursor.set(page.nextCursor);
-        this.hasMore.set(page.hasMore);
-        this.loadingMore.set(false);
-      },
-      error: () => this.loadingMore.set(false),
-    });
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   /** POSTs a new inactive draft from the typed form. */
@@ -231,7 +233,7 @@ export class ConfigurationDetailComponent {
             }),
           );
           this.form.controls.changeReason.reset('');
-          this.loadVersions();
+          this.fetchPage(1);
         },
         error: (err: unknown) => {
           this.saving.set(false);
@@ -287,7 +289,7 @@ export class ConfigurationDetailComponent {
                 if (action.version) {
                   this.applyActive(action.version);
                 }
-                this.loadVersions();
+                this.fetchPage(this.page());
               }
             },
           });
@@ -341,7 +343,7 @@ export class ConfigurationDetailComponent {
                 if (action.version) {
                   this.applyActive(action.version);
                 }
-                this.loadVersions();
+                this.fetchPage(this.page());
               }
             },
             error: (err: unknown) => {

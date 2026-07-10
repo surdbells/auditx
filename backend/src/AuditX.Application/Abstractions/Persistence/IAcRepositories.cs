@@ -10,15 +10,15 @@ public interface IAcPackRepository
     Task<AcPack?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Keyset-paginated packs (newest version first), optionally filtered by status. When
+    /// Offset-paginated packs (newest version first), optionally filtered by status. When
     /// <paramref name="approvedOnly"/> is true (a non-CIA AC member), only approved/distributed packs are returned —
-    /// filtered IN the query before pagination so the cursor + page size stay correct (a post-pagination filter would
-    /// yield short/empty pages and a misaligned cursor).
+    /// filtered IN the query before pagination so the page size + total stay correct (a post-pagination filter would
+    /// yield short/empty pages and a misaligned total).
     /// </summary>
-    Task<CursorPage<AcPack>> ListAsync(AcPackStatus? status, bool approvedOnly, PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<AcPack>> ListAsync(AcPackStatus? status, bool approvedOnly, PageSpec page, CancellationToken cancellationToken = default);
 
-    /// <summary>Keyset-paginated distribution log for a pack, ordered by dispatch time.</summary>
-    Task<CursorPage<AcPackDistribution>> ListDistributionsAsync(Guid acPackId, PageRequest page, CancellationToken cancellationToken = default);
+    /// <summary>Offset-paginated distribution log for a pack, ordered by dispatch time.</summary>
+    Task<PagedResult<AcPackDistribution>> ListDistributionsAsync(Guid acPackId, PageSpec page, CancellationToken cancellationToken = default);
 
     /// <summary>Highest version number assigned bank-wide so far (0 if none), for computing the next version.</summary>
     Task<int> GetMaxVersionNumberAsync(CancellationToken cancellationToken = default);
@@ -30,8 +30,8 @@ public interface IAcActionItemRepository
 {
     Task<AcActionItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    /// <summary>Keyset-paginated action items (newest first), optionally filtered by status.</summary>
-    Task<CursorPage<AcActionItem>> ListAsync(AcActionItemStatus? status, PageRequest page, CancellationToken cancellationToken = default);
+    /// <summary>Offset-paginated action items (newest first), optionally filtered by status.</summary>
+    Task<PagedResult<AcActionItem>> ListAsync(AcActionItemStatus? status, PageSpec page, CancellationToken cancellationToken = default);
 
     void Add(AcActionItem item);
 }

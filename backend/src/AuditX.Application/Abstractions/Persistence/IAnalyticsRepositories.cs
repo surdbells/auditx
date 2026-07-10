@@ -33,7 +33,7 @@ public interface IRecurrenceClusterRepository
 
     Task<IReadOnlyList<RecurrenceCluster>> ListTrackedAsync(CancellationToken cancellationToken = default);
 
-    Task<CursorPage<RecurrenceCluster>> ListPagedAsync(PageRequest page, CancellationToken cancellationToken = default);
+    Task<PagedResult<RecurrenceCluster>> ListPagedAsync(PageSpec page, CancellationToken cancellationToken = default);
 
     Task<RecurrenceCluster?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 

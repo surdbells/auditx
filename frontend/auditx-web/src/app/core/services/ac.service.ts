@@ -18,9 +18,9 @@ import {
   AddAcCommentRequest,
   ApproveAcPackRequest,
   CreateAcActionItemRequest,
-  CursorPage,
   FindingVisibilityRestriction,
   GenerateAcPackRequest,
+  PagedResult,
   RestrictFindingVisibilityRequest,
   UpdateAcActionItemRequest,
   UpdateAcPackCiaTextRequest,
@@ -56,12 +56,12 @@ export class AcService {
     return this.api.post<AcPackGenerationResult>('/ac-packs/generate', body);
   }
 
-  /** Cursor page of AC packs, optionally filtered by status. */
-  listPacks(query: AcPackQuery = {}): Observable<CursorPage<AcPackListItem>> {
-    return this.api.get<CursorPage<AcPackListItem>>('/ac-packs', {
+  /** Page of AC packs, optionally filtered by status. */
+  listPacks(query: AcPackQuery = {}): Observable<PagedResult<AcPackListItem>> {
+    return this.api.get<PagedResult<AcPackListItem>>('/ac-packs', {
       status: query.status,
-      cursor: query.cursor,
-      limit: query.limit,
+      page: query.page,
+      pageSize: query.pageSize,
     });
   }
 
@@ -112,12 +112,12 @@ export class AcService {
   /** Distribution log for a pack. */
   packDistributions(
     id: string,
-    cursor?: string | null,
-    limit?: number,
-  ): Observable<CursorPage<AcPackDistribution>> {
-    return this.api.get<CursorPage<AcPackDistribution>>(
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<AcPackDistribution>> {
+    return this.api.get<PagedResult<AcPackDistribution>>(
       `/ac-packs/${id}/distributions`,
-      { cursor, limit },
+      { page, pageSize },
     );
   }
 
@@ -138,13 +138,13 @@ export class AcService {
 
   listActionItems(
     status?: string | null,
-    cursor?: string | null,
-    limit?: number,
-  ): Observable<CursorPage<AcActionItem>> {
-    return this.api.get<CursorPage<AcActionItem>>('/ac-action-items', {
+    page?: number,
+    pageSize?: number,
+  ): Observable<PagedResult<AcActionItem>> {
+    return this.api.get<PagedResult<AcActionItem>>('/ac-action-items', {
       status,
-      cursor,
-      limit,
+      page,
+      pageSize,
     });
   }
 

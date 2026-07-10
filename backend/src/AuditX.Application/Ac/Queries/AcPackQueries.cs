@@ -38,26 +38,25 @@ internal static class AcPackStatusParsing
     }
 }
 
-// ---- List packs (ViewACPacks; cursor + ?status filter) ----
+// ---- List packs (ViewACPacks; offset + ?status filter) ----
 
-public sealed record ListAcPacksQuery(string? Status, string? Cursor, int? Limit) : IQuery<CursorPage<AcPackListItemDto>>;
+public sealed record ListAcPacksQuery(string? Status, int? Page, int? PageSize) : IQuery<PagedResult<AcPackListItemDto>>;
 
 public sealed class ListAcPacksQueryHandler(IAcPackRepository packs, IPermissionResolver permissions, ICurrentUser currentUser)
-    : IQueryHandler<ListAcPacksQuery, CursorPage<AcPackListItemDto>>
+    : IQueryHandler<ListAcPacksQuery, PagedResult<AcPackListItemDto>>
 {
-    public async Task<CursorPage<AcPackListItemDto>> Handle(ListAcPacksQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<AcPackListItemDto>> Handle(ListAcPacksQuery query, CancellationToken cancellationToken)
     {
         var userId = currentUser.UserId ?? throw new UnauthorizedException();
         var status = AcPackStatusParsing.Parse(query.Status);
 
         // AC members (not CIA) only ever see approved/distributed packs — filtered in the repo query BEFORE pagination
-        // so the page size + cursor are correct (the pack is hidden pre-approval).
+        // so the page size + total are correct (the pack is hidden pre-approval).
         var isCia = await permissions.HasPermissionAsync(userId, PermissionKeys.Cia, cancellationToken: cancellationToken);
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await packs.ListAsync(status, approvedOnly: !isCia, page, cancellationToken);
 
-        var items = result.Items.Select(p => p.ToListDto()).ToArray();
-        return new CursorPage<AcPackListItemDto>(items, result.NextCursor, result.HasMore);
+        return result.Map(p => p.ToListDto());
     }
 }
 
@@ -177,22 +176,22 @@ public sealed class DownloadAcPackArtefactQueryHandler(
     }
 }
 
-// ---- Distribution log (cursor; ViewACPacks) ----
+// ---- Distribution log (offset; ViewACPacks) ----
 
-public sealed record ListAcPackDistributionsQuery(Guid Id, string? Cursor, int? Limit) : IQuery<CursorPage<AcPackDistributionDto>>;
+public sealed record ListAcPackDistributionsQuery(Guid Id, int? Page, int? PageSize) : IQuery<PagedResult<AcPackDistributionDto>>;
 
 public sealed class ListAcPackDistributionsQueryHandler(
     IAcPackRepository packs, IPermissionResolver permissions, ICurrentUser currentUser)
-    : IQueryHandler<ListAcPackDistributionsQuery, CursorPage<AcPackDistributionDto>>
+    : IQueryHandler<ListAcPackDistributionsQuery, PagedResult<AcPackDistributionDto>>
 {
-    public async Task<CursorPage<AcPackDistributionDto>> Handle(ListAcPackDistributionsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedResult<AcPackDistributionDto>> Handle(ListAcPackDistributionsQuery query, CancellationToken cancellationToken)
     {
         var userId = currentUser.UserId ?? throw new UnauthorizedException();
         var pack = await packs.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("AC pack", query.Id);
         await GetAcPackQueryHandler.EnsureCanReadAsync(pack, userId, permissions, cancellationToken);
 
-        var page = PageRequest.Of(query.Cursor, query.Limit);
+        var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await packs.ListDistributionsAsync(query.Id, page, cancellationToken);
-        return new CursorPage<AcPackDistributionDto>(result.Items.Select(d => d.ToDto()).ToArray(), result.NextCursor, result.HasMore);
+        return result.Map(d => d.ToDto());
     }
 }

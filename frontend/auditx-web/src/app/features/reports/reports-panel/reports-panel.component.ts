@@ -32,6 +32,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -42,6 +43,8 @@ const GENERATABLE: AuditStatus[] = ['under_review', 'completed'];
 
 /** Poll interval (ms) while a generation is pending/running. */
 const POLL_INTERVAL = 2000;
+
+const DEFAULT_PAGE_SIZE = 25;
 
 @Component({
   selector: 'app-reports-panel',
@@ -62,6 +65,7 @@ const POLL_INTERVAL = 2000;
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
     TranslatePipe,
   ],
   templateUrl: './reports-panel.component.html',
@@ -88,9 +92,11 @@ export class ReportsPanelComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly reports = signal<ReportListItem[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
   readonly auditStatus = signal<AuditStatus | null>(null);
   readonly auditName = signal<string>('');
   /** Set while a generation is pending/running and being polled. */
@@ -131,39 +137,38 @@ export class ReportsPanelComponent {
       next: (audit) => {
         this.auditStatus.set(audit.status);
         this.auditName.set(audit.name);
-        this.loadList();
+        this.fetchPage(1);
       },
       error: () => this.state.set('error'),
     });
   }
 
-  private loadList(): void {
-    this.nextCursor.set(null);
-    this.service.listForAudit(this.auditId()).subscribe({
-      next: (page) => {
-        this.reports.set(page.items);
-        this.nextCursor.set(page.nextCursor);
-        this.hasMore.set(page.hasMore);
+  fetchPage(page: number): void {
+    this.loading.set(true);
+    this.service.listForAudit(this.auditId(), page, this.pageSize()).subscribe({
+      next: (result) => {
+        this.reports.set(result.items);
+        this.total.set(result.total);
+        this.page.set(result.page);
         this.state.set('ready');
+        this.loading.set(false);
       },
-      error: () => this.state.set('error'),
+      error: () => {
+        if (this.state() === 'loading') {
+          this.state.set('error');
+        }
+        this.loading.set(false);
+      },
     });
   }
 
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.service.listForAudit(this.auditId(), this.nextCursor()).subscribe({
-      next: (page) => {
-        this.reports.update((current) => [...current, ...page.items]);
-        this.nextCursor.set(page.nextCursor);
-        this.hasMore.set(page.hasMore);
-        this.loadingMore.set(false);
-      },
-      error: () => this.loadingMore.set(false),
-    });
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   generate(): void {
@@ -201,7 +206,7 @@ export class ReportsPanelComponent {
           this.notify.error(
             this.i18n.translate('reports.panel.notify.lostTrack'),
           );
-          this.loadList();
+          this.fetchPage(1);
         },
       });
     });
@@ -216,7 +221,7 @@ export class ReportsPanelComponent {
           version: report.versionNumber,
         }),
       );
-      this.loadList();
+      this.fetchPage(1);
     } else if (report.status === 'failed') {
       this.pollSub?.unsubscribe();
       this.generating.set(false);
@@ -224,7 +229,7 @@ export class ReportsPanelComponent {
         report.failureReason ||
           this.i18n.translate('reports.panel.notify.generationFailed'),
       );
-      this.loadList();
+      this.fetchPage(1);
     }
     // pending / running: keep polling.
   }

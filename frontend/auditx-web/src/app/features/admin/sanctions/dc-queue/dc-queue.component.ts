@@ -23,10 +23,11 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-const PAGE_SIZE = 7;
+const DEFAULT_PAGE_SIZE = 25;
 const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
 
 @Component({
@@ -44,6 +45,7 @@ const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PaginatorComponent,
   ],
   templateUrl: './dc-queue.component.html',
   styleUrl: './dc-queue.component.scss',
@@ -64,9 +66,11 @@ export class DcQueueComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly cases = signal<SanctionsCaseListItem[]>([]);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
-  readonly loadingMore = signal(false);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(DEFAULT_PAGE_SIZE);
+  /** In-flight fetch (page navigation) — disables the paginator without clearing the table. */
+  readonly loading = signal(false);
 
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.cases().length === 0,
@@ -76,7 +80,7 @@ export class DcQueueComponent {
   readonly maskedSubject = MASKED_SUBJECT;
 
   constructor() {
-    this.fetchFirstPage();
+    this.fetchPage(1);
   }
 
   subjectLabel(row: SanctionsCaseListItem): string {
@@ -89,49 +93,32 @@ export class DcQueueComponent {
     return code ? this.refLookup.label('sanction_category', code) : '—';
   }
 
-  fetchFirstPage(): void {
-    this.state.set('loading');
-    this.cases.set([]);
-    this.nextCursor.set(null);
-    this.query(null, (items, cursor, more) => {
-      this.cases.set(items);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.state.set('ready');
-    });
-  }
-
-  loadMore(): void {
-    if (!this.hasMore() || this.loadingMore()) {
-      return;
-    }
-    this.loadingMore.set(true);
-    this.query(this.nextCursor(), (items, cursor, more) => {
-      this.cases.update((current) => [...current, ...items]);
-      this.nextCursor.set(cursor);
-      this.hasMore.set(more);
-      this.loadingMore.set(false);
-    });
-  }
-
-  private query(
-    cursor: string | null,
-    onSuccess: (
-      items: SanctionsCaseListItem[],
-      cursor: string | null,
-      more: boolean,
-    ) => void,
-  ): void {
-    this.service.dcQueue(cursor, PAGE_SIZE).subscribe({
-      next: (page) => onSuccess(page.items, page.nextCursor, page.hasMore),
+  fetchPage(page: number): void {
+    this.loading.set(true);
+    this.service.dcQueue(page, this.pageSize()).subscribe({
+      next: (result) => {
+        this.cases.set(result.items);
+        this.total.set(result.total);
+        this.page.set(result.page);
+        this.state.set('ready');
+        this.loading.set(false);
+      },
       error: () => {
-        if (cursor === null) {
+        if (this.state() === 'loading') {
           this.state.set('error');
-        } else {
-          this.loadingMore.set(false);
         }
+        this.loading.set(false);
       },
     });
+  }
+
+  onPageChange(page: number): void {
+    this.fetchPage(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.fetchPage(1);
   }
 
   open(row: SanctionsCaseListItem): void {
