@@ -11,13 +11,6 @@ export interface ApiMetadata {
   [key: string]: unknown;
 }
 
-/** Cursor-paginated collection envelope. */
-export interface CursorPage<T> {
-  items: T[];
-  nextCursor: string | null;
-  hasMore: boolean;
-}
-
 /** Offset/page-paginated collection envelope (first/prev/next/last + page-size navigation). */
 export interface PagedResult<T> {
   items: T[];
