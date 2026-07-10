@@ -381,6 +381,15 @@ export const routes: Routes = [
           ).then((m) => m.ReportTemplatesComponent),
       },
       {
+        path: 'admin/report-schedules',
+        title: 'Report Schedules · AuditX',
+        canActivate: [permissionGuard(Permissions.ScheduleReports)],
+        loadComponent: () =>
+          import(
+            './features/reports/report-schedules/report-schedules.component'
+          ).then((m) => m.ReportSchedulesComponent),
+      },
+      {
         path: 'exceptions',
         title: 'Exceptions · AuditX',
         canActivate: [permissionGuard(Permissions.ViewExceptions)],

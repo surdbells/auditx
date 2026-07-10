@@ -75,6 +75,7 @@ export const Permissions = {
   ViewReport: 'ViewReport',
   DistributeReport: 'DistributeReport',
   ConfigureReports: 'ConfigureReports',
+  ScheduleReports: 'ScheduleReports',
 
   // M6 — Exceptions & Management Action Plans (MAP)
   ViewExceptions: 'ViewExceptions',

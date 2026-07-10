@@ -1,0 +1,29 @@
+.schedules__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.schedules__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.schedules__table-wrapper {
+  overflow-x: auto;
+}
+
+.schedules__table {
+  width: 100%;
+}
+
+.schedules__name {
+  font-weight: 500;
+}
+
+.schedules__row-actions {
+  text-align: right;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}
