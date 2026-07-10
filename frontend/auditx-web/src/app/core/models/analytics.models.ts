@@ -296,6 +296,22 @@ export interface ProcedureSummary {
   sampleErrorRatePercent: number | null;
 }
 
+/** One document-type count for the evidence summary (P2-D). */
+export interface EvidenceTypeCount {
+  documentType: string;
+  count: number;
+}
+
+/** Requested-vs-received evidence summary (P2-D): outstanding / overdue / waived + by document type. */
+export interface EvidenceSummary {
+  totalRequests: number;
+  outstanding: number;
+  received: number;
+  waived: number;
+  overdue: number;
+  byDocumentType: EvidenceTypeCount[];
+}
+
 /** A single Critical/High open exception for the material-findings widget. */
 export interface MaterialFinding {
   exceptionId: string;

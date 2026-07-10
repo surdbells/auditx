@@ -1,0 +1,110 @@
+<mat-card appearance="outlined" class="evi">
+  <div class="evi__head">
+    <h3 class="evi__title">{{ 'evidence.title' | t }}</h3>
+    @if (canActionNow() && !adding()) {
+      <button matButton="filled" type="button" (click)="startAdd()">
+        <mat-icon>add</mat-icon>
+        {{ 'evidence.actions.request' | t }}
+      </button>
+    }
+  </div>
+
+  @if (adding()) {
+    <form [formGroup]="form" class="evi__form">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'evidence.field.title' | t }}</mat-label>
+        <input matInput formControlName="title" autocomplete="off" />
+        @if (form.controls.title.hasError('required') && form.controls.title.touched) {
+          <mat-error>{{ 'evidence.error.titleRequired' | t }}</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="evi__row">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'evidence.field.documentType' | t }}</mat-label>
+          <mat-select formControlName="documentType">
+            <mat-option [value]="''">{{ 'evidence.value.noType' | t }}</mat-option>
+            @for (o of documentTypes(); track o.code) {
+              <mat-option [value]="o.code">{{ o.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'evidence.field.dueDate' | t }}</mat-label>
+          <input matInput type="date" formControlName="dueDate" />
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'evidence.field.checklistItem' | t }}</mat-label>
+        <mat-select formControlName="checklistItemId">
+          <mat-option [value]="''">{{ 'evidence.value.noItem' | t }}</mat-option>
+          @for (i of audit().checklistItems; track i.id) {
+            <mat-option [value]="i.id">{{ i.prompt }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'evidence.field.notes' | t }}</mat-label>
+        <textarea matInput formControlName="notes" rows="2"></textarea>
+      </mat-form-field>
+
+      <div class="evi__form-actions">
+        <button matButton type="button" (click)="cancelAdd()">{{ 'evidence.actions.cancel' | t }}</button>
+        <button matButton="filled" type="button" (click)="submit()" [disabled]="form.invalid || submitting()">
+          {{ 'evidence.actions.save' | t }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (!requests().length && !loading()) {
+    <p class="muted evi__empty">{{ 'evidence.empty' | t }}</p>
+  } @else {
+    <ul class="evi__list">
+      @for (r of requests(); track r.id) {
+        <li class="evi__item">
+          <div class="evi__item-head">
+            <span class="status-badge" [attr.data-status]="r.status === 'received' ? 'responded' : (r.status === 'waived' ? 'muted' : 'open')">
+              {{ 'evidence.status.' + r.status | t }}
+            </span>
+            @if (r.isOverdue) {
+              <span class="overdue-badge">{{ 'evidence.overdue' | t }}</span>
+            }
+            <span class="evi__item-name">{{ r.title }}</span>
+            @if (canActionNow()) {
+              <button matIconButton type="button" [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'evidence.actions.menuAria' | t: { title: r.title }">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #rowMenu="matMenu">
+                @if (r.status === 'requested') {
+                  <button mat-menu-item type="button" (click)="markReceived(r)">
+                    <mat-icon>inventory</mat-icon><span>{{ 'evidence.actions.markReceived' | t }}</span>
+                  </button>
+                  <button mat-menu-item type="button" (click)="waive(r)">
+                    <mat-icon>block</mat-icon><span>{{ 'evidence.actions.waive' | t }}</span>
+                  </button>
+                }
+                <button mat-menu-item type="button" (click)="remove(r)">
+                  <mat-icon>delete</mat-icon><span>{{ 'evidence.actions.delete' | t }}</span>
+                </button>
+              </mat-menu>
+            }
+          </div>
+          <p class="muted evi__item-meta">
+            @if (documentTypeLabel(r.documentType); as dt) { {{ dt }} · }
+            {{ 'evidence.field.dueDate' | t }}: {{ r.dueDate ?? '—' }} ·
+            {{ nameOf(r.requestedByUserId) }}
+            @if (r.status === 'waived' && r.waiveReason) {
+              · {{ 'evidence.waivedLabel' | t }}: {{ r.waiveReason }}
+            }
+          </p>
+          @if (promptFor(r.checklistItemId); as prompt) {
+            <p class="muted evi__item-item">↳ {{ prompt }}</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</mat-card>

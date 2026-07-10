@@ -148,8 +148,11 @@ describe('AuditExecutionComponent', () => {
       .flush({
         data: { totalItems: 2, responded: 1, pass: 1, fail: 0, na: 0, exceptions: 0 },
       });
-    // P2-C: the self-managing procedures panel loads its list on init.
+    // P2-C / P2-D: the self-managing procedures + evidence panels load their lists on init; the evidence
+    // panel also lazy-loads the document-type reference-data for its form.
     http.expectOne(`${BASE}/audits/a-1/procedures`).flush({ data: [] });
+    http.expectOne(`${BASE}/audits/a-1/evidence-requests`).flush({ data: [] });
+    http.expectOne((r) => r.url === `${BASE}/reference-data/evidence_document_type`).flush({ data: [] });
     if (a.status === 'under_review' && perms.includes('ManageAudit')) {
       http
         .expectOne(`${BASE}/audits/a-1/review/fail-without-exception`)

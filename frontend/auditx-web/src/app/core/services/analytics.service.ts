@@ -14,6 +14,7 @@ import {
   DashboardDetail,
   DashboardListItem,
   DeleteDashboardWidgetRequest,
+  EvidenceSummary,
   ExceptionPortfolio,
   FindingFollowUpSummary,
   FunctionPerformance,
@@ -186,6 +187,11 @@ export class AnalyticsService {
   /** Execution-procedure coverage + sampling error-rate (P2-C, ViewAnalytics). */
   procedureSummary(): Observable<ProcedureSummary> {
     return this.api.get<ProcedureSummary>('/analytics/procedures');
+  }
+
+  /** Requested-vs-received evidence — outstanding / overdue / waived + by type (P2-D, ViewAnalytics). */
+  evidenceSummary(): Observable<EvidenceSummary> {
+    return this.api.get<EvidenceSummary>('/analytics/evidence');
   }
 
   /* ---- Recurrence clusters (ViewAnalytics) ---- */

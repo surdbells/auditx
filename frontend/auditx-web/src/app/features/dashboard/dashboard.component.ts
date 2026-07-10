@@ -25,6 +25,7 @@ import {
   GaugeChartComponent,
 } from '../../shared/charts';
 import {
+  EvidenceSummary,
   ExceptionPortfolio,
   FindingFollowUpSummary,
   ProcedureSummary,
@@ -103,6 +104,7 @@ export class DashboardComponent {
   readonly portfolio = signal<ExceptionPortfolio | null>(null);
   readonly followUp = signal<FindingFollowUpSummary | null>(null);
   readonly procedures = signal<ProcedureSummary | null>(null);
+  readonly evidence = signal<EvidenceSummary | null>(null);
   readonly planStatus = signal<PlanStatusKpi | null>(null);
   readonly auditCounts = signal<Record<string, number> | null>(null);
   readonly materialFindings = signal<MaterialFinding[]>([]);
@@ -130,6 +132,7 @@ export class DashboardComponent {
     this.analytics.exceptionPortfolio().subscribe({ next: (p) => this.portfolio.set(p), error: () => undefined });
     this.analytics.findingFollowUp().subscribe({ next: (f) => this.followUp.set(f), error: () => undefined });
     this.analytics.procedureSummary().subscribe({ next: (p) => this.procedures.set(p), error: () => undefined });
+    this.analytics.evidenceSummary().subscribe({ next: (e) => this.evidence.set(e), error: () => undefined });
     this.analytics.planStatus().subscribe({ next: (p) => this.planStatus.set(p), error: () => undefined });
     this.analytics.materialFindings().subscribe({ next: (f) => this.materialFindings.set(f), error: () => undefined });
   }
@@ -247,6 +250,19 @@ export class DashboardComponent {
       .filter((r) => r.count > 0)
       .map((r) => ({ label: this.humanise(r.type), value: r.count })),
   );
+
+  /** Requested-evidence status split (P2-D). */
+  readonly evidenceData = computed<ChartDatum[]>(() => {
+    const e = this.evidence();
+    if (!e) {
+      return [];
+    }
+    return [
+      { label: this.i18n.translate('dashboard.evidence.outstanding'), value: e.outstanding },
+      { label: this.i18n.translate('dashboard.evidence.received'), value: e.received },
+      { label: this.i18n.translate('dashboard.evidence.waived'), value: e.waived },
+    ].filter((d) => d.value > 0);
+  });
 
   readonly planPercent = computed(() => this.planStatus()?.completionPercent ?? null);
 

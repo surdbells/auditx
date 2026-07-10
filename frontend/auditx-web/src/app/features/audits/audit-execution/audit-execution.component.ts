@@ -70,6 +70,7 @@ import {
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AuditTimePanelComponent } from './audit-time-panel.component';
 import { AuditProceduresPanelComponent } from './audit-procedures-panel.component';
+import { AuditEvidencePanelComponent } from './audit-evidence-panel.component';
 
 const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
 
@@ -101,6 +102,7 @@ interface ProgressGroup {
     MatExpansionModule,
     AuditTimePanelComponent,
     AuditProceduresPanelComponent,
+    AuditEvidencePanelComponent,
   ],
   templateUrl: './audit-execution.component.html',
   styleUrl: './audit-execution.component.scss',

@@ -89,6 +89,16 @@
         <app-bar-chart [data]="procedureData()" [label]="'dashboard.charts.proceduresByType' | t" />
       </div>
     }
+    @if (evidenceData().length) {
+      <div class="panel">
+        <h3 class="panel__title">{{ 'dashboard.charts.evidenceStatus' | t }}</h3>
+        <app-donut-chart
+          [data]="evidenceData()"
+          [label]="'dashboard.charts.evidenceStatus' | t"
+          [centerLabel]="'dashboard.charts.evidenceCenter' | t"
+        />
+      </div>
+    }
   </section>
 }
 
