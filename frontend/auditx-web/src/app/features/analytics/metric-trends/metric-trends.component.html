@@ -1,0 +1,114 @@
+<app-page-header
+  [title]="'trends.title' | t"
+  [subtitle]="'trends.subtitle' | t"
+>
+  <div actions>
+    <a matButton routerLink="/analytics">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'analytics.nav.allDashboards' | t }}
+    </a>
+    <button matButton type="button" (click)="fetch()">
+      <mat-icon>refresh</mat-icon>
+      {{ 'analytics.actions.refresh' | t }}
+    </button>
+  </div>
+</app-page-header>
+
+<mat-card appearance="outlined" class="mt__controls">
+  <mat-form-field appearance="outline" class="mt__metric">
+    <mat-label>{{ 'trends.metricLabel' | t }}</mat-label>
+    <mat-select [value]="metric()" (valueChange)="selectMetric($event)">
+      @for (m of metrics; track m.key) {
+        <mat-option [value]="m.key">{{ m.labelKey | t }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-button-toggle-group
+    class="mt__period"
+    [value]="period()"
+    (change)="selectPeriod($event.value)"
+    [attr.aria-label]="'trends.periodLabel' | t"
+  >
+    @for (p of periods; track p) {
+      <mat-button-toggle [value]="p">{{ 'trends.period.' + p | t }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+</mat-card>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'trends.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'trends.error' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (!hasSeries()) {
+      <app-empty-state
+        icon="trending_up"
+        [title]="'trends.empty.title' | t"
+        [message]="'trends.empty.message' | t"
+      />
+    } @else {
+      <!-- Comparison summary -->
+      <section class="mt__stats" [attr.aria-label]="'trends.summaryAria' | t">
+        <div class="mt__stat">
+          <span class="mt__stat-label">{{ 'trends.current' | t }}</span>
+          <span class="mt__stat-value">{{ valueOf(comparison()?.current) }}</span>
+        </div>
+        <div class="mt__stat">
+          <span class="mt__stat-label">{{ 'trends.previous' | t }}</span>
+          <span class="mt__stat-value">{{ valueOf(comparison()?.previous) }}</span>
+        </div>
+        <div class="mt__stat mt__stat--delta" [attr.data-dir]="deltaDirection()">
+          <span class="mt__stat-label">{{ 'trends.change.' + period() | t }}</span>
+          <span class="mt__stat-value">
+            @if (deltaDirection() !== 'flat') {
+              <mat-icon aria-hidden="true">{{ deltaDirection() === 'up' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            }
+            {{ valueOf(comparison()?.delta) }}
+            @if (comparison()?.percentChange !== null && comparison()?.percentChange !== undefined) {
+              <span class="mt__stat-pct">({{ comparison()?.percentChange }}%)</span>
+            }
+          </span>
+        </div>
+        @if (comparison()?.forecast; as f) {
+          <div class="mt__stat mt__stat--forecast">
+            <span class="mt__stat-label">{{ 'trends.forecast' | t }}</span>
+            <span class="mt__stat-value">{{ f.projectedValue }}</span>
+            <span class="mt__stat-hint">{{ 'trends.forecastFor' | t: { date: (f.projectedFor | date: 'MMM y') } }}</span>
+          </div>
+        }
+      </section>
+
+      <!-- Trend chart -->
+      <mat-card appearance="outlined" class="mt__chart-card">
+        <h3 class="mt__chart-title">{{ 'trends.chartTitle' | t }}</h3>
+        <app-line-chart [data]="chartData()" [label]="'trends.chartTitle' | t" [area]="true" />
+      </mat-card>
+
+      <!-- Period table -->
+      <mat-card appearance="outlined" class="mt__table-card">
+        <div class="mt__table-wrapper">
+          <table class="mt__table">
+            <thead>
+              <tr>
+                <th>{{ 'trends.col.period' | t }}</th>
+                <th class="num">{{ 'trends.col.value' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of comparison()?.periods ?? []; track p.label) {
+                <tr>
+                  <td>{{ p.label }}</td>
+                  <td class="num">{{ valueOf(p.value) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

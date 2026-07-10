@@ -20,6 +20,9 @@ import {
   FunctionPerformance,
   ProcedureSummary,
   MaterialFinding,
+  MetricComparison,
+  MetricTrend,
+  ComparisonPeriodType,
   OrgUnitScorecard,
   PerformanceScorecard,
   PlanStatusKpi,
@@ -192,6 +195,36 @@ export class AnalyticsService {
   /** Requested-vs-received evidence — outstanding / overdue / waived + by type (P2-D, ViewAnalytics). */
   evidenceSummary(): Observable<EvidenceSummary> {
     return this.api.get<EvidenceSummary>('/analytics/evidence');
+  }
+
+  /* ---- Metric trends + comparison (D1, ViewAnalytics) ---- */
+
+  /** Raw KPI time-series from the daily snapshot fact table (defaults to the trailing 90 days). */
+  metricTrend(
+    metric: string,
+    dimension?: string | null,
+    from?: string | null,
+    to?: string | null,
+  ): Observable<MetricTrend> {
+    return this.api.get<MetricTrend>('/analytics/trend', { metric, dimension, from, to });
+  }
+
+  /**
+   * Period-over-period comparison (month / quarter / year) + a linear forecast for a snapshot metric —
+   * the MoM / QoQ / YoY delta, the trailing period buckets and a projected next-period value.
+   */
+  metricComparison(
+    metric: string,
+    period: ComparisonPeriodType,
+    periods?: number,
+    dimension?: string | null,
+  ): Observable<MetricComparison> {
+    return this.api.get<MetricComparison>('/analytics/metric-comparison', {
+      metric,
+      period,
+      periods,
+      dimension,
+    });
   }
 
   /* ---- Recurrence clusters (ViewAnalytics) ---- */

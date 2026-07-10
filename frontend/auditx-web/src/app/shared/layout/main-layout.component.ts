@@ -136,6 +136,7 @@ export class MainLayoutComponent {
       titleKey: 'nav.section.insights',
       items: [
         { labelKey: 'nav.analytics', icon: 'analytics', route: '/analytics', permissions: [Permissions.ViewAnalytics] },
+        { labelKey: 'nav.metricTrends', icon: 'trending_up', route: '/analytics/trends', permissions: [Permissions.ViewAnalytics] },
         { labelKey: 'nav.departmentScorecards', icon: 'account_tree', route: '/analytics/org-units', permissions: [Permissions.ViewAnalytics] },
         { labelKey: 'nav.timeBudget', icon: 'schedule', route: '/analytics/time-budget', permissions: [Permissions.ViewAnalytics] },
         { labelKey: 'nav.riskHeatmap', icon: 'crisis_alert', route: '/analytics/risk-heatmap', permissions: [Permissions.ViewAnalytics] },

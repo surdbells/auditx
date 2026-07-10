@@ -312,6 +312,58 @@ export interface EvidenceSummary {
   byDocumentType: EvidenceTypeCount[];
 }
 
+/* =========================================================================
+ * Metric trend comparison + forecasting (D1)
+ * ===================================================================== */
+
+/** The calendar grain a metric series is bucketed into for period-over-period comparison. */
+export type ComparisonPeriodType = 'month' | 'quarter' | 'year';
+
+/** One time-series point from the daily snapshot fact table. */
+export interface MetricPoint {
+  asOfDate: string;
+  value: number;
+}
+
+/** A KPI time-series (defaults to the trailing 90 days). */
+export interface MetricTrend {
+  metricKey: string;
+  dimension: string | null;
+  points: MetricPoint[];
+}
+
+/** One calendar period's representative value; `value` is null when the period has no snapshot (a gap). */
+export interface MetricPeriodPoint {
+  label: string;
+  periodStart: string;
+  periodEnd: string;
+  value: number | null;
+}
+
+/** A projected next-period value from an ordinary-least-squares fit over the daily series. */
+export interface MetricForecast {
+  method: string;
+  projectedFor: string;
+  projectedValue: number;
+  slope: number;
+}
+
+/**
+ * Period-over-period comparison for a snapshot metric (D1): the trailing period buckets (month / quarter / year),
+ * the latest-vs-previous delta + percent change (MoM / QoQ / YoY), and a simple linear forecast of the next period.
+ */
+export interface MetricComparison {
+  metricKey: string;
+  dimension: string | null;
+  period: string;
+  periods: MetricPeriodPoint[];
+  current: number | null;
+  previous: number | null;
+  delta: number | null;
+  percentChange: number | null;
+  forecast: MetricForecast | null;
+}
+
 /** A single Critical/High open exception for the material-findings widget. */
 export interface MaterialFinding {
   exceptionId: string;

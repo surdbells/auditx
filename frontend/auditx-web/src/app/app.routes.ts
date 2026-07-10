@@ -452,6 +452,15 @@ export const routes: Routes = [
           ).then((m) => m.TimeBudgetComponent),
       },
       {
+        path: 'analytics/trends',
+        title: 'Metric Trends · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/metric-trends/metric-trends.component'
+          ).then((m) => m.MetricTrendsComponent),
+      },
+      {
         path: 'analytics/risk-heatmap',
         title: 'Risk Heatmap · AuditX',
         canActivate: [permissionGuard(Permissions.ViewAnalytics)],
