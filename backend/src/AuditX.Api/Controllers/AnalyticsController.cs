@@ -131,6 +131,17 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
         [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetMetricTrendQuery(metric, dimension, from, to), cancellationToken));
 
+    /// <summary>
+    /// Period-over-period comparison (month / quarter / year) + a linear forecast for a snapshot metric — the
+    /// MoM / QoQ / YoY delta, the trailing period buckets, and a projected next-period value.
+    /// </summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("metric-comparison")]
+    public async Task<IActionResult> MetricComparison(
+        [FromQuery] string metric, [FromQuery] string? dimension,
+        [FromQuery] string? period, [FromQuery] int? periods, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetMetricComparisonQuery(metric, dimension, period ?? "month", periods), cancellationToken));
+
     /// <summary>Forces an immediate KPI snapshot for today (also captured daily by the background job).</summary>
     [RequirePermission(PermissionKeys.ConfigureDashboards)]
     [HttpPost("snapshots/capture")]
