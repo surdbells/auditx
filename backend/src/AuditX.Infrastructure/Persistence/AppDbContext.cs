@@ -17,6 +17,7 @@ using AuditX.Domain.Reports;
 using AuditX.Domain.Sanctions;
 using AuditX.Domain.Risks;
 using AuditX.Domain.SavedViews;
+using AuditX.Domain.Scheduling;
 using AuditX.Domain.Sharing;
 using AuditX.Domain.Templates;
 using AuditX.Domain.Execution;
@@ -104,6 +105,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<SavedView> SavedViews => Set<SavedView>();
 
     public DbSet<SharedLink> SharedLinks => Set<SharedLink>();
+
+    public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
 
     public DbSet<Risk> Risks => Set<Risk>();
 

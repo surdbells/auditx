@@ -14,7 +14,9 @@ public sealed class SharedLinkConfiguration : IEntityTypeConfiguration<SharedLin
         builder.HasKey(l => l.Id);
         builder.Property(l => l.Id).ValueGeneratedNever();
 
-        builder.Property(l => l.Slug).HasMaxLength(64).IsRequired();
+        // base64url slugs are case-sensitive; a case-sensitive collation keeps lookups exact-match and preserves the
+        // slug's full entropy (the DB default is case-insensitive, which would fold e.g. 'aB' and 'Ab' together).
+        builder.Property(l => l.Slug).HasMaxLength(64).IsRequired().UseCollation("Latin1_General_100_BIN2");
         builder.Property(l => l.TargetType)
             .HasConversion(new SnakeCaseEnumConverter<SharedLinkTargetType>())
             .HasMaxLength(20)

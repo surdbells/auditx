@@ -36,7 +36,7 @@ public static class BuiltInRoles
             PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException,
             PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException,
             PermissionKeys.ReopenException, PermissionKeys.VerifyException,
-            PermissionKeys.GenerateReport, PermissionKeys.ViewReport, PermissionKeys.DistributeReport,
+            PermissionKeys.GenerateReport, PermissionKeys.ViewReport, PermissionKeys.DistributeReport, PermissionKeys.ScheduleReports,
             PermissionKeys.ViewSanctions, PermissionKeys.TriggerSanctions, PermissionKeys.RecommendSanction, PermissionKeys.ViewGrid,
             PermissionKeys.ViewAnalytics, PermissionKeys.AdHocQueryUse, PermissionKeys.PerformanceAnalyticsView, PermissionKeys.ViewAuditTrail,
             PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries, PermissionKeys.ViewRisk, PermissionKeys.ManageRisk,
@@ -68,7 +68,7 @@ public static class BuiltInRoles
             PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException, PermissionKeys.SubmitMap,
             PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException, PermissionKeys.Cia,
             PermissionKeys.ReopenException, PermissionKeys.VerifyException,
-            PermissionKeys.ConfigureNotifications, PermissionKeys.ConfigureReports, PermissionKeys.ConfigureExceptionWorkflow,
+            PermissionKeys.ConfigureNotifications, PermissionKeys.ConfigureReports, PermissionKeys.ScheduleReports, PermissionKeys.ConfigureExceptionWorkflow,
             // Bootstrap governance: the super-user can approve annual plans + read AC surfaces out of the box, so a
             // fresh install can complete plan → approve → launch without first hand-assigning an Audit Committee Chair.
             PermissionKeys.AcMember, PermissionKeys.AcChair,

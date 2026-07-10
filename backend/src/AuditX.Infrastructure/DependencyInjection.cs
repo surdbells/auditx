@@ -71,6 +71,7 @@ public static class DependencyInjection
         services.AddScoped<IEvidenceRequestRepository, EvidenceRequestRepository>();
         services.AddScoped<ISavedViewRepository, SavedViewRepository>();
         services.AddScoped<ISharedLinkRepository, SharedLinkRepository>();
+        services.AddScoped<IReportScheduleRepository, ReportScheduleRepository>();
         services.AddScoped<IRiskRepository, RiskRepository>();
         services.AddScoped<IControlRepository, ControlRepository>();
         services.AddScoped<IRegulationRepository, RegulationRepository>();
@@ -98,6 +99,7 @@ public static class DependencyInjection
         services.AddScoped<Application.Reports.Generation.ReportContentAssembler>();
         services.AddScoped<Application.Reports.Generation.StandaloneReportAssembler>();
         services.AddScoped<Application.Reports.Generation.ReportGenerationService>();
+        services.AddScoped<Application.Scheduling.ScheduledReportRunner>();
         services.AddScoped<Reports.HtmlReportRenderer>();
         services.AddScoped<Reports.OpenXmlReportRenderer>();
         services.AddScoped<Reports.PdfReportRenderer>();

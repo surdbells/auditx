@@ -213,6 +213,10 @@ public static class AuditEventTypes
     public const string ReportDownloaded = "report_downloaded";
     public const string ReportShareLinkCreated = "report_share_link_created";
     public const string ReportShareLinkRevoked = "report_share_link_revoked";
+    public const string ReportScheduleCreated = "report_schedule_created";
+    public const string ReportScheduleUpdated = "report_schedule_updated";
+    public const string ReportScheduleDeleted = "report_schedule_deleted";
+    public const string ReportScheduleRun = "report_schedule_run";
     public const string ReportHashMismatch = "report_hash_mismatch";
     public const string ReportTemplateCreated = "report_template_created";
     public const string ReportTemplateActivated = "report_template_activated";
@@ -297,6 +301,7 @@ public static class AuditTargetTypes
     public const string Report = "report";
     public const string ReportTemplate = "report_template";
     public const string SharedLink = "shared_link";
+    public const string ReportSchedule = "report_schedule";
     public const string Dashboard = "dashboard";
     public const string RecurrenceCluster = "recurrence_cluster";
     public const string BankConfiguration = "bank_configuration";

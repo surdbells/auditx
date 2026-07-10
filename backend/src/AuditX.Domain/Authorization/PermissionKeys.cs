@@ -82,6 +82,7 @@ public static class PermissionKeys
     public const string ViewReport = "ViewReport";
     public const string DistributeReport = "DistributeReport";
     public const string ConfigureReports = "ConfigureReports";
+    public const string ScheduleReports = "ScheduleReports";
 
     // M9 — Analytics
     public const string ViewAnalytics = "ViewAnalytics";

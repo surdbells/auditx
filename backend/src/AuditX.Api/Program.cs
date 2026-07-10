@@ -111,6 +111,7 @@ builder.Services.AddScoped<RecurrenceClusterScanJob>();
 builder.Services.AddScoped<AnalyticsSnapshotJob>();
 builder.Services.AddScoped<AcPackGenerationJob>();
 builder.Services.AddScoped<AcPackRecurringGenerationJob>();
+builder.Services.AddScoped<ReportScheduleRunnerJob>();
 builder.Services.AddScoped<AuditX.Application.Abstractions.Reports.IReportGenerationQueue, HangfireReportGenerationQueue>();
 builder.Services.AddScoped<AuditX.Application.Abstractions.Ac.IAcPackGenerationQueue, HangfireAcPackGenerationQueue>();
 
@@ -200,6 +201,12 @@ recurringJobs.AddOrUpdate<AcPackRecurringGenerationJob>(
     AcPackRecurringGenerationJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     "0 2 1 1,4,7,10 *");
+
+// Hourly runner for due recurring report schedules (D3-C): generate + email each due standalone report.
+recurringJobs.AddOrUpdate<ReportScheduleRunnerJob>(
+    ReportScheduleRunnerJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Hourly);
 
 app.Run();
 return;

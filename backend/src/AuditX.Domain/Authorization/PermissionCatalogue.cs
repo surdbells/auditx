@@ -84,6 +84,7 @@ public static class PermissionCatalogue
         new(PermissionKeys.ViewReport, "View report", "View/download a generated report.", "M8", PermissionScopeType.Audit),
         new(PermissionKeys.DistributeReport, "Distribute report", "Distribute a report to recipients.", "M8", PermissionScopeType.Audit),
         new(PermissionKeys.ConfigureReports, "Configure reports", "Manage report templates.", "M8", PermissionScopeType.Global),
+        new(PermissionKeys.ScheduleReports, "Schedule reports", "Create and manage recurring report schedules.", "M8", PermissionScopeType.Global),
 
         // M9 — Analytics
         new(PermissionKeys.ViewAnalytics, "View analytics", "View dashboards and analytics.", "M9", PermissionScopeType.Global),
