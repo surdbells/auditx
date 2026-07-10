@@ -9,8 +9,9 @@
     />
   }
   @case ('ready') {
+    <app-page-guide [guide]="guide" />
     <div class="settings__grid">
-      <mat-card appearance="outlined" class="settings__card">
+      <mat-card appearance="outlined" class="settings__card" data-guide="general">
         <h2 class="settings__title">{{ 'administration.bankSettings.title' | t }}</h2>
         <form [formGroup]="settingsForm" class="settings__form">
           <mat-form-field appearance="outline" class="full">
@@ -167,7 +168,7 @@
         </form>
       </mat-card>
 
-      <mat-card appearance="outlined" class="settings__card">
+      <mat-card appearance="outlined" class="settings__card" data-guide="limits">
         <h2 class="settings__title">{{ 'administration.bankSettings.limitsTitle' | t }}</h2>
         <form [formGroup]="limitsForm" class="settings__form">
           <mat-form-field appearance="outline">

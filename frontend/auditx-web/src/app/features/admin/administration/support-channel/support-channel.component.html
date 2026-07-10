@@ -9,8 +9,9 @@
     />
   }
   @case ('ready') {
+    <app-page-guide [guide]="guide" />
     <div class="support__grid">
-      <mat-card appearance="outlined" class="support__card">
+      <mat-card appearance="outlined" class="support__card" data-guide="status">
         <h2 class="support__title">{{ 'administration.support.statusTitle' | t }}</h2>
         @if (status(); as s) {
           <p>
@@ -42,7 +43,7 @@
       <mat-card appearance="outlined" class="support__card">
         <h2 class="support__title">{{ 'administration.support.enableTitle' | t }}</h2>
         <form [formGroup]="form" class="support__form">
-          <mat-form-field appearance="outline" class="full">
+          <mat-form-field appearance="outline" class="full" data-guide="engineers">
             <mat-label>{{ 'administration.support.engineerIdentifiers' | t }}</mat-label>
             <mat-chip-grid #chipGrid [attr.aria-label]="'administration.support.engineers' | t">
               @for (id of engineers(); track id) {
@@ -67,7 +68,7 @@
             <input matInput type="number" formControlName="durationMinutes" />
           </mat-form-field>
 
-          <div class="support__actions">
+          <div class="support__actions" data-guide="grant">
             <button
               matButton="filled"
               type="button"

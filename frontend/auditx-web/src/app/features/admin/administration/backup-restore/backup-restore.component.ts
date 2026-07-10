@@ -26,10 +26,68 @@ import {
 } from '../../../../core/models';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the backup & restore tab (walkthrough + About panel). */
+const BACKUP_GUIDE: PageGuide = {
+  id: 'administration-backup-restore',
+  titleKey: 'administration.tabs.backup',
+  purposeKey: 'administration.backup.guide.purpose',
+  descriptionKey: 'administration.backup.guide.description',
+  actionKeys: [
+    'administration.backup.guide.action.drill',
+    'administration.backup.guide.action.request',
+    'administration.backup.guide.action.decide',
+    'administration.backup.guide.action.history',
+  ],
+  sections: [
+    { selector: '[data-guide="drill"]', titleKey: 'administration.backup.guide.section.drill.title', bodyKey: 'administration.backup.guide.section.drill.body' },
+    { selector: '[data-guide="restore"]', titleKey: 'administration.backup.guide.section.restore.title', bodyKey: 'administration.backup.guide.section.restore.body' },
+    { selector: '.restore__history-card', titleKey: 'administration.backup.guide.section.history.title', bodyKey: 'administration.backup.guide.section.history.body' },
+  ],
+  workflowKeys: [
+    'administration.backup.guide.flow.backup',
+    'administration.backup.guide.flow.drill',
+    'administration.backup.guide.flow.record',
+    'administration.backup.guide.flow.request',
+    'administration.backup.guide.flow.approve',
+  ],
+  dependsOnKeys: [
+    'administration.backup.guide.dep.backups',
+    'administration.backup.guide.dep.retention',
+    'administration.backup.guide.dep.rbac',
+  ],
+  usedByKeys: [
+    'administration.backup.guide.use.compliance',
+    'administration.backup.guide.use.auditTrail',
+    'administration.backup.guide.use.resilience',
+  ],
+  businessRuleKeys: [
+    'administration.backup.guide.rule.dualControl',
+    'administration.backup.guide.rule.justification',
+    'administration.backup.guide.rule.outcome',
+    'administration.backup.guide.rule.immutable',
+  ],
+  tipKeys: [
+    'administration.backup.guide.tip.cadence',
+    'administration.backup.guide.tip.details',
+    'administration.backup.guide.tip.snapshot',
+  ],
+  permissionKeys: [
+    'administration.backup.guide.perm.retention',
+    'administration.backup.guide.perm.restore',
+    'administration.backup.guide.perm.separation',
+  ],
+  faq: [
+    { questionKey: 'administration.backup.guide.faq.drill.q', answerKey: 'administration.backup.guide.faq.drill.a' },
+    { questionKey: 'administration.backup.guide.faq.undo.q', answerKey: 'administration.backup.guide.faq.undo.a' },
+  ],
+};
 
 @Component({
   selector: 'app-backup-restore',
@@ -46,6 +104,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatIconModule,
     LoadingComponent,
     ErrorStateComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './backup-restore.component.html',
@@ -57,6 +116,8 @@ export class BackupRestoreComponent {
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = BACKUP_GUIDE;
 
   readonly drillColumns = ['executedAt', 'outcome', 'details'];
 

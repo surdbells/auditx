@@ -1,5 +1,7 @@
+<app-page-guide [guide]="guide" />
+
 <div class="bulk__grid">
-  <mat-card appearance="outlined" class="bulk__card">
+  <mat-card appearance="outlined" class="bulk__card" data-guide="deactivate">
     <h2 class="bulk__title">{{ 'administration.bulkUsers.deactivate.title' | t }}</h2>
     <p class="muted">{{ 'administration.bulkUsers.deactivate.hint' | t }}</p>
     <form [formGroup]="deactivateForm" class="bulk__form">
@@ -48,7 +50,7 @@
     }
   </mat-card>
 
-  <mat-card appearance="outlined" class="bulk__card">
+  <mat-card appearance="outlined" class="bulk__card" data-guide="import">
     <h2 class="bulk__title">{{ 'administration.bulkUsers.import.title' | t }}</h2>
     <p class="muted">{{ 'administration.bulkUsers.import.hint' | t }}</p>
     <form [formGroup]="importForm" class="bulk__form">

@@ -18,10 +18,65 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { ReleaseInstall } from '../../../../core/models';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the releases (update-management) page. */
+const RELEASES_GUIDE: PageGuide = {
+  id: 'administration-releases',
+  titleKey: 'administration.tabs.releases',
+  purposeKey: 'administration.releases.guide.purpose',
+  descriptionKey: 'administration.releases.guide.description',
+  actionKeys: [
+    'administration.releases.guide.action.install',
+    'administration.releases.guide.action.change',
+    'administration.releases.guide.action.review',
+    'administration.releases.guide.action.retry',
+  ],
+  sections: [
+    { selector: '.releases__form', titleKey: 'administration.releases.guide.section.form.title', bodyKey: 'administration.releases.guide.section.form.body' },
+    { selector: '.releases__actions', titleKey: 'administration.releases.guide.section.verify.title', bodyKey: 'administration.releases.guide.section.verify.body' },
+    { selector: '.releases__table', titleKey: 'administration.releases.guide.section.history.title', bodyKey: 'administration.releases.guide.section.history.body' },
+  ],
+  workflowKeys: [
+    'administration.releases.guide.flow.change',
+    'administration.releases.guide.flow.sign',
+    'administration.releases.guide.flow.verify',
+    'administration.releases.guide.flow.install',
+    'administration.releases.guide.flow.log',
+  ],
+  dependsOnKeys: [
+    'administration.releases.guide.dep.change',
+    'administration.releases.guide.dep.signature',
+    'administration.releases.guide.dep.admin',
+  ],
+  usedByKeys: [
+    'administration.releases.guide.use.integrity',
+    'administration.releases.guide.use.audit',
+    'administration.releases.guide.use.compliance',
+  ],
+  businessRuleKeys: [
+    'administration.releases.guide.rule.verify',
+    'administration.releases.guide.rule.change',
+    'administration.releases.guide.rule.immutable',
+  ],
+  tipKeys: [
+    'administration.releases.guide.tip.hash',
+    'administration.releases.guide.tip.rejected',
+  ],
+  permissionKeys: [
+    'administration.releases.guide.perm.admin',
+    'administration.releases.guide.perm.install',
+  ],
+  faq: [
+    { questionKey: 'administration.releases.guide.faq.rejected.q', answerKey: 'administration.releases.guide.faq.rejected.a' },
+    { questionKey: 'administration.releases.guide.faq.change.q', answerKey: 'administration.releases.guide.faq.change.a' },
+  ],
+};
 
 @Component({
   selector: 'app-releases',
@@ -37,6 +92,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     MatIconModule,
     LoadingComponent,
     ErrorStateComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './releases.component.html',
@@ -47,6 +103,8 @@ export class ReleasesComponent {
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = RELEASES_GUIDE;
 
   readonly displayedColumns = ['version', 'status', 'changeRecord', 'detail', 'createdAt'];
 

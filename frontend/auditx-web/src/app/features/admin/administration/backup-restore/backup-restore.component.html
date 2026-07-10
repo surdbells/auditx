@@ -1,5 +1,7 @@
+<app-page-guide [guide]="guide" />
+
 <div class="restore__grid">
-  <mat-card appearance="outlined" class="restore__card">
+  <mat-card appearance="outlined" class="restore__card" data-guide="drill">
     <h2 class="restore__title">{{ 'administration.backup.drill.title' | t }}</h2>
     @if (canManageRetention()) {
       <form [formGroup]="drillForm" class="restore__form">
@@ -31,7 +33,7 @@
     }
   </mat-card>
 
-  <mat-card appearance="outlined" class="restore__card">
+  <mat-card appearance="outlined" class="restore__card" data-guide="restore">
     <h2 class="restore__title">{{ 'administration.backup.restore.title' | t }}</h2>
     @if (canExecRestore()) {
       <form [formGroup]="restoreForm" class="restore__form">

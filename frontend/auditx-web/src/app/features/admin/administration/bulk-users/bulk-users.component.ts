@@ -17,6 +17,63 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { BulkOperationResult } from '../../../../core/models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
+
+/** Contextual page guide for bulk user provisioning (walkthrough + About panel). */
+const BULK_USERS_GUIDE: PageGuide = {
+  id: 'admin-bulk-users',
+  titleKey: 'administration.tabs.bulkUsers',
+  purposeKey: 'administration.bulkUsers.guide.purpose',
+  descriptionKey: 'administration.bulkUsers.guide.description',
+  actionKeys: [
+    'administration.bulkUsers.guide.action.import',
+    'administration.bulkUsers.guide.action.deactivate',
+    'administration.bulkUsers.guide.action.upload',
+    'administration.bulkUsers.guide.action.review',
+  ],
+  sections: [
+    { selector: '[data-guide="deactivate"]', titleKey: 'administration.bulkUsers.guide.section.deactivate.title', bodyKey: 'administration.bulkUsers.guide.section.deactivate.body' },
+    { selector: '[data-guide="import"]', titleKey: 'administration.bulkUsers.guide.section.import.title', bodyKey: 'administration.bulkUsers.guide.section.import.body' },
+    { selector: '.bulk__upload', titleKey: 'administration.bulkUsers.guide.section.upload.title', bodyKey: 'administration.bulkUsers.guide.section.upload.body' },
+  ],
+  workflowKeys: [
+    'administration.bulkUsers.guide.flow.prepare',
+    'administration.bulkUsers.guide.flow.upload',
+    'administration.bulkUsers.guide.flow.provision',
+    'administration.bulkUsers.guide.flow.review',
+    'administration.bulkUsers.guide.flow.onboard',
+  ],
+  dependsOnKeys: [
+    'administration.bulkUsers.guide.dep.csv',
+    'administration.bulkUsers.guide.dep.roles',
+    'administration.bulkUsers.guide.dep.users',
+  ],
+  usedByKeys: [
+    'administration.bulkUsers.guide.use.users',
+    'administration.bulkUsers.guide.use.audits',
+    'administration.bulkUsers.guide.use.access',
+  ],
+  businessRuleKeys: [
+    'administration.bulkUsers.guide.rule.format',
+    'administration.bulkUsers.guide.rule.duplicate',
+    'administration.bulkUsers.guide.rule.partial',
+    'administration.bulkUsers.guide.rule.deactivate',
+  ],
+  tipKeys: [
+    'administration.bulkUsers.guide.tip.small',
+    'administration.bulkUsers.guide.tip.errors',
+    'administration.bulkUsers.guide.tip.ids',
+  ],
+  permissionKeys: [
+    'administration.bulkUsers.guide.perm.admin',
+    'administration.bulkUsers.guide.perm.manage',
+  ],
+  faq: [
+    { questionKey: 'administration.bulkUsers.guide.faq.format.q', answerKey: 'administration.bulkUsers.guide.faq.format.a' },
+    { questionKey: 'administration.bulkUsers.guide.faq.undo.q', answerKey: 'administration.bulkUsers.guide.faq.undo.a' },
+  ],
+};
 
 @Component({
   selector: 'app-bulk-users',
@@ -30,11 +87,14 @@ import { TranslationService } from '../../../../core/i18n/translation.service';
     MatIconModule,
     MatTableModule,
     TranslatePipe,
+    PageGuideComponent,
   ],
   templateUrl: './bulk-users.component.html',
   styleUrl: './bulk-users.component.scss',
 })
 export class BulkUsersComponent {
+  readonly guide = BULK_USERS_GUIDE;
+
   private readonly admin = inject(AdministrationService);
   private readonly notify = inject(NotificationService);
   private readonly fb = inject(FormBuilder);

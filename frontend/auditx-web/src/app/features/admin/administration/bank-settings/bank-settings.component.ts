@@ -22,8 +22,62 @@ import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the organization/bank settings page. */
+const BANK_SETTINGS_GUIDE: PageGuide = {
+  id: 'administration-bank-settings',
+  titleKey: 'administration.bankSettings.title',
+  purposeKey: 'administration.bankSettings.guide.purpose',
+  descriptionKey: 'administration.bankSettings.guide.description',
+  actionKeys: [
+    'administration.bankSettings.guide.action.identity',
+    'administration.bankSettings.guide.action.branding',
+    'administration.bankSettings.guide.action.rules',
+    'administration.bankSettings.guide.action.limits',
+  ],
+  sections: [
+    { selector: '[data-guide="general"]', titleKey: 'administration.bankSettings.guide.section.general.title', bodyKey: 'administration.bankSettings.guide.section.general.body' },
+    { selector: '.settings__branding', titleKey: 'administration.bankSettings.guide.section.branding.title', bodyKey: 'administration.bankSettings.guide.section.branding.body' },
+    { selector: '[data-guide="limits"]', titleKey: 'administration.bankSettings.guide.section.limits.title', bodyKey: 'administration.bankSettings.guide.section.limits.body' },
+  ],
+  workflowKeys: [
+    'administration.bankSettings.guide.flow.identity',
+    'administration.bankSettings.guide.flow.brand',
+    'administration.bankSettings.guide.flow.rules',
+    'administration.bankSettings.guide.flow.save',
+  ],
+  dependsOnKeys: [
+    'administration.bankSettings.guide.dep.permissions',
+    'administration.bankSettings.guide.dep.directory',
+  ],
+  usedByKeys: [
+    'administration.bankSettings.guide.use.branding',
+    'administration.bankSettings.guide.use.planning',
+    'administration.bankSettings.guide.use.evidence',
+  ],
+  businessRuleKeys: [
+    'administration.bankSettings.guide.rule.color',
+    'administration.bankSettings.guide.rule.asset',
+    'administration.bankSettings.guide.rule.overlap',
+    'administration.bankSettings.guide.rule.limits',
+  ],
+  tipKeys: [
+    'administration.bankSettings.guide.tip.preview',
+    'administration.bankSettings.guide.tip.locale',
+  ],
+  permissionKeys: [
+    'administration.bankSettings.guide.perm.manage',
+    'administration.bankSettings.guide.perm.limits',
+  ],
+  faq: [
+    { questionKey: 'administration.bankSettings.guide.faq.apply.q', answerKey: 'administration.bankSettings.guide.faq.apply.a' },
+    { questionKey: 'administration.bankSettings.guide.faq.limits.q', answerKey: 'administration.bankSettings.guide.faq.limits.a' },
+  ],
+};
 
 @Component({
   selector: 'app-bank-settings',
@@ -38,6 +92,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,
+    PageGuideComponent,
   ],
   templateUrl: './bank-settings.component.html',
   styleUrl: './bank-settings.component.scss',
@@ -49,6 +104,8 @@ export class BankSettingsComponent {
   private readonly branding = inject(BrandingService);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = BANK_SETTINGS_GUIDE;
 
   /** Max branding image size, in bytes (mirrors the server-side cap). */
   private readonly maxAssetBytes = 512 * 1024;

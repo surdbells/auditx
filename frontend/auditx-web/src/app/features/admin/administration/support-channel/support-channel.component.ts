@@ -25,8 +25,60 @@ import {
 } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the vendor support-channel (break-glass access) tab. */
+const SUPPORT_CHANNEL_GUIDE: PageGuide = {
+  id: 'administration-support-channel',
+  titleKey: 'administration.support.guide.pageTitle',
+  purposeKey: 'administration.support.guide.purpose',
+  descriptionKey: 'administration.support.guide.description',
+  actionKeys: [
+    'administration.support.guide.action.status',
+    'administration.support.guide.action.grant',
+    'administration.support.guide.action.duration',
+    'administration.support.guide.action.revoke',
+  ],
+  sections: [
+    { selector: '[data-guide="status"]', titleKey: 'administration.support.guide.section.status.title', bodyKey: 'administration.support.guide.section.status.body' },
+    { selector: '[data-guide="engineers"]', titleKey: 'administration.support.guide.section.engineers.title', bodyKey: 'administration.support.guide.section.engineers.body' },
+    { selector: '[data-guide="grant"]', titleKey: 'administration.support.guide.section.grant.title', bodyKey: 'administration.support.guide.section.grant.body' },
+  ],
+  workflowKeys: [
+    'administration.support.guide.flow.request',
+    'administration.support.guide.flow.grant',
+    'administration.support.guide.flow.assist',
+    'administration.support.guide.flow.expire',
+  ],
+  dependsOnKeys: [
+    'administration.support.guide.dep.permission',
+    'administration.support.guide.dep.identity',
+  ],
+  usedByKeys: [
+    'administration.support.guide.use.audit',
+    'administration.support.guide.use.health',
+  ],
+  businessRuleKeys: [
+    'administration.support.guide.rule.duration',
+    'administration.support.guide.rule.expiry',
+    'administration.support.guide.rule.revoke',
+    'administration.support.guide.rule.identifiers',
+  ],
+  tipKeys: [
+    'administration.support.guide.tip.shortest',
+    'administration.support.guide.tip.revoke',
+  ],
+  permissionKeys: [
+    'administration.support.guide.perm.manage',
+  ],
+  faq: [
+    { questionKey: 'administration.support.guide.faq.expire.q', answerKey: 'administration.support.guide.faq.expire.a' },
+    { questionKey: 'administration.support.guide.faq.who.q', answerKey: 'administration.support.guide.faq.who.a' },
+  ],
+};
 
 @Component({
   selector: 'app-support-channel',
@@ -43,6 +95,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,
+    PageGuideComponent,
   ],
   templateUrl: './support-channel.component.html',
   styleUrl: './support-channel.component.scss',
@@ -53,6 +106,8 @@ export class SupportChannelComponent {
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = SUPPORT_CHANNEL_GUIDE;
 
   readonly state = signal<ViewState>('loading');
   readonly status = signal<SupportChannelStatus | null>(null);

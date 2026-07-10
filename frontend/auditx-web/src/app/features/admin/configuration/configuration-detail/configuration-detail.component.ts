@@ -38,12 +38,68 @@ import { LoadingComponent } from '../../../../shared/components/loading/loading.
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the configuration domain detail (walkthrough + About panel). */
+const CONFIGURATION_DETAIL_GUIDE: PageGuide = {
+  id: 'configuration-detail',
+  titleKey: 'configuration.detail.guide.pageTitle',
+  purposeKey: 'configuration.detail.guide.purpose',
+  descriptionKey: 'configuration.detail.guide.description',
+  actionKeys: [
+    'configuration.detail.guide.action.review',
+    'configuration.detail.guide.action.draft',
+    'configuration.detail.guide.action.activate',
+    'configuration.detail.guide.action.rollback',
+  ],
+  sections: [
+    { selector: '.config__defs', titleKey: 'configuration.detail.guide.section.active.title', bodyKey: 'configuration.detail.guide.section.active.body' },
+    { selector: '.config__form', titleKey: 'configuration.detail.guide.section.draft.title', bodyKey: 'configuration.detail.guide.section.draft.body' },
+    { selector: '.config__table-card', titleKey: 'configuration.detail.guide.section.history.title', bodyKey: 'configuration.detail.guide.section.history.body' },
+  ],
+  workflowKeys: [
+    'configuration.detail.guide.flow.draft',
+    'configuration.detail.guide.flow.review',
+    'configuration.detail.guide.flow.activate',
+    'configuration.detail.guide.flow.apply',
+  ],
+  dependsOnKeys: [
+    'configuration.detail.guide.dep.domains',
+    'configuration.detail.guide.dep.approvals',
+    'configuration.detail.guide.dep.permission',
+  ],
+  usedByKeys: [
+    'configuration.detail.guide.use.exceptions',
+    'configuration.detail.guide.use.analytics',
+    'configuration.detail.guide.use.reports',
+  ],
+  businessRuleKeys: [
+    'configuration.detail.guide.rule.single',
+    'configuration.detail.guide.rule.reason',
+    'configuration.detail.guide.rule.checker',
+    'configuration.detail.guide.rule.immutable',
+  ],
+  tipKeys: [
+    'configuration.detail.guide.tip.reason',
+    'configuration.detail.guide.tip.rollback',
+    'configuration.detail.guide.tip.refresh',
+  ],
+  permissionKeys: [
+    'configuration.detail.guide.perm.manage',
+    'configuration.detail.guide.perm.viewer',
+  ],
+  faq: [
+    { questionKey: 'configuration.detail.guide.faq.pending.q', answerKey: 'configuration.detail.guide.faq.pending.a' },
+    { questionKey: 'configuration.detail.guide.faq.rollback.q', answerKey: 'configuration.detail.guide.faq.rollback.a' },
+  ],
+};
 
 /** Translation key for the title shown for each known domain. */
 const DOMAIN_TITLE_KEYS: Record<string, string> = {
@@ -76,6 +132,7 @@ const MIN_REASON = 20;
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './configuration-detail.component.html',
@@ -118,6 +175,8 @@ export class ConfigurationDetailComponent {
   readonly fieldErrors = signal<FieldError[]>([]);
 
   readonly minReason = MIN_REASON;
+
+  readonly guide = CONFIGURATION_DETAIL_GUIDE;
 
   readonly title = computed(() => {
     const key = DOMAIN_TITLE_KEYS[this.domain()];
