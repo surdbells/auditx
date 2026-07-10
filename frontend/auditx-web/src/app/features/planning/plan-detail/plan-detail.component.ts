@@ -30,6 +30,7 @@ import { UsersService } from '../../../core/services/users.service';
 import { TemplatesService } from '../../../core/services/templates.service';
 import { AuditsService } from '../../../core/services/audits.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
+import { EntityLookupService } from '../../../core/services/entity-lookup.service';
 import { ReferenceDataService } from '../../../core/services/reference-data.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -71,6 +72,8 @@ import { ErrorStateComponent } from '../../../shared/components/error-state/erro
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
 import { PageGuide } from '../../../core/models/page-guide.models';
+import { GanttChartComponent } from '../../../shared/charts';
+import { GanttItem } from '../../../shared/charts/chart-types';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -92,6 +95,7 @@ const PLAN_DETAIL_GUIDE: PageGuide = {
     { selector: '.detail__actions', titleKey: 'planning.detail.guide.section.actions.title', bodyKey: 'planning.detail.guide.section.actions.body' },
     { selector: '.detail__status-row', titleKey: 'planning.detail.guide.section.status.title', bodyKey: 'planning.detail.guide.section.status.body' },
     { selector: '.detail__exec-card', titleKey: 'planning.detail.guide.section.execution.title', bodyKey: 'planning.detail.guide.section.execution.body' },
+    { selector: '[data-guide="timeline"]', titleKey: 'planning.detail.guide.section.timeline.title', bodyKey: 'planning.detail.guide.section.timeline.body' },
     { selector: '.detail__items-card', titleKey: 'planning.detail.guide.section.items.title', bodyKey: 'planning.detail.guide.section.items.body' },
   ],
   workflowKeys: [
@@ -150,6 +154,7 @@ const PLAN_DETAIL_GUIDE: PageGuide = {
     ErrorStateComponent,
     PageHeaderComponent,
     PageGuideComponent,
+    GanttChartComponent,
     TranslatePipe,
   ],
   templateUrl: './plan-detail.component.html',
@@ -166,6 +171,8 @@ export class PlanDetailComponent {
   private readonly audits = inject(AuditsService);
   /** Resolves assigned-lead user ids to display names in the item table. */
   readonly userLookup = inject(UserLookupService);
+  /** Resolves entity ids to names for the timeline row labels. */
+  private readonly entityLookup = inject(EntityLookupService);
   private readonly refData = inject(ReferenceDataService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -239,6 +246,23 @@ export class PlanDetailComponent {
     () => !!this.plan()?.canLaunchAudits && this.canCreateAudit(),
   );
 
+  /** Plan items laid out for the timeline (Gantt), ordered by their manual order index. */
+  readonly ganttItems = computed<GanttItem[]>(() => {
+    const p = this.plan();
+    if (!p) {
+      return [];
+    }
+    return [...p.items]
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map((it) => ({
+        label: this.entityLookup.name(it.entityId),
+        start: it.plannedStartDate,
+        end: it.plannedEndDate,
+        tone: it.status,
+        detail: `${it.auditType} · ${it.plannedStartDate} → ${it.plannedEndDate}`,
+      }));
+  });
+
   /** Real per-item checklist progress from the execution roll-up, indexed by plan-item id. */
   progressFor(item: PlanItem): PlanItemProgress | undefined {
     return this.execution()?.itemProgress?.find((p) => p.planItemId === item.id);
@@ -258,6 +282,8 @@ export class PlanDetailComponent {
   private entitiesCache: EntityListItem[] = [];
 
   constructor() {
+    // Warm the entity directory so the timeline row labels resolve to names, not ids.
+    this.entityLookup.ensureLoaded();
     // The id input resolves before the constructor body runs in zoneless mode
     // only after binding; fetch lazily via effect-free guard.
     queueMicrotask(() => this.fetch());

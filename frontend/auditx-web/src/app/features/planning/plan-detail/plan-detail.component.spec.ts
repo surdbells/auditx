@@ -104,6 +104,12 @@ describe('PlanDetailComponent', () => {
     await fixture.whenStable();
     http.expectOne(`${BASE}/annual-plans/p-1/execution`).flush({ data: execution() });
     fixture.detectChanges();
+
+    // The detail warms the entity directory (for the timeline row labels); drain that
+    // fire-and-forget request so afterEach http.verify() stays clean.
+    http
+      .match((r) => r.url === `${BASE}/audit-universe/entities`)
+      .forEach((r) => r.flush({ data: { items: [] } }));
   }
 
   afterEach(() => http.verify());

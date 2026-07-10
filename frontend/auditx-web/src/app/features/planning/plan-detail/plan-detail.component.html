@@ -141,6 +141,20 @@
         </mat-card>
       }
 
+      <!-- Timeline (Gantt) -->
+      @if (ganttItems().length) {
+        <mat-card appearance="outlined" class="detail__timeline-card" data-guide="timeline">
+          <h3 class="detail__card-title">{{ 'planning.detail.timeline' | t }}</h3>
+          <app-gantt-chart
+            [items]="ganttItems()"
+            [rangeStart]="p.periodStart"
+            [rangeEnd]="p.periodEnd"
+            [label]="'planning.detail.timeline' | t"
+            [emptyLabel]="'planning.detail.timelineEmpty' | t"
+          />
+        </mat-card>
+      }
+
       <!-- Items -->
       <mat-card appearance="outlined" class="detail__items-card">
         <div class="detail__items-head">
