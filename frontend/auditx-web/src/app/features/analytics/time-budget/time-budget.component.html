@@ -7,12 +7,14 @@
       <mat-icon>arrow_back</mat-icon>
       {{ 'analytics.nav.allDashboards' | t }}
     </a>
-    <button matButton type="button" (click)="fetch()">
+    <button matButton type="button" (click)="fetch()" data-guide="refresh">
       <mat-icon>refresh</mat-icon>
       {{ 'analytics.actions.refresh' | t }}
     </button>
   </div>
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 @switch (state()) {
   @case ('loading') {
@@ -30,7 +32,7 @@
       />
     } @else {
       <h2 class="tb__section">{{ 'analytics.timeBudget.budgetTitle' | t }}</h2>
-      <mat-card appearance="outlined" class="tb__table-card">
+      <mat-card appearance="outlined" class="tb__table-card" data-guide="budget">
         <div class="tb__table-wrapper">
           <table mat-table [dataSource]="budget()" class="tb__table">
             <ng-container matColumnDef="audit">
@@ -79,7 +81,7 @@
           [message]="'analytics.timeBudget.utilEmpty.message' | t"
         />
       } @else {
-        <mat-card appearance="outlined" class="tb__table-card">
+        <mat-card appearance="outlined" class="tb__table-card" data-guide="utilisation">
           <div class="tb__table-wrapper">
             <table mat-table [dataSource]="utilisation()" class="tb__table">
               <ng-container matColumnDef="auditor">

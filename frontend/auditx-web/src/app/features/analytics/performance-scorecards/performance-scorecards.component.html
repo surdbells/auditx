@@ -2,7 +2,7 @@
   [title]="'analytics.scorecards.title' | t"
   [subtitle]="'analytics.scorecards.subtitle' | t"
 >
-  <div actions>
+  <div actions data-guide="controls">
     <a matButton routerLink="/analytics">
       <mat-icon>arrow_back</mat-icon>
       {{ 'analytics.nav.allDashboards' | t }}
@@ -13,6 +13,8 @@
     </button>
   </div>
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 @switch (state()) {
   @case ('loading') {

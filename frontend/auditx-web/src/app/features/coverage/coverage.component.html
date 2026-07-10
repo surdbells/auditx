@@ -3,8 +3,10 @@
   [subtitle]="'coverage.header.subtitle' | t"
 />
 
+<app-page-guide [guide]="guide" />
+
 <!-- Not audited since -->
-<mat-card appearance="outlined" class="cov__card">
+<mat-card appearance="outlined" class="cov__card" data-guide="not-audited">
   <h3 class="cov__title">{{ 'coverage.notAudited.title' | t }}</h3>
   <form [formGroup]="notAuditedForm" class="cov__form" (ngSubmit)="runNotAudited()">
     <mat-form-field appearance="outline">
@@ -66,7 +68,7 @@
 </mat-card>
 
 <!-- High-risk gaps -->
-<mat-card appearance="outlined" class="cov__card">
+<mat-card appearance="outlined" class="cov__card" data-guide="high-risk">
   <h3 class="cov__title">{{ 'coverage.highRisk.title' | t }}</h3>
   <form [formGroup]="highRiskForm" class="cov__form" (ngSubmit)="runHighRisk()">
     <mat-form-field appearance="outline">
@@ -138,7 +140,7 @@
 </mat-card>
 
 <!-- Coverage matrix -->
-<mat-card appearance="outlined" class="cov__card">
+<mat-card appearance="outlined" class="cov__card" data-guide="matrix">
   <h3 class="cov__title">{{ 'coverage.matrix.title' | t }}</h3>
   <form [formGroup]="matrixForm" class="cov__form" (ngSubmit)="runMatrix()">
     <mat-form-field appearance="outline">

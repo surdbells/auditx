@@ -2,7 +2,7 @@
   [title]="'analytics.list.title' | t"
   [subtitle]="'analytics.list.subtitle' | t"
 >
-  <div actions>
+  <div actions data-guide="actions">
     <a matButton routerLink="/analytics/recurrence-clusters">
       <mat-icon>repeat</mat-icon>
       {{ 'analytics.nav.recurrenceClusters' | t }}
@@ -13,6 +13,8 @@
     </button>
   </div>
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 @switch (state()) {
   @case ('loading') {

@@ -22,9 +22,40 @@ import {
   NotAuditedRow,
 } from '../../core/models';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../core/models/page-guide.models';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 type ReportState = 'idle' | 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the coverage analytics view (walkthrough + About panel). */
+const COVERAGE_GUIDE: PageGuide = {
+  id: 'coverage',
+  titleKey: 'coverage.header.title',
+  purposeKey: 'coverage.guide.purpose',
+  descriptionKey: 'coverage.guide.description',
+  actionKeys: [
+    'coverage.guide.action.notAudited',
+    'coverage.guide.action.highRisk',
+    'coverage.guide.action.matrix',
+    'coverage.guide.action.filter',
+  ],
+  sections: [
+    { selector: '[data-guide="not-audited"]', titleKey: 'coverage.guide.section.notAudited.title', bodyKey: 'coverage.guide.section.notAudited.body' },
+    { selector: '[data-guide="high-risk"]', titleKey: 'coverage.guide.section.highRisk.title', bodyKey: 'coverage.guide.section.highRisk.body' },
+    { selector: '[data-guide="matrix"]', titleKey: 'coverage.guide.section.matrix.title', bodyKey: 'coverage.guide.section.matrix.body' },
+  ],
+  workflowKeys: ['coverage.guide.flow.universe', 'coverage.guide.flow.risk', 'coverage.guide.flow.plan', 'coverage.guide.flow.audit', 'coverage.guide.flow.coverage'],
+  dependsOnKeys: ['coverage.guide.dep.universe', 'coverage.guide.dep.audits', 'coverage.guide.dep.risk'],
+  usedByKeys: ['coverage.guide.use.plan', 'coverage.guide.use.reports', 'coverage.guide.use.board'],
+  businessRuleKeys: ['coverage.guide.rule.completed', 'coverage.guide.rule.residual', 'coverage.guide.rule.window'],
+  tipKeys: ['coverage.guide.tip.highRisk', 'coverage.guide.tip.window', 'coverage.guide.tip.entityType'],
+  permissionKeys: ['coverage.guide.perm.analytics', 'coverage.guide.perm.manager'],
+  faq: [
+    { questionKey: 'coverage.guide.faq.never.q', answerKey: 'coverage.guide.faq.never.a' },
+    { questionKey: 'coverage.guide.faq.residual.q', answerKey: 'coverage.guide.faq.residual.a' },
+  ],
+};
 
 @Component({
   selector: 'app-coverage',
@@ -41,6 +72,7 @@ type ReportState = 'idle' | 'loading' | 'ready' | 'error';
     MatButtonModule,
     MatIconModule,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './coverage.component.html',
@@ -50,6 +82,8 @@ export class CoverageComponent {
   private readonly service = inject(CoverageService);
   private readonly universe = inject(UniverseService);
   private readonly fb = inject(FormBuilder);
+
+  readonly guide = COVERAGE_GUIDE;
 
   /** Entity-type options for the coverage filters. */
   readonly entityTypes = signal<string[]>([]);

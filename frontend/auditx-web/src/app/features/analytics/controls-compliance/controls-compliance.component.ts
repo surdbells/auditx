@@ -23,8 +23,63 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for controls & compliance analytics (drives the walkthrough + the About panel). */
+const CONTROLS_COMPLIANCE_GUIDE: PageGuide = {
+  id: 'controls-compliance',
+  titleKey: 'analytics.controlsCompliance.title',
+  purposeKey: 'analytics.controlsCompliance.guide.purpose',
+  descriptionKey: 'analytics.controlsCompliance.guide.description',
+  actionKeys: [
+    'analytics.controlsCompliance.guide.action.effectiveness',
+    'analytics.controlsCompliance.guide.action.breakdown',
+    'analytics.controlsCompliance.guide.action.compliance',
+    'analytics.controlsCompliance.guide.action.refresh',
+  ],
+  sections: [
+    { selector: '.cc__summary-card', titleKey: 'analytics.controlsCompliance.guide.section.summary.title', bodyKey: 'analytics.controlsCompliance.guide.section.summary.body' },
+    { selector: '.cc__breakdowns', titleKey: 'analytics.controlsCompliance.guide.section.breakdowns.title', bodyKey: 'analytics.controlsCompliance.guide.section.breakdowns.body' },
+    { selector: '.cc__table-card', titleKey: 'analytics.controlsCompliance.guide.section.compliance.title', bodyKey: 'analytics.controlsCompliance.guide.section.compliance.body' },
+  ],
+  workflowKeys: [
+    'analytics.controlsCompliance.guide.flow.define',
+    'analytics.controlsCompliance.guide.flow.test',
+    'analytics.controlsCompliance.guide.flow.rate',
+    'analytics.controlsCompliance.guide.flow.link',
+    'analytics.controlsCompliance.guide.flow.report',
+  ],
+  dependsOnKeys: [
+    'analytics.controlsCompliance.guide.dep.controls',
+    'analytics.controlsCompliance.guide.dep.regulations',
+    'analytics.controlsCompliance.guide.dep.findings',
+  ],
+  usedByKeys: [
+    'analytics.controlsCompliance.guide.use.reports',
+    'analytics.controlsCompliance.guide.use.dashboards',
+    'analytics.controlsCompliance.guide.use.audits',
+  ],
+  businessRuleKeys: [
+    'analytics.controlsCompliance.guide.rule.share',
+    'analytics.controlsCompliance.guide.rule.active',
+    'analytics.controlsCompliance.guide.rule.open',
+  ],
+  tipKeys: [
+    'analytics.controlsCompliance.guide.tip.ineffective',
+    'analytics.controlsCompliance.guide.tip.register',
+  ],
+  permissionKeys: [
+    'analytics.controlsCompliance.guide.perm.viewer',
+    'analytics.controlsCompliance.guide.perm.manager',
+  ],
+  faq: [
+    { questionKey: 'analytics.controlsCompliance.guide.faq.share.q', answerKey: 'analytics.controlsCompliance.guide.faq.share.a' },
+    { questionKey: 'analytics.controlsCompliance.guide.faq.empty.q', answerKey: 'analytics.controlsCompliance.guide.faq.empty.a' },
+  ],
+};
 
 /** Controls & Compliance analytics (P1-B, ViewAnalytics): control-effectiveness roll-up + compliance-by-regulation. */
 @Component({
@@ -41,6 +96,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './controls-compliance.component.html',
   styleUrl: './controls-compliance.component.scss',
@@ -48,6 +104,8 @@ type ViewState = 'loading' | 'ready' | 'error';
 export class ControlsComplianceComponent {
   private readonly service = inject(AnalyticsService);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = CONTROLS_COMPLIANCE_GUIDE;
 
   readonly regulationColumns = ['code', 'name', 'authority', 'linked', 'open'];
 

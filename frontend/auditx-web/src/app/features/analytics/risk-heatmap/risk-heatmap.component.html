@@ -3,7 +3,7 @@
   [subtitle]="'risk.heatmap.subtitle' | t"
 >
   <div actions>
-    <a matButton routerLink="/risks">
+    <a matButton routerLink="/risks" data-guide="register">
       <mat-icon>list</mat-icon>
       {{ 'risk.heatmap.register' | t }}
     </a>
@@ -13,6 +13,8 @@
     </button>
   </div>
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 @switch (state()) {
   @case ('loading') {

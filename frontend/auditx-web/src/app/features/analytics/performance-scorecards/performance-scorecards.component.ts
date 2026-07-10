@@ -20,8 +20,64 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the performance scorecards view (drives the walkthrough + the About panel). */
+const SCORECARDS_GUIDE: PageGuide = {
+  id: 'performance-scorecards',
+  titleKey: 'analytics.scorecards.title',
+  purposeKey: 'analytics.performanceScorecards.guide.purpose',
+  descriptionKey: 'analytics.performanceScorecards.guide.description',
+  actionKeys: [
+    'analytics.performanceScorecards.guide.action.review',
+    'analytics.performanceScorecards.guide.action.compare',
+    'analytics.performanceScorecards.guide.action.drill',
+    'analytics.performanceScorecards.guide.action.refresh',
+  ],
+  sections: [
+    { selector: '[data-guide="controls"]', titleKey: 'analytics.performanceScorecards.guide.section.controls.title', bodyKey: 'analytics.performanceScorecards.guide.section.controls.body' },
+    { selector: '.scorecards__table-card', titleKey: 'analytics.performanceScorecards.guide.section.card.title', bodyKey: 'analytics.performanceScorecards.guide.section.card.body' },
+    { selector: '.scorecards__table', titleKey: 'analytics.performanceScorecards.guide.section.table.title', bodyKey: 'analytics.performanceScorecards.guide.section.table.body' },
+  ],
+  workflowKeys: [
+    'analytics.performanceScorecards.guide.flow.lead',
+    'analytics.performanceScorecards.guide.flow.deliver',
+    'analytics.performanceScorecards.guide.flow.raise',
+    'analytics.performanceScorecards.guide.flow.aggregate',
+    'analytics.performanceScorecards.guide.flow.review',
+  ],
+  dependsOnKeys: [
+    'analytics.performanceScorecards.guide.dep.audits',
+    'analytics.performanceScorecards.guide.dep.exceptions',
+    'analytics.performanceScorecards.guide.dep.users',
+  ],
+  usedByKeys: [
+    'analytics.performanceScorecards.guide.use.appraisal',
+    'analytics.performanceScorecards.guide.use.capacity',
+    'analytics.performanceScorecards.guide.use.reports',
+  ],
+  businessRuleKeys: [
+    'analytics.performanceScorecards.guide.rule.lead',
+    'analytics.performanceScorecards.guide.rule.completed',
+    'analytics.performanceScorecards.guide.rule.cycle',
+    'analytics.performanceScorecards.guide.rule.closure',
+  ],
+  tipKeys: [
+    'analytics.performanceScorecards.guide.tip.context',
+    'analytics.performanceScorecards.guide.tip.closure',
+  ],
+  permissionKeys: [
+    'analytics.performanceScorecards.guide.perm.view',
+    'analytics.performanceScorecards.guide.perm.sensitive',
+  ],
+  faq: [
+    { questionKey: 'analytics.performanceScorecards.guide.faq.empty.q', answerKey: 'analytics.performanceScorecards.guide.faq.empty.a' },
+    { questionKey: 'analytics.performanceScorecards.guide.faq.ranking.q', answerKey: 'analytics.performanceScorecards.guide.faq.ranking.a' },
+  ],
+};
 
 /** Per-audit-lead performance scorecards (PerformanceAnalyticsView). */
 @Component({
@@ -38,6 +94,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './performance-scorecards.component.html',
   styleUrl: './performance-scorecards.component.scss',
@@ -56,6 +113,8 @@ export class PerformanceScorecardsComponent {
     'exceptionsClosed',
     'closureDays',
   ];
+
+  readonly guide = SCORECARDS_GUIDE;
 
   readonly state = signal<ViewState>('loading');
   readonly scorecards = signal<PerformanceScorecard[]>([]);

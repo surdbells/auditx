@@ -20,8 +20,68 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the risk heat-map (drives the walkthrough + the About panel). */
+const RISK_HEATMAP_GUIDE: PageGuide = {
+  id: 'risk-heatmap',
+  titleKey: 'risk.heatmap.title',
+  purposeKey: 'analytics.riskHeatmap.guide.purpose',
+  descriptionKey: 'analytics.riskHeatmap.guide.description',
+  actionKeys: [
+    'analytics.riskHeatmap.guide.action.read',
+    'analytics.riskHeatmap.guide.action.summary',
+    'analytics.riskHeatmap.guide.action.register',
+    'analytics.riskHeatmap.guide.action.refresh',
+  ],
+  sections: [
+    { selector: '.rh__summary-card', titleKey: 'analytics.riskHeatmap.guide.section.summary.title', bodyKey: 'analytics.riskHeatmap.guide.section.summary.body' },
+    { selector: '.rh__grid-card', titleKey: 'analytics.riskHeatmap.guide.section.grid.title', bodyKey: 'analytics.riskHeatmap.guide.section.grid.body' },
+    { selector: '[data-guide="register"]', titleKey: 'analytics.riskHeatmap.guide.section.register.title', bodyKey: 'analytics.riskHeatmap.guide.section.register.body' },
+  ],
+  workflowKeys: [
+    'analytics.riskHeatmap.guide.flow.identify',
+    'analytics.riskHeatmap.guide.flow.assess',
+    'analytics.riskHeatmap.guide.flow.heatmap',
+    'analytics.riskHeatmap.guide.flow.treat',
+    'analytics.riskHeatmap.guide.flow.review',
+  ],
+  dependsOnKeys: [
+    'analytics.riskHeatmap.guide.dep.register',
+    'analytics.riskHeatmap.guide.dep.assessment',
+    'analytics.riskHeatmap.guide.dep.owners',
+    'analytics.riskHeatmap.guide.dep.bands',
+  ],
+  usedByKeys: [
+    'analytics.riskHeatmap.guide.use.planning',
+    'analytics.riskHeatmap.guide.use.findings',
+    'analytics.riskHeatmap.guide.use.reports',
+    'analytics.riskHeatmap.guide.use.dashboards',
+  ],
+  businessRuleKeys: [
+    'analytics.riskHeatmap.guide.rule.score',
+    'analytics.riskHeatmap.guide.rule.open',
+    'analytics.riskHeatmap.guide.rule.band',
+    'analytics.riskHeatmap.guide.rule.overdue',
+  ],
+  tipKeys: [
+    'analytics.riskHeatmap.guide.tip.corner',
+    'analytics.riskHeatmap.guide.tip.hover',
+    'analytics.riskHeatmap.guide.tip.act',
+  ],
+  permissionKeys: [
+    'analytics.riskHeatmap.guide.perm.analytics',
+    'analytics.riskHeatmap.guide.perm.riskManager',
+    'analytics.riskHeatmap.guide.perm.admin',
+  ],
+  faq: [
+    { questionKey: 'analytics.riskHeatmap.guide.faq.empty.q', answerKey: 'analytics.riskHeatmap.guide.faq.empty.a' },
+    { questionKey: 'analytics.riskHeatmap.guide.faq.colour.q', answerKey: 'analytics.riskHeatmap.guide.faq.colour.a' },
+  ],
+};
 
 /** Enterprise risk heatmap + register summary (P1-A, ViewAnalytics). */
 @Component({
@@ -38,6 +98,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './risk-heatmap.component.html',
   styleUrl: './risk-heatmap.component.scss',
@@ -48,6 +109,8 @@ export class RiskHeatmapComponent {
   /** Rows render impact 5→1 (high at top); columns render likelihood 1→5. */
   readonly impacts = [5, 4, 3, 2, 1];
   readonly likelihoods = [1, 2, 3, 4, 5];
+
+  readonly guide = RISK_HEATMAP_GUIDE;
 
   readonly state = signal<ViewState>('loading');
   readonly heatmap = signal<RiskHeatmap | null>(null);
