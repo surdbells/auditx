@@ -119,6 +119,23 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
     public async Task<IActionResult> Cancel(Guid id, [FromBody] ReasonVersionRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new CancelExceptionCommand(id, request.Reason, request.Version), cancellationToken));
 
+    // ---- Management response / follow-up verification / reopen (P2-B) ----
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpPost("api/v1/exceptions/{id:guid}/management-response")]
+    public async Task<IActionResult> RecordManagementResponse(Guid id, [FromBody] ManagementResponseRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new RecordManagementResponseCommand(id, request.Decision, request.Comment, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.VerifyException)]
+    [HttpPost("api/v1/exceptions/{id:guid}/verifications")]
+    public async Task<IActionResult> AddVerification(Guid id, [FromBody] AddVerificationRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new AddFindingVerificationCommand(id, request.Result, request.Notes, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ReopenException)]
+    [HttpPost("api/v1/exceptions/{id:guid}/reopen")]
+    public async Task<IActionResult> Reopen(Guid id, [FromBody] ReasonVersionRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ReopenExceptionCommand(id, request.Reason, request.Version), cancellationToken));
+
     // ---- MAP ----
 
     [RequirePermission(PermissionKeys.SubmitMap)]

@@ -101,6 +101,77 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         Assert.Equal(1, list.GetArrayLength());
     }
 
+    /// <summary>Grant the Audit Manager role (ViewAnalytics) to 'manager' and log in as an analyst.</summary>
+    private async Task<HttpClient> AnalystAsync(HttpClient admin)
+    {
+        var users = await UsersByEmailAsync(admin);
+        var roles = await DataAsync(await admin.GetAsync("/api/v1/roles"));
+        var roleId = roles.EnumerateArray().First(r => r.GetProperty("name").GetString() == "Audit Manager").GetProperty("id").GetGuid();
+        await admin.PostAsJsonAsync($"/api/v1/users/{users["manager@auditx.local"]}/roles", new { roleId, scopeValue = (string?)null });
+        var client = NewClient();
+        (await client.PostAsJsonAsync("/api/v1/auth/login", new { username = "manager", password = "Passw0rd!" })).EnsureSuccessStatusCode();
+        return client;
+    }
+
+    [Fact]
+    public async Task Management_response_reopen_and_verification_wiring()
+    {
+        var admin = await AdminAsync(); // Administrator: ManageException + ReopenException + VerifyException
+        var (auditId, failItem, _, owner) = await SeedAuditWithResponsesAsync(admin);
+        var ex = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = failItem, title = "Gap", severity = "medium", rootCause = "rc", recommendation = "rec",
+            rootCauseCategory = "process_gap", ownerUserId = owner,
+        }));
+        var exId = ex.GetProperty("id").GetGuid();
+
+        // Management response is recorded on the open finding.
+        var responded = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/exceptions/{exId}/management-response", new
+        {
+            decision = "partially_accepted", comment = "We accept the control gap but dispute the severity.", version = Version(ex),
+        }));
+        Assert.Equal("partially_accepted", responded.GetProperty("managementResponseDecision").GetString());
+
+        // Reopen + verification are only valid once closed → 409 on an open finding (endpoint + permission wired).
+        var reopen = await admin.PostAsJsonAsync($"/api/v1/exceptions/{exId}/reopen", new
+        {
+            reason = "Trying to reopen a finding that is not closed yet.", version = Version(responded),
+        });
+        Assert.Equal(HttpStatusCode.Conflict, reopen.StatusCode);
+
+        var verify = await admin.PostAsJsonAsync($"/api/v1/exceptions/{exId}/verifications", new
+        {
+            result = "passed", notes = "n/a", version = Version(responded),
+        });
+        Assert.Equal(HttpStatusCode.Conflict, verify.StatusCode);
+
+        // Follow-up analytics returns its shape (ViewAnalytics).
+        var analyst = await AnalystAsync(admin);
+        var followup = await DataAsync(await analyst.GetAsync("/api/v1/analytics/finding-followup"));
+        Assert.True(followup.GetProperty("totalFindings").GetInt32() >= 1);
+        Assert.True(followup.GetProperty("withManagementResponse").GetInt32() >= 1);
+    }
+
+    [Fact]
+    public async Task Reopen_requires_the_reopen_permission()
+    {
+        var admin = await AdminAsync();
+        var (auditId, failItem, _, owner) = await SeedAuditWithResponsesAsync(admin);
+        var ex = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = failItem, title = "Gap", severity = "low", rootCause = "rc", recommendation = "rec",
+            rootCauseCategory = "human_error", ownerUserId = owner,
+        }));
+
+        var auditee = NewClient();
+        (await auditee.PostAsJsonAsync("/api/v1/auth/login", new { username = "auditee", password = "Passw0rd!" })).EnsureSuccessStatusCode();
+        var resp = await auditee.PostAsJsonAsync($"/api/v1/exceptions/{ex.GetProperty("id").GetGuid()}/reopen", new
+        {
+            reason = "Auditee should not be able to reopen a finding at all.", version = Version(ex),
+        });
+        Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
+    }
+
     [Fact]
     public async Task Raise_captures_the_root_cause_taxonomy()
     {

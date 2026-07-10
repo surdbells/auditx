@@ -6,6 +6,11 @@ public sealed record RaiseExceptionRequest(
 
 public sealed record ChangeSeverityRequest(string Severity, string Reason, string Version);
 
+// P2-B — management response, follow-up verification (reopen reuses ReasonVersionRequest).
+public sealed record ManagementResponseRequest(string Decision, string Comment, string Version);
+
+public sealed record AddVerificationRequest(string Result, string? Notes, string Version);
+
 public sealed record ReassignOwnerRequest(Guid OwnerUserId, string Version);
 
 public sealed record MapActionRequest(string Description, Guid OwnerUserId, DateOnly TargetDate, string? ExpectedEvidenceType);

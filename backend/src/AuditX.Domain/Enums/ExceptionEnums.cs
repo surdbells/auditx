@@ -30,3 +30,19 @@ public enum MapActionStatus
     Pending,
     Complete,
 }
+
+/// <summary>Management's formal position on a finding (P2-B), distinct from the remediation plan.</summary>
+public enum ManagementResponseDecision
+{
+    Accepted,
+    PartiallyAccepted,
+    Disputed,
+}
+
+/// <summary>Outcome of a post-closure follow-up verification that remediation is effective (P2-B).</summary>
+public enum VerificationResult
+{
+    Passed,
+    PartiallyPassed,
+    Failed,
+}

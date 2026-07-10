@@ -31,3 +31,9 @@ public sealed record ExceptionPendingCiaEvent(Guid ExceptionId, Guid ClosedBy) :
 public sealed record ExceptionClosedEvent(Guid ExceptionId, Guid ClosedBy, Guid? CiaCountersignedBy) : ExceptionEvent;
 
 public sealed record ExceptionCancelledEvent(Guid ExceptionId, Guid ActorUserId, string Reason) : ExceptionEvent;
+
+public sealed record ManagementResponseRecordedEvent(Guid ExceptionId, ManagementResponseDecision Decision, Guid ActorUserId) : ExceptionEvent;
+
+public sealed record FindingVerifiedEvent(Guid ExceptionId, Guid VerificationId, VerificationResult Result, Guid VerifiedByUserId) : ExceptionEvent;
+
+public sealed record ExceptionReopenedEvent(Guid ExceptionId, Guid ActorUserId, string Reason, int ReopenCount) : ExceptionEvent;

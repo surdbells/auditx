@@ -24,12 +24,18 @@ public static class ExceptionMappings
         e.TargetDateOverridden, e.IsRecurrence, e.RecurrenceOfExceptionId, e.CiaPending,
         e.IsOverdue(today), e.DaysPastTarget(today), e.MapSubmittedAt, e.MapApprovedAt, e.MapRejectionReason,
         e.ClosureEvidenceNote, e.ClosedBy, e.ClosedAt, e.CiaCountersignedBy, e.CancellationReason,
+        e.ManagementResponseDecision?.ToSnake(), e.ManagementResponseComment, e.ManagementRespondedBy, e.ManagementRespondedAt,
+        e.ReopenCount, e.ReopenedBy, e.ReopenedAt, e.ReopenReason,
         Convert.ToBase64String(e.Version ?? []),
-        e.MapActions.Select(a => a.ToDto()).ToArray());
+        e.MapActions.Select(a => a.ToDto()).ToArray(),
+        e.Verifications.OrderByDescending(v => v.VerifiedAt).Select(v => v.ToDto()).ToArray());
 
     public static MapActionDto ToDto(this MapAction a) => new(
         a.Id, a.ExceptionId, a.Description, a.OwnerUserId, a.TargetDate, a.ExpectedEvidenceType,
         a.Status.ToSnake(), a.CompletedAt, a.CompletedBy);
+
+    public static FindingVerificationDto ToDto(this FindingVerification v) => new(
+        v.Id, v.ExceptionId, v.Result.ToSnake(), v.VerifiedByUserId, v.VerifiedAt, v.Notes);
 
     public static ExceptionListItemDto ToListItemDto(this AuditException e, DateOnly today) => new(
         e.Id, e.AuditId, e.Title, e.Severity.ToSnake(), e.StatusLabel(), e.OwnerUserId, e.TargetDate,

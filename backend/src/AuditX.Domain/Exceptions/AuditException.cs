@@ -14,6 +14,7 @@ namespace AuditX.Domain.Exceptions;
 public sealed class AuditException : AggregateRoot
 {
     private readonly List<MapAction> _mapActions = [];
+    private readonly List<FindingVerification> _verifications = [];
 
     private AuditException()
     {
@@ -86,6 +87,26 @@ public sealed class AuditException : AggregateRoot
 
     public DateTimeOffset? CancelledAt { get; private set; }
 
+    // ---- Management response (P2-B): management's formal position on the finding. ----
+
+    public ManagementResponseDecision? ManagementResponseDecision { get; private set; }
+
+    public string? ManagementResponseComment { get; private set; }
+
+    public Guid? ManagementRespondedBy { get; private set; }
+
+    public DateTimeOffset? ManagementRespondedAt { get; private set; }
+
+    // ---- Reopen (P2-B): a closed finding can be reopened; the count feeds closure-quality reporting. ----
+
+    public int ReopenCount { get; private set; }
+
+    public Guid? ReopenedBy { get; private set; }
+
+    public DateTimeOffset? ReopenedAt { get; private set; }
+
+    public string? ReopenReason { get; private set; }
+
     /// <summary>Optional quantified financial exposure of the finding, for $-impact reporting.</summary>
     public decimal? FinancialImpact { get; private set; }
 
@@ -95,6 +116,8 @@ public sealed class AuditException : AggregateRoot
     public byte[] Version { get; private set; } = [];
 
     public IReadOnlyList<MapAction> MapActions => _mapActions.AsReadOnly();
+
+    public IReadOnlyList<FindingVerification> Verifications => _verifications.AsReadOnly();
 
     public bool RequiresCiaCountersign => Severity == ExceptionSeverity.Critical;
 
@@ -312,6 +335,55 @@ public sealed class AuditException : AggregateRoot
         CancelledAt = nowUtc;
         Status = ExceptionStatus.Cancelled;
         RaiseDomainEvent(new ExceptionCancelledEvent(Id, actorUserId, CancellationReason));
+    }
+
+    // ---- P2-B: management response, follow-up verification, reopen ----
+
+    /// <summary>Records management's formal position on the finding (accept / partially accept / dispute). Overwrites any prior response; blocked once cancelled.</summary>
+    public void RecordManagementResponse(ManagementResponseDecision decision, string comment, Guid actorUserId, DateTimeOffset nowUtc)
+    {
+        if (Status == ExceptionStatus.Cancelled)
+        {
+            throw new InvalidStateTransitionException("exception.response_locked", "A cancelled exception cannot take a management response.");
+        }
+
+        ManagementResponseDecision = decision;
+        ManagementResponseComment = Guard.NotNullOrWhiteSpace(comment, "exception.response_comment_required", "A management-response comment is required.");
+        ManagementRespondedBy = actorUserId;
+        ManagementRespondedAt = nowUtc;
+        RaiseDomainEvent(new ManagementResponseRecordedEvent(Id, decision, actorUserId));
+    }
+
+    /// <summary>Records a post-closure follow-up verification of the remediation (only meaningful once the finding is Closed).</summary>
+    public FindingVerification AddVerification(VerificationResult result, string? notes, Guid verifiedByUserId, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("exception.not_closed_for_verification", ExceptionStatus.Closed);
+        var verification = new FindingVerification(Id, result, verifiedByUserId, notes, nowUtc);
+        _verifications.Add(verification);
+        RaiseDomainEvent(new FindingVerifiedEvent(Id, verification.Id, result, verifiedByUserId));
+        return verification;
+    }
+
+    /// <summary>Reopens a closed finding back to Open (e.g. after a failed follow-up), clearing the closure and incrementing the reopen count.</summary>
+    public void Reopen(string reason, Guid actorUserId, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("exception.not_closed_for_reopen", ExceptionStatus.Closed);
+        var trimmed = Guard.MinLength(reason, 20, "exception.reopen_reason_required", "A reopen reason of at least 20 characters is required.");
+
+        Status = ExceptionStatus.Open;
+        ReopenCount += 1;
+        ReopenedBy = actorUserId;
+        ReopenedAt = nowUtc;
+        ReopenReason = trimmed;
+
+        // A reopened finding is no longer closed: clear the closure/CIA fields so it presents as a clean open finding.
+        ClosedAt = null;
+        ClosedBy = null;
+        ClosureEvidenceNote = null;
+        CiaPending = false;
+        CiaCountersignedBy = null;
+        CiaCountersignedAt = null;
+        RaiseDomainEvent(new ExceptionReopenedEvent(Id, actorUserId, trimmed, ReopenCount));
     }
 
     private void Transition(ExceptionStatus to, params ExceptionStatus[] from)

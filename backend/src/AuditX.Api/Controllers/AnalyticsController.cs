@@ -95,6 +95,12 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> ComplianceByRegulation(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ComplianceByRegulationQuery(), cancellationToken));
 
+    /// <summary>Finding follow-up — management-response coverage, reopen count + verification outcomes (P2-B).</summary>
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("finding-followup")]
+    public async Task<IActionResult> FindingFollowUp(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new FindingFollowUpQuery(), cancellationToken));
+
     [RequirePermission(PermissionKeys.ViewAnalytics)]
     [HttpGet("recurrence-clusters")]
     public async Task<IActionResult> RecurrenceClusters([FromQuery] string? cursor, [FromQuery] int? limit, CancellationToken cancellationToken)

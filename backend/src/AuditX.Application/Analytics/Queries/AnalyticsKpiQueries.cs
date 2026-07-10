@@ -134,6 +134,15 @@ public sealed class ComplianceByRegulationQueryHandler(IAnalyticsQueryService an
         => analytics.ComplianceByRegulationAsync(cancellationToken);
 }
 
+public sealed record FindingFollowUpQuery : IQuery<FindingFollowUpSummaryDto>;
+
+public sealed class FindingFollowUpQueryHandler(IAnalyticsQueryService analytics)
+    : IQueryHandler<FindingFollowUpQuery, FindingFollowUpSummaryDto>
+{
+    public Task<FindingFollowUpSummaryDto> Handle(FindingFollowUpQuery query, CancellationToken cancellationToken)
+        => analytics.FindingFollowUpAsync(cancellationToken);
+}
+
 // ---- Coverage matrix (reuse ICoverageQueryService — do NOT reimplement coverage) ----
 
 public sealed record AnalyticsCoverageQuery(int WindowMonths) : IQuery<CoverageMatrix>;

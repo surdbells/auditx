@@ -4,6 +4,10 @@ public sealed record MapActionDto(
     Guid Id, Guid ExceptionId, string Description, Guid OwnerUserId, DateOnly TargetDate,
     string? ExpectedEvidenceType, string Status, DateTimeOffset? CompletedAt, Guid? CompletedBy);
 
+/// <summary>A post-closure follow-up verification of a finding's remediation (P2-B).</summary>
+public sealed record FindingVerificationDto(
+    Guid Id, Guid ExceptionId, string Result, Guid VerifiedByUserId, DateTimeOffset VerifiedAt, string? Notes);
+
 public sealed record ExceptionDto(
     Guid Id,
     Guid AuditId,
@@ -36,8 +40,17 @@ public sealed record ExceptionDto(
     DateTimeOffset? ClosedAt,
     Guid? CiaCountersignedBy,
     string? CancellationReason,
+    string? ManagementResponseDecision,
+    string? ManagementResponseComment,
+    Guid? ManagementRespondedBy,
+    DateTimeOffset? ManagementRespondedAt,
+    int ReopenCount,
+    Guid? ReopenedBy,
+    DateTimeOffset? ReopenedAt,
+    string? ReopenReason,
     string Version,
-    IReadOnlyList<MapActionDto> MapActions);
+    IReadOnlyList<MapActionDto> MapActions,
+    IReadOnlyList<FindingVerificationDto> Verifications);
 
 public sealed record ExceptionListItemDto(
     Guid Id, Guid AuditId, string Title, string Severity, string Status, Guid OwnerUserId,

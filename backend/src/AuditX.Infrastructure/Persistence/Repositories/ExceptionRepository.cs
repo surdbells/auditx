@@ -9,7 +9,10 @@ namespace AuditX.Infrastructure.Persistence.Repositories;
 public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
 {
     public Task<AuditException?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => db.Exceptions.Include(e => e.MapActions).FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+        => db.Exceptions
+            .Include(e => e.MapActions)
+            .Include(e => e.Verifications)
+            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<AuditException>> ListByAuditAsync(Guid auditId, ExceptionStatus? status, CancellationToken cancellationToken = default)
     {

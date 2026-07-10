@@ -55,6 +55,9 @@ public interface IAnalyticsQueryService
 
     /// <summary>Compliance-by-regulation (P1-B): per active regulation, the count of linked + open findings.</summary>
     Task<IReadOnlyList<ComplianceByRegulationRowDto>> ComplianceByRegulationAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Finding follow-up summary (P2-B): management-response coverage, reopen count and verification outcomes.</summary>
+    Task<FindingFollowUpSummaryDto> FindingFollowUpAsync(CancellationToken cancellationToken = default);
 }
 
 // ---- KPI DTOs (snake-cased at the API edge by the serializer; these are the shape the port returns) ----
@@ -213,3 +216,18 @@ public sealed record ControlEffectivenessSummaryDto(
 /// <summary>Compliance-by-regulation row (P1-B): one active regulation + its linked/open finding counts.</summary>
 public sealed record ComplianceByRegulationRowDto(
     Guid RegulationId, string Code, string Name, string? Authority, int LinkedFindings, int OpenFindings);
+
+/// <summary>One verification-outcome count for the follow-up summary (P2-B).</summary>
+public sealed record VerificationResultCountDto(string Result, int Count);
+
+/// <summary>
+/// Finding follow-up summary (P2-B): management-response coverage, reopen count, and post-closure verification
+/// outcomes — the substrate for management-timeliness and follow-up-effectiveness reporting.
+/// </summary>
+public sealed record FindingFollowUpSummaryDto(
+    int TotalFindings,
+    int Closed,
+    int Reopened,
+    int WithManagementResponse,
+    int VerifiedFindings,
+    IReadOnlyList<VerificationResultCountDto> ByVerificationResult);

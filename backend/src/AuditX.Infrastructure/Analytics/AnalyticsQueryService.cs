@@ -520,6 +520,32 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
             .ToArray();
     }
 
+    public async Task<FindingFollowUpSummaryDto> FindingFollowUpAsync(CancellationToken cancellationToken = default)
+    {
+        var findings = await db.Exceptions.AsNoTracking()
+            .Select(e => new { e.Status, e.ReopenCount, HasResponse = e.ManagementResponseDecision != null })
+            .ToListAsync(cancellationToken);
+
+        var total = findings.Count;
+        var closed = findings.Count(f => f.Status == ExceptionStatus.Closed);
+        var reopened = findings.Count(f => f.ReopenCount > 0);
+        var withResponse = findings.Count(f => f.HasResponse);
+
+        var verifiedFindings = await db.FindingVerifications.AsNoTracking()
+            .Select(v => v.ExceptionId).Distinct().CountAsync(cancellationToken);
+
+        var byResult = await db.FindingVerifications.AsNoTracking()
+            .GroupBy(v => v.Result)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+        var byVerificationResult = byResult
+            .Select(g => new VerificationResultCountDto(g.Key.ToSnake(), g.Count))
+            .OrderByDescending(r => r.Count).ThenBy(r => r.Result)
+            .ToArray();
+
+        return new FindingFollowUpSummaryDto(total, closed, reopened, withResponse, verifiedFindings, byVerificationResult);
+    }
+
     /// <summary>Sums a unit's own aggregate with every descendant's (DFS; cycle-guarded).</summary>
     private static OrgAgg RollUp(Guid rootId, IReadOnlyDictionary<Guid, Guid[]> childrenByParent, IReadOnlyDictionary<Guid, OrgAgg> direct)
     {

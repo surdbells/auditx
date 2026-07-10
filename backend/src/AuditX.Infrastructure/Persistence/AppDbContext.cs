@@ -108,6 +108,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<MapAction> MapActions => Set<MapAction>();
 
+    public DbSet<FindingVerification> FindingVerifications => Set<FindingVerification>();
+
     public DbSet<NotificationRule> NotificationRules => Set<NotificationRule>();
 
     public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();

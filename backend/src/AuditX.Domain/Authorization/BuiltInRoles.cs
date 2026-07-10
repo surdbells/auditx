@@ -22,7 +22,7 @@ public static class BuiltInRoles
             PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.ViewTemplates,
             PermissionKeys.ViewUniverse, PermissionKeys.RespondItem, PermissionKeys.UploadEvidence,
             PermissionKeys.ViewEvidence, PermissionKeys.ViewExceptions, PermissionKeys.RaiseException,
-            PermissionKeys.SubmitMap, PermissionKeys.ViewReport, PermissionKeys.ViewAnalytics,
+            PermissionKeys.SubmitMap, PermissionKeys.VerifyException, PermissionKeys.ViewReport, PermissionKeys.ViewAnalytics,
             PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries, PermissionKeys.ViewRisk, PermissionKeys.ViewControls,
         ]);
 
@@ -35,6 +35,7 @@ public static class BuiltInRoles
             PermissionKeys.RespondItem, PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ManageEvidence,
             PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException,
             PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException,
+            PermissionKeys.ReopenException, PermissionKeys.VerifyException,
             PermissionKeys.GenerateReport, PermissionKeys.ViewReport, PermissionKeys.DistributeReport,
             PermissionKeys.ViewSanctions, PermissionKeys.TriggerSanctions, PermissionKeys.RecommendSanction, PermissionKeys.ViewGrid,
             PermissionKeys.ViewAnalytics, PermissionKeys.AdHocQueryUse, PermissionKeys.PerformanceAnalyticsView, PermissionKeys.ViewAuditTrail,
@@ -66,6 +67,7 @@ public static class BuiltInRoles
             PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries,
             PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException, PermissionKeys.SubmitMap,
             PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException, PermissionKeys.Cia,
+            PermissionKeys.ReopenException, PermissionKeys.VerifyException,
             PermissionKeys.ConfigureNotifications, PermissionKeys.ConfigureReports, PermissionKeys.ConfigureExceptionWorkflow,
             // Bootstrap governance: the super-user can approve annual plans + read AC surfaces out of the box, so a
             // fresh install can complete plan → approve → launch without first hand-assigning an Audit Committee Chair.

@@ -63,6 +63,8 @@ public static class PermissionCatalogue
         new(PermissionKeys.ApproveMap, "Approve MAP", "Approve or reject a Management Action Plan.", "M6", PermissionScopeType.Audit),
         new(PermissionKeys.CloseException, "Close exception", "Verify evidence and close an exception.", "M6", PermissionScopeType.Audit),
         new(PermissionKeys.CancelException, "Cancel exception", "Cancel an exception with reason.", "M6", PermissionScopeType.Audit),
+        new(PermissionKeys.ReopenException, "Reopen exception", "Reopen a closed finding (e.g. after a failed follow-up).", "M6", PermissionScopeType.Audit),
+        new(PermissionKeys.VerifyException, "Verify finding", "Record a post-closure follow-up verification of remediation.", "M6", PermissionScopeType.Audit),
         new(PermissionKeys.ConfigureExceptionWorkflow, "Configure exception workflow", "Edit the exception state machine and escalation rules.", "M6", PermissionScopeType.Global),
 
         // M7 — Sanctions

@@ -176,4 +176,66 @@ public sealed class AuditExceptionTests
         Assert.Null(e.ClosedBy);
         Assert.Null(e.ClosureEvidenceNote);
     }
+
+    // ---- P2-B: management response, follow-up verification, reopen ----
+
+    private static AuditException Closed()
+    {
+        var e = Approved2(ExceptionSeverity.Medium);
+        e.Close("verified", Actor, Now);
+        return e;
+    }
+
+    [Fact]
+    public void Management_response_records_decision_and_comment()
+    {
+        var e = New();
+        Assert.Throws<DomainException>(() => e.RecordManagementResponse(ManagementResponseDecision.Accepted, "  ", Actor, Now));
+
+        e.RecordManagementResponse(ManagementResponseDecision.PartiallyAccepted, "We accept the control gap but dispute the rating.", Actor, Now);
+        Assert.Equal(ManagementResponseDecision.PartiallyAccepted, e.ManagementResponseDecision);
+        Assert.Equal(Actor, e.ManagementRespondedBy);
+        Assert.Contains(e.DomainEvents, x => x is ManagementResponseRecordedEvent);
+    }
+
+    [Fact]
+    public void Verification_is_only_allowed_once_closed()
+    {
+        var open = New();
+        Assert.Throws<InvalidStateTransitionException>(() => open.AddVerification(VerificationResult.Passed, null, Actor, Now));
+
+        var closed = Closed();
+        closed.AddVerification(VerificationResult.PartiallyPassed, "Two of three controls now operating.", Actor, Now);
+        Assert.Single(closed.Verifications);
+        Assert.Equal(VerificationResult.PartiallyPassed, closed.Verifications[0].Result);
+        Assert.Contains(closed.DomainEvents, x => x is FindingVerifiedEvent);
+    }
+
+    [Fact]
+    public void Reopen_requires_closed_and_a_reason_and_increments_count()
+    {
+        var open = New();
+        Assert.Throws<InvalidStateTransitionException>(() => open.Reopen("Failed the follow-up verification review.", Actor, Now));
+
+        var e = Closed();
+        Assert.Throws<DomainException>(() => e.Reopen("too short", Actor, Now));
+
+        e.Reopen("Follow-up verification failed; the control regressed within a month.", Actor, Now);
+        Assert.Equal(ExceptionStatus.Open, e.Status);
+        Assert.Equal(1, e.ReopenCount);
+        Assert.Equal(Actor, e.ReopenedBy);
+        Assert.Null(e.ClosedAt);
+        Assert.Null(e.ClosedBy);
+        Assert.Contains(e.DomainEvents, x => x is ExceptionReopenedEvent);
+
+        // A second closure + reopen bumps the count to 2.
+        e.AddMapAction("Re-implement the control", Owner, Target.AddDays(-1), null);
+        e.SubmitMap(Owner, Now);
+        e.ApproveMap(Actor, Now);
+        e.MarkMapActionComplete(e.MapActions[^1].Id, false, false, Owner, Now);
+        e.MarkMapComplete(Owner);
+        e.Close("re-verified", Actor, Now);
+        e.Reopen("Regressed a second time after the seasonal peak.", Actor, Now);
+        Assert.Equal(2, e.ReopenCount);
+    }
 }

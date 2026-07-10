@@ -61,6 +61,8 @@ public static class PermissionKeys
     public const string ApproveMap = "ApproveMap";
     public const string CloseException = "CloseException";
     public const string CancelException = "CancelException";
+    public const string ReopenException = "ReopenException";
+    public const string VerifyException = "VerifyException";
     public const string ConfigureExceptionWorkflow = "ConfigureExceptionWorkflow";
 
     // M7 — Sanctions
