@@ -48,12 +48,43 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the risk register (drives the walkthrough + the About panel). */
+const RISK_GUIDE: PageGuide = {
+  id: 'risk-register',
+  titleKey: 'risk.list.title',
+  purposeKey: 'risk.guide.purpose',
+  descriptionKey: 'risk.guide.description',
+  actionKeys: [
+    'risk.guide.action.register',
+    'risk.guide.action.filter',
+    'risk.guide.action.score',
+    'risk.guide.action.lifecycle',
+  ],
+  sections: [
+    { selector: '[data-guide="register"]', titleKey: 'risk.guide.section.register.title', bodyKey: 'risk.guide.section.register.body' },
+    { selector: '.risk-list__filters-card', titleKey: 'risk.guide.section.filters.title', bodyKey: 'risk.guide.section.filters.body' },
+    { selector: '.risk-list__table', titleKey: 'risk.guide.section.table.title', bodyKey: 'risk.guide.section.table.body' },
+  ],
+  workflowKeys: ['risk.guide.flow.identify', 'risk.guide.flow.assess', 'risk.guide.flow.treat', 'risk.guide.flow.monitor', 'risk.guide.flow.close'],
+  dependsOnKeys: ['risk.guide.dep.owners', 'risk.guide.dep.findings', 'risk.guide.dep.categories'],
+  usedByKeys: ['risk.guide.use.heatmap', 'risk.guide.use.reports', 'risk.guide.use.analytics', 'risk.guide.use.audits'],
+  businessRuleKeys: ['risk.guide.rule.rating', 'risk.guide.rule.lifecycle', 'risk.guide.rule.owner', 'risk.guide.rule.close'],
+  tipKeys: ['risk.guide.tip.residual', 'risk.guide.tip.heatmap', 'risk.guide.tip.closed'],
+  permissionKeys: ['risk.guide.perm.manager', 'risk.guide.perm.viewer', 'risk.guide.perm.admin'],
+  faq: [
+    { questionKey: 'risk.guide.faq.rating.q', answerKey: 'risk.guide.faq.rating.a' },
+    { questionKey: 'risk.guide.faq.close.q', answerKey: 'risk.guide.faq.close.a' },
+  ],
+};
 
 /** The enterprise risk register (P1-A): filterable list + register/edit/transition/delete. */
 @Component({
@@ -76,6 +107,7 @@ const DEFAULT_PAGE_SIZE = 25;
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './risk-register.component.html',
@@ -108,6 +140,8 @@ export class RiskRegisterComponent {
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
   readonly loading = signal(false);
+
+  readonly guide = RISK_GUIDE;
 
   readonly canManage = computed(() => this.auth.hasPermission(Permissions.ManageRisk));
   readonly isEmpty = computed(() => this.state() === 'ready' && this.risks().length === 0);

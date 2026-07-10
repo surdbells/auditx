@@ -39,6 +39,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import {
   SearchableSelectComponent,
   SelectOption,
@@ -50,6 +52,35 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the exceptions register (drives the walkthrough + the About panel). */
+const EXCEPTIONS_GUIDE: PageGuide = {
+  id: 'exceptions-list',
+  titleKey: 'exceptions.list.title',
+  purposeKey: 'exceptions.guide.purpose',
+  descriptionKey: 'exceptions.guide.description',
+  actionKeys: [
+    'exceptions.guide.action.filter',
+    'exceptions.guide.action.open',
+    'exceptions.guide.action.track',
+    'exceptions.guide.action.export',
+  ],
+  sections: [
+    { selector: '.exceptions__filters-card', titleKey: 'exceptions.guide.section.filters.title', bodyKey: 'exceptions.guide.section.filters.body' },
+    { selector: '[data-guide="export"]', titleKey: 'exceptions.guide.section.export.title', bodyKey: 'exceptions.guide.section.export.body' },
+    { selector: '.exceptions__table', titleKey: 'exceptions.guide.section.table.title', bodyKey: 'exceptions.guide.section.table.body' },
+  ],
+  workflowKeys: ['exceptions.guide.flow.fieldwork', 'exceptions.guide.flow.raise', 'exceptions.guide.flow.map', 'exceptions.guide.flow.remediate', 'exceptions.guide.flow.close'],
+  dependsOnKeys: ['exceptions.guide.dep.audits', 'exceptions.guide.dep.plans', 'exceptions.guide.dep.users'],
+  usedByKeys: ['exceptions.guide.use.reports', 'exceptions.guide.use.analytics', 'exceptions.guide.use.sanctions'],
+  businessRuleKeys: ['exceptions.guide.rule.lifecycle', 'exceptions.guide.rule.map', 'exceptions.guide.rule.overdue', 'exceptions.guide.rule.recurrence'],
+  tipKeys: ['exceptions.guide.tip.filter', 'exceptions.guide.tip.overdue', 'exceptions.guide.tip.export'],
+  permissionKeys: ['exceptions.guide.perm.auditor', 'exceptions.guide.perm.owner', 'exceptions.guide.perm.manager'],
+  faq: [
+    { questionKey: 'exceptions.guide.faq.map.q', answerKey: 'exceptions.guide.faq.map.a' },
+    { questionKey: 'exceptions.guide.faq.overdue.q', answerKey: 'exceptions.guide.faq.overdue.a' },
+  ],
+};
 
 /** Converts a Date to the start-of-day ISO datetime string. */
 function toIsoStart(value: Date | null): string | undefined {
@@ -94,6 +125,7 @@ function toIsoEnd(value: Date | null): string | undefined {
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './exceptions-list.component.html',
@@ -107,6 +139,8 @@ export class ExceptionsListComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = EXCEPTIONS_GUIDE;
 
   readonly displayedColumns = [
     'title',

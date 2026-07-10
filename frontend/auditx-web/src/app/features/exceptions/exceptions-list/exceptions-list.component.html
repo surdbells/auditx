@@ -13,12 +13,15 @@
       type="button"
       (click)="exportCsv()"
       [disabled]="exporting()"
+      data-guide="export"
     >
       <mat-icon>download</mat-icon>
       {{ (exporting() ? 'exceptions.export.exporting' : 'exceptions.export.csv') | t }}
     </button>
   </div>
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 <mat-card appearance="outlined" class="exceptions__filters-card">
   <form [formGroup]="filters" class="exceptions__filters">

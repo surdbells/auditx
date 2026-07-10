@@ -40,10 +40,40 @@ import { PaginatorComponent } from '../../../../shared/components/paginator/pagi
 import { UserStatusLabelPipe } from '../../../../shared/pipes/user-status-label.pipe';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the users identity list (drives the walkthrough + the About panel). */
+const USERS_GUIDE: PageGuide = {
+  id: 'users-list',
+  titleKey: 'identity.users.title',
+  purposeKey: 'identity.guide.purpose',
+  descriptionKey: 'identity.guide.description',
+  actionKeys: [
+    'identity.guide.action.search',
+    'identity.guide.action.filter',
+    'identity.guide.action.open',
+    'identity.guide.action.deactivate',
+  ],
+  sections: [
+    { selector: '.users__filters-card', titleKey: 'identity.guide.section.filters.title', bodyKey: 'identity.guide.section.filters.body' },
+    { selector: '.users__table', titleKey: 'identity.guide.section.table.title', bodyKey: 'identity.guide.section.table.body' },
+  ],
+  workflowKeys: ['identity.guide.flow.provision', 'identity.guide.flow.directory', 'identity.guide.flow.role', 'identity.guide.flow.active'],
+  dependsOnKeys: ['identity.guide.dep.ad', 'identity.guide.dep.roles', 'identity.guide.dep.orgunit'],
+  usedByKeys: ['identity.guide.use.audits', 'identity.guide.use.assignments', 'identity.guide.use.auditlog'],
+  businessRuleKeys: ['identity.guide.rule.provisioned', 'identity.guide.rule.awaiting', 'identity.guide.rule.deactivate'],
+  tipKeys: ['identity.guide.tip.search', 'identity.guide.tip.awaiting'],
+  permissionKeys: ['identity.guide.perm.admin', 'identity.guide.perm.viewer'],
+  faq: [
+    { questionKey: 'identity.guide.faq.create.q', answerKey: 'identity.guide.faq.create.a' },
+    { questionKey: 'identity.guide.faq.status.q', answerKey: 'identity.guide.faq.status.a' },
+  ],
+};
 
 @Component({
   selector: 'app-users-list',
@@ -68,6 +98,7 @@ const DEFAULT_PAGE_SIZE = 25;
     PaginatorComponent,
     UserStatusLabelPipe,
     TranslatePipe,
+    PageGuideComponent,
   ],
   templateUrl: './users-list.component.html',
   styleUrl: './users-list.component.scss',
@@ -80,6 +111,8 @@ export class UsersListComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = USERS_GUIDE;
 
   readonly displayedColumns = [
     'displayName',

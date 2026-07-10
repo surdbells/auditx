@@ -41,6 +41,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -50,6 +52,35 @@ const DEFAULT_PAGE_SIZE = 25;
 
 /** Heat-map band keyed off a composite residual score (typical scale 1–5). */
 export type HeatBand = 'none' | 'low' | 'moderate' | 'high' | 'critical';
+
+/** Contextual page guide for the audit-universe entities list (walkthrough + About panel). */
+const UNIVERSE_GUIDE: PageGuide = {
+  id: 'universe-entities-list',
+  titleKey: 'universe.list.title',
+  purposeKey: 'universe.guide.purpose',
+  descriptionKey: 'universe.guide.description',
+  actionKeys: [
+    'universe.guide.action.create',
+    'universe.guide.action.filter',
+    'universe.guide.action.score',
+    'universe.guide.action.import',
+  ],
+  sections: [
+    { selector: '[data-guide="create"]', titleKey: 'universe.guide.section.create.title', bodyKey: 'universe.guide.section.create.body' },
+    { selector: '.entities__filters-card', titleKey: 'universe.guide.section.filters.title', bodyKey: 'universe.guide.section.filters.body' },
+    { selector: '.entities__table', titleKey: 'universe.guide.section.table.title', bodyKey: 'universe.guide.section.table.body' },
+  ],
+  workflowKeys: ['universe.guide.flow.define', 'universe.guide.flow.dimensions', 'universe.guide.flow.score', 'universe.guide.flow.rank', 'universe.guide.flow.plan'],
+  dependsOnKeys: ['universe.guide.dep.dimensions', 'universe.guide.dep.orgUnits', 'universe.guide.dep.users'],
+  usedByKeys: ['universe.guide.use.plan', 'universe.guide.use.audits', 'universe.guide.use.analytics'],
+  businessRuleKeys: ['universe.guide.rule.residual', 'universe.guide.rule.heat', 'universe.guide.rule.archive', 'universe.guide.rule.score'],
+  tipKeys: ['universe.guide.tip.import', 'universe.guide.tip.heat', 'universe.guide.tip.archived'],
+  permissionKeys: ['universe.guide.perm.manage', 'universe.guide.perm.score'],
+  faq: [
+    { questionKey: 'universe.guide.faq.residual.q', answerKey: 'universe.guide.faq.residual.a' },
+    { questionKey: 'universe.guide.faq.delete.q', answerKey: 'universe.guide.faq.delete.a' },
+  ],
+};
 
 @Component({
   selector: 'app-entities-list',
@@ -73,6 +104,7 @@ export type HeatBand = 'none' | 'low' | 'moderate' | 'high' | 'critical';
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './entities-list.component.html',
@@ -127,6 +159,8 @@ export class EntitiesListComponent {
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.entities().length === 0,
   );
+
+  readonly guide = UNIVERSE_GUIDE;
 
   constructor() {
     this.loadEntityTypes();

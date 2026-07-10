@@ -43,12 +43,43 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the controls register (drives the walkthrough + the About panel). */
+const CONTROLS_GUIDE: PageGuide = {
+  id: 'controls-register',
+  titleKey: 'control.list.title',
+  purposeKey: 'controls.guide.purpose',
+  descriptionKey: 'controls.guide.description',
+  actionKeys: [
+    'controls.guide.action.register',
+    'controls.guide.action.filter',
+    'controls.guide.action.test',
+    'controls.guide.action.retire',
+  ],
+  sections: [
+    { selector: '[data-guide="register"]', titleKey: 'controls.guide.section.register.title', bodyKey: 'controls.guide.section.register.body' },
+    { selector: '.control-list__filters-card', titleKey: 'controls.guide.section.filters.title', bodyKey: 'controls.guide.section.filters.body' },
+    { selector: '.control-list__table', titleKey: 'controls.guide.section.table.title', bodyKey: 'controls.guide.section.table.body' },
+  ],
+  workflowKeys: ['controls.guide.flow.register', 'controls.guide.flow.classify', 'controls.guide.flow.test', 'controls.guide.flow.link', 'controls.guide.flow.report'],
+  dependsOnKeys: ['controls.guide.dep.users', 'controls.guide.dep.regulations', 'controls.guide.dep.universe'],
+  usedByKeys: ['controls.guide.use.findings', 'controls.guide.use.compliance', 'controls.guide.use.reports'],
+  businessRuleKeys: ['controls.guide.rule.testing', 'controls.guide.rule.retire', 'controls.guide.rule.code', 'controls.guide.rule.type'],
+  tipKeys: ['controls.guide.tip.filter', 'controls.guide.tip.retire', 'controls.guide.tip.compliance'],
+  permissionKeys: ['controls.guide.perm.manage', 'controls.guide.perm.view'],
+  faq: [
+    { questionKey: 'controls.guide.faq.register.q', answerKey: 'controls.guide.faq.register.a' },
+    { questionKey: 'controls.guide.faq.effectiveness.q', answerKey: 'controls.guide.faq.effectiveness.a' },
+  ],
+};
 
 /** The internal-controls register (P1-B): filterable list + register/edit/retire/delete. */
 @Component({
@@ -71,6 +102,7 @@ const DEFAULT_PAGE_SIZE = 25;
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './control-register.component.html',
@@ -103,6 +135,8 @@ export class ControlRegisterComponent {
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
   readonly loading = signal(false);
+
+  readonly guide = CONTROLS_GUIDE;
 
   readonly canManage = computed(() => this.auth.hasPermission(Permissions.ManageControls));
   readonly isEmpty = computed(() => this.state() === 'ready' && this.controls().length === 0);

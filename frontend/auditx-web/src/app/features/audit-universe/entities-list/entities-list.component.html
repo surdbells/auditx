@@ -16,13 +16,15 @@
         <mat-icon>upload_file</mat-icon>
         {{ 'universe.actions.bulkImport' | t }}
       </button>
-      <button matButton="filled" type="button" (click)="create()">
+      <button matButton="filled" type="button" (click)="create()" data-guide="create">
         <mat-icon>add</mat-icon>
         {{ 'universe.actions.newEntity' | t }}
       </button>
     }
   </div>
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 <mat-card appearance="outlined" class="entities__filters-card">
   <form [formGroup]="filters" class="entities__filters">

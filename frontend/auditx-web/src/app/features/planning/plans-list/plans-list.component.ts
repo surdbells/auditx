@@ -31,12 +31,43 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the annual plans list (drives the walkthrough + the About panel). */
+const PLANS_GUIDE: PageGuide = {
+  id: 'plans-list',
+  titleKey: 'planning.list.title',
+  purposeKey: 'planning.guide.purpose',
+  descriptionKey: 'planning.guide.description',
+  actionKeys: [
+    'planning.guide.action.create',
+    'planning.guide.action.filter',
+    'planning.guide.action.open',
+    'planning.guide.action.track',
+  ],
+  sections: [
+    { selector: '[data-guide="create"]', titleKey: 'planning.guide.section.create.title', bodyKey: 'planning.guide.section.create.body' },
+    { selector: '.plans__filters-card', titleKey: 'planning.guide.section.filters.title', bodyKey: 'planning.guide.section.filters.body' },
+    { selector: '.plans__table', titleKey: 'planning.guide.section.table.title', bodyKey: 'planning.guide.section.table.body' },
+  ],
+  workflowKeys: ['planning.guide.flow.draft', 'planning.guide.flow.submit', 'planning.guide.flow.approve', 'planning.guide.flow.audits', 'planning.guide.flow.close'],
+  dependsOnKeys: ['planning.guide.dep.universe', 'planning.guide.dep.risk', 'planning.guide.dep.users'],
+  usedByKeys: ['planning.guide.use.audits', 'planning.guide.use.reports', 'planning.guide.use.analytics'],
+  businessRuleKeys: ['planning.guide.rule.lifecycle', 'planning.guide.rule.approval', 'planning.guide.rule.items', 'planning.guide.rule.locked'],
+  tipKeys: ['planning.guide.tip.filter', 'planning.guide.tip.revisions'],
+  permissionKeys: ['planning.guide.perm.manage', 'planning.guide.perm.approve'],
+  faq: [
+    { questionKey: 'planning.guide.faq.create.q', answerKey: 'planning.guide.faq.create.a' },
+    { questionKey: 'planning.guide.faq.audits.q', answerKey: 'planning.guide.faq.audits.a' },
+  ],
+};
 
 @Component({
   selector: 'app-plans-list',
@@ -55,6 +86,7 @@ const DEFAULT_PAGE_SIZE = 25;
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './plans-list.component.html',
@@ -68,6 +100,8 @@ export class PlansListComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = PLANS_GUIDE;
 
   readonly displayedColumns = ['periodLabel', 'period', 'status', 'itemCount'];
 

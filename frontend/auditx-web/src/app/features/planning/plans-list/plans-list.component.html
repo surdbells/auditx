@@ -3,12 +3,14 @@
   [subtitle]="'planning.list.subtitle' | t"
 >
   @if (canManage()) {
-    <button actions matButton="filled" type="button" (click)="create()">
+    <button actions matButton="filled" type="button" (click)="create()" data-guide="create">
       <mat-icon>add</mat-icon>
       {{ 'planning.list.newPlan' | t }}
     </button>
   }
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 <mat-card appearance="outlined" class="plans__filters-card">
   <form [formGroup]="filters" class="plans__filters">
