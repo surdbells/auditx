@@ -106,7 +106,7 @@
             <dt>{{ 'audits.field.template' | t }}</dt>
             <dd>
               @if (a.templateId) {
-                {{ templateName() ?? a.templateId }}@if (a.templateVersion) { (v{{ a.templateVersion }}) }
+                {{ templateName() ?? '…' }}@if (a.templateVersion) { (v{{ a.templateVersion }}) }
               } @else {
                 —
               }

@@ -22,6 +22,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AuthService } from '../../../core/services/auth.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { EntityLookupService } from '../../../core/services/entity-lookup.service';
+import { OrgUnitLookupService } from '../../../core/services/org-unit-lookup.service';
 import { Permissions } from '../../../core/permissions';
 import { DashboardDetail, DashboardWidget } from '../../../core/models';
 import {
@@ -96,6 +97,7 @@ export class DashboardViewComponent {
   private readonly i18n = inject(TranslationService);
   private readonly userLookup = inject(UserLookupService);
   private readonly entityLookup = inject(EntityLookupService);
+  private readonly orgUnitLookup = inject(OrgUnitLookupService);
 
   /** Drilldown-only GUID id columns are not shown as text in a widget table. */
   private readonly hiddenColumns: ReadonlySet<string> = new Set([
@@ -124,6 +126,13 @@ export class DashboardViewComponent {
     'severity',
     'status',
     'category',
+  ]);
+
+  /** User-id columns that don't end in `UserId` (the `*By` actor fields), resolved to a name by convention. */
+  private readonly userByColumns: ReadonlySet<string> = new Set([
+    'createdBy', 'updatedBy', 'generatedBy', 'raisedBy', 'closedBy', 'approvedBy', 'deletedBy',
+    'dispatchedBy', 'cancelledBy', 'activatedBy', 'performedBy', 'respondedBy', 'verifiedBy',
+    'uploadedBy', 'ownerId', 'assignedTo',
   ]);
 
   readonly state = signal<ViewState>('loading');
@@ -186,9 +195,11 @@ export class DashboardViewComponent {
    * directory loads), enum columns title-case, ISO dates shorten to the date, else plain text.
    */
   cellFor(column: string, value: unknown): string {
-    const resolve = this.resolvers[column];
-    if (resolve && typeof value === 'string' && value.length > 0) {
-      return resolve(value);
+    if (typeof value === 'string' && value.length > 0) {
+      const resolve = this.resolvers[column] ?? this.genericResolver(column);
+      if (resolve) {
+        return resolve(value);
+      }
     }
     if (this.titleiseColumns.has(column) && typeof value === 'string') {
       return this.titleCase(value);
@@ -197,6 +208,24 @@ export class DashboardViewComponent {
       return value.slice(0, 10);
     }
     return cellText(value);
+  }
+
+  /**
+   * Convention-based fallback for widget columns not in the explicit resolvers map: any `*UserId` / known `*By`
+   * actor column → user name, `*EntityId` → entity name, `orgUnitId` → org-unit name. The lookups return the raw
+   * value for anything they don't recognise, so applying this broadly is safe (a non-id value is returned unchanged).
+   */
+  private genericResolver(column: string): ((id: string) => string) | undefined {
+    if (/UserId$/i.test(column) || this.userByColumns.has(column)) {
+      return (id) => this.userLookup.displayName(id);
+    }
+    if (/EntityId$/i.test(column)) {
+      return (id) => this.entityLookup.name(id);
+    }
+    if (/OrgUnitId$/i.test(column)) {
+      return (id) => this.orgUnitLookup.name(id);
+    }
+    return undefined;
   }
 
   private titleCase(snake: string): string {

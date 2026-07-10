@@ -45,7 +45,13 @@ describe('SanctionsTrackerComponent', () => {
     fixture.detectChanges();
   }
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    // The category column lazily loads the sanction_category reference-data (fire-and-forget); drain it before verify.
+    http
+      .match((r) => r.url.includes('/reference-data/'))
+      .forEach((r) => r.flush({ data: [] }));
+    http.verify();
+  });
 
   it('loads cases and masks the subject as EMPLOYEE_REDACTED', async () => {
     setup();

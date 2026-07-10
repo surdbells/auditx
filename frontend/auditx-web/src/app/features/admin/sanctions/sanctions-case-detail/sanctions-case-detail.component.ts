@@ -18,6 +18,7 @@ import { Observable } from 'rxjs';
 
 import { SanctionsService } from '../../../../core/services/sanctions.service';
 import { UserLookupService } from '../../../../core/services/user-lookup.service';
+import { ReferenceDataLookupService } from '../../../../core/services/reference-data-lookup.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
@@ -81,6 +82,7 @@ export class SanctionsCaseDetailComponent {
   private readonly service = inject(SanctionsService);
   /** Resolves the unmasked subject user id to a display name. */
   private readonly userLookup = inject(UserLookupService);
+  private readonly refLookup = inject(ReferenceDataLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -101,6 +103,10 @@ export class SanctionsCaseDetailComponent {
     }
     return this.userLookup.displayName(c.subjectUserId);
   });
+
+  categoryLabel(code: string | null | undefined): string {
+    return code ? this.refLookup.label('sanction_category', code) : '—';
+  }
 
   /* ---- Permissions ---- */
 

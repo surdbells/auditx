@@ -11,7 +11,7 @@
       }}</span>
       @if (entry.actorUserId) {
         <span class="detail__muted">{{
-          'adminMisc.auditTrail.detail.user' | t: { id: entry.actorUserId }
+          'adminMisc.auditTrail.detail.user' | t: { id: actorName }
         }}</span>
       }
       @if (entry.actorSystemLabel) {

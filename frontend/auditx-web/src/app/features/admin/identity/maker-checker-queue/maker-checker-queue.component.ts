@@ -20,6 +20,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { MakerCheckerService } from '../../../../core/services/maker-checker.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { UserLookupService } from '../../../../core/services/user-lookup.service';
 import { MakerCheckerActionDto } from '../../../../core/models';
 import {
   ConfirmDialogComponent,
@@ -62,6 +63,7 @@ export class MakerCheckerQueueComponent {
   private readonly service = inject(MakerCheckerService);
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
+  private readonly userLookup = inject(UserLookupService);
 
   readonly displayedColumns = [
     'actionType',
@@ -175,6 +177,20 @@ export class MakerCheckerQueueComponent {
 
   actionLabel(action: MakerCheckerActionDto): string {
     return `${action.actionType} on ${action.targetObjectType}`;
+  }
+
+  /**
+   * A human label for the polymorphic target: a resolved name when the target is a user (the common maker-checker
+   * case — role grants, status changes), else empty so the bare GUID is hidden (the target type line above already
+   * identifies the object; a raw id conveys nothing to the approver).
+   */
+  targetLabel(action: MakerCheckerActionDto): string {
+    if (!action.targetObjectId) {
+      return '';
+    }
+    return action.targetObjectType?.toLowerCase() === 'user'
+      ? this.userLookup.displayName(action.targetObjectId)
+      : '';
   }
 
   private removeAction(id: string): void {

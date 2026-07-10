@@ -19,6 +19,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SanctionsService } from '../../../../core/services/sanctions.service';
 import { UserLookupService } from '../../../../core/services/user-lookup.service';
+import { ReferenceDataLookupService } from '../../../../core/services/reference-data-lookup.service';
 import {
   SanctionsCaseListItem,
   SanctionsCaseStatus,
@@ -63,6 +64,7 @@ export class SanctionsTrackerComponent {
   private readonly service = inject(SanctionsService);
   /** Resolves unmasked subject user ids to display names. */
   private readonly userLookup = inject(UserLookupService);
+  private readonly refLookup = inject(ReferenceDataLookupService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
@@ -141,6 +143,10 @@ export class SanctionsTrackerComponent {
       return MASKED_SUBJECT;
     }
     return this.userLookup.displayName(row.subjectUserId);
+  }
+
+  categoryLabel(code: string | null | undefined): string {
+    return code ? this.refLookup.label('sanction_category', code) : '—';
   }
 
   fetchFirstPage(): void {

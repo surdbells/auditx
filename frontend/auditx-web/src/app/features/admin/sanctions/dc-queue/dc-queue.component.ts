@@ -14,6 +14,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SanctionsService } from '../../../../core/services/sanctions.service';
+import { UserLookupService } from '../../../../core/services/user-lookup.service';
+import { ReferenceDataLookupService } from '../../../../core/services/reference-data-lookup.service';
 import { SanctionsCaseListItem } from '../../../../core/models';
 import { humanise } from '../humanise';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
@@ -49,6 +51,8 @@ const MASKED_SUBJECT = 'EMPLOYEE_REDACTED';
 export class DcQueueComponent {
   private readonly service = inject(SanctionsService);
   private readonly router = inject(Router);
+  private readonly userLookup = inject(UserLookupService);
+  private readonly refLookup = inject(ReferenceDataLookupService);
 
   readonly displayedColumns = [
     'subject',
@@ -78,7 +82,11 @@ export class DcQueueComponent {
   subjectLabel(row: SanctionsCaseListItem): string {
     return row.subjectMasked || !row.subjectUserId
       ? MASKED_SUBJECT
-      : row.subjectUserId;
+      : this.userLookup.displayName(row.subjectUserId);
+  }
+
+  categoryLabel(code: string | null | undefined): string {
+    return code ? this.refLookup.label('sanction_category', code) : '—';
   }
 
   fetchFirstPage(): void {
