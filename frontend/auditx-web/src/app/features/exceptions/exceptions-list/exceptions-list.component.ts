@@ -42,6 +42,7 @@ import {
   SearchableSelectComponent,
   SelectOption,
 } from '../../../shared/components/searchable-select/searchable-select.component';
+import { SavedViewsBarComponent } from '../../../shared/components/saved-views/saved-views-bar.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -90,6 +91,7 @@ function toIsoEnd(value: Date | null): string | undefined {
     MatIconModule,
     MatTooltipModule,
     SearchableSelectComponent,
+    SavedViewsBarComponent,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -351,6 +353,33 @@ export class ExceptionsListComponent {
           }
         },
       });
+  }
+
+  /** The current filter selection as a JSON-safe object for a saved view (dates serialised to ISO strings). */
+  currentParams(): Record<string, unknown> {
+    const v = this.filters.getRawValue();
+    return {
+      ...v,
+      raisedFrom: v.raisedFrom ? v.raisedFrom.toISOString() : null,
+      raisedTo: v.raisedTo ? v.raisedTo.toISOString() : null,
+    };
+  }
+
+  /** Applies a saved view's parameters back onto the filter form (rehydrating dates); the debounced watcher refetches. */
+  applyView(params: Record<string, unknown>): void {
+    const str = (x: unknown, fallback = ''): string => (typeof x === 'string' ? x : fallback);
+    const date = (x: unknown): Date | null => (typeof x === 'string' && x ? new Date(x) : null);
+    this.filters.patchValue({
+      search: str(params['search']),
+      status: str(params['status'], 'all') as ExceptionStatus | 'all',
+      severity: str(params['severity'], 'all') as ExceptionSeverity | 'all',
+      plan: str(params['plan']),
+      audit: str(params['audit']),
+      overdue: str(params['overdue'], 'all') as 'all' | 'yes' | 'no',
+      recurrence: str(params['recurrence'], 'all') as 'all' | 'yes' | 'no',
+      raisedFrom: date(params['raisedFrom']),
+      raisedTo: date(params['raisedTo']),
+    });
   }
 
   open(row: ExceptionListItem): void {

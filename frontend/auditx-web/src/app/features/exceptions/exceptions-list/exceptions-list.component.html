@@ -2,16 +2,22 @@
   [title]="'exceptions.list.title' | t"
   [subtitle]="'exceptions.list.subtitle' | t"
 >
-  <button
-    actions
-    matButton="outlined"
-    type="button"
-    (click)="exportCsv()"
-    [disabled]="exporting()"
-  >
-    <mat-icon>download</mat-icon>
-    {{ (exporting() ? 'exceptions.export.exporting' : 'exceptions.export.csv') | t }}
-  </button>
+  <div actions class="exceptions__header-actions">
+    <app-saved-views-bar
+      viewKey="exceptions"
+      [params]="currentParams()"
+      (applied)="applyView($event)"
+    />
+    <button
+      matButton="outlined"
+      type="button"
+      (click)="exportCsv()"
+      [disabled]="exporting()"
+    >
+      <mat-icon>download</mat-icon>
+      {{ (exporting() ? 'exceptions.export.exporting' : 'exceptions.export.csv') | t }}
+    </button>
+  </div>
 </app-page-header>
 
 <mat-card appearance="outlined" class="exceptions__filters-card">

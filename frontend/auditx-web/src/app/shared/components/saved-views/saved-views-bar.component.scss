@@ -1,0 +1,59 @@
+.svb {
+  display: inline-flex;
+}
+
+.svb__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.3rem;
+  margin-left: 0.4rem;
+  border-radius: 0.6rem;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  font: var(--mat-sys-label-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.svb__empty {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.svb__item {
+  display: flex;
+  align-items: center;
+}
+
+.svb__apply {
+  flex: 1 1 auto;
+}
+
+.svb__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.svb__tag {
+  margin-left: 0.4rem;
+  padding: 0 0.35rem;
+  border-radius: 0.4rem;
+  background: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-small);
+}
+
+.svb__delete {
+  flex: 0 0 auto;
+  margin-right: 0.25rem;
+}
+
+.svb__divider {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: var(--mat-sys-outline-variant);
+}

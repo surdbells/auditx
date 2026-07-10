@@ -71,6 +71,8 @@ describe('ExceptionsListComponent', () => {
       .flush({
         data: { items: [item()], nextCursor: 'c2', hasMore: true },
       });
+    // The saved-views bar loads this screen's views on init.
+    http.expectOne((r) => r.url === `${BASE}/saved-views`).flush({ data: [] });
     fixture.detectChanges();
     await fixture.whenStable();
   }
@@ -138,5 +140,40 @@ describe('ExceptionsListComponent', () => {
     await setup();
     expect(component.auditNameOf('a-1')).toBe('Treasury Controls Audit');
     expect(component.auditNameOf('unknown')).toBe('unknown');
+  });
+
+  it('round-trips filters through a saved view (currentParams → applyView)', async () => {
+    await setup();
+    component.filters.patchValue({
+      search: 'sod',
+      severity: 'critical',
+      overdue: 'yes',
+      raisedFrom: new Date(2026, 0, 1),
+    });
+
+    // Capture the current selection as a saved view would (dates serialised to ISO strings).
+    const saved = component.currentParams();
+    expect(saved['search']).toBe('sod');
+    expect(saved['severity']).toBe('critical');
+    expect(typeof saved['raisedFrom']).toBe('string');
+
+    // Reset, then re-apply the saved parameters.
+    component.filters.reset({
+      search: '', status: 'all', severity: 'all', plan: '', audit: '',
+      overdue: 'all', recurrence: 'all', raisedFrom: null, raisedTo: null,
+    });
+    component.applyView(saved);
+
+    const restored = component.filters.getRawValue();
+    expect(restored.search).toBe('sod');
+    expect(restored.severity).toBe('critical');
+    expect(restored.overdue).toBe('yes');
+    expect(restored.raisedFrom instanceof Date).toBe(true);
+
+    // patchValue's debounced watcher issues a refetch — satisfy it so http.verify() passes.
+    component.fetchFirstPage();
+    http.expectOne((r) => r.url === `${BASE}/exceptions`).flush({
+      data: { items: [], nextCursor: null, hasMore: false },
+    });
   });
 });
