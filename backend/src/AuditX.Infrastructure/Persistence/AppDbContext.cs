@@ -16,6 +16,7 @@ using AuditX.Domain.ReferenceData;
 using AuditX.Domain.Reports;
 using AuditX.Domain.Sanctions;
 using AuditX.Domain.Risks;
+using AuditX.Domain.SavedViews;
 using AuditX.Domain.Templates;
 using AuditX.Domain.Execution;
 using AuditX.Domain.TimeTracking;
@@ -98,6 +99,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<AuditProcedure> AuditProcedures => Set<AuditProcedure>();
 
     public DbSet<EvidenceRequest> EvidenceRequests => Set<EvidenceRequest>();
+
+    public DbSet<SavedView> SavedViews => Set<SavedView>();
 
     public DbSet<Risk> Risks => Set<Risk>();
 
