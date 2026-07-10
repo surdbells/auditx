@@ -18,6 +18,8 @@ import {
   FindingControlLink,
   FindingLinks,
   FindingRegulationLink,
+  AddVerificationRequest,
+  ManagementResponseRequest,
   RaiseExceptionRequest,
   ReassignOwnerRequest,
   ReasonVersionRequest,
@@ -158,6 +160,20 @@ export class ExceptionsService {
 
   cancel(id: string, body: ReasonVersionRequest): Observable<Exception> {
     return this.api.post<Exception>(`/exceptions/${id}/cancel`, body);
+  }
+
+  /* ---- Management response / follow-up verification / reopen (P2-B) ---- */
+
+  recordManagementResponse(id: string, body: ManagementResponseRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/management-response`, body);
+  }
+
+  addVerification(id: string, body: AddVerificationRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/verifications`, body);
+  }
+
+  reopen(id: string, body: ReasonVersionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/reopen`, body);
   }
 
   /* ---- MAP lifecycle ---- */

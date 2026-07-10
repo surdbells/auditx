@@ -84,6 +84,8 @@ export const Permissions = {
   ApproveMap: 'ApproveMap',
   CloseException: 'CloseException',
   CancelException: 'CancelException',
+  ReopenException: 'ReopenException',
+  VerifyException: 'VerifyException',
   CIA: 'CIA',
 
   // M11 — Audit Trail & Evidence Integrity

@@ -264,6 +264,22 @@ export interface ComplianceByRegulationRow {
   openFindings: number;
 }
 
+/** One verification-outcome count for the follow-up summary (P2-B). */
+export interface VerificationResultCount {
+  result: string;
+  count: number;
+}
+
+/** Finding follow-up summary (P2-B): management-response coverage, reopen count + verification outcomes. */
+export interface FindingFollowUpSummary {
+  totalFindings: number;
+  closed: number;
+  reopened: number;
+  withManagementResponse: number;
+  verifiedFindings: number;
+  byVerificationResult: VerificationResultCount[];
+}
+
 /** A single Critical/High open exception for the material-findings widget. */
 export interface MaterialFinding {
   exceptionId: string;

@@ -29,6 +29,12 @@
               {{ 'exceptions.action.cancel' | t }}
             </button>
           }
+          @if (canReopenNow()) {
+            <button matButton type="button" (click)="reopen()">
+              <mat-icon>replay</mat-icon>
+              {{ 'exceptions.action.reopen' | t }}
+            </button>
+          }
         </div>
       </app-page-header>
 
@@ -46,6 +52,11 @@
         }
         @if (e.isRecurrence) {
           <span class="status-badge">{{ 'exceptions.field.recurrence' | t }}</span>
+        }
+        @if (e.reopenCount > 0) {
+          <span class="status-badge" data-status="map_rejected" [matTooltip]="e.reopenReason || ''">
+            {{ 'exceptions.flag.reopened' | t: { count: e.reopenCount } }}
+          </span>
         }
       </div>
 
@@ -179,6 +190,32 @@
         </div>
       </mat-card>
 
+      <!-- Management response (P2-B) -->
+      <mat-card appearance="outlined" class="detail__card">
+        <div class="detail__card-head">
+          <h3 class="detail__card-title">{{ 'exceptions.detail.responseTitle' | t }}</h3>
+          @if (canRecordResponse()) {
+            <div class="detail__card-actions">
+              <button matButton type="button" (click)="recordManagementResponse()">
+                <mat-icon>rate_review</mat-icon>
+                {{ (e.managementResponseDecision ? 'exceptions.action.editResponse' : 'exceptions.action.recordResponse') | t }}
+              </button>
+            </div>
+          }
+        </div>
+        @if (e.managementResponseDecision) {
+          <div class="detail__status-row">
+            <span class="status-badge" [attr.data-status]="e.managementResponseDecision === 'disputed' ? 'map_rejected' : (e.managementResponseDecision === 'accepted' ? 'responded' : 'pending_closure')">
+              {{ 'exceptions.responseDecision.' + e.managementResponseDecision | t }}
+            </span>
+            <span class="muted">{{ nameOf(e.managementRespondedBy) }} · {{ e.managementRespondedAt | date: 'mediumDate' }}</span>
+          </div>
+          <p class="detail__response-comment">{{ e.managementResponseComment }}</p>
+        } @else {
+          <p class="muted detail__empty">{{ 'exceptions.detail.noResponse' | t }}</p>
+        }
+      </mat-card>
+
       <!-- Management Action Plan -->
       <mat-card appearance="outlined" class="detail__card">
         <div class="detail__card-head">
@@ -301,6 +338,42 @@
           </ul>
         }
       </mat-card>
+
+      <!-- Follow-up verification (P2-B) -->
+      @if (e.verifications.length || canVerifyNow()) {
+        <mat-card appearance="outlined" class="detail__card">
+          <div class="detail__card-head">
+            <h3 class="detail__card-title">{{ 'exceptions.detail.verificationTitle' | t }}</h3>
+            @if (canVerifyNow()) {
+              <div class="detail__card-actions">
+                <button matButton type="button" (click)="addVerification()">
+                  <mat-icon>fact_check</mat-icon>
+                  {{ 'exceptions.action.addVerification' | t }}
+                </button>
+              </div>
+            }
+          </div>
+          @if (!e.verifications.length) {
+            <p class="muted detail__empty">{{ 'exceptions.detail.noVerifications' | t }}</p>
+          } @else {
+            <ul class="detail__verifications">
+              @for (v of e.verifications; track v.id) {
+                <li class="detail__verification">
+                  <div class="detail__verification-head">
+                    <span class="status-badge" [attr.data-status]="v.result === 'failed' ? 'map_rejected' : (v.result === 'passed' ? 'responded' : 'pending_closure')">
+                      {{ 'exceptions.verificationResult.' + v.result | t }}
+                    </span>
+                    <span class="muted">{{ nameOf(v.verifiedByUserId) }} · {{ v.verifiedAt | date: 'medium' }}</span>
+                  </div>
+                  @if (v.notes) {
+                    <p class="detail__verification-notes">{{ v.notes }}</p>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </mat-card>
+      }
 
       <!-- Closure / CIA -->
       @if (canCloseNow() || canCiaCountersign()) {

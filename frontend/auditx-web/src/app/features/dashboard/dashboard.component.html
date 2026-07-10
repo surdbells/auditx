@@ -73,6 +73,16 @@
         <app-bar-chart [data]="rootCauseData()" [label]="'dashboard.charts.findingsByRootCause' | t" />
       </div>
     }
+    @if (verificationData().length) {
+      <div class="panel">
+        <h3 class="panel__title">{{ 'dashboard.charts.verificationOutcomes' | t }}</h3>
+        <app-donut-chart
+          [data]="verificationData()"
+          [label]="'dashboard.charts.verificationOutcomes' | t"
+          [centerLabel]="'dashboard.charts.verificationsCenter' | t"
+        />
+      </div>
+    }
   </section>
 }
 

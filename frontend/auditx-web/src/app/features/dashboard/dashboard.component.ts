@@ -26,6 +26,7 @@ import {
 } from '../../shared/charts';
 import {
   ExceptionPortfolio,
+  FindingFollowUpSummary,
   FunctionPerformance,
   MaterialFinding,
   PlanStatusKpi,
@@ -99,6 +100,7 @@ export class DashboardComponent {
   /* ---- Live analytics (loaded only when permitted; null until/unless available) ---- */
   readonly performance = signal<FunctionPerformance | null>(null);
   readonly portfolio = signal<ExceptionPortfolio | null>(null);
+  readonly followUp = signal<FindingFollowUpSummary | null>(null);
   readonly planStatus = signal<PlanStatusKpi | null>(null);
   readonly auditCounts = signal<Record<string, number> | null>(null);
   readonly materialFindings = signal<MaterialFinding[]>([]);
@@ -124,6 +126,7 @@ export class DashboardComponent {
     }
     this.analytics.functionPerformance().subscribe({ next: (p) => this.performance.set(p), error: () => undefined });
     this.analytics.exceptionPortfolio().subscribe({ next: (p) => this.portfolio.set(p), error: () => undefined });
+    this.analytics.findingFollowUp().subscribe({ next: (f) => this.followUp.set(f), error: () => undefined });
     this.analytics.planStatus().subscribe({ next: (p) => this.planStatus.set(p), error: () => undefined });
     this.analytics.materialFindings().subscribe({ next: (f) => this.materialFindings.set(f), error: () => undefined });
   }
@@ -226,6 +229,13 @@ export class DashboardComponent {
     (this.portfolio()?.byRootCause ?? [])
       .filter((r) => r.count > 0)
       .map((r) => ({ label: this.humanise(r.rootCauseCategory), value: r.count })),
+  );
+
+  /** Post-closure verification outcomes (P2-B). */
+  readonly verificationData = computed<ChartDatum[]>(() =>
+    (this.followUp()?.byVerificationResult ?? [])
+      .filter((r) => r.count > 0)
+      .map((r) => ({ label: this.humanise(r.result), value: r.count })),
   );
 
   readonly planPercent = computed(() => this.planStatus()?.completionPercent ?? null);

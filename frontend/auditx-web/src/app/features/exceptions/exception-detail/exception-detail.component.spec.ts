@@ -37,8 +37,10 @@ function exception(
     ciaPending: false,
     isOverdue: false,
     daysPastTarget: 0,
+    reopenCount: 0,
     version: 'v1',
     mapActions: [],
+    verifications: [],
     ...overrides,
   };
 }

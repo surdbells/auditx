@@ -67,6 +67,15 @@ import {
   LinkFindingKind,
   LinkFindingResult,
 } from '../dialogs/link-finding-dialog.component';
+import {
+  ManagementResponseDialogComponent,
+  ManagementResponseDialogData,
+  ManagementResponseDialogResult,
+} from '../dialogs/management-response-dialog.component';
+import {
+  VerificationDialogComponent,
+  VerificationDialogResult,
+} from '../dialogs/verification-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -130,6 +139,8 @@ export class ExceptionDetailComponent {
     this.auth.hasPermission(Permissions.CancelException),
   );
   readonly canCia = computed(() => this.auth.hasPermission(Permissions.CIA));
+  readonly canReopen = computed(() => this.auth.hasPermission(Permissions.ReopenException));
+  readonly canVerify = computed(() => this.auth.hasPermission(Permissions.VerifyException));
   readonly canUploadEvidence = computed(() =>
     this.auth.hasPermission(Permissions.UploadEvidence),
   );
@@ -171,6 +182,11 @@ export class ExceptionDetailComponent {
   );
   readonly canManageNow = computed(() => this.canManage() && !this.isReadOnly());
   readonly canCancelNow = computed(() => this.canCancel() && !this.isReadOnly());
+  /** Management response can be recorded any time except once cancelled. */
+  readonly canRecordResponse = computed(() => this.canManage() && this.status() !== 'cancelled');
+  /** Reopen + follow-up verification are only meaningful once the finding is closed. */
+  readonly canReopenNow = computed(() => this.canReopen() && this.status() === 'closed');
+  readonly canVerifyNow = computed(() => this.canVerify() && this.status() === 'closed');
   /** MAP actions may be worked while approved (before mark-complete). */
   readonly canWorkActions = computed(
     () => this.canSubmitMap() && this.status() === 'map_approved',
@@ -536,6 +552,71 @@ export class ExceptionDetailComponent {
           onResult(result.id);
         }
       });
+  }
+
+  /* ---- Management response / follow-up verification / reopen (P2-B) ---- */
+
+  recordManagementResponse(): void {
+    const ex = this.exception();
+    if (!ex) {
+      return;
+    }
+    const data: ManagementResponseDialogData = {
+      decision: ex.managementResponseDecision,
+      comment: ex.managementResponseComment,
+    };
+    this.dialog
+      .open(ManagementResponseDialogComponent, { data, width: '480px' })
+      .afterClosed()
+      .subscribe((result?: ManagementResponseDialogResult) => {
+        if (!result) {
+          return;
+        }
+        this.runMutation(
+          this.service.recordManagementResponse(this.id(), {
+            decision: result.decision,
+            comment: result.comment,
+            version: this.version(),
+          }),
+          this.i18n.translate('exceptions.notify.responseRecorded'),
+        );
+      });
+  }
+
+  addVerification(): void {
+    this.dialog
+      .open(VerificationDialogComponent, { width: '480px' })
+      .afterClosed()
+      .subscribe((result?: VerificationDialogResult) => {
+        if (!result) {
+          return;
+        }
+        this.runMutation(
+          this.service.addVerification(this.id(), {
+            result: result.result,
+            notes: result.notes,
+            version: this.version(),
+          }),
+          this.i18n.translate('exceptions.notify.verificationRecorded'),
+        );
+      });
+  }
+
+  reopen(): void {
+    this.openReason(
+      {
+        title: this.i18n.translate('exceptions.action.reopen'),
+        message: this.i18n.translate('exceptions.dialog.reopenMessage'),
+        reasonRequired: true,
+        confirmLabel: this.i18n.translate('exceptions.action.reopen'),
+        destructive: true,
+      },
+      (reason) =>
+        this.runMutation(
+          this.service.reopen(this.id(), { reason, version: this.version() }),
+          this.i18n.translate('exceptions.notify.reopened'),
+        ),
+    );
   }
 
   private openReason(

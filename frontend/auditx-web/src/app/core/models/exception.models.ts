@@ -30,6 +30,15 @@ export type ExceptionStatus =
 /** Status of a single management-action-plan action. */
 export type MapActionStatus = 'pending' | 'complete';
 
+/** Management's formal position on a finding (P2-B). */
+export type ManagementResponseDecision = 'accepted' | 'partially_accepted' | 'disputed';
+
+/** Outcome of a post-closure follow-up verification (P2-B). */
+export type VerificationResult = 'passed' | 'partially_passed' | 'failed';
+
+export const MANAGEMENT_RESPONSE_DECISIONS: readonly ManagementResponseDecision[] = ['accepted', 'partially_accepted', 'disputed'];
+export const VERIFICATION_RESULTS: readonly VerificationResult[] = ['passed', 'partially_passed', 'failed'];
+
 /** A single management-action-plan action. */
 export interface MapAction {
   id: string;
@@ -41,6 +50,16 @@ export interface MapAction {
   status: MapActionStatus;
   completedAt?: string | null;
   completedBy?: string | null;
+}
+
+/** A post-closure follow-up verification of a finding's remediation (P2-B). */
+export interface FindingVerification {
+  id: string;
+  exceptionId: string;
+  result: VerificationResult;
+  verifiedByUserId: string;
+  verifiedAt: string;
+  notes?: string | null;
 }
 
 /** Full exception aggregate. */
@@ -78,8 +97,20 @@ export interface Exception {
   closedAt?: string | null;
   ciaCountersignedBy?: string | null;
   cancellationReason?: string | null;
+  // P2-B — management response.
+  managementResponseDecision?: ManagementResponseDecision | null;
+  managementResponseComment?: string | null;
+  managementRespondedBy?: string | null;
+  managementRespondedAt?: string | null;
+  // P2-B — reopen tracking.
+  reopenCount: number;
+  reopenedBy?: string | null;
+  reopenedAt?: string | null;
+  reopenReason?: string | null;
   version: string;
   mapActions: MapAction[];
+  // P2-B — post-closure follow-up verifications (newest first).
+  verifications: FindingVerification[];
 }
 
 /** Lightweight row for the exceptions tracker list. */
@@ -137,6 +168,20 @@ export interface SubmitMapRequest {
 export interface ChangeSeverityRequest {
   severity: ExceptionSeverity;
   reason: string;
+  version: string;
+}
+
+/** P2-B — record management's formal position on a finding. */
+export interface ManagementResponseRequest {
+  decision: ManagementResponseDecision;
+  comment: string;
+  version: string;
+}
+
+/** P2-B — record a post-closure follow-up verification. */
+export interface AddVerificationRequest {
+  result: VerificationResult;
+  notes?: string | null;
   version: string;
 }
 

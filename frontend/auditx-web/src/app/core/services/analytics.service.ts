@@ -15,6 +15,7 @@ import {
   DashboardListItem,
   DeleteDashboardWidgetRequest,
   ExceptionPortfolio,
+  FindingFollowUpSummary,
   FunctionPerformance,
   MaterialFinding,
   OrgUnitScorecard,
@@ -174,6 +175,11 @@ export class AnalyticsService {
   /** Compliance-by-regulation — linked + open findings per active regulation (P1-B, ViewAnalytics). */
   complianceByRegulation(): Observable<ComplianceByRegulationRow[]> {
     return this.api.get<ComplianceByRegulationRow[]>('/analytics/compliance-by-regulation');
+  }
+
+  /** Finding follow-up — management-response coverage, reopen count + verification outcomes (P2-B, ViewAnalytics). */
+  findingFollowUp(): Observable<FindingFollowUpSummary> {
+    return this.api.get<FindingFollowUpSummary>('/analytics/finding-followup');
   }
 
   /* ---- Recurrence clusters (ViewAnalytics) ---- */
