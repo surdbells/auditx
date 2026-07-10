@@ -571,14 +571,45 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
 
     public async Task<FindingFollowUpSummaryDto> FindingFollowUpAsync(CancellationToken cancellationToken = default)
     {
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
         var findings = await db.Exceptions.AsNoTracking()
-            .Select(e => new { e.Status, e.ReopenCount, HasResponse = e.ManagementResponseDecision != null })
+            .Select(e => new
+            {
+                e.Status,
+                e.ReopenCount,
+                HasResponse = e.ManagementResponseDecision != null,
+                e.RaisedAt,
+                e.ManagementRespondedAt,
+                e.ManagementResponseDueDate,
+            })
             .ToListAsync(cancellationToken);
 
         var total = findings.Count;
         var closed = findings.Count(f => f.Status == ExceptionStatus.Closed);
         var reopened = findings.Count(f => f.ReopenCount > 0);
         var withResponse = findings.Count(f => f.HasResponse);
+
+        // Response-timeliness (SLA): only findings with a due date and not cancelled are in scope.
+        var slaScope = findings.Where(f => f.ManagementResponseDueDate is not null && f.Status != ExceptionStatus.Cancelled).ToArray();
+        int respondedOnTime = 0, respondedLate = 0, responseOverdue = 0;
+        foreach (var f in slaScope)
+        {
+            var due = f.ManagementResponseDueDate!.Value;
+            if (f.ManagementRespondedAt is { } at)
+            {
+                if (DateOnly.FromDateTime(at.UtcDateTime) <= due) { respondedOnTime++; } else { respondedLate++; }
+            }
+            else if (due < today)
+            {
+                responseOverdue++;
+            }
+        }
+
+        // Mean raise→response turnaround (days) over all responded findings.
+        var responded = findings.Where(f => f.ManagementRespondedAt is not null).ToArray();
+        double? averageResponseDays = responded.Length > 0
+            ? Math.Round(responded.Average(f => (f.ManagementRespondedAt!.Value - f.RaisedAt).TotalDays), 1)
+            : null;
 
         var verifiedFindings = await db.FindingVerifications.AsNoTracking()
             .Select(v => v.ExceptionId).Distinct().CountAsync(cancellationToken);
@@ -592,7 +623,9 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
             .OrderByDescending(r => r.Count).ThenBy(r => r.Result)
             .ToArray();
 
-        return new FindingFollowUpSummaryDto(total, closed, reopened, withResponse, verifiedFindings, byVerificationResult);
+        return new FindingFollowUpSummaryDto(
+            total, closed, reopened, withResponse, verifiedFindings, byVerificationResult,
+            slaScope.Length, respondedOnTime, respondedLate, responseOverdue, averageResponseDays);
     }
 
     public async Task<ProcedureSummaryDto> ProcedureSummaryAsync(CancellationToken cancellationToken = default)

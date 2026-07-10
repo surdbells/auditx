@@ -308,6 +308,25 @@ export class DashboardComponent {
       .map((r) => ({ label: this.humanise(r.result), value: r.count })),
   );
 
+  /** Management-response timeliness (SLA): on-time / late / still-overdue, over findings with a response due date. */
+  readonly responseTimelinessData = computed<ChartDatum[]>(() => {
+    const f = this.followUp();
+    if (!f) {
+      return [];
+    }
+    return [
+      { label: this.i18n.translate('exceptions.timeliness.on_time'), value: f.respondedOnTime },
+      { label: this.i18n.translate('exceptions.timeliness.late'), value: f.respondedLate },
+      { label: this.i18n.translate('exceptions.timeliness.overdue'), value: f.responseOverdue },
+    ].filter((d) => d.value > 0);
+  });
+
+  /** Mean raise→response turnaround (days), for the SLA donut centre; em dash when nothing responded. */
+  readonly averageResponseDaysLabel = computed(() => {
+    const avg = this.followUp()?.averageResponseDays;
+    return avg === null || avg === undefined ? '—' : `${avg}`;
+  });
+
   /** Execution procedures by type (P2-C). */
   readonly procedureData = computed<ChartDatum[]>(() =>
     (this.procedures()?.byType ?? [])

@@ -97,6 +97,9 @@ public sealed class AuditException : AggregateRoot
 
     public DateTimeOffset? ManagementRespondedAt { get; private set; }
 
+    /// <summary>The date by which management is expected to respond — the substrate for response-timeliness / SLA reporting.</summary>
+    public DateOnly? ManagementResponseDueDate { get; private set; }
+
     // ---- Reopen (P2-B): a closed finding can be reopened; the count feeds closure-quality reporting. ----
 
     public int ReopenCount { get; private set; }
@@ -338,6 +341,17 @@ public sealed class AuditException : AggregateRoot
     }
 
     // ---- P2-B: management response, follow-up verification, reopen ----
+
+    /// <summary>Sets (or clears, with null) the date by which management must respond. Blocked once cancelled — a cancelled finding needs no response.</summary>
+    public void SetManagementResponseDueDate(DateOnly? dueDate)
+    {
+        if (Status == ExceptionStatus.Cancelled)
+        {
+            throw new InvalidStateTransitionException("exception.response_locked", "A cancelled exception cannot take a management-response due date.");
+        }
+
+        ManagementResponseDueDate = dueDate;
+    }
 
     /// <summary>Records management's formal position on the finding (accept / partially accept / dispute). Overwrites any prior response; blocked once cancelled.</summary>
     public void RecordManagementResponse(ManagementResponseDecision decision, string comment, Guid actorUserId, DateTimeOffset nowUtc)

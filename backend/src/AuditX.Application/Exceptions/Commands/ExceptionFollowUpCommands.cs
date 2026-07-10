@@ -62,6 +62,40 @@ public sealed class RecordManagementResponseCommandHandler(
     }
 }
 
+// ---- Management-response due date (response-timeliness / SLA) ----
+
+public sealed record SetManagementResponseDueDateCommand(Guid ExceptionId, DateOnly? DueDate, string Version) : ICommand<ExceptionDto>;
+
+public sealed class SetManagementResponseDueDateCommandValidator : AbstractValidator<SetManagementResponseDueDateCommand>
+{
+    public SetManagementResponseDueDateCommandValidator()
+    {
+        RuleFor(x => x.ExceptionId).NotEmpty();
+        RuleFor(x => x.Version).NotEmpty();
+    }
+}
+
+public sealed class SetManagementResponseDueDateCommandHandler(
+    IExceptionRepository exceptions, IAuditRepository audits, IPermissionResolver permissions,
+    ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    : ICommandHandler<SetManagementResponseDueDateCommand, ExceptionDto>
+{
+    public async Task<ExceptionDto> Handle(SetManagementResponseDueDateCommand command, CancellationToken cancellationToken)
+    {
+        var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
+        var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
+        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        exception.EnsureVersion(command.Version);
+
+        var before = new { dueDate = exception.ManagementResponseDueDate };
+        exception.SetManagementResponseDueDate(command.DueDate);
+        audit.Record(AuditEventTypes.ManagementResponseDueDateSet, AuditTargetTypes.Exception, exception.Id,
+            before: before, after: new { dueDate = exception.ManagementResponseDueDate });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return exception.ToDto(DateOnly.FromDateTime(clock.UtcNow.UtcDateTime));
+    }
+}
+
 // ---- Follow-up verification (P2-B) ----
 
 public sealed record AddFindingVerificationCommand(Guid ExceptionId, string Result, string? Notes, string Version) : ICommand<ExceptionDto>;

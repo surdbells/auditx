@@ -288,6 +288,12 @@ export interface FindingFollowUpSummary {
   withManagementResponse: number;
   verifiedFindings: number;
   byVerificationResult: VerificationResultCount[];
+  // Response-timeliness / SLA slice (findings with a response due date).
+  withResponseDue: number;
+  respondedOnTime: number;
+  respondedLate: number;
+  responseOverdue: number;
+  averageResponseDays: number | null;
 }
 
 /** One procedure-type count for the procedure summary (P2-C). */

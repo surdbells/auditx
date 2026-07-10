@@ -238,3 +238,20 @@
   margin: 0.4rem 0 0;
   white-space: pre-wrap;
 }
+
+// Management-response timeliness badge tones (on the shared .status-badge).
+.status-badge[data-timeliness='on_time'] {
+  background: color-mix(in srgb, #2e7d32 16%, transparent);
+  color: #2e7d32;
+}
+
+.status-badge[data-timeliness='late'],
+.status-badge[data-timeliness='overdue'] {
+  background: color-mix(in srgb, #c62828 16%, transparent);
+  color: #c62828;
+}
+
+.status-badge[data-timeliness='due'] {
+  background: color-mix(in srgb, #ef6c00 16%, transparent);
+  color: #ef6c00;
+}

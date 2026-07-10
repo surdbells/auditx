@@ -102,6 +102,9 @@ export interface Exception {
   managementResponseComment?: string | null;
   managementRespondedBy?: string | null;
   managementRespondedAt?: string | null;
+  // Response-timeliness / SLA: due date + derived on_time | late | overdue | due (null when no due date).
+  managementResponseDueDate?: string | null;
+  managementResponseTimeliness?: string | null;
   // P2-B — reopen tracking.
   reopenCount: number;
   reopenedBy?: string | null;
@@ -175,6 +178,12 @@ export interface ChangeSeverityRequest {
 export interface ManagementResponseRequest {
   decision: ManagementResponseDecision;
   comment: string;
+  version: string;
+}
+
+/** Set (or clear, with a null date) the management-response due date for response-timeliness reporting. */
+export interface SetResponseDueDateRequest {
+  dueDate: string | null;
   version: string;
 }
 

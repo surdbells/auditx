@@ -20,6 +20,7 @@ import {
   FindingRegulationLink,
   AddVerificationRequest,
   ManagementResponseRequest,
+  SetResponseDueDateRequest,
   RaiseExceptionRequest,
   ReassignOwnerRequest,
   ReasonVersionRequest,
@@ -166,6 +167,11 @@ export class ExceptionsService {
 
   recordManagementResponse(id: string, body: ManagementResponseRequest): Observable<Exception> {
     return this.api.post<Exception>(`/exceptions/${id}/management-response`, body);
+  }
+
+  /** Set (or clear) the management-response due date (response-timeliness / SLA). */
+  setResponseDueDate(id: string, body: SetResponseDueDateRequest): Observable<Exception> {
+    return this.api.patch<Exception>(`/exceptions/${id}/response-due-date`, body);
   }
 
   addVerification(id: string, body: AddVerificationRequest): Observable<Exception> {

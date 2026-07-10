@@ -17,6 +17,25 @@ public static class ExceptionMappings
     private static string StatusLabel(this AuditException e)
         => e.Status == ExceptionStatus.PendingClosure && e.CiaPending ? "pending_cia_approval" : e.Status.ToSnake();
 
+    /// <summary>
+    /// Management-response timeliness against the response due date: <c>on_time</c> / <c>late</c> once responded,
+    /// <c>overdue</c> / <c>due</c> while still awaited. Null when no due date is set (or the finding is cancelled).
+    /// </summary>
+    private static string? ResponseTimeliness(this AuditException e, DateOnly today)
+    {
+        if (e.ManagementResponseDueDate is not { } due || e.Status == ExceptionStatus.Cancelled)
+        {
+            return null;
+        }
+
+        if (e.ManagementRespondedAt is { } at)
+        {
+            return DateOnly.FromDateTime(at.UtcDateTime) <= due ? "on_time" : "late";
+        }
+
+        return due < today ? "overdue" : "due";
+    }
+
     public static ExceptionDto ToDto(this AuditException e, DateOnly today) => new(
         e.Id, e.AuditId, e.ChecklistItemId, e.AuditableEntityId, e.Title, e.Severity.ToSnake(), e.StatusLabel(),
         e.RootCause, e.Recommendation, e.Category, e.RootCauseCategory, e.OwnerUserId, e.RaisedByUserId, e.RaisedAt, e.TargetDate,
@@ -25,6 +44,7 @@ public static class ExceptionMappings
         e.IsOverdue(today), e.DaysPastTarget(today), e.MapSubmittedAt, e.MapApprovedAt, e.MapRejectionReason,
         e.ClosureEvidenceNote, e.ClosedBy, e.ClosedAt, e.CiaCountersignedBy, e.CancellationReason,
         e.ManagementResponseDecision?.ToSnake(), e.ManagementResponseComment, e.ManagementRespondedBy, e.ManagementRespondedAt,
+        e.ManagementResponseDueDate, e.ResponseTimeliness(today),
         e.ReopenCount, e.ReopenedBy, e.ReopenedAt, e.ReopenReason,
         RowVersionToken.Encode(e.Version),
         e.MapActions.Select(a => a.ToDto()).ToArray(),

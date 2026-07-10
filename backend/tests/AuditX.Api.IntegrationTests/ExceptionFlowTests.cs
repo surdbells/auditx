@@ -153,6 +153,67 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     }
 
     [Fact]
+    public async Task Response_due_date_drives_timeliness_and_sla_analytics()
+    {
+        var admin = await AdminAsync();
+        var (auditId, failItem, _, owner) = await SeedAuditWithResponsesAsync(admin);
+        var ex = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = failItem, title = "SLA gap", severity = "medium", rootCause = "rc", recommendation = "rec", ownerUserId = owner,
+        }));
+        var exId = ex.GetProperty("id").GetGuid();
+
+        // A due date in the PAST with no response yet → timeliness is 'overdue'.
+        var withDue = await DataAsync(await admin.PatchAsJsonAsync($"/api/v1/exceptions/{exId}/response-due-date", new
+        {
+            dueDate = "2020-01-01", version = Version(ex),
+        }));
+        Assert.Equal("2020-01-01", withDue.GetProperty("managementResponseDueDate").GetString());
+        Assert.Equal("overdue", withDue.GetProperty("managementResponseTimeliness").GetString());
+
+        // Recording a response now (after the past due date) flips timeliness to 'late'.
+        var responded = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/exceptions/{exId}/management-response", new
+        {
+            decision = "accepted", comment = "Acknowledged, remediation underway.", version = Version(withDue),
+        }));
+        Assert.Equal("late", responded.GetProperty("managementResponseTimeliness").GetString());
+
+        // The follow-up analytics SLA slice reflects the late response + a non-null average turnaround.
+        var analyst = await AnalystAsync(admin);
+        var followup = await DataAsync(await analyst.GetAsync("/api/v1/analytics/finding-followup"));
+        Assert.True(followup.GetProperty("withResponseDue").GetInt32() >= 1);
+        Assert.True(followup.GetProperty("respondedLate").GetInt32() >= 1);
+        Assert.NotEqual(JsonValueKind.Null, followup.GetProperty("averageResponseDays").ValueKind);
+
+        // Clearing the due date removes the timeliness signal.
+        var cleared = await DataAsync(await admin.PatchAsJsonAsync($"/api/v1/exceptions/{exId}/response-due-date", new
+        {
+            dueDate = (string?)null, version = Version(responded),
+        }));
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("managementResponseDueDate").ValueKind);
+        Assert.Equal(JsonValueKind.Null, cleared.GetProperty("managementResponseTimeliness").ValueKind);
+    }
+
+    [Fact]
+    public async Task Setting_the_response_due_date_requires_manage_exception()
+    {
+        var admin = await AdminAsync();
+        var (auditId, failItem, _, owner) = await SeedAuditWithResponsesAsync(admin);
+        var ex = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = failItem, title = "Gap", severity = "low", rootCause = "rc", recommendation = "rec", ownerUserId = owner,
+        }));
+
+        var auditee = NewClient();
+        (await auditee.PostAsJsonAsync("/api/v1/auth/login", new { username = "auditee", password = "Passw0rd!" })).EnsureSuccessStatusCode();
+        var denied = await auditee.PatchAsJsonAsync($"/api/v1/exceptions/{ex.GetProperty("id").GetGuid()}/response-due-date", new
+        {
+            dueDate = "2027-01-01", version = Version(ex),
+        });
+        Assert.Equal(HttpStatusCode.Forbidden, denied.StatusCode);
+    }
+
+    [Fact]
     public async Task Reopen_requires_the_reopen_permission()
     {
         var admin = await AdminAsync();

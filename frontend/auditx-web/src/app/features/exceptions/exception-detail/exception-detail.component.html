@@ -198,6 +198,10 @@
           <h3 class="detail__card-title">{{ 'exceptions.detail.responseTitle' | t }}</h3>
           @if (canRecordResponse()) {
             <div class="detail__card-actions">
+              <button matButton type="button" (click)="setResponseDueDate()">
+                <mat-icon>event</mat-icon>
+                {{ 'exceptions.action.setResponseDue' | t }}
+              </button>
               <button matButton type="button" (click)="recordManagementResponse()">
                 <mat-icon>rate_review</mat-icon>
                 {{ (e.managementResponseDecision ? 'exceptions.action.editResponse' : 'exceptions.action.recordResponse') | t }}
@@ -205,6 +209,19 @@
             </div>
           }
         </div>
+        @if (e.managementResponseDueDate || e.managementResponseTimeliness) {
+          <div class="detail__status-row">
+            <span class="muted">
+              {{ 'exceptions.detail.responseDue' | t }}:
+              {{ e.managementResponseDueDate ? (e.managementResponseDueDate | date: 'mediumDate') : ('exceptions.detail.noDueDate' | t) }}
+            </span>
+            @if (e.managementResponseTimeliness) {
+              <span class="status-badge" [attr.data-timeliness]="e.managementResponseTimeliness">
+                {{ 'exceptions.timeliness.' + e.managementResponseTimeliness | t }}
+              </span>
+            }
+          </div>
+        }
         @if (e.managementResponseDecision) {
           <div class="detail__status-row">
             <span class="status-badge" [attr.data-status]="e.managementResponseDecision === 'disputed' ? 'map_rejected' : (e.managementResponseDecision === 'accepted' ? 'responded' : 'pending_closure')">

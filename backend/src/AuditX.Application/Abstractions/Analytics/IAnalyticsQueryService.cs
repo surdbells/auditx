@@ -249,6 +249,9 @@ public sealed record VerificationResultCountDto(string Result, int Count);
 /// <summary>
 /// Finding follow-up summary (P2-B): management-response coverage, reopen count, and post-closure verification
 /// outcomes — the substrate for management-timeliness and follow-up-effectiveness reporting.
+/// <c>WithResponseDue</c>..<c>ResponseOverdue</c> are the response-SLA slice (findings with a response due date):
+/// on-time / late once responded, still-outstanding-and-past-due otherwise. <c>AverageResponseDays</c> is the mean
+/// raise→response turnaround over all responded findings.
 /// </summary>
 public sealed record FindingFollowUpSummaryDto(
     int TotalFindings,
@@ -256,7 +259,12 @@ public sealed record FindingFollowUpSummaryDto(
     int Reopened,
     int WithManagementResponse,
     int VerifiedFindings,
-    IReadOnlyList<VerificationResultCountDto> ByVerificationResult);
+    IReadOnlyList<VerificationResultCountDto> ByVerificationResult,
+    int WithResponseDue,
+    int RespondedOnTime,
+    int RespondedLate,
+    int ResponseOverdue,
+    double? AverageResponseDays);
 
 /// <summary>One procedure-type count for the procedure summary (P2-C).</summary>
 public sealed record ProcedureTypeCountDto(string Type, int Count);

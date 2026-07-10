@@ -75,6 +75,11 @@ import {
   ManagementResponseDialogResult,
 } from '../dialogs/management-response-dialog.component';
 import {
+  ResponseDueDateDialogComponent,
+  ResponseDueDateDialogData,
+  ResponseDueDateDialogResult,
+} from '../dialogs/response-due-date-dialog.component';
+import {
   VerificationDialogComponent,
   VerificationDialogResult,
 } from '../dialogs/verification-dialog.component';
@@ -641,6 +646,29 @@ export class ExceptionDetailComponent {
             version: this.version(),
           }),
           this.i18n.translate('exceptions.notify.responseRecorded'),
+        );
+      });
+  }
+
+  setResponseDueDate(): void {
+    const ex = this.exception();
+    if (!ex) {
+      return;
+    }
+    const data: ResponseDueDateDialogData = { dueDate: ex.managementResponseDueDate ?? null };
+    this.dialog
+      .open(ResponseDueDateDialogComponent, { data, width: '360px' })
+      .afterClosed()
+      .subscribe((result?: ResponseDueDateDialogResult) => {
+        if (!result) {
+          return;
+        }
+        this.runMutation(
+          this.service.setResponseDueDate(this.id(), {
+            dueDate: result.dueDate,
+            version: this.version(),
+          }),
+          this.i18n.translate('exceptions.notify.responseDueSet'),
         );
       });
   }

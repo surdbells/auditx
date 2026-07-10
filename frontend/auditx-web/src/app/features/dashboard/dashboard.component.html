@@ -85,6 +85,17 @@
         />
       </div>
     }
+    @if (responseTimelinessData().length) {
+      <div class="panel">
+        <h3 class="panel__title">{{ 'dashboard.charts.responseTimeliness' | t }}</h3>
+        <app-donut-chart
+          [data]="responseTimelinessData()"
+          [label]="'dashboard.charts.responseTimeliness' | t"
+          [centerLabel]="averageResponseDaysLabel()"
+        />
+        <p class="panel__note muted">{{ 'dashboard.charts.responseTimelinessNote' | t }}</p>
+      </div>
+    }
     @if (procedureData().length) {
       <div class="panel">
         <h3 class="panel__title">{{ 'dashboard.charts.proceduresByType' | t }}</h3>

@@ -178,6 +178,7 @@ public static class AuditEventTypes
     public const string ExceptionClosed = "exception_closed";
     public const string ExceptionCancelled = "exception_cancelled";
     public const string ManagementResponseRecorded = "management_response_recorded";
+    public const string ManagementResponseDueDateSet = "management_response_due_date_set";
     public const string FindingVerified = "finding_verified";
     public const string ExceptionReopened = "exception_reopened";
 

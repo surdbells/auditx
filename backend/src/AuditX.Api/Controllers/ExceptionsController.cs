@@ -126,6 +126,11 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
     public async Task<IActionResult> RecordManagementResponse(Guid id, [FromBody] ManagementResponseRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new RecordManagementResponseCommand(id, request.Decision, request.Comment, request.Version), cancellationToken));
 
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpPatch("api/v1/exceptions/{id:guid}/response-due-date")]
+    public async Task<IActionResult> SetResponseDueDate(Guid id, [FromBody] SetResponseDueDateRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SetManagementResponseDueDateCommand(id, request.DueDate, request.Version), cancellationToken));
+
     [RequirePermission(PermissionKeys.VerifyException)]
     [HttpPost("api/v1/exceptions/{id:guid}/verifications")]
     public async Task<IActionResult> AddVerification(Guid id, [FromBody] AddVerificationRequest request, CancellationToken cancellationToken)
