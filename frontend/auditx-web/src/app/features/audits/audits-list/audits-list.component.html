@@ -3,12 +3,14 @@
   [subtitle]="'audits.list.subtitle' | t"
 >
   @if (canCreate()) {
-    <button actions matButton="filled" type="button" (click)="create()">
+    <button actions matButton="filled" type="button" (click)="create()" data-guide="create">
       <mat-icon>add</mat-icon>
       {{ 'audits.actions.newAudit' | t }}
     </button>
   }
 </app-page-header>
+
+<app-page-guide [guide]="guide" />
 
 @if (counts().length) {
   <div class="audits__counts">

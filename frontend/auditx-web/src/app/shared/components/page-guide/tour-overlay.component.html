@@ -1,0 +1,68 @@
+@if (tour.currentStep(); as step) {
+  @if (hasSpot()) {
+    <!-- Spotlight: the box-shadow dims the whole page except this cut-out; the target stays interactive. -->
+    <div
+      class="tour__spot"
+      [style.top]="spotStyle()?.top"
+      [style.left]="spotStyle()?.left"
+      [style.width]="spotStyle()?.width"
+      [style.height]="spotStyle()?.height"
+    ></div>
+  } @else {
+    <div class="tour__scrim" (click)="tour.skip()"></div>
+  }
+
+  <div
+    class="tour__card"
+    [class.tour__card--centered]="!hasSpot()"
+    [style.width]="cardStyle()['width']"
+    [style.left]="cardStyle()['left']"
+    [style.top]="cardStyle()['top']"
+    [style.bottom]="cardStyle()['bottom']"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="tour__head">
+      <span class="tour__icon" aria-hidden="true"><mat-icon>{{ step.icon }}</mat-icon></span>
+      <h2 class="tour__title">{{ step.title }}</h2>
+      <button matIconButton type="button" class="tour__close" (click)="tour.skip()" [attr.aria-label]="'guide.nav.close' | t">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="tour__body">
+      @for (para of step.body.split('\n\n'); track $index) {
+        @if (para) {
+          <p>{{ para }}</p>
+        }
+      }
+      @if (step.bullets?.length) {
+        <ul class="tour__bullets">
+          @for (b of step.bullets; track b) {
+            <li>{{ b }}</li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="tour__foot">
+      <div class="tour__dots" aria-hidden="true">
+        @for (s of tour.steps(); track $index; let i = $index) {
+          <button type="button" class="tour__dot" [class.tour__dot--on]="i === tour.index()" (click)="tour.goTo(i)"></button>
+        }
+      </div>
+      <div class="tour__nav">
+        <span class="tour__count">{{ tour.index() + 1 }} / {{ tour.stepCount() }}</span>
+        @if (!tour.isFirst()) {
+          <button matButton type="button" (click)="tour.previous()">{{ 'guide.nav.back' | t }}</button>
+        }
+        @if (tour.isLast()) {
+          <button matButton="filled" type="button" (click)="tour.finish()">{{ 'guide.nav.done' | t }}</button>
+        } @else {
+          <button matButton type="button" (click)="tour.skip()">{{ 'guide.nav.skip' | t }}</button>
+          <button matButton="filled" type="button" (click)="tour.next()">{{ 'guide.nav.next' | t }}</button>
+        }
+      </div>
+    </div>
+  </div>
+}

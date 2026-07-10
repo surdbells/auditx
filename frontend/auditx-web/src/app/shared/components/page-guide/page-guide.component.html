@@ -1,0 +1,130 @@
+<div class="pg">
+  <div class="pg__actions">
+    <button matButton type="button" class="pg__btn" (click)="startTour()">
+      <mat-icon>help_outline</mat-icon>
+      {{ 'guide.help' | t }}
+    </button>
+    <button matButton type="button" class="pg__btn" (click)="toggleAbout()">
+      <mat-icon>{{ aboutOpen() ? 'expand_less' : 'menu_book' }}</mat-icon>
+      {{ 'guide.about' | t }}
+    </button>
+  </div>
+
+  @if (aboutOpen()) {
+    <section class="pg__panel" [attr.aria-label]="'guide.about' | t">
+      <div class="pg__block">
+        <h3 class="pg__h">{{ 'guide.about.purpose' | t }}</h3>
+        <p>{{ guide().purposeKey | t }}</p>
+        <p class="pg__muted">{{ guide().descriptionKey | t }}</p>
+      </div>
+
+      @if (guide().dependsOnKeys?.length || guide().usedByKeys?.length) {
+        <div class="pg__block">
+          <h3 class="pg__h">{{ 'guide.about.relationships' | t }}</h3>
+          <div class="pg__graph">
+            @if (guide().dependsOnKeys?.length) {
+              <div class="pg__graph-col">
+                <span class="pg__graph-label">{{ 'guide.about.dependsOn' | t }}</span>
+                @for (k of guide().dependsOnKeys; track k) {
+                  <span class="pg__node">{{ k | t }}</span>
+                }
+              </div>
+              <mat-icon class="pg__arrow" aria-hidden="true">arrow_forward</mat-icon>
+            }
+            <span class="pg__node pg__node--self">{{ guide().titleKey | t }}</span>
+            @if (guide().usedByKeys?.length) {
+              <mat-icon class="pg__arrow" aria-hidden="true">arrow_forward</mat-icon>
+              <div class="pg__graph-col">
+                <span class="pg__graph-label">{{ 'guide.about.usedBy' | t }}</span>
+                @for (k of guide().usedByKeys; track k) {
+                  <span class="pg__node">{{ k | t }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (guide().actionKeys?.length) {
+        <div class="pg__block">
+          <h3 class="pg__h">{{ 'guide.about.actions' | t }}</h3>
+          <ul class="pg__list">
+            @for (k of guide().actionKeys; track k) {
+              <li>{{ k | t }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (guide().workflowKeys?.length) {
+        <div class="pg__block">
+          <h3 class="pg__h">{{ 'guide.about.workflow' | t }}</h3>
+          <div class="pg__flow">
+            @for (k of guide().workflowKeys; track k; let last = $last) {
+              <span class="pg__flow-step">{{ k | t }}</span>
+              @if (!last) {
+                <mat-icon class="pg__arrow" aria-hidden="true">chevron_right</mat-icon>
+              }
+            }
+          </div>
+        </div>
+      }
+
+      @if (guide().permissionKeys?.length) {
+        <div class="pg__block">
+          <h3 class="pg__h">{{ 'guide.about.permissions' | t }}</h3>
+          <div class="pg__chips">
+            @for (k of guide().permissionKeys; track k) {
+              <span class="pg__chip">{{ k | t }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      @if (guide().businessRuleKeys?.length) {
+        <div class="pg__block">
+          <h3 class="pg__h">{{ 'guide.about.rules' | t }}</h3>
+          <ul class="pg__list">
+            @for (k of guide().businessRuleKeys; track k) {
+              <li>{{ k | t }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (guide().tipKeys?.length) {
+        <div class="pg__block">
+          <h3 class="pg__h">{{ 'guide.about.tips' | t }}</h3>
+          <ul class="pg__list">
+            @for (k of guide().tipKeys; track k) {
+              <li>{{ k | t }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (guide().faq?.length) {
+        <div class="pg__block">
+          <h3 class="pg__h">{{ 'guide.about.faq' | t }}</h3>
+          <dl class="pg__faq">
+            @for (item of guide().faq; track item.questionKey) {
+              <dt>{{ item.questionKey | t }}</dt>
+              <dd>{{ item.answerKey | t }}</dd>
+            }
+          </dl>
+        </div>
+      }
+
+      <div class="pg__block pg__restart">
+        <button matButton type="button" (click)="startTour()">
+          <mat-icon>replay</mat-icon>
+          {{ 'guide.restart' | t }}
+        </button>
+      </div>
+    </section>
+  }
+</div>
+
+@if (tourActive()) {
+  <app-tour-overlay />
+}

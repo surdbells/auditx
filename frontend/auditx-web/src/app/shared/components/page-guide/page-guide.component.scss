@@ -1,0 +1,148 @@
+.pg {
+  margin-bottom: 1rem;
+}
+
+.pg__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.pg__btn {
+  --mat-text-button-with-icon-horizontal-padding: 0.75rem;
+  color: var(--mat-sys-primary);
+}
+
+.pg__panel {
+  margin-top: 0.75rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 14px;
+  background: var(--mat-sys-surface-container-low);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  animation: pg-in 0.16s ease;
+}
+@keyframes pg-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.pg__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.pg__h {
+  margin: 0;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface);
+}
+.pg__block p {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+.pg__muted {
+  color: var(--mat-sys-outline);
+}
+
+.pg__list {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+/* Relationship graph */
+.pg__graph {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+.pg__graph-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.pg__graph-label {
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pg__node {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container-highest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface);
+  white-space: nowrap;
+}
+.pg__node--self {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  border-color: transparent;
+  font-weight: 600;
+}
+.pg__arrow {
+  color: var(--mat-sys-outline);
+  flex: none;
+}
+
+/* Workflow flow */
+.pg__flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+.pg__flow-step {
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  font: var(--mat-sys-label-medium);
+  white-space: nowrap;
+}
+
+.pg__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.pg__chip {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pg__faq {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.pg__faq dt {
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface);
+}
+.pg__faq dd {
+  margin: 0.1rem 0 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.pg__restart {
+  align-items: flex-start;
+}

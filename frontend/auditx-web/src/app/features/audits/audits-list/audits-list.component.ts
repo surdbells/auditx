@@ -42,12 +42,43 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the audits list (drives the walkthrough + the About panel). */
+const AUDITS_GUIDE: PageGuide = {
+  id: 'audits-list',
+  titleKey: 'audits.list.title',
+  purposeKey: 'audits.guide.purpose',
+  descriptionKey: 'audits.guide.description',
+  actionKeys: [
+    'audits.guide.action.create',
+    'audits.guide.action.filter',
+    'audits.guide.action.open',
+    'audits.guide.action.track',
+  ],
+  sections: [
+    { selector: '[data-guide="create"]', titleKey: 'audits.guide.section.create.title', bodyKey: 'audits.guide.section.create.body' },
+    { selector: '.audits__filters-card', titleKey: 'audits.guide.section.filters.title', bodyKey: 'audits.guide.section.filters.body' },
+    { selector: '.audits__table', titleKey: 'audits.guide.section.table.title', bodyKey: 'audits.guide.section.table.body' },
+  ],
+  workflowKeys: ['audits.guide.flow.plan', 'audits.guide.flow.launch', 'audits.guide.flow.execute', 'audits.guide.flow.findings', 'audits.guide.flow.report'],
+  dependsOnKeys: ['audits.guide.dep.plan', 'audits.guide.dep.template', 'audits.guide.dep.universe', 'audits.guide.dep.users'],
+  usedByKeys: ['audits.guide.use.findings', 'audits.guide.use.reports', 'audits.guide.use.analytics', 'audits.guide.use.sanctions'],
+  businessRuleKeys: ['audits.guide.rule.lifecycle', 'audits.guide.rule.template', 'audits.guide.rule.team', 'audits.guide.rule.cancel'],
+  tipKeys: ['audits.guide.tip.filter', 'audits.guide.tip.template', 'audits.guide.tip.reopen'],
+  permissionKeys: ['audits.guide.perm.manager', 'audits.guide.perm.auditor', 'audits.guide.perm.admin'],
+  faq: [
+    { questionKey: 'audits.guide.faq.create.q', answerKey: 'audits.guide.faq.create.a' },
+    { questionKey: 'audits.guide.faq.status.q', answerKey: 'audits.guide.faq.status.a' },
+  ],
+};
 
 @Component({
   selector: 'app-audits-list',
@@ -67,6 +98,7 @@ const DEFAULT_PAGE_SIZE = 25;
     ErrorStateComponent,
     PageHeaderComponent,
     PaginatorComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './audits-list.component.html',
@@ -86,6 +118,8 @@ export class AuditsListComponent {
   readonly refLookup = inject(ReferenceDataLookupService);
 
   readonly auditTypes = this.refLookup.options('audit_type');
+
+  readonly guide = AUDITS_GUIDE;
 
   readonly displayedColumns = [
     'name',
