@@ -221,6 +221,13 @@ export class DashboardComponent {
     (this.portfolio()?.byAgeBucket ?? []).map((b) => ({ label: b.bucket, value: b.count })),
   );
 
+  /** Open findings by root-cause taxonomy (P2-A) — a pareto of causes. */
+  readonly rootCauseData = computed<ChartDatum[]>(() =>
+    (this.portfolio()?.byRootCause ?? [])
+      .filter((r) => r.count > 0)
+      .map((r) => ({ label: this.humanise(r.rootCauseCategory), value: r.count })),
+  );
+
   readonly planPercent = computed(() => this.planStatus()?.completionPercent ?? null);
 
   /**

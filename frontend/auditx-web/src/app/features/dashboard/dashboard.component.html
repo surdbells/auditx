@@ -67,6 +67,12 @@
         <app-bar-chart [data]="ageData()" [label]="'dashboard.charts.findingsByAge' | t" />
       </div>
     }
+    @if (rootCauseData().length) {
+      <div class="panel">
+        <h3 class="panel__title">{{ 'dashboard.charts.findingsByRootCause' | t }}</h3>
+        <app-bar-chart [data]="rootCauseData()" [label]="'dashboard.charts.findingsByRootCause' | t" />
+      </div>
+    }
   </section>
 }
 

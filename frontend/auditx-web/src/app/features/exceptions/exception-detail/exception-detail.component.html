@@ -86,6 +86,10 @@
             <dd>{{ e.category || '—' }}</dd>
           </div>
           <div>
+            <dt>{{ 'exceptions.detail.rootCauseCategory' | t }}</dt>
+            <dd>{{ e.rootCauseCategory ? e.rootCauseCategory.replaceAll('_', ' ') : '—' }}</dd>
+          </div>
+          <div>
             <dt>{{ 'exceptions.detail.audit' | t }}</dt>
             <dd><a [routerLink]="['/audits', e.auditId]">{{ 'exceptions.detail.viewAudit' | t }}</a></dd>
           </div>

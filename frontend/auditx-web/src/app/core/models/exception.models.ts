@@ -55,6 +55,8 @@ export interface Exception {
   rootCause?: string | null;
   recommendation?: string | null;
   category?: string | null;
+  /** Structured root-cause taxonomy code (P2-A). */
+  rootCauseCategory?: string | null;
   ownerUserId: string;
   raisedByUserId: string;
   raisedAt: string;
@@ -114,6 +116,7 @@ export interface RaiseExceptionRequest {
   rootCause: string;
   recommendation: string;
   category?: string | null;
+  rootCauseCategory?: string | null;
   ownerUserId: string;
   targetDateOverride?: string | null;
   overrideRationale?: string | null;

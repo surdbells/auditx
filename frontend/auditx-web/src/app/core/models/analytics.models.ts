@@ -113,12 +113,19 @@ export interface ExceptionByEntity {
   averageClosureDays: number | null;
 }
 
-/** Exception-portfolio KPIs: open by severity / age bucket / entity + closure time. */
+/** Open exceptions grouped by root-cause taxonomy code (P2-A); "uncategorised" collects blanks. */
+export interface ExceptionRootCauseCount {
+  rootCauseCategory: string;
+  count: number;
+}
+
+/** Exception-portfolio KPIs: open by severity / age bucket / entity / root cause + closure time. */
 export interface ExceptionPortfolio {
   totalOpen: number;
   bySeverity: ExceptionSeverityCount[];
   byAgeBucket: ExceptionAgeBucket[];
   byEntity: ExceptionByEntity[];
+  byRootCause: ExceptionRootCauseCount[];
   averageClosureDays: number | null;
 }
 
