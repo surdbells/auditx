@@ -134,6 +134,7 @@ export class BankSettingsComponent {
     allowAuditLaunchBeforeApproval: [false],
     showOverview: [true],
     showWalkthrough: [true],
+    autoStartWalkthrough: [true],
     reportRetentionMonths: [0, [Validators.required, Validators.min(0), Validators.max(600)]],
     primaryColor: [
       '#4f46e5',
@@ -178,6 +179,7 @@ export class BankSettingsComponent {
       allowAuditLaunchBeforeApproval: s.allowAuditLaunchBeforeApproval,
       showOverview: s.showOverview,
       showWalkthrough: s.showWalkthrough,
+      autoStartWalkthrough: s.autoStartWalkthrough,
       reportRetentionMonths: s.reportRetentionMonths,
       primaryColor: s.primaryColor,
       accentColor: s.accentColor,
@@ -219,6 +221,7 @@ export class BankSettingsComponent {
         allowAuditLaunchBeforeApproval: v.allowAuditLaunchBeforeApproval,
         showOverview: v.showOverview,
         showWalkthrough: v.showWalkthrough,
+        autoStartWalkthrough: v.autoStartWalkthrough,
         reportRetentionMonths: v.reportRetentionMonths,
         primaryColor: v.primaryColor,
         accentColor: v.accentColor,
@@ -236,6 +239,7 @@ export class BankSettingsComponent {
             iconDataUri,
             showOverview: v.showOverview,
             showWalkthrough: v.showWalkthrough,
+            autoStartWalkthrough: v.autoStartWalkthrough,
           });
           this.notify.success(
             this.i18n.translate('administration.bankSettings.savedToast'),

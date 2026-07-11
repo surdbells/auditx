@@ -21,7 +21,7 @@ public sealed record UpdateBankSettingsCommand(
     string BankDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
     bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval,
     string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri,
-    bool ShowOverview, bool ShowWalkthrough, int ReportRetentionMonths)
+    bool ShowOverview, bool ShowWalkthrough, int ReportRetentionMonths, bool AutoStartWalkthrough)
     : ICommand<BankSettingsDto>;
 
 public sealed class UpdateBankSettingsCommandValidator : AbstractValidator<UpdateBankSettingsCommand>
@@ -59,7 +59,7 @@ public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository set
         bank.SetAdProvisioningFilter(command.AdProvisioningFilterOuDn, command.AdProvisioningFilterGroupSid);
         bank.SetAllowOverlappingPlanPeriods(command.AllowOverlappingPlanPeriods);
         bank.SetAllowAuditLaunchBeforeApproval(command.AllowAuditLaunchBeforeApproval);
-        bank.SetPageGuideVisibility(command.ShowOverview, command.ShowWalkthrough);
+        bank.SetPageGuideVisibility(command.ShowOverview, command.ShowWalkthrough, command.AutoStartWalkthrough);
         bank.SetReportRetentionMonths(command.ReportRetentionMonths);
         bank.SetBranding(command.PrimaryColor, command.AccentColor, command.LogoDataUri, command.IconDataUri);
         // Keep the audit payload metadata-only — the logo/icon data URIs are deliberately excluded.

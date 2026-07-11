@@ -67,6 +67,13 @@
             <p class="settings__toggle-hint">{{ 'administration.bankSettings.showWalkthroughHint' | t }}</p>
           </div>
 
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="autoStartWalkthrough">
+              {{ 'administration.bankSettings.autoStartWalkthrough' | t }}
+            </mat-slide-toggle>
+            <p class="settings__toggle-hint">{{ 'administration.bankSettings.autoStartWalkthroughHint' | t }}</p>
+          </div>
+
           <mat-form-field appearance="outline" class="full">
             <mat-label>{{ 'administration.bankSettings.reportRetentionMonths' | t }}</mat-label>
             <input matInput type="number" formControlName="reportRetentionMonths" min="0" max="600" />

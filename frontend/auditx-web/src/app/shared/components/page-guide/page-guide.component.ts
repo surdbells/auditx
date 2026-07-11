@@ -60,8 +60,8 @@ export class PageGuideComponent {
         return;
       }
       this.autoRan = true;
-      // Suppress the auto-run tour when the admin has hidden the Walkthrough button.
-      if (this.showWalkthrough() && !this.tour.hasCompleted(g.id)) {
+      // Auto-run only when the admin has it enabled AND the Walkthrough itself is not hidden.
+      if (this.showWalkthrough() && this.branding.autoStartWalkthrough() && !this.tour.hasCompleted(g.id)) {
         this.autoTimer = setTimeout(() => this.tour.start(g), 700);
       }
     });

@@ -27,7 +27,7 @@ public sealed class GetBrandingQueryHandler(IBankSettingsRepository settings)
         var bank = await settings.GetAsync(cancellationToken);
         return new BrandingDto(
             bank.BankDisplayName, bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri,
-            bank.ShowOverview, bank.ShowWalkthrough);
+            bank.ShowOverview, bank.ShowWalkthrough, bank.AutoStartWalkthrough);
     }
 }
 

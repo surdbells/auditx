@@ -66,6 +66,12 @@ public sealed class BankSettings : Entity
     public bool ShowWalkthrough { get; private set; } = true;
 
     /// <summary>
+    /// When true (default), the walkthrough auto-starts the first time a user opens a page on a device.
+    /// Independent of <see cref="ShowWalkthrough"/> — but a hidden walkthrough never auto-starts.
+    /// </summary>
+    public bool AutoStartWalkthrough { get; private set; } = true;
+
+    /// <summary>
     /// Months a completed report is retained before its artefacts are expired (no longer served). 0 (default) = retain
     /// indefinitely / no expiry. Bounded to 600 months (50 years).
     /// </summary>
@@ -97,11 +103,12 @@ public sealed class BankSettings : Entity
 
     public void SetAllowAuditLaunchBeforeApproval(bool value) => AllowAuditLaunchBeforeApproval = value;
 
-    /// <summary>Sets whether the page-guide "Overview" and "Walkthrough" buttons are shown across the app.</summary>
-    public void SetPageGuideVisibility(bool showOverview, bool showWalkthrough)
+    /// <summary>Sets the page-guide behaviour: the "Overview" / "Walkthrough" buttons and the auto-start tour.</summary>
+    public void SetPageGuideVisibility(bool showOverview, bool showWalkthrough, bool autoStartWalkthrough)
     {
         ShowOverview = showOverview;
         ShowWalkthrough = showWalkthrough;
+        AutoStartWalkthrough = autoStartWalkthrough;
     }
 
     /// <summary>Sets the report retention period in months (0 = retain indefinitely). Out-of-range values are ignored.</summary>

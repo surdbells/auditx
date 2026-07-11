@@ -51,6 +51,7 @@ describe('AdministrationService', () => {
         iconDataUri: null,
         showOverview: true,
         showWalkthrough: true,
+        autoStartWalkthrough: true,
         reportRetentionMonths: 0,
       })
       .subscribe();

@@ -16,6 +16,7 @@ function branding(overrides: Partial<Branding> = {}): Branding {
     iconDataUri: null,
     showOverview: true,
     showWalkthrough: true,
+    autoStartWalkthrough: true,
     ...overrides,
   };
 }

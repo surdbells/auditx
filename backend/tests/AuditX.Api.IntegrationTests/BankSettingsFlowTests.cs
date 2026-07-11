@@ -30,12 +30,13 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
     {
         var admin = await LoginAsync("admin");
 
-        // Both buttons default to shown.
+        // Both buttons + the auto-start tour default to on.
         var current = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
         Assert.True(current.GetProperty("showOverview").GetBoolean());
         Assert.True(current.GetProperty("showWalkthrough").GetBoolean());
+        Assert.True(current.GetProperty("autoStartWalkthrough").GetBoolean());
 
-        // Hide Overview, keep Walkthrough (send the current values back — the PATCH is a full replace).
+        // Hide Overview, keep Walkthrough, disable the auto-start tour (full-replace PATCH).
         var updated = await DataAsync(await admin.PatchAsJsonAsync("/api/v1/admin/bank-settings", new
         {
             bankDisplayName = current.GetProperty("bankDisplayName").GetString(),
@@ -51,20 +52,24 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
             iconDataUri = (string?)null,
             showOverview = false,
             showWalkthrough = true,
+            autoStartWalkthrough = false,
         }));
         Assert.False(updated.GetProperty("showOverview").GetBoolean());
         Assert.True(updated.GetProperty("showWalkthrough").GetBoolean());
+        Assert.False(updated.GetProperty("autoStartWalkthrough").GetBoolean());
 
         // Persisted on re-read.
         var reread = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
         Assert.False(reread.GetProperty("showOverview").GetBoolean());
         Assert.True(reread.GetProperty("showWalkthrough").GetBoolean());
+        Assert.False(reread.GetProperty("autoStartWalkthrough").GetBoolean());
 
         // The anonymous branding surface (which the SPA page-guide reads app-wide) reflects the toggles.
         var anon = NewClient();
         var branding = await DataAsync(await anon.GetAsync("/api/v1/branding"));
         Assert.False(branding.GetProperty("showOverview").GetBoolean());
         Assert.True(branding.GetProperty("showWalkthrough").GetBoolean());
+        Assert.False(branding.GetProperty("autoStartWalkthrough").GetBoolean());
     }
 
     [Fact]

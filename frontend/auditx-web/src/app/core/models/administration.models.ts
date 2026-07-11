@@ -18,6 +18,8 @@ export interface BankSettings {
   iconDataUri: string | null;
   showOverview: boolean;
   showWalkthrough: boolean;
+  /** When true, the walkthrough auto-starts on a user's first visit to each page (per device). */
+  autoStartWalkthrough: boolean;
   /** Months a completed report is retained before its artefacts are expired; 0 = retain indefinitely. */
   reportRetentionMonths: number;
 }
@@ -36,6 +38,7 @@ export interface UpdateBankSettingsRequest {
   iconDataUri: string | null;
   showOverview: boolean;
   showWalkthrough: boolean;
+  autoStartWalkthrough: boolean;
   reportRetentionMonths: number;
 }
 
@@ -49,6 +52,8 @@ export interface Branding {
   /** Whether the page-guide "Overview" / "Walkthrough" buttons are shown app-wide (admin-configured). */
   showOverview: boolean;
   showWalkthrough: boolean;
+  /** Whether the walkthrough auto-starts on first visit to each page (admin-configured). */
+  autoStartWalkthrough: boolean;
 }
 
 export interface ResourceLimits {

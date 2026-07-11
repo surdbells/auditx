@@ -28,6 +28,8 @@ export class BrandingService {
   /** Admin-configured page-guide button visibility (default shown), read by the shared page-guide component. */
   readonly showOverview = signal(true);
   readonly showWalkthrough = signal(true);
+  /** Admin-configured auto-start of the first-run walkthrough (default on). */
+  readonly autoStartWalkthrough = signal(true);
 
   /** Fetches `/branding` and applies it. Never throws for callers that ignore the result. */
   load(): Observable<Branding> {
@@ -41,6 +43,7 @@ export class BrandingService {
     // Default to shown when the field is absent (older payloads), so the guide never silently disappears.
     this.showOverview.set(branding.showOverview ?? true);
     this.showWalkthrough.set(branding.showWalkthrough ?? true);
+    this.autoStartWalkthrough.set(branding.autoStartWalkthrough ?? true);
 
     const root = this.document.documentElement;
     this.applyColor(root, branding.primaryColor || DEFAULT_PRIMARY, 'primary', 'brand');
