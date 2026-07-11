@@ -116,6 +116,18 @@ function toDateOnly(value: Date | null): string {
           </mat-form-field>
         </div>
 
+        <div class="row">
+          <mat-form-field appearance="outline">
+            <mat-label>Non-conformance (optional)</mat-label>
+            <mat-select formControlName="nonConformanceCategory">
+              <mat-option [value]="''">— none —</mat-option>
+              @for (o of nonConformances(); track o.code) {
+                <mat-option [value]="o.code">{{ o.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
         <mat-form-field appearance="outline" class="full">
           <mat-label>Root cause</mat-label>
           <textarea matInput formControlName="rootCause" rows="3"></textarea>
@@ -211,6 +223,8 @@ export class RaiseExceptionDialogComponent {
   readonly categories = this.refLookup.options('exception_category');
   /** Active root-cause taxonomy items (P2-A), lazy-loaded. */
   readonly rootCauses = this.refLookup.options('root_cause_category');
+  /** Active non-conformance taxonomy items, lazy-loaded. */
+  readonly nonConformances = this.refLookup.options('non_conformance_category');
 
   readonly form = this.fb.nonNullable.group({
     title: [this.data.title ?? '', [Validators.required, Validators.maxLength(300)]],
@@ -218,6 +232,7 @@ export class RaiseExceptionDialogComponent {
     ownerUserId: ['', [Validators.required]],
     category: [''],
     rootCauseCategory: ['', [Validators.required]],
+    nonConformanceCategory: [''],
     rootCause: [this.data.rootCause ?? '', [Validators.required]],
     recommendation: [this.data.recommendation ?? '', [Validators.required]],
     overrideTargetDate: [false],
@@ -258,6 +273,7 @@ export class RaiseExceptionDialogComponent {
       recommendation: v.recommendation.trim(),
       category: v.category.trim() || null,
       rootCauseCategory: v.rootCauseCategory.trim() || null,
+      nonConformanceCategory: v.nonConformanceCategory.trim() || null,
       ownerUserId: v.ownerUserId,
       targetDateOverride: v.overrideTargetDate
         ? toDateOnly(v.targetDateOverride)

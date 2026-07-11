@@ -22,7 +22,8 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
     public async Task<IActionResult> Raise(Guid auditId, [FromBody] RaiseExceptionRequest request, CancellationToken cancellationToken)
         => Created(await dispatcher.Send(new RaiseExceptionCommand(
             auditId, request.ChecklistItemId, request.Title, request.Severity, request.RootCause, request.Recommendation,
-            request.Category, request.RootCauseCategory, request.OwnerUserId, request.TargetDateOverride, request.OverrideRationale), cancellationToken));
+            request.Category, request.RootCauseCategory, request.OwnerUserId, request.TargetDateOverride, request.OverrideRationale,
+            request.NonConformanceCategory), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewExceptions)]
     [HttpGet("api/v1/audits/{auditId:guid}/exceptions")]

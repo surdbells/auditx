@@ -119,13 +119,20 @@ export interface ExceptionRootCauseCount {
   count: number;
 }
 
-/** Exception-portfolio KPIs: open by severity / age bucket / entity / root cause + closure time. */
+/** Open exceptions grouped by non-conformance taxonomy code; "uncategorised" collects blanks. */
+export interface ExceptionNonConformanceCount {
+  nonConformanceCategory: string;
+  count: number;
+}
+
+/** Exception-portfolio KPIs: open by severity / age bucket / entity / root cause / non-conformance + closure time. */
 export interface ExceptionPortfolio {
   totalOpen: number;
   bySeverity: ExceptionSeverityCount[];
   byAgeBucket: ExceptionAgeBucket[];
   byEntity: ExceptionByEntity[];
   byRootCause: ExceptionRootCauseCount[];
+  byNonConformance: ExceptionNonConformanceCount[];
   averageClosureDays: number | null;
 }
 

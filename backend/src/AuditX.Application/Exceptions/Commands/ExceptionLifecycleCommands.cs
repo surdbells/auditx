@@ -25,7 +25,8 @@ internal static class ExceptionParsing
 
 public sealed record RaiseExceptionCommand(
     Guid AuditId, Guid ChecklistItemId, string Title, string Severity, string RootCause, string Recommendation,
-    string? Category, string? RootCauseCategory, Guid OwnerUserId, DateOnly? TargetDateOverride, string? OverrideRationale) : ICommand<ExceptionDto>;
+    string? Category, string? RootCauseCategory, Guid OwnerUserId, DateOnly? TargetDateOverride, string? OverrideRationale,
+    string? NonConformanceCategory = null) : ICommand<ExceptionDto>;
 
 public sealed class RaiseExceptionCommandValidator : AbstractValidator<RaiseExceptionCommand>
 {
@@ -102,6 +103,7 @@ public sealed class RaiseExceptionCommandHandler(
         // Normalise the category the same way the domain persists it, so the recurrence lookup keys match.
         var normalizedCategory = string.IsNullOrWhiteSpace(command.Category) ? null : command.Category.Trim();
         var normalizedRootCauseCategory = string.IsNullOrWhiteSpace(command.RootCauseCategory) ? null : command.RootCauseCategory.Trim();
+        var normalizedNonConformanceCategory = string.IsNullOrWhiteSpace(command.NonConformanceCategory) ? null : command.NonConformanceCategory.Trim();
 
         var isRecurrence = false;
         Guid? recurrenceOf = null;
@@ -123,7 +125,8 @@ public sealed class RaiseExceptionCommandHandler(
         var exception = AuditException.Raise(
             command.AuditId, command.ChecklistItemId, auditableEntityId, command.Title, severity, command.RootCause,
             command.Recommendation, normalizedCategory, normalizedRootCauseCategory, command.OwnerUserId, userId, targetDate, overridden,
-            command.OverrideRationale, isRecurrence, recurrenceOf, configSnapshot, clock.UtcNow);
+            command.OverrideRationale, isRecurrence, recurrenceOf, configSnapshot, clock.UtcNow,
+            nonConformanceCategory: normalizedNonConformanceCategory);
 
         exceptions.Add(exception);
         auditEntity.SetItemException(command.ChecklistItemId, true); // M5 write-back (cleared only on cancel)

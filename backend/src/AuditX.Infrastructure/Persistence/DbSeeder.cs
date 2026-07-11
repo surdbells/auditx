@@ -261,6 +261,16 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             (ReferenceDataCategories.RootCauseCategory, "third_party", "Third-party / vendor failure"),
             (ReferenceDataCategories.RootCauseCategory, "wilful_violation", "Wilful violation / override"),
 
+            // Non-conformance taxonomy — the kind of breach a finding represents, for compliance / non-conformance-rate reporting.
+            (ReferenceDataCategories.NonConformanceCategory, "policy_breach", "Policy breach"),
+            (ReferenceDataCategories.NonConformanceCategory, "regulatory_breach", "Regulatory breach"),
+            (ReferenceDataCategories.NonConformanceCategory, "control_failure", "Control failure"),
+            (ReferenceDataCategories.NonConformanceCategory, "process_deviation", "Process deviation"),
+            (ReferenceDataCategories.NonConformanceCategory, "documentation_gap", "Documentation gap"),
+            (ReferenceDataCategories.NonConformanceCategory, "unauthorised_activity", "Unauthorised activity"),
+            (ReferenceDataCategories.NonConformanceCategory, "data_quality", "Data quality issue"),
+            (ReferenceDataCategories.NonConformanceCategory, "other", "Other"),
+
             // Evidence document types (P2-D) — categorises requested evidence for evidence-by-type reporting.
             (ReferenceDataCategories.EvidenceDocumentType, "policy_procedure", "Policy / procedure"),
             (ReferenceDataCategories.EvidenceDocumentType, "screenshot", "Screenshot"),

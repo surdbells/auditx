@@ -301,6 +301,13 @@ export class DashboardComponent {
       .map((r) => ({ label: this.humanise(r.rootCauseCategory), value: r.count })),
   );
 
+  /** Open findings by non-conformance taxonomy — the kind of breach, for compliance reporting. */
+  readonly nonConformanceData = computed<ChartDatum[]>(() =>
+    (this.portfolio()?.byNonConformance ?? [])
+      .filter((r) => r.count > 0)
+      .map((r) => ({ label: this.humanise(r.nonConformanceCategory), value: r.count })),
+  );
+
   /** Post-closure verification outcomes (P2-B). */
   readonly verificationData = computed<ChartDatum[]>(() =>
     (this.followUp()?.byVerificationResult ?? [])

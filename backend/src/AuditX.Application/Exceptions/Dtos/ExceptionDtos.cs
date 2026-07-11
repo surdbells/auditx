@@ -20,6 +20,7 @@ public sealed record ExceptionDto(
     string? Recommendation,
     string? Category,
     string? RootCauseCategory,
+    string? NonConformanceCategory,
     Guid OwnerUserId,
     Guid RaisedByUserId,
     DateTimeOffset RaisedAt,

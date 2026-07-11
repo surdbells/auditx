@@ -253,6 +253,33 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     }
 
     [Fact]
+    public async Task Raise_captures_the_non_conformance_taxonomy_and_surfaces_it_in_the_portfolio()
+    {
+        var admin = await AdminAsync();
+        var (auditId, failItem, _, owner) = await SeedAuditWithResponsesAsync(admin);
+
+        var raised = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = failItem, title = "Regulatory breach", severity = "high",
+            rootCause = "no maker-checker", recommendation = "introduce dual control",
+            category = "regulatory", rootCauseCategory = "process_gap", nonConformanceCategory = "regulatory_breach",
+            ownerUserId = owner,
+        }));
+        Assert.Equal("regulatory_breach", raised.GetProperty("nonConformanceCategory").GetString());
+
+        // Survives a re-read of the detail.
+        var reread = await DataAsync(await admin.GetAsync($"/api/v1/exceptions/{raised.GetProperty("id").GetGuid()}"));
+        Assert.Equal("regulatory_breach", reread.GetProperty("nonConformanceCategory").GetString());
+
+        // The open finding is grouped by non-conformance in the exception-portfolio analytics.
+        var analyst = await AnalystAsync(admin);
+        var portfolio = await DataAsync(await analyst.GetAsync("/api/v1/analytics/exception-portfolio"));
+        Assert.Contains(
+            portfolio.GetProperty("byNonConformance").EnumerateArray(),
+            n => n.GetProperty("nonConformanceCategory").GetString() == "regulatory_breach");
+    }
+
+    [Fact]
     public async Task Map_submit_then_gated_approve_returns_pending_action()
     {
         var admin = await AdminAsync();

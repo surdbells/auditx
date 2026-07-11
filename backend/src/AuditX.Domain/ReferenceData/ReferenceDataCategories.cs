@@ -16,6 +16,9 @@ public static class ReferenceDataCategories
     /// <summary>Root-cause categories (process gap, human error, system limitation, …) — the finding root-cause taxonomy (P2-A).</summary>
     public const string RootCauseCategory = "root_cause_category";
 
+    /// <summary>Non-conformance categories (policy breach, regulatory breach, control failure, …) — the finding non-conformance taxonomy for compliance reporting.</summary>
+    public const string NonConformanceCategory = "non_conformance_category";
+
     /// <summary>Evidence document types (policy, screenshot, report, contract, …) — categorises requested evidence (P2-D).</summary>
     public const string EvidenceDocumentType = "evidence_document_type";
 
@@ -31,6 +34,7 @@ public static class ReferenceDataCategories
         new(AuditType, "Audit types"),
         new(ExceptionCategory, "Exception categories"),
         new(RootCauseCategory, "Root-cause categories"),
+        new(NonConformanceCategory, "Non-conformance categories"),
         new(EvidenceDocumentType, "Evidence document types"),
         new(EntityType, "Entity types"),
         new(SanctionCategory, "Sanction categories"),

@@ -75,6 +75,12 @@
         <app-bar-chart [data]="rootCauseData()" [label]="'dashboard.charts.findingsByRootCause' | t" />
       </div>
     }
+    @if (nonConformanceData().length) {
+      <div class="panel">
+        <h3 class="panel__title">{{ 'dashboard.charts.findingsByNonConformance' | t }}</h3>
+        <app-bar-chart [data]="nonConformanceData()" [label]="'dashboard.charts.findingsByNonConformance' | t" />
+      </div>
+    }
     @if (verificationData().length) {
       <div class="panel">
         <h3 class="panel__title">{{ 'dashboard.charts.verificationOutcomes' | t }}</h3>

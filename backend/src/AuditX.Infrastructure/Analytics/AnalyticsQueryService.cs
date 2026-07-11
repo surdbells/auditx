@@ -47,7 +47,7 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
 
         var open = await db.Exceptions.AsNoTracking()
             .Where(e => OpenStatuses.Contains(e.Status))
-            .Select(e => new { e.Id, e.Severity, e.RaisedAt, e.AuditableEntityId, e.RootCauseCategory })
+            .Select(e => new { e.Id, e.Severity, e.RaisedAt, e.AuditableEntityId, e.RootCauseCategory, e.NonConformanceCategory })
             .ToListAsync(cancellationToken);
 
         var bySeverity = open
@@ -64,6 +64,14 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
             .Select(g => new ExceptionRootCauseCountDto(g.Key, g.Count()))
             .OrderByDescending(r => r.Count)
             .ThenBy(r => r.RootCauseCategory)
+            .ToArray();
+
+        // Non-conformance taxonomy breakdown over open findings (the kind of breach); null/blank → "uncategorised".
+        var byNonConformance = open
+            .GroupBy(e => string.IsNullOrWhiteSpace(e.NonConformanceCategory) ? "uncategorised" : e.NonConformanceCategory!.Trim())
+            .Select(g => new ExceptionNonConformanceCountDto(g.Key, g.Count()))
+            .OrderByDescending(r => r.Count)
+            .ThenBy(r => r.NonConformanceCategory)
             .ToArray();
 
         // Average closure time over CLOSED exceptions (days between raised and closed).
@@ -98,7 +106,7 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
             .ThenBy(e => e.EntityName)
             .ToArray();
 
-        return new ExceptionPortfolioDto(open.Count, bySeverity, byAge, byEntity, byRootCause, avgClosure);
+        return new ExceptionPortfolioDto(open.Count, bySeverity, byAge, byEntity, byRootCause, byNonConformance, avgClosure);
     }
 
     public async Task<SanctionsConsistencyDto> SanctionsConsistencyAsync(CancellationToken cancellationToken = default)

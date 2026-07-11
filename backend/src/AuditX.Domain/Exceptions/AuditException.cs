@@ -39,6 +39,9 @@ public sealed class AuditException : AggregateRoot
     /// <summary>Structured root-cause taxonomy code (from the <c>root_cause_category</c> reference-data list, P2-A). Free-text detail stays in <see cref="RootCause"/>.</summary>
     public string? RootCauseCategory { get; private set; }
 
+    /// <summary>Structured non-conformance taxonomy code (from the <c>non_conformance_category</c> reference-data list) — the kind of breach, for compliance / non-conformance-rate reporting.</summary>
+    public string? NonConformanceCategory { get; private set; }
+
     public Guid OwnerUserId { get; private set; }
 
     public Guid RaisedByUserId { get; private set; }
@@ -128,7 +131,8 @@ public sealed class AuditException : AggregateRoot
         Guid auditId, Guid checklistItemId, Guid? auditableEntityId, string title, ExceptionSeverity severity,
         string rootCause, string recommendation, string? category, string? rootCauseCategory, Guid ownerUserId, Guid raisedBy,
         DateOnly targetDate, bool targetDateOverridden, string? overrideRationale,
-        bool isRecurrence, Guid? recurrenceOfExceptionId, string? configurationVersionsJson, DateTimeOffset nowUtc)
+        bool isRecurrence, Guid? recurrenceOfExceptionId, string? configurationVersionsJson, DateTimeOffset nowUtc,
+        string? nonConformanceCategory = null)
     {
         var exception = new AuditException
         {
@@ -141,6 +145,7 @@ public sealed class AuditException : AggregateRoot
             Recommendation = Guard.NotNullOrWhiteSpace(recommendation, "exception.recommendation_required", "A recommendation is required."),
             Category = string.IsNullOrWhiteSpace(category) ? null : category.Trim(),
             RootCauseCategory = string.IsNullOrWhiteSpace(rootCauseCategory) ? null : rootCauseCategory.Trim(),
+            NonConformanceCategory = string.IsNullOrWhiteSpace(nonConformanceCategory) ? null : nonConformanceCategory.Trim(),
             OwnerUserId = ownerUserId,
             RaisedByUserId = raisedBy,
             RaisedAt = nowUtc,

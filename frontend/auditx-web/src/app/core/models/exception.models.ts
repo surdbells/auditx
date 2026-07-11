@@ -76,6 +76,8 @@ export interface Exception {
   category?: string | null;
   /** Structured root-cause taxonomy code (P2-A). */
   rootCauseCategory?: string | null;
+  /** Structured non-conformance taxonomy code (the kind of breach), for compliance reporting. */
+  nonConformanceCategory?: string | null;
   ownerUserId: string;
   raisedByUserId: string;
   raisedAt: string;
@@ -151,6 +153,7 @@ export interface RaiseExceptionRequest {
   recommendation: string;
   category?: string | null;
   rootCauseCategory?: string | null;
+  nonConformanceCategory?: string | null;
   ownerUserId: string;
   targetDateOverride?: string | null;
   overrideRationale?: string | null;

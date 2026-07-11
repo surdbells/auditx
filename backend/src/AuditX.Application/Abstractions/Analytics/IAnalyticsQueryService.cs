@@ -106,13 +106,17 @@ public sealed record ExceptionByEntityDto(Guid AuditableEntityId, string EntityN
 /// <summary>Open exceptions grouped by their root-cause taxonomy code (P2-A). "uncategorised" collects blanks.</summary>
 public sealed record ExceptionRootCauseCountDto(string RootCauseCategory, int Count);
 
-/// <summary>Exception-portfolio KPIs (US-M9 G2): open by severity / by age bucket / by entity / by root cause + overall closure time.</summary>
+/// <summary>Open exceptions grouped by their non-conformance taxonomy code. "uncategorised" collects blanks.</summary>
+public sealed record ExceptionNonConformanceCountDto(string NonConformanceCategory, int Count);
+
+/// <summary>Exception-portfolio KPIs (US-M9 G2): open by severity / age bucket / entity / root cause / non-conformance + overall closure time.</summary>
 public sealed record ExceptionPortfolioDto(
     int TotalOpen,
     IReadOnlyList<ExceptionSeverityCountDto> BySeverity,
     IReadOnlyList<ExceptionAgeBucketDto> ByAgeBucket,
     IReadOnlyList<ExceptionByEntityDto> ByEntity,
     IReadOnlyList<ExceptionRootCauseCountDto> ByRootCause,
+    IReadOnlyList<ExceptionNonConformanceCountDto> ByNonConformance,
     double? AverageClosureDays);
 
 /// <summary>Sanctions consistency for one business unit (category). Subject identity is intentionally absent.</summary>
