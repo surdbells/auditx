@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -10,12 +10,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
-import { CreateAcActionItemRequest, UserDto } from '../../../core/models';
+import { CreateAcActionItemRequest, UserDirectoryEntry } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface CreateActionItemDialogData {
-  /** Active users for the optional assignee picker. */
-  users: UserDto[];
+  /**
+   * User directory for the optional assignee picker (a signal so the options fill in even if the lazy
+   * directory load completes after the dialog opens). Sourced from the authenticated-only /users/directory,
+   * which every AC member can read — unlike the ManageUsers-gated admin user list.
+   */
+  users: Signal<UserDirectoryEntry[]>;
 }
 
 /** Create an AC action item. Title is required; assignee + due date optional. */
@@ -47,9 +51,9 @@ export interface CreateActionItemDialogData {
           <mat-label>{{ 'ac.createItem.assignTo' | t }}</mat-label>
           <mat-select formControlName="assignedToUserId">
             <mat-option [value]="null">{{ 'ac.createItem.unassigned' | t }}</mat-option>
-            @for (u of data.users; track u.id) {
+            @for (u of data.users(); track u.id) {
               <mat-option [value]="u.id">
-                {{ u.displayName }} ({{ u.email }})
+                {{ u.displayName }}
               </mat-option>
             }
           </mat-select>

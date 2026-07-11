@@ -99,9 +99,9 @@ describe('AcActionItemsComponent', () => {
       .expectOne((r) => r.url === `${BASE}/ac-action-items`)
       .flush({ data: page(items) });
     await fixture.whenStable();
-    // Component fetches the active-user directory for assignee labels.
+    // Component warms the authenticated-only user directory for assignee labels (one-shot lookup).
     http
-      .expectOne((r) => r.url === `${BASE}/users`)
+      .expectOne((r) => r.url === `${BASE}/users/directory`)
       .flush({ data: emptyUserPage() });
     await fixture.whenStable();
     fixture.detectChanges();
@@ -153,11 +153,7 @@ describe('AcActionItemsComponent', () => {
     expect(req.request.params.get('page')).toBe('1');
     req.flush({ data: page([]) });
     await fixture.whenStable();
-    // The reload re-attempts the directory fetch (cache still empty from setup).
-    http
-      .expectOne((r) => r.url === `${BASE}/users`)
-      .flush({ data: emptyUserPage() });
-    await fixture.whenStable();
+    // The directory lookup is one-shot — a reload does NOT re-request it.
     expect(component.items().length).toBe(0);
   });
 
@@ -169,11 +165,7 @@ describe('AcActionItemsComponent', () => {
     expect(req.request.params.get('pageSize')).toBe('25');
     req.flush({ data: page([actionItem({ id: 'a-2' })], 50, 2) });
     await fixture.whenStable();
-    // The reload re-attempts the directory fetch (cache still empty from setup).
-    http
-      .expectOne((r) => r.url === `${BASE}/users`)
-      .flush({ data: emptyUserPage() });
-    await fixture.whenStable();
+    // The directory lookup is one-shot — a reload does NOT re-request it.
     expect(component.page()).toBe(2);
     expect(component.total()).toBe(50);
   });

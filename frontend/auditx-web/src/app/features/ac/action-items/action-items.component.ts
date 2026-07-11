@@ -15,11 +15,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 
 import { AcService } from '../../../core/services/ac.service';
-import { UsersService } from '../../../core/services/users.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
-import { AcActionItem, UserDto } from '../../../core/models';
+import { AcActionItem } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import { humanise } from '../format';
@@ -120,7 +120,11 @@ const AC_ACTION_ITEMS_GUIDE: PageGuide = {
 })
 export class AcActionItemsComponent {
   private readonly service = inject(AcService);
-  private readonly users = inject(UsersService);
+  /**
+   * Assignee ids resolve through the authenticated-only user DIRECTORY — the admin user list requires
+   * ManageUsers, which AC members don't hold (the old call 403'd and left raw ids in the table).
+   */
+  private readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -143,8 +147,6 @@ export class AcActionItemsComponent {
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
   readonly loading = signal(false);
-
-  private usersCache: UserDto[] = [];
 
   readonly humanise = humanise;
 
@@ -178,7 +180,7 @@ export class AcActionItemsComponent {
           this.page.set(result.page);
           this.state.set('ready');
           this.loading.set(false);
-          this.ensureUsers();
+          this.userLookup.ensureLoaded();
         },
         error: () => {
           if (this.state() === 'loading') {
@@ -206,27 +208,27 @@ export class AcActionItemsComponent {
   /* ---- Create (ACMember) ---- */
 
   create(): void {
-    this.ensureUsers(() => {
-      const data: CreateActionItemDialogData = { users: this.usersCache };
-      this.dialog
-        .open(CreateActionItemDialogComponent, { data, width: '520px' })
-        .afterClosed()
-        .subscribe((request) => {
-          if (!request) {
-            return;
-          }
-          this.service.createActionItem(request).subscribe({
-            next: () => {
-              this.notify.success(this.i18n.translate('ac.items.notify.created'));
-              this.fetchPage(1);
-            },
-            error: () =>
-              this.notify.error(
-                this.i18n.translate('ac.items.notify.createError'),
-              ),
-          });
+    // Pass the directory SIGNAL so the picker fills in even if the lazy load lands after the dialog opens.
+    this.userLookup.ensureLoaded();
+    const data: CreateActionItemDialogData = { users: this.userLookup.options };
+    this.dialog
+      .open(CreateActionItemDialogComponent, { data, width: '520px' })
+      .afterClosed()
+      .subscribe((request) => {
+        if (!request) {
+          return;
+        }
+        this.service.createActionItem(request).subscribe({
+          next: () => {
+            this.notify.success(this.i18n.translate('ac.items.notify.created'));
+            this.fetchPage(1);
+          },
+          error: () =>
+            this.notify.error(
+              this.i18n.translate('ac.items.notify.createError'),
+            ),
         });
-    });
+      });
   }
 
   /* ---- Progress / close (CIA) ---- */
@@ -284,33 +286,17 @@ export class AcActionItemsComponent {
 
   /* ---- Helpers ---- */
 
+  /** Resolves the assignee id to a display name (reactive — re-renders when the lazy directory loads). */
   assigneeLabel(item: AcActionItem): string {
     if (!item.assignedToUserId) {
       return '—';
     }
-    return (
-      this.usersCache.find((u) => u.id === item.assignedToUserId)?.displayName ??
-      item.assignedToUserId
-    );
+    return this.userLookup.displayName(item.assignedToUserId);
   }
 
   private replace(updated: AcActionItem): void {
     this.items.update((list) =>
       list.map((i) => (i.id === updated.id ? updated : i)),
     );
-  }
-
-  private ensureUsers(onReady?: () => void): void {
-    if (this.usersCache.length) {
-      onReady?.();
-      return;
-    }
-    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
-      next: (page) => {
-        this.usersCache = page.items;
-        onReady?.();
-      },
-      error: () => onReady?.(),
-    });
   }
 }
