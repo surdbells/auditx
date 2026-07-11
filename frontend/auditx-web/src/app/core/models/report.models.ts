@@ -9,8 +9,8 @@
  * concurrency (e.g. report templates).
  */
 
-/** Lifecycle status of a report generation. */
-export type ReportStatus = 'pending' | 'running' | 'completed' | 'failed';
+/** Lifecycle status of a report generation. `expired` = past retention; artefacts no longer served. */
+export type ReportStatus = 'pending' | 'running' | 'completed' | 'failed' | 'expired';
 
 /**
  * The kind of report. `audit_engagement` is the per-audit engagement report;

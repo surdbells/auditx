@@ -15,7 +15,8 @@ public sealed record BankSettingsDto(
     string? LogoDataUri,
     string? IconDataUri,
     bool ShowOverview,
-    bool ShowWalkthrough);
+    bool ShowWalkthrough,
+    int ReportRetentionMonths);
 
 public sealed record ResourceLimitsDto(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
 

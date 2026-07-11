@@ -83,6 +83,9 @@
             <strong>{{ 'reports.viewer.generationFailed' | t }}</strong> {{ r.failureReason }}
           </div>
         }
+        @if (r.status === 'expired') {
+          <div class="viewer__notice">{{ 'reports.viewer.expiredNote' | t }}</div>
+        }
       </mat-card>
 
       <!-- Inline preview (view before export) -->

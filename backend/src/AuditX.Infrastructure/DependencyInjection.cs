@@ -99,6 +99,7 @@ public static class DependencyInjection
         services.AddScoped<Application.Reports.Generation.ReportContentAssembler>();
         services.AddScoped<Application.Reports.Generation.StandaloneReportAssembler>();
         services.AddScoped<Application.Reports.Generation.ReportGenerationService>();
+        services.AddScoped<Application.Reports.Retention.ReportRetentionService>();
         services.AddScoped<Application.Scheduling.ScheduledReportRunner>();
         services.AddScoped<Reports.HtmlReportRenderer>();
         services.AddScoped<Reports.OpenXmlReportRenderer>();

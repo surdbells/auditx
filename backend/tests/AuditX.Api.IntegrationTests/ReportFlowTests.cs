@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using AuditX.Application.Reports.Generation;
+using AuditX.Application.Reports.Retention;
+using AuditX.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AuditX.Api.IntegrationTests;
@@ -280,6 +283,61 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
         var after = await DataAsync(await admin.GetAsync("/api/v1/report-templates"));
         Assert.Equal(1, after.EnumerateArray().Count(t => t.GetProperty("isActive").GetBoolean()));
         Assert.True(after.EnumerateArray().Single(t => t.GetProperty("id").GetGuid() == newId).GetProperty("isActive").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Retention_policy_stamps_reports_then_the_job_expires_them_and_blocks_download()
+    {
+        var admin = await LoginAsync("admin");
+
+        // Configure a 12-month retention policy via the admin bank-settings PATCH (full replace of current values).
+        var s = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
+        (await admin.PatchAsJsonAsync("/api/v1/admin/bank-settings", new
+        {
+            bankDisplayName = s.GetProperty("bankDisplayName").GetString(),
+            timezone = s.GetProperty("timezone").GetString(),
+            localeDefault = s.GetProperty("localeDefault").GetString(),
+            adProvisioningFilterOuDn = (string?)null,
+            adProvisioningFilterGroupSid = (string?)null,
+            allowOverlappingPlanPeriods = false,
+            allowAuditLaunchBeforeApproval = false,
+            primaryColor = s.GetProperty("primaryColor").GetString(),
+            accentColor = s.GetProperty("accentColor").GetString(),
+            logoDataUri = (string?)null,
+            iconDataUri = (string?)null,
+            showOverview = true,
+            showWalkthrough = true,
+            reportRetentionMonths = 12,
+        })).EnsureSuccessStatusCode();
+
+        // Generate a standalone report — completion stamps RetentionUntil from the policy.
+        var manager = await ReporterAsync(admin);
+        var accepted = await manager.PostAsJsonAsync("/api/v1/reports/standalone", new { kind = "executive_summary", docx = false });
+        var reportId = JsonDocument.Parse(await accepted.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("data").GetProperty("reportId").GetGuid();
+        await NudgeGenerationAsync(reportId);
+        await PollUntilSettledAsync(manager, reportId);
+
+        // The policy stamped a retention date; backdate it into the past, then run the retention-expiry service.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var stamped = await db.Reports.AsNoTracking().FirstAsync(r => r.Id == reportId);
+            Assert.NotNull(stamped.RetentionUntil);
+
+            await db.Reports.Where(r => r.Id == reportId)
+                .ExecuteUpdateAsync(u => u.SetProperty(r => r.RetentionUntil, DateTimeOffset.UtcNow.AddDays(-1)));
+
+            var expired = await scope.ServiceProvider.GetRequiredService<ReportRetentionService>().ExpireDueAsync(CancellationToken.None);
+            Assert.True(expired >= 1);
+        }
+
+        // The report is now Expired and its artefacts are no longer served.
+        var after = await DataAsync(await manager.GetAsync($"/api/v1/reports/{reportId}"));
+        Assert.Equal("expired", after.GetProperty("status").GetString());
+
+        var blocked = await manager.GetAsync($"/api/v1/reports/{reportId}/download?format=html");
+        Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
     }
 
     [Fact]

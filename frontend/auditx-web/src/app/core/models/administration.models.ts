@@ -18,6 +18,8 @@ export interface BankSettings {
   iconDataUri: string | null;
   showOverview: boolean;
   showWalkthrough: boolean;
+  /** Months a completed report is retained before its artefacts are expired; 0 = retain indefinitely. */
+  reportRetentionMonths: number;
 }
 
 export interface UpdateBankSettingsRequest {
@@ -34,6 +36,7 @@ export interface UpdateBankSettingsRequest {
   iconDataUri: string | null;
   showOverview: boolean;
   showWalkthrough: boolean;
+  reportRetentionMonths: number;
 }
 
 /** Public branding served anonymously from `/branding` — themes the shell before authentication. */

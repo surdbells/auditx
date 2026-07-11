@@ -65,6 +65,12 @@ public sealed class BankSettings : Entity
     /// <summary>When true (default), each page's "Walkthrough" button is shown in the page guide.</summary>
     public bool ShowWalkthrough { get; private set; } = true;
 
+    /// <summary>
+    /// Months a completed report is retained before its artefacts are expired (no longer served). 0 (default) = retain
+    /// indefinitely / no expiry. Bounded to 600 months (50 years).
+    /// </summary>
+    public int ReportRetentionMonths { get; private set; }
+
     public static BankSettings CreateDefault(string bankDisplayName) => new()
     {
         BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
@@ -96,6 +102,15 @@ public sealed class BankSettings : Entity
     {
         ShowOverview = showOverview;
         ShowWalkthrough = showWalkthrough;
+    }
+
+    /// <summary>Sets the report retention period in months (0 = retain indefinitely). Out-of-range values are ignored.</summary>
+    public void SetReportRetentionMonths(int months)
+    {
+        if (months is >= 0 and <= 600)
+        {
+            ReportRetentionMonths = months;
+        }
     }
 
     /// <summary>Sets the branding: primary/accent colours are required; logo/icon are optional data URIs.</summary>

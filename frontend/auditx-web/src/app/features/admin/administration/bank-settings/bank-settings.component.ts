@@ -134,6 +134,7 @@ export class BankSettingsComponent {
     allowAuditLaunchBeforeApproval: [false],
     showOverview: [true],
     showWalkthrough: [true],
+    reportRetentionMonths: [0, [Validators.required, Validators.min(0), Validators.max(600)]],
     primaryColor: [
       '#4f46e5',
       [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
@@ -177,6 +178,7 @@ export class BankSettingsComponent {
       allowAuditLaunchBeforeApproval: s.allowAuditLaunchBeforeApproval,
       showOverview: s.showOverview,
       showWalkthrough: s.showWalkthrough,
+      reportRetentionMonths: s.reportRetentionMonths,
       primaryColor: s.primaryColor,
       accentColor: s.accentColor,
       logoDataUri: s.logoDataUri ?? '',
@@ -217,6 +219,7 @@ export class BankSettingsComponent {
         allowAuditLaunchBeforeApproval: v.allowAuditLaunchBeforeApproval,
         showOverview: v.showOverview,
         showWalkthrough: v.showWalkthrough,
+        reportRetentionMonths: v.reportRetentionMonths,
         primaryColor: v.primaryColor,
         accentColor: v.accentColor,
         logoDataUri,

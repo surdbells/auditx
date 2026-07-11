@@ -27,6 +27,9 @@ public interface IReportRepository
     /// <summary>Highest version number assigned for a standalone kind so far (0 if none), for the next per-kind version.</summary>
     Task<int> GetNextVersionForKindAsync(ReportKind kind, CancellationToken cancellationToken = default);
 
+    /// <summary>Completed reports whose retention date has passed (TRACKED, for the retention-expiry job to expire).</summary>
+    Task<IReadOnlyList<Report>> ListExpirableAsync(DateTimeOffset asOf, CancellationToken cancellationToken = default);
+
     void Add(Report report);
 }
 

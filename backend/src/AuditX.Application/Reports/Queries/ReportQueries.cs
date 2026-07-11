@@ -84,6 +84,12 @@ public sealed class DownloadReportArtefactQueryHandler(
         var report = await reports.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Report", query.Id);
         await ReportAccess.EnsureCanReadAsync(report, audits, currentUser.UserId, permissions, cancellationToken);
 
+        // Retention: an expired report's artefacts are no longer served (the immutable record + hash are preserved).
+        if (report.Status == ReportStatus.Expired)
+        {
+            throw new ConflictException("report_expired", "This report has passed its retention period; its artefacts are no longer available for download.");
+        }
+
         var format = (query.Format ?? string.Empty).Trim().ToLowerInvariant();
         var artefacts = ReportMappings.ParseArtefacts(report.ProducedArtefactsJson);
         var artefact = artefacts.FirstOrDefault(a => string.Equals(a.Format, format, StringComparison.OrdinalIgnoreCase))

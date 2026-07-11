@@ -112,6 +112,7 @@ builder.Services.AddScoped<AnalyticsSnapshotJob>();
 builder.Services.AddScoped<AcPackGenerationJob>();
 builder.Services.AddScoped<AcPackRecurringGenerationJob>();
 builder.Services.AddScoped<ReportScheduleRunnerJob>();
+builder.Services.AddScoped<ReportRetentionJob>();
 builder.Services.AddScoped<AuditX.Application.Abstractions.Reports.IReportGenerationQueue, HangfireReportGenerationQueue>();
 builder.Services.AddScoped<AuditX.Application.Abstractions.Ac.IAcPackGenerationQueue, HangfireAcPackGenerationQueue>();
 
@@ -207,6 +208,12 @@ recurringJobs.AddOrUpdate<ReportScheduleRunnerJob>(
     ReportScheduleRunnerJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Hourly);
+
+// Daily report retention-expiry: reports past their configured retention period stop serving their artefacts.
+recurringJobs.AddOrUpdate<ReportRetentionJob>(
+    ReportRetentionJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Daily);
 
 app.Run();
 return;

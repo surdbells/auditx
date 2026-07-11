@@ -58,7 +58,7 @@ public sealed class Report : AggregateRoot, ISoftDeletable
 
     public DateTimeOffset? CompletedAt { get; private set; }
 
-    /// <summary>Column only — the retention-expiry job is deferred (M11/M15-owned).</summary>
+    /// <summary>When set, the date after which the artefacts may be disposed. Stamped at completion when a retention policy is configured.</summary>
     public DateTimeOffset? RetentionUntil { get; private set; }
 
     public bool IsDeleted { get; private set; }
@@ -150,6 +150,18 @@ public sealed class Report : AggregateRoot, ISoftDeletable
         CompletedAt = nowUtc;
         RaiseDomainEvent(new ReportGeneratedEvent(Id, AuditId, VersionNumber, GeneratedBy));
     }
+
+    /// <summary>
+    /// Stamp the retention date (after which the artefacts may be disposed). Set right after <see cref="Complete"/>
+    /// when a retention policy is configured; a null clears it (retain indefinitely).
+    /// </summary>
+    public void SetRetentionUntil(DateTimeOffset? until) => RetentionUntil = until;
+
+    /// <summary>
+    /// Retention period reached: mark a completed report Expired so its artefacts are no longer served. The immutable
+    /// record + canonical hash are preserved (non-destructive) — only download access is withdrawn.
+    /// </summary>
+    public void Expire() => Transition(ReportStatus.Expired, ReportStatus.Completed);
 
     /// <summary>Mark generation failed with a reason (→ failed). Terminal; regeneration is a new report row.</summary>
     public void Fail(string reason)

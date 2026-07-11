@@ -67,6 +67,12 @@
             <p class="settings__toggle-hint">{{ 'administration.bankSettings.showWalkthroughHint' | t }}</p>
           </div>
 
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>{{ 'administration.bankSettings.reportRetentionMonths' | t }}</mat-label>
+            <input matInput type="number" formControlName="reportRetentionMonths" min="0" max="600" />
+            <mat-hint>{{ 'administration.bankSettings.reportRetentionHint' | t }}</mat-hint>
+          </mat-form-field>
+
           <section class="settings__branding full">
             <h3 class="settings__subtitle">{{ 'administration.branding.title' | t }}</h3>
 

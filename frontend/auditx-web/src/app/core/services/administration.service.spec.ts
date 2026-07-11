@@ -51,6 +51,7 @@ describe('AdministrationService', () => {
         iconDataUri: null,
         showOverview: true,
         showWalkthrough: true,
+        reportRetentionMonths: 0,
       })
       .subscribe();
     const req = http.expectOne(`${BASE}/admin/bank-settings`);

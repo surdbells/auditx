@@ -11,6 +11,9 @@ public enum ReportStatus
     Running,
     Completed,
     Failed,
+
+    /// <summary>Retention period reached: the immutable record + hash are kept, but the artefacts are no longer served.</summary>
+    Expired,
 }
 
 /// <summary>

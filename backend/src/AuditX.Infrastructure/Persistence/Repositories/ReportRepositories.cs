@@ -48,6 +48,11 @@ public sealed class ReportRepository(AppDbContext db) : IReportRepository
             ? await db.Reports.Where(r => r.AuditId == null && r.Kind == kind).MaxAsync(r => r.VersionNumber, cancellationToken)
             : 0;
 
+    public async Task<IReadOnlyList<Report>> ListExpirableAsync(DateTimeOffset asOf, CancellationToken cancellationToken = default)
+        => await db.Reports // tracked: the job mutates + saves.
+            .Where(r => r.Status == ReportStatus.Completed && r.RetentionUntil != null && r.RetentionUntil <= asOf)
+            .ToListAsync(cancellationToken);
+
     public void Add(Report report) => db.Reports.Add(report);
 }
 

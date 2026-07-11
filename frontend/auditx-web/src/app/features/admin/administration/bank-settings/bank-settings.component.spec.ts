@@ -25,6 +25,7 @@ function settings(overrides: Partial<BankSettings> = {}): BankSettings {
     iconDataUri: null,
     showOverview: true,
     showWalkthrough: true,
+    reportRetentionMonths: 0,
     ...overrides,
   };
 }

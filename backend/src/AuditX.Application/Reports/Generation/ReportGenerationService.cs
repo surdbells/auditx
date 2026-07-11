@@ -22,6 +22,7 @@ namespace AuditX.Application.Reports.Generation;
 public sealed class ReportGenerationService(
     IReportRepository reports,
     IAuditRepository audits,
+    IBankSettingsRepository settings,
     ReportContentAssembler assembler,
     StandaloneReportAssembler standaloneAssembler,
     IReportRenderer renderer,
@@ -100,6 +101,15 @@ public sealed class ReportGenerationService(
 
             var producedJson = JsonSerializer.Serialize(produced, JsonOptions);
             report.Complete(canonicalHash, produced, producedJson, clock.UtcNow);
+
+            // Stamp the retention date when a retention policy is configured (0 = retain indefinitely). Past this date
+            // the ReportRetentionJob expires the report so its artefacts are no longer served.
+            var bank = await settings.GetAsync(cancellationToken);
+            if (bank.ReportRetentionMonths > 0)
+            {
+                report.SetRetentionUntil(clock.UtcNow.AddMonths(bank.ReportRetentionMonths));
+            }
+
             auditRecorder.RecordAs(Domain.Enums.ActorType.System, "reports", report.GeneratedBy,
                 AuditEventTypes.ReportGenerated, AuditTargetTypes.Report, report.Id,
                 after: new { report.AuditId, report.VersionNumber, sha256 = canonicalHash, formats = produced.Count });
