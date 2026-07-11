@@ -70,7 +70,8 @@ public sealed class ListExceptionsForAuditQueryHandler(
 public sealed record SearchExceptionsQuery(
     string? Status, string? Severity, Guid? OwnerUserId, Guid? AuditableEntityId, Guid? AuditId,
     string? Category, bool? IsRecurrence, bool? IsOverdue, string? Search,
-    Guid? AnnualPlanId, DateTimeOffset? RaisedFrom, DateTimeOffset? RaisedTo, int? Page, int? PageSize)
+    Guid? AnnualPlanId, DateTimeOffset? RaisedFrom, DateTimeOffset? RaisedTo, int? Page, int? PageSize,
+    string? RootCauseCategory = null, string? NonConformanceCategory = null)
     : IQuery<PagedResult<ExceptionListItemDto>>;
 
 public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions, IClock clock)
@@ -85,10 +86,14 @@ public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions
                 ? sv
                 : throw new ConflictException("exception.invalid_severity", $"Unknown severity '{query.Severity}'.");
 
+        // "open_any" is the KPI-drilldown umbrella: any non-terminal status (matches the analytics portfolio).
+        var openAny = string.Equals(query.Status, "open_any", StringComparison.OrdinalIgnoreCase);
         var filter = new ExceptionSearchFilter(
-            ListExceptionsForAuditQueryHandler.ParseStatus(query.Status), severity, query.OwnerUserId,
+            openAny ? null : ListExceptionsForAuditQueryHandler.ParseStatus(query.Status), severity, query.OwnerUserId,
             query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search,
-            query.AnnualPlanId, query.RaisedFrom, query.RaisedTo);
+            query.AnnualPlanId, query.RaisedFrom, query.RaisedTo,
+            query.RootCauseCategory, query.NonConformanceCategory,
+            IsOpen: openAny ? true : null);
 
         var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await exceptions.SearchAsync(filter, page, cancellationToken);
@@ -101,7 +106,8 @@ public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions
 public sealed record ExportFindingRegisterQuery(
     string? Status, string? Severity, Guid? OwnerUserId, Guid? AuditableEntityId, Guid? AuditId,
     string? Category, bool? IsRecurrence, bool? IsOverdue, string? Search,
-    Guid? AnnualPlanId, DateTimeOffset? RaisedFrom, DateTimeOffset? RaisedTo) : IQuery<CsvExportResult>;
+    Guid? AnnualPlanId, DateTimeOffset? RaisedFrom, DateTimeOffset? RaisedTo,
+    string? RootCauseCategory = null, string? NonConformanceCategory = null) : IQuery<CsvExportResult>;
 
 public sealed class ExportFindingRegisterQueryHandler(IExceptionRepository exceptions, IClock clock, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : IQueryHandler<ExportFindingRegisterQuery, CsvExportResult>
@@ -122,10 +128,13 @@ public sealed class ExportFindingRegisterQueryHandler(IExceptionRepository excep
                 ? sv
                 : throw new ConflictException("exception.invalid_severity", $"Unknown severity '{query.Severity}'.");
 
+        var openAny = string.Equals(query.Status, "open_any", StringComparison.OrdinalIgnoreCase);
         var filter = new ExceptionSearchFilter(
-            ListExceptionsForAuditQueryHandler.ParseStatus(query.Status), severity, query.OwnerUserId,
+            openAny ? null : ListExceptionsForAuditQueryHandler.ParseStatus(query.Status), severity, query.OwnerUserId,
             query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search,
-            query.AnnualPlanId, query.RaisedFrom, query.RaisedTo);
+            query.AnnualPlanId, query.RaisedFrom, query.RaisedTo,
+            query.RootCauseCategory, query.NonConformanceCategory,
+            IsOpen: openAny ? true : null);
 
         var csv = new CsvWriter(Header);
         await foreach (var r in exceptions.StreamForExportAsync(filter, cancellationToken))
@@ -155,11 +164,13 @@ public sealed class ExportFindingRegisterQueryHandler(IExceptionRepository excep
 
         var result = csv.Build($"finding-register-{clock.UtcNow.UtcDateTime:yyyyMMddHHmmss}.csv");
 
-        // The export is auditable (who pulled what) — payload carries the filter + integrity hash, never row content.
+        // The export is auditable (who pulled what) — payload carries the FULL filter + integrity hash, never row content.
         audit.Record(AuditEventTypes.FindingRegisterExported, AuditTargetTypes.Exception, null, payload: new
         {
             format = "csv", row_count = result.RowCount, sha256 = result.Sha256,
             query.Status, query.Severity, query.AuditId, query.AuditableEntityId, query.AnnualPlanId, query.Search,
+            query.Category, query.IsRecurrence, query.IsOverdue, query.RaisedFrom, query.RaisedTo,
+            query.RootCauseCategory, query.NonConformanceCategory,
         });
         await unitOfWork.SaveChangesAsync(cancellationToken);
 

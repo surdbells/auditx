@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   input,
+  output,
 } from '@angular/core';
 
 import { ChartDatum } from '../chart-types';
@@ -11,6 +12,8 @@ import { resolveColor } from '../chart-colors';
 /** One donut ring segment, laid out as a stroked circle arc. */
 interface Segment {
   label: string;
+  /** Stable identifier for tracking + drilldown clicks (datum key, falling back to the label). */
+  key: string;
   value: number;
   color: string;
   /** Length of this arc along the circumference (px). */
@@ -51,12 +54,18 @@ interface Segment {
             fill="transparent"
             [attr.stroke-width]="thickness"
           />
-          @for (seg of segments(); track seg.label) {
+          <!--
+            NOTE: the slices are deliberately NOT click targets. Each slice is a full transparent-fill circle,
+            so under SVG hit-testing the topmost circle would swallow every click in the ring AND the hole —
+            drilling into the wrong segment. The legend rows below are the (keyboard-accessible) drill surface.
+          -->
+          @for (seg of segments(); track seg.key) {
             <circle
               cx="21"
               cy="21"
               [attr.r]="radius"
               fill="transparent"
+              pointer-events="none"
               [attr.stroke]="seg.color"
               [attr.stroke-width]="thickness"
               [attr.stroke-dasharray]="seg.dash + ' ' + (circumference - seg.dash)"
@@ -84,8 +93,16 @@ interface Segment {
           </text>
         </svg>
         <ul class="donut__legend">
-          @for (seg of segments(); track seg.label) {
-            <li class="donut__legend-item">
+          @for (seg of segments(); track seg.key) {
+            <li
+              class="donut__legend-item"
+              [class.donut__legend-item--clickable]="clickable()"
+              [attr.role]="clickable() ? 'button' : null"
+              [attr.tabindex]="clickable() ? 0 : null"
+              (click)="onSegment(seg.key)"
+              (keydown.enter)="onSegment(seg.key)"
+              (keydown.space)="onSegment(seg.key); $event.preventDefault()"
+            >
               <span class="donut__swatch" [style.background]="seg.color"></span>
               <span class="donut__legend-label">{{ seg.label }}</span>
               <span class="donut__legend-value">
@@ -163,6 +180,19 @@ interface Segment {
       color: var(--mat-sys-on-surface-variant);
       white-space: nowrap;
     }
+    .donut__legend-item--clickable {
+      cursor: pointer;
+      outline: none;
+      border-radius: 4px;
+    }
+    .donut__legend-item--clickable:hover .donut__legend-label,
+    .donut__legend-item--clickable:focus-visible .donut__legend-label {
+      text-decoration: underline;
+    }
+    .donut__legend-item--clickable:focus-visible {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 1px;
+    }
     .chart__empty {
       margin: 0.5rem 0;
       color: var(--mat-sys-on-surface-variant);
@@ -177,6 +207,18 @@ export class DonutChartComponent {
   readonly label = input<string>('Donut chart');
   /** Small caption under the centre total (e.g. "total", "open"). */
   readonly centerLabel = input<string>('total');
+
+  /** When true, slices/legend rows are clickable and emit {@link segmentClick} (drilldown). */
+  readonly clickable = input(false);
+
+  /** Emits the clicked segment's label (only when {@link clickable}). */
+  readonly segmentClick = output<string>();
+
+  protected onSegment(label: string): void {
+    if (this.clickable()) {
+      this.segmentClick.emit(label);
+    }
+  }
 
   /* ---- Ring geometry in the 42×42 viewBox (radius chosen so the ring fits). */
   protected readonly radius = 15.9155; // circumference ≈ 100 → dash values read as %.
@@ -217,6 +259,7 @@ export class DonutChartComponent {
       // each segment begins where the previous one ended.
       const seg: Segment = {
         label: d.label,
+        key: d.key ?? d.label,
         value: d.value,
         color: resolveColor(d.label, i, d.color),
         dash,

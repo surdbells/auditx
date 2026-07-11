@@ -38,10 +38,11 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
         [FromQuery] string? status, [FromQuery] string? severity, [FromQuery] Guid? owner, [FromQuery] Guid? entity,
         [FromQuery] Guid? audit, [FromQuery] string? category, [FromQuery] bool? recurrence, [FromQuery] bool? overdue,
         [FromQuery] string? search, [FromQuery] Guid? plan, [FromQuery] DateTimeOffset? raisedFrom, [FromQuery] DateTimeOffset? raisedTo,
-        [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
+        [FromQuery] int? page, [FromQuery] int? pageSize,
+        [FromQuery] string? rootCauseCategory, [FromQuery] string? nonConformanceCategory, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new SearchExceptionsQuery(
             status, severity, owner, entity, audit, category, recurrence, overdue, search,
-            plan, raisedFrom, raisedTo, page, pageSize), cancellationToken));
+            plan, raisedFrom, raisedTo, page, pageSize, rootCauseCategory, nonConformanceCategory), cancellationToken));
 
     /// <summary>Cross-audit finding-register CSV export (same filters as the tracker). The SHA-256 is on the response header.</summary>
     [RequirePermission(PermissionKeys.ViewExceptions)]
@@ -50,10 +51,11 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
         [FromQuery] string? status, [FromQuery] string? severity, [FromQuery] Guid? owner, [FromQuery] Guid? entity,
         [FromQuery] Guid? audit, [FromQuery] string? category, [FromQuery] bool? recurrence, [FromQuery] bool? overdue,
         [FromQuery] string? search, [FromQuery] Guid? plan, [FromQuery] DateTimeOffset? raisedFrom, [FromQuery] DateTimeOffset? raisedTo,
-        CancellationToken cancellationToken)
+        [FromQuery] string? rootCauseCategory, [FromQuery] string? nonConformanceCategory, CancellationToken cancellationToken)
     {
         var export = await dispatcher.Query(new ExportFindingRegisterQuery(
-            status, severity, owner, entity, audit, category, recurrence, overdue, search, plan, raisedFrom, raisedTo), cancellationToken);
+            status, severity, owner, entity, audit, category, recurrence, overdue, search, plan, raisedFrom, raisedTo,
+            rootCauseCategory, nonConformanceCategory), cancellationToken);
         Response.Headers["X-Content-SHA256"] = export.Sha256;
         Response.Headers["X-Row-Count"] = export.RowCount.ToString();
         return File(export.Content, export.ContentType, export.FileName);

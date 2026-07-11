@@ -2,6 +2,23 @@
   margin-bottom: 1.25rem;
 }
 
+// Dashboard-drilldown notice: filters arriving via query params that have no visible control here.
+.exceptions__drilldown {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-small);
+
+  mat-icon {
+    color: var(--mat-sys-primary);
+  }
+}
+
 .exceptions__header-actions {
   display: flex;
   flex-wrap: wrap;

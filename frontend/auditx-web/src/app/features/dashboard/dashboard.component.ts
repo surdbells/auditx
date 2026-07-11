@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -146,6 +146,7 @@ export class DashboardComponent {
   private readonly analytics = inject(AnalyticsService);
   private readonly audits = inject(AuditsService);
   private readonly i18n = inject(TranslationService);
+  private readonly router = inject(Router);
 
   readonly session = this.auth.session;
   readonly firstName = computed(() => this.session()?.firstName ?? 'there');
@@ -295,19 +296,59 @@ export class DashboardComponent {
     (this.portfolio()?.byAgeBucket ?? []).map((b) => ({ label: b.bucket, value: b.count })),
   );
 
-  /** Open findings by root-cause taxonomy (P2-A) — a pareto of causes. */
+  /** Open findings by root-cause taxonomy (P2-A) — a pareto of causes. `key` carries the raw code for drilldown. */
   readonly rootCauseData = computed<ChartDatum[]>(() =>
     (this.portfolio()?.byRootCause ?? [])
       .filter((r) => r.count > 0)
-      .map((r) => ({ label: this.humanise(r.rootCauseCategory), value: r.count })),
+      .map((r) => ({ label: this.humanise(r.rootCauseCategory), key: r.rootCauseCategory, value: r.count })),
   );
 
-  /** Open findings by non-conformance taxonomy — the kind of breach, for compliance reporting. */
+  /** Open findings by non-conformance taxonomy — the kind of breach. `key` carries the raw code for drilldown. */
   readonly nonConformanceData = computed<ChartDatum[]>(() =>
     (this.portfolio()?.byNonConformance ?? [])
       .filter((r) => r.count > 0)
-      .map((r) => ({ label: this.humanise(r.nonConformanceCategory), value: r.count })),
+      .map((r) => ({ label: this.humanise(r.nonConformanceCategory), key: r.nonConformanceCategory, value: r.count })),
   );
+
+  /* ----
+   * Chart drilldowns → the exceptions tracker with the matching filter. Every portfolio chart counts OPEN
+   * findings, so each drill also carries the 'open_any' status umbrella to keep the list faithful to the KPI.
+   * ---- */
+
+  /** Drill from a severity slice to the tracker filtered by that severity (chart keys are the raw codes). */
+  drillSeverity(code: string): void {
+    void this.router.navigate(['/exceptions'], { queryParams: { severity: code, status: 'open_any' } });
+  }
+
+  /**
+   * Drill from an age bucket ("0-30" … "90+") to the tracker via a raised-at date range. Boundaries use the same
+   * 30/60/90-day edges as the analytics buckets (adjacent drills deliberately share the boundary instant rather
+   * than leave a dead zone between them); the day-granular date filters make this a close, not exact, match.
+   */
+  drillAge(bucket: string): void {
+    const now = Date.now();
+    const daysAgo = (d: number) => new Date(now - d * 86_400_000).toISOString();
+    const ranges: Record<string, { raisedFrom?: string; raisedTo?: string }> = {
+      '0-30': { raisedFrom: daysAgo(30) },
+      '31-60': { raisedFrom: daysAgo(60), raisedTo: daysAgo(30) },
+      '61-90': { raisedFrom: daysAgo(90), raisedTo: daysAgo(60) },
+      '90+': { raisedTo: daysAgo(90) },
+    };
+    const range = ranges[bucket];
+    if (range) {
+      void this.router.navigate(['/exceptions'], { queryParams: { ...range, status: 'open_any' } });
+    }
+  }
+
+  /** Drill from a root-cause bar to the tracker (chart keys carry the raw taxonomy code). */
+  drillRootCause(code: string): void {
+    void this.router.navigate(['/exceptions'], { queryParams: { rootCauseCategory: code, status: 'open_any' } });
+  }
+
+  /** Drill from a non-conformance bar to the tracker (chart keys carry the raw taxonomy code). */
+  drillNonConformance(code: string): void {
+    void this.router.navigate(['/exceptions'], { queryParams: { nonConformanceCategory: code, status: 'open_any' } });
+  }
 
   /** Post-closure verification outcomes (P2-B). */
   readonly verificationData = computed<ChartDatum[]>(() =>

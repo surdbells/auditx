@@ -8,7 +8,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { provideNativeDateAdapter } from '@angular/material/core';
@@ -30,7 +30,7 @@ import {
   ExceptionListItem,
   ExceptionQuery,
   ExceptionSeverity,
-  ExceptionStatus,
+  ExceptionStatusFilter,
   PlanListItem,
   UserDto,
 } from '../../../core/models';
@@ -137,6 +137,7 @@ export class ExceptionsListComponent {
   private readonly plans = inject(AnnualPlansService);
   private readonly audits = inject(AuditsService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
 
@@ -153,8 +154,9 @@ export class ExceptionsListComponent {
     'flags',
   ];
 
-  readonly statuses: { value: ExceptionStatus | 'all'; label: string }[] = [
+  readonly statuses: { value: ExceptionStatusFilter | 'all'; label: string }[] = [
     { value: 'all', label: this.i18n.translate('exceptions.filter.allStatuses') },
+    { value: 'open_any', label: this.i18n.translate('exceptions.status.openAny') },
     { value: 'open', label: this.i18n.translate('exceptions.status.open') },
     { value: 'map_submitted', label: this.i18n.translate('exceptions.status.mapSubmitted') },
     { value: 'map_approved', label: this.i18n.translate('exceptions.status.mapApproved') },
@@ -180,7 +182,7 @@ export class ExceptionsListComponent {
 
   readonly filters = this.fb.nonNullable.group({
     search: '',
-    status: 'all' as ExceptionStatus | 'all',
+    status: 'all' as ExceptionStatusFilter | 'all',
     severity: 'all' as ExceptionSeverity | 'all',
     plan: '',
     audit: '',
@@ -228,14 +230,90 @@ export class ExceptionsListComponent {
 
   private usersCache: UserDto[] = [];
 
+  /**
+   * Extra drilldown filters arriving via query params (dashboard chart clicks) that have no visible
+   * filter control on this page. Shown as a dismissible notice; cleared with {@link clearDrilldown}.
+   */
+  readonly drilldown = signal<{ rootCauseCategory?: string; nonConformanceCategory?: string }>({});
+
+  readonly hasDrilldown = computed(() => {
+    const d = this.drilldown();
+    return !!(d.rootCauseCategory || d.nonConformanceCategory);
+  });
+
+  /** Human-readable summary of the active drilldown filters for the notice chip. */
+  readonly drilldownLabel = computed(() => {
+    const d = this.drilldown();
+    const parts: string[] = [];
+    if (d.rootCauseCategory) {
+      parts.push(`${this.i18n.translate('exceptions.detail.rootCauseCategory')}: ${d.rootCauseCategory.replaceAll('_', ' ')}`);
+    }
+    if (d.nonConformanceCategory) {
+      parts.push(`${this.i18n.translate('exceptions.detail.nonConformanceCategory')}: ${d.nonConformanceCategory.replaceAll('_', ' ')}`);
+    }
+    return parts.join(' · ');
+  });
+
   constructor() {
     this.ensureUsers();
     this.loadPlans();
     this.loadAudits();
+    this.applyQueryParams();
     this.fetchPage(1);
     this.filters.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed())
       .subscribe(() => this.fetchPage(1));
+  }
+
+  /** Initialise the filters from the URL (dashboard drilldowns) before the first fetch. */
+  private applyQueryParams(): void {
+    const params = this.route.snapshot.queryParamMap;
+    if (params.keys.length === 0) {
+      return;
+    }
+
+    const patch: Partial<ReturnType<typeof this.filters.getRawValue>> = {};
+    const severity = params.get('severity');
+    if (severity && this.severities.some((s) => s.value === severity)) {
+      patch.severity = severity as ExceptionSeverity;
+    }
+    const status = params.get('status');
+    if (status && this.statuses.some((s) => s.value === status)) {
+      patch.status = status as ExceptionStatusFilter;
+    }
+    const overdue = params.get('overdue');
+    if (overdue === 'true' || overdue === 'yes') {
+      patch.overdue = 'yes';
+    }
+    const raisedFrom = params.get('raisedFrom');
+    if (raisedFrom && !Number.isNaN(Date.parse(raisedFrom))) {
+      patch.raisedFrom = new Date(raisedFrom);
+    }
+    const raisedTo = params.get('raisedTo');
+    if (raisedTo && !Number.isNaN(Date.parse(raisedTo))) {
+      patch.raisedTo = new Date(raisedTo);
+    }
+    if (Object.keys(patch).length > 0) {
+      // The debounced valueChanges watcher is not subscribed yet, so this never double-fetches.
+      this.filters.patchValue(patch);
+    }
+
+    this.drilldown.set({
+      rootCauseCategory: params.get('rootCauseCategory') ?? undefined,
+      nonConformanceCategory: params.get('nonConformanceCategory') ?? undefined,
+    });
+  }
+
+  /** Clears the dashboard-drilldown filters (and drops them from the URL) then refetches. */
+  clearDrilldown(): void {
+    this.drilldown.set({});
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { rootCauseCategory: null, nonConformanceCategory: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    this.fetchPage(1);
   }
 
   private ensureUsers(): void {
@@ -329,6 +407,9 @@ export class ExceptionsListComponent {
       recurrence: recurrence === 'all' ? undefined : recurrence === 'yes',
       raisedFrom: toIsoStart(raisedFrom),
       raisedTo: toIsoEnd(raisedTo),
+      // Dashboard-drilldown extras (no visible control here; surfaced via the drilldown notice).
+      rootCauseCategory: this.drilldown().rootCauseCategory,
+      nonConformanceCategory: this.drilldown().nonConformanceCategory,
     };
   }
 
@@ -368,11 +449,23 @@ export class ExceptionsListComponent {
 
   /** Applies a saved view's parameters back onto the filter form (rehydrating dates); the debounced watcher refetches. */
   applyView(params: Record<string, unknown>): void {
+    // A saved view is a complete filter state — drop any dashboard-drilldown extras so the applied
+    // view shows exactly what it captured (the chip disappears with them).
+    if (this.hasDrilldown()) {
+      this.drilldown.set({});
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { rootCauseCategory: null, nonConformanceCategory: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
+
     const str = (x: unknown, fallback = ''): string => (typeof x === 'string' ? x : fallback);
     const date = (x: unknown): Date | null => (typeof x === 'string' && x ? new Date(x) : null);
     this.filters.patchValue({
       search: str(params['search']),
-      status: str(params['status'], 'all') as ExceptionStatus | 'all',
+      status: str(params['status'], 'all') as ExceptionStatusFilter | 'all',
       severity: str(params['severity'], 'all') as ExceptionSeverity | 'all',
       plan: str(params['plan']),
       audit: str(params['audit']),

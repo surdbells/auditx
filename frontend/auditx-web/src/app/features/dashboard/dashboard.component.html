@@ -60,25 +60,42 @@
           [data]="severityData()"
           [label]="'dashboard.charts.findingsBySeverity' | t"
           [centerLabel]="'dashboard.charts.findingsCenter' | t"
+          [clickable]="true"
+          (segmentClick)="drillSeverity($event)"
         />
       </div>
     }
     @if (ageData().length) {
       <div class="panel">
         <h3 class="panel__title">{{ 'dashboard.charts.findingsByAge' | t }}</h3>
-        <app-bar-chart [data]="ageData()" [label]="'dashboard.charts.findingsByAge' | t" />
+        <app-bar-chart
+          [data]="ageData()"
+          [label]="'dashboard.charts.findingsByAge' | t"
+          [clickable]="true"
+          (segmentClick)="drillAge($event)"
+        />
       </div>
     }
     @if (rootCauseData().length) {
       <div class="panel">
         <h3 class="panel__title">{{ 'dashboard.charts.findingsByRootCause' | t }}</h3>
-        <app-bar-chart [data]="rootCauseData()" [label]="'dashboard.charts.findingsByRootCause' | t" />
+        <app-bar-chart
+          [data]="rootCauseData()"
+          [label]="'dashboard.charts.findingsByRootCause' | t"
+          [clickable]="true"
+          (segmentClick)="drillRootCause($event)"
+        />
       </div>
     }
     @if (nonConformanceData().length) {
       <div class="panel">
         <h3 class="panel__title">{{ 'dashboard.charts.findingsByNonConformance' | t }}</h3>
-        <app-bar-chart [data]="nonConformanceData()" [label]="'dashboard.charts.findingsByNonConformance' | t" />
+        <app-bar-chart
+          [data]="nonConformanceData()"
+          [label]="'dashboard.charts.findingsByNonConformance' | t"
+          [clickable]="true"
+          (segmentClick)="drillNonConformance($event)"
+        />
       </div>
     }
     @if (verificationData().length) {

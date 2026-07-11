@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   input,
+  output,
 } from '@angular/core';
 
 import { ChartDatum } from '../chart-types';
@@ -11,6 +12,8 @@ import { resolveColor } from '../chart-colors';
 /** A bar laid out for rendering (position + resolved colour + scaled length). */
 interface LaidOutBar {
   label: string;
+  /** Stable identifier for tracking + drilldown clicks (datum key, falling back to the label). */
+  key: string;
   value: number;
   color: string;
   /** Top of the bar row band (px, SVG units). */
@@ -45,8 +48,16 @@ interface LaidOutBar {
         preserveAspectRatio="xMinYMin meet"
       >
         <title>{{ ariaLabel() }}</title>
-        @for (bar of bars(); track bar.label) {
-          <g>
+        @for (bar of bars(); track bar.key) {
+          <g
+            [class.chart__row--clickable]="clickable()"
+            [attr.role]="clickable() ? 'button' : null"
+            [attr.tabindex]="clickable() ? 0 : null"
+            [attr.aria-label]="clickable() ? bar.label + ': ' + bar.valueText : null"
+            (click)="onSegment(bar.key)"
+            (keydown.enter)="onSegment(bar.key)"
+            (keydown.space)="onSegment(bar.key); $event.preventDefault()"
+          >
             <text
               class="chart__label"
               [attr.x]="0"
@@ -114,6 +125,15 @@ interface LaidOutBar {
       color: var(--mat-sys-on-surface-variant);
       font: var(--mat-sys-body-small);
     }
+    .chart__row--clickable {
+      cursor: pointer;
+      outline: none;
+    }
+    .chart__row--clickable:hover .chart__label,
+    .chart__row--clickable:focus-visible .chart__label {
+      text-decoration: underline;
+      fill: var(--mat-sys-on-surface);
+    }
   `,
 })
 export class BarChartComponent {
@@ -121,6 +141,18 @@ export class BarChartComponent {
   readonly data = input<ChartDatum[]>([]);
   /** Accessible description; falls back to a generic label. */
   readonly label = input<string>('Bar chart');
+
+  /** When true, bar rows are clickable and emit {@link segmentClick} (drilldown). */
+  readonly clickable = input(false);
+
+  /** Emits the clicked bar's label (only when {@link clickable}). */
+  readonly segmentClick = output<string>();
+
+  protected onSegment(label: string): void {
+    if (this.clickable()) {
+      this.segmentClick.emit(label);
+    }
+  }
 
   /* ---- Fixed SVG geometry (user units; the SVG scales to fit its box). ---- */
   protected readonly width = 320;
@@ -157,6 +189,7 @@ export class BarChartComponent {
     const track = this.trackWidth();
     return data.map((d, i) => ({
       label: d.label,
+      key: d.key ?? d.label,
       value: d.value,
       color: resolveColor(d.label, i, d.color),
       y: i * (this.rowHeight + this.barGap),

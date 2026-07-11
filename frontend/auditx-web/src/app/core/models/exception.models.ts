@@ -27,6 +27,12 @@ export type ExceptionStatus =
   | 'cancelled'
   | 'pending_cia_approval';
 
+/**
+ * A status value the tracker FILTER accepts: any concrete status, or the 'open_any' umbrella
+ * (every non-terminal status — the same definition the analytics portfolio counts). Used by KPI drilldowns.
+ */
+export type ExceptionStatusFilter = ExceptionStatus | 'open_any';
+
 /** Status of a single management-action-plan action. */
 export type MapActionStatus = 'pending' | 'complete';
 
@@ -227,7 +233,7 @@ export interface ApproveMapResult {
 
 /** List query parameters for the cross-audit exceptions tracker. */
 export interface ExceptionQuery {
-  status?: ExceptionStatus | '';
+  status?: ExceptionStatusFilter | '';
   severity?: ExceptionSeverity | '';
   owner?: string;
   entity?: string;
@@ -243,6 +249,10 @@ export interface ExceptionQuery {
   raisedFrom?: string;
   /** ISO datetime upper bound on raised-at (inclusive). */
   raisedTo?: string;
+  /** Root-cause taxonomy code ("uncategorised" matches blanks) — dashboard drilldown. */
+  rootCauseCategory?: string;
+  /** Non-conformance taxonomy code ("uncategorised" matches blanks) — dashboard drilldown. */
+  nonConformanceCategory?: string;
   page?: number;
   pageSize?: number;
 }

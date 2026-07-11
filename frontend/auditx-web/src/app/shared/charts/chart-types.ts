@@ -10,6 +10,11 @@ export interface ChartDatum {
   value: number;
   /** Explicit colour override; otherwise resolved from the semantic palette. */
   color?: string;
+  /**
+   * Stable identifier emitted by drilldown clicks (falls back to {@link label}). Set it when labels are
+   * humanised/display-only so a click carries the raw code and distinct data can never collide on a label.
+   */
+  key?: string;
 }
 
 /** One point on a line chart / sparkline. */

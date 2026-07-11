@@ -277,6 +277,22 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         Assert.Contains(
             portfolio.GetProperty("byNonConformance").EnumerateArray(),
             n => n.GetProperty("nonConformanceCategory").GetString() == "regulatory_breach");
+
+        // Drilldown: the tracker filters by the taxonomy codes (the dashboard chart click-through path).
+        var id = raised.GetProperty("id").GetGuid();
+        var byNc = await DataAsync(await admin.GetAsync("/api/v1/exceptions?nonConformanceCategory=regulatory_breach"));
+        Assert.Contains(byNc.GetProperty("items").EnumerateArray(), e => e.GetProperty("id").GetGuid() == id);
+
+        var byRc = await DataAsync(await admin.GetAsync("/api/v1/exceptions?rootCauseCategory=process_gap"));
+        Assert.Contains(byRc.GetProperty("items").EnumerateArray(), e => e.GetProperty("id").GetGuid() == id);
+
+        // A different code excludes it.
+        var other = await DataAsync(await admin.GetAsync("/api/v1/exceptions?nonConformanceCategory=data_quality"));
+        Assert.DoesNotContain(other.GetProperty("items").EnumerateArray(), e => e.GetProperty("id").GetGuid() == id);
+
+        // The 'open_any' umbrella (drilldowns carry it so the list matches the open-findings KPIs) includes it too.
+        var openAny = await DataAsync(await admin.GetAsync("/api/v1/exceptions?status=open_any&nonConformanceCategory=regulatory_breach"));
+        Assert.Contains(openAny.GetProperty("items").EnumerateArray(), e => e.GetProperty("id").GetGuid() == id);
     }
 
     [Fact]

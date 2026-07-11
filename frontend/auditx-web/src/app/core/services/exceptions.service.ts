@@ -75,6 +75,8 @@ export class ExceptionsService {
       overdue: query.overdue,
       raisedFrom: query.raisedFrom,
       raisedTo: query.raisedTo,
+      rootCauseCategory: query.rootCauseCategory,
+      nonConformanceCategory: query.nonConformanceCategory,
       page: query.page,
       pageSize: query.pageSize,
     });
@@ -100,6 +102,8 @@ export class ExceptionsService {
     set('overdue', query.overdue);
     set('raisedFrom', query.raisedFrom);
     set('raisedTo', query.raisedTo);
+    set('rootCauseCategory', query.rootCauseCategory);
+    set('nonConformanceCategory', query.nonConformanceCategory);
     return this.http.get(`${this.baseUrl}/exceptions/export`, {
       params,
       responseType: 'blob',

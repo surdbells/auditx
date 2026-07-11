@@ -8,7 +8,9 @@ namespace AuditX.Application.Abstractions.Persistence;
 public sealed record ExceptionSearchFilter(
     ExceptionStatus? Status, ExceptionSeverity? Severity, Guid? OwnerUserId, Guid? AuditableEntityId,
     Guid? AuditId, string? Category, bool? IsRecurrence, bool? IsOverdue, DateOnly AsOfDate, string? Search = null,
-    Guid? AnnualPlanId = null, DateTimeOffset? RaisedFrom = null, DateTimeOffset? RaisedTo = null);
+    Guid? AnnualPlanId = null, DateTimeOffset? RaisedFrom = null, DateTimeOffset? RaisedTo = null,
+    string? RootCauseCategory = null, string? NonConformanceCategory = null,
+    bool? IsOpen = null);
 
 /// <summary>Flat, join-resolved export row for the cross-audit finding-register CSV.</summary>
 public sealed record ExceptionExportRow(

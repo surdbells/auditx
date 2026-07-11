@@ -35,6 +35,15 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
     /// <summary>Applies every <see cref="ExceptionSearchFilter"/> dimension (no pagination) — shared by search + export.</summary>
     private IQueryable<AuditException> ApplyFilter(IQueryable<AuditException> query, ExceptionSearchFilter filter)
     {
+        // "Any open" umbrella (KPI drilldowns): open = everything except the two terminal states — the same
+        // definition the analytics portfolio uses.
+        if (filter.IsOpen is { } isOpen)
+        {
+            query = isOpen
+                ? query.Where(e => e.Status != ExceptionStatus.Closed && e.Status != ExceptionStatus.Cancelled)
+                : query.Where(e => e.Status == ExceptionStatus.Closed || e.Status == ExceptionStatus.Cancelled);
+        }
+
         if (filter.Status is { } s)
         {
             query = query.Where(e => e.Status == s);
@@ -82,6 +91,21 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
         if (!string.IsNullOrWhiteSpace(filter.Category))
         {
             query = query.Where(e => e.Category == filter.Category);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.RootCauseCategory))
+        {
+            // "uncategorised" is the analytics label for blanks — match null/blank so a drilldown on it works.
+            query = filter.RootCauseCategory == "uncategorised"
+                ? query.Where(e => e.RootCauseCategory == null || e.RootCauseCategory == "")
+                : query.Where(e => e.RootCauseCategory == filter.RootCauseCategory);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.NonConformanceCategory))
+        {
+            query = filter.NonConformanceCategory == "uncategorised"
+                ? query.Where(e => e.NonConformanceCategory == null || e.NonConformanceCategory == "")
+                : query.Where(e => e.NonConformanceCategory == filter.NonConformanceCategory);
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
