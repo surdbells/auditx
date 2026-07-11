@@ -132,6 +132,8 @@ export class BankSettingsComponent {
     adProvisioningFilterGroupSid: [''],
     allowOverlappingPlanPeriods: [false],
     allowAuditLaunchBeforeApproval: [false],
+    showOverview: [true],
+    showWalkthrough: [true],
     primaryColor: [
       '#4f46e5',
       [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
@@ -173,6 +175,8 @@ export class BankSettingsComponent {
       adProvisioningFilterGroupSid: s.adProvisioningFilterGroupSid ?? '',
       allowOverlappingPlanPeriods: s.allowOverlappingPlanPeriods,
       allowAuditLaunchBeforeApproval: s.allowAuditLaunchBeforeApproval,
+      showOverview: s.showOverview,
+      showWalkthrough: s.showWalkthrough,
       primaryColor: s.primaryColor,
       accentColor: s.accentColor,
       logoDataUri: s.logoDataUri ?? '',
@@ -211,6 +215,8 @@ export class BankSettingsComponent {
           v.adProvisioningFilterGroupSid.trim() || null,
         allowOverlappingPlanPeriods: v.allowOverlappingPlanPeriods,
         allowAuditLaunchBeforeApproval: v.allowAuditLaunchBeforeApproval,
+        showOverview: v.showOverview,
+        showWalkthrough: v.showWalkthrough,
         primaryColor: v.primaryColor,
         accentColor: v.accentColor,
         logoDataUri,
@@ -218,13 +224,15 @@ export class BankSettingsComponent {
       })
       .subscribe({
         next: () => {
-          // Re-theme the running app in place so the change is visible without a reload.
+          // Re-theme the running app in place (incl. the page-guide button visibility) so the change is visible without a reload.
           this.branding.apply({
             organizationName: v.bankDisplayName.trim(),
             primaryColor: v.primaryColor,
             accentColor: v.accentColor,
             logoDataUri,
             iconDataUri,
+            showOverview: v.showOverview,
+            showWalkthrough: v.showWalkthrough,
           });
           this.notify.success(
             this.i18n.translate('administration.bankSettings.savedToast'),

@@ -13,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { PageGuide } from '../../../core/models/page-guide.models';
 import { TourManagerService } from '../../../core/services/tour-manager.service';
+import { BrandingService } from '../../../core/services/branding.service';
 import { TourOverlayComponent } from './tour-overlay.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -33,6 +34,11 @@ export class PageGuideComponent {
   readonly guide = input.required<PageGuide>();
 
   protected readonly tour = inject(TourManagerService);
+  private readonly branding = inject(BrandingService);
+
+  /** Admin-configured visibility of the two page-guide buttons (bank settings). */
+  protected readonly showOverview = this.branding.showOverview;
+  protected readonly showWalkthrough = this.branding.showWalkthrough;
 
   protected readonly aboutOpen = signal(false);
   protected readonly tourActive = computed(() => this.tour.activeGuideId() === this.guide().id);
@@ -54,7 +60,8 @@ export class PageGuideComponent {
         return;
       }
       this.autoRan = true;
-      if (!this.tour.hasCompleted(g.id)) {
+      // Suppress the auto-run tour when the admin has hidden the Walkthrough button.
+      if (this.showWalkthrough() && !this.tour.hasCompleted(g.id)) {
         this.autoTimer = setTimeout(() => this.tour.start(g), 700);
       }
     });

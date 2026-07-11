@@ -53,6 +53,20 @@
             <p class="settings__toggle-hint">{{ 'administration.bankSettings.allowLaunchBeforeApprovalHint' | t }}</p>
           </div>
 
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="showOverview">
+              {{ 'administration.bankSettings.showOverview' | t }}
+            </mat-slide-toggle>
+            <p class="settings__toggle-hint">{{ 'administration.bankSettings.showOverviewHint' | t }}</p>
+          </div>
+
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="showWalkthrough">
+              {{ 'administration.bankSettings.showWalkthrough' | t }}
+            </mat-slide-toggle>
+            <p class="settings__toggle-hint">{{ 'administration.bankSettings.showWalkthroughHint' | t }}</p>
+          </div>
+
           <section class="settings__branding full">
             <h3 class="settings__subtitle">{{ 'administration.branding.title' | t }}</h3>
 

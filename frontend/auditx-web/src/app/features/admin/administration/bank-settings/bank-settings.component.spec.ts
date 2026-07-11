@@ -23,6 +23,8 @@ function settings(overrides: Partial<BankSettings> = {}): BankSettings {
     accentColor: '#7c3aed',
     logoDataUri: null,
     iconDataUri: null,
+    showOverview: true,
+    showWalkthrough: true,
     ...overrides,
   };
 }

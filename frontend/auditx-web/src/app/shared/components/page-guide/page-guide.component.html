@@ -1,13 +1,17 @@
 <div class="pg">
   <div class="pg__actions">
-    <button matButton type="button" class="pg__btn" (click)="startTour()">
-      <mat-icon>help_outline</mat-icon>
-      {{ 'guide.help' | t }}
-    </button>
-    <button matButton type="button" class="pg__btn" (click)="toggleAbout()">
-      <mat-icon>{{ aboutOpen() ? 'expand_less' : 'menu_book' }}</mat-icon>
-      {{ 'guide.about' | t }}
-    </button>
+    @if (showWalkthrough()) {
+      <button matButton type="button" class="pg__btn" (click)="startTour()">
+        <mat-icon>help_outline</mat-icon>
+        {{ 'guide.help' | t }}
+      </button>
+    }
+    @if (showOverview()) {
+      <button matButton type="button" class="pg__btn" (click)="toggleAbout()">
+        <mat-icon>{{ aboutOpen() ? 'expand_less' : 'menu_book' }}</mat-icon>
+        {{ 'guide.about' | t }}
+      </button>
+    }
   </div>
 
   @if (aboutOpen()) {
@@ -115,12 +119,14 @@
         </div>
       }
 
-      <div class="pg__block pg__restart">
-        <button matButton type="button" (click)="startTour()">
-          <mat-icon>replay</mat-icon>
-          {{ 'guide.restart' | t }}
-        </button>
-      </div>
+      @if (showWalkthrough()) {
+        <div class="pg__block pg__restart">
+          <button matButton type="button" (click)="startTour()">
+            <mat-icon>replay</mat-icon>
+            {{ 'guide.restart' | t }}
+          </button>
+        </div>
+      }
     </section>
   }
 </div>

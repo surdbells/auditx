@@ -16,6 +16,8 @@ export interface BankSettings {
   accentColor: string;
   logoDataUri: string | null;
   iconDataUri: string | null;
+  showOverview: boolean;
+  showWalkthrough: boolean;
 }
 
 export interface UpdateBankSettingsRequest {
@@ -30,6 +32,8 @@ export interface UpdateBankSettingsRequest {
   accentColor: string;
   logoDataUri: string | null;
   iconDataUri: string | null;
+  showOverview: boolean;
+  showWalkthrough: boolean;
 }
 
 /** Public branding served anonymously from `/branding` — themes the shell before authentication. */
@@ -39,6 +43,9 @@ export interface Branding {
   accentColor: string;
   logoDataUri: string | null;
   iconDataUri: string | null;
+  /** Whether the page-guide "Overview" / "Walkthrough" buttons are shown app-wide (admin-configured). */
+  showOverview: boolean;
+  showWalkthrough: boolean;
 }
 
 export interface ResourceLimits {

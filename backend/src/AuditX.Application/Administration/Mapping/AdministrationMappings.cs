@@ -11,7 +11,8 @@ public static class AdministrationMappings
         bank.AdProvisioningFilterOuDn, bank.AdProvisioningFilterGroupSid,
         bank.MaxEvidenceFileMb, bank.MaxAuditEvidenceGb, bank.AllowOverlappingPlanPeriods,
         bank.AllowAuditLaunchBeforeApproval,
-        bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri);
+        bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri,
+        bank.ShowOverview, bank.ShowWalkthrough);
 
     public static SupportChannelStatusDto ToStatusDto(this SupportChannelSession? session, DateTimeOffset nowUtc)
         => session is null

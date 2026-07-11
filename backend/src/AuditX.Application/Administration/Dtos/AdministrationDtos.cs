@@ -13,13 +13,16 @@ public sealed record BankSettingsDto(
     string PrimaryColor,
     string AccentColor,
     string? LogoDataUri,
-    string? IconDataUri);
+    string? IconDataUri,
+    bool ShowOverview,
+    bool ShowWalkthrough);
 
 public sealed record ResourceLimitsDto(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
 
 /// <summary>Public branding surface served anonymously so the shell/login can theme before authentication.</summary>
 public sealed record BrandingDto(
-    string OrganizationName, string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri);
+    string OrganizationName, string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri,
+    bool ShowOverview, bool ShowWalkthrough);
 
 public sealed record BulkOperationErrorDto(string Identifier, string Message);
 

@@ -20,7 +20,8 @@ namespace AuditX.Application.Administration.Commands;
 public sealed record UpdateBankSettingsCommand(
     string BankDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
     bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval,
-    string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri)
+    string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri,
+    bool ShowOverview, bool ShowWalkthrough)
     : ICommand<BankSettingsDto>;
 
 public sealed class UpdateBankSettingsCommandValidator : AbstractValidator<UpdateBankSettingsCommand>
@@ -58,11 +59,13 @@ public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository set
         bank.SetAdProvisioningFilter(command.AdProvisioningFilterOuDn, command.AdProvisioningFilterGroupSid);
         bank.SetAllowOverlappingPlanPeriods(command.AllowOverlappingPlanPeriods);
         bank.SetAllowAuditLaunchBeforeApproval(command.AllowAuditLaunchBeforeApproval);
+        bank.SetPageGuideVisibility(command.ShowOverview, command.ShowWalkthrough);
         bank.SetBranding(command.PrimaryColor, command.AccentColor, command.LogoDataUri, command.IconDataUri);
         // Keep the audit payload metadata-only — the logo/icon data URIs are deliberately excluded.
         audit.Record(AuditEventTypes.BankSettingsUpdated, AuditTargetTypes.BankSettings, bank.Id, after: new
         {
             bank.BankDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval,
+            bank.ShowOverview, bank.ShowWalkthrough,
             bank.PrimaryColor, bank.AccentColor, hasLogo = bank.LogoDataUri is not null, hasIcon = bank.IconDataUri is not null,
         });
         await unitOfWork.SaveChangesAsync(cancellationToken);

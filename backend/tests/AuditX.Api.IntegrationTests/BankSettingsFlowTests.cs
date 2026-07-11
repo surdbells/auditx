@@ -1,0 +1,76 @@
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+
+namespace AuditX.Api.IntegrationTests;
+
+/// <summary>
+/// Bank settings: the page-guide visibility toggles (Overview / Walkthrough) round-trip through the admin
+/// settings surface and are reflected on the anonymous /branding surface the SPA page-guide reads.
+/// </summary>
+public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<ApiFactory>
+{
+    private HttpClient NewClient() => factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { HandleCookies = true });
+
+    private async Task<HttpClient> LoginAsync(string username)
+    {
+        var client = NewClient();
+        (await client.PostAsJsonAsync("/api/v1/auth/login", new { username, password = "Passw0rd!" })).EnsureSuccessStatusCode();
+        return client;
+    }
+
+    private static async Task<JsonElement> DataAsync(HttpResponseMessage response)
+    {
+        response.EnsureSuccessStatusCode();
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data").Clone();
+    }
+
+    [Fact]
+    public async Task Page_guide_visibility_toggles_round_trip_and_surface_on_branding()
+    {
+        var admin = await LoginAsync("admin");
+
+        // Both buttons default to shown.
+        var current = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
+        Assert.True(current.GetProperty("showOverview").GetBoolean());
+        Assert.True(current.GetProperty("showWalkthrough").GetBoolean());
+
+        // Hide Overview, keep Walkthrough (send the current values back — the PATCH is a full replace).
+        var updated = await DataAsync(await admin.PatchAsJsonAsync("/api/v1/admin/bank-settings", new
+        {
+            bankDisplayName = current.GetProperty("bankDisplayName").GetString(),
+            timezone = current.GetProperty("timezone").GetString(),
+            localeDefault = current.GetProperty("localeDefault").GetString(),
+            adProvisioningFilterOuDn = (string?)null,
+            adProvisioningFilterGroupSid = (string?)null,
+            allowOverlappingPlanPeriods = current.GetProperty("allowOverlappingPlanPeriods").GetBoolean(),
+            allowAuditLaunchBeforeApproval = current.GetProperty("allowAuditLaunchBeforeApproval").GetBoolean(),
+            primaryColor = current.GetProperty("primaryColor").GetString(),
+            accentColor = current.GetProperty("accentColor").GetString(),
+            logoDataUri = (string?)null,
+            iconDataUri = (string?)null,
+            showOverview = false,
+            showWalkthrough = true,
+        }));
+        Assert.False(updated.GetProperty("showOverview").GetBoolean());
+        Assert.True(updated.GetProperty("showWalkthrough").GetBoolean());
+
+        // Persisted on re-read.
+        var reread = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
+        Assert.False(reread.GetProperty("showOverview").GetBoolean());
+        Assert.True(reread.GetProperty("showWalkthrough").GetBoolean());
+
+        // The anonymous branding surface (which the SPA page-guide reads app-wide) reflects the toggles.
+        var anon = NewClient();
+        var branding = await DataAsync(await anon.GetAsync("/api/v1/branding"));
+        Assert.False(branding.GetProperty("showOverview").GetBoolean());
+        Assert.True(branding.GetProperty("showWalkthrough").GetBoolean());
+    }
+
+    [Fact]
+    public async Task Reading_bank_settings_requires_the_view_permission()
+    {
+        var auditee = await LoginAsync("auditee"); // no ViewBankSettings
+        Assert.Equal(HttpStatusCode.Forbidden, (await auditee.GetAsync("/api/v1/admin/bank-settings")).StatusCode);
+    }
+}

@@ -59,6 +59,12 @@ public sealed class BankSettings : Entity
     /// <summary>Optional favicon/app icon as a <c>data:image/*</c> URI, used as the browser-tab icon.</summary>
     public string? IconDataUri { get; private set; }
 
+    /// <summary>When true (default), each page's "Overview" (About-this-page) button is shown in the page guide.</summary>
+    public bool ShowOverview { get; private set; } = true;
+
+    /// <summary>When true (default), each page's "Walkthrough" button is shown in the page guide.</summary>
+    public bool ShowWalkthrough { get; private set; } = true;
+
     public static BankSettings CreateDefault(string bankDisplayName) => new()
     {
         BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
@@ -84,6 +90,13 @@ public sealed class BankSettings : Entity
     public void SetAllowOverlappingPlanPeriods(bool value) => AllowOverlappingPlanPeriods = value;
 
     public void SetAllowAuditLaunchBeforeApproval(bool value) => AllowAuditLaunchBeforeApproval = value;
+
+    /// <summary>Sets whether the page-guide "Overview" and "Walkthrough" buttons are shown across the app.</summary>
+    public void SetPageGuideVisibility(bool showOverview, bool showWalkthrough)
+    {
+        ShowOverview = showOverview;
+        ShowWalkthrough = showWalkthrough;
+    }
 
     /// <summary>Sets the branding: primary/accent colours are required; logo/icon are optional data URIs.</summary>
     public void SetBranding(string primaryColor, string accentColor, string? logoDataUri, string? iconDataUri)

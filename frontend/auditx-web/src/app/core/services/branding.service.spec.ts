@@ -14,6 +14,8 @@ function branding(overrides: Partial<Branding> = {}): Branding {
     accentColor: '#445566',
     logoDataUri: null,
     iconDataUri: null,
+    showOverview: true,
+    showWalkthrough: true,
     ...overrides,
   };
 }

@@ -49,6 +49,8 @@ describe('AdministrationService', () => {
         accentColor: '#7c3aed',
         logoDataUri: null,
         iconDataUri: null,
+        showOverview: true,
+        showWalkthrough: true,
       })
       .subscribe();
     const req = http.expectOne(`${BASE}/admin/bank-settings`);

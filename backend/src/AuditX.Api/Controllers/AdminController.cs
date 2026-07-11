@@ -26,7 +26,8 @@ public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
         => Envelope(await dispatcher.Send(new UpdateBankSettingsCommand(
             request.BankDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid,
             request.AllowOverlappingPlanPeriods, request.AllowAuditLaunchBeforeApproval,
-            request.PrimaryColor, request.AccentColor, request.LogoDataUri, request.IconDataUri), cancellationToken));
+            request.PrimaryColor, request.AccentColor, request.LogoDataUri, request.IconDataUri,
+            request.ShowOverview, request.ShowWalkthrough), cancellationToken));
 
     [RequirePermission(PermissionKeys.ConfigureLimits)]
     [HttpPatch("resource-limits")]
