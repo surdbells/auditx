@@ -62,7 +62,8 @@ interface QuickLink {
 /** Contextual page guide for the home dashboard (drives the walkthrough + the About panel). */
 const DASHBOARD_GUIDE: PageGuide = {
   id: 'dashboard',
-  titleKey: 'dashboard.welcome',
+  // A static title — the guide title is rendered without interpolation params, so it must not carry {{name}}.
+  titleKey: 'dashboard.guide.title',
   purposeKey: 'dashboard.guide.purpose',
   descriptionKey: 'dashboard.guide.description',
   actionKeys: [
