@@ -20,6 +20,7 @@ import { filter, map } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { BrandingService } from '../../core/services/branding.service';
+import { IdleTimeoutService } from '../../core/services/idle-timeout.service';
 import { Permissions } from '../../core/permissions';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../../core/i18n/language-switcher.component';
@@ -237,6 +238,9 @@ export class MainLayoutComponent {
   });
 
   constructor() {
+    // Arm the session-inactivity watchdog for the authenticated shell (config-driven; 0 minutes = off).
+    inject(IdleTimeoutService).start();
+
     // Keep the accordion aligned with the active route so the current screen's group is open.
     this.openSection.set(this.sectionForUrl(this.router.url));
     this.router.events

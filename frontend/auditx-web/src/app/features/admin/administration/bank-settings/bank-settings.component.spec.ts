@@ -27,6 +27,8 @@ function settings(overrides: Partial<BankSettings> = {}): BankSettings {
     showWalkthrough: true,
     autoStartWalkthrough: true,
     reportRetentionMonths: 0,
+    idleTimeoutMinutes: 15,
+    idleWarningSeconds: 60,
     ...overrides,
   };
 }

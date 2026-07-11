@@ -36,6 +36,10 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
         Assert.True(current.GetProperty("showWalkthrough").GetBoolean());
         Assert.True(current.GetProperty("autoStartWalkthrough").GetBoolean());
 
+        // Idle-logout policy defaults: warn after 15 idle minutes, 60s countdown.
+        Assert.Equal(15, current.GetProperty("idleTimeoutMinutes").GetInt32());
+        Assert.Equal(60, current.GetProperty("idleWarningSeconds").GetInt32());
+
         // Hide Overview, keep Walkthrough, disable the auto-start tour (full-replace PATCH).
         var updated = await DataAsync(await admin.PatchAsJsonAsync("/api/v1/admin/bank-settings", new
         {
@@ -53,16 +57,22 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
             showOverview = false,
             showWalkthrough = true,
             autoStartWalkthrough = false,
+            idleTimeoutMinutes = 30,
+            idleWarningSeconds = 90,
         }));
         Assert.False(updated.GetProperty("showOverview").GetBoolean());
         Assert.True(updated.GetProperty("showWalkthrough").GetBoolean());
         Assert.False(updated.GetProperty("autoStartWalkthrough").GetBoolean());
+        Assert.Equal(30, updated.GetProperty("idleTimeoutMinutes").GetInt32());
+        Assert.Equal(90, updated.GetProperty("idleWarningSeconds").GetInt32());
 
         // Persisted on re-read.
         var reread = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
         Assert.False(reread.GetProperty("showOverview").GetBoolean());
         Assert.True(reread.GetProperty("showWalkthrough").GetBoolean());
         Assert.False(reread.GetProperty("autoStartWalkthrough").GetBoolean());
+        Assert.Equal(30, reread.GetProperty("idleTimeoutMinutes").GetInt32());
+        Assert.Equal(90, reread.GetProperty("idleWarningSeconds").GetInt32());
 
         // The anonymous branding surface (which the SPA page-guide reads app-wide) reflects the toggles.
         var anon = NewClient();
@@ -70,6 +80,8 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
         Assert.False(branding.GetProperty("showOverview").GetBoolean());
         Assert.True(branding.GetProperty("showWalkthrough").GetBoolean());
         Assert.False(branding.GetProperty("autoStartWalkthrough").GetBoolean());
+        Assert.Equal(30, branding.GetProperty("idleTimeoutMinutes").GetInt32());
+        Assert.Equal(90, branding.GetProperty("idleWarningSeconds").GetInt32());
     }
 
     [Fact]

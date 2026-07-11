@@ -136,6 +136,9 @@ export class BankSettingsComponent {
     showWalkthrough: [true],
     autoStartWalkthrough: [true],
     reportRetentionMonths: [0, [Validators.required, Validators.min(0), Validators.max(600)]],
+    idleTimeoutMinutes: [15, [Validators.required, Validators.min(0), Validators.max(480)]],
+    // 20-second floor per WCAG 2.2.1 (Timing Adjustable): users must get at least 20s to extend the session.
+    idleWarningSeconds: [60, [Validators.required, Validators.min(20), Validators.max(600)]],
     primaryColor: [
       '#4f46e5',
       [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)],
@@ -181,6 +184,8 @@ export class BankSettingsComponent {
       showWalkthrough: s.showWalkthrough,
       autoStartWalkthrough: s.autoStartWalkthrough,
       reportRetentionMonths: s.reportRetentionMonths,
+      idleTimeoutMinutes: s.idleTimeoutMinutes,
+      idleWarningSeconds: s.idleWarningSeconds,
       primaryColor: s.primaryColor,
       accentColor: s.accentColor,
       logoDataUri: s.logoDataUri ?? '',
@@ -223,6 +228,8 @@ export class BankSettingsComponent {
         showWalkthrough: v.showWalkthrough,
         autoStartWalkthrough: v.autoStartWalkthrough,
         reportRetentionMonths: v.reportRetentionMonths,
+        idleTimeoutMinutes: v.idleTimeoutMinutes,
+        idleWarningSeconds: v.idleWarningSeconds,
         primaryColor: v.primaryColor,
         accentColor: v.accentColor,
         logoDataUri,
@@ -240,6 +247,8 @@ export class BankSettingsComponent {
             showOverview: v.showOverview,
             showWalkthrough: v.showWalkthrough,
             autoStartWalkthrough: v.autoStartWalkthrough,
+            idleTimeoutMinutes: v.idleTimeoutMinutes,
+            idleWarningSeconds: v.idleWarningSeconds,
           });
           this.notify.success(
             this.i18n.translate('administration.bankSettings.savedToast'),

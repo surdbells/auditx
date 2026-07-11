@@ -53,6 +53,8 @@ describe('AdministrationService', () => {
         showWalkthrough: true,
         autoStartWalkthrough: true,
         reportRetentionMonths: 0,
+        idleTimeoutMinutes: 15,
+        idleWarningSeconds: 60,
       })
       .subscribe();
     const req = http.expectOne(`${BASE}/admin/bank-settings`);

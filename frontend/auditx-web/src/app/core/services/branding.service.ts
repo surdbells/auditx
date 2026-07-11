@@ -30,6 +30,9 @@ export class BrandingService {
   readonly showWalkthrough = signal(true);
   /** Admin-configured auto-start of the first-run walkthrough (default on). */
   readonly autoStartWalkthrough = signal(true);
+  /** Idle-logout policy (minutes to the warning, 0 = disabled; countdown seconds), read by IdleTimeoutService. */
+  readonly idleTimeoutMinutes = signal(15);
+  readonly idleWarningSeconds = signal(60);
 
   /** Fetches `/branding` and applies it. Never throws for callers that ignore the result. */
   load(): Observable<Branding> {
@@ -44,6 +47,8 @@ export class BrandingService {
     this.showOverview.set(branding.showOverview ?? true);
     this.showWalkthrough.set(branding.showWalkthrough ?? true);
     this.autoStartWalkthrough.set(branding.autoStartWalkthrough ?? true);
+    this.idleTimeoutMinutes.set(branding.idleTimeoutMinutes ?? 15);
+    this.idleWarningSeconds.set(branding.idleWarningSeconds ?? 60);
 
     const root = this.document.documentElement;
     this.applyColor(root, branding.primaryColor || DEFAULT_PRIMARY, 'primary', 'brand');

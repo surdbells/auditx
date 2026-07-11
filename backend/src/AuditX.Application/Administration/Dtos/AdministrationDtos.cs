@@ -17,14 +17,17 @@ public sealed record BankSettingsDto(
     bool ShowOverview,
     bool ShowWalkthrough,
     int ReportRetentionMonths,
-    bool AutoStartWalkthrough);
+    bool AutoStartWalkthrough,
+    int IdleTimeoutMinutes,
+    int IdleWarningSeconds);
 
 public sealed record ResourceLimitsDto(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
 
 /// <summary>Public branding surface served anonymously so the shell/login can theme before authentication.</summary>
 public sealed record BrandingDto(
     string OrganizationName, string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri,
-    bool ShowOverview, bool ShowWalkthrough, bool AutoStartWalkthrough);
+    bool ShowOverview, bool ShowWalkthrough, bool AutoStartWalkthrough,
+    int IdleTimeoutMinutes, int IdleWarningSeconds);
 
 public sealed record BulkOperationErrorDto(string Identifier, string Message);
 

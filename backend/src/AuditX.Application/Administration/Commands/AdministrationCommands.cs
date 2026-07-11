@@ -21,7 +21,8 @@ public sealed record UpdateBankSettingsCommand(
     string BankDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
     bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval,
     string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri,
-    bool ShowOverview, bool ShowWalkthrough, int ReportRetentionMonths, bool AutoStartWalkthrough)
+    bool ShowOverview, bool ShowWalkthrough, int ReportRetentionMonths, bool AutoStartWalkthrough,
+    int IdleTimeoutMinutes, int IdleWarningSeconds)
     : ICommand<BankSettingsDto>;
 
 public sealed class UpdateBankSettingsCommandValidator : AbstractValidator<UpdateBankSettingsCommand>
@@ -42,6 +43,15 @@ public sealed class UpdateBankSettingsCommandValidator : AbstractValidator<Updat
             .WithMessage("Logo must be a data:image/* URI under 512 KB.");
         RuleFor(x => x.IconDataUri).Must(BeValidImageDataUri).When(x => !string.IsNullOrWhiteSpace(x.IconDataUri))
             .WithMessage("Icon must be a data:image/* URI under 512 KB.");
+
+        // Mirror the domain guards so out-of-range values fail fast with a 422 instead of being silently ignored.
+        RuleFor(x => x.ReportRetentionMonths).InclusiveBetween(0, 600)
+            .WithMessage("Report retention must be between 0 (indefinite) and 600 months.");
+        RuleFor(x => x.IdleTimeoutMinutes).InclusiveBetween(0, 480)
+            .WithMessage("Idle timeout must be between 0 (disabled) and 480 minutes.");
+        // 20-second floor per WCAG 2.2.1 (Timing Adjustable): users must get at least 20s to extend the session.
+        RuleFor(x => x.IdleWarningSeconds).InclusiveBetween(20, 600)
+            .WithMessage("The idle warning countdown must be between 20 and 600 seconds.");
     }
 
     private static bool BeValidImageDataUri(string? value)
@@ -61,12 +71,15 @@ public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository set
         bank.SetAllowAuditLaunchBeforeApproval(command.AllowAuditLaunchBeforeApproval);
         bank.SetPageGuideVisibility(command.ShowOverview, command.ShowWalkthrough, command.AutoStartWalkthrough);
         bank.SetReportRetentionMonths(command.ReportRetentionMonths);
+        bank.SetIdleTimeout(command.IdleTimeoutMinutes, command.IdleWarningSeconds);
         bank.SetBranding(command.PrimaryColor, command.AccentColor, command.LogoDataUri, command.IconDataUri);
-        // Keep the audit payload metadata-only — the logo/icon data URIs are deliberately excluded.
+        // Keep the audit payload metadata-only — the logo/icon data URIs are deliberately excluded. Every policy
+        // field IS recorded so security-relevant changes (e.g. disabling the idle logout) stay attributable.
         audit.Record(AuditEventTypes.BankSettingsUpdated, AuditTargetTypes.BankSettings, bank.Id, after: new
         {
             bank.BankDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval,
-            bank.ShowOverview, bank.ShowWalkthrough,
+            bank.ShowOverview, bank.ShowWalkthrough, bank.AutoStartWalkthrough,
+            bank.ReportRetentionMonths, bank.IdleTimeoutMinutes, bank.IdleWarningSeconds,
             bank.PrimaryColor, bank.AccentColor, hasLogo = bank.LogoDataUri is not null, hasIcon = bank.IconDataUri is not null,
         });
         await unitOfWork.SaveChangesAsync(cancellationToken);

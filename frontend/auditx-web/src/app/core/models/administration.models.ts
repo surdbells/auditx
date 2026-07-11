@@ -22,6 +22,10 @@ export interface BankSettings {
   autoStartWalkthrough: boolean;
   /** Months a completed report is retained before its artefacts are expired; 0 = retain indefinitely. */
   reportRetentionMonths: number;
+  /** Minutes of inactivity before the idle warning appears; 0 = idle logout disabled. */
+  idleTimeoutMinutes: number;
+  /** Seconds the idle warning counts down before automatic sign-out. */
+  idleWarningSeconds: number;
 }
 
 export interface UpdateBankSettingsRequest {
@@ -40,6 +44,8 @@ export interface UpdateBankSettingsRequest {
   showWalkthrough: boolean;
   autoStartWalkthrough: boolean;
   reportRetentionMonths: number;
+  idleTimeoutMinutes: number;
+  idleWarningSeconds: number;
 }
 
 /** Public branding served anonymously from `/branding` — themes the shell before authentication. */
@@ -54,6 +60,9 @@ export interface Branding {
   showWalkthrough: boolean;
   /** Whether the walkthrough auto-starts on first visit to each page (admin-configured). */
   autoStartWalkthrough: boolean;
+  /** Idle-logout policy: minutes of inactivity before the warning (0 = disabled) + countdown seconds. */
+  idleTimeoutMinutes: number;
+  idleWarningSeconds: number;
 }
 
 export interface ResourceLimits {

@@ -12,7 +12,8 @@ public static class AdministrationMappings
         bank.MaxEvidenceFileMb, bank.MaxAuditEvidenceGb, bank.AllowOverlappingPlanPeriods,
         bank.AllowAuditLaunchBeforeApproval,
         bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri,
-        bank.ShowOverview, bank.ShowWalkthrough, bank.ReportRetentionMonths, bank.AutoStartWalkthrough);
+        bank.ShowOverview, bank.ShowWalkthrough, bank.ReportRetentionMonths, bank.AutoStartWalkthrough,
+        bank.IdleTimeoutMinutes, bank.IdleWarningSeconds);
 
     public static SupportChannelStatusDto ToStatusDto(this SupportChannelSession? session, DateTimeOffset nowUtc)
         => session is null

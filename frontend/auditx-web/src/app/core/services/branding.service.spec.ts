@@ -17,6 +17,8 @@ function branding(overrides: Partial<Branding> = {}): Branding {
     showOverview: true,
     showWalkthrough: true,
     autoStartWalkthrough: true,
+    idleTimeoutMinutes: 15,
+    idleWarningSeconds: 60,
     ...overrides,
   };
 }

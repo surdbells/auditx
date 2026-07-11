@@ -27,7 +27,8 @@ public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
             request.BankDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid,
             request.AllowOverlappingPlanPeriods, request.AllowAuditLaunchBeforeApproval,
             request.PrimaryColor, request.AccentColor, request.LogoDataUri, request.IconDataUri,
-            request.ShowOverview, request.ShowWalkthrough, request.ReportRetentionMonths, request.AutoStartWalkthrough), cancellationToken));
+            request.ShowOverview, request.ShowWalkthrough, request.ReportRetentionMonths, request.AutoStartWalkthrough,
+            request.IdleTimeoutMinutes, request.IdleWarningSeconds), cancellationToken));
 
     [RequirePermission(PermissionKeys.ConfigureLimits)]
     [HttpPatch("resource-limits")]

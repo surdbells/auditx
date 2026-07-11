@@ -77,6 +77,18 @@ public sealed class BankSettings : Entity
     /// </summary>
     public int ReportRetentionMonths { get; private set; }
 
+    /// <summary>
+    /// Minutes of user inactivity before the idle warning appears. 0 = idle logout disabled.
+    /// Bounded to 480 minutes (8 hours). Default 15 — a secure baseline for an audit platform.
+    /// </summary>
+    public int IdleTimeoutMinutes { get; private set; } = 15;
+
+    /// <summary>
+    /// Seconds the idle warning counts down before the user is signed out automatically.
+    /// Bounded to 20–600 seconds (the 20s floor keeps WCAG 2.2.1 "Timing Adjustable" satisfiable). Default 60.
+    /// </summary>
+    public int IdleWarningSeconds { get; private set; } = 60;
+
     public static BankSettings CreateDefault(string bankDisplayName) => new()
     {
         BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
@@ -117,6 +129,20 @@ public sealed class BankSettings : Entity
         if (months is >= 0 and <= 600)
         {
             ReportRetentionMonths = months;
+        }
+    }
+
+    /// <summary>Sets the idle-logout policy (minutes to the warning, 0 = disabled; warning countdown seconds). Out-of-range values are ignored.</summary>
+    public void SetIdleTimeout(int minutes, int warningSeconds)
+    {
+        if (minutes is >= 0 and <= 480)
+        {
+            IdleTimeoutMinutes = minutes;
+        }
+
+        if (warningSeconds is >= 20 and <= 600)
+        {
+            IdleWarningSeconds = warningSeconds;
         }
     }
 
