@@ -5,6 +5,7 @@ using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Reports.Dtos;
+using AuditX.Application.Reports.Mapping;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Audits;
 using AuditX.Domain.Common;
@@ -193,5 +194,55 @@ public sealed class DistributeReportCommandHandler(
             .Where(s => counts.TryGetValue(s, out var c) && c > 0)
             .Select(s => $"{counts[s]} {s.ToString().ToLowerInvariant()}");
         return string.Join(", ", parts);
+    }
+}
+
+// ---- Delivery-outcome confirmation (Pending → Delivered | Bounced) ----
+
+/// <summary>
+/// Confirm a distribution's delivery outcome. The on-prem SMTP relay gives no automatic bounce/read callbacks, so
+/// confirmation arrives out-of-band — a distributor acting on a bounce notice / recipient acknowledgement, or an
+/// email-provider integration calling the endpoint with a service account. A confirmed outcome is final.
+/// </summary>
+public sealed record RecordDistributionOutcomeCommand(Guid ReportId, Guid DistributionId, string Outcome)
+    : ICommand<ReportDistributionDto>;
+
+public sealed class RecordDistributionOutcomeCommandHandler(
+    IReportRepository reports, IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser,
+    IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    : ICommandHandler<RecordDistributionOutcomeCommand, ReportDistributionDto>
+{
+    public async Task<ReportDistributionDto> Handle(RecordDistributionOutcomeCommand command, CancellationToken cancellationToken)
+    {
+        var actorId = currentUser.UserId ?? throw new UnauthorizedException();
+
+        var report = await reports.GetByIdAsync(command.ReportId, cancellationToken)
+            ?? throw new NotFoundException("Report", command.ReportId);
+
+        // Same resource scope as distributing: engagement reports need team-or-manager; standalone needs analytics.
+        if (report.AuditId is { } auditId)
+        {
+            var auditEntity = await audits.GetByIdAsync(auditId, cancellationToken) ?? throw new NotFoundException("Audit", auditId);
+            await ReportAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        }
+        else
+        {
+            await ReportAccess.EnsureCanAccessStandaloneAsync(currentUser.UserId, permissions, cancellationToken, report.Kind);
+        }
+
+        var outcome = (command.Outcome ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "delivered" => DeliveryOutcome.Delivered,
+            "bounced" => DeliveryOutcome.Bounced,
+            _ => throw new DomainException("report.outcome_invalid", "The outcome must be delivered or bounced."),
+        };
+
+        var distribution = report.RecordDistributionOutcome(command.DistributionId, outcome, actorId, clock.UtcNow);
+
+        audit.Record(AuditEventTypes.ReportDeliveryOutcomeRecorded, AuditTargetTypes.Report, report.Id,
+            payload: new { distributionId = distribution.Id, outcome = outcome.ToString(), distribution.RecipientUserId, distribution.RecipientEmail });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return distribution.ToDto();
     }
 }

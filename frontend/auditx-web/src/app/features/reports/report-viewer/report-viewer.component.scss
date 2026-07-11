@@ -103,6 +103,13 @@
   width: 100%;
 }
 
+.viewer__outcome-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+
 .viewer__load-more {
   display: flex;
   justify-content: center;

@@ -17,6 +17,9 @@ public sealed record DistributeReportRequest(
     IReadOnlyList<Guid>? RecipientUserIds, IReadOnlyList<string>? RecipientEmailAddresses,
     IReadOnlyList<string>? RecipientRoleNames = null);
 
+/// <summary>Body for POST /reports/{id}/distributions/{distributionId}/outcome: <c>delivered</c> or <c>bounced</c>.</summary>
+public sealed record RecordDistributionOutcomeRequest(string Outcome);
+
 public sealed record CreateReportTemplateRequest(string Name, string TemplateDefinition);
 
 public sealed record ActivateReportTemplateRequest(string Reason);

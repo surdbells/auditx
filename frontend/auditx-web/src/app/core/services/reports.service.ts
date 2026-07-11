@@ -142,6 +142,18 @@ export class ReportsService {
     );
   }
 
+  /** Confirm a distribution's delivery outcome ('delivered' | 'bounced'). Final once recorded. */
+  recordDistributionOutcome(
+    reportId: string,
+    distributionId: string,
+    outcome: 'delivered' | 'bounced',
+  ): Observable<ReportDistribution> {
+    return this.api.post<ReportDistribution>(
+      `/reports/${reportId}/distributions/${distributionId}/outcome`,
+      { outcome },
+    );
+  }
+
   /* ---- Templates ---- */
 
   listTemplates(): Observable<ReportTemplate[]> {

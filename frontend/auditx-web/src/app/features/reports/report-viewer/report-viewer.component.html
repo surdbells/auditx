@@ -198,6 +198,26 @@
                   <span class="status-badge" [attr.data-status]="d.outcome">
                     {{ humanise(d.outcome) }}
                   </span>
+                  @if (canDistribute() && d.outcome === 'pending') {
+                    <span class="viewer__outcome-actions">
+                      <button
+                        matButton
+                        type="button"
+                        [disabled]="confirmingOutcomeId() === d.id"
+                        (click)="confirmOutcome(d, 'delivered')"
+                      >
+                        {{ 'reports.viewer.outcome.markDelivered' | t }}
+                      </button>
+                      <button
+                        matButton
+                        type="button"
+                        [disabled]="confirmingOutcomeId() === d.id"
+                        (click)="confirmOutcome(d, 'bounced')"
+                      >
+                        {{ 'reports.viewer.outcome.markBounced' | t }}
+                      </button>
+                    </span>
+                  }
                 </td>
               </ng-container>
 

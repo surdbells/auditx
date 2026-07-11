@@ -86,6 +86,14 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
     public async Task<IActionResult> Distributions(Guid id, [FromQuery] int? page, [FromQuery] int? pageSize, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ListReportDistributionsQuery(id, page, pageSize), cancellationToken));
 
+    /// <summary>Confirm a distribution's delivery outcome (delivered / bounced). Final once recorded.</summary>
+    [RequirePermission(PermissionKeys.DistributeReport)]
+    [HttpPost("api/v1/reports/{id:guid}/distributions/{distributionId:guid}/outcome")]
+    public async Task<IActionResult> RecordDistributionOutcome(
+        Guid id, Guid distributionId, [FromBody] RecordDistributionOutcomeRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(
+            new RecordDistributionOutcomeCommand(id, distributionId, request.Outcome), cancellationToken));
+
     /// <summary>Parses a standalone report kind, rejecting an unrecognised value or the engagement kind (400).</summary>
     private static ReportKind ParseStandaloneKind(string? value)
     {

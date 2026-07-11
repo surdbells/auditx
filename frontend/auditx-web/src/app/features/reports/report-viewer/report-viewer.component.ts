@@ -334,6 +334,25 @@ export class ReportViewerComponent {
     this.fetchDistributions(1);
   }
 
+  /* ---- Delivery-outcome confirmation ---- */
+
+  /** The distribution whose outcome is being confirmed (disables its buttons while in flight). */
+  readonly confirmingOutcomeId = signal<string | null>(null);
+
+  /** Confirm a pending distribution's outcome (delivered/bounced). Final once recorded. */
+  confirmOutcome(row: ReportDistribution, outcome: 'delivered' | 'bounced'): void {
+    this.confirmingOutcomeId.set(row.id);
+    this.service.recordDistributionOutcome(this.id(), row.id, outcome).subscribe({
+      next: (updated) => {
+        // Patch the row in place so the badge flips without losing the current page.
+        this.distributions.update((rows) => rows.map((d) => (d.id === updated.id ? updated : d)));
+        this.notify.success(this.i18n.translate('reports.viewer.outcome.recorded'));
+        this.confirmingOutcomeId.set(null);
+      },
+      error: () => this.confirmingOutcomeId.set(null),
+    });
+  }
+
   /* ---- Recipient name resolution ---- */
 
   recipientLabel(row: ReportDistribution): string {

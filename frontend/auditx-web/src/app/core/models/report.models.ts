@@ -82,6 +82,9 @@ export interface ReportDistribution {
   dispatchedAt: string;
   dispatchedBy: string;
   outcome: string;
+  /** When/who confirmed the outcome (null while pending). */
+  outcomeRecordedAt: string | null;
+  outcomeRecordedBy: string | null;
 }
 
 /** Stored-vs-recomputed integrity check on a report artefact. */

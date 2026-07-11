@@ -192,6 +192,18 @@ public sealed class Report : AggregateRoot, ISoftDeletable
     }
 
     /// <summary>
+    /// Confirm a distribution's delivery outcome (Pending → Delivered | Bounced). Routed through the aggregate
+    /// root so the mutation advances the report rowversion; a confirmed outcome is final.
+    /// </summary>
+    public ReportDistribution RecordDistributionOutcome(Guid distributionId, DeliveryOutcome outcome, Guid byUserId, DateTimeOffset atUtc)
+    {
+        var distribution = _distributions.FirstOrDefault(d => d.Id == distributionId)
+            ?? throw new DomainException("report.distribution_not_found", "The distribution does not exist on this report.");
+        distribution.RecordOutcome(outcome, byUserId, atUtc);
+        return distribution;
+    }
+
+    /// <summary>
     /// Raise the integrity alert when verify-on-read detects a hash mismatch (C1/C2). Does NOT mutate report
     /// content — it is an alert only — and the event payload carries Critical severity for the M10 override.
     /// </summary>

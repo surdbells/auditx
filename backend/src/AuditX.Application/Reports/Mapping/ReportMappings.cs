@@ -40,7 +40,7 @@ public static class ReportMappings
 
     public static ReportDistributionDto ToDto(this ReportDistribution d) => new(
         d.Id, d.ReportId, d.ReportVersionNumber, d.RecipientUserId, d.RecipientEmail,
-        d.DispatchedAt, d.DispatchedBy, d.Outcome.ToSnake());
+        d.DispatchedAt, d.DispatchedBy, d.Outcome.ToSnake(), d.OutcomeRecordedAt, d.OutcomeRecordedBy);
 
     public static ReportTemplateDto ToDto(this ReportTemplate t) => new(
         t.Id, t.Name, t.VersionNumber, t.TemplateDefinitionJson, t.IsActive, t.ActivationReason,

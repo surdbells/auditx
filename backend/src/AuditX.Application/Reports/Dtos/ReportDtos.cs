@@ -47,7 +47,9 @@ public sealed record ReportDistributionDto(
     string? RecipientEmail,
     DateTimeOffset DispatchedAt,
     Guid DispatchedBy,
-    string Outcome);
+    string Outcome,
+    DateTimeOffset? OutcomeRecordedAt,
+    Guid? OutcomeRecordedBy);
 
 /// <summary>Result of the verify-hash endpoint: stored vs recomputed, and whether they match.</summary>
 public sealed record ReportHashVerificationDto(string? StoredHash, string RecomputedHash, bool Match);

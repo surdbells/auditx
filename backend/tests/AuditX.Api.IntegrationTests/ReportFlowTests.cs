@@ -286,6 +286,57 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     [Fact]
+    public async Task Distribution_outcome_confirms_once_delivered_then_locks()
+    {
+        var admin = await LoginAsync("admin");
+        var auditId = await BuildReportableAuditAsync(admin);
+        var manager = await ReporterAsync(admin); // Audit Manager → DistributeReport + report scope (lead)
+
+        // Generate + distribute to a directory user; the row is recorded Pending (accepted by the relay).
+        var accepted = await manager.PostAsJsonAsync($"/api/v1/audits/{auditId}/reports", new { docx = false });
+        var reportId = JsonDocument.Parse(await accepted.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("data").GetProperty("reportId").GetGuid();
+        await NudgeGenerationAsync(reportId);
+        await PollUntilSettledAsync(manager, reportId);
+
+        var users = await UsersByEmailAsync(admin);
+        (await manager.PostAsJsonAsync($"/api/v1/reports/{reportId}/distribute", new
+        {
+            recipientUserIds = new[] { users["auditee@auditx.local"] },
+            recipientEmailAddresses = Array.Empty<string>(),
+        })).EnsureSuccessStatusCode();
+
+        var log = await DataAsync(await manager.GetAsync($"/api/v1/reports/{reportId}/distributions"));
+        var row = log.GetProperty("items").EnumerateArray().First();
+        var distributionId = row.GetProperty("id").GetGuid();
+        Assert.Equal("pending", row.GetProperty("outcome").GetString());
+        Assert.Equal(JsonValueKind.Null, row.GetProperty("outcomeRecordedAt").ValueKind);
+
+        // Confirm delivered → outcome flips with the confirmation evidence stamped.
+        var confirmed = await DataAsync(await manager.PostAsJsonAsync(
+            $"/api/v1/reports/{reportId}/distributions/{distributionId}/outcome", new { outcome = "delivered" }));
+        Assert.Equal("delivered", confirmed.GetProperty("outcome").GetString());
+        Assert.NotEqual(JsonValueKind.Null, confirmed.GetProperty("outcomeRecordedAt").ValueKind);
+        Assert.NotEqual(JsonValueKind.Null, confirmed.GetProperty("outcomeRecordedBy").ValueKind);
+
+        // A confirmed outcome is final — a second confirmation conflicts.
+        var again = await manager.PostAsJsonAsync(
+            $"/api/v1/reports/{reportId}/distributions/{distributionId}/outcome", new { outcome = "bounced" });
+        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+
+        // Confirming requires the DistributeReport permission.
+        var auditee = await LoginAsync("auditee");
+        var denied = await auditee.PostAsJsonAsync(
+            $"/api/v1/reports/{reportId}/distributions/{distributionId}/outcome", new { outcome = "delivered" });
+        Assert.Equal(HttpStatusCode.Forbidden, denied.StatusCode);
+
+        // An unknown outcome value is rejected as a business-rule violation.
+        var bad = await manager.PostAsJsonAsync(
+            $"/api/v1/reports/{reportId}/distributions/{distributionId}/outcome", new { outcome = "read" });
+        Assert.Equal(HttpStatusCode.UnprocessableContent, bad.StatusCode);
+    }
+
+    [Fact]
     public async Task Retention_policy_stamps_reports_then_the_job_expires_them_and_blocks_download()
     {
         var admin = await LoginAsync("admin");

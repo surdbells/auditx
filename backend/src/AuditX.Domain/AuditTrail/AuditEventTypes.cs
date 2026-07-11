@@ -214,6 +214,7 @@ public static class AuditEventTypes
     public const string ReportDistributed = "report_distributed";
     public const string ReportDownloaded = "report_downloaded";
     public const string ReportExpired = "report_expired";
+    public const string ReportDeliveryOutcomeRecorded = "report_delivery_outcome_recorded";
     public const string ReportShareLinkCreated = "report_share_link_created";
     public const string ReportShareLinkRevoked = "report_share_link_revoked";
     public const string ReportScheduleCreated = "report_schedule_created";
