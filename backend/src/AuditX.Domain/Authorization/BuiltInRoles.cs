@@ -53,35 +53,10 @@ public static class BuiltInRoles
 
     public static readonly BuiltInRoleDefinition Administrator = new(
         AdministratorName,
-        "Manages role assignments, custom roles, templates and bank-wide configuration; does not perform audit work.",
-        [
-            PermissionKeys.ManageUsers, PermissionKeys.ManageRoles, PermissionKeys.Delegate,
-            PermissionKeys.ViewAuditTrail, PermissionKeys.ExportAuditTrail, PermissionKeys.ViewConfig,
-            PermissionKeys.ManageConfiguration, PermissionKeys.ManageTemplates, PermissionKeys.ViewTemplates,
-            PermissionKeys.ManageUniverse, PermissionKeys.ViewUniverse, PermissionKeys.ScoreRisk,
-            PermissionKeys.ViewRisk, PermissionKeys.ManageRisk,
-            PermissionKeys.ViewControls, PermissionKeys.ManageControls,
-            PermissionKeys.ManagePlan, PermissionKeys.ViewPlan, PermissionKeys.ViewCoverage,
-            PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.CreateAudit, PermissionKeys.ManageAudit,
-            PermissionKeys.RespondItem, PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ManageEvidence,
-            PermissionKeys.LogTime, PermissionKeys.ViewTimeEntries,
-            PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException, PermissionKeys.SubmitMap,
-            PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException, PermissionKeys.Cia,
-            PermissionKeys.ReopenException, PermissionKeys.VerifyException,
-            PermissionKeys.ConfigureNotifications, PermissionKeys.ConfigureReports, PermissionKeys.ScheduleReports, PermissionKeys.ConfigureExceptionWorkflow,
-            // Bootstrap governance: the super-user can approve annual plans + read AC surfaces out of the box, so a
-            // fresh install can complete plan → approve → launch without first hand-assigning an Audit Committee Chair.
-            PermissionKeys.AcMember, PermissionKeys.AcChair,
-            PermissionKeys.ManageGrid, PermissionKeys.ViewGrid,
-            // The super-user sees the Insights workspace (analytics + standalone reports) out of the box.
-            // PerformanceAnalyticsView is deliberately NOT granted — it stays a specialised cohort permission.
-            PermissionKeys.ViewAnalytics,
-            PermissionKeys.ConfigureDashboards, PermissionKeys.ConfigurePredictive,
-            PermissionKeys.ViewIntegrations, PermissionKeys.ConfigureIntegrations, PermissionKeys.ViewIntegrationHealth, PermissionKeys.ConfigureWebhooks,
-            PermissionKeys.ViewBankSettings, PermissionKeys.ManageBankSettings, PermissionKeys.ViewSystemHealth,
-            PermissionKeys.ManageSupportChannel, PermissionKeys.ManageRetention, PermissionKeys.ExecRestore,
-            PermissionKeys.InstallReleases, PermissionKeys.ConfigureLimits, PermissionKeys.AdminOps,
-        ]);
+        "The super-user: holds every permission in the catalogue, including audit execution and all administration.",
+        // The AuditX Administrator is granted ALL permissions — the full catalogue, so nothing in the platform
+        // is ever gated away from the super-user. New permissions are picked up automatically as they are added.
+        [.. PermissionCatalogue.All.Select(p => p.Key)]);
 
     public static readonly IReadOnlyList<BuiltInRoleDefinition> All = [Auditor, AuditManager, Auditee, Administrator];
 }
