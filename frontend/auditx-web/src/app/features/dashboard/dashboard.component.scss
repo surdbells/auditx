@@ -76,13 +76,13 @@ a.kpi:hover {
   font-weight: 750;
   line-height: 1.05;
   letter-spacing: -0.02em;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
   font-variant-numeric: tabular-nums;
 }
 .kpi__label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--mat-sys-on-surface-variant);
   margin-top: 0.15rem;
 }
 .kpi__hint {
@@ -113,7 +113,7 @@ a.kpi:hover .kpi__go {
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
 }
 .panel__hint {
   margin: -0.6rem 0 0.9rem;
@@ -172,14 +172,14 @@ a.kpi:hover .kpi__go {
   transition: background-color 140ms ease, border-color 140ms ease;
 }
 .attention__row:hover {
-  background: #f8fafc;
-  border-color: #e2e8f0;
+  background: var(--mat-sys-surface-container);
+  border-color: var(--mat-sys-outline);
 }
 .attention__title {
   flex: 1 1 auto;
   min-width: 0;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -203,7 +203,7 @@ a.kpi:hover .kpi__go {
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
 }
 .dash__launch {
   display: grid;
@@ -239,6 +239,16 @@ a.kpi:hover .kpi__go {
   background: var(--accent-soft);
   border: 1px solid var(--accent-bd);
 }
+// On dark, derive the icon tint from the accent so the light --accent-soft/-bd
+// pastels don't read as bright chips on the dark canvas. Uses :host-context so
+// the ancestor [data-theme] selector survives component style encapsulation.
+:host-context([data-theme='dark']) .launch__icon {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+}
+:host-context([data-theme='dark']) a.kpi:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
 .launch__text {
   display: flex;
   flex-direction: column;
@@ -247,7 +257,7 @@ a.kpi:hover .kpi__go {
 }
 .launch__title {
   font-weight: 650;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
 }
 .launch__desc {
   font-size: 0.78rem;

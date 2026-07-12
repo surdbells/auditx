@@ -25,6 +25,7 @@ import { Permissions } from '../../core/permissions';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../../core/i18n/language-switcher.component';
 import { TextSizeComponent } from '../../core/theme/text-size.component';
+import { ThemeToggleComponent } from '../../core/theme/theme-toggle.component';
 import { GlobalSearchComponent } from './global-search.component';
 
 interface NavItem {
@@ -62,6 +63,7 @@ const COLLAPSE_KEY = 'auditx.nav.collapsed';
     TranslatePipe,
     LanguageSwitcherComponent,
     TextSizeComponent,
+    ThemeToggleComponent,
     GlobalSearchComponent,
   ],
   templateUrl: './main-layout.component.html',

@@ -1,5 +1,11 @@
-// Reusable status pill styling, driven by a [data-status] attribute.
-.status-badge {
+// Reusable status / severity pills, driven by [data-status] / [data-severity].
+//
+// Each coloured variant only sets a single `--badge-hue`; the shared base derives
+// the tinted background + readable ink from it, and a dark-theme rule re-derives
+// both so the pills stay legible on the dark canvas. Hues: green (good), red
+// (bad), orange (warning), blue (in-flight), grey (neutral/idle), purple (review).
+
+%badge {
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.6rem;
@@ -7,308 +13,113 @@
   font: var(--mat-sys-label-medium);
   font-weight: 500;
   white-space: nowrap;
-  background: var(--mat-sys-surface-variant);
-  color: var(--mat-sys-on-surface-variant);
+  // Neutral default; coloured variants override --badge-hue.
+  --badge-hue: var(--mat-sys-on-surface-variant);
+  background: color-mix(in srgb, var(--badge-hue) 15%, transparent);
+  color: color-mix(in srgb, var(--badge-hue) 78%, #000);
 }
 
-.status-badge[data-status='active'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
+.status-badge {
+  @extend %badge;
 }
 
-.status-badge[data-status='deactivated'] {
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
+.severity-badge {
+  @extend %badge;
+  text-transform: capitalize;
 }
 
-.status-badge[data-status='locked'] {
-  background: color-mix(in srgb, #ef6c00 18%, transparent);
-  color: #e65100;
+.overdue-badge {
+  @extend %badge;
+  --badge-hue: #c62828;
 }
 
-.status-badge[data-status='awaiting_role_assignment'] {
-  background: color-mix(in srgb, #1565c0 16%, transparent);
-  color: #0d47a1;
+// On dark, lift the ink toward white and deepen the tint so pills stay readable.
+html[data-theme='dark'] :is(.status-badge, .severity-badge, .overdue-badge) {
+  background: color-mix(in srgb, var(--badge-hue) 26%, transparent);
+  color: color-mix(in srgb, var(--badge-hue) 42%, #fff);
 }
 
-// Template lifecycle states.
-.status-badge[data-status='draft'] {
-  background: color-mix(in srgb, #616161 16%, transparent);
-  color: #424242;
-}
+// ---- Hue assignments ------------------------------------------------------
 
-.status-badge[data-status='published'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
-}
-
-.status-badge[data-status='archived'] {
-  background: color-mix(in srgb, #ef6c00 18%, transparent);
-  color: #e65100;
-}
-
-// Integration health states (serialized snake_case).
-.status-badge[data-status='healthy'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
-}
-
-.status-badge[data-status='degraded'] {
-  background: color-mix(in srgb, #ef6c00 18%, transparent);
-  color: #e65100;
-}
-
-.status-badge[data-status='failing'] {
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
-}
-
-// Webhook delivery statuses (serialized snake_case). `delivered`, `pending`,
-// `failed` and `dead_letter` reuse the M10 dispatch palette defined below.
-
-// Release install + restore outcome statuses.
+// Green — good / complete / verified / healthy.
+.status-badge[data-status='active'],
+.status-badge[data-status='published'],
+.status-badge[data-status='healthy'],
 .status-badge[data-status='Verified'],
 .status-badge[data-status='Installed'],
 .status-badge[data-status='Success'],
 .status-badge[data-status='Approved'],
-.status-badge[data-status='Executed'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
-}
-
-.status-badge[data-status='Rejected'] {
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
-}
-
-.status-badge[data-status='Requested'] {
-  background: color-mix(in srgb, #1565c0 16%, transparent);
-  color: #0d47a1;
-}
-
-// M3 — Annual plan lifecycle states.
-.status-badge[data-status='submitted'],
-.status-badge[data-status='revision_submitted'] {
-  background: color-mix(in srgb, #1565c0 16%, transparent);
-  color: #0d47a1;
-}
-
-.status-badge[data-status='revisions_requested'] {
-  background: color-mix(in srgb, #ef6c00 18%, transparent);
-  color: #e65100;
-}
-
-.status-badge[data-status='approved'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
-}
-
-.status-badge[data-status='closed'] {
-  background: color-mix(in srgb, #616161 16%, transparent);
-  color: #424242;
-}
-
-// M3 — Plan item statuses.
-.status-badge[data-status='planned'] {
-  background: color-mix(in srgb, #616161 16%, transparent);
-  color: #424242;
-}
-
-.status-badge[data-status='in_progress'] {
-  background: color-mix(in srgb, #1565c0 16%, transparent);
-  color: #0d47a1;
-}
-
-.status-badge[data-status='completed'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
-}
-
-.status-badge[data-status='deferred'] {
-  background: color-mix(in srgb, #ef6c00 18%, transparent);
-  color: #e65100;
-}
-
-// M4 — Audit lifecycle states (draft / planned / in_progress / completed
-// reuse the M3 palette above; the rest are defined here).
-.status-badge[data-status='under_review'] {
-  background: color-mix(in srgb, #6a1b9a 16%, transparent);
-  color: #4a148c;
-}
-
-.status-badge[data-status='cancelled'] {
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
-}
-
-// M4 — Checklist item states (not_started / in_progress reuse above).
-.status-badge[data-status='not_started'] {
-  background: color-mix(in srgb, #616161 16%, transparent);
-  color: #424242;
-}
-
-.status-badge[data-status='responded'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
-}
-
-// M6 — Exception lifecycle statuses (closed / cancelled / in_progress reuse
-// the palette above; the rest are defined here).
-.status-badge[data-status='open'] {
-  background: color-mix(in srgb, #1565c0 16%, transparent);
-  color: #0d47a1;
-}
-
-.status-badge[data-status='map_submitted'] {
-  background: color-mix(in srgb, #6a1b9a 16%, transparent);
-  color: #4a148c;
-}
-
-.status-badge[data-status='map_approved'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
-}
-
-.status-badge[data-status='map_rejected'] {
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
-}
-
-.status-badge[data-status='pending_closure'],
-.status-badge[data-status='pending_cia_approval'] {
-  background: color-mix(in srgb, #ef6c00 18%, transparent);
-  color: #e65100;
-}
-
-// M10 — Notification rule active/inactive states.
-.status-badge[data-status='inactive'] {
-  background: color-mix(in srgb, #616161 16%, transparent);
-  color: #424242;
-}
-
-// M10 — Notification template scope.
-.status-badge[data-status='system'] {
-  background: color-mix(in srgb, #616161 16%, transparent);
-  color: #424242;
-}
-
-.status-badge[data-status='bank'] {
-  background: color-mix(in srgb, #1565c0 16%, transparent);
-  color: #0d47a1;
-}
-
-// M10 — Notification dispatch statuses (serialized snake_case).
-.status-badge[data-status='delivered'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
-}
-
-.status-badge[data-status='pending'],
-.status-badge[data-status='dispatched'] {
-  background: color-mix(in srgb, #1565c0 16%, transparent);
-  color: #0d47a1;
-}
-
-.status-badge[data-status='bounced'],
-.status-badge[data-status='failed'] {
-  background: color-mix(in srgb, #ef6c00 18%, transparent);
-  color: #e65100;
-}
-
-.status-badge[data-status='dead_letter'] {
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
-}
-
-// P1-B — Control register status (active reuses the green 'active' above).
-.status-badge[data-status='retired'] {
-  background: color-mix(in srgb, #616161 16%, transparent);
-  color: #424242;
-}
-
-// P1-B — Control effectiveness (semantic good/warning/bad scale).
-.status-badge[data-status='effective'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
-}
-
-.status-badge[data-status='partially_effective'] {
-  background: color-mix(in srgb, #ef6c00 18%, transparent);
-  color: #e65100;
-}
-
-.status-badge[data-status='ineffective'] {
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
-}
-
-.status-badge[data-status='not_tested'] {
-  background: color-mix(in srgb, #616161 16%, transparent);
-  color: #424242;
-}
-
-// M6 — Exception severity pills, driven by a [data-severity] attribute.
-.severity-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font: var(--mat-sys-label-medium);
-  font-weight: 500;
-  text-transform: capitalize;
-  white-space: nowrap;
-  background: var(--mat-sys-surface-variant);
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.severity-badge[data-severity='low'] {
-  background: color-mix(in srgb, #616161 16%, transparent);
-  color: #424242;
-}
-
-.severity-badge[data-severity='medium'] {
-  background: color-mix(in srgb, #1565c0 16%, transparent);
-  color: #0d47a1;
-}
-
-.severity-badge[data-severity='high'] {
-  background: color-mix(in srgb, #ef6c00 18%, transparent);
-  color: #e65100;
-}
-
-.severity-badge[data-severity='critical'] {
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
-}
-
-// M6 — Overdue badge.
-.overdue-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font: var(--mat-sys-label-medium);
-  font-weight: 500;
-  white-space: nowrap;
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
-}
-
-// M8 — Report generation: `running` reuses the in-progress blue.
-.status-badge[data-status='running'] {
-  background: color-mix(in srgb, #1565c0 16%, transparent);
-  color: #0d47a1;
-}
-
-// M8 — Report hash-verification badge (stored vs recomputed).
+.status-badge[data-status='Executed'],
+.status-badge[data-status='approved'],
+.status-badge[data-status='completed'],
+.status-badge[data-status='responded'],
+.status-badge[data-status='map_approved'],
+.status-badge[data-status='delivered'],
+.status-badge[data-status='effective'],
 .status-badge[data-status='match'] {
-  background: color-mix(in srgb, #2e7d32 16%, transparent);
-  color: #1b5e20;
+  --badge-hue: #2e7d32;
 }
 
-.status-badge[data-status='mismatch'] {
-  background: color-mix(in srgb, #c62828 16%, transparent);
-  color: #b71c1c;
+// Red — bad / rejected / failed.
+.status-badge[data-status='deactivated'],
+.status-badge[data-status='failing'],
+.status-badge[data-status='Rejected'],
+.status-badge[data-status='map_rejected'],
+.status-badge[data-status='cancelled'],
+.status-badge[data-status='dead_letter'],
+.status-badge[data-status='ineffective'],
+.status-badge[data-status='mismatch'],
+.severity-badge[data-severity='critical'] {
+  --badge-hue: #c62828;
+}
+
+// Orange — warning / degraded / attention.
+.status-badge[data-status='locked'],
+.status-badge[data-status='archived'],
+.status-badge[data-status='degraded'],
+.status-badge[data-status='revisions_requested'],
+.status-badge[data-status='deferred'],
+.status-badge[data-status='pending_closure'],
+.status-badge[data-status='pending_cia_approval'],
+.status-badge[data-status='bounced'],
+.status-badge[data-status='failed'],
+.status-badge[data-status='partially_effective'],
+.severity-badge[data-severity='high'] {
+  --badge-hue: #ef6c00;
+}
+
+// Blue — in-flight / submitted / informational.
+.status-badge[data-status='awaiting_role_assignment'],
+.status-badge[data-status='Requested'],
+.status-badge[data-status='submitted'],
+.status-badge[data-status='revision_submitted'],
+.status-badge[data-status='in_progress'],
+.status-badge[data-status='open'],
+.status-badge[data-status='bank'],
+.status-badge[data-status='pending'],
+.status-badge[data-status='dispatched'],
+.status-badge[data-status='running'],
+.severity-badge[data-severity='medium'] {
+  --badge-hue: #1565c0;
+}
+
+// Grey — neutral / idle / draft.
+.status-badge[data-status='draft'],
+.status-badge[data-status='closed'],
+.status-badge[data-status='planned'],
+.status-badge[data-status='not_started'],
+.status-badge[data-status='inactive'],
+.status-badge[data-status='system'],
+.status-badge[data-status='retired'],
+.status-badge[data-status='not_tested'],
+.severity-badge[data-severity='low'] {
+  --badge-hue: #616161;
+}
+
+// Purple — under review.
+.status-badge[data-status='under_review'],
+.status-badge[data-status='map_submitted'] {
+  --badge-hue: #6a1b9a;
 }
 
 .muted {

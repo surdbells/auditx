@@ -7,7 +7,7 @@
 .layout__sidenav {
   width: 260px;
   border-right: 1px solid var(--mat-sys-outline-variant);
-  background: #ffffff;
+  background: var(--mat-sys-surface);
   overflow: hidden;
   // Material 3 gives the drawer a large default corner radius; force it square (the flat, rounded-corner-free rail).
   border-radius: 0;
@@ -76,18 +76,18 @@
   font-size: 1.1rem;
   font-weight: 750;
   letter-spacing: -0.02em;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
 }
 .nav__brand-sub {
   font-size: 0.58rem;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: var(--mat-sys-on-surface-variant);
 }
 .nav__collapse {
   flex: 0 0 auto;
-  color: #94a3b8;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 // ---- Dividers ----------------------------------------------------------
@@ -124,7 +124,7 @@
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: #9aa4b6;
+  color: var(--mat-sys-on-surface-variant);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -132,7 +132,7 @@
   font-size: 18px;
   width: 18px;
   height: 18px;
-  color: #b8c0cf;
+  color: var(--mat-sys-on-surface-variant);
   transform: rotate(-90deg);
   transition: transform 160ms ease;
 }
@@ -141,7 +141,7 @@
 }
 .nav__section-head:hover .nav__section-title,
 .nav__section-head:hover .nav__section-chevron {
-  color: #4f46e5;
+  color: var(--mat-sys-primary);
 }
 // Divider standing in for the section header on the collapsed rail.
 .nav__section-rule {
@@ -159,7 +159,7 @@
   height: 38px;
   padding: 0 0.65rem;
   border-radius: 0;
-  color: #475569;
+  color: var(--mat-sys-on-surface-variant);
   text-decoration: none;
   font-size: 0.855rem;
   font-weight: 500;
@@ -167,15 +167,15 @@
   transition: background-color 140ms ease, color 140ms ease;
 }
 .nav__item:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface);
 }
 .nav__item-icon {
   flex: 0 0 auto;
   font-size: 20px;
   width: 20px;
   height: 20px;
-  color: #94a3b8;
+  color: var(--mat-sys-on-surface-variant);
   transition: color 140ms ease;
 }
 .nav__label {
@@ -184,8 +184,8 @@
   text-overflow: ellipsis;
 }
 .nav__item--active {
-  background: #eef2ff;
-  color: #3730a3;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
   font-weight: 650;
 }
 .nav__item--active::before {
@@ -195,10 +195,10 @@
   top: 6px;
   bottom: 6px;
   width: 3px;
-  background: #4f46e5;
+  background: var(--mat-sys-primary);
 }
 .nav__item--active .nav__item-icon {
-  color: #4f46e5;
+  color: var(--mat-sys-primary);
 }
 
 // ---- Bottom profile ----------------------------------------------------
@@ -215,7 +215,7 @@
   transition: background-color 140ms ease;
 }
 .nav__profile:hover {
-  background: #f1f5f9;
+  background: var(--mat-sys-surface-container);
 }
 .nav__avatar {
   flex: 0 0 auto;
@@ -241,14 +241,14 @@
 .nav__profile-name {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .nav__profile-email {
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: var(--mat-sys-on-surface-variant);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -258,7 +258,7 @@
   font-size: 18px;
   width: 18px;
   height: 18px;
-  color: #94a3b8;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 // ---- Collapsed rail: hide text, centre icons ---------------------------
@@ -316,11 +316,11 @@
 }
 .profile-menu__name {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
 }
 .profile-menu__email {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 // ---- Topbar — frosted, sticky -----------------------------------------
@@ -337,14 +337,14 @@
   // Never let the column-flex parent squish the bar on short viewports.
   flex: 0 0 76px;
   gap: 1.5rem;
-  background: rgb(255 255 255 / 0.72);
+  background: color-mix(in srgb, var(--mat-sys-surface) 72%, transparent);
   backdrop-filter: saturate(1.4) blur(12px);
   border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 .layout__toolbar-title {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--mat-sys-on-surface-variant);
 }
 .layout__spacer {
   flex: 1 1 auto;

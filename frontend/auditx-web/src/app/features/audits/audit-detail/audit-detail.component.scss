@@ -137,7 +137,7 @@
   font-size: 0.92rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
 }
 .detail__section-count {
   flex: 0 0 auto;
@@ -270,7 +270,7 @@
 }
 .detail__fieldwork-title {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
 }
 .detail__fieldwork-sub {
   font-size: 0.82rem;
@@ -355,7 +355,7 @@
 .detail__timeline-event {
   margin: 0;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--mat-sys-on-surface);
 }
 .detail__timeline-row--reopen .detail__timeline-event {
   color: #be123c;
