@@ -13,7 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
@@ -73,7 +73,7 @@ interface SectionGroup {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatMenuModule,
     MatSelectModule,
     MatChipsModule,

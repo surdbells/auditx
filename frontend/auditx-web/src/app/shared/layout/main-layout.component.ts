@@ -10,7 +10,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../core/icons/icon.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavContainer, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -56,7 +56,7 @@ const COLLAPSE_KEY = 'auditx.nav.collapsed';
     RouterLinkActive,
     MatToolbarModule,
     MatSidenavModule,
-    MatIconModule,
+    IconComponent,
     MatButtonModule,
     MatMenuModule,
     MatTooltipModule,

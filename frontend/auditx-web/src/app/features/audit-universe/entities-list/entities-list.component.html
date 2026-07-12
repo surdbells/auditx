@@ -4,20 +4,20 @@
 >
   <div actions class="entities__header-actions">
     <a matButton routerLink="/audit-universe/org-units">
-      <mat-icon>account_tree</mat-icon>
+      <app-icon name="account_tree" />
       {{ 'universe.list.orgUnits' | t }}
     </a>
     <a matButton routerLink="/audit-universe/risk-dimensions">
-      <mat-icon>tune</mat-icon>
+      <app-icon name="tune" />
       {{ 'universe.list.riskDimensions' | t }}
     </a>
     @if (canManage()) {
       <button matButton type="button" (click)="bulkImport()">
-        <mat-icon>upload_file</mat-icon>
+        <app-icon name="upload_file" />
         {{ 'universe.actions.bulkImport' | t }}
       </button>
       <button matButton="filled" type="button" (click)="create()" data-guide="create">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'universe.actions.newEntity' | t }}
       </button>
     }
@@ -37,7 +37,7 @@
         [placeholder]="'universe.filter.entityNamePlaceholder' | t"
         autocomplete="off"
       />
-      <mat-icon matPrefix>search</mat-icon>
+      <app-icon matPrefix name="search" />
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -140,18 +140,18 @@
                   [matMenuTriggerFor]="rowMenu"
                   [attr.aria-label]="'universe.actions.actionsForAria' | t: { name: e.name }"
                 >
-                  <mat-icon>more_vert</mat-icon>
+                  <app-icon name="more_vert" />
                 </button>
                 <mat-menu #rowMenu="matMenu">
                   @if (canOpenEditor()) {
                     <button mat-menu-item type="button" (click)="open(e)">
-                      <mat-icon>open_in_new</mat-icon>
+                      <app-icon name="open_in_new" />
                       <span>{{ 'universe.actions.open' | t }}</span>
                     </button>
                   }
                   @if (canManage()) {
                     <button mat-menu-item type="button" (click)="archive(e, $event)">
-                      <mat-icon>archive</mat-icon>
+                      <app-icon name="archive" />
                       <span>{{ 'universe.actions.archive' | t }}</span>
                     </button>
                   }

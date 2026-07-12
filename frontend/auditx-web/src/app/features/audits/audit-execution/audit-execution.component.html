@@ -44,13 +44,13 @@
             <div class="exec__fail-actions">
               @if (canRaiseException()) {
                 <button matButton type="button" (click)="raiseException(item)">
-                  <mat-icon>report_problem</mat-icon>
+                  <app-icon name="report_problem" />
                   {{ 'audits.actions.raiseException' | t }}
                 </button>
               }
               @if (canManage()) {
                 <button matButton="filled" type="button" (click)="recordJudgement(item)">
-                  <mat-icon>gavel</mat-icon>
+                  <app-icon name="gavel" />
                   {{ 'audits.actions.recordJudgement' | t }}
                 </button>
               }
@@ -90,11 +90,11 @@
                 <span class="exec__rail-dot" [attr.data-state]="railState(item)" aria-hidden="true"></span>
                 <span class="exec__rail-label">{{ item.prompt }}</span>
                 @if (item.hasException) {
-                  <mat-icon
+                  <app-icon
                     class="exec__rail-flag"
                     [matTooltip]="'audits.exec.hasExceptionTooltip' | t"
                     [attr.aria-label]="'audits.exec.hasExceptionTooltip' | t"
-                  >report_problem</mat-icon>
+                   name="report_problem" />
                 }
               </button>
             }
@@ -112,11 +112,11 @@
             <div class="exec__detail-nav">
               <button matIconButton type="button" (click)="selectPrevious()" [disabled]="!hasPrevious()"
                 [attr.aria-label]="'audits.exec.prevItem' | t">
-                <mat-icon>arrow_upward</mat-icon>
+                <app-icon name="arrow_upward" />
               </button>
               <button matIconButton type="button" (click)="selectNext()" [disabled]="!hasNext()"
                 [attr.aria-label]="'audits.exec.nextItem' | t">
-                <mat-icon>arrow_downward</mat-icon>
+                <app-icon name="arrow_downward" />
               </button>
             </div>
           </div>
@@ -154,12 +154,12 @@
           <div class="exec__item-actions">
             @if (canRespond()) {
               <button matButton="filled" type="button" (click)="respond(item)">
-                <mat-icon>edit_note</mat-icon>
+                <app-icon name="edit_note" />
                 {{ 'audits.actions.respond' | t }}
               </button>
               @if (hasDraft(item.itemId)) {
                 <button matButton type="button" (click)="discardDraft(item)">
-                  <mat-icon>delete_sweep</mat-icon>
+                  <app-icon name="delete_sweep" />
                   {{ 'audits.actions.discardDraft' | t }}
                 </button>
               }
@@ -167,24 +167,24 @@
             <!-- Raise an exception directly on a failed item (auditors + reviewers). -->
             @if (canRaiseException() && item.verdict === 'fail' && !item.hasException) {
               <button matButton="tonal" type="button" class="exec__raise" (click)="raiseException(item)">
-                <mat-icon>report_problem</mat-icon>
+                <app-icon name="report_problem" />
                 {{ 'audits.actions.raiseException' | t }}
               </button>
             }
             @if (canManage() && !isReadOnly()) {
               <button matButton type="button" (click)="assign(item)">
-                <mat-icon>person</mat-icon>
+                <app-icon name="person" />
                 {{ 'audits.actions.assign' | t }}
               </button>
             }
             <button matButton type="button" (click)="showHistory(item)">
-              <mat-icon>history</mat-icon>
+              <app-icon name="history" />
               {{ 'audits.actions.history' | t }}
             </button>
             @if (hasNext()) {
               <button matButton type="button" class="exec__next" (click)="selectNext()">
                 {{ 'audits.exec.saveNext' | t }}
-                <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+                <app-icon iconPositionEnd name="arrow_forward" />
               </button>
             }
           </div>
@@ -198,7 +198,7 @@
                   <span class="exec__evidence-title">{{ 'audits.exec.evidenceTitle' | t }}</span>
                   @if (canUploadEvidence() && canRespond()) {
                     <button matButton type="button" (click)="fileInput.click()">
-                      <mat-icon>upload_file</mat-icon>
+                      <app-icon name="upload_file" />
                       {{ 'audits.actions.upload' | t }}
                     </button>
                     <input #fileInput type="file" hidden (change)="uploadEvidence(response.id, fileInput)" />
@@ -224,11 +224,11 @@
                         <div class="exec__file-actions">
                           <button matIconButton type="button" (click)="downloadEvidence(file)"
                             [attr.aria-label]="'audits.actions.downloadEvidenceAria' | t">
-                            <mat-icon>download</mat-icon>
+                            <app-icon name="download" />
                           </button>
                           @if (canManageEvidence()) {
                             <button matIconButton type="button" (click)="deleteEvidence(response.id, file)" aria-label="Delete evidence">
-                              <mat-icon>delete</mat-icon>
+                              <app-icon name="delete" />
                             </button>
                           }
                         </div>
@@ -259,10 +259,10 @@
         [attr.aria-label]="'audits.exec.scope.item' | t"
       >
         <mat-button-toggle value="item">
-          <mat-icon>link</mat-icon>{{ 'audits.exec.scope.item' | t }}
+          <app-icon name="link" />{{ 'audits.exec.scope.item' | t }}
         </mat-button-toggle>
         <mat-button-toggle value="audit">
-          <mat-icon>assignment</mat-icon>{{ 'audits.exec.scope.audit' | t }}
+          <app-icon name="assignment" />{{ 'audits.exec.scope.audit' | t }}
         </mat-button-toggle>
       </mat-button-toggle-group>
     </div>

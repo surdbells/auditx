@@ -4,12 +4,12 @@
 >
   <div actions class="risk-list__header-actions">
     <a matButton routerLink="/analytics/risk-heatmap">
-      <mat-icon>grid_on</mat-icon>
+      <app-icon name="grid_on" />
       {{ 'risk.list.heatmap' | t }}
     </a>
     @if (canManage()) {
       <button matButton="filled" type="button" (click)="create()" data-guide="register">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'risk.actions.register' | t }}
       </button>
     }
@@ -23,7 +23,7 @@
     <mat-form-field appearance="outline" class="risk-list__search">
       <mat-label>{{ 'common.search' | t }}</mat-label>
       <input matInput formControlName="search" autocomplete="off" />
-      <mat-icon matPrefix>search</mat-icon>
+      <app-icon matPrefix name="search" />
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>{{ 'risk.field.status' | t }}</mat-label>
@@ -106,29 +106,29 @@
               <td mat-cell *matCellDef="let r">
                 @if (canManage()) {
                   <button matIconButton type="button" [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'risk.actions.menuAria' | t: { title: r.title }">
-                    <mat-icon>more_vert</mat-icon>
+                    <app-icon name="more_vert" />
                   </button>
                   <mat-menu #rowMenu="matMenu">
                     <button mat-menu-item type="button" (click)="edit(r)">
-                      <mat-icon>edit</mat-icon><span>{{ 'risk.actions.edit' | t }}</span>
+                      <app-icon name="edit" /><span>{{ 'risk.actions.edit' | t }}</span>
                     </button>
                     @if (r.status !== 'mitigating' && r.status !== 'closed') {
                       <button mat-menu-item type="button" (click)="setStatus(r, 'mitigating')">
-                        <mat-icon>engineering</mat-icon><span>{{ 'risk.actions.markMitigating' | t }}</span>
+                        <app-icon name="engineering" /><span>{{ 'risk.actions.markMitigating' | t }}</span>
                       </button>
                     }
                     @if (r.status !== 'monitoring' && r.status !== 'closed') {
                       <button mat-menu-item type="button" (click)="setStatus(r, 'monitoring')">
-                        <mat-icon>visibility</mat-icon><span>{{ 'risk.actions.markMonitoring' | t }}</span>
+                        <app-icon name="visibility" /><span>{{ 'risk.actions.markMonitoring' | t }}</span>
                       </button>
                     }
                     @if (r.status !== 'closed') {
                       <button mat-menu-item type="button" (click)="setStatus(r, 'closed')">
-                        <mat-icon>check_circle</mat-icon><span>{{ 'risk.actions.close' | t }}</span>
+                        <app-icon name="check_circle" /><span>{{ 'risk.actions.close' | t }}</span>
                       </button>
                     }
                     <button mat-menu-item type="button" (click)="remove(r)">
-                      <mat-icon>delete</mat-icon><span>{{ 'risk.actions.delete' | t }}</span>
+                      <app-icon name="delete" /><span>{{ 'risk.actions.delete' | t }}</span>
                     </button>
                   </mat-menu>
                 }

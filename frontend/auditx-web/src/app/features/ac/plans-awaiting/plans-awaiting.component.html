@@ -40,7 +40,7 @@
             <div class="plans__body">
               <p class="plans__meta">{{ p.itemCount }} plan item(s).</p>
               <a matButton="outlined" [routerLink]="['/planning', p.id]">
-                <mat-icon>open_in_new</mat-icon>
+                <app-icon name="open_in_new" />
                 {{ canDecide() ? 'Review & decide' : 'Open plan' }}
               </a>
 

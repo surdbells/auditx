@@ -30,7 +30,7 @@
             </dl>
             <div class="support__actions">
               <button matButton type="button" class="support__revoke" (click)="revoke()">
-                <mat-icon>block</mat-icon>
+                <app-icon name="block" />
                 {{ 'administration.support.revokeAccess' | t }}
               </button>
             </div>
@@ -50,7 +50,7 @@
                 <mat-chip-row (removed)="removeEngineer(id)">
                   {{ id }}
                   <button matChipRemove [attr.aria-label]="'administration.support.removeEngineer' | t: { id: id }">
-                    <mat-icon>cancel</mat-icon>
+                    <app-icon name="cancel" />
                   </button>
                 </mat-chip-row>
               }

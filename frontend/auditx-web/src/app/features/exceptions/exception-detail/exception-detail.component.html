@@ -10,28 +10,28 @@
       <app-page-header [title]="e.title" [subtitle]="'exceptions.detail.subtitle' | t">
         <div actions class="detail__actions">
           <button matButton type="button" (click)="showHistory()">
-            <mat-icon>history</mat-icon>
+            <app-icon name="history" />
             {{ 'exceptions.action.history' | t }}
           </button>
           @if (canManageNow()) {
             <button matButton type="button" (click)="changeSeverity()">
-              <mat-icon>tune</mat-icon>
+              <app-icon name="tune" />
               {{ 'exceptions.action.changeSeverity' | t }}
             </button>
             <button matButton type="button" (click)="reassignOwner()">
-              <mat-icon>person</mat-icon>
+              <app-icon name="person" />
               {{ 'exceptions.action.reassignOwner' | t }}
             </button>
           }
           @if (canCancelNow()) {
             <button matButton type="button" (click)="cancel()">
-              <mat-icon>cancel</mat-icon>
+              <app-icon name="cancel" />
               {{ 'exceptions.action.cancel' | t }}
             </button>
           }
           @if (canReopenNow()) {
             <button matButton type="button" (click)="reopen()">
-              <mat-icon>replay</mat-icon>
+              <app-icon name="replay" />
               {{ 'exceptions.action.reopen' | t }}
             </button>
           }
@@ -142,11 +142,11 @@
           @if (canManage()) {
             <div class="detail__card-actions">
               <button matButton type="button" (click)="addControlLink()">
-                <mat-icon>add_link</mat-icon>
+                <app-icon name="add_link" />
                 {{ 'links.action.linkControl' | t }}
               </button>
               <button matButton type="button" (click)="addRegulationLink()">
-                <mat-icon>add_link</mat-icon>
+                <app-icon name="add_link" />
                 {{ 'links.action.linkRegulation' | t }}
               </button>
             </div>
@@ -163,7 +163,7 @@
                   <span class="detail__chip-label">{{ c.title }}</span>
                   @if (canManage()) {
                     <button matIconButton type="button" (click)="removeControlLink(c)" [attr.aria-label]="'links.action.unlink' | t: { name: c.code }">
-                      <mat-icon>close</mat-icon>
+                      <app-icon name="close" />
                     </button>
                   }
                 </li>
@@ -184,7 +184,7 @@
                   <span class="detail__chip-label">{{ r.name }}</span>
                   @if (canManage()) {
                     <button matIconButton type="button" (click)="removeRegulationLink(r)" [attr.aria-label]="'links.action.unlink' | t: { name: r.code }">
-                      <mat-icon>close</mat-icon>
+                      <app-icon name="close" />
                     </button>
                   }
                 </li>
@@ -203,11 +203,11 @@
           @if (canRecordResponse()) {
             <div class="detail__card-actions">
               <button matButton type="button" (click)="setResponseDueDate()">
-                <mat-icon>event</mat-icon>
+                <app-icon name="event" />
                 {{ 'exceptions.action.setResponseDue' | t }}
               </button>
               <button matButton type="button" (click)="recordManagementResponse()">
-                <mat-icon>rate_review</mat-icon>
+                <app-icon name="rate_review" />
                 {{ (e.managementResponseDecision ? 'exceptions.action.editResponse' : 'exceptions.action.recordResponse') | t }}
               </button>
             </div>
@@ -246,29 +246,29 @@
           <div class="detail__card-actions">
             @if (canSubmitMapNow()) {
               <button matButton="filled" type="button" (click)="submitMap()">
-                <mat-icon>playlist_add</mat-icon>
+                <app-icon name="playlist_add" />
                 {{ (e.status === 'map_rejected' ? 'exceptions.action.resubmitMap' : 'exceptions.action.submitMap') | t }}
               </button>
             }
             @if (canReviewMap()) {
               <button matButton="filled" type="button" (click)="approveMap()">
-                <mat-icon>check</mat-icon>
+                <app-icon name="check" />
                 {{ 'exceptions.action.approve' | t }}
               </button>
               <button matButton type="button" (click)="rejectMap()">
-                <mat-icon>close</mat-icon>
+                <app-icon name="close" />
                 {{ 'exceptions.action.reject' | t }}
               </button>
             }
             @if (canMarkMapComplete()) {
               <button matButton="filled" type="button" (click)="markMapComplete()">
-                <mat-icon>task_alt</mat-icon>
+                <app-icon name="task_alt" />
                 {{ 'exceptions.action.markMapComplete' | t }}
               </button>
             }
             @if (canReturnForEvidence()) {
               <button matButton type="button" (click)="returnForEvidence()">
-                <mat-icon>reply</mat-icon>
+                <app-icon name="reply" />
                 {{ 'exceptions.action.returnForEvidence' | t }}
               </button>
             }
@@ -298,7 +298,7 @@
                 <div class="detail__action-actions">
                   @if (canWorkActions() && action.status !== 'complete') {
                     <button matButton type="button" (click)="markActionComplete(action)">
-                      <mat-icon>done</mat-icon>
+                      <app-icon name="done" />
                       {{ 'exceptions.action.markComplete' | t }}
                     </button>
                   }
@@ -310,12 +310,12 @@
                     <div class="detail__evidence-head">
                       <span class="detail__evidence-title">{{ 'exceptions.detail.evidence' | t }}</span>
                       <button matButton type="button" (click)="loadEvidence(action)">
-                        <mat-icon>refresh</mat-icon>
+                        <app-icon name="refresh" />
                         {{ 'exceptions.action.load' | t }}
                       </button>
                       @if (canUploadEvidence() && !isReadOnly()) {
                         <button matButton type="button" (click)="fileInput.click()">
-                          <mat-icon>upload_file</mat-icon>
+                          <app-icon name="upload_file" />
                           {{ 'exceptions.action.upload' | t }}
                         </button>
                         <input
@@ -348,7 +348,7 @@
                               (click)="downloadEvidence(file)"
                               [attr.aria-label]="'exceptions.action.downloadEvidence' | t"
                             >
-                              <mat-icon>download</mat-icon>
+                              <app-icon name="download" />
                             </button>
                           </li>
                         }
@@ -370,7 +370,7 @@
             @if (canVerifyNow()) {
               <div class="detail__card-actions">
                 <button matButton type="button" (click)="addVerification()">
-                  <mat-icon>fact_check</mat-icon>
+                  <app-icon name="fact_check" />
                   {{ 'exceptions.action.addVerification' | t }}
                 </button>
               </div>
@@ -406,13 +406,13 @@
             <div class="detail__card-actions">
               @if (canCloseNow()) {
                 <button matButton="filled" type="button" (click)="close()">
-                  <mat-icon>lock</mat-icon>
+                  <app-icon name="lock" />
                   {{ 'exceptions.action.closeException' | t }}
                 </button>
               }
               @if (canCiaCountersign()) {
                 <button matButton="filled" type="button" (click)="ciaCountersign()">
-                  <mat-icon>verified</mat-icon>
+                  <app-icon name="verified" />
                   {{ 'exceptions.action.ciaCountersign' | t }}
                 </button>
               }

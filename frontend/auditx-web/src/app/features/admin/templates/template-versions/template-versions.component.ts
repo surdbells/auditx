@@ -10,7 +10,7 @@ import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TemplatesService } from '../../../../core/services/templates.service';
@@ -32,7 +32,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     DatePipe,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatFormFieldModule,
     MatSelectModule,
     TranslatePipe,

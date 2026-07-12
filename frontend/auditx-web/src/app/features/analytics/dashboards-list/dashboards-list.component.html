@@ -4,11 +4,11 @@
 >
   <div actions data-guide="actions">
     <a matButton routerLink="/analytics/recurrence-clusters">
-      <mat-icon>repeat</mat-icon>
+      <app-icon name="repeat" />
       {{ 'analytics.nav.recurrenceClusters' | t }}
     </a>
     <button matButton type="button" (click)="fetch()">
-      <mat-icon>refresh</mat-icon>
+      <app-icon name="refresh" />
       {{ 'analytics.actions.refresh' | t }}
     </button>
   </div>
@@ -50,7 +50,7 @@
                 <p class="dashboards__desc">{{ d.description }}</p>
               }
               <p class="dashboards__meta">
-                <mat-icon aria-hidden="true">widgets</mat-icon>
+                <app-icon aria-hidden="true" name="widgets" />
                 {{ d.widgetCount }}
                 {{ d.widgetCount === 1 ? ('analytics.list.widget' | t) : ('analytics.list.widgets' | t) }}
               </p>

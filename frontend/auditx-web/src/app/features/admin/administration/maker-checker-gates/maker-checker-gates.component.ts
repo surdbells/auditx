@@ -10,7 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { MakerCheckerService } from '../../../../core/services/maker-checker.service';
@@ -108,7 +108,7 @@ const DUAL_CONTROL_GUIDE: PageGuide = {
     MatSlideToggleModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatIconModule,
+    IconComponent,
     MatProgressBarModule,
     TranslatePipe,
     LoadingComponent,

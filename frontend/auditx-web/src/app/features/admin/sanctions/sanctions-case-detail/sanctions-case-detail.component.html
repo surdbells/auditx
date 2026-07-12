@@ -14,7 +14,7 @@
         <div actions class="detail__actions">
           @if (canGenerateDossier()) {
             <button matButton type="button" (click)="generateDossier()">
-              <mat-icon>description</mat-icon>
+              <app-icon name="description" />
               {{ 'sanctions.action.generateDossier' | t }}
             </button>
           }
@@ -78,13 +78,13 @@
           <div class="detail__card-actions">
             @if (canEditRecommendation()) {
               <button matButton type="button" (click)="recordRecommendation()">
-                <mat-icon>edit</mat-icon>
+                <app-icon name="edit" />
                 {{ c.recommendation ? ('sanctions.action.editRecommendation' | t) : ('sanctions.action.recommend' | t) }}
               </button>
             }
             @if (canSubmit()) {
               <button matButton="filled" type="button" (click)="submit()">
-                <mat-icon>send</mat-icon>
+                <app-icon name="send" />
                 {{ 'sanctions.action.submit' | t }}
               </button>
             }
@@ -143,13 +143,13 @@
                   type="button"
                   (click)="recordHrOutcome()"
                 >
-                  <mat-icon>how_to_reg</mat-icon>
+                  <app-icon name="how_to_reg" />
                   {{ 'sanctions.action.recordHrOutcome' | t }}
                 </button>
               }
               @if (canReferToDcNow()) {
                 <button matButton type="button" (click)="referToDc()">
-                  <mat-icon>forward</mat-icon>
+                  <app-icon name="forward" />
                   {{ 'sanctions.action.referToDc' | t }}
                 </button>
               }
@@ -159,7 +159,7 @@
                   type="button"
                   (click)="recordDcDecision()"
                 >
-                  <mat-icon>balance</mat-icon>
+                  <app-icon name="balance" />
                   {{ 'sanctions.action.recordDcDecision' | t }}
                 </button>
               }
@@ -203,7 +203,7 @@
             <div class="detail__card-actions">
               @if (canFileAppealNow()) {
                 <button matButton type="button" (click)="fileAppeal()">
-                  <mat-icon>gavel</mat-icon>
+                  <app-icon name="gavel" />
                   {{ 'sanctions.action.fileAppeal' | t }}
                 </button>
               }
@@ -213,13 +213,13 @@
                   type="button"
                   (click)="decideAppeal()"
                 >
-                  <mat-icon>rule</mat-icon>
+                  <app-icon name="rule" />
                   {{ 'sanctions.action.decideAppeal' | t }}
                 </button>
               }
               @if (canCloseNow()) {
                 <button matButton="filled" type="button" (click)="close()">
-                  <mat-icon>lock</mat-icon>
+                  <app-icon name="lock" />
                   {{ 'sanctions.action.closeCase' | t }}
                 </button>
               }

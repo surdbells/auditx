@@ -5,7 +5,7 @@
     [matMenuTriggerFor]="menu"
     [attr.aria-label]="'savedViews.menuAria' | t"
   >
-    <mat-icon>bookmarks</mat-icon>
+    <app-icon name="bookmarks" />
     {{ 'savedViews.button' | t }}
     @if (views().length) {
       <span class="svb__count">{{ views().length }}</span>
@@ -19,7 +19,7 @@
       @for (v of views(); track v.id) {
         <div class="svb__item">
           <button mat-menu-item type="button" class="svb__apply" (click)="apply(v)">
-            <mat-icon>{{ v.isShared ? 'groups' : 'bookmark' }}</mat-icon>
+            <app-icon [name]="v.isShared ? 'groups' : 'bookmark'" />
             <span class="svb__name">{{ v.name }}</span>
             @if (v.isShared && !v.isOwner) {
               <span class="svb__tag">{{ 'savedViews.sharedTag' | t }}</span>
@@ -33,7 +33,7 @@
               [matTooltip]="'savedViews.actions.delete' | t"
               (click)="remove(v, $event)"
             >
-              <mat-icon>delete</mat-icon>
+              <app-icon name="delete" />
             </button>
           }
         </div>
@@ -41,7 +41,7 @@
     }
     <div class="svb__divider"></div>
     <button mat-menu-item type="button" (click)="saveCurrent()">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       <span>{{ 'savedViews.saveCurrent' | t }}</span>
     </button>
   </mat-menu>

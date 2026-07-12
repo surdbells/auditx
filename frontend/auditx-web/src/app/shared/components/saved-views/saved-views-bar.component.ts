@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -32,7 +32,7 @@ import {
 @Component({
   selector: 'app-saved-views-bar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatMenuModule, MatIconModule, MatTooltipModule, TranslatePipe],
+  imports: [MatButtonModule, MatMenuModule, IconComponent, MatTooltipModule, TranslatePipe],
   templateUrl: './saved-views-bar.component.html',
   styleUrl: './saved-views-bar.component.scss',
 })

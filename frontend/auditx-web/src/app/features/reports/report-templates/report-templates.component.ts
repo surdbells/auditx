@@ -9,7 +9,7 @@ import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatTableModule } from '@angular/material/table';
 
 import { ReportsService } from '../../../core/services/reports.service';
@@ -72,7 +72,7 @@ const REPORT_TEMPLATES_GUIDE: PageGuide = {
     MatCardModule,
     MatTableModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,

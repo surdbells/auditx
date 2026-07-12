@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
@@ -79,7 +79,7 @@ interface MetricOption {
     MatButtonToggleModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
     LineChartComponent,
     LoadingComponent,

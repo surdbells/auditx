@@ -19,7 +19,7 @@
       "
     >
       <button actions matButton="outlined" type="button" (click)="cancel()">
-        <mat-icon>arrow_back</mat-icon>
+        <app-icon name="arrow_back" />
         {{ 'identity.actions.back' | t }}
       </button>
     </app-page-header>
@@ -28,7 +28,7 @@
 
     @if (isReadOnly()) {
       <div class="editor__readonly-banner" role="note">
-        <mat-icon aria-hidden="true">lock</mat-icon>
+        <app-icon aria-hidden="true" name="lock" />
         {{ 'identity.roleEditor.readOnlyBanner' | t }}
       </div>
     }

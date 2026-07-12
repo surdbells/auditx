@@ -12,7 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
@@ -50,7 +50,7 @@ const ACTIONABLE = new Set(['planned', 'in_progress', 'under_review']);
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatMenuModule,
     MatTooltipModule,
     TranslatePipe,

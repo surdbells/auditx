@@ -1,11 +1,11 @@
 @if (canManage()) {
   <div class="templates__toolbar">
     <button matButton="filled" type="button" (click)="createBankTemplate()">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       {{ 'notifications.templates.new' | t }}
     </button>
     <button matButton type="button" (click)="fetch()">
-      <mat-icon>refresh</mat-icon>
+      <app-icon name="refresh" />
       {{ 'notifications.actions.refresh' | t }}
     </button>
   </div>
@@ -73,12 +73,12 @@
                 @if (canManage()) {
                   @if (t.scope === 'system') {
                     <button matButton type="button" (click)="override(t)">
-                      <mat-icon>edit_note</mat-icon>
+                      <app-icon name="edit_note" />
                       {{ 'notifications.actions.override' | t }}
                     </button>
                   } @else {
                     <button matButton type="button" (click)="override(t)">
-                      <mat-icon>edit</mat-icon>
+                      <app-icon name="edit" />
                       {{ 'notifications.actions.edit' | t }}
                     </button>
                   }

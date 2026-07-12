@@ -1,11 +1,11 @@
 @if (canManage()) {
   <div class="rules__toolbar">
     <button matButton="filled" type="button" (click)="create()">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       {{ 'notifications.rules.create' | t }}
     </button>
     <button matButton type="button" (click)="fetch()">
-      <mat-icon>refresh</mat-icon>
+      <app-icon name="refresh" />
       {{ 'notifications.actions.refresh' | t }}
     </button>
   </div>
@@ -77,17 +77,17 @@
               <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'notifications.column.actions' | t"></th>
               <td mat-cell *matCellDef="let r" class="rules__actions">
                 <button matButton type="button" (click)="preview(r)">
-                  <mat-icon>visibility</mat-icon>
+                  <app-icon name="visibility" />
                   {{ 'notifications.actions.preview' | t }}
                 </button>
                 @if (canManage()) {
                   <button matButton type="button" (click)="edit(r)">
-                    <mat-icon>edit</mat-icon>
+                    <app-icon name="edit" />
                     {{ 'notifications.actions.edit' | t }}
                   </button>
                   @if (r.isActive) {
                     <button matButton type="button" (click)="deactivate(r)">
-                      <mat-icon>block</mat-icon>
+                      <app-icon name="block" />
                       {{ 'notifications.actions.deactivate' | t }}
                     </button>
                   }

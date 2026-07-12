@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../icons/icon.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -15,7 +15,7 @@ import { TranslatePipe } from './translate.pipe';
   imports: [
     UpperCasePipe,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatMenuModule,
     MatTooltipModule,
     TranslatePipe,
@@ -37,14 +37,14 @@ import { TranslatePipe } from './translate.pipe';
       [attr.aria-label]="'language.label' | t"
       [matTooltip]="'language.label' | t"
     >
-      <mat-icon>language</mat-icon>
+      <app-icon name="language" />
       <span class="lang-switch__code">{{ translation.lang() | uppercase }}</span>
-      <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+      <app-icon iconPositionEnd name="arrow_drop_down" />
     </button>
     <mat-menu #menu="matMenu">
       @for (option of translation.available; track option.code) {
         <button mat-menu-item type="button" (click)="translation.use(option.code)">
-          <mat-icon>{{ translation.lang() === option.code ? 'check' : 'language' }}</mat-icon>
+          <app-icon [name]="translation.lang() === option.code ? 'check' : 'language'" />
           <span>{{ option.label }}</span>
         </button>
       }

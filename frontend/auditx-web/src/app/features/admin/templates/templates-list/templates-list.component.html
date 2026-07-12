@@ -4,7 +4,7 @@
 >
   @if (canManage()) {
     <button actions matButton="filled" type="button" (click)="createTemplate()" data-guide="create">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       {{ 'templatesAdmin.list.newTemplate' | t }}
     </button>
   }
@@ -23,7 +23,7 @@
         [placeholder]="'templatesAdmin.list.searchPlaceholder' | t"
         autocomplete="off"
       />
-      <mat-icon matPrefix>search</mat-icon>
+      <app-icon matPrefix name="search" />
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -114,26 +114,26 @@
                   [matMenuTriggerFor]="rowMenu"
                   [attr.aria-label]="'templatesAdmin.list.actionsFor' | t: { name: t.name }"
                 >
-                  <mat-icon>more_vert</mat-icon>
+                  <app-icon name="more_vert" />
                 </button>
                 <mat-menu #rowMenu="matMenu">
                   <a mat-menu-item [routerLink]="['/admin/templates', t.id]">
-                    <mat-icon>open_in_new</mat-icon>
+                    <app-icon name="open_in_new" />
                     <span>{{ 'templatesAdmin.action.open' | t }}</span>
                   </a>
                   @if (canManage()) {
                     <button mat-menu-item type="button" (click)="clone(t, $event)">
-                      <mat-icon>content_copy</mat-icon>
+                      <app-icon name="content_copy" />
                       <span>{{ 'templatesAdmin.action.clone' | t }}</span>
                     </button>
                     @if (t.status === 'archived') {
                       <button mat-menu-item type="button" (click)="unarchive(t, $event)">
-                        <mat-icon>unarchive</mat-icon>
+                        <app-icon name="unarchive" />
                         <span>{{ 'templatesAdmin.action.unarchive' | t }}</span>
                       </button>
                     } @else {
                       <button mat-menu-item type="button" (click)="archive(t, $event)">
-                        <mat-icon>archive</mat-icon>
+                        <app-icon name="archive" />
                         <span>{{ 'templatesAdmin.action.archive' | t }}</span>
                       </button>
                     }

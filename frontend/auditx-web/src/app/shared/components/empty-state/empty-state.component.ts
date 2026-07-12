@@ -5,17 +5,17 @@ import {
   output,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-empty-state',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [MatButtonModule, IconComponent, TranslatePipe],
   template: `
     <div class="empty">
-      <mat-icon class="empty__icon" aria-hidden="true">{{ icon() }}</mat-icon>
+      <app-icon class="empty__icon" aria-hidden="true" [name]="icon()" />
       <h3 class="empty__title">{{ title() | t }}</h3>
       @if (message()) {
         <p class="empty__message">{{ message() | t }}</p>

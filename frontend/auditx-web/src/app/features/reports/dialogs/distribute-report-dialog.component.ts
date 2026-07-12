@@ -13,7 +13,7 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
@@ -43,7 +43,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     MatSelectModule,
     MatChipsModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
   ],
   template: `
@@ -79,7 +79,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               <mat-chip-row (removed)="removeEmail(email)">
                 {{ email }}
                 <button matChipRemove [attr.aria-label]="'reports.dialog.distribute.removeEmail' | t: { email: email }">
-                  <mat-icon>cancel</mat-icon>
+                  <app-icon name="cancel" />
                 </button>
               </mat-chip-row>
             }

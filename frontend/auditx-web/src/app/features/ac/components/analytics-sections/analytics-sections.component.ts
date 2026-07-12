@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -41,7 +41,7 @@ import {
   imports: [
     DatePipe,
     MatCardModule,
-    MatIconModule,
+    IconComponent,
     MatTableModule,
     MatTooltipModule,
     BarChartComponent,

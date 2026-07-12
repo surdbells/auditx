@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -12,7 +12,7 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 @Component({
   selector: 'app-awaiting-role',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatCardModule, MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [MatCardModule, MatButtonModule, IconComponent, TranslatePipe],
   templateUrl: './awaiting-role.component.html',
   styleUrl: './awaiting-role.component.scss',
 })

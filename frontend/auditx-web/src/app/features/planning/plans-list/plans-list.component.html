@@ -4,7 +4,7 @@
 >
   @if (canManage()) {
     <button actions matButton="filled" type="button" (click)="create()" data-guide="create">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       {{ 'planning.list.newPlan' | t }}
     </button>
   }

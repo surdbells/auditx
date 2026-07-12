@@ -18,25 +18,25 @@
         <div actions class="detail__actions">
           @if (canSubmit()) {
             <button matButton="filled" type="button" (click)="submit()">
-              <mat-icon>send</mat-icon>
+              <app-icon name="send" />
               {{ 'planning.detail.submit' | t }}
             </button>
           }
           @if (canSubmitRevision()) {
             <button matButton type="button" (click)="submitRevision()">
-              <mat-icon>edit_calendar</mat-icon>
+              <app-icon name="edit_calendar" />
               {{ 'planning.detail.submitRevision' | t }}
             </button>
           }
           @if (canDecideNow()) {
             <button matButton="filled" type="button" (click)="decide()">
-              <mat-icon>gavel</mat-icon>
+              <app-icon name="gavel" />
               {{ 'planning.detail.decision' | t }}
             </button>
           }
           @if (canClose()) {
             <button matButton type="button" (click)="close()">
-              <mat-icon>lock</mat-icon>
+              <app-icon name="lock" />
               {{ 'planning.detail.close' | t }}
             </button>
           }
@@ -126,7 +126,7 @@
           @if (exec.behindSchedule.length) {
             <div class="detail__behind">
               <h4 class="detail__behind-title">
-                <mat-icon class="detail__behind-icon">warning</mat-icon>
+                <app-icon class="detail__behind-icon" name="warning" />
                 {{ 'planning.detail.behindSchedule' | t: { count: exec.behindSchedule.length } }}
               </h4>
               <ul class="detail__behind-list">
@@ -161,7 +161,7 @@
           <h3 class="detail__card-title">{{ 'planning.detail.planItems' | t }}</h3>
           @if (canManage() && isEditable()) {
             <button matButton="filled" type="button" (click)="addItem()">
-              <mat-icon>add</mat-icon>
+              <app-icon name="add" />
               {{ 'planning.common.addItem' | t }}
             </button>
           }
@@ -191,7 +191,7 @@
                     [attr.aria-label]="'planning.detail.dragToReorder' | t"
                     [matTooltip]="'planning.detail.dragToReorder' | t"
                   >
-                    <mat-icon>drag_indicator</mat-icon>
+                    <app-icon name="drag_indicator" />
                   </button>
                 </td>
               </ng-container>
@@ -243,7 +243,7 @@
                       (click)="openLinkedAudit(i)"
                       [matTooltip]="'planning.detail.openAuditTip' | t"
                     >
-                      <mat-icon>open_in_new</mat-icon>
+                      <app-icon name="open_in_new" />
                       {{ 'planning.detail.openAudit' | t }}
                     </button>
                   } @else if (canCreateAudit()) {
@@ -264,7 +264,7 @@
                         (click)="launchAudit(i)"
                         [disabled]="!canLaunchAudits()"
                       >
-                        <mat-icon>rocket_launch</mat-icon>
+                        <app-icon name="rocket_launch" />
                         {{ 'planning.detail.launchAudit' | t }}
                       </button>
                     </span>
@@ -276,7 +276,7 @@
                       (click)="removeItem(i)"
                       [attr.aria-label]="'planning.detail.removeItemAria' | t: { type: refLookup.label('audit_type', i.auditType) }"
                     >
-                      <mat-icon>delete</mat-icon>
+                      <app-icon name="delete" />
                     </button>
                   }
                 </td>

@@ -18,7 +18,7 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 
 import { CreateWebhookSubscriptionRequest } from '../../../../core/models';
@@ -47,7 +47,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatInputModule,
     MatChipsModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
   ],
   templateUrl: './webhook-subscription-dialog.component.html',

@@ -11,7 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -108,7 +108,7 @@ const REFERENCE_DATA_GUIDE: PageGuide = {
     MatTableModule,
     MatButtonModule,
     MatButtonToggleModule,
-    MatIconModule,
+    IconComponent,
     MatSlideToggleModule,
     MatTooltipModule,
     LoadingComponent,

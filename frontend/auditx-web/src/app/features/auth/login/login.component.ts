@@ -13,7 +13,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
@@ -31,7 +31,7 @@ import { LanguageSwitcherComponent } from '../../../core/i18n/language-switcher.
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatProgressBarModule,
     TranslatePipe,
     LanguageSwitcherComponent,

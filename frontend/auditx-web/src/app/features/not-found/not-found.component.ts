@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../core/icons/icon.component';
 
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-not-found',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [RouterLink, MatButtonModule, IconComponent, TranslatePipe],
   template: `
     <div class="nf">
       <div class="nf__code">404</div>
@@ -17,7 +17,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
         {{ 'account.notFound.message' | t }}
       </p>
       <a matButton="filled" routerLink="/dashboard">
-        <mat-icon>home</mat-icon>
+        <app-icon name="home" />
         {{ 'account.notFound.back' | t }}
       </a>
     </div>

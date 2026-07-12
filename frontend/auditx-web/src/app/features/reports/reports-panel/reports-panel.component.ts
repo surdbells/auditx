@@ -13,7 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -58,7 +58,7 @@ const DEFAULT_PAGE_SIZE = 25;
     MatTableModule,
     MatButtonModule,
     MatCheckboxModule,
-    MatIconModule,
+    IconComponent,
     MatProgressSpinnerModule,
     MatTooltipModule,
     LoadingComponent,

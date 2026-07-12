@@ -4,7 +4,7 @@
 >
   @if (canManage()) {
     <button actions matButton="filled" type="button" (click)="create()">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       {{ 'universe.dims.newDimension' | t }}
     </button>
   }
@@ -85,7 +85,7 @@
                     (click)="edit(d)"
                     [attr.aria-label]="'universe.actions.editAria' | t: { name: d.name }"
                   >
-                    <mat-icon>edit</mat-icon>
+                    <app-icon name="edit" />
                   </button>
                 }
               </td>

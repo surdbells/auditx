@@ -13,7 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
@@ -127,7 +127,7 @@ const MIN_REASON = 20;
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
-    MatIconModule,
+    IconComponent,
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,

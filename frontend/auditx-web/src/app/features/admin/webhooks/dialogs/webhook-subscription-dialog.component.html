@@ -21,7 +21,7 @@
           <mat-chip-row (removed)="removeEventType(type)">
             {{ type }}
             <button matChipRemove [attr.aria-label]="'integrations.subscriptionDialog.eventTypes.remove' | t: { type: type }">
-              <mat-icon>cancel</mat-icon>
+              <app-icon name="cancel" />
             </button>
           </mat-chip-row>
         }

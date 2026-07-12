@@ -73,13 +73,11 @@
               <th mat-header-cell *matHeaderCellDef>{{ 'sanctions.field.recurrence' | t }}</th>
               <td mat-cell *matCellDef="let c">
                 @if (c.isRecurrence) {
-                  <mat-icon
+                  <app-icon
                     class="sanctions__recurrence"
                     [matTooltip]="'sanctions.field.recurrence' | t"
                     [attr.aria-label]="'sanctions.field.recurrence' | t"
-                  >
-                    repeat
-                  </mat-icon>
+                   name="repeat" />
                 } @else {
                   —
                 }

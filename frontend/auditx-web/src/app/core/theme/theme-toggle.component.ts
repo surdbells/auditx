@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../icons/icon.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -13,7 +13,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatMenuModule,
     MatTooltipModule,
     TranslatePipe,
@@ -26,7 +26,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       [attr.aria-label]="'theme.label' | t"
       [matTooltip]="'theme.label' | t"
     >
-      <mat-icon>{{ theme.resolved() === 'dark' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+      <app-icon [name]="theme.resolved() === 'dark' ? 'dark_mode' : 'light_mode'" />
     </button>
     <mat-menu #menu="matMenu">
       <div class="theme-toggle__heading" mat-menu-item disabled>
@@ -34,7 +34,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       </div>
       @for (option of theme.available; track option.code) {
         <button mat-menu-item type="button" (click)="theme.use(option.code)">
-          <mat-icon>{{ theme.preference() === option.code ? 'check' : option.icon }}</mat-icon>
+          <app-icon [name]="theme.preference() === option.code ? 'check' : option.icon" />
           <span>{{ option.labelKey | t }}</span>
         </button>
       }

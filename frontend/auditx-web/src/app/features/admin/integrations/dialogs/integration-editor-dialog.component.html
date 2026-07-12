@@ -41,7 +41,7 @@
       @if (hasStoredCredentials && !editingCredentials()) {
         <div class="credentials__row">
           <span class="credentials__status">
-            <mat-icon aria-hidden="true">lock</mat-icon>
+            <app-icon aria-hidden="true" name="lock" />
             {{ 'integrations.editor.credentials.configured' | t }}
           </span>
           <button matButton type="button" (click)="startEditingCredentials()">

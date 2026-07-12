@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { RouterLink } from '@angular/router';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -87,7 +87,7 @@ const DASHBOARDS_GUIDE: PageGuide = {
     RouterLink,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,

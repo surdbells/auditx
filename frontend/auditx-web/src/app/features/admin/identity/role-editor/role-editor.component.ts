@@ -18,7 +18,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -134,7 +134,7 @@ const ROLE_EDITOR_GUIDE: PageGuide = {
     MatCheckboxModule,
     MatExpansionModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatTooltipModule,
     LoadingComponent,
     ErrorStateComponent,

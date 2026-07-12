@@ -4,17 +4,17 @@
 >
   <div actions>
     <a matButton routerLink="/analytics">
-      <mat-icon>arrow_back</mat-icon>
+      <app-icon name="arrow_back" />
       {{ 'analytics.nav.allDashboards' | t }}
     </a>
     @if (canConfigure() && dashboard()) {
       <button matButton="filled" type="button" (click)="addWidget()">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'analytics.view.addWidget' | t }}
       </button>
     }
     <button matButton type="button" (click)="fetch()">
-      <mat-icon>refresh</mat-icon>
+      <app-icon name="refresh" />
       {{ 'analytics.actions.refresh' | t }}
     </button>
   </div>
@@ -59,7 +59,7 @@
                   [matTooltip]="'analytics.view.removeWidget' | t"
                   (click)="deleteWidget(widget)"
                 >
-                  <mat-icon>close</mat-icon>
+                  <app-icon name="close" />
                 </button>
               }
             </mat-card-header>
@@ -67,7 +67,7 @@
             <mat-card-content class="widget__body">
               @if (isUnavailable(widget)) {
                 <p class="widget__unavailable">
-                  <mat-icon aria-hidden="true">lock</mat-icon>
+                  <app-icon aria-hidden="true" name="lock" />
                   {{ 'analytics.view.unavailable' | t }}
                 </p>
               } @else {

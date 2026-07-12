@@ -12,7 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
@@ -58,7 +58,7 @@ interface OrgUnitRow extends OrgUnit {
     MatTableModule,
     MatCheckboxModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatMenuModule,
     RouterLink,
     LoadingComponent,

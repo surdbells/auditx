@@ -4,12 +4,12 @@
 >
   <div actions class="control-list__header-actions">
     <a matButton routerLink="/analytics/controls-compliance">
-      <mat-icon>fact_check</mat-icon>
+      <app-icon name="fact_check" />
       {{ 'control.list.analytics' | t }}
     </a>
     @if (canManage()) {
       <button matButton="filled" type="button" (click)="create()" data-guide="register">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'control.actions.register' | t }}
       </button>
     }
@@ -23,7 +23,7 @@
     <mat-form-field appearance="outline" class="control-list__search">
       <mat-label>{{ 'common.search' | t }}</mat-label>
       <input matInput formControlName="search" autocomplete="off" />
-      <mat-icon matPrefix>search</mat-icon>
+      <app-icon matPrefix name="search" />
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>{{ 'control.field.type' | t }}</mat-label>
@@ -111,18 +111,18 @@
               <td mat-cell *matCellDef="let c">
                 @if (canManage()) {
                   <button matIconButton type="button" [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'control.actions.menuAria' | t: { code: c.code }">
-                    <mat-icon>more_vert</mat-icon>
+                    <app-icon name="more_vert" />
                   </button>
                   <mat-menu #rowMenu="matMenu">
                     <button mat-menu-item type="button" (click)="edit(c)">
-                      <mat-icon>edit</mat-icon><span>{{ 'control.actions.edit' | t }}</span>
+                      <app-icon name="edit" /><span>{{ 'control.actions.edit' | t }}</span>
                     </button>
                     <button mat-menu-item type="button" (click)="toggleActive(c)">
-                      <mat-icon>{{ c.isActive ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                      <app-icon [name]="c.isActive ? 'toggle_off' : 'toggle_on'" />
                       <span>{{ (c.isActive ? 'control.actions.retire' : 'control.actions.reactivate') | t }}</span>
                     </button>
                     <button mat-menu-item type="button" (click)="remove(c)">
-                      <mat-icon>delete</mat-icon><span>{{ 'control.actions.delete' | t }}</span>
+                      <app-icon name="delete" /><span>{{ 'control.actions.delete' | t }}</span>
                     </button>
                   </mat-menu>
                 }

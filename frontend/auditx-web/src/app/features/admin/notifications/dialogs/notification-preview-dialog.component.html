@@ -27,7 +27,7 @@
       (click)="run()"
       [disabled]="form.invalid || state() === 'loading'"
     >
-      <mat-icon>visibility</mat-icon>
+      <app-icon name="visibility" />
       {{ state() === 'loading' ? ('notifications.previewDialog.rendering' | t) : ('notifications.previewDialog.render' | t) }}
     </button>
   </form>

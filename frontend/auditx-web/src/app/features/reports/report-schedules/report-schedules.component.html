@@ -5,11 +5,11 @@
   @if (canManage()) {
     <div actions class="schedules__actions">
       <button matButton="filled" type="button" (click)="create()" data-guide="create">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'reportSchedules.action.new' | t }}
       </button>
       <button matButton type="button" (click)="fetch()">
-        <mat-icon>refresh</mat-icon>
+        <app-icon name="refresh" />
         {{ 'reportSchedules.action.refresh' | t }}
       </button>
     </div>
@@ -88,14 +88,14 @@
                     [matMenuTriggerFor]="rowMenu"
                     [attr.aria-label]="'reportSchedules.action.menuAria' | t: { name: s.name }"
                   >
-                    <mat-icon>more_vert</mat-icon>
+                    <app-icon name="more_vert" />
                   </button>
                   <mat-menu #rowMenu="matMenu">
                     <button mat-menu-item type="button" (click)="edit(s)">
-                      <mat-icon>edit</mat-icon><span>{{ 'reportSchedules.action.edit' | t }}</span>
+                      <app-icon name="edit" /><span>{{ 'reportSchedules.action.edit' | t }}</span>
                     </button>
                     <button mat-menu-item type="button" (click)="remove(s)">
-                      <mat-icon>delete</mat-icon><span>{{ 'reportSchedules.action.delete' | t }}</span>
+                      <app-icon name="delete" /><span>{{ 'reportSchedules.action.delete' | t }}</span>
                     </button>
                   </mat-menu>
                 }

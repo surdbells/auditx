@@ -3,7 +3,7 @@
   [subtitle]="'identity.roles.subtitle' | t"
 >
   <button actions matButton="filled" type="button" (click)="createRole()" data-guide="create">
-    <mat-icon>add</mat-icon>
+    <app-icon name="add" />
     {{ 'identity.roles.newRole' | t }}
   </button>
 </app-page-header>
@@ -86,11 +86,11 @@
                   [matMenuTriggerFor]="rowMenu"
                   [attr.aria-label]="'identity.common.actionsFor' | t: { name: role.name }"
                 >
-                  <mat-icon>more_vert</mat-icon>
+                  <app-icon name="more_vert" />
                 </button>
                 <mat-menu #rowMenu="matMenu">
                   <a mat-menu-item [routerLink]="['/admin/roles', role.id]">
-                    <mat-icon>edit</mat-icon>
+                    <app-icon name="edit" />
                     <span>{{ (role.isBuiltIn ? 'identity.actions.view' : 'identity.actions.edit') | t }}</span>
                   </a>
                   <button
@@ -99,7 +99,7 @@
                     [disabled]="role.isBuiltIn || role.isArchived"
                     (click)="archive(role, $event)"
                   >
-                    <mat-icon>archive</mat-icon>
+                    <app-icon name="archive" />
                     <span>{{ 'identity.actions.archive' | t }}</span>
                   </button>
                 </mat-menu>

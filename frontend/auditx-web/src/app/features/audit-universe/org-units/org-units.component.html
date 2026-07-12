@@ -4,12 +4,12 @@
 >
   <div actions class="orgunits__header-actions">
     <a matButton routerLink="/audit-universe">
-      <mat-icon>arrow_back</mat-icon>
+      <app-icon name="arrow_back" />
       {{ 'orgUnit.list.backToUniverse' | t }}
     </a>
     @if (canManage()) {
       <button matButton="filled" type="button" (click)="create()">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'orgUnit.actions.newUnit' | t }}
       </button>
     }
@@ -79,21 +79,21 @@
                     [matMenuTriggerFor]="rowMenu"
                     [attr.aria-label]="'orgUnit.actions.actionsForAria' | t: { name: u.name }"
                   >
-                    <mat-icon>more_vert</mat-icon>
+                    <app-icon name="more_vert" />
                   </button>
                   <mat-menu #rowMenu="matMenu">
                     @if (!u.isArchived) {
                       <button mat-menu-item type="button" (click)="edit(u)">
-                        <mat-icon>edit</mat-icon>
+                        <app-icon name="edit" />
                         <span>{{ 'orgUnit.actions.edit' | t }}</span>
                       </button>
                       <button mat-menu-item type="button" (click)="archive(u)">
-                        <mat-icon>archive</mat-icon>
+                        <app-icon name="archive" />
                         <span>{{ 'orgUnit.actions.archive' | t }}</span>
                       </button>
                     } @else {
                       <button mat-menu-item type="button" (click)="restore(u)">
-                        <mat-icon>unarchive</mat-icon>
+                        <app-icon name="unarchive" />
                         <span>{{ 'orgUnit.actions.restore' | t }}</span>
                       </button>
                     }

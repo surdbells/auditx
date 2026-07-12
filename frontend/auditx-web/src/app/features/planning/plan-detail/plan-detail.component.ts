@@ -10,7 +10,7 @@ import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -145,7 +145,7 @@ const PLAN_DETAIL_GUIDE: PageGuide = {
     MatCardModule,
     MatTableModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatProgressBarModule,
     MatTooltipModule,
     CdkDropList,

@@ -10,7 +10,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
@@ -71,7 +71,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     RouterLink,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatTableModule,
     MatTooltipModule,
     TranslatePipe,

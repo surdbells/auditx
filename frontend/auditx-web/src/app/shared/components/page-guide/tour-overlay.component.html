@@ -23,10 +23,10 @@
     aria-modal="true"
   >
     <div class="tour__head">
-      <span class="tour__icon" aria-hidden="true"><mat-icon>{{ step.icon }}</mat-icon></span>
+      <span class="tour__icon" aria-hidden="true"><app-icon [name]="step.icon" /></span>
       <h2 class="tour__title">{{ step.title }}</h2>
       <button matIconButton type="button" class="tour__close" (click)="tour.skip()" [attr.aria-label]="'guide.nav.close' | t">
-        <mat-icon>close</mat-icon>
+        <app-icon name="close" />
       </button>
     </div>
 

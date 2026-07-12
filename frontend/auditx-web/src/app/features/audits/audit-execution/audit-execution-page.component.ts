@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 
 import { AuditsService } from '../../../core/services/audits.service';
 import { Audit } from '../../../core/models';
@@ -30,7 +30,7 @@ type ViewState = 'loading' | 'ready' | 'error';
   imports: [
     RouterLink,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
@@ -48,7 +48,7 @@ type ViewState = 'loading' | 'ready' | 'error';
       @case ('ready') {
         @if (audit(); as a) {
           <a class="exec-page__back" [routerLink]="['/audits', a.id]">
-            <mat-icon>arrow_back</mat-icon>
+            <app-icon name="arrow_back" />
             <span>{{ 'audits.exec.backToAudit' | t }}</span>
           </a>
           <app-page-header [title]="a.name" [subtitle]="'audits.exec.pageSubtitle' | t">

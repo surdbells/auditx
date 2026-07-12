@@ -8,7 +8,7 @@
     </mat-select>
   </mat-form-field>
   <button matButton type="button" (click)="fetchPage(page())">
-    <mat-icon>refresh</mat-icon>
+    <app-icon name="refresh" />
     {{ 'integrations.actions.refresh' | t }}
   </button>
 </mat-card>
@@ -75,7 +75,7 @@
               <td mat-cell *matCellDef="let d">
                 @if (canRetryRow(d)) {
                   <button matButton type="button" (click)="retry(d)">
-                    <mat-icon>replay</mat-icon>
+                    <app-icon name="replay" />
                     {{ 'integrations.actions.retry' | t }}
                   </button>
                 }

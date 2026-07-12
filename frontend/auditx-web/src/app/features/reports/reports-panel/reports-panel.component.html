@@ -1,7 +1,7 @@
 <app-page-header [title]="'reports.panel.title' | t" [subtitle]="auditName()">
   <div actions class="panel__actions">
     <a matButton type="button" [routerLink]="['/audits', auditId()]">
-      <mat-icon>arrow_back</mat-icon>
+      <app-icon name="arrow_back" />
       {{ 'reports.panel.backToAudit' | t }}
     </a>
   </div>
@@ -36,7 +36,7 @@
             "
             [matTooltipDisabled]="canGenerateNow()"
           >
-            <mat-icon>description</mat-icon>
+            <app-icon name="description" />
             {{ 'reports.panel.action.generate' | t }}
           </button>
         </div>
@@ -107,7 +107,7 @@
                       type="button"
                       (click)="download(r, fmt)"
                     >
-                      <mat-icon>download</mat-icon>
+                      <app-icon name="download" />
                       {{ fmt | uppercase }}
                     </button>
                   }

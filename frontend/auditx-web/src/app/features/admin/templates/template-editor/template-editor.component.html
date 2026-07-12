@@ -21,7 +21,7 @@
   @case ('ready') {
     @if (!isNew() && !isDraft()) {
       <div class="editor__banner" [attr.data-status]="template()?.status">
-        <mat-icon aria-hidden="true">lock</mat-icon>
+        <app-icon aria-hidden="true" name="lock" />
         <span>
           @if (isPublished()) {
             {{ 'templatesAdmin.editor.bannerPublished' | t: { version: template()?.currentVersion ?? '' } }}
@@ -96,11 +96,11 @@
           @if (canEditStructure()) {
             <div class="editor__card-actions">
               <button matButton type="button" (click)="addSection()">
-                <mat-icon>create_new_folder</mat-icon>
+                <app-icon name="create_new_folder" />
                 {{ 'templatesAdmin.editor.addSection' | t }}
               </button>
               <button matButton="filled" type="button" (click)="addItem()">
-                <mat-icon>add</mat-icon>
+                <app-icon name="add" />
                 {{ 'templatesAdmin.editor.addItem' | t }}
               </button>
             </div>
@@ -134,7 +134,7 @@
                     [attr.aria-label]="'templatesAdmin.editor.dragSection' | t"
                     [matTooltip]="'templatesAdmin.editor.dragSection' | t"
                   >
-                    <mat-icon>drag_indicator</mat-icon>
+                    <app-icon name="drag_indicator" />
                   </button>
                 }
                 <h3 class="editor__section-title">
@@ -148,7 +148,7 @@
                       [attr.aria-label]="'templatesAdmin.editor.renameSection' | t"
                       (click)="renameSection(group.name)"
                     >
-                      <mat-icon>edit</mat-icon>
+                      <app-icon name="edit" />
                     </button>
                     <button
                       matIconButton
@@ -156,7 +156,7 @@
                       [attr.aria-label]="'templatesAdmin.editor.removeSection' | t"
                       (click)="removeSection(group.name)"
                     >
-                      <mat-icon>delete</mat-icon>
+                      <app-icon name="delete" />
                     </button>
                   </div>
                 }
@@ -186,7 +186,7 @@
                           [attr.aria-label]="'templatesAdmin.editor.dragItem' | t"
                           [matTooltip]="'templatesAdmin.editor.dragItem' | t"
                         >
-                          <mat-icon>drag_indicator</mat-icon>
+                          <app-icon name="drag_indicator" />
                         </button>
                         <button
                           matIconButton
@@ -195,7 +195,7 @@
                           [disabled]="item.orderIndex === orderedItems()[0].orderIndex"
                           (click)="moveItem(item, -1)"
                         >
-                          <mat-icon>arrow_upward</mat-icon>
+                          <app-icon name="arrow_upward" />
                         </button>
                         <button
                           matIconButton
@@ -204,7 +204,7 @@
                           [disabled]="item.orderIndex === orderedItems()[orderedItems().length - 1].orderIndex"
                           (click)="moveItem(item, 1)"
                         >
-                          <mat-icon>arrow_downward</mat-icon>
+                          <app-icon name="arrow_downward" />
                         </button>
                       </div>
                     }
@@ -230,7 +230,7 @@
                         [attr.aria-label]="'templatesAdmin.editor.editItem' | t"
                         (click)="editItem(item)"
                       >
-                        <mat-icon>edit</mat-icon>
+                        <app-icon name="edit" />
                       </button>
                       <button
                         matIconButton
@@ -238,7 +238,7 @@
                         [attr.aria-label]="'templatesAdmin.editor.removeItem' | t"
                         (click)="removeItem(item)"
                       >
-                        <mat-icon>delete</mat-icon>
+                        <app-icon name="delete" />
                       </button>
                     </div>
                   }
@@ -266,7 +266,7 @@
                   (click)="publish()"
                   [disabled]="saving()"
                 >
-                  <mat-icon>publish</mat-icon>
+                  <app-icon name="publish" />
                   {{ 'templatesAdmin.editor.publish' | t }}
                 </button>
               }
@@ -277,7 +277,7 @@
                   (click)="newDraft()"
                   [disabled]="saving()"
                 >
-                  <mat-icon>edit_note</mat-icon>
+                  <app-icon name="edit_note" />
                   {{ 'templatesAdmin.editor.newDraftVersion' | t }}
                 </button>
               }

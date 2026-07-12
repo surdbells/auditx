@@ -7,7 +7,7 @@
     <form [formGroup]="importForm" class="bulk__form">
       <div class="bulk__upload">
         <button matButton type="button" (click)="fileInput.click()">
-          <mat-icon>upload_file</mat-icon>
+          <app-icon name="upload_file" />
           {{ 'administration.bulkUsers.import.chooseFile' | t }}
         </button>
         <input
@@ -43,7 +43,7 @@
     @if (importResult(); as r) {
       <div class="bulk__result">
         <p class="bulk__success">
-          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          <app-icon aria-hidden="true" name="check_circle" />
           {{ 'administration.bulkUsers.import.result' | t: { success: r.successCount, failed: r.errors.length } }}
         </p>
         @if (r.errors.length) {

@@ -15,7 +15,7 @@
       [disabled]="exporting()"
       data-guide="export"
     >
-      <mat-icon>download</mat-icon>
+      <app-icon name="download" />
       {{ (exporting() ? 'exceptions.export.exporting' : 'exceptions.export.csv') | t }}
     </button>
   </div>
@@ -25,7 +25,7 @@
 
 @if (hasDrilldown()) {
   <div class="exceptions__drilldown" role="status">
-    <mat-icon>filter_alt</mat-icon>
+    <app-icon name="filter_alt" />
     <span>{{ 'exceptions.drilldown.active' | t }} {{ drilldownLabel() }}</span>
     <button matButton type="button" (click)="clearDrilldown()">
       {{ 'exceptions.drilldown.clear' | t }}
@@ -37,7 +37,7 @@
   <form [formGroup]="filters" class="exceptions__filters">
     <mat-form-field appearance="outline" class="exceptions__search">
       <mat-label>{{ 'exceptions.filter.search' | t }}</mat-label>
-      <mat-icon matPrefix>search</mat-icon>
+      <app-icon matPrefix name="search" />
       <input
         matInput
         formControlName="search"
@@ -197,13 +197,11 @@
                     </span>
                   }
                   @if (e.isRecurrence) {
-                    <mat-icon
+                    <app-icon
                       class="exceptions__recurrence"
                       [matTooltip]="'exceptions.field.recurrence' | t"
                       [attr.aria-label]="'exceptions.field.recurrence' | t"
-                    >
-                      repeat
-                    </mat-icon>
+                     name="repeat" />
                   }
                 </span>
               </td>

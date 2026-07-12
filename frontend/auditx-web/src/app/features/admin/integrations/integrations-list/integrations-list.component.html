@@ -4,7 +4,7 @@
 >
   @if (canManage()) {
     <button actions matButton="filled" type="button" (click)="create()" data-guide="create">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       {{ 'integrations.list.new' | t }}
     </button>
   }
@@ -79,21 +79,21 @@
                   [matMenuTriggerFor]="rowMenu"
                   [attr.aria-label]="'integrations.list.actionsFor' | t: { name: i.name }"
                 >
-                  <mat-icon>more_vert</mat-icon>
+                  <app-icon name="more_vert" />
                 </button>
                 <mat-menu #rowMenu="matMenu">
                   @if (canManage()) {
                     <button mat-menu-item type="button" (click)="test(i)">
-                      <mat-icon>network_check</mat-icon>
+                      <app-icon name="network_check" />
                       <span>{{ 'integrations.actions.test' | t }}</span>
                     </button>
                     <button mat-menu-item type="button" (click)="edit(i)">
-                      <mat-icon>edit</mat-icon>
+                      <app-icon name="edit" />
                       <span>{{ 'integrations.actions.edit' | t }}</span>
                     </button>
                     @if (i.isActive) {
                       <button mat-menu-item type="button" (click)="deactivate(i)">
-                        <mat-icon>power_settings_new</mat-icon>
+                        <app-icon name="power_settings_new" />
                         <span>{{ 'integrations.actions.deactivate' | t }}</span>
                       </button>
                     }

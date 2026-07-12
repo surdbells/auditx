@@ -9,7 +9,7 @@ import {
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
@@ -79,14 +79,14 @@ function fromDateOnly(value: string | undefined): Date | null {
     MatSelectModule,
     MatDatepickerModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ data.planItem ? 'Launch audit' : 'New audit' }}</h2>
     <mat-dialog-content>
       @if (data.planItem; as pi) {
         <div class="plan-banner">
-          <mat-icon>event_available</mat-icon>
+          <app-icon name="event_available" />
           <span>Launching from the annual plan — <strong>{{ pi.entityName }}</strong> ({{ pi.auditTypeLabel }}). The audit will be linked to this plan item.</span>
         </div>
       }

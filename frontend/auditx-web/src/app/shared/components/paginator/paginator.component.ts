@@ -6,7 +6,7 @@ import {
   output,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -26,7 +26,7 @@ export const LOAD_ALL_CAP = 5000;
 @Component({
   selector: 'app-paginator',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, MatSelectModule, TranslatePipe],
+  imports: [MatButtonModule, IconComponent, MatSelectModule, TranslatePipe],
   template: `
     <div class="ax-pager">
       <div class="ax-pager__summary">
@@ -65,7 +65,7 @@ export const LOAD_ALL_CAP = 5000;
             (click)="pageChange.emit(1)"
             [attr.aria-label]="'paginator.first' | t"
           >
-            <mat-icon>first_page</mat-icon>
+            <app-icon name="first_page" />
           </button>
           <button
             matIconButton
@@ -74,7 +74,7 @@ export const LOAD_ALL_CAP = 5000;
             (click)="pageChange.emit(page() - 1)"
             [attr.aria-label]="'paginator.previous' | t"
           >
-            <mat-icon>chevron_left</mat-icon>
+            <app-icon name="chevron_left" />
           </button>
           <button
             matIconButton
@@ -83,7 +83,7 @@ export const LOAD_ALL_CAP = 5000;
             (click)="pageChange.emit(page() + 1)"
             [attr.aria-label]="'paginator.next' | t"
           >
-            <mat-icon>chevron_right</mat-icon>
+            <app-icon name="chevron_right" />
           </button>
           <button
             matIconButton
@@ -92,7 +92,7 @@ export const LOAD_ALL_CAP = 5000;
             (click)="pageChange.emit(totalPages())"
             [attr.aria-label]="'paginator.last' | t"
           >
-            <mat-icon>last_page</mat-icon>
+            <app-icon name="last_page" />
           </button>
         </div>
       </div>

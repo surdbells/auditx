@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 
 import { PageGuide } from '../../../core/models/page-guide.models';
 import { TourManagerService } from '../../../core/services/tour-manager.service';
@@ -26,7 +26,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-page-guide',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, TourOverlayComponent, TranslatePipe],
+  imports: [MatButtonModule, IconComponent, TourOverlayComponent, TranslatePipe],
   templateUrl: './page-guide.component.html',
   styleUrl: './page-guide.component.scss',
 })

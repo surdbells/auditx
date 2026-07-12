@@ -13,7 +13,7 @@
     @if (user(); as u) {
       <app-page-header [title]="u.displayName" [subtitle]="u.email">
         <button actions matButton="outlined" type="button" (click)="goBack()">
-          <mat-icon>arrow_back</mat-icon>
+          <app-icon name="arrow_back" />
           {{ 'identity.userDetail.backToUsers' | t }}
         </button>
       </app-page-header>
@@ -55,7 +55,7 @@
                   <span class="muted">{{ 'identity.capacity.unset' | t }}</span>
                 }
                 <button matButton type="button" class="profile__capacity-edit" (click)="openSetCapacity()">
-                  <mat-icon>edit</mat-icon>
+                  <app-icon name="edit" />
                   {{ 'identity.capacity.edit' | t }}
                 </button>
               </dd>
@@ -69,7 +69,7 @@
           <mat-card-header class="detail__card-header">
             <mat-card-title>{{ 'identity.userDetail.roles' | t }}</mat-card-title>
             <button matButton="filled" type="button" (click)="openGrantRole()">
-              <mat-icon>add</mat-icon>
+              <app-icon name="add" />
               {{ 'identity.grantRole.title' | t }}
             </button>
           </mat-card-header>
@@ -78,7 +78,7 @@
               <mat-list>
                 @for (role of directRoles(); track role.id) {
                   <mat-list-item class="role-row">
-                    <mat-icon matListItemIcon>badge</mat-icon>
+                    <app-icon matListItemIcon name="badge" />
                     <span matListItemTitle>{{ role.roleName }}</span>
                     <span matListItemLine>
                       @if (role.scopeValue) {
@@ -98,7 +98,7 @@
                       [attr.aria-label]="'identity.userDetail.revokeAria' | t: { name: role.roleName }"
                       (click)="revokeRole(role)"
                     >
-                      <mat-icon>delete_outline</mat-icon>
+                      <app-icon name="delete_outline" />
                     </button>
                   </mat-list-item>
                 }
@@ -113,7 +113,7 @@
           <mat-card-header class="detail__card-header">
             <mat-card-title>{{ 'identity.userDetail.delegations' | t }}</mat-card-title>
             <button matButton="filled" type="button" (click)="openCreateDelegation()">
-              <mat-icon>add</mat-icon>
+              <app-icon name="add" />
               {{ 'identity.userDetail.newDelegation' | t }}
             </button>
           </mat-card-header>
@@ -153,7 +153,7 @@
                         [attr.aria-label]="'identity.userDetail.revokeDelegation' | t"
                         (click)="revokeDelegation(d)"
                       >
-                        <mat-icon>delete_outline</mat-icon>
+                        <app-icon name="delete_outline" />
                       </button>
                     </td>
                   </ng-container>

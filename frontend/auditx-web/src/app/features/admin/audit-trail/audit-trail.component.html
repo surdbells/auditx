@@ -11,7 +11,7 @@
       (click)="exportCsv()"
       [disabled]="exporting()"
     >
-      <mat-icon>download</mat-icon>
+      <app-icon name="download" />
       {{
         exporting()
           ? ('adminMisc.auditTrail.exporting' | t)
@@ -62,11 +62,11 @@
 
     <div class="trail__filter-actions">
       <button matButton="filled" type="button" (click)="apply()">
-        <mat-icon>search</mat-icon>
+        <app-icon name="search" />
         {{ 'adminMisc.actions.apply' | t }}
       </button>
       <button matButton type="button" (click)="clear()">
-        <mat-icon>clear</mat-icon>
+        <app-icon name="clear" />
         {{ 'adminMisc.actions.clear' | t }}
       </button>
     </div>

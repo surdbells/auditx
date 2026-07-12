@@ -8,7 +8,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 
@@ -77,7 +77,7 @@ const INTEGRATIONS_GUIDE: PageGuide = {
     MatCardModule,
     MatTableModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatMenuModule,
     TranslatePipe,
     LoadingComponent,

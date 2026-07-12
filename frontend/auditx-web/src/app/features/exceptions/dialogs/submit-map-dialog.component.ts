@@ -15,7 +15,7 @@ import {
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
@@ -60,7 +60,7 @@ type ActionGroup = FormGroup<{
     MatInputModule,
     MatSelectModule,
     MatDatepickerModule,
-    MatIconModule,
+    IconComponent,
     MatButtonModule,
     TranslatePipe,
   ],
@@ -80,7 +80,7 @@ type ActionGroup = FormGroup<{
                     (click)="removeAction(i)"
                     [attr.aria-label]="'exceptions.action.removeAction' | t"
                   >
-                    <mat-icon>delete</mat-icon>
+                    <app-icon name="delete" />
                   </button>
                 }
               </div>
@@ -125,7 +125,7 @@ type ActionGroup = FormGroup<{
         </div>
 
         <button matButton type="button" (click)="addAction()">
-          <mat-icon>add</mat-icon>
+          <app-icon name="add" />
           {{ 'exceptions.action.addAction' | t }}
         </button>
       </form>

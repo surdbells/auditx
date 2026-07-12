@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -97,7 +97,7 @@ interface ProgressGroup {
     DatePipe,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatChipsModule,
     MatTooltipModule,
     MatProgressBarModule,

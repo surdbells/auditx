@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../icons/icon.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -13,7 +13,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatMenuModule,
     MatTooltipModule,
     TranslatePipe,
@@ -26,7 +26,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       [attr.aria-label]="'textSize.label' | t"
       [matTooltip]="'textSize.label' | t"
     >
-      <mat-icon>format_size</mat-icon>
+      <app-icon name="format_size" />
     </button>
     <mat-menu #menu="matMenu">
       <div class="text-size__heading" mat-menu-item disabled>
@@ -34,7 +34,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
       </div>
       @for (option of textSize.available; track option.code) {
         <button mat-menu-item type="button" (click)="textSize.use(option.code)">
-          <mat-icon>{{ textSize.size() === option.code ? 'check' : 'format_size' }}</mat-icon>
+          <app-icon [name]="textSize.size() === option.code ? 'check' : 'format_size'" />
           <span>{{ option.labelKey | t }}</span>
         </button>
       }

@@ -12,7 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 
 import { AcService } from '../../../../core/services/ac.service';
@@ -37,7 +37,7 @@ import { TranslationService } from '../../../../core/i18n/translation.service';
     FormsModule,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatFormFieldModule,
     MatInputModule,
     TranslatePipe,

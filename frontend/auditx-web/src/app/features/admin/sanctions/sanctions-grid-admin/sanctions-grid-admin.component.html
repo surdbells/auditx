@@ -7,7 +7,7 @@
 
 @if (pendingBanner(); as banner) {
   <mat-card appearance="outlined" class="grid__banner">
-    <mat-icon>hourglass_top</mat-icon>
+    <app-icon name="hourglass_top" />
     <span>{{ banner }}</span>
   </mat-card>
 }
@@ -76,7 +76,7 @@
                     (click)="removeRow(row.key)"
                     [attr.aria-label]="'sanctions.grid.removeCell' | t"
                   >
-                    <mat-icon>delete</mat-icon>
+                    <app-icon name="delete" />
                   </button>
                 </td>
               </tr>
@@ -113,7 +113,7 @@
           {{ 'sanctions.field.recurrence' | t }}
         </label>
         <button matButton="outlined" type="button" (click)="addRow()">
-          <mat-icon>add</mat-icon>
+          <app-icon name="add" />
           {{ 'sanctions.grid.addCell' | t }}
         </button>
       </div>
@@ -125,12 +125,12 @@
           (click)="saveDraft()"
           [disabled]="saving()"
         >
-          <mat-icon>save</mat-icon>
+          <app-icon name="save" />
           {{ saving() ? ('sanctions.grid.saving' | t) : ('sanctions.grid.saveDraft' | t) }}
         </button>
         @if (canActivate()) {
           <button matButton type="button" (click)="activate()">
-            <mat-icon>check_circle</mat-icon>
+            <app-icon name="check_circle" />
             {{ 'sanctions.grid.activate' | t }}
           </button>
         }

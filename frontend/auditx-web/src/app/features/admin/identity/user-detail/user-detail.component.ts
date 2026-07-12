@@ -13,7 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatListModule } from '@angular/material/list';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -115,7 +115,7 @@ const USER_DETAIL_GUIDE: PageGuide = {
     DatePipe,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatChipsModule,
     MatDividerModule,
     MatListModule,

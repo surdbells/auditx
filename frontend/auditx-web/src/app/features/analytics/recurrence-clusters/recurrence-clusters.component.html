@@ -4,11 +4,11 @@
 >
   <div actions>
     <a matButton routerLink="/analytics">
-      <mat-icon>arrow_back</mat-icon>
+      <app-icon name="arrow_back" />
       {{ 'analytics.nav.allDashboards' | t }}
     </a>
     <button matButton type="button" (click)="fetchPage(1)" data-guide="refresh">
-      <mat-icon>refresh</mat-icon>
+      <app-icon name="refresh" />
       {{ 'analytics.actions.refresh' | t }}
     </button>
   </div>

@@ -21,7 +21,7 @@
 </section>
 
 <ng-template #kpiBody let-kpi>
-  <span class="kpi__chip" aria-hidden="true"><mat-icon>{{ kpi.icon }}</mat-icon></span>
+  <span class="kpi__chip" aria-hidden="true"><app-icon [name]="kpi.icon" /></span>
   <span class="kpi__body">
     <span class="kpi__value">{{ kpi.value }}</span>
     <span class="kpi__label">{{ kpi.label }}</span>
@@ -30,7 +30,7 @@
     }
   </span>
   @if (kpi.route) {
-    <mat-icon class="kpi__go" aria-hidden="true">arrow_forward</mat-icon>
+    <app-icon class="kpi__go" aria-hidden="true" name="arrow_forward" />
   }
 </ng-template>
 
@@ -175,7 +175,7 @@
             <span class="attention__title">{{ f.title }}</span>
             <span class="status-badge" [attr.data-status]="f.status">{{ f.status.replaceAll('_', ' ') }}</span>
             <span class="attention__due muted">{{ 'dashboard.attention.due' | t: { date: (f.targetDate | date: 'mediumDate') } }}</span>
-            <mat-icon class="attention__go" aria-hidden="true">chevron_right</mat-icon>
+            <app-icon class="attention__go" aria-hidden="true" name="chevron_right" />
           </a>
         }
       </ul>
@@ -204,12 +204,12 @@
   <section class="dash__launch">
     @for (link of quickLinks(); track link.route) {
       <a class="launch" [class]="'launch--' + link.accent" [routerLink]="link.route">
-        <span class="launch__icon" aria-hidden="true"><mat-icon>{{ link.icon }}</mat-icon></span>
+        <span class="launch__icon" aria-hidden="true"><app-icon [name]="link.icon" /></span>
         <span class="launch__text">
           <span class="launch__title">{{ link.title | t }}</span>
           <span class="launch__desc">{{ link.description | t }}</span>
         </span>
-        <mat-icon class="launch__go" aria-hidden="true">arrow_forward</mat-icon>
+        <app-icon class="launch__go" aria-hidden="true" name="arrow_forward" />
       </a>
     }
   </section>

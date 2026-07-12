@@ -3,7 +3,7 @@
     <h3 class="proc__title">{{ 'procedure.title' | t }}</h3>
     @if (canRecordNow() && !adding()) {
       <button matButton="filled" type="button" (click)="startAdd()">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'procedure.actions.record' | t }}
       </button>
     }
@@ -38,7 +38,7 @@
         </mat-form-field>
       } @else {
         <p class="proc-panel__scoped-hint muted">
-          <mat-icon inline>link</mat-icon> {{ 'procedure.scoped.hint' | t }}
+          <app-icon inline name="link" /> {{ 'procedure.scoped.hint' | t }}
         </p>
       }
 
@@ -107,7 +107,7 @@
             <span class="muted proc__item-meta">{{ nameOf(p.performedByUserId) }} · {{ p.performedOn }}</span>
             @if (canModify(p)) {
               <button matIconButton type="button" (click)="remove(p)" [attr.aria-label]="'procedure.actions.delete' | t">
-                <mat-icon>delete</mat-icon>
+                <app-icon name="delete" />
               </button>
             }
           </div>

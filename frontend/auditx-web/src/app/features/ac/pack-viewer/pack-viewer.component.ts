@@ -11,7 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -116,7 +116,7 @@ const PACK_VIEWER_GUIDE: PageGuide = {
     MatCardModule,
     MatTableModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatTooltipModule,
     LoadingComponent,
     ErrorStateComponent,

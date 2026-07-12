@@ -4,7 +4,7 @@
 >
   @if (canCreate()) {
     <button actions matButton="filled" type="button" (click)="create()" data-guide="create">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       {{ 'audits.actions.newAudit' | t }}
     </button>
   }

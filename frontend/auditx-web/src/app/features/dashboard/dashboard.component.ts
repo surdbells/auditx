@@ -10,7 +10,7 @@ import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../core/icons/icon.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -127,7 +127,7 @@ const DASHBOARD_GUIDE: PageGuide = {
     NgTemplateOutlet,
     RouterLink,
     MatCardModule,
-    MatIconModule,
+    IconComponent,
     MatButtonModule,
     MatButtonToggleModule,
     MatTooltipModule,

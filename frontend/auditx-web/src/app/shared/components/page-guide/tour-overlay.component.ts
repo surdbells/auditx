@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 
 import { TourManagerService } from '../../../core/services/tour-manager.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -32,7 +32,7 @@ const GAP = 12;
 @Component({
   selector: 'app-tour-overlay',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [MatButtonModule, IconComponent, TranslatePipe],
   templateUrl: './tour-overlay.component.html',
   styleUrl: './tour-overlay.component.scss',
 })

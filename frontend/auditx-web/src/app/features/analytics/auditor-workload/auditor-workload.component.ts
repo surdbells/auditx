@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 
@@ -87,7 +87,7 @@ const WORKLOAD_GUIDE: PageGuide = {
     MatCardModule,
     MatTableModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,

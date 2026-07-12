@@ -10,7 +10,7 @@
         (click)="generate()"
         [disabled]="generating()"
       >
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ (generating() ? 'ac.packs.generating' : 'ac.packs.generate') | t }}
       </button>
     }

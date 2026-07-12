@@ -4,11 +4,11 @@
 >
   <div actions>
     <a matButton routerLink="/admin/configuration">
-      <mat-icon>arrow_back</mat-icon>
+      <app-icon name="arrow_back" />
       {{ 'config.detail.allDomains' | t }}
     </a>
     <button matButton type="button" (click)="fetch()">
-      <mat-icon>refresh</mat-icon>
+      <app-icon name="refresh" />
       {{ 'config.detail.refresh' | t }}
     </button>
   </div>
@@ -29,7 +29,7 @@
   @case ('ready') {
     @if (pendingBanner(); as banner) {
       <div class="config__banner" role="status">
-        <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+        <app-icon aria-hidden="true" name="hourglass_top" />
         <span>{{ banner }}</span>
       </div>
     }
@@ -186,7 +186,7 @@
             (click)="saveDraft()"
             [disabled]="form.invalid || saving()"
           >
-            <mat-icon>save</mat-icon>
+            <app-icon name="save" />
             {{ 'config.detail.draft.save' | t }}
           </button>
         </mat-card-actions>
@@ -243,11 +243,11 @@
             <td mat-cell *matCellDef="let v" class="config__row-actions">
               @if (canManage() && !v.isActive) {
                 <button matButton type="button" (click)="activate(v)">
-                  <mat-icon>play_circle</mat-icon>
+                  <app-icon name="play_circle" />
                   {{ 'config.detail.history.activate' | t }}
                 </button>
                 <button matButton type="button" (click)="rollback(v)">
-                  <mat-icon>history</mat-icon>
+                  <app-icon name="history" />
                   {{ 'config.detail.history.rollback' | t }}
                 </button>
               }

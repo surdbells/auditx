@@ -12,7 +12,7 @@ import {
   MatDialogModule,
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
@@ -41,7 +41,7 @@ export interface ReportShareDialogData {
     MatFormFieldModule,
     MatSelectModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatTooltipModule,
     TranslatePipe,
   ],

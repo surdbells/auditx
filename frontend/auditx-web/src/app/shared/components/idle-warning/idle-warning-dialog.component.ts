@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Signal, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import {
   MAT_DIALOG_DATA,
   MatDialogModule,
@@ -25,10 +25,10 @@ export type IdleWarningResult = boolean;
 @Component({
   selector: 'app-idle-warning-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [MatDialogModule, MatButtonModule, IconComponent, TranslatePipe],
   template: `
     <h2 mat-dialog-title class="idle__title">
-      <mat-icon>schedule</mat-icon>
+      <app-icon name="schedule" />
       {{ 'idle.title' | t }}
     </h2>
     <mat-dialog-content>

@@ -13,7 +13,7 @@
       [routerLink]="['/admin/configuration', d.domain]"
     >
       <mat-card-header>
-        <mat-icon mat-card-avatar aria-hidden="true">{{ d.icon }}</mat-icon>
+        <app-icon mat-card-avatar aria-hidden="true" [name]="d.icon" />
         <mat-card-title>{{ d.title }}</mat-card-title>
         <mat-card-subtitle data-guide="domain-code">{{ d.domain }}</mat-card-subtitle>
       </mat-card-header>

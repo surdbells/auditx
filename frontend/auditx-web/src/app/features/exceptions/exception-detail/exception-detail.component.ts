@@ -11,7 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
@@ -154,7 +154,7 @@ const EXCEPTION_DETAIL_GUIDE: PageGuide = {
     RouterLink,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatChipsModule,
     MatTooltipModule,
     LoadingComponent,

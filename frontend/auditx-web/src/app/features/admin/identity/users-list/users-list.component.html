@@ -16,7 +16,7 @@
         [placeholder]="'identity.users.filter.searchPlaceholder' | t"
         autocomplete="off"
       />
-      <mat-icon matPrefix>search</mat-icon>
+      <app-icon matPrefix name="search" />
     </mat-form-field>
 
     <mat-form-field appearance="outline">
@@ -67,10 +67,10 @@
           <span class="users__bulkbar-count">{{ 'identity.bulk.selected' | t: { count: selectedCount() } }}</span>
           <span class="users__bulkbar-actions">
             <button matButton type="button" (click)="bulkActivate()" [disabled]="bulkBusy()">
-              <mat-icon>how_to_reg</mat-icon>{{ 'identity.bulk.activate' | t }}
+              <app-icon name="how_to_reg" />{{ 'identity.bulk.activate' | t }}
             </button>
             <button matButton type="button" (click)="bulkDeactivate()" [disabled]="bulkBusy()">
-              <mat-icon>person_off</mat-icon>{{ 'identity.bulk.deactivate' | t }}
+              <app-icon name="person_off" />{{ 'identity.bulk.deactivate' | t }}
             </button>
             <button matButton type="button" (click)="clearSelection()">{{ 'identity.bulk.clear' | t }}</button>
           </span>
@@ -154,11 +154,11 @@
                   [matMenuTriggerFor]="rowMenu"
                   [attr.aria-label]="'identity.common.actionsFor' | t: { name: user.displayName }"
                 >
-                  <mat-icon>more_vert</mat-icon>
+                  <app-icon name="more_vert" />
                 </button>
                 <mat-menu #rowMenu="matMenu">
                   <a mat-menu-item [routerLink]="['/admin/users', user.id]">
-                    <mat-icon>visibility</mat-icon>
+                    <app-icon name="visibility" />
                     <span>{{ 'identity.users.viewDetails' | t }}</span>
                   </a>
                   <button
@@ -167,7 +167,7 @@
                     [disabled]="user.status === 'deactivated'"
                     (click)="deactivate(user, $event)"
                   >
-                    <mat-icon>block</mat-icon>
+                    <app-icon name="block" />
                     <span>{{ 'identity.actions.deactivate' | t }}</span>
                   </button>
                 </mat-menu>

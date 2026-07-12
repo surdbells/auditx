@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatTableModule } from '@angular/material/table';
 
 import { NotificationAdminService } from '../../../../core/services/notifications-admin.service';
@@ -33,7 +33,7 @@ const DEFAULT_PAGE_SIZE = 25;
     MatCardModule,
     MatTableModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
     LoadingComponent,
     EmptyStateComponent,

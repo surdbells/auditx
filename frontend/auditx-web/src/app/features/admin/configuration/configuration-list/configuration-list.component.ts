@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 
 import { CONFIG_DOMAIN_EXCEPTION_DEFAULTS } from '../../../../core/models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -80,7 +80,7 @@ const CONFIGURATION_GUIDE: PageGuide = {
     RouterLink,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     PageHeaderComponent,
     PageGuideComponent,
     TranslatePipe,

@@ -9,7 +9,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 
@@ -89,7 +89,7 @@ const RELEASES_GUIDE: PageGuide = {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     LoadingComponent,
     ErrorStateComponent,
     PageGuideComponent,

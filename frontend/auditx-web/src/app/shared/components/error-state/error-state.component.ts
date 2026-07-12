@@ -5,22 +5,22 @@ import {
   output,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 @Component({
   selector: 'app-error-state',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [MatButtonModule, IconComponent, TranslatePipe],
   template: `
     <div class="error" role="alert">
-      <mat-icon class="error__icon" aria-hidden="true">error_outline</mat-icon>
+      <app-icon class="error__icon" aria-hidden="true" name="error_outline" />
       <h3 class="error__title">{{ title() | t }}</h3>
       <p class="error__message">{{ message() | t }}</p>
       @if (showRetry()) {
         <button matButton="filled" type="button" (click)="retry.emit()">
-          <mat-icon>refresh</mat-icon>
+          <app-icon name="refresh" />
           {{ retryLabel() | t }}
         </button>
       }

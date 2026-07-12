@@ -11,7 +11,7 @@ import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -122,7 +122,7 @@ const SANCTIONS_CASE_GUIDE: PageGuide = {
     RouterLink,
     MatCardModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatTooltipModule,
     TranslatePipe,
     LoadingComponent,

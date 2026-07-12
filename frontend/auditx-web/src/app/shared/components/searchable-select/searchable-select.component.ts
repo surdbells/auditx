@@ -16,7 +16,7 @@ import {
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -40,7 +40,7 @@ export interface SelectOption {
   selector: 'app-searchable-select',
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  imports: [MatFormFieldModule, MatSelectModule, MatIconModule],
+  imports: [MatFormFieldModule, MatSelectModule, IconComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -62,7 +62,7 @@ export interface SelectOption {
         (openedChange)="onOpened($event)"
       >
         <div class="ss-search" (click)="$event.stopPropagation()">
-          <mat-icon class="ss-search__icon" aria-hidden="true">search</mat-icon>
+          <app-icon class="ss-search__icon" aria-hidden="true" name="search" />
           <input
             #box
             class="ss-search__input"

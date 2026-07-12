@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 
 import { AdministrationService } from '../../../../core/services/administration.service';
 import { SystemHealth } from '../../../../core/models';
@@ -78,7 +78,7 @@ const SYSTEM_HEALTH_GUIDE: PageGuide = {
   imports: [
     DatePipe,
     MatCardModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,

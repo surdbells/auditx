@@ -8,7 +8,7 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 
 import { SharedLinksService } from '../../../core/services/shared-links.service';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
@@ -24,7 +24,7 @@ type ResolveState = 'loading' | 'invalid' | 'forbidden' | 'error';
 @Component({
   selector: 'app-shared-link-resolve',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MatButtonModule, MatIconModule, LoadingComponent, TranslatePipe],
+  imports: [RouterLink, MatButtonModule, IconComponent, LoadingComponent, TranslatePipe],
   template: `
     @switch (state()) {
       @case ('loading') {
@@ -32,7 +32,7 @@ type ResolveState = 'loading' | 'invalid' | 'forbidden' | 'error';
       }
       @default {
         <div class="slr">
-          <mat-icon class="slr__icon">{{ state() === 'forbidden' ? 'lock' : 'link_off' }}</mat-icon>
+          <app-icon class="slr__icon" [name]="state() === 'forbidden' ? 'lock' : 'link_off'" />
           <h2 class="slr__title">{{ 'sharedLink.' + state() + '.title' | t }}</h2>
           <p class="slr__message">{{ 'sharedLink.' + state() + '.message' | t }}</p>
           <a matButton="filled" routerLink="/reports">{{ 'sharedLink.goToReports' | t }}</a>

@@ -8,7 +8,7 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -76,7 +76,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     MatChipsModule,
     MatSlideToggleModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
   ],
   template: `
@@ -131,7 +131,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               <mat-chip-row (removed)="removeEmail(email)">
                 {{ email }}
                 <button matChipRemove [attr.aria-label]="'reportSchedules.field.removeEmail' | t: { email: email }">
-                  <mat-icon>cancel</mat-icon>
+                  <app-icon name="cancel" />
                 </button>
               </mat-chip-row>
             }

@@ -3,7 +3,7 @@
   subtitle="Review and authorise sensitive changes raised by other administrators."
 >
   <button actions matButton="outlined" type="button" (click)="fetch()">
-    <mat-icon>refresh</mat-icon>
+    <app-icon name="refresh" />
     Refresh
   </button>
 </app-page-header>
@@ -78,7 +78,7 @@
                   [disabled]="processingId() === a.id"
                   (click)="approve(a)"
                 >
-                  <mat-icon>check</mat-icon>
+                  <app-icon name="check" />
                   Approve
                 </button>
                 <button
@@ -87,7 +87,7 @@
                   [disabled]="processingId() === a.id"
                   (click)="reject(a)"
                 >
-                  <mat-icon>close</mat-icon>
+                  <app-icon name="close" />
                   Reject
                 </button>
               </td>

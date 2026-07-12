@@ -11,7 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule, MatChipInputEvent } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 
 import { AdministrationService } from '../../../../core/services/administration.service';
@@ -91,7 +91,7 @@ const SUPPORT_CHANNEL_GUIDE: PageGuide = {
     MatInputModule,
     MatChipsModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
     LoadingComponent,
     ErrorStateComponent,

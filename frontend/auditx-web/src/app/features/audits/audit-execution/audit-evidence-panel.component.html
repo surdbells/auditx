@@ -3,7 +3,7 @@
     <h3 class="evi__title">{{ 'evidence.title' | t }}</h3>
     @if (canActionNow() && !adding()) {
       <button matButton="filled" type="button" (click)="startAdd()">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'evidence.actions.request' | t }}
       </button>
     }
@@ -47,7 +47,7 @@
         </mat-form-field>
       } @else {
         <p class="ev-panel__scoped-hint muted">
-          <mat-icon inline>link</mat-icon> {{ 'evidence.scoped.hint' | t }}
+          <app-icon inline name="link" /> {{ 'evidence.scoped.hint' | t }}
         </p>
       }
 
@@ -81,19 +81,19 @@
             <span class="evi__item-name">{{ r.title }}</span>
             @if (canActionNow()) {
               <button matIconButton type="button" [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'evidence.actions.menuAria' | t: { title: r.title }">
-                <mat-icon>more_vert</mat-icon>
+                <app-icon name="more_vert" />
               </button>
               <mat-menu #rowMenu="matMenu">
                 @if (r.status === 'requested') {
                   <button mat-menu-item type="button" (click)="markReceived(r)">
-                    <mat-icon>inventory</mat-icon><span>{{ 'evidence.actions.markReceived' | t }}</span>
+                    <app-icon name="inventory" /><span>{{ 'evidence.actions.markReceived' | t }}</span>
                   </button>
                   <button mat-menu-item type="button" (click)="waive(r)">
-                    <mat-icon>block</mat-icon><span>{{ 'evidence.actions.waive' | t }}</span>
+                    <app-icon name="block" /><span>{{ 'evidence.actions.waive' | t }}</span>
                   </button>
                 }
                 <button mat-menu-item type="button" (click)="remove(r)">
-                  <mat-icon>delete</mat-icon><span>{{ 'evidence.actions.delete' | t }}</span>
+                  <app-icon name="delete" /><span>{{ 'evidence.actions.delete' | t }}</span>
                 </button>
               </mat-menu>
             }

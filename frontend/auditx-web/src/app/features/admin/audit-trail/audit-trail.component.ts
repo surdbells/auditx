@@ -13,7 +13,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 
@@ -108,7 +108,7 @@ function toIsoEnd(value: Date | null): string | undefined {
     MatInputModule,
     MatDatepickerModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     SearchableSelectComponent,
     LoadingComponent,
     EmptyStateComponent,

@@ -18,7 +18,7 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 
 import { NotificationAdminService } from '../../../../core/services/notifications-admin.service';
@@ -53,7 +53,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
   ],
   templateUrl: './notification-preview-dialog.component.html',

@@ -62,21 +62,21 @@
       <span class="time-panel__timer">
         @if (!timerRunning() && elapsedSec() === 0) {
           <button matButton type="button" (click)="startTimer()">
-            <mat-icon>timer</mat-icon>{{ 'time.timer.start' | t }}
+            <app-icon name="timer" />{{ 'time.timer.start' | t }}
           </button>
         } @else {
           <span class="time-panel__timer-val" [class.time-panel__timer-val--running]="timerRunning()">{{ elapsedLabel() }}</span>
           @if (timerRunning()) {
             <button matIconButton type="button" (click)="stopTimer()" [matTooltip]="'time.timer.stop' | t" [attr.aria-label]="'time.timer.stop' | t">
-              <mat-icon>stop_circle</mat-icon>
+              <app-icon name="stop_circle" />
             </button>
           } @else {
             <button matIconButton type="button" (click)="startTimer()" [matTooltip]="'time.timer.resume' | t" [attr.aria-label]="'time.timer.resume' | t">
-              <mat-icon>play_circle</mat-icon>
+              <app-icon name="play_circle" />
             </button>
           }
           <button matIconButton type="button" (click)="resetTimer()" [matTooltip]="'time.timer.reset' | t" [attr.aria-label]="'time.timer.reset' | t">
-            <mat-icon>close</mat-icon>
+            <app-icon name="close" />
           </button>
         }
       </span>
@@ -117,7 +117,7 @@
       </div>
       @if (isScoped()) {
         <p class="time-panel__scoped-hint muted">
-          <mat-icon inline>link</mat-icon> {{ 'time.scoped.hint' | t }}
+          <app-icon inline name="link" /> {{ 'time.scoped.hint' | t }}
         </p>
       }
       <mat-form-field appearance="outline" class="full">
@@ -153,7 +153,7 @@
           @if (entry.notes || promptFor(entry.checklistItemId)) {
             <div class="time-entry__meta muted">
               @if (promptFor(entry.checklistItemId); as p) {
-                <span class="time-entry__item"><mat-icon inline>checklist</mat-icon>{{ p }}</span>
+                <span class="time-entry__item"><app-icon inline name="checklist" />{{ p }}</span>
               }
               @if (entry.notes) {
                 <span class="time-entry__notes">{{ entry.notes }}</span>
@@ -163,10 +163,10 @@
           @if (canModify(entry)) {
             <div class="time-entry__actions">
               <button matIconButton type="button" (click)="edit(entry)" [attr.aria-label]="'time.actions.edit' | t">
-                <mat-icon>edit</mat-icon>
+                <app-icon name="edit" />
               </button>
               <button matIconButton type="button" (click)="remove(entry)" [attr.aria-label]="'time.actions.delete' | t">
-                <mat-icon>delete</mat-icon>
+                <app-icon name="delete" />
               </button>
             </div>
           }

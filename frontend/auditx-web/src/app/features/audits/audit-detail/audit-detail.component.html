@@ -14,7 +14,7 @@
         <div actions class="detail__actions">
           @if (canViewReports()) {
             <a matButton type="button" [routerLink]="['/audits', a.id, 'reports']">
-              <mat-icon>summarize</mat-icon>
+              <app-icon name="summarize" />
               {{ 'audits.actions.reports' | t }}
             </a>
           }
@@ -28,39 +28,39 @@
                 [matTooltip]="planHint()"
                 [matTooltipDisabled]="canPlan()"
               >
-                <mat-icon>event_available</mat-icon>
+                <app-icon name="event_available" />
                 {{ 'audits.actions.plan' | t }}
               </button>
             }
             @if (isPlanned()) {
               <button matButton="filled" type="button" (click)="start()">
-                <mat-icon>play_arrow</mat-icon>
+                <app-icon name="play_arrow" />
                 {{ 'audits.actions.start' | t }}
               </button>
               <button matButton type="button" (click)="reopen()">
-                <mat-icon>undo</mat-icon>
+                <app-icon name="undo" />
                 {{ 'audits.actions.reopen' | t }}
               </button>
             }
             @if (isInProgress()) {
               <button matButton="filled" type="button" (click)="sendToReview()">
-                <mat-icon>rate_review</mat-icon>
+                <app-icon name="rate_review" />
                 {{ 'audits.actions.sendToReview' | t }}
               </button>
             }
             @if (isUnderReview()) {
               <button matButton="filled" type="button" (click)="complete()">
-                <mat-icon>task_alt</mat-icon>
+                <app-icon name="task_alt" />
                 {{ 'audits.actions.complete' | t }}
               </button>
               <button matButton type="button" (click)="returnToInProgress()">
-                <mat-icon>reply</mat-icon>
+                <app-icon name="reply" />
                 {{ 'audits.actions.returnToInProgress' | t }}
               </button>
             }
             @if (canCancel()) {
               <button matButton type="button" (click)="cancel()">
-                <mat-icon>cancel</mat-icon>
+                <app-icon name="cancel" />
                 {{ 'audits.actions.cancel' | t }}
               </button>
             }
@@ -146,11 +146,11 @@
           @if (canManageTeam()) {
             <div class="detail__card-actions">
               <button matButton type="button" (click)="transferLead()">
-                <mat-icon>swap_horiz</mat-icon>
+                <app-icon name="swap_horiz" />
                 {{ 'audits.actions.transferLead' | t }}
               </button>
               <button matButton="filled" type="button" (click)="addMember()">
-                <mat-icon>person_add</mat-icon>
+                <app-icon name="person_add" />
                 {{ 'audits.actions.addMember' | t }}
               </button>
             </div>
@@ -174,7 +174,7 @@
                     (click)="removeMember(m)"
                     [attr.aria-label]="'audits.team.removeAria' | t: { name: nameOf(m.userId) }"
                   >
-                    <mat-icon>delete</mat-icon>
+                    <app-icon name="delete" />
                   </button>
                 }
               </li>
@@ -192,13 +192,13 @@
           <div class="detail__card-actions">
             @if (canManageSections()) {
               <button matButton type="button" (click)="addSection()">
-                <mat-icon>create_new_folder</mat-icon>
+                <app-icon name="create_new_folder" />
                 {{ 'audits.actions.addSection' | t }}
               </button>
             }
             @if (canAddChecklistItem()) {
               <button matButton="filled" type="button" (click)="addChecklistItem()">
-                <mat-icon>add</mat-icon>
+                <app-icon name="add" />
                 {{ 'audits.actions.addItem' | t }}
               </button>
             }
@@ -228,10 +228,10 @@
                       [attr.aria-label]="'audits.sections.reorderAria' | t"
                       [matTooltip]="'audits.sections.reorder' | t"
                     >
-                      <mat-icon>drag_indicator</mat-icon>
+                      <app-icon name="drag_indicator" />
                     </button>
                   }
-                  <span class="detail__section-icon" aria-hidden="true"><mat-icon>segment</mat-icon></span>
+                  <span class="detail__section-icon" aria-hidden="true"><app-icon name="segment" /></span>
                   <h4 class="detail__section-name">{{ group.name }}</h4>
                   <span class="detail__section-count">{{ group.items.length }}</span>
                   @if (canManageSections()) {
@@ -243,7 +243,7 @@
                         [attr.aria-label]="'audits.sections.renameAria' | t: { name: group.name }"
                         [matTooltip]="'audits.sections.renameConfirm' | t"
                       >
-                        <mat-icon>edit</mat-icon>
+                        <app-icon name="edit" />
                       </button>
                       @if (!group.items.length) {
                         <button
@@ -253,7 +253,7 @@
                           [attr.aria-label]="'audits.sections.removeAria' | t: { name: group.name }"
                           [matTooltip]="'audits.actions.remove' | t"
                         >
-                          <mat-icon>delete</mat-icon>
+                          <app-icon name="delete" />
                         </button>
                       }
                     </span>
@@ -268,7 +268,7 @@
           @if (ungroupedGroup(); as group) {
             <section class="detail__section">
               <header class="detail__section-head">
-                <span class="detail__section-icon" aria-hidden="true"><mat-icon>segment</mat-icon></span>
+                <span class="detail__section-icon" aria-hidden="true"><app-icon name="segment" /></span>
                 <h4 class="detail__section-name">{{ group.name }}</h4>
                 <span class="detail__section-count">{{ group.items.length }}</span>
               </header>
@@ -299,7 +299,7 @@
                   [attr.aria-label]="'audits.actions.reorderItemAria' | t"
                   [matTooltip]="'audits.actions.dragToReorder' | t"
                 >
-                  <mat-icon>drag_indicator</mat-icon>
+                  <app-icon name="drag_indicator" />
                 </button>
               }
               <div class="detail__item-main">
@@ -328,7 +328,7 @@
                     (click)="editChecklistItem(item)"
                     [attr.aria-label]="'audits.actions.editItemAria' | t"
                   >
-                    <mat-icon>edit</mat-icon>
+                    <app-icon name="edit" />
                   </button>
                   <button
                     matIconButton
@@ -336,7 +336,7 @@
                     (click)="removeChecklistItem(item)"
                     [attr.aria-label]="'audits.actions.removeItemAria' | t"
                   >
-                    <mat-icon>delete</mat-icon>
+                    <app-icon name="delete" />
                   </button>
                 </div>
               }
@@ -406,14 +406,14 @@
       <!-- Fieldwork (M5) lives on its own screen once the audit is past Draft -->
       @if (showExecution()) {
         <a class="detail__fieldwork" [routerLink]="['/audits', a.id, 'execute']">
-          <span class="detail__fieldwork-icon"><mat-icon>fact_check</mat-icon></span>
+          <span class="detail__fieldwork-icon"><app-icon name="fact_check" /></span>
           <span class="detail__fieldwork-text">
             <span class="detail__fieldwork-title">{{ 'audits.exec.openTitle' | t }}</span>
             <span class="detail__fieldwork-sub">
               {{ 'audits.exec.openSubtitle' | t: { responded: a.checklistItems.length } }}
             </span>
           </span>
-          <mat-icon class="detail__fieldwork-arrow">arrow_forward</mat-icon>
+          <app-icon class="detail__fieldwork-arrow" name="arrow_forward" />
         </a>
       }
     }

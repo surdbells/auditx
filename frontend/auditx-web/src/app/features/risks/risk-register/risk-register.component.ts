@@ -13,7 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
@@ -101,7 +101,7 @@ const RISK_GUIDE: PageGuide = {
     MatSelectModule,
     MatCheckboxModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatMenuModule,
     LoadingComponent,
     EmptyStateComponent,

@@ -4,7 +4,7 @@
 >
   @if (canManage() && selectedCategory()) {
     <button actions matButton="filled" type="button" (click)="create()" data-guide="create">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       New item
     </button>
   }
@@ -111,7 +111,7 @@
                         [attr.aria-label]="'Edit ' + i.label"
                         matTooltip="Edit"
                       >
-                        <mat-icon>edit</mat-icon>
+                        <app-icon name="edit" />
                       </button>
                       @if (i.isActive) {
                         <button
@@ -121,7 +121,7 @@
                           [attr.aria-label]="'Archive ' + i.label"
                           matTooltip="Archive"
                         >
-                          <mat-icon>archive</mat-icon>
+                          <app-icon name="archive" />
                         </button>
                       } @else {
                         <button
@@ -131,7 +131,7 @@
                           [attr.aria-label]="'Reactivate ' + i.label"
                           matTooltip="Reactivate"
                         >
-                          <mat-icon>unarchive</mat-icon>
+                          <app-icon name="unarchive" />
                         </button>
                       }
                     }

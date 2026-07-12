@@ -10,7 +10,7 @@ import {
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../core/icons/icon.component';
 import { debounceTime, distinctUntilChanged, map, switchMap, of, catchError } from 'rxjs';
 
 import { SearchService } from '../../core/services/search.service';
@@ -42,10 +42,10 @@ interface GroupVm {
 @Component({
   selector: 'app-global-search',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, MatIconModule, TranslatePipe],
+  imports: [ReactiveFormsModule, IconComponent, TranslatePipe],
   template: `
     <div class="gsearch" [class.gsearch--open]="open()">
-      <mat-icon class="gsearch__icon" aria-hidden="true">search</mat-icon>
+      <app-icon class="gsearch__icon" aria-hidden="true" name="search" />
       <input
         #box
         class="gsearch__input"
@@ -69,7 +69,7 @@ interface GroupVm {
           [attr.aria-label]="'search.clear' | t"
           (click)="clear()"
         >
-          <mat-icon aria-hidden="true">close</mat-icon>
+          <app-icon aria-hidden="true" name="close" />
         </button>
       }
 
@@ -90,7 +90,7 @@ interface GroupVm {
                   (mouseenter)="activeIndex.set(hit.index)"
                   (click)="go(hit)"
                 >
-                  <mat-icon class="gsearch__hit-icon" aria-hidden="true">{{ hit.icon }}</mat-icon>
+                  <app-icon class="gsearch__hit-icon" aria-hidden="true" [name]="hit.icon" />
                   <span class="gsearch__hit-text">
                     <span class="gsearch__hit-title">{{ hit.title }}</span>
                     @if (hit.subtitle) {

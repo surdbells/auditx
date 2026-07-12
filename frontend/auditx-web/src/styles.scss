@@ -161,6 +161,29 @@ html[data-theme='dark'] body {
   box-sizing: border-box;
 }
 
+// ---- Icons (Lucide via <app-icon>) -------------------------------------
+// Match mat-icon's font-driven sizing: the SVG is 1em, so any existing icon CSS
+// that sets font-size (or the 24px default) scales it exactly as before, and
+// colour follows currentColor. app-icon is inline so it flows like a glyph.
+app-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  line-height: 0;
+  vertical-align: middle;
+  color: inherit;
+  flex: 0 0 auto;
+}
+app-icon lucide-icon {
+  display: inline-flex;
+}
+app-icon svg {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
+
 // ---- Global element polish ---------------------------------------------
 ::selection {
   background: color-mix(in srgb, var(--mat-sys-primary) 22%, transparent);

@@ -5,11 +5,11 @@
   @if (canConfigure()) {
     <div actions class="templates__actions">
       <button matButton="filled" type="button" (click)="create()">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'reports.templates.action.new' | t }}
       </button>
       <button matButton type="button" (click)="fetch()">
-        <mat-icon>refresh</mat-icon>
+        <app-icon name="refresh" />
         {{ 'reports.templates.action.refresh' | t }}
       </button>
     </div>
@@ -75,7 +75,7 @@
               <td mat-cell *matCellDef="let t" class="templates__row-actions">
                 @if (canConfigure() && !t.isActive) {
                   <button matButton type="button" (click)="activate(t)">
-                    <mat-icon>play_circle</mat-icon>
+                    <app-icon name="play_circle" />
                     {{ 'reports.templates.action.activate' | t }}
                   </button>
                 }

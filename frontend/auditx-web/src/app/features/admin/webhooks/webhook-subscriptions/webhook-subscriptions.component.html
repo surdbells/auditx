@@ -4,7 +4,7 @@
   </p>
   @if (canManage()) {
     <button matButton="filled" type="button" (click)="create()">
-      <mat-icon>add</mat-icon>
+      <app-icon name="add" />
       {{ 'integrations.subscriptions.new' | t }}
     </button>
   }
@@ -64,7 +64,7 @@
                     (click)="remove(s)"
                     [attr.aria-label]="'integrations.subscriptions.deleteAria' | t: { url: s.destinationUrl }"
                   >
-                    <mat-icon>delete</mat-icon>
+                    <app-icon name="delete" />
                   </button>
                 }
               </td>

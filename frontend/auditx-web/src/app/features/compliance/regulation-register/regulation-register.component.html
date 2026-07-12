@@ -5,7 +5,7 @@
   <div actions>
     @if (canManage()) {
       <button matButton="filled" type="button" (click)="create()" data-guide="register">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'compliance.actions.register' | t }}
       </button>
     }
@@ -19,7 +19,7 @@
     <mat-form-field appearance="outline" class="reg-list__search">
       <mat-label>{{ 'common.search' | t }}</mat-label>
       <input matInput formControlName="search" autocomplete="off" />
-      <mat-icon matPrefix>search</mat-icon>
+      <app-icon matPrefix name="search" />
     </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>{{ 'compliance.field.category' | t }}</mat-label>
@@ -81,18 +81,18 @@
               <td mat-cell *matCellDef="let r">
                 @if (canManage()) {
                   <button matIconButton type="button" [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'compliance.actions.menuAria' | t: { code: r.code }">
-                    <mat-icon>more_vert</mat-icon>
+                    <app-icon name="more_vert" />
                   </button>
                   <mat-menu #rowMenu="matMenu">
                     <button mat-menu-item type="button" (click)="edit(r)">
-                      <mat-icon>edit</mat-icon><span>{{ 'compliance.actions.edit' | t }}</span>
+                      <app-icon name="edit" /><span>{{ 'compliance.actions.edit' | t }}</span>
                     </button>
                     <button mat-menu-item type="button" (click)="toggleActive(r)">
-                      <mat-icon>{{ r.isActive ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                      <app-icon [name]="r.isActive ? 'toggle_off' : 'toggle_on'" />
                       <span>{{ (r.isActive ? 'compliance.actions.retire' : 'compliance.actions.reactivate') | t }}</span>
                     </button>
                     <button mat-menu-item type="button" (click)="remove(r)">
-                      <mat-icon>delete</mat-icon><span>{{ 'compliance.actions.delete' | t }}</span>
+                      <app-icon name="delete" /><span>{{ 'compliance.actions.delete' | t }}</span>
                     </button>
                   </mat-menu>
                 }

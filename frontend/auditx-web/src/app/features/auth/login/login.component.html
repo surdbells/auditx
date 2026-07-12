@@ -2,14 +2,14 @@
   <aside class="login__aside">
     <div class="login__aside-inner">
       <div class="login__logo" aria-hidden="true">
-        <mat-icon>verified_user</mat-icon>
+        <app-icon name="verified_user" />
       </div>
       <div class="login__aside-brand">AuditX Enterprise</div>
       <p class="login__aside-tagline">{{ 'layout.platformSubtitle' | t }}</p>
       <ul class="login__aside-points">
-        <li><mat-icon aria-hidden="true">check_circle</mat-icon><span>{{ 'nav.planning' | t }} · {{ 'nav.audits' | t }} · {{ 'nav.exceptions' | t }}</span></li>
-        <li><mat-icon aria-hidden="true">verified_user</mat-icon><span>{{ 'nav.auditTrail' | t }} · {{ 'nav.sanctions' | t }}</span></li>
-        <li><mat-icon aria-hidden="true">insights</mat-icon><span>{{ 'nav.analytics' | t }} · {{ 'nav.coverage' | t }}</span></li>
+        <li><app-icon aria-hidden="true" name="check_circle" /><span>{{ 'nav.planning' | t }} · {{ 'nav.audits' | t }} · {{ 'nav.exceptions' | t }}</span></li>
+        <li><app-icon aria-hidden="true" name="verified_user" /><span>{{ 'nav.auditTrail' | t }} · {{ 'nav.sanctions' | t }}</span></li>
+        <li><app-icon aria-hidden="true" name="insights" /><span>{{ 'nav.analytics' | t }} · {{ 'nav.coverage' | t }}</span></li>
       </ul>
     </div>
   </aside>
@@ -21,7 +21,7 @@
     }
     <mat-card-header class="login__header">
       <div class="login__brand">
-        <mat-icon class="login__brand-icon" aria-hidden="true">verified_user</mat-icon>
+        <app-icon class="login__brand-icon" aria-hidden="true" name="verified_user" />
         <div>
           <div class="login__brand-name">AuditX Enterprise</div>
           <div class="login__brand-sub">{{ 'layout.platformSubtitle' | t }}</div>
@@ -37,7 +37,7 @@
 
       @if (errorMessage(); as msg) {
         <div class="login__error" role="alert">
-          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <app-icon aria-hidden="true" name="error_outline" />
           <span>{{ msg | t }}</span>
         </div>
       }
@@ -53,7 +53,7 @@
             autocapitalize="off"
             spellcheck="false"
           />
-          <mat-icon matPrefix>person</mat-icon>
+          <app-icon matPrefix name="person" />
           @if (form.controls.username.hasError('required') && form.controls.username.touched) {
             <mat-error>{{ 'auth.login.usernameRequired' | t }}</mat-error>
           }
@@ -67,7 +67,7 @@
             formControlName="password"
             autocomplete="current-password"
           />
-          <mat-icon matPrefix>lock</mat-icon>
+          <app-icon matPrefix name="lock" />
           <button
             matIconButton
             matSuffix
@@ -76,7 +76,7 @@
             [attr.aria-label]="(hidePassword() ? 'auth.login.showPassword' : 'auth.login.hidePassword') | t"
             [attr.aria-pressed]="!hidePassword()"
           >
-            <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
+            <app-icon [name]="hidePassword() ? 'visibility' : 'visibility_off'" />
           </button>
           @if (form.controls.password.hasError('required') && form.controls.password.touched) {
             <mat-error>{{ 'auth.login.passwordRequired' | t }}</mat-error>
@@ -102,7 +102,7 @@
         (click)="useSso()"
         [disabled]="submitting() || ssoBusy()"
       >
-        <mat-icon>desktop_windows</mat-icon>
+        <app-icon name="desktop_windows" />
         {{ (ssoBusy() ? 'auth.login.contactingDirectory' : 'auth.login.sso') | t }}
       </button>
     </mat-card-content>

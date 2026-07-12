@@ -5,7 +5,7 @@
   <div actions>
     @if (canCreate()) {
       <button matButton="filled" type="button" (click)="create()" data-guide="create">
-        <mat-icon>add</mat-icon>
+        <app-icon name="add" />
         {{ 'ac.items.new' | t }}
       </button>
     }

@@ -11,7 +11,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
@@ -48,7 +48,7 @@ const RECORDABLE = new Set(['in_progress', 'under_review']);
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
   ],
   templateUrl: './audit-procedures-panel.component.html',

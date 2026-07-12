@@ -19,19 +19,19 @@
               (click)="printReport()"
               [disabled]="printing()"
             >
-              <mat-icon>print</mat-icon>
+              <app-icon name="print" />
               {{ 'reports.viewer.action.print' | t }}
             </button>
           }
           @if (isCompleted()) {
             <button matButton="outlined" type="button" (click)="share()">
-              <mat-icon>link</mat-icon>
+              <app-icon name="link" />
               {{ 'reports.viewer.action.share' | t }}
             </button>
           }
           @if (canDistribute() && isCompleted()) {
             <button matButton="filled" type="button" (click)="distribute()">
-              <mat-icon>send</mat-icon>
+              <app-icon name="send" />
               {{ 'reports.viewer.action.distribute' | t }}
             </button>
           }
@@ -125,7 +125,7 @@
               (click)="verifyHash()"
               [disabled]="verifying()"
             >
-              <mat-icon>verified</mat-icon>
+              <app-icon name="verified" />
               {{ 'reports.viewer.action.verifyHash' | t }}
             </button>
           </div>
@@ -150,7 +150,7 @@
             <div class="viewer__downloads">
               @for (a of artefacts(); track a.format) {
                 <button matButton type="button" (click)="download(a)">
-                  <mat-icon>{{ a.format === 'pdf' ? 'picture_as_pdf' : 'download' }}</mat-icon>
+                  <app-icon [name]="a.format === 'pdf' ? 'picture_as_pdf' : 'download'" />
                   {{ a.format | uppercase }}
                 </button>
               }

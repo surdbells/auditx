@@ -14,7 +14,7 @@
         <div actions class="viewer__actions">
           @if (canEditText()) {
             <button matButton type="button" (click)="editCiaText()">
-              <mat-icon>edit_note</mat-icon>
+              <app-icon name="edit_note" />
               {{ 'ac.viewer.editNarrative' | t }}
             </button>
           }
@@ -25,7 +25,7 @@
               (click)="approve()"
               [disabled]="busy()"
             >
-              <mat-icon>check_circle</mat-icon>
+              <app-icon name="check_circle" />
               {{ 'ac.viewer.approve' | t }}
             </button>
           }
@@ -36,7 +36,7 @@
               (click)="distribute()"
               [disabled]="busy()"
             >
-              <mat-icon>send</mat-icon>
+              <app-icon name="send" />
               {{ 'ac.viewer.distribute' | t }}
             </button>
           }
@@ -96,7 +96,7 @@
           <div class="viewer__downloads">
             @for (a of artefacts(); track a.format) {
               <button matButton type="button" (click)="download(a)">
-                <mat-icon>download</mat-icon>
+                <app-icon name="download" />
                 {{ a.format | uppercase }}
               </button>
             }

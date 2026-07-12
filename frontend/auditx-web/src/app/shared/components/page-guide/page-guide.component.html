@@ -2,13 +2,13 @@
   <div class="pg__actions">
     @if (showWalkthrough()) {
       <button matButton type="button" class="pg__btn" (click)="startTour()">
-        <mat-icon>help_outline</mat-icon>
+        <app-icon name="help_outline" />
         {{ 'guide.help' | t }}
       </button>
     }
     @if (showOverview()) {
       <button matButton type="button" class="pg__btn" (click)="toggleAbout()">
-        <mat-icon>{{ aboutOpen() ? 'expand_less' : 'menu_book' }}</mat-icon>
+        <app-icon [name]="aboutOpen() ? 'expand_less' : 'menu_book'" />
         {{ 'guide.about' | t }}
       </button>
     }
@@ -33,11 +33,11 @@
                   <span class="pg__node">{{ k | t }}</span>
                 }
               </div>
-              <mat-icon class="pg__arrow" aria-hidden="true">arrow_forward</mat-icon>
+              <app-icon class="pg__arrow" aria-hidden="true" name="arrow_forward" />
             }
             <span class="pg__node pg__node--self">{{ guide().titleKey | t }}</span>
             @if (guide().usedByKeys?.length) {
-              <mat-icon class="pg__arrow" aria-hidden="true">arrow_forward</mat-icon>
+              <app-icon class="pg__arrow" aria-hidden="true" name="arrow_forward" />
               <div class="pg__graph-col">
                 <span class="pg__graph-label">{{ 'guide.about.usedBy' | t }}</span>
                 @for (k of guide().usedByKeys; track k) {
@@ -67,7 +67,7 @@
             @for (k of guide().workflowKeys; track k; let last = $last) {
               <span class="pg__flow-step">{{ k | t }}</span>
               @if (!last) {
-                <mat-icon class="pg__arrow" aria-hidden="true">chevron_right</mat-icon>
+                <app-icon class="pg__arrow" aria-hidden="true" name="chevron_right" />
               }
             }
           </div>
@@ -122,7 +122,7 @@
       @if (showWalkthrough()) {
         <div class="pg__block pg__restart">
           <button matButton type="button" (click)="startTour()">
-            <mat-icon>replay</mat-icon>
+            <app-icon name="replay" />
             {{ 'guide.restart' | t }}
           </button>
         </div>

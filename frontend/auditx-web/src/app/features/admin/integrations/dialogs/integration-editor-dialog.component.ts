@@ -18,7 +18,7 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
@@ -67,7 +67,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     TranslatePipe,
   ],
   templateUrl: './integration-editor-dialog.component.html',

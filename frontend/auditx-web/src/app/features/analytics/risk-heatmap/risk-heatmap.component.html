@@ -4,11 +4,11 @@
 >
   <div actions>
     <a matButton routerLink="/risks" data-guide="register">
-      <mat-icon>list</mat-icon>
+      <app-icon name="list" />
       {{ 'risk.heatmap.register' | t }}
     </a>
     <button matButton type="button" (click)="fetch()">
-      <mat-icon>refresh</mat-icon>
+      <app-icon name="refresh" />
       {{ 'analytics.actions.refresh' | t }}
     </button>
   </div>

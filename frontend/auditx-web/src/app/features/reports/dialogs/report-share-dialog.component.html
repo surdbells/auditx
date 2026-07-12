@@ -13,7 +13,7 @@
       </mat-select>
     </mat-form-field>
     <button matButton="filled" type="button" (click)="create()" [disabled]="creating()">
-      <mat-icon>add_link</mat-icon>
+      <app-icon name="add_link" />
       {{ 'reports.share.create' | t }}
     </button>
   </div>
@@ -44,10 +44,10 @@
           <div class="rsd__item-actions">
             @if (link.isActive) {
               <button matIconButton type="button" [matTooltip]="'reports.share.actions.copy' | t" (click)="copy(link)">
-                <mat-icon>content_copy</mat-icon>
+                <app-icon name="content_copy" />
               </button>
               <button matIconButton type="button" [matTooltip]="'reports.share.actions.revoke' | t" (click)="revoke(link)">
-                <mat-icon>link_off</mat-icon>
+                <app-icon name="link_off" />
               </button>
             }
           </div>

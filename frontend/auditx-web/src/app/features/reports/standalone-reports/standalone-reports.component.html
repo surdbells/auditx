@@ -26,7 +26,7 @@
         <mat-select [value]="newKind()" (selectionChange)="newKind.set($event.value)" [disabled]="generating()">
           @for (opt of generateKinds(); track opt.value) {
             <mat-option [value]="opt.value">
-              <mat-icon class="std__opt-icon">{{ opt.icon }}</mat-icon>
+              <app-icon class="std__opt-icon" [name]="opt.icon" />
               {{ opt.labelKey | t }}
             </mat-option>
           }
@@ -43,7 +43,7 @@
         (click)="generate()"
         [disabled]="generating()"
       >
-        <mat-icon>note_add</mat-icon>
+        <app-icon name="note_add" />
         {{ 'reports.standalone.action.generate' | t }}
       </button>
     </div>
@@ -121,7 +121,7 @@
                 @if (r.status === 'completed' && canOpenKind(r.kind)) {
                   @for (fmt of r.producedFormats; track fmt) {
                     <button matButton type="button" (click)="download(r, fmt)">
-                      <mat-icon>download</mat-icon>
+                      <app-icon name="download" />
                       {{ fmt | uppercase }}
                     </button>
                   }

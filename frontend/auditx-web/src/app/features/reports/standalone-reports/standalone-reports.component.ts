@@ -14,7 +14,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
+import { IconComponent } from '../../../core/icons/icon.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
@@ -144,7 +144,7 @@ const STANDALONE_REPORTS_GUIDE: PageGuide = {
     MatCheckboxModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatIconModule,
+    IconComponent,
     MatProgressSpinnerModule,
     MatTooltipModule,
     LoadingComponent,
