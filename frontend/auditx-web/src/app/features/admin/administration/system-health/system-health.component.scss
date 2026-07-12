@@ -5,6 +5,49 @@
   margin-bottom: 1.5rem;
 }
 
+// ---- Dependency probes -------------------------------------------------
+.health__checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.health__check {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.25rem;
+}
+
+.health__dot {
+  flex: 0 0 auto;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--mat-sys-on-surface-variant);
+}
+.health__dot[data-status='healthy'] {
+  background: #2e7d32;
+}
+.health__dot[data-status='degraded'] {
+  background: #ef6c00;
+}
+.health__dot[data-status='unhealthy'] {
+  background: #c62828;
+}
+
+.health__check-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.health__check-name {
+  font-weight: 600;
+}
+.health__check-detail {
+  font-size: 0.8rem;
+}
+
 .health__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -33,4 +76,30 @@
 
 .health__label {
   color: var(--mat-sys-on-surface-variant);
+}
+
+// ---- Runtime footer ----------------------------------------------------
+.health__runtime {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin: 1.75rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+.health__runtime div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.health__runtime dt {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+.health__runtime dd {
+  margin: 0;
+  font-weight: 600;
 }

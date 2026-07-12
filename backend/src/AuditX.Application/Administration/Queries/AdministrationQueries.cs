@@ -67,6 +67,34 @@ public sealed class GetSystemHealthQueryHandler(ISystemMetricsProvider metrics, 
     public async Task<SystemHealthDto> Handle(GetSystemHealthQuery query, CancellationToken cancellationToken)
     {
         var m = await metrics.GetAsync(cancellationToken);
-        return new SystemHealthDto("healthy", m.ActiveUserCount, m.TotalUserCount, m.TemplateCount, m.IntegrationCount, clock.UtcNow);
+
+        var checks = new List<SystemHealthCheckDto>
+        {
+            new("Database", m.DatabaseConnected ? "healthy" : "unhealthy",
+                m.DatabaseConnected ? $"Responded in {m.DatabaseLatencyMs} ms" : "Unreachable"),
+            new("Cache", m.CacheConnected ? "healthy" : "degraded",
+                m.CacheConnected ? "Connected" : "Not connected — running without cache"),
+        };
+
+        var metricList = new List<SystemHealthMetricDto>
+        {
+            new("Active users", m.ActiveUserCount),
+            new("Total users", m.TotalUserCount),
+            new("Audits", m.AuditCount),
+            new("Exceptions", m.ExceptionCount),
+            new("Controls", m.ControlCount),
+            new("Regulations", m.RegulationCount),
+            new("Risks", m.RiskCount),
+            new("Checklist templates", m.TemplateCount),
+            new("Active integrations", m.ActiveIntegrationCount),
+            new("Webhook subscriptions", m.WebhookSubscriptionCount),
+        };
+
+        // Overall status: unhealthy if the database is down, degraded if a non-critical dependency is off.
+        var status = !m.DatabaseConnected ? "unhealthy"
+            : checks.Any(c => c.Status != "healthy") ? "degraded"
+            : "healthy";
+
+        return new SystemHealthDto(status, checks, metricList, m.Version, m.Environment, m.UptimeSeconds, clock.UtcNow);
     }
 }

@@ -12,8 +12,25 @@ public interface IReleasePackageVerifier
     ReleaseVerificationResult Verify(string version, string manifestSha256, byte[] signature, byte[] manifestContent);
 }
 
-/// <summary>Aggregate deployment metrics for the system-health surface (US-M15-029).</summary>
-public sealed record SystemMetrics(int ActiveUserCount, int TotalUserCount, int TemplateCount, int IntegrationCount);
+/// <summary>Aggregate deployment metrics + dependency probes for the system-health surface (US-M15-029).</summary>
+public sealed record SystemMetrics(
+    bool DatabaseConnected,
+    long DatabaseLatencyMs,
+    bool CacheConnected,
+    int ActiveUserCount,
+    int TotalUserCount,
+    int AuditCount,
+    int ExceptionCount,
+    int ControlCount,
+    int RegulationCount,
+    int RiskCount,
+    int TemplateCount,
+    int ActiveIntegrationCount,
+    int TotalIntegrationCount,
+    int WebhookSubscriptionCount,
+    string Version,
+    string Environment,
+    long UptimeSeconds);
 
 public interface ISystemMetricsProvider
 {

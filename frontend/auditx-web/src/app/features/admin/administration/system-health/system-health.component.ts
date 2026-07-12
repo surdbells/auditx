@@ -96,35 +96,43 @@ export class SystemHealthComponent {
   readonly state = signal<ViewState>('loading');
   readonly health = signal<SystemHealth | null>(null);
 
-  readonly metrics = computed(() => {
-    // Track the active language so labels re-resolve on toggle.
-    this.i18n.lang();
-    const h = this.health();
-    if (!h) {
-      return [];
+  /** Per-metric icon, keyed by the backend label. */
+  private static readonly METRIC_ICONS: Record<string, string> = {
+    'Active users': 'how_to_reg',
+    'Total users': 'groups',
+    Audits: 'assignment',
+    Exceptions: 'report_problem',
+    Controls: 'fact_check',
+    Regulations: 'account_balance',
+    Risks: 'crisis_alert',
+    'Checklist templates': 'description',
+    'Active integrations': 'hub',
+    'Webhook subscriptions': 'webhook',
+  };
+
+  readonly checks = computed(() => this.health()?.checks ?? []);
+
+  readonly metrics = computed(() =>
+    (this.health()?.metrics ?? []).map((m) => ({
+      icon: SystemHealthComponent.METRIC_ICONS[m.label] ?? 'insights',
+      label: m.label,
+      value: m.value,
+    })),
+  );
+
+  /** Human uptime (e.g. "3d 4h", "12m"). */
+  readonly uptimeText = computed(() => {
+    const s = this.health()?.uptimeSeconds ?? 0;
+    const d = Math.floor(s / 86400);
+    const h = Math.floor((s % 86400) / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (d > 0) {
+      return `${d}d ${h}h`;
     }
-    return [
-      {
-        icon: 'group',
-        label: this.i18n.translate('administration.health.activeUsers'),
-        value: h.activeUserCount,
-      },
-      {
-        icon: 'groups',
-        label: this.i18n.translate('administration.health.totalUsers'),
-        value: h.totalUserCount,
-      },
-      {
-        icon: 'description',
-        label: this.i18n.translate('administration.health.templates'),
-        value: h.templateCount,
-      },
-      {
-        icon: 'hub',
-        label: this.i18n.translate('administration.health.integrations'),
-        value: h.integrationCount,
-      },
-    ];
+    if (h > 0) {
+      return `${h}h ${m}m`;
+    }
+    return `${m}m`;
   });
 
   constructor() {

@@ -202,18 +202,20 @@ describe('AdministrationService', () => {
   });
 
   it('gets system health metrics', () => {
-    let count: number | undefined;
-    service.getSystemHealth().subscribe((h) => (count = h.totalUserCount));
+    let health: import('../models').SystemHealth | undefined;
+    service.getSystemHealth().subscribe((h) => (health = h));
     http.expectOne(`${BASE}/admin/system-health`).flush({
       data: {
-        status: 'Healthy',
-        activeUserCount: 5,
-        totalUserCount: 8,
-        templateCount: 3,
-        integrationCount: 2,
+        status: 'healthy',
+        checks: [{ name: 'Database', status: 'healthy', detail: 'Responded in 3 ms' }],
+        metrics: [{ label: 'Total users', value: 8 }],
+        version: '1.0.0',
+        environment: 'Development',
+        uptimeSeconds: 3600,
         generatedAt: '',
       },
     });
-    expect(count).toBe(8);
+    expect(health?.metrics[0].value).toBe(8);
+    expect(health?.checks[0].name).toBe('Database');
   });
 });

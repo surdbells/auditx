@@ -20,6 +20,21 @@
       </span>
     </div>
 
+    <!-- Dependency probes -->
+    <div class="health__checks">
+      @for (c of checks(); track c.name) {
+        <mat-card appearance="outlined" class="health__check">
+          <span class="health__dot" [attr.data-status]="c.status" aria-hidden="true"></span>
+          <div class="health__check-body">
+            <div class="health__check-name">{{ c.name }}</div>
+            <div class="health__check-detail muted">{{ c.detail }}</div>
+          </div>
+          <span class="status-badge" [attr.data-status]="c.status">{{ c.status }}</span>
+        </mat-card>
+      }
+    </div>
+
+    <!-- Operational counts -->
     <div class="health__grid">
       @for (m of metrics(); track m.label) {
         <mat-card appearance="outlined" class="health__card">
@@ -29,5 +44,21 @@
         </mat-card>
       }
     </div>
+
+    <!-- Runtime -->
+    <dl class="health__runtime">
+      <div>
+        <dt>{{ 'administration.health.version' | t }}</dt>
+        <dd>{{ health()?.version }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'administration.health.environment' | t }}</dt>
+        <dd>{{ health()?.environment }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'administration.health.uptime' | t }}</dt>
+        <dd>{{ uptimeText() }}</dd>
+      </div>
+    </dl>
   }
 }

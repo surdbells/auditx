@@ -1,9 +1,13 @@
+using System.Diagnostics;
+using System.Reflection;
 using System.Security.Cryptography;
 using AuditX.Application.Abstractions.Administration;
 using AuditX.Domain.Enums;
 using AuditX.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 
 namespace AuditX.Infrastructure.Administration;
 
@@ -54,15 +58,65 @@ public sealed class RsaReleasePackageVerifier(IOptions<ReleaseSigningOptions> op
     }
 }
 
-/// <summary>Reads aggregate deployment metrics for the system-health surface.</summary>
-public sealed class SystemMetricsProvider(AppDbContext db) : ISystemMetricsProvider
+/// <summary>Reads aggregate deployment metrics + probes dependencies for the system-health surface.</summary>
+public sealed class SystemMetricsProvider(AppDbContext db, IConnectionMultiplexer redis, IHostEnvironment env)
+    : ISystemMetricsProvider
 {
+    // Captured once at first use; the process start marks the app's uptime baseline.
+    private static readonly DateTimeOffset ProcessStart =
+        Process.GetCurrentProcess().StartTime.ToUniversalTime();
+
     public async Task<SystemMetrics> GetAsync(CancellationToken cancellationToken = default)
     {
+        // Database reachability + round-trip latency.
+        var sw = Stopwatch.StartNew();
+        bool dbConnected;
+        try
+        {
+            dbConnected = await db.Database.CanConnectAsync(cancellationToken);
+        }
+        catch
+        {
+            dbConnected = false;
+        }
+        sw.Stop();
+
+        var cacheConnected = SafeProbe(() => redis.IsConnected);
+
         var total = await db.Users.CountAsync(cancellationToken);
         var active = await db.Users.CountAsync(u => u.Status == UserStatus.Active, cancellationToken);
+        var audits = await db.Audits.CountAsync(cancellationToken);
+        var exceptions = await db.Exceptions.CountAsync(cancellationToken);
+        var controls = await db.Controls.CountAsync(cancellationToken);
+        var regulations = await db.Regulations.CountAsync(cancellationToken);
+        var risks = await db.Risks.CountAsync(cancellationToken);
         var templates = await db.Templates.CountAsync(cancellationToken);
-        var integrations = await db.Integrations.CountAsync(i => i.IsActive, cancellationToken);
-        return new SystemMetrics(active, total, templates, integrations);
+        var integrationsTotal = await db.Integrations.CountAsync(cancellationToken);
+        var integrationsActive = await db.Integrations.CountAsync(i => i.IsActive, cancellationToken);
+        var webhooks = await db.WebhookSubscriptions.CountAsync(cancellationToken);
+
+        var asm = Assembly.GetEntryAssembly();
+        var version = asm?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? asm?.GetName().Version?.ToString()
+            ?? "unknown";
+        var uptime = Math.Max(0, (long)(DateTimeOffset.UtcNow - ProcessStart).TotalSeconds);
+
+        return new SystemMetrics(
+            dbConnected, sw.ElapsedMilliseconds, cacheConnected,
+            active, total, audits, exceptions, controls, regulations, risks, templates,
+            integrationsActive, integrationsTotal, webhooks,
+            version, env.EnvironmentName, uptime);
+    }
+
+    private static bool SafeProbe(Func<bool> probe)
+    {
+        try
+        {
+            return probe();
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

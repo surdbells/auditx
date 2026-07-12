@@ -62,10 +62,17 @@ public sealed record ObjectRestoreRequestDto(
     Guid? DecidedByUserId,
     string? DecisionComment);
 
+/// <summary>A dependency probe (database, cache, …). Status is healthy | degraded | unhealthy.</summary>
+public sealed record SystemHealthCheckDto(string Name, string Status, string? Detail);
+
+/// <summary>A labelled operational count for the health dashboard.</summary>
+public sealed record SystemHealthMetricDto(string Label, long Value);
+
 public sealed record SystemHealthDto(
     string Status,
-    int ActiveUserCount,
-    int TotalUserCount,
-    int TemplateCount,
-    int IntegrationCount,
+    IReadOnlyList<SystemHealthCheckDto> Checks,
+    IReadOnlyList<SystemHealthMetricDto> Metrics,
+    string Version,
+    string Environment,
+    long UptimeSeconds,
     DateTimeOffset GeneratedAt);

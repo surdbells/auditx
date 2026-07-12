@@ -157,11 +157,24 @@ export interface DecideObjectRestoreRequest {
   comment: string;
 }
 
+export interface SystemHealthCheck {
+  name: string;
+  /** healthy | degraded | unhealthy */
+  status: string;
+  detail: string | null;
+}
+
+export interface SystemHealthMetric {
+  label: string;
+  value: number;
+}
+
 export interface SystemHealth {
   status: string;
-  activeUserCount: number;
-  totalUserCount: number;
-  templateCount: number;
-  integrationCount: number;
+  checks: SystemHealthCheck[];
+  metrics: SystemHealthMetric[];
+  version: string;
+  environment: string;
+  uptimeSeconds: number;
   generatedAt: string;
 }
