@@ -31,6 +31,12 @@ public static class ReferenceDataCategories
     /// <summary>Risk categories (operational, financial, compliance, …) used by the risk register.</summary>
     public const string RiskCategory = "risk_category";
 
+    /// <summary>Regulatory authorities (central bank, securities commission, …) that issue the regulations tracked in the compliance register.</summary>
+    public const string RegulationAuthority = "regulation_authority";
+
+    /// <summary>Regulation categories (prudential, AML/CFT, consumer protection, …) used to classify regulations in the compliance register.</summary>
+    public const string RegulationCategory = "regulation_category";
+
     /// <summary>Every category the store recognises, with its human label — the admin UI's manageable-list menu.</summary>
     public static readonly IReadOnlyList<ReferenceDataCategoryDescriptor> All =
     [
@@ -42,6 +48,8 @@ public static class ReferenceDataCategories
         new(EntityType, "Entity types"),
         new(SanctionCategory, "Sanction categories"),
         new(RiskCategory, "Risk categories"),
+        new(RegulationAuthority, "Regulatory authorities"),
+        new(RegulationCategory, "Regulation categories"),
     ];
 
     public static bool IsKnown(string? category) =>

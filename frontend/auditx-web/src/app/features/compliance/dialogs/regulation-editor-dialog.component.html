@@ -23,11 +23,21 @@
     <div class="reg-form__row">
       <mat-form-field appearance="outline">
         <mat-label>{{ 'compliance.field.authority' | t }}</mat-label>
-        <input matInput formControlName="authority" autocomplete="off" />
+        <mat-select formControlName="authority">
+          <mat-option value="">{{ 'compliance.field.none' | t }}</mat-option>
+          @for (a of authorityOptions(); track a.code) {
+            <mat-option [value]="a.code">{{ a.label }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>{{ 'compliance.field.category' | t }}</mat-label>
-        <input matInput formControlName="category" autocomplete="off" />
+        <mat-select formControlName="category">
+          <mat-option value="">{{ 'compliance.field.none' | t }}</mat-option>
+          @for (c of categoryOptions(); track c.code) {
+            <mat-option [value]="c.code">{{ c.label }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
     </div>
 

@@ -841,6 +841,8 @@
   "compliance.field.authority": "Authority",
   "compliance.field.category": "Category",
   "compliance.field.description": "Description",
+  "compliance.field.none": "None",
+  "compliance.filter.allCategories": "All categories",
   "compliance.filter.includeRetired": "Show retired",
   "compliance.actions.register": "Register regulation",
   "compliance.actions.edit": "Edit",

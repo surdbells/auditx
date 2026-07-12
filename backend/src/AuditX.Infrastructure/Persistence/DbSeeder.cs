@@ -310,6 +310,26 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             (ReferenceDataCategories.RiskCategory, "technology", "Technology / Cyber"),
             (ReferenceDataCategories.RiskCategory, "reputational", "Reputational"),
             (ReferenceDataCategories.RiskCategory, "fraud", "Fraud"),
+
+            (ReferenceDataCategories.RegulationAuthority, "cbn", "Central Bank of Nigeria (CBN)"),
+            (ReferenceDataCategories.RegulationAuthority, "sec", "Securities & Exchange Commission (SEC)"),
+            (ReferenceDataCategories.RegulationAuthority, "ndic", "Nigeria Deposit Insurance Corporation (NDIC)"),
+            (ReferenceDataCategories.RegulationAuthority, "nfiu", "Nigerian Financial Intelligence Unit (NFIU)"),
+            (ReferenceDataCategories.RegulationAuthority, "frc", "Financial Reporting Council (FRC)"),
+            (ReferenceDataCategories.RegulationAuthority, "naicom", "National Insurance Commission (NAICOM)"),
+            (ReferenceDataCategories.RegulationAuthority, "nitda", "National IT Development Agency (NITDA)"),
+            (ReferenceDataCategories.RegulationAuthority, "basel", "Basel Committee (BCBS)"),
+            (ReferenceDataCategories.RegulationAuthority, "fatf", "Financial Action Task Force (FATF)"),
+
+            (ReferenceDataCategories.RegulationCategory, "prudential", "Prudential"),
+            (ReferenceDataCategories.RegulationCategory, "aml_cft", "AML / CFT"),
+            (ReferenceDataCategories.RegulationCategory, "corporate_governance", "Corporate governance"),
+            (ReferenceDataCategories.RegulationCategory, "consumer_protection", "Consumer protection"),
+            (ReferenceDataCategories.RegulationCategory, "data_protection", "Data protection & privacy"),
+            (ReferenceDataCategories.RegulationCategory, "cybersecurity", "Cybersecurity"),
+            (ReferenceDataCategories.RegulationCategory, "capital_markets", "Capital markets"),
+            (ReferenceDataCategories.RegulationCategory, "financial_reporting", "Financial reporting"),
+            (ReferenceDataCategories.RegulationCategory, "operational_risk", "Operational risk"),
         };
 
         // One round-trip: existing (category, code) pairs across the seeded categories. Include soft-deleted rows so

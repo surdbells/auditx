@@ -16,10 +16,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSelectModule } from '@angular/material/select';
 
 import { RegulationsService } from '../../../core/services/regulations.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { Permissions } from '../../../core/permissions';
 import { MatTableModule } from '@angular/material/table';
 import { Regulation, RegulationListItem } from '../../../core/models';
@@ -81,6 +83,7 @@ const REGULATION_GUIDE: PageGuide = {
     MatTableModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatCheckboxModule,
     MatButtonModule,
     IconComponent,
@@ -103,8 +106,12 @@ export class RegulationRegisterComponent {
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+  readonly refLookup = inject(ReferenceDataLookupService);
 
   readonly guide = REGULATION_GUIDE;
+
+  /** Active regulation categories for the filter dropdown. */
+  readonly categoryFilterOptions = this.refLookup.options('regulation_category');
 
   readonly displayedColumns = ['code', 'name', 'authority', 'category', 'status', 'actions'];
 
