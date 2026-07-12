@@ -259,20 +259,17 @@ export class AuditTimePanelComponent {
   }
 
   /**
-   * Stops the stopwatch and drops the elapsed time into the log form (rounded up to the nearest
-   * 15 min, min 15) so the auditor can review + adjust before logging. Deliberately never auto-logs.
+   * Stops the stopwatch and logs the tracked time straight away (rounded up to the nearest 15 min,
+   * min 15) — the value comes from the timer, not hand-entry, so it is recorded as measured and can't
+   * be silently edited before logging.
    */
   stopTimer(): void {
     this.clearTimer();
     this.timerRunning.set(false);
-    const hours = Math.max(0.25, Math.ceil((this.elapsedSec() / 3600) * 4) / 4);
-    this.editing.set(null);
-    this.form.patchValue({
-      workDate: this.today(),
-      hours,
-      category: 'fieldwork',
-      checklistItemId: this.scopedItemId() ?? '',
-    });
+    const seconds = this.elapsedSec();
+    this.elapsedSec.set(0);
+    const hours = Math.max(0.25, Math.ceil((seconds / 3600) * 4) / 4);
+    this.logQuick(hours);
   }
 
   resetTimer(): void {

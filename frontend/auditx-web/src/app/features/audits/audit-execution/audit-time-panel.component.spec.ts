@@ -113,15 +113,21 @@ describe('AuditTimePanelComponent', () => {
     http.expectOne(`${BASE}/audits/a-1/time-entries/summary`).flush({ data: emptySummary() });
   });
 
-  it('stops the timer and drops the elapsed time into the form (never auto-logs)', () => {
+  it('stops the timer and auto-logs the measured time (rounded up to 15 min)', () => {
     setup('i-1');
-    // 40 min elapsed → rounds up to 0.75h; no HTTP fired (opt-in review).
-    component.elapsedSec.set(40 * 60);
+    component.elapsedSec.set(40 * 60); // 40 min → rounds up to 0.75h
     component.stopTimer();
 
     expect(component.timerRunning()).toBe(false);
-    expect(component.form.controls.hours.value).toBe(0.75);
-    expect(component.form.controls.checklistItemId.value).toBe('i-1');
-    http.expectNone(`${BASE}/audits/a-1/time-entries`); // stopping never logs on its own
+    expect(component.elapsedSec()).toBe(0);
+    const req = http.expectOne(`${BASE}/audits/a-1/time-entries`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body.hours).toBe(0.75);
+    expect(req.request.body.category).toBe('fieldwork');
+    expect(req.request.body.checklistItemId).toBe('i-1');
+    req.flush({ data: {} });
+    // Refreshes the list + summary after logging.
+    http.expectOne(`${BASE}/audits/a-1/time-entries`).flush({ data: [] });
+    http.expectOne(`${BASE}/audits/a-1/time-entries/summary`).flush({ data: emptySummary() });
   });
 });

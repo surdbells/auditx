@@ -155,6 +155,13 @@
                 </button>
               }
             }
+            <!-- Raise an exception directly on a failed item (auditors + reviewers). -->
+            @if (canRaiseException() && item.verdict === 'fail' && !item.hasException) {
+              <button matButton="tonal" type="button" class="exec__raise" (click)="raiseException(item)">
+                <mat-icon>report_problem</mat-icon>
+                {{ 'audits.actions.raiseException' | t }}
+              </button>
+            }
             @if (canManage() && !isReadOnly()) {
               <button matButton type="button" (click)="assign(item)">
                 <mat-icon>person</mat-icon>

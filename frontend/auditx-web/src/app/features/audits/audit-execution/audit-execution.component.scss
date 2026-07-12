@@ -228,6 +228,47 @@
   padding-top: 1rem;
 }
 
+/* Premium pill tabs (override the flat MDC underline tabs). */
+.exec__tabs ::ng-deep {
+  .mat-mdc-tab-header {
+    border-bottom: none;
+  }
+  .mat-mdc-tab-labels {
+    gap: 0.5rem;
+    padding: 0.15rem 0;
+  }
+  .mat-mdc-tab.mdc-tab {
+    flex-grow: 0;
+    min-width: 0;
+    height: 40px;
+    padding: 0 1.15rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 999px;
+    background: var(--mat-sys-surface);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease;
+  }
+  .mat-mdc-tab.mdc-tab:hover {
+    background: color-mix(in srgb, var(--mat-sys-primary) 7%, var(--mat-sys-surface));
+  }
+  .mat-mdc-tab.mdc-tab--active {
+    background: color-mix(in srgb, var(--mat-sys-primary) 13%, transparent);
+    border-color: var(--mat-sys-primary);
+  }
+  .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+    color: var(--mat-sys-primary);
+  }
+  // Pills carry the active state themselves — drop the underline ink bar.
+  .mdc-tab-indicator__content--underline {
+    display: none;
+  }
+  .mat-mdc-tab-ripple {
+    border-radius: 999px;
+  }
+}
+
 .exec__draft-tag {
   padding: 0.1rem 0.5rem;
   border-radius: 999px;

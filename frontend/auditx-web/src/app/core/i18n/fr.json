@@ -643,7 +643,7 @@
   "time.scoped.hint": "Enregistré sur l'élément de check-list ouvert.",
   "time.quick.label": "Saisie rapide",
   "time.timer.start": "Démarrer le chrono",
-  "time.timer.stop": "Arrêter et reporter les heures",
+  "time.timer.stop": "Arrêter et enregistrer",
   "time.timer.resume": "Reprendre le chrono",
   "time.timer.reset": "Réinitialiser le chrono",
   "procedure.scoped.hint": "Enregistré sur l'élément de check-list ouvert.",

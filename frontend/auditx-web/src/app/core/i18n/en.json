@@ -643,7 +643,7 @@
   "time.scoped.hint": "Logged against the open checklist item.",
   "time.quick.label": "Quick log",
   "time.timer.start": "Start timer",
-  "time.timer.stop": "Stop & fill hours",
+  "time.timer.stop": "Stop & log",
   "time.timer.resume": "Resume timer",
   "time.timer.reset": "Reset timer",
   "procedure.scoped.hint": "Recorded against the open checklist item.",
