@@ -184,6 +184,42 @@ app-icon svg {
   display: block;
 }
 
+// Material's own spacing/sizing is written for `.mat-icon`; after the Lucide
+// migration replicate the key rules for <app-icon> so buttons, menus and form
+// fields keep their native spacing and don't crowd their labels.
+
+// Text / filled / tonal / outlined buttons: 18px icon with an 8px gap to the label.
+.mat-mdc-button-base:not(.mat-mdc-icon-button) app-icon {
+  font-size: 18px;
+  margin-right: 8px;
+}
+.mat-mdc-button-base:not(.mat-mdc-icon-button) app-icon[iconPositionEnd] {
+  margin-right: 0;
+  margin-left: 8px;
+}
+
+// Icon-only buttons: centred glyph, no margins.
+.mat-mdc-icon-button app-icon {
+  margin: 0;
+}
+
+// Menu items: gap after the leading icon (matches mat-icon's 16px).
+.mat-mdc-menu-item app-icon {
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+// Form-field prefix / suffix icons: Material's 12px horizontal padding.
+.mat-mdc-form-field-icon-prefix > app-icon,
+.mat-mdc-form-field-icon-suffix > app-icon {
+  padding: 0 12px;
+}
+
+// Chips carry a slightly smaller leading icon.
+.mat-mdc-chip app-icon {
+  font-size: 18px;
+}
+
 // ---- Global element polish ---------------------------------------------
 ::selection {
   background: color-mix(in srgb, var(--mat-sys-primary) 22%, transparent);
