@@ -388,11 +388,13 @@ html[data-theme='dark'] *::-webkit-scrollbar-thumb {
   box-shadow: var(--ax-shadow-3) !important;
   border: 1px solid var(--mat-sys-outline-variant);
 }
-// The bottom account menu matches the sidebar width (260px) so it reads as an
-// extension of the nav column rather than a narrow floating chip.
+// The bottom account menu sits just inside the 260px nav column with an even gap
+// on both sides (and a small lift off the button) so it reads as a floating card
+// rather than touching the sidebar edges.
 .profile-menu.mat-mdc-menu-panel {
-  min-width: 260px;
-  max-width: 260px;
+  min-width: 228px;
+  max-width: 228px;
+  margin: 0.4rem 0.85rem;
 }
 .mat-mdc-dialog-surface {
   border-radius: 20px !important;

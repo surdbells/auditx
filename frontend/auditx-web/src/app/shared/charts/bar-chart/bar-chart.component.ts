@@ -12,6 +12,8 @@ import { resolveColor } from '../chart-colors';
 /** A bar laid out for rendering (position + resolved colour + scaled length). */
 interface LaidOutBar {
   label: string;
+  /** Label truncated to fit the fixed label column (full text stays in a &lt;title&gt;). */
+  display: string;
   /** Stable identifier for tracking + drilldown clicks (datum key, falling back to the label). */
   key: string;
   value: number;
@@ -64,7 +66,8 @@ interface LaidOutBar {
               [attr.y]="bar.y + rowHeight / 2"
               dominant-baseline="middle"
             >
-              {{ bar.label }}
+              <title>{{ bar.label }}</title>
+              {{ bar.display }}
             </text>
             <rect
               class="chart__track"
@@ -156,12 +159,16 @@ export class BarChartComponent {
 
   /* ---- Fixed SVG geometry (user units; the SVG scales to fit its box). ---- */
   protected readonly width = 320;
-  protected readonly labelWidth = 96;
-  protected readonly valueGutter = 40;
+  protected readonly labelWidth = 112;
+  protected readonly valueGutter = 34;
   protected readonly rowHeight = 28;
   protected readonly barPadding = 5;
   protected readonly barThickness = 18;
   protected readonly barGap = 6;
+  /** Approx. glyph advance at the 12px label font; used to fit labels in the column. */
+  private readonly labelCharWidth = 6.4;
+  /** A small right inset so the truncated label never touches the bar track. */
+  private readonly labelInset = 8;
 
   readonly hasData = computed(() =>
     this.data().some((d) => Number.isFinite(d.value) && d.value > 0),
@@ -187,8 +194,13 @@ export class BarChartComponent {
     const data = this.data().filter((d) => Number.isFinite(d.value));
     const max = Math.max(1, ...data.map((d) => d.value));
     const track = this.trackWidth();
+    const maxChars = Math.max(
+      4,
+      Math.floor((this.labelWidth - this.labelInset) / this.labelCharWidth),
+    );
     return data.map((d, i) => ({
       label: d.label,
+      display: this.truncate(d.label, maxChars),
       key: d.key ?? d.label,
       value: d.value,
       color: resolveColor(d.label, i, d.color),
@@ -197,6 +209,10 @@ export class BarChartComponent {
       valueText: this.formatValue(d.value),
     }));
   });
+
+  private truncate(label: string, maxChars: number): string {
+    return label.length > maxChars ? `${label.slice(0, maxChars - 1).trimEnd()}…` : label;
+  }
 
   private formatValue(value: number): string {
     return Number.isInteger(value) ? String(value) : value.toFixed(1);
