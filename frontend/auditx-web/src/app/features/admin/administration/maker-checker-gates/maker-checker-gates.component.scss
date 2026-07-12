@@ -1,0 +1,87 @@
+.gates__intro {
+  margin: 0 0 1.25rem;
+  max-width: 68ch;
+}
+
+.gates__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  max-width: 900px;
+}
+
+.gates__card {
+  position: relative;
+  overflow: hidden;
+  padding: 1.25rem 1.5rem;
+}
+
+.gates__bar {
+  position: absolute;
+  inset: 0 0 auto 0;
+}
+
+.gates__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.gates__title {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+}
+
+.gates__desc {
+  margin: 0.25rem 0 0;
+  max-width: 60ch;
+}
+
+.gates__enable {
+  flex: 0 0 auto;
+}
+
+.gates__policy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.gates__role {
+  max-width: 360px;
+}
+
+.gates__self {
+  margin-top: 0.5rem;
+}
+
+.gates__hint {
+  margin: 0.15rem 0 0;
+  font: var(--mat-sys-label-small);
+  max-width: 60ch;
+}
+
+.gates__disabled {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+  font: var(--mat-sys-label-medium);
+}
+
+.gates__disabled mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+@media (max-width: 600px) {
+  .gates__head {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}

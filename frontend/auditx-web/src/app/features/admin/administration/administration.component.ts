@@ -12,6 +12,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { BankSettingsComponent } from './bank-settings/bank-settings.component';
 import { BulkUsersComponent } from './bulk-users/bulk-users.component';
+import { MakerCheckerGatesComponent } from './maker-checker-gates/maker-checker-gates.component';
 import { SupportChannelComponent } from './support-channel/support-channel.component';
 import { ReleasesComponent } from './releases/releases.component';
 import { BackupRestoreComponent } from './backup-restore/backup-restore.component';
@@ -26,6 +27,7 @@ import { SystemHealthComponent } from './system-health/system-health.component';
     TranslatePipe,
     BankSettingsComponent,
     BulkUsersComponent,
+    MakerCheckerGatesComponent,
     SupportChannelComponent,
     ReleasesComponent,
     BackupRestoreComponent,
@@ -50,6 +52,9 @@ export class AdministrationComponent {
   );
   readonly canManageUsers = computed(() =>
     this.auth.hasPermission(Permissions.ManageUsers),
+  );
+  readonly canManageDualControl = computed(() =>
+    this.auth.hasPermission(Permissions.ManageBankSettings),
   );
   readonly canManageSupport = computed(() =>
     this.auth.hasPermission(Permissions.ManageSupportChannel),

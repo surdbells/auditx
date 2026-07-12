@@ -7,7 +7,12 @@ using FluentValidation;
 
 namespace AuditX.Application.Identity.MakerChecker;
 
-/// <summary>List the configured maker-checker gates (US-M1-020).</summary>
+/// <summary>
+/// List the configurable maker-checker gates (US-M1-020). Returns one row per <em>enforced</em> action
+/// type (<see cref="MakerCheckerActionCatalogue"/>), overlaying any persisted configuration; types with
+/// no stored row fall back to the deploy-time default (<see cref="MakerCheckerActionTypes.DefaultEnabled"/>).
+/// This keeps the admin screen complete even before a bank has ever touched a gate.
+/// </summary>
 public sealed record ListMakerCheckerGatesQuery : IQuery<IReadOnlyList<MakerCheckerGateDto>>;
 
 public sealed class ListMakerCheckerGatesQueryHandler(IMakerCheckerGateRepository gates)
@@ -15,8 +20,15 @@ public sealed class ListMakerCheckerGatesQueryHandler(IMakerCheckerGateRepositor
 {
     public async Task<IReadOnlyList<MakerCheckerGateDto>> Handle(ListMakerCheckerGatesQuery query, CancellationToken cancellationToken)
     {
-        var all = await gates.GetAllAsync(cancellationToken);
-        return all.Select(g => new MakerCheckerGateDto(g.ActionType, g.IsEnabled, g.CheckerRoleName, g.AllowMakerAsChecker)).ToArray();
+        var persisted = (await gates.GetAllAsync(cancellationToken))
+            .ToDictionary(g => g.ActionType, StringComparer.Ordinal);
+
+        return MakerCheckerActionCatalogue.Enforced
+            .Select(actionType =>
+                persisted.TryGetValue(actionType, out var gate)
+                    ? new MakerCheckerGateDto(gate.ActionType, gate.IsEnabled, gate.CheckerRoleName, gate.AllowMakerAsChecker)
+                    : new MakerCheckerGateDto(actionType, MakerCheckerActionTypes.DefaultEnabled.Contains(actionType), null, false))
+            .ToArray();
     }
 }
 
@@ -29,7 +41,11 @@ public sealed record ConfigureMakerCheckerGateCommand(
 
 public sealed class ConfigureMakerCheckerGateCommandValidator : AbstractValidator<ConfigureMakerCheckerGateCommand>
 {
-    public ConfigureMakerCheckerGateCommandValidator() => RuleFor(x => x.ActionType).NotEmpty();
+    public ConfigureMakerCheckerGateCommandValidator() =>
+        RuleFor(x => x.ActionType)
+            .NotEmpty()
+            .Must(MakerCheckerActionCatalogue.IsEnforced)
+            .WithMessage("Only enforced maker-checker action types can be configured.");
 }
 
 public sealed class ConfigureMakerCheckerGateCommandHandler(

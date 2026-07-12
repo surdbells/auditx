@@ -54,6 +54,14 @@ export class ApiService {
       .pipe(map((r) => r.data));
   }
 
+  put<T>(path: string, body?: unknown): Observable<T> {
+    return this.http
+      .put<ApiResponse<T>>(this.url(path), body ?? {}, {
+        withCredentials: true,
+      })
+      .pipe(map((r) => r.data));
+  }
+
   /** For endpoints that return no body (204). */
   postVoid(path: string, body?: unknown): Observable<void> {
     return this.http.post<void>(this.url(path), body ?? {}, {

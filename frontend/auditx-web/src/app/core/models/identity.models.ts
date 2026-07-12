@@ -111,6 +111,21 @@ export interface PendingActionDto {
   pendingActionId: string;
 }
 
+/** Configurable dual-control gate for one enforced action type (US-M1-020). */
+export interface MakerCheckerGateDto {
+  actionType: string;
+  isEnabled: boolean;
+  checkerRoleName: string | null;
+  allowMakerAsChecker: boolean;
+}
+
+export interface ConfigureGateRequest {
+  actionType: string;
+  isEnabled: boolean;
+  checkerRoleName: string | null;
+  allowMakerAsChecker: boolean;
+}
+
 /** Request payloads. */
 export interface LoginRequest {
   username: string;

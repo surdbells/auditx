@@ -18,6 +18,13 @@
       </div>
     </mat-tab>
   }
+  @if (canManageDualControl()) {
+    <mat-tab [label]="'administration.tabs.dualControl' | t">
+      <div class="tab-body">
+        <app-maker-checker-gates />
+      </div>
+    </mat-tab>
+  }
   @if (canManageSupport()) {
     <mat-tab [label]="'administration.tabs.support' | t">
       <div class="tab-body">
