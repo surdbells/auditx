@@ -27,7 +27,8 @@ public sealed record UserDto(
     string LastName,
     string DisplayName,
     string Status,
-    DateTimeOffset? LastLoginAt);
+    DateTimeOffset? LastLoginAt,
+    IReadOnlyList<string> RoleNames);
 
 /// <summary>Minimal id→name entry for the shared user directory, readable by any authenticated user
 /// so user references (owners, leads, authors, recipients) can be shown as names rather than raw ids.</summary>

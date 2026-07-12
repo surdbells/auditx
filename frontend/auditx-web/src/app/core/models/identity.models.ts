@@ -30,6 +30,8 @@ export interface UserDto {
   displayName: string;
   status: UserStatus;
   lastLoginAt: string | null;
+  /** Active role names, for the users-list Role column (present on the list endpoint). */
+  roleNames?: string[];
 }
 
 export interface UserDetailDto extends UserDto {

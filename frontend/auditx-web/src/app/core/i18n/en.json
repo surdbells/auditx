@@ -1503,6 +1503,8 @@
   "identity.field.name": "Name",
   "identity.field.email": "Email",
   "identity.field.status": "Status",
+  "identity.field.roles": "Roles",
+  "identity.common.noRole": "No role",
   "identity.field.role": "Role",
   "identity.field.firstName": "First name",
   "identity.field.lastName": "Last name",

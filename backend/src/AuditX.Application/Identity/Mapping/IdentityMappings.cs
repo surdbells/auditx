@@ -12,9 +12,11 @@ namespace AuditX.Application.Identity.Mapping;
 /// </summary>
 public static class IdentityMappings
 {
-    public static UserDto ToDto(this User user) => new(
+    public static UserDto ToDto(this User user) => user.ToDto([]);
+
+    public static UserDto ToDto(this User user, IReadOnlyList<string> roleNames) => new(
         user.Id, user.Email, user.FirstName, user.LastName, user.DisplayName,
-        user.Status.ToSnake(), user.LastLoginAt);
+        user.Status.ToSnake(), user.LastLoginAt, roleNames);
 
     public static RoleDto ToDto(this Role role) => new(
         role.Id,

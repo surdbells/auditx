@@ -31,7 +31,11 @@ public sealed class GetMeQueryHandler(ICurrentUser currentUser, IUserRepository 
 public sealed record ListUsersQuery(string? Search, string? Role, string? Status, int? Page, int? PageSize)
     : IQuery<PagedResult<UserDto>>;
 
-public sealed class ListUsersQueryHandler(IUserRepository users)
+public sealed class ListUsersQueryHandler(
+    IUserRepository users,
+    IUserRoleRepository userRoles,
+    IRoleRepository roles,
+    IClock clock)
     : IQueryHandler<ListUsersQuery, PagedResult<UserDto>>
 {
     public async Task<PagedResult<UserDto>> Handle(ListUsersQuery query, CancellationToken cancellationToken)
@@ -44,7 +48,33 @@ public sealed class ListUsersQueryHandler(IUserRepository users)
 
         var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await users.SearchAsync(query.Search, query.Role, status, page, cancellationToken);
-        return result.Map(u => u.ToDto());
+
+        // Resolve each listed user's ACTIVE role names for the grid (one batched name lookup for the page).
+        var now = clock.UtcNow;
+        var activeRoleIdsByUser = new Dictionary<Guid, IReadOnlyList<Guid>>();
+        var allRoleIds = new HashSet<Guid>();
+        foreach (var user in result.Items)
+        {
+            var assignments = await userRoles.GetForUserAsync(user.Id, cancellationToken);
+            var ids = assignments.Where(a => a.IsEffectiveAt(now)).Select(a => a.RoleId).Distinct().ToArray();
+            activeRoleIdsByUser[user.Id] = ids;
+            foreach (var id in ids)
+            {
+                allRoleIds.Add(id);
+            }
+        }
+
+        var roleNameById = allRoleIds.Count == 0
+            ? new Dictionary<Guid, string>()
+            : (await roles.GetByIdsAsync(allRoleIds, cancellationToken)).ToDictionary(r => r.Id, r => r.Name);
+
+        return result.Map(user => user.ToDto(
+            activeRoleIdsByUser[user.Id]
+                .Select(id => roleNameById.GetValueOrDefault(id))
+                .Where(name => name is not null)
+                .Select(name => name!)
+                .OrderBy(name => name)
+                .ToArray()));
     }
 }
 

@@ -1503,6 +1503,8 @@
   "identity.field.name": "Nom",
   "identity.field.email": "Courriel",
   "identity.field.status": "Statut",
+  "identity.field.roles": "Rôles",
+  "identity.common.noRole": "Aucun rôle",
   "identity.field.role": "Rôle",
   "identity.field.firstName": "Prénom",
   "identity.field.lastName": "Nom de famille",

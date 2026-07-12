@@ -117,6 +117,7 @@ export class UsersListComponent {
   readonly displayedColumns = [
     'displayName',
     'email',
+    'roles',
     'status',
     'lastLoginAt',
     'actions',
