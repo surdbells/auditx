@@ -9,6 +9,8 @@ $ax-font: 'Inter Variable, Inter, ui-sans-serif, system-ui, -apple-system, "Sego
 
 html {
   height: 100%;
+  // User-adjustable page text size (TextSizeService sets --ax-root-font); all rem-based type follows.
+  font-size: var(--ax-root-font, 100%);
   @include mat.theme(
     (
       color: (

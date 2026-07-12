@@ -24,6 +24,7 @@ import { credentialsInterceptor } from './core/interceptors/credentials.intercep
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { BrandingService } from './core/services/branding.service';
+import { TextSizeService } from './core/theme/text-size.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -42,6 +43,10 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([credentialsInterceptor, errorInterceptor]),
     ),
     provideAnimationsAsync(),
+    // Apply the persisted appearance preferences (text size) before first paint to avoid a flash.
+    provideAppInitializer(() => {
+      inject(TextSizeService);
+    }),
     // Probe the existing session on bootstrap so guards have state on first paint.
     provideAppInitializer(async () => {
       const auth = inject(AuthService);
