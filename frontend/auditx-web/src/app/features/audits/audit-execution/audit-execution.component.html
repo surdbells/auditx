@@ -137,6 +137,13 @@
             }
           </div>
 
+          @if (answerText(item.itemId); as answer) {
+            <div class="exec__answer">
+              <span class="exec__answer-label muted">{{ 'audits.exec.answerLabel' | t }}</span>
+              <span class="exec__answer-value">{{ answer }}</span>
+            </div>
+          }
+
           @if (responseFor(item.itemId)?.comment; as comment) {
             <p class="exec__comment">{{ comment }}</p>
           }

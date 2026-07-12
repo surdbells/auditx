@@ -701,4 +701,22 @@ export class AuditExecutionComponent {
     }
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
+
+  /**
+   * The captured answer for a value-type item (text / numeric / date / rating / choice), formatted
+   * for display — pass/fail/n-a items have no value (they use the verdict chip instead).
+   */
+  answerText(itemId: string): string | null {
+    const json = this.responseFor(itemId)?.valueJson;
+    if (!json) {
+      return null;
+    }
+    try {
+      const v = JSON.parse(json) as Record<string, unknown>;
+      const raw = v['text'] ?? v['number'] ?? v['date'] ?? v['rating'] ?? v['choice'];
+      return raw === undefined || raw === null ? null : String(raw);
+    } catch {
+      return null;
+    }
+  }
 }

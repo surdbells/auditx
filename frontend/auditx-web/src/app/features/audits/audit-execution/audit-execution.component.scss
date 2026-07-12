@@ -199,6 +199,24 @@
   flex-wrap: wrap;
   font: var(--mat-sys-label-medium);
 }
+
+/* Captured answer for value-type items (rating / numeric / text / date / choice). */
+.exec__answer {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container-low);
+}
+.exec__answer-label {
+  font: var(--mat-sys-label-small);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.exec__answer-value {
+  font-weight: 600;
+}
 .exec__next {
   margin-left: auto;
 }

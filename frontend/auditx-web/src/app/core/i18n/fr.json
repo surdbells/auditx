@@ -1115,6 +1115,7 @@
   "audits.exec.prevItem": "Élément précédent",
   "audits.exec.nextItem": "Élément suivant",
   "audits.exec.saveNext": "Élément suivant",
+  "audits.exec.answerLabel": "Réponse",
   "audits.exec.flagged": "Signalé",
   "audits.exec.respondToAttach": "Répondez pour joindre des preuves.",
   "audits.verdict.pass": "Réussite",
