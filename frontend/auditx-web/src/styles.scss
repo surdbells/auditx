@@ -257,6 +257,12 @@ body {
   box-shadow: var(--ax-shadow-3) !important;
   border: 1px solid var(--mat-sys-outline-variant);
 }
+// The bottom account menu matches the sidebar width (260px) so it reads as an
+// extension of the nav column rather than a narrow floating chip.
+.profile-menu.mat-mdc-menu-panel {
+  min-width: 260px;
+  max-width: 260px;
+}
 .mat-mdc-dialog-surface {
   border-radius: 20px !important;
   box-shadow: var(--ax-shadow-3) !important;
