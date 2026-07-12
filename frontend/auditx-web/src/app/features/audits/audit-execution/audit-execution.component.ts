@@ -186,10 +186,22 @@ export class AuditExecutionComponent {
     () => this.canRespondPerm() && this.isInProgress(),
   );
 
-  /** Manager review tools only matter while under review. */
-  readonly showReviewPanel = computed(
-    () => this.canManage() && this.isUnderReview(),
-  );
+  /**
+   * Worklist of failed items still needing an exception. Anyone with RaiseException sees it while the
+   * checklist is live (in progress or under review) so they can raise directly — not just the reviewer.
+   * Reviewers keep it throughout review (including the "all clear" empty state) to also record judgement.
+   */
+  readonly showFailWorklist = computed(() => {
+    if (!this.isInProgress() && !this.isUnderReview()) {
+      return false;
+    }
+    const canReview = this.canManage() && this.isUnderReview();
+    if (!this.canRaiseException() && !canReview) {
+      return false;
+    }
+    // Reviewers keep the panel throughout review; auditors see it only when something needs action.
+    return canReview || this.failItems().length > 0;
+  });
 
   readonly progressPct = computed(() => {
     const p = this.progress();
@@ -330,7 +342,12 @@ export class AuditExecutionComponent {
     this.service.getReviewSummary(id).subscribe({
       next: (s) => this.summary.set(s),
     });
-    if (this.canManage() && this.isUnderReview()) {
+    // Load the fail worklist for anyone who can act on it (raise an exception or, as reviewer, record
+    // judgement) while the checklist is live — so auditors get the same at-a-glance shortcut as reviewers.
+    if (
+      (this.canRaiseException() || this.canManage()) &&
+      (this.isInProgress() || this.isUnderReview())
+    ) {
       this.loadFailItems();
     }
   }

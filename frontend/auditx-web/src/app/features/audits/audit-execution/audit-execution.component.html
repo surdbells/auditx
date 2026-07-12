@@ -27,8 +27,8 @@
   }
 </mat-card>
 
-<!-- Reviewer: failures lacking an exception -->
-@if (showReviewPanel()) {
+<!-- Failures still needing an exception — visible to anyone who can raise one, not just the reviewer. -->
+@if (showFailWorklist()) {
   <mat-card appearance="outlined" class="exec__card">
     <h3 class="exec__card-title">{{ 'audits.exec.reviewPanelTitle' | t }}</h3>
     @if (!failItems().length) {
@@ -48,10 +48,12 @@
                   {{ 'audits.actions.raiseException' | t }}
                 </button>
               }
-              <button matButton="filled" type="button" (click)="recordJudgement(item)">
-                <mat-icon>gavel</mat-icon>
-                {{ 'audits.actions.recordJudgement' | t }}
-              </button>
+              @if (canManage()) {
+                <button matButton="filled" type="button" (click)="recordJudgement(item)">
+                  <mat-icon>gavel</mat-icon>
+                  {{ 'audits.actions.recordJudgement' | t }}
+                </button>
+              }
             </div>
           </li>
         }

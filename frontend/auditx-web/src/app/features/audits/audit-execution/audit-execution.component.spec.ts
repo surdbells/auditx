@@ -108,7 +108,16 @@ describe('AuditExecutionComponent', () => {
   let notify: jasmine.SpyObj<NotificationService>;
   let dialog: jasmine.SpyObj<MatDialog>;
 
-  async function setup(perms: string[], a: Audit): Promise<void> {
+  async function setup(
+    perms: string[],
+    a: Audit,
+    failItems: {
+      itemId: string;
+      prompt: string;
+      comment: string | null;
+      assignedUserId: string | null;
+    }[] = [],
+  ): Promise<void> {
     notify = jasmine.createSpyObj<NotificationService>('NotificationService', [
       'success',
       'info',
@@ -144,10 +153,16 @@ describe('AuditExecutionComponent', () => {
       .flush({
         data: { totalItems: 2, responded: 1, pass: 1, fail: 0, na: 0, exceptions: 0 },
       });
-    if (a.status === 'under_review' && perms.includes('ManageAudit')) {
-      http
-        .expectOne(`${BASE}/audits/a-1/review/fail-without-exception`)
-        .flush({ data: { count: 0, items: [] } });
+    // The fail worklist loads for anyone who can raise an exception (or manage) while the checklist is live.
+    if (
+      (a.status === 'under_review' || a.status === 'in_progress') &&
+      (perms.includes('ManageAudit') || perms.includes('RaiseException'))
+    ) {
+      for (const req of http.match(
+        `${BASE}/audits/a-1/review/fail-without-exception`,
+      )) {
+        req.flush({ data: { count: failItems.length, items: failItems } });
+      }
     }
     fixture.detectChanges();
     // The master-detail workspace auto-selects the first item and lazily loads its response.
@@ -310,12 +325,22 @@ describe('AuditExecutionComponent', () => {
     expect(notify.success).toHaveBeenCalled();
   });
 
-  it('shows the reviewer fail panel only when managing under review', async () => {
+  it('shows the reviewer fail panel when managing under review', async () => {
     await setup(['ManageAudit'], audit('under_review'));
-    expect(component.showReviewPanel()).toBe(true);
+    expect(component.showFailWorklist()).toBe(true);
 
     await setupFresh(['ManageAudit'], audit('in_progress'));
-    expect(component.showReviewPanel()).toBe(false);
+    expect(component.showFailWorklist()).toBe(false);
+  });
+
+  it('shows the fail worklist to a non-manager auditor with RaiseException when failures need one', async () => {
+    await setup(['RaiseException', 'ViewAudit'], audit('in_progress'), [
+      { itemId: 'i-2', prompt: 'Q2', comment: null, assignedUserId: null },
+    ]);
+    // An auditor (no ManageAudit) still sees the worklist so they can raise directly — not just the reviewer.
+    expect(component.showFailWorklist()).toBe(true);
+    expect(component.failItems().length).toBe(1);
+    expect(component.canManage()).toBe(false);
   });
 
   // Re-create the component in a single test that needs two states without a
