@@ -12,16 +12,16 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule, MatChipInputEvent } from '@angular/material/chips';
 import {
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 
-import { CreateWebhookSubscriptionRequest } from '../../../../core/models';
+import { CreateWebhookSubscriptionRequest, WebhookEventType } from '../../../../core/models';
+import { WebhooksService } from '../../../../core/services/webhooks.service';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 function jsonValidator(control: AbstractControl): ValidationErrors | null {
@@ -45,9 +45,8 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatChipsModule,
+    MatSelectModule,
     MatButtonModule,
-    IconComponent,
     TranslatePipe,
   ],
   templateUrl: './webhook-subscription-dialog.component.html',
@@ -62,39 +61,37 @@ export class WebhookSubscriptionDialogComponent {
       >
     >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly webhooks = inject(WebhooksService);
 
-  readonly eventTypes = signal<string[]>([]);
+  /** The catalogue of subscribable event types for the dropdown. */
+  readonly eventTypeOptions = signal<WebhookEventType[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     destinationUrl: [
       '',
       [Validators.required, Validators.pattern(/^https?:\/\/.+/)],
     ],
+    subscribedEventTypes: [[] as string[], Validators.required],
     hmacSecret: ['', Validators.required],
     retryPolicyJson: ['', [jsonValidator]],
   });
 
-  addEventType(event: MatChipInputEvent): void {
-    const value = (event.value ?? '').trim();
-    if (value && !this.eventTypes().includes(value)) {
-      this.eventTypes.update((list) => [...list, value]);
-    }
-    event.chipInput?.clear();
-  }
-
-  removeEventType(type: string): void {
-    this.eventTypes.update((list) => list.filter((t) => t !== type));
+  constructor() {
+    this.webhooks.eventTypes().subscribe({
+      next: (types) => this.eventTypeOptions.set(types),
+      error: () => this.eventTypeOptions.set([]),
+    });
   }
 
   submit(): void {
-    if (this.form.invalid || this.eventTypes().length === 0) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     const v = this.form.getRawValue();
     this.dialogRef.close({
       destinationUrl: v.destinationUrl.trim(),
-      subscribedEventTypes: this.eventTypes(),
+      subscribedEventTypes: v.subscribedEventTypes,
       hmacSecret: v.hmacSecret,
       retryPolicyJson: v.retryPolicyJson.trim() || '{}',
     });

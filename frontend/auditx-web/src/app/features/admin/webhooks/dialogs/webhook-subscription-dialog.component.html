@@ -13,25 +13,18 @@
       }
     </mat-form-field>
 
-    <!-- TODO(ux): event-type chip entry is free-text — no event-catalogue autocomplete source is wired up here yet. -->
     <mat-form-field appearance="outline" class="full">
       <mat-label>{{ 'integrations.subscriptionDialog.eventTypes.label' | t }}</mat-label>
-      <mat-chip-grid #chipGrid [attr.aria-label]="'integrations.subscriptionDialog.eventTypes.ariaLabel' | t">
-        @for (type of eventTypes(); track type) {
-          <mat-chip-row (removed)="removeEventType(type)">
-            {{ type }}
-            <button matChipRemove [attr.aria-label]="'integrations.subscriptionDialog.eventTypes.remove' | t: { type: type }">
-              <app-icon name="cancel" />
-            </button>
-          </mat-chip-row>
+      <mat-select formControlName="subscribedEventTypes" multiple>
+        @for (opt of eventTypeOptions(); track opt.code) {
+          <mat-option [value]="opt.code">{{ opt.label }}</mat-option>
         }
-        <input
-          [placeholder]="'integrations.subscriptionDialog.eventTypes.placeholder' | t"
-          [matChipInputFor]="chipGrid"
-          (matChipInputTokenEnd)="addEventType($event)"
-        />
-      </mat-chip-grid>
-      <mat-hint>{{ 'integrations.subscriptionDialog.eventTypes.hint' | t }}</mat-hint>
+      </mat-select>
+      @if (form.controls.subscribedEventTypes.hasError('required') && form.controls.subscribedEventTypes.touched) {
+        <mat-error>{{ 'integrations.subscriptionDialog.eventTypes.required' | t }}</mat-error>
+      } @else {
+        <mat-hint>{{ 'integrations.subscriptionDialog.eventTypes.hint' | t }}</mat-hint>
+      }
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full">
@@ -70,7 +63,7 @@
     matButton="filled"
     type="button"
     (click)="submit()"
-    [disabled]="form.invalid || eventTypes().length === 0"
+    [disabled]="form.invalid"
   >
     {{ 'integrations.actions.create' | t }}
   </button>

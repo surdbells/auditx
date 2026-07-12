@@ -18,6 +18,15 @@ describe('WebhooksService', () => {
 
   afterEach(() => http.verify());
 
+  it('lists the subscribable event-type catalogue', () => {
+    let result: { code: string; label: string }[] | undefined;
+    service.eventTypes().subscribe((r) => (result = r));
+    const req = http.expectOne(`${BASE}/webhook-event-types`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ data: [{ code: 'exception_raised', label: 'Exception raised' }] });
+    expect(result?.[0].label).toBe('Exception raised');
+  });
+
   it('lists subscriptions', () => {
     let result: unknown[] | undefined;
     service.listSubscriptions().subscribe((r) => (result = r));

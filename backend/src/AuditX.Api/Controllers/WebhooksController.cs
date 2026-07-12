@@ -13,6 +13,11 @@ namespace AuditX.Api.Controllers;
 public sealed class WebhooksController(IDispatcher dispatcher) : ApiControllerBase
 {
     [RequirePermission(PermissionKeys.ViewIntegrations)]
+    [HttpGet("webhook-event-types")]
+    public async Task<IActionResult> ListEventTypes(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListWebhookEventTypesQuery(), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewIntegrations)]
     [HttpGet("webhook-subscriptions")]
     public async Task<IActionResult> ListSubscriptions(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ListWebhookSubscriptionsQuery(), cancellationToken));

@@ -24,7 +24,23 @@ public sealed class CreateWebhookSubscriptionCommandValidator : AbstractValidato
         RuleFor(x => x.DestinationUrl).NotEmpty();
         RuleFor(x => x.HmacSecret).NotEmpty().MinimumLength(16);
         RuleFor(x => x.SubscribedEventTypes).NotEmpty();
+        RuleForEach(x => x.SubscribedEventTypes)
+            .Must(WebhookEventCatalog.IsKnown)
+            .WithMessage("'{PropertyValue}' is not a subscribable webhook event type.");
     }
+}
+
+/// <summary>The catalogue of subscribable webhook event types (US-M14) for the subscription editor dropdown.</summary>
+public sealed record WebhookEventTypeDto(string Code, string Label);
+
+public sealed record ListWebhookEventTypesQuery : IQuery<IReadOnlyList<WebhookEventTypeDto>>;
+
+public sealed class ListWebhookEventTypesQueryHandler
+    : IQueryHandler<ListWebhookEventTypesQuery, IReadOnlyList<WebhookEventTypeDto>>
+{
+    public Task<IReadOnlyList<WebhookEventTypeDto>> Handle(ListWebhookEventTypesQuery query, CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<WebhookEventTypeDto>>(
+            WebhookEventCatalog.All.Select(e => new WebhookEventTypeDto(e.Code, e.Label)).ToArray());
 }
 
 public sealed class CreateWebhookSubscriptionCommandHandler(

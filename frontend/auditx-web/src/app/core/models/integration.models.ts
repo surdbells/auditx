@@ -95,6 +95,12 @@ export interface CreateWebhookSubscriptionRequest {
   retryPolicyJson: string;
 }
 
+/** A subscribable webhook event: stable code + human label (for the subscription dropdown). */
+export interface WebhookEventType {
+  code: string;
+  label: string;
+}
+
 export interface WebhookDelivery {
   id: string;
   subscriptionId: string;

@@ -7,6 +7,7 @@ import {
   PagedResult,
   WebhookDelivery,
   WebhookDeliveryStatus,
+  WebhookEventType,
   WebhookSubscription,
 } from '../models';
 
@@ -14,6 +15,11 @@ import {
 @Injectable({ providedIn: 'root' })
 export class WebhooksService {
   private readonly api = inject(ApiService);
+
+  /** The catalogue of subscribable event types for the subscription editor dropdown. */
+  eventTypes(): Observable<WebhookEventType[]> {
+    return this.api.get<WebhookEventType[]>('/webhook-event-types');
+  }
 
   listSubscriptions(): Observable<WebhookSubscription[]> {
     return this.api.get<WebhookSubscription[]>('/webhook-subscriptions');
