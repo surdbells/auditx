@@ -69,6 +69,7 @@ public sealed class DemoDataSeeder(
         var templates = await SeedTemplatesAsync(cancellationToken);
         var (entities, plan) = await SeedUniverseAndPlanAsync(users, cancellationToken);
         await SeedOrgUnitsAsync(cancellationToken);
+        await SeedComplianceAsync(users, entities, cancellationToken);
         var audits = await SeedAuditsAsync(users, templates, plan, entities, cancellationToken);
         await SeedResponsesAndEvidenceAsync(audits, users, cancellationToken);
         var exceptions = await SeedExceptionsAndMapsAsync(audits, entities, users, cancellationToken);
@@ -361,6 +362,57 @@ public sealed class DemoDataSeeder(
         {
             users[i].SetOrgUnit(divisions[i % divisions.Length]);
         }
+
+        await db.SaveChangesAsync(ct);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+    // P1-B — Compliance. A regulatory register (Nigerian-bank authorities) + an internal-control register linked
+    // to auditable entities, so the Regulations and Controls screens land on populated, realistic data. Authority
+    // and category use the seeded reference-data codes (regulation_authority / regulation_category).
+    // ---------------------------------------------------------------------------------------------------------
+    private async Task SeedComplianceAsync(DemoUsers users, DemoEntities entities, CancellationToken ct)
+    {
+        var regulations = new[]
+        {
+            AuditX.Domain.Compliance.Regulation.Register("CBN-PRU-01", "Prudential Guidelines for Deposit Money Banks", "cbn", "Capital adequacy, liquidity and provisioning requirements for banks.", "prudential"),
+            AuditX.Domain.Compliance.Regulation.Register("CBN-AML-02", "AML/CFT Regulations", "cbn", "Anti-money-laundering and combating-the-financing-of-terrorism obligations.", "aml_cft"),
+            AuditX.Domain.Compliance.Regulation.Register("NFIU-STR-01", "Suspicious Transaction Reporting Guidelines", "nfiu", "Filing of suspicious- and currency-transaction reports.", "aml_cft"),
+            AuditX.Domain.Compliance.Regulation.Register("SEC-CG-01", "Code of Corporate Governance", "sec", "Board composition, oversight and disclosure requirements.", "corporate_governance"),
+            AuditX.Domain.Compliance.Regulation.Register("NDIC-DI-01", "Deposit Insurance Framework", "ndic", "Deposit-insurance premium and reporting obligations.", "prudential"),
+            AuditX.Domain.Compliance.Regulation.Register("NDPR-01", "Nigeria Data Protection Regulation", "nitda", "Processing, consent and breach-notification duties for personal data.", "data_protection"),
+            AuditX.Domain.Compliance.Regulation.Register("CBN-CYB-03", "Risk-Based Cybersecurity Framework", "cbn", "Cyber-risk governance, controls and incident reporting for banks.", "cybersecurity"),
+            AuditX.Domain.Compliance.Regulation.Register("FRC-IFRS-01", "IFRS Financial Reporting Standards", "frc", "Adoption of International Financial Reporting Standards.", "financial_reporting"),
+            AuditX.Domain.Compliance.Regulation.Register("BASEL-III", "Basel III Capital & Liquidity Standards", "basel", "International capital, leverage and liquidity standards.", "prudential"),
+            AuditX.Domain.Compliance.Regulation.Register("CBN-CP-04", "Consumer Protection Framework", "cbn", "Fair-treatment, disclosure and complaints-handling requirements.", "consumer_protection"),
+        };
+        // Retire one so the register shows an inactive lifecycle state too.
+        regulations[^1].SetActive(false);
+        db.Regulations.AddRange(regulations);
+
+        var tested = Today.AddDays(-45);
+        void AddControl(string code, string title, string desc,
+            AuditX.Domain.Enums.ControlType type, AuditX.Domain.Enums.ControlFrequency freq,
+            Guid owner, Guid entityId, AuditX.Domain.Enums.ControlEffectiveness eff)
+        {
+            var control = AuditX.Domain.Controls.Control.Register(code, title, desc, type, freq, owner, entityId);
+            if (eff != AuditX.Domain.Enums.ControlEffectiveness.NotTested)
+            {
+                control.Update(title, desc, type, freq, owner, entityId, eff, tested);
+            }
+            db.Controls.Add(control);
+        }
+
+        AddControl("CTL-001", "Daily cash reconciliation", "Teller cash is counted and reconciled daily by two officers.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Daily, users.Auditee1Id, entities.LagosBranchId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-002", "Dual control on vault access", "Vault access requires two authorised officers and is logged.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee1Id, entities.LagosBranchId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-003", "Privileged access review", "Privileged core-banking accounts are reviewed each quarter.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Quarterly, users.Auditee2Id, entities.CoreBankingId, AuditX.Domain.Enums.ControlEffectiveness.PartiallyEffective);
+        AddControl("CTL-004", "Segregation of duties in core banking", "Segregation of duties is enforced across core-banking roles.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee2Id, entities.CoreBankingId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-005", "Change management approval", "Production changes are approved and tested before release.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.AdHoc, users.Auditee2Id, entities.CoreBankingId, AuditX.Domain.Enums.ControlEffectiveness.NotTested);
+        AddControl("CTL-006", "Daily backup verification", "Backups run daily and restore tests are performed periodically.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Daily, users.Auditee2Id, entities.DataCentreId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-007", "Credit approval limits enforcement", "Facilities above limits require the appropriate approval tier.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee3Id, entities.CreditId, AuditX.Domain.Enums.ControlEffectiveness.Ineffective);
+        AddControl("CTL-008", "Treasury deal confirmation", "Every treasury deal is independently confirmed before settlement.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Daily, users.Auditee3Id, entities.TreasuryId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-009", "KYC documentation review", "New-account KYC packs are sampled and reviewed monthly.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Monthly, users.Auditee1Id, entities.OperationsId, AuditX.Domain.Enums.ControlEffectiveness.PartiallyEffective);
+        AddControl("CTL-010", "AML transaction monitoring", "Transactions are screened continuously for suspicious patterns.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee1Id, entities.OperationsId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
 
         await db.SaveChangesAsync(ct);
     }
