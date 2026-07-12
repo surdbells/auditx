@@ -155,6 +155,10 @@ describe('AuditExecutionComponent', () => {
         .flush({ data: { count: 0, items: [] } });
     }
     fixture.detectChanges();
+    // The master-detail workspace auto-selects the first item and lazily loads its response.
+    for (const req of http.match((r) => /\/audits\/a-1\/items\/.+\/responses$/.test(r.url))) {
+      req.flush({ data: null });
+    }
     // Rendering a row's actor name triggers the directory-backed lookup — drain it if it fired.
     for (const req of http.match((r) => r.url === `${BASE}/users/directory`)) {
       req.flush({

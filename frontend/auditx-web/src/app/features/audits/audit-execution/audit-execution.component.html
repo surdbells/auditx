@@ -60,180 +60,174 @@
   </mat-card>
 }
 
-<!-- Checklist execution -->
-<mat-card appearance="outlined" class="exec__card">
-  <h3 class="exec__card-title">{{ 'audits.exec.checklistTitle' | t }}</h3>
-
-  @if (!progressGroups().length) {
-    <p class="muted">{{ 'audits.exec.noItems' | t }}</p>
+<!-- Checklist execution — master / detail workspace -->
+<mat-card appearance="outlined" class="exec__card exec__workspace">
+  @if (!orderedItems().length) {
+    <p class="muted exec__empty">{{ 'audits.exec.noItems' | t }}</p>
   } @else {
-    @for (group of progressGroups(); track group.name) {
-      <section class="exec__section">
-        <header class="exec__section-head">
-          <span class="exec__section-icon" aria-hidden="true"><mat-icon>segment</mat-icon></span>
-          <div class="exec__section-headings">
-            <h4 class="exec__section-name">{{ group.name }}</h4>
-            <span class="exec__section-meta">
-              {{ 'audits.exec.sectionMeta' | t: { done: sectionDone(group), total: group.items.length } }}
-            </span>
-          </div>
-          <span class="exec__section-count">{{ group.items.length }}</span>
-        </header>
-        <mat-accordion multi>
-          @for (item of group.items; track item.itemId) {
-            <mat-expansion-panel (opened)="loadResponse(item)">
-              <mat-expansion-panel-header>
-                <mat-panel-title class="exec__item-title">
-                  {{ item.prompt }}
-                  @if (item.isRequired) {
-                    <span class="exec__required">{{ 'audits.checklist.required' | t }}</span>
-                  }
-                </mat-panel-title>
-                <mat-panel-description class="exec__item-desc">
-                  <span class="status-badge" [attr.data-status]="item.itemState">
-                    {{ item.itemState.replace('_', ' ') }}
-                  </span>
-                  @if (item.verdict) {
-                    <span
-                      class="verdict-chip"
-                      [attr.data-verdict]="item.verdict"
-                    >
-                      {{ verdictLabel(item.verdict) }}
-                    </span>
-                  }
-                  @if (item.hasException) {
-                    <mat-icon
-                      class="exec__exception"
-                      [matTooltip]="'audits.exec.hasExceptionTooltip' | t"
-                      [attr.aria-label]="'audits.exec.hasExceptionTooltip' | t"
-                    >
-                      report_problem
-                    </mat-icon>
-                  }
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-
-              <div class="exec__item-body">
-                <div class="exec__item-meta muted">
-                  <span>{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
-                  @if (responseFor(item.itemId); as r) {
-                    <span>{{ 'audits.exec.verdictInline' | t: { verdict: verdictLabel(r.verdict) } }}</span>
-                    @if (r.isDraft) {
-                      <span class="exec__draft-tag">{{ 'audits.exec.draftTag' | t }}</span>
-                    }
-                  }
-                </div>
-
-                @if (responseFor(item.itemId)?.comment; as comment) {
-                  <p class="exec__comment">{{ comment }}</p>
+    <div class="exec__panes">
+      <!-- LEFT RAIL: the whole checklist -->
+      <aside class="exec__rail" [attr.aria-label]="'audits.exec.checklistTitle' | t">
+        <div class="exec__rail-head">
+          <span class="exec__rail-title">{{ 'audits.exec.checklistTitle' | t }}</span>
+          <span class="exec__rail-pct">{{ progressPct() }}%</span>
+        </div>
+        @for (group of progressGroups(); track group.name) {
+          <div class="exec__rail-group">
+            <div class="exec__rail-group-head">
+              <span class="exec__rail-group-name">{{ group.name }}</span>
+              <span class="exec__rail-group-meta">{{ sectionDone(group) }}/{{ group.items.length }}</span>
+            </div>
+            @for (item of group.items; track item.itemId) {
+              <button
+                type="button"
+                class="exec__rail-item"
+                [class.exec__rail-item--active]="selectedItemId() === item.itemId"
+                (click)="selectItem(item)"
+              >
+                <span class="exec__rail-dot" [attr.data-state]="railState(item)" aria-hidden="true"></span>
+                <span class="exec__rail-label">{{ item.prompt }}</span>
+                @if (item.hasException) {
+                  <mat-icon
+                    class="exec__rail-flag"
+                    [matTooltip]="'audits.exec.hasExceptionTooltip' | t"
+                    [attr.aria-label]="'audits.exec.hasExceptionTooltip' | t"
+                  >report_problem</mat-icon>
                 }
+              </button>
+            }
+          </div>
+        }
+      </aside>
 
-                <!-- Response actions -->
-                <div class="exec__item-actions">
-                  @if (canRespond()) {
-                    <button matButton="filled" type="button" (click)="respond(item)">
-                      <mat-icon>edit_note</mat-icon>
-                      {{ 'audits.actions.respond' | t }}
+      <!-- RIGHT PANE: the selected item's workspace -->
+      <section class="exec__detail">
+        @if (selectedItem(); as item) {
+          <div class="exec__detail-top">
+            <span class="exec__detail-crumb muted">
+              {{ 'audits.exec.itemPosition' | t: { section: item.sectionName || '—', index: selectedIndex() + 1, total: orderedItems().length } }}
+            </span>
+            <div class="exec__detail-nav">
+              <button matIconButton type="button" (click)="selectPrevious()" [disabled]="!hasPrevious()"
+                [attr.aria-label]="'audits.exec.prevItem' | t">
+                <mat-icon>arrow_upward</mat-icon>
+              </button>
+              <button matIconButton type="button" (click)="selectNext()" [disabled]="!hasNext()"
+                [attr.aria-label]="'audits.exec.nextItem' | t">
+                <mat-icon>arrow_downward</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <h3 class="exec__detail-prompt">
+            {{ item.prompt }}
+            @if (item.isRequired) {
+              <span class="exec__required">{{ 'audits.checklist.required' | t }}</span>
+            }
+          </h3>
+
+          <div class="exec__detail-status">
+            <span class="status-badge" [attr.data-status]="item.itemState">{{ item.itemState.replace('_', ' ') }}</span>
+            @if (item.verdict) {
+              <span class="verdict-chip" [attr.data-verdict]="item.verdict">{{ verdictLabel(item.verdict) }}</span>
+            }
+            <span class="muted">{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
+            @if (responseFor(item.itemId)?.isDraft) {
+              <span class="exec__draft-tag">{{ 'audits.exec.draftTag' | t }}</span>
+            }
+          </div>
+
+          @if (responseFor(item.itemId)?.comment; as comment) {
+            <p class="exec__comment">{{ comment }}</p>
+          }
+
+          <!-- Response actions -->
+          <div class="exec__item-actions">
+            @if (canRespond()) {
+              <button matButton="filled" type="button" (click)="respond(item)">
+                <mat-icon>edit_note</mat-icon>
+                {{ 'audits.actions.respond' | t }}
+              </button>
+              @if (hasDraft(item.itemId)) {
+                <button matButton type="button" (click)="discardDraft(item)">
+                  <mat-icon>delete_sweep</mat-icon>
+                  {{ 'audits.actions.discardDraft' | t }}
+                </button>
+              }
+            }
+            @if (canManage() && !isReadOnly()) {
+              <button matButton type="button" (click)="assign(item)">
+                <mat-icon>person</mat-icon>
+                {{ 'audits.actions.assign' | t }}
+              </button>
+            }
+            <button matButton type="button" (click)="showHistory(item)">
+              <mat-icon>history</mat-icon>
+              {{ 'audits.actions.history' | t }}
+            </button>
+            @if (hasNext()) {
+              <button matButton type="button" class="exec__next" (click)="selectNext()">
+                {{ 'audits.exec.saveNext' | t }}
+                <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+              </button>
+            }
+          </div>
+
+          <!-- Evidence -->
+          @if (canViewEvidence()) {
+            @let response = responseFor(item.itemId);
+            @if (response) {
+              <div class="exec__evidence">
+                <div class="exec__evidence-head">
+                  <span class="exec__evidence-title">{{ 'audits.exec.evidenceTitle' | t }}</span>
+                  @if (canUploadEvidence() && canRespond()) {
+                    <button matButton type="button" (click)="fileInput.click()">
+                      <mat-icon>upload_file</mat-icon>
+                      {{ 'audits.actions.upload' | t }}
                     </button>
-                    @if (hasDraft(item.itemId)) {
-                      <button matButton type="button" (click)="discardDraft(item)">
-                        <mat-icon>delete_sweep</mat-icon>
-                        {{ 'audits.actions.discardDraft' | t }}
-                      </button>
-                    }
+                    <input #fileInput type="file" hidden (change)="uploadEvidence(response.id, fileInput)" />
                   }
-                  @if (canManage() && !isReadOnly()) {
-                    <button matButton type="button" (click)="assign(item)">
-                      <mat-icon>person</mat-icon>
-                      {{ 'audits.actions.assign' | t }}
-                    </button>
-                  }
-                  <button matButton type="button" (click)="showHistory(item)">
-                    <mat-icon>history</mat-icon>
-                    {{ 'audits.actions.history' | t }}
-                  </button>
                 </div>
-
-                <!-- Evidence -->
-                @if (canViewEvidence()) {
-                  @let response = responseFor(item.itemId);
-                  @if (response) {
-                    <div class="exec__evidence">
-                      <div class="exec__evidence-head">
-                        <span class="exec__evidence-title">{{ 'audits.exec.evidenceTitle' | t }}</span>
-                        @if (canUploadEvidence() && canRespond()) {
-                          <button
-                            matButton
-                            type="button"
-                            (click)="fileInput.click()"
-                          >
-                            <mat-icon>upload_file</mat-icon>
-                            {{ 'audits.actions.upload' | t }}
-                          </button>
-                          <input
-                            #fileInput
-                            type="file"
-                            hidden
-                            (change)="uploadEvidence(response.id, fileInput)"
-                          />
-                        }
-                      </div>
-                      @if (!evidenceFor(response.id).length) {
-                        <p class="muted exec__evidence-empty">{{ 'audits.exec.noEvidence' | t }}</p>
-                      } @else {
-                        <ul class="exec__files">
-                          @for (file of evidenceFor(response.id); track file.id) {
-                            <li class="exec__file">
-                              <div class="exec__file-info">
-                                <span class="exec__file-name">
-                                  {{ file.originalFilename }}
-                                </span>
-                                <span class="muted exec__file-meta">
-                                  {{ formatSize(file.sizeBytes) }} ·
-                                  {{ nameOf(file.uploadedBy) }} ·
-                                  {{ file.uploadedAt | date: 'short' }}
-                                </span>
-                                @if (file.isFlagged) {
-                                  <span class="exec__flagged">{{ 'audits.exec.flagged' | t }}</span>
-                                }
-                              </div>
-                              <div class="exec__file-actions">
-                                <button
-                                  matIconButton
-                                  type="button"
-                                  (click)="downloadEvidence(file)"
-                                  [attr.aria-label]="'audits.actions.downloadEvidenceAria' | t"
-                                >
-                                  <mat-icon>download</mat-icon>
-                                </button>
-                                @if (canManageEvidence()) {
-                                  <button
-                                    matIconButton
-                                    type="button"
-                                    (click)="deleteEvidence(response.id, file)"
-                                    aria-label="Delete evidence"
-                                  >
-                                    <mat-icon>delete</mat-icon>
-                                  </button>
-                                }
-                              </div>
-                            </li>
+                @if (!evidenceFor(response.id).length) {
+                  <p class="muted exec__evidence-empty">{{ 'audits.exec.noEvidence' | t }}</p>
+                } @else {
+                  <ul class="exec__files">
+                    @for (file of evidenceFor(response.id); track file.id) {
+                      <li class="exec__file">
+                        <div class="exec__file-info">
+                          <span class="exec__file-name">{{ file.originalFilename }}</span>
+                          <span class="muted exec__file-meta">
+                            {{ formatSize(file.sizeBytes) }} ·
+                            {{ nameOf(file.uploadedBy) }} ·
+                            {{ file.uploadedAt | date: 'short' }}
+                          </span>
+                          @if (file.isFlagged) {
+                            <span class="exec__flagged">{{ 'audits.exec.flagged' | t }}</span>
                           }
-                        </ul>
-                      }
-                    </div>
-                  } @else {
-                    <p class="muted exec__evidence-empty">
-                      Respond to attach evidence.
-                    </p>
-                  }
+                        </div>
+                        <div class="exec__file-actions">
+                          <button matIconButton type="button" (click)="downloadEvidence(file)"
+                            [attr.aria-label]="'audits.actions.downloadEvidenceAria' | t">
+                            <mat-icon>download</mat-icon>
+                          </button>
+                          @if (canManageEvidence()) {
+                            <button matIconButton type="button" (click)="deleteEvidence(response.id, file)" aria-label="Delete evidence">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                          }
+                        </div>
+                      </li>
+                    }
+                  </ul>
                 }
               </div>
-            </mat-expansion-panel>
+            } @else {
+              <p class="muted exec__evidence-empty">{{ 'audits.exec.respondToAttach' | t }}</p>
+            }
           }
-        </mat-accordion>
+        }
       </section>
-    }
+    </div>
   }
 </mat-card>
 

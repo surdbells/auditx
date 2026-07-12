@@ -14,7 +14,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -100,7 +99,6 @@ interface ProgressGroup {
     MatChipsModule,
     MatTooltipModule,
     MatProgressBarModule,
-    MatExpansionModule,
     AuditTimePanelComponent,
     AuditProceduresPanelComponent,
     AuditEvidencePanelComponent,
@@ -233,6 +231,70 @@ export class AuditExecutionComponent {
     return group.items.filter((i) => i.itemState === 'responded').length;
   }
 
+  /* ---- Master-detail selection ---- */
+
+  /** The checklist item currently open in the workspace (right pane). */
+  readonly selectedItemId = signal<string | null>(null);
+
+  /** All progress items flattened in display order (across sections). */
+  readonly orderedItems = computed<ChecklistProgressItem[]>(() =>
+    this.progressGroups().flatMap((g) => g.items),
+  );
+
+  /** The resolved selected item (null until progress loads / nothing selected). */
+  readonly selectedItem = computed<ChecklistProgressItem | null>(
+    () => this.orderedItems().find((i) => i.itemId === this.selectedItemId()) ?? null,
+  );
+
+  /** 0-based position of the selected item across the whole checklist (-1 if none). */
+  readonly selectedIndex = computed(() =>
+    this.orderedItems().findIndex((i) => i.itemId === this.selectedItemId()),
+  );
+
+  /** A concise dot state for the rail marker: verdict wins once responded, else the workflow state. */
+  railState(item: ChecklistProgressItem): string {
+    if (item.itemState === 'responded' && item.verdict) {
+      return item.verdict; // pass | fail | na
+    }
+    return item.itemState; // not_started | in_progress | responded
+  }
+
+  /** Opens a checklist item in the workspace and lazily loads its response + evidence. */
+  selectItem(item: ChecklistProgressItem): void {
+    this.selectedItemId.set(item.itemId);
+    this.loadResponse(item);
+  }
+
+  /** Moves to the next / previous checklist item (wrapping is intentionally disabled). */
+  selectNext(): void {
+    const items = this.orderedItems();
+    const next = items[this.selectedIndex() + 1];
+    if (next) {
+      this.selectItem(next);
+    }
+  }
+  selectPrevious(): void {
+    const prev = this.orderedItems()[this.selectedIndex() - 1];
+    if (prev) {
+      this.selectItem(prev);
+    }
+  }
+  readonly hasNext = computed(() => this.selectedIndex() >= 0 && this.selectedIndex() < this.orderedItems().length - 1);
+  readonly hasPrevious = computed(() => this.selectedIndex() > 0);
+
+  /** Keeps a valid selection after (re)load: first item by default, or clears if the item vanished. */
+  private ensureSelection(): void {
+    const items = this.orderedItems();
+    if (!items.length) {
+      this.selectedItemId.set(null);
+      return;
+    }
+    const current = this.selectedItemId();
+    if (!current || !items.some((i) => i.itemId === current)) {
+      this.selectItem(items[0]);
+    }
+  }
+
   constructor() {
     // Refetch progress / summary whenever the audit id first appears or changes.
     effect(() => {
@@ -248,7 +310,10 @@ export class AuditExecutionComponent {
   refresh(): void {
     const id = this.audit().id;
     this.service.getChecklistProgress(id).subscribe({
-      next: (p) => this.progress.set(p),
+      next: (p) => {
+        this.progress.set(p);
+        this.ensureSelection();
+      },
     });
     this.service.getReviewSummary(id).subscribe({
       next: (s) => this.summary.set(s),
