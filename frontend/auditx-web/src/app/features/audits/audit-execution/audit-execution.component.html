@@ -231,16 +231,42 @@
   }
 </mat-card>
 
-<!-- Time & effort (P0-B) — self-managing; only budget edits bump the audit version -->
-@if (canViewTime()) {
-  <app-audit-time-panel
-    [audit]="audit()"
-    (budgetChanged)="reloadRequested.emit()"
-  />
+<!-- Item work: evidence requests / procedures / time — scoped to the open checklist item (or the whole audit) -->
+@if (selectedItem()) {
+  <div class="exec__item-work">
+    <div class="exec__item-work-head">
+      <mat-button-toggle-group
+        class="exec__scope"
+        [value]="panelScope()"
+        (change)="panelScope.set($event.value)"
+        hideSingleSelectionIndicator
+        [attr.aria-label]="'audits.exec.scope.item' | t"
+      >
+        <mat-button-toggle value="item">
+          <mat-icon>link</mat-icon>{{ 'audits.exec.scope.item' | t }}
+        </mat-button-toggle>
+        <mat-button-toggle value="audit">
+          <mat-icon>assignment</mat-icon>{{ 'audits.exec.scope.audit' | t }}
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <mat-tab-group class="exec__tabs" mat-stretch-tabs="false" animationDuration="0ms">
+      <mat-tab [label]="'audits.exec.tab.evidence' | t">
+        <app-audit-evidence-panel [audit]="audit()" [scopedItemId]="scopedIdForPanels()" />
+      </mat-tab>
+      <mat-tab [label]="'audits.exec.tab.procedures' | t">
+        <app-audit-procedures-panel [audit]="audit()" [scopedItemId]="scopedIdForPanels()" />
+      </mat-tab>
+      @if (canViewTime()) {
+        <mat-tab [label]="'audits.exec.tab.time' | t">
+          <app-audit-time-panel
+            [audit]="audit()"
+            [scopedItemId]="scopedIdForPanels()"
+            (budgetChanged)="reloadRequested.emit()"
+          />
+        </mat-tab>
+      }
+    </mat-tab-group>
+  </div>
 }
-
-<!-- Typed execution procedures (P2-C) — self-managing; a separate aggregate (no version coupling) -->
-<app-audit-procedures-panel [audit]="audit()" />
-
-<!-- Expected / requested evidence (P2-D) — self-managing; a separate aggregate (no version coupling) -->
-<app-audit-evidence-panel [audit]="audit()" />

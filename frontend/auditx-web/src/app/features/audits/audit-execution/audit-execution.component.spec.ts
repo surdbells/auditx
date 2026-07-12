@@ -144,11 +144,6 @@ describe('AuditExecutionComponent', () => {
       .flush({
         data: { totalItems: 2, responded: 1, pass: 1, fail: 0, na: 0, exceptions: 0 },
       });
-    // P2-C / P2-D: the self-managing procedures + evidence panels load their lists on init; the evidence
-    // panel also lazy-loads the document-type reference-data for its form.
-    http.expectOne(`${BASE}/audits/a-1/procedures`).flush({ data: [] });
-    http.expectOne(`${BASE}/audits/a-1/evidence-requests`).flush({ data: [] });
-    http.expectOne((r) => r.url === `${BASE}/reference-data/evidence_document_type`).flush({ data: [] });
     if (a.status === 'under_review' && perms.includes('ManageAudit')) {
       http
         .expectOne(`${BASE}/audits/a-1/review/fail-without-exception`)
@@ -158,6 +153,24 @@ describe('AuditExecutionComponent', () => {
     // The master-detail workspace auto-selects the first item and lazily loads its response.
     for (const req of http.match((r) => /\/audits\/a-1\/items\/.+\/responses$/.test(r.url))) {
       req.flush({ data: null });
+    }
+    // The item-work tabs (evidence requests + procedures, and time when permitted) load their lists;
+    // the evidence panel also lazy-loads the document-type reference-data for its form. Drain tolerantly.
+    for (const req of http.match(`${BASE}/audits/a-1/evidence-requests`)) {
+      req.flush({ data: [] });
+    }
+    for (const req of http.match(`${BASE}/audits/a-1/procedures`)) {
+      req.flush({ data: [] });
+    }
+    for (const req of http.match((r) => r.url === `${BASE}/reference-data/evidence_document_type`)) {
+      req.flush({ data: [] });
+    }
+    // Time panel loads only when the viewer holds LogTime / ViewTimeEntries (none of these fixtures do).
+    for (const req of http.match(`${BASE}/audits/a-1/time-entries`)) {
+      req.flush({ data: [] });
+    }
+    for (const req of http.match(`${BASE}/audits/a-1/time-entries/summary`)) {
+      req.flush({ data: { actualHours: 0, budgetedHours: null, varianceHours: null, percentConsumed: null, entryCount: 0, byCategory: [] } });
     }
     // Rendering a row's actor name triggers the directory-backed lookup — drain it if it fired.
     for (const req of http.match((r) => r.url === `${BASE}/users/directory`)) {

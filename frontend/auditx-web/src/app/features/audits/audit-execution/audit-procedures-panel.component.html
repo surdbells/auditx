@@ -26,15 +26,21 @@
         </mat-form-field>
       </div>
 
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>{{ 'procedure.field.checklistItem' | t }}</mat-label>
-        <mat-select formControlName="checklistItemId">
-          <mat-option [value]="''">{{ 'procedure.value.noItem' | t }}</mat-option>
-          @for (i of audit().checklistItems; track i.id) {
-            <mat-option [value]="i.id">{{ i.prompt }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      @if (!isScoped()) {
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'procedure.field.checklistItem' | t }}</mat-label>
+          <mat-select formControlName="checklistItemId">
+            <mat-option [value]="''">{{ 'procedure.value.noItem' | t }}</mat-option>
+            @for (i of audit().checklistItems; track i.id) {
+              <mat-option [value]="i.id">{{ i.prompt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      } @else {
+        <p class="proc-panel__scoped-hint muted">
+          <mat-icon inline>link</mat-icon> {{ 'procedure.scoped.hint' | t }}
+        </p>
+      }
 
       <mat-form-field appearance="outline" class="full">
         <mat-label>{{ 'procedure.field.summary' | t }}</mat-label>
@@ -88,11 +94,11 @@
     </form>
   }
 
-  @if (!procedures().length && !loading()) {
+  @if (!visibleProcedures().length && !loading()) {
     <p class="muted proc__empty">{{ 'procedure.empty' | t }}</p>
   } @else {
     <ul class="proc__list">
-      @for (p of procedures(); track p.id) {
+      @for (p of visibleProcedures(); track p.id) {
         <li class="proc__item">
           <div class="proc__item-head">
             <span class="status-badge" [attr.data-status]="p.type === 'sampling' ? 'in_progress' : (p.type === 'interview' ? 'bank' : 'system')">

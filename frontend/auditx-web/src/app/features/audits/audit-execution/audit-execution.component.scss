@@ -203,6 +203,31 @@
   margin-left: auto;
 }
 
+/* Item work: scoped evidence / procedures / time tabs */
+.exec__item-work {
+  margin-top: 1.25rem;
+}
+.exec__item-work-head {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.6rem;
+}
+.exec__scope {
+  border-radius: 999px;
+  overflow: hidden;
+}
+.exec__scope mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 0.3rem;
+  vertical-align: middle;
+}
+.exec__tabs :where(app-audit-time-panel, app-audit-procedures-panel, app-audit-evidence-panel) {
+  display: block;
+  padding-top: 1rem;
+}
+
 .exec__draft-tag {
   padding: 0.1rem 0.5rem;
   border-radius: 999px;

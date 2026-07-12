@@ -60,6 +60,16 @@ const ACTIONABLE = new Set(['planned', 'in_progress', 'under_review']);
 })
 export class AuditEvidencePanelComponent {
   readonly audit = input.required<Audit>();
+  /** When set, the panel is scoped to one checklist item (filter + pre-attach + hide the item picker). */
+  readonly scopedItemId = input<string | null>(null);
+
+  readonly isScoped = computed(() => !!this.scopedItemId());
+
+  /** Requests shown — filtered to the scoped item when scoped, else all. */
+  readonly visibleRequests = computed(() => {
+    const scope = this.scopedItemId();
+    return scope ? this.requests().filter((r) => r.checklistItemId === scope) : this.requests();
+  });
 
   private readonly service = inject(EvidenceRequestsService);
   private readonly notify = inject(NotificationService);
@@ -132,7 +142,7 @@ export class AuditEvidencePanelComponent {
 
   startAdd(): void {
     this.adding.set(true);
-    this.form.reset({ title: '', documentType: '', checklistItemId: '', dueDate: '', notes: '' });
+    this.form.reset({ title: '', documentType: '', checklistItemId: this.scopedItemId() ?? '', dueDate: '', notes: '' });
   }
 
   cancelAdd(): void {

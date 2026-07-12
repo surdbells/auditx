@@ -63,8 +63,21 @@ const LOGGABLE = new Set(['planned', 'in_progress', 'under_review', 'completed']
 })
 export class AuditTimePanelComponent {
   readonly audit = input.required<Audit>();
+  /**
+   * When set, the panel is scoped to a single checklist item: the list filters to that item,
+   * new entries are pre-attached to it, and the item picker is hidden. Null = whole-audit view.
+   */
+  readonly scopedItemId = input<string | null>(null);
   /** Emitted after a budget change (bumps the audit version) so the parent reloads. */
   readonly budgetChanged = output<void>();
+
+  readonly isScoped = computed(() => !!this.scopedItemId());
+
+  /** Entries shown in the list — filtered to the scoped item when scoped, else all. */
+  readonly visibleEntries = computed(() => {
+    const scope = this.scopedItemId();
+    return scope ? this.entries().filter((e) => e.checklistItemId === scope) : this.entries();
+  });
 
   private readonly service = inject(TimeTrackingService);
   private readonly notify = inject(NotificationService);
@@ -130,6 +143,13 @@ export class AuditTimePanelComponent {
         this.lastAuditId = id;
         this.budgetForm.controls.budgetedHours.setValue(this.audit().budgetedHours);
         this.refresh();
+      }
+    });
+    // Keep the (hidden) related-item control pinned to the scoped item so new entries attach to it.
+    effect(() => {
+      const scope = this.scopedItemId();
+      if (scope && !this.editing()) {
+        this.form.controls.checklistItemId.setValue(scope);
       }
     });
   }
@@ -216,7 +236,13 @@ export class AuditTimePanelComponent {
 
   cancelEdit(): void {
     this.editing.set(null);
-    this.form.reset({ category: 'fieldwork', checklistItemId: '', notes: '', workDate: '', hours: null });
+    this.form.reset({
+      category: 'fieldwork',
+      checklistItemId: this.scopedItemId() ?? '',
+      notes: '',
+      workDate: '',
+      hours: null,
+    });
   }
 
   remove(entry: TimeEntry): void {

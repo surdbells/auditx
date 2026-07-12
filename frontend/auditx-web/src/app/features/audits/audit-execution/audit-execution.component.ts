@@ -16,6 +16,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Observable } from 'rxjs';
 
@@ -99,6 +101,8 @@ interface ProgressGroup {
     MatChipsModule,
     MatTooltipModule,
     MatProgressBarModule,
+    MatButtonToggleModule,
+    MatTabsModule,
     AuditTimePanelComponent,
     AuditProceduresPanelComponent,
     AuditEvidencePanelComponent,
@@ -235,6 +239,14 @@ export class AuditExecutionComponent {
 
   /** The checklist item currently open in the workspace (right pane). */
   readonly selectedItemId = signal<string | null>(null);
+
+  /** Scope for the evidence / procedures / time tabs: the open item, or the whole audit. */
+  readonly panelScope = signal<'item' | 'audit'>('item');
+
+  /** The id passed to the panels — the selected item when scoped to it, else null (whole audit). */
+  readonly scopedIdForPanels = computed(() =>
+    this.panelScope() === 'item' ? this.selectedItemId() : null,
+  );
 
   /** All progress items flattened in display order (across sections). */
   readonly orderedItems = computed<ChecklistProgressItem[]>(() =>

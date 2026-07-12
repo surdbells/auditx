@@ -82,3 +82,11 @@
     grid-template-columns: 1fr;
   }
 }
+
+.ev-panel__scoped-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.15rem;
+  font: var(--mat-sys-label-medium);
+}

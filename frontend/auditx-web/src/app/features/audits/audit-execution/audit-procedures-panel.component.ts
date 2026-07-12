@@ -56,6 +56,16 @@ const RECORDABLE = new Set(['in_progress', 'under_review']);
 })
 export class AuditProceduresPanelComponent {
   readonly audit = input.required<Audit>();
+  /** When set, the panel is scoped to one checklist item (filter + pre-attach + hide the item picker). */
+  readonly scopedItemId = input<string | null>(null);
+
+  readonly isScoped = computed(() => !!this.scopedItemId());
+
+  /** Procedures shown — filtered to the scoped item when scoped, else all. */
+  readonly visibleProcedures = computed(() => {
+    const scope = this.scopedItemId();
+    return scope ? this.procedures().filter((p) => p.checklistItemId === scope) : this.procedures();
+  });
 
   private readonly service = inject(ProceduresService);
   private readonly notify = inject(NotificationService);
@@ -144,7 +154,7 @@ export class AuditProceduresPanelComponent {
     this.form.reset({
       type: 'sampling',
       performedOn: '',
-      checklistItemId: '',
+      checklistItemId: this.scopedItemId() ?? '',
       summary: '',
       counterparty: '',
       population: null,

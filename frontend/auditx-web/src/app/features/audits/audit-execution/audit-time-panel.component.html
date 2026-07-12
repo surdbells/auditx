@@ -70,16 +70,23 @@
             }
           </mat-select>
         </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ 'time.field.checklistItem' | t }}</mat-label>
-          <mat-select formControlName="checklistItemId">
-            <mat-option [value]="''">{{ 'time.value.noItem' | t }}</mat-option>
-            @for (item of audit().checklistItems; track item.id) {
-              <mat-option [value]="item.id">{{ item.prompt }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        @if (!isScoped()) {
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'time.field.checklistItem' | t }}</mat-label>
+            <mat-select formControlName="checklistItemId">
+              <mat-option [value]="''">{{ 'time.value.noItem' | t }}</mat-option>
+              @for (item of audit().checklistItems; track item.id) {
+                <mat-option [value]="item.id">{{ item.prompt }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
       </div>
+      @if (isScoped()) {
+        <p class="time-panel__scoped-hint muted">
+          <mat-icon inline>link</mat-icon> {{ 'time.scoped.hint' | t }}
+        </p>
+      }
       <mat-form-field appearance="outline" class="full">
         <mat-label>{{ 'time.field.notes' | t }}</mat-label>
         <input matInput formControlName="notes" maxlength="1000" autocomplete="off" />
@@ -98,11 +105,11 @@
   <!-- Entries list -->
   @if (loading()) {
     <p class="muted">{{ 'time.list.loading' | t }}</p>
-  } @else if (!entries().length) {
+  } @else if (!visibleEntries().length) {
     <p class="muted">{{ 'time.list.empty' | t }}</p>
   } @else {
     <ul class="time-panel__list">
-      @for (entry of entries(); track entry.id) {
+      @for (entry of visibleEntries(); track entry.id) {
         <li class="time-entry">
           <div class="time-entry__main">
             <span class="time-entry__hours">{{ entry.hours }}{{ 'time.unit.h' | t }}</span>

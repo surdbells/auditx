@@ -35,15 +35,21 @@
         </mat-form-field>
       </div>
 
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>{{ 'evidence.field.checklistItem' | t }}</mat-label>
-        <mat-select formControlName="checklistItemId">
-          <mat-option [value]="''">{{ 'evidence.value.noItem' | t }}</mat-option>
-          @for (i of audit().checklistItems; track i.id) {
-            <mat-option [value]="i.id">{{ i.prompt }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      @if (!isScoped()) {
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'evidence.field.checklistItem' | t }}</mat-label>
+          <mat-select formControlName="checklistItemId">
+            <mat-option [value]="''">{{ 'evidence.value.noItem' | t }}</mat-option>
+            @for (i of audit().checklistItems; track i.id) {
+              <mat-option [value]="i.id">{{ i.prompt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      } @else {
+        <p class="ev-panel__scoped-hint muted">
+          <mat-icon inline>link</mat-icon> {{ 'evidence.scoped.hint' | t }}
+        </p>
+      }
 
       <mat-form-field appearance="outline" class="full">
         <mat-label>{{ 'evidence.field.notes' | t }}</mat-label>
@@ -59,11 +65,11 @@
     </form>
   }
 
-  @if (!requests().length && !loading()) {
+  @if (!visibleRequests().length && !loading()) {
     <p class="muted evi__empty">{{ 'evidence.empty' | t }}</p>
   } @else {
     <ul class="evi__list">
-      @for (r of requests(); track r.id) {
+      @for (r of visibleRequests(); track r.id) {
         <li class="evi__item">
           <div class="evi__item-head">
             <span class="status-badge" [attr.data-status]="r.status === 'received' ? 'responded' : (r.status === 'waived' ? 'muted' : 'open')">
