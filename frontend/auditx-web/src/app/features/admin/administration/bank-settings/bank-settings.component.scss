@@ -10,8 +10,15 @@
 }
 
 .settings__title {
-  margin: 0 0 1rem;
+  margin: 0 0 0.35rem;
   font: var(--mat-sys-title-medium);
+}
+
+.settings__card-hint {
+  margin: 0 0 1.1rem;
+  font-size: 0.82rem;
+  color: var(--mat-sys-on-surface-variant);
+  max-width: 60ch;
 }
 
 .settings__form {
@@ -46,17 +53,10 @@
 }
 
 // ---- Branding ----------------------------------------------------------
-.settings__branding {
-  border-top: 1px solid var(--mat-sys-outline-variant);
-  padding-top: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-}
-
-.settings__subtitle {
-  margin: 0;
-  font: var(--mat-sys-title-small);
+// The colour and asset blocks each span the full card width so they stack.
+.settings__branding .settings__colors,
+.settings__branding .settings__assets {
+  flex: 1 1 100%;
 }
 
 .settings__colors {
