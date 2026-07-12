@@ -73,6 +73,9 @@ public static class BuiltInRoles
             // fresh install can complete plan → approve → launch without first hand-assigning an Audit Committee Chair.
             PermissionKeys.AcMember, PermissionKeys.AcChair,
             PermissionKeys.ManageGrid, PermissionKeys.ViewGrid,
+            // The super-user sees the Insights workspace (analytics + standalone reports) out of the box.
+            // PerformanceAnalyticsView is deliberately NOT granted — it stays a specialised cohort permission.
+            PermissionKeys.ViewAnalytics,
             PermissionKeys.ConfigureDashboards, PermissionKeys.ConfigurePredictive,
             PermissionKeys.ViewIntegrations, PermissionKeys.ConfigureIntegrations, PermissionKeys.ViewIntegrationHealth, PermissionKeys.ConfigureWebhooks,
             PermissionKeys.ViewBankSettings, PermissionKeys.ManageBankSettings, PermissionKeys.ViewSystemHealth,

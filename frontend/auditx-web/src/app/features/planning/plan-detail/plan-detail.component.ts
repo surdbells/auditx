@@ -32,6 +32,7 @@ import { AuditsService } from '../../../core/services/audits.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { EntityLookupService } from '../../../core/services/entity-lookup.service';
 import { ReferenceDataService } from '../../../core/services/reference-data.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
@@ -174,6 +175,8 @@ export class PlanDetailComponent {
   /** Resolves entity ids to names for the timeline row labels. */
   private readonly entityLookup = inject(EntityLookupService);
   private readonly refData = inject(ReferenceDataService);
+  /** Resolves the stored audit-type code to its human label (lazy-loaded, incl. inactive). */
+  readonly refLookup = inject(ReferenceDataLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);

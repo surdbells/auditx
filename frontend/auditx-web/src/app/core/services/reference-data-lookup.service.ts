@@ -4,15 +4,20 @@ import { ReferenceDataService } from './reference-data.service';
 import { ReferenceDataItem } from '../models';
 
 /**
- * Shared, lazily-populated cache of ACTIVE reference-data items, keyed by
- * category then item code.
+ * Shared, lazily-populated cache of reference-data items, keyed by category
+ * then item code.
+ *
+ * The cache holds ALL items (active + inactive) so {@link label} can resolve a
+ * historical code even after its item is deactivated — otherwise a deactivated
+ * audit-type / entity-type would render as its raw code in existing rows.
+ * {@link options} (form/filter dropdowns) exposes only the active items.
  *
  * Mirrors {@link UserLookupService}: the first read of a category via
- * {@link options} or {@link label} kicks off a fire-and-forget, idempotent load
- * of that category's active items. It never throws — on error the category is
- * left empty and callers fall back to the raw code. This means a component can
- * inject the service without forcing specs to flush the
- * `/reference-data/{category}` GET unless they actually exercise the lookup.
+ * {@link options} or {@link label} kicks off a fire-and-forget, idempotent load.
+ * It never throws — on error the category is left empty and callers fall back to
+ * the raw code. This means a component can inject the service without forcing
+ * specs to flush the `/reference-data/{category}` GET unless they actually
+ * exercise the lookup.
  */
 @Injectable({ providedIn: 'root' })
 export class ReferenceDataLookupService {
@@ -30,18 +35,21 @@ export class ReferenceDataLookupService {
   >();
 
   /**
-   * Active items for populating a `<mat-select>`, ordered by sortOrder then
-   * label. Loads the category on first read.
+   * ACTIVE items for populating a `<mat-select>`, ordered by sortOrder then
+   * label. Loads the category on first read. Inactive items are cached (so
+   * {@link label} can still resolve historical codes) but never offered here.
    */
   options(category: string): Signal<ReferenceDataItem[]> {
     let sig = this.optionSignals.get(category);
     if (!sig) {
       sig = computed(() =>
-        [...(this.itemsByCategory().get(category)?.values() ?? [])].sort(
-          (a, b) =>
-            a.sortOrder - b.sortOrder ||
-            (a.label || '').localeCompare(b.label || ''),
-        ),
+        [...(this.itemsByCategory().get(category)?.values() ?? [])]
+          .filter((i) => i.isActive)
+          .sort(
+            (a, b) =>
+              a.sortOrder - b.sortOrder ||
+              (a.label || '').localeCompare(b.label || ''),
+          ),
       );
       this.optionSignals.set(category, sig);
     }
@@ -81,13 +89,13 @@ export class ReferenceDataLookupService {
     });
   }
 
-  /** Idempotently starts the eager load of a category's active items. */
+  /** Idempotently starts the eager load of a category's items (active + inactive, for label resolution). */
   ensureLoaded(category: string): void {
     if (this.loadStarted.has(category)) {
       return;
     }
     this.loadStarted.add(category);
-    this.service.list(category).subscribe({
+    this.service.list(category, true).subscribe({
       next: (items) => {
         this.itemsByCategory.update((prev) => {
           const next = new Map(prev);

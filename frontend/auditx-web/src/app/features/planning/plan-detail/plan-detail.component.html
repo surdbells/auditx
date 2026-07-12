@@ -132,7 +132,7 @@
               <ul class="detail__behind-list">
                 @for (i of exec.behindSchedule; track i.id) {
                   <li>
-                    {{ 'planning.detail.dueOn' | t: { type: i.auditType, date: (i.plannedEndDate | date: 'mediumDate') } }}
+                    {{ 'planning.detail.dueOn' | t: { type: refLookup.label('audit_type', i.auditType), date: (i.plannedEndDate | date: 'mediumDate') } }}
                   </li>
                 }
               </ul>
@@ -197,7 +197,7 @@
               </ng-container>
               <ng-container matColumnDef="auditType">
                 <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colAuditType' | t }}</th>
-                <td mat-cell *matCellDef="let i">{{ i.auditType }}</td>
+                <td mat-cell *matCellDef="let i">{{ refLookup.label('audit_type', i.auditType) }}</td>
               </ng-container>
               <ng-container matColumnDef="planned">
                 <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colPlanned' | t }}</th>
@@ -274,7 +274,7 @@
                       matIconButton
                       type="button"
                       (click)="removeItem(i)"
-                      [attr.aria-label]="'planning.detail.removeItemAria' | t: { type: i.auditType }"
+                      [attr.aria-label]="'planning.detail.removeItemAria' | t: { type: refLookup.label('audit_type', i.auditType) }"
                     >
                       <mat-icon>delete</mat-icon>
                     </button>

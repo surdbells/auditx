@@ -1,5 +1,7 @@
 .mc__filter-card {
   margin-bottom: 1.25rem;
+  // Padding so the select's outline doesn't collide with the card border.
+  padding: 1rem 1.25rem 0;
 }
 
 .mc__filter {

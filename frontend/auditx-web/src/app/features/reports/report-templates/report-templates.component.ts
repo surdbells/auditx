@@ -27,10 +27,42 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the report-templates admin console (walkthrough + the Overview panel). */
+const REPORT_TEMPLATES_GUIDE: PageGuide = {
+  id: 'report-templates',
+  titleKey: 'reports.templates.title',
+  purposeKey: 'reports.templates.guide.purpose',
+  descriptionKey: 'reports.templates.guide.description',
+  actionKeys: [
+    'reports.templates.guide.action.create',
+    'reports.templates.guide.action.version',
+    'reports.templates.guide.action.activate',
+  ],
+  sections: [
+    {
+      selector: '.templates__table',
+      titleKey: 'reports.templates.guide.section.table.title',
+      bodyKey: 'reports.templates.guide.section.table.body',
+    },
+  ],
+  usedByKeys: [
+    'reports.templates.guide.use.generation',
+    'reports.templates.guide.use.schedules',
+  ],
+  businessRuleKeys: [
+    'reports.templates.guide.rule.published',
+    'reports.templates.guide.rule.auditType',
+  ],
+  tipKeys: ['reports.templates.guide.tip.version'],
+  permissionKeys: ['reports.templates.guide.perm.configure'],
+};
 
 @Component({
   selector: 'app-report-templates',
@@ -45,6 +77,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './report-templates.component.html',
@@ -56,6 +89,8 @@ export class ReportTemplatesComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = REPORT_TEMPLATES_GUIDE;
 
   readonly displayedColumns = [
     'name',

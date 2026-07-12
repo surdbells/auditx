@@ -44,15 +44,20 @@
       <mat-label>{{ 'universe.field.entityType' | t }}</mat-label>
       <mat-select formControlName="entityType">
         <mat-option [value]="''">{{ 'universe.filter.allTypes' | t }}</mat-option>
-        @for (t of entityTypes(); track t) {
-          <mat-option [value]="t">{{ t }}</mat-option>
+        @for (t of entityTypeOptions(); track t.code) {
+          <mat-option [value]="t.code">{{ t.label }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>{{ 'universe.field.owner' | t }}</mat-label>
-      <input matInput formControlName="owner" autocomplete="off" />
+      <mat-select formControlName="owner">
+        <mat-option [value]="''">{{ 'universe.filter.allOwners' | t }}</mat-option>
+        @for (u of userLookup.options(); track u.id) {
+          <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
+        }
+      </mat-select>
     </mat-form-field>
 
     <mat-checkbox formControlName="archived">{{ 'universe.filter.includeArchived' | t }}</mat-checkbox>
@@ -93,7 +98,7 @@
 
             <ng-container matColumnDef="entityType">
               <th mat-header-cell *matHeaderCellDef>{{ 'universe.field.type' | t }}</th>
-              <td mat-cell *matCellDef="let e">{{ e.entityType }}</td>
+              <td mat-cell *matCellDef="let e">{{ refLookup.label('entity_type', e.entityType) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="owner">

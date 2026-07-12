@@ -84,7 +84,6 @@ describe('EntityEditorDialogComponent', () => {
 
     const dialogData: EntityEditorDialogData = data ?? {
       entity: entity(),
-      entityTypes: ['Process', 'System'],
       parentCandidates: [],
     };
 
@@ -111,6 +110,10 @@ describe('EntityEditorDialogComponent', () => {
     });
     // The org-unit picker lazily loads the org-unit tree on construction.
     http.expectOne((r) => r.url === `${BASE}/org-units`).flush({ data: [] });
+    // The entity-type select lazily loads the entity_type reference category.
+    for (const req of http.match((r) => r.url === `${BASE}/reference-data/entity_type`)) {
+      req.flush({ data: [] });
+    }
   }
 
   afterEach(() => http.verify());
@@ -128,7 +131,6 @@ describe('EntityEditorDialogComponent', () => {
   it('seeds existing scores into the grid rows', () => {
     setup(['ManageUniverse', 'ScoreRisk'], {
       entity: entity({ inherentScores: { Financial: 3 } }),
-      entityTypes: ['Process'],
       parentCandidates: [],
     });
     http

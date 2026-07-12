@@ -23,6 +23,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 
 import { UniverseService } from '../../../core/services/universe.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { OrgUnitLookupService } from '../../../core/services/org-unit-lookup.service';
 import { RiskDimensionsService } from '../../../core/services/risk-dimensions.service';
@@ -41,8 +42,6 @@ import { SearchableSelectComponent } from '../../../shared/components/searchable
 export interface EntityEditorDialogData {
   /** Present when editing; absent for create. */
   entity?: Entity;
-  /** Entity-type options sourced from `/entity-types`. */
-  entityTypes: string[];
   /** Other entities that can be selected as a parent (excludes self). */
   parentCandidates: Entity[];
 }
@@ -88,6 +87,9 @@ export class EntityEditorDialogComponent {
     inject<MatDialogRef<EntityEditorDialogComponent, boolean>>(MatDialogRef);
   private readonly fb = inject(FormBuilder);
   private readonly universe = inject(UniverseService);
+  /** Active entity-type reference items for the type select (label shown, code stored). */
+  private readonly refLookup = inject(ReferenceDataLookupService);
+  readonly entityTypeOptions = this.refLookup.options('entity_type');
   /** Populates the owner select (lazy directory load). */
   readonly userLookup = inject(UserLookupService);
   /** Populates the org-unit picker (lazy tree load). */

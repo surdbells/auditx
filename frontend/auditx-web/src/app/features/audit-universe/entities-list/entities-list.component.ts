@@ -22,6 +22,7 @@ import { MatTableModule } from '@angular/material/table';
 import { debounceTime } from 'rxjs';
 
 import { UniverseService } from '../../../core/services/universe.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -114,6 +115,9 @@ export class EntitiesListComponent {
   private readonly universe = inject(UniverseService);
   /** Resolves owner user ids to display names in the table. */
   readonly userLookup = inject(UserLookupService);
+  /** Entity-type reference items: labels for the column + the active-only filter/editor dropdown. */
+  readonly refLookup = inject(ReferenceDataLookupService);
+  readonly entityTypeOptions = this.refLookup.options('entity_type');
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -128,8 +132,6 @@ export class EntitiesListComponent {
     'lastAudited',
     'actions',
   ];
-
-  readonly entityTypes = signal<string[]>([]);
 
   readonly filters = this.fb.nonNullable.group({
     entityType: '',
@@ -163,21 +165,13 @@ export class EntitiesListComponent {
   readonly guide = UNIVERSE_GUIDE;
 
   constructor() {
-    this.loadEntityTypes();
+    // Warm the user directory so the owner filter dropdown + owner column populate.
+    this.userLookup.ensureLoaded();
     this.fetchPage(1);
 
     this.filters.valueChanges
       .pipe(debounceTime(300), takeUntilDestroyed())
       .subscribe(() => this.fetchPage(1));
-  }
-
-  private loadEntityTypes(): void {
-    this.universe.entityTypes().subscribe({
-      next: (types) => this.entityTypes.set(types),
-      error: () => {
-        // Non-fatal: the filter just stays empty.
-      },
-    });
   }
 
   fetchPage(page: number): void {
@@ -186,7 +180,8 @@ export class EntitiesListComponent {
     this.universe
       .list({
         entityType,
-        owner,
+        // Owner is a user id (or '' for "any"); the backend filters by owner user id.
+        owner: owner || undefined,
         search,
         archived: archived ? true : undefined,
         page,
@@ -246,7 +241,6 @@ export class EntitiesListComponent {
 
   create(): void {
     const data: EntityEditorDialogData = {
-      entityTypes: this.entityTypes(),
       parentCandidates: this.entities(),
     };
     this.dialog
@@ -265,7 +259,6 @@ export class EntitiesListComponent {
     }
     const data: EntityEditorDialogData = {
       entity,
-      entityTypes: this.entityTypes(),
       parentCandidates: this.entities().filter((e) => e.id !== entity.id),
     };
     this.dialog

@@ -13,8 +13,8 @@
     <mat-form-field appearance="outline" class="full">
       <mat-label>{{ 'universe.field.entityType' | t }}</mat-label>
       <mat-select formControlName="entityType">
-        @for (t of data.entityTypes; track t) {
-          <mat-option [value]="t">{{ t }}</mat-option>
+        @for (t of entityTypeOptions(); track t.code) {
+          <mat-option [value]="t.code">{{ t.label }}</mat-option>
         }
       </mat-select>
       @if (form.controls.entityType.hasError('required') && form.controls.entityType.touched) {

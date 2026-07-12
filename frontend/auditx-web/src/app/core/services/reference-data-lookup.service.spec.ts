@@ -43,15 +43,20 @@ describe('ReferenceDataLookupService', () => {
     const req = http.expectOne(
       (r) => r.url === `${BASE}/reference-data/audit_type`,
     );
-    expect(req.request.params.get('includeInactive')).toBe('false');
+    // Loads ALL items (incl. inactive) so label() can resolve historical codes.
+    expect(req.request.params.get('includeInactive')).toBe('true');
     req.flush({
       data: [
         item('it', 'IT', { sortOrder: 2 }),
         item('aml', 'AML', { sortOrder: 1 }),
+        item('legacy', 'Legacy', { sortOrder: 3, isActive: false }),
       ],
     });
 
+    // options() offers only ACTIVE items, ordered by sortOrder…
     expect(opts().map((o) => o.code)).toEqual(['aml', 'it']);
+    // …but label() still resolves the inactive one (no raw-code leak on historical rows).
+    expect(service.label('audit_type', 'legacy')).toBe('Legacy');
   });
 
   it('resolves a code to its label, falling back to the raw code', () => {
