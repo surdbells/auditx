@@ -154,6 +154,44 @@ public sealed class BulkDeactivateUsersCommandHandler(
     }
 }
 
+public sealed record BulkReactivateUsersCommand(IReadOnlyList<Guid> UserIds) : ICommand<BulkOperationResultDto>;
+
+public sealed class BulkReactivateUsersCommandHandler(
+    IUserRepository users, IPermissionResolver permissions, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<BulkReactivateUsersCommand, BulkOperationResultDto>
+{
+    public async Task<BulkOperationResultDto> Handle(BulkReactivateUsersCommand command, CancellationToken cancellationToken)
+    {
+        var ids = command.UserIds.Distinct().ToArray();
+        var found = await users.GetByIdsAsync(ids, cancellationToken);
+        var foundIds = found.Select(u => u.Id).ToHashSet();
+
+        var errors = ids.Where(id => !foundIds.Contains(id))
+            .Select(id => new BulkOperationErrorDto(id.ToString(), "User not found."))
+            .ToList();
+
+        // Atomic: if any row is invalid, commit nothing (mirrors bulk deactivate).
+        if (errors.Count > 0)
+        {
+            return new BulkOperationResultDto(0, errors);
+        }
+
+        foreach (var user in found)
+        {
+            user.Reactivate();
+        }
+
+        audit.Record(AuditEventTypes.UsersBulkReactivated, AuditTargetTypes.User, null, payload: new { count = found.Count, ids });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        foreach (var id in foundIds)
+        {
+            await permissions.InvalidateAsync(id, cancellationToken);
+        }
+
+        return new BulkOperationResultDto(found.Count, []);
+    }
+}
+
 public sealed record BulkImportUsersCommand(string CsvContent) : ICommand<BulkOperationResultDto>;
 
 public sealed class BulkImportUsersCommandValidator : AbstractValidator<BulkImportUsersCommand>

@@ -1,55 +1,6 @@
 <app-page-guide [guide]="guide" />
 
 <div class="bulk__grid">
-  <mat-card appearance="outlined" class="bulk__card" data-guide="deactivate">
-    <h2 class="bulk__title">{{ 'administration.bulkUsers.deactivate.title' | t }}</h2>
-    <p class="muted">{{ 'administration.bulkUsers.deactivate.hint' | t }}</p>
-    <form [formGroup]="deactivateForm" class="bulk__form">
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>{{ 'administration.bulkUsers.deactivate.userIdsLabel' | t }}</mat-label>
-        <textarea
-          matInput
-          rows="5"
-          formControlName="userIds"
-          spellcheck="false"
-        ></textarea>
-      </mat-form-field>
-      <div class="bulk__actions">
-        <button
-          matButton="filled"
-          type="button"
-          (click)="bulkDeactivate()"
-          [disabled]="deactivateForm.invalid || deactivating()"
-        >
-          {{ (deactivating() ? 'administration.bulkUsers.deactivate.working' : 'administration.bulkUsers.deactivate.submit') | t }}
-        </button>
-      </div>
-    </form>
-
-    @if (deactivateResult(); as r) {
-      <div class="bulk__result">
-        <p class="bulk__success">
-          <mat-icon aria-hidden="true">check_circle</mat-icon>
-          {{ 'administration.bulkUsers.deactivate.result' | t: { success: r.successCount, failed: r.errors.length } }}
-        </p>
-        @if (r.errors.length) {
-          <table mat-table [dataSource]="r.errors" class="bulk__error-table">
-            <ng-container matColumnDef="identifier">
-              <th mat-header-cell *matHeaderCellDef>{{ 'administration.bulkUsers.errorTable.identifier' | t }}</th>
-              <td mat-cell *matCellDef="let e">{{ e.identifier }}</td>
-            </ng-container>
-            <ng-container matColumnDef="message">
-              <th mat-header-cell *matHeaderCellDef>{{ 'administration.bulkUsers.errorTable.message' | t }}</th>
-              <td mat-cell *matCellDef="let e">{{ e.message }}</td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: errorColumns"></tr>
-          </table>
-        }
-      </div>
-    }
-  </mat-card>
-
   <mat-card appearance="outlined" class="bulk__card" data-guide="import">
     <h2 class="bulk__title">{{ 'administration.bulkUsers.import.title' | t }}</h2>
     <p class="muted">{{ 'administration.bulkUsers.import.hint' | t }}</p>

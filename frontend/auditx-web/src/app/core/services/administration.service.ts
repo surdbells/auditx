@@ -48,6 +48,12 @@ export class AdministrationService {
     });
   }
 
+  bulkActivateUsers(userIds: string[]): Observable<BulkOperationResult> {
+    return this.api.post<BulkOperationResult>('/admin/users/bulk-activate', {
+      userIds,
+    });
+  }
+
   bulkImportUsers(csvContent: string): Observable<BulkOperationResult> {
     return this.api.post<BulkOperationResult>('/admin/users/bulk-import', {
       csvContent,

@@ -43,6 +43,11 @@ public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
         => Envelope(await dispatcher.Send(new BulkDeactivateUsersCommand(request.UserIds), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpPost("users/bulk-activate")]
+    public async Task<IActionResult> BulkActivate([FromBody] BulkUserIdsRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new BulkReactivateUsersCommand(request.UserIds), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpPost("users/bulk-import")]
     public async Task<IActionResult> BulkImport([FromBody] BulkImportRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new BulkImportUsersCommand(request.CsvContent), cancellationToken));

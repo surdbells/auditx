@@ -66,6 +66,7 @@ public static class AuditEventTypes
     public const string BankSettingsUpdated = "bank_settings_updated";
     public const string ResourceLimitsUpdated = "resource_limits_updated";
     public const string UsersBulkDeactivated = "users_bulk_deactivated";
+    public const string UsersBulkReactivated = "users_bulk_reactivated";
     public const string UsersBulkImported = "users_bulk_imported";
     public const string SupportChannelEnabled = "support_channel_enabled";
     public const string SupportChannelRevoked = "support_channel_revoked";

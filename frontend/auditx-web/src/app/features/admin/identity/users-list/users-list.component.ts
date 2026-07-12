@@ -21,11 +21,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { UsersService } from '../../../../core/services/users.service';
 import { RolesService } from '../../../../core/services/roles.service';
+import { AdministrationService } from '../../../../core/services/administration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { RoleDto, UserDto, UserStatus } from '../../../../core/models';
 import {
@@ -88,6 +90,7 @@ const USERS_GUIDE: PageGuide = {
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatIconModule,
     MatMenuModule,
     MatChipsModule,
@@ -106,6 +109,7 @@ const USERS_GUIDE: PageGuide = {
 export class UsersListComponent {
   private readonly usersService = inject(UsersService);
   private readonly rolesService = inject(RolesService);
+  private readonly admin = inject(AdministrationService);
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
@@ -115,6 +119,7 @@ export class UsersListComponent {
   readonly guide = USERS_GUIDE;
 
   readonly displayedColumns = [
+    'select',
     'displayName',
     'email',
     'roles',
@@ -145,6 +150,65 @@ export class UsersListComponent {
   /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
   readonly loading = signal(false);
   readonly roles = signal<RoleDto[]>([]);
+
+  /* ---- Multi-select (bulk activate / deactivate) ---- */
+  readonly selectedIds = signal<ReadonlySet<string>>(new Set());
+  readonly bulkBusy = signal(false);
+
+  readonly selectedCount = computed(() => this.selectedIds().size);
+  readonly allSelected = computed(() => {
+    const rows = this.users();
+    return rows.length > 0 && rows.every((u) => this.selectedIds().has(u.id));
+  });
+  readonly someSelected = computed(() => this.selectedCount() > 0 && !this.allSelected());
+
+  isSelected(id: string): boolean {
+    return this.selectedIds().has(id);
+  }
+  toggleOne(id: string): void {
+    this.selectedIds.update((s) => {
+      const next = new Set(s);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+  toggleAll(): void {
+    this.selectedIds.set(this.allSelected() ? new Set() : new Set(this.users().map((u) => u.id)));
+  }
+  clearSelection(): void {
+    this.selectedIds.set(new Set());
+  }
+
+  /** Bulk-activates the selected users, then refreshes the page + clears the selection. */
+  bulkActivate(): void {
+    this.runBulk(this.admin.bulkActivateUsers([...this.selectedIds()]), 'identity.bulk.activatedToast');
+  }
+  bulkDeactivate(): void {
+    this.runBulk(this.admin.bulkDeactivateUsers([...this.selectedIds()]), 'identity.bulk.deactivatedToast');
+  }
+  private runBulk(op: ReturnType<AdministrationService['bulkActivateUsers']>, toastKey: string): void {
+    if (!this.selectedCount() || this.bulkBusy()) {
+      return;
+    }
+    this.bulkBusy.set(true);
+    op.subscribe({
+      next: (result) => {
+        this.bulkBusy.set(false);
+        if (result.errors.length) {
+          this.notify.error(this.i18n.translate('identity.bulk.partialError'));
+        } else {
+          this.notify.success(this.i18n.translate(toastKey, { count: result.successCount }));
+        }
+        this.clearSelection();
+        this.fetchPage(this.page());
+      },
+      error: () => this.bulkBusy.set(false),
+    });
+  }
 
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.users().length === 0,
@@ -181,6 +245,8 @@ export class UsersListComponent {
 
   fetchPage(page: number): void {
     this.loading.set(true);
+    // Selection is per page — drop it when the visible rows change.
+    this.clearSelection();
     const { search, role, status } = this.filters.getRawValue();
     this.usersService
       .list({ search, role, status, page, pageSize: this.pageSize() })

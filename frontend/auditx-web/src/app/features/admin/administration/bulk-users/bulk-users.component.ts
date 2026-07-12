@@ -28,12 +28,10 @@ const BULK_USERS_GUIDE: PageGuide = {
   descriptionKey: 'administration.bulkUsers.guide.description',
   actionKeys: [
     'administration.bulkUsers.guide.action.import',
-    'administration.bulkUsers.guide.action.deactivate',
     'administration.bulkUsers.guide.action.upload',
     'administration.bulkUsers.guide.action.review',
   ],
   sections: [
-    { selector: '[data-guide="deactivate"]', titleKey: 'administration.bulkUsers.guide.section.deactivate.title', bodyKey: 'administration.bulkUsers.guide.section.deactivate.body' },
     { selector: '[data-guide="import"]', titleKey: 'administration.bulkUsers.guide.section.import.title', bodyKey: 'administration.bulkUsers.guide.section.import.body' },
     { selector: '.bulk__upload', titleKey: 'administration.bulkUsers.guide.section.upload.title', bodyKey: 'administration.bulkUsers.guide.section.upload.body' },
   ],
@@ -58,7 +56,6 @@ const BULK_USERS_GUIDE: PageGuide = {
     'administration.bulkUsers.guide.rule.format',
     'administration.bulkUsers.guide.rule.duplicate',
     'administration.bulkUsers.guide.rule.partial',
-    'administration.bulkUsers.guide.rule.deactivate',
   ],
   tipKeys: [
     'administration.bulkUsers.guide.tip.small',
@@ -102,25 +99,12 @@ export class BulkUsersComponent {
 
   readonly errorColumns = ['identifier', 'message'];
 
-  readonly deactivating = signal(false);
   readonly importing = signal(false);
-  readonly deactivateResult = signal<BulkOperationResult | null>(null);
   readonly importResult = signal<BulkOperationResult | null>(null);
-
-  readonly deactivateForm = this.fb.nonNullable.group({
-    userIds: ['', Validators.required],
-  });
 
   readonly importForm = this.fb.nonNullable.group({
     csvContent: ['', Validators.required],
   });
-
-  private parseIds(raw: string): string[] {
-    return raw
-      .split(/[\s,;]+/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-  }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -134,28 +118,6 @@ export class BulkUsersComponent {
     };
     reader.readAsText(file);
     input.value = '';
-  }
-
-  bulkDeactivate(): void {
-    const ids = this.parseIds(this.deactivateForm.controls.userIds.value);
-    if (ids.length === 0) {
-      this.deactivateForm.controls.userIds.markAsTouched();
-      return;
-    }
-    this.deactivating.set(true);
-    this.deactivateResult.set(null);
-    this.admin.bulkDeactivateUsers(ids).subscribe({
-      next: (result) => {
-        this.deactivateResult.set(result);
-        this.notify.success(
-          this.i18n.translate('administration.bulkUsers.notify.deactivated', {
-            count: result.successCount,
-          }),
-        );
-        this.deactivating.set(false);
-      },
-      error: () => this.deactivating.set(false),
-    });
   }
 
   bulkImport(): void {

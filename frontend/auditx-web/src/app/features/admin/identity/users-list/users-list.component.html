@@ -62,9 +62,42 @@
         (action)="clearFilters()"
       />
     } @else {
+      @if (selectedCount()) {
+        <div class="users__bulkbar" role="status">
+          <span class="users__bulkbar-count">{{ 'identity.bulk.selected' | t: { count: selectedCount() } }}</span>
+          <span class="users__bulkbar-actions">
+            <button matButton type="button" (click)="bulkActivate()" [disabled]="bulkBusy()">
+              <mat-icon>how_to_reg</mat-icon>{{ 'identity.bulk.activate' | t }}
+            </button>
+            <button matButton type="button" (click)="bulkDeactivate()" [disabled]="bulkBusy()">
+              <mat-icon>person_off</mat-icon>{{ 'identity.bulk.deactivate' | t }}
+            </button>
+            <button matButton type="button" (click)="clearSelection()">{{ 'identity.bulk.clear' | t }}</button>
+          </span>
+        </div>
+      }
       <mat-card appearance="outlined" class="users__table-card">
         <div class="users__table-wrapper">
           <table mat-table [dataSource]="users()" class="users__table">
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef>
+                <mat-checkbox
+                  [checked]="allSelected()"
+                  [indeterminate]="someSelected()"
+                  (change)="toggleAll()"
+                  [attr.aria-label]="'identity.bulk.selectAll' | t"
+                />
+              </th>
+              <td mat-cell *matCellDef="let user">
+                <mat-checkbox
+                  [checked]="isSelected(user.id)"
+                  (change)="toggleOne(user.id)"
+                  (click)="$event.stopPropagation()"
+                  [attr.aria-label]="'identity.bulk.selectOne' | t: { name: user.displayName }"
+                />
+              </td>
+            </ng-container>
+
             <ng-container matColumnDef="displayName">
               <th mat-header-cell *matHeaderCellDef>{{ 'identity.field.name' | t }}</th>
               <td mat-cell *matCellDef="let user">
