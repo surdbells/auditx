@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -86,6 +87,7 @@ export class AuditTimePanelComponent {
   private readonly i18n = inject(TranslationService);
   /** Resolves contributor ids to names (lazy global directory). */
   private readonly lookup = inject(UserLookupService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly categories = TIME_CATEGORIES;
 
@@ -152,6 +154,7 @@ export class AuditTimePanelComponent {
         this.form.controls.checklistItemId.setValue(scope);
       }
     });
+    this.destroyRef.onDestroy(() => this.clearTimer());
   }
 
   refresh(): void {
@@ -185,6 +188,104 @@ export class AuditTimePanelComponent {
   /** Only the entry's owner or an audit manager may edit/delete it. */
   canModify(entry: TimeEntry): boolean {
     return entry.userId === this.me() || this.canManageBudget();
+  }
+
+  /* ---- Quick capture: one-tap chips + an opt-in stopwatch ---- */
+
+  /** Preset durations (hours) offered as one-tap "+15m / +30m / +1h" chips. */
+  readonly quickHours = [0.25, 0.5, 1];
+
+  /** Local (not UTC) yyyy-mm-dd for "today", so the smart default matches the auditor's calendar day. */
+  private today(): string {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  /** Human label for a preset chip (0.25 → "15m", 1 → "1h"). */
+  quickLabel(hours: number): string {
+    return hours < 1 ? `${Math.round(hours * 60)}m` : `${hours}h`;
+  }
+
+  /** One-tap log: today, category Fieldwork, attached to the scoped item (or none). */
+  logQuick(hours: number): void {
+    if (this.submitting()) {
+      return;
+    }
+    this.submitting.set(true);
+    this.service
+      .log(this.audit().id, {
+        workDate: this.today(),
+        hours,
+        category: 'fieldwork',
+        checklistItemId: this.scopedItemId() || null,
+        notes: null,
+      })
+      .subscribe({
+        next: () => {
+          this.submitting.set(false);
+          this.notify.success(this.i18n.translate('time.notify.logged'));
+          this.refresh();
+        },
+        error: (err: unknown) => {
+          this.submitting.set(false);
+          this.onError(err);
+        },
+      });
+  }
+
+  readonly timerRunning = signal(false);
+  readonly elapsedSec = signal(0);
+  private timerHandle: ReturnType<typeof setInterval> | null = null;
+  private timerStartMs = 0;
+
+  /** Elapsed stopwatch as HH:MM:SS. */
+  readonly elapsedLabel = computed(() => {
+    const s = this.elapsedSec();
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${p(Math.floor(s / 3600))}:${p(Math.floor((s % 3600) / 60))}:${p(s % 60)}`;
+  });
+
+  startTimer(): void {
+    if (this.timerRunning()) {
+      return;
+    }
+    this.timerStartMs = Date.now() - this.elapsedSec() * 1000;
+    this.timerRunning.set(true);
+    this.timerHandle = setInterval(
+      () => this.elapsedSec.set(Math.floor((Date.now() - this.timerStartMs) / 1000)),
+      1000,
+    );
+  }
+
+  /**
+   * Stops the stopwatch and drops the elapsed time into the log form (rounded up to the nearest
+   * 15 min, min 15) so the auditor can review + adjust before logging. Deliberately never auto-logs.
+   */
+  stopTimer(): void {
+    this.clearTimer();
+    this.timerRunning.set(false);
+    const hours = Math.max(0.25, Math.ceil((this.elapsedSec() / 3600) * 4) / 4);
+    this.editing.set(null);
+    this.form.patchValue({
+      workDate: this.today(),
+      hours,
+      category: 'fieldwork',
+      checklistItemId: this.scopedItemId() ?? '',
+    });
+  }
+
+  resetTimer(): void {
+    this.clearTimer();
+    this.timerRunning.set(false);
+    this.elapsedSec.set(0);
+  }
+
+  private clearTimer(): void {
+    if (this.timerHandle) {
+      clearInterval(this.timerHandle);
+      this.timerHandle = null;
+    }
   }
 
   submit(): void {

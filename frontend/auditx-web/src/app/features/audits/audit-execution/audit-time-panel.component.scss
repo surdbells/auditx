@@ -80,6 +80,40 @@
   font: var(--mat-sys-label-medium);
 }
 
+.time-panel__quick {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px dashed var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mat-sys-primary) 4%, transparent);
+}
+.time-panel__quick-label {
+  font: var(--mat-sys-label-medium);
+  font-weight: 600;
+}
+.time-panel__chip {
+  font-variant-numeric: tabular-nums;
+}
+.time-panel__timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+.time-panel__timer-val {
+  font-family: ui-monospace, 'Roboto Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0 0.35rem;
+}
+.time-panel__timer-val--running {
+  color: var(--mat-sys-primary);
+}
+
 .full {
   width: 100%;
 }

@@ -50,6 +50,39 @@
     </div>
   }
 
+  <!-- Quick capture: one-tap chips + an opt-in stopwatch -->
+  @if (canLogNow()) {
+    <div class="time-panel__quick">
+      <span class="time-panel__quick-label muted">{{ 'time.quick.label' | t }}</span>
+      @for (h of quickHours; track h) {
+        <button matButton="outlined" type="button" class="time-panel__chip" (click)="logQuick(h)" [disabled]="submitting()">
+          +{{ quickLabel(h) }}
+        </button>
+      }
+      <span class="time-panel__timer">
+        @if (!timerRunning() && elapsedSec() === 0) {
+          <button matButton type="button" (click)="startTimer()">
+            <mat-icon>timer</mat-icon>{{ 'time.timer.start' | t }}
+          </button>
+        } @else {
+          <span class="time-panel__timer-val" [class.time-panel__timer-val--running]="timerRunning()">{{ elapsedLabel() }}</span>
+          @if (timerRunning()) {
+            <button matIconButton type="button" (click)="stopTimer()" [matTooltip]="'time.timer.stop' | t" [attr.aria-label]="'time.timer.stop' | t">
+              <mat-icon>stop_circle</mat-icon>
+            </button>
+          } @else {
+            <button matIconButton type="button" (click)="startTimer()" [matTooltip]="'time.timer.resume' | t" [attr.aria-label]="'time.timer.resume' | t">
+              <mat-icon>play_circle</mat-icon>
+            </button>
+          }
+          <button matIconButton type="button" (click)="resetTimer()" [matTooltip]="'time.timer.reset' | t" [attr.aria-label]="'time.timer.reset' | t">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </span>
+    </div>
+  }
+
   <!-- Log / edit form -->
   @if (canLogNow()) {
     <form [formGroup]="form" class="time-panel__form" (ngSubmit)="submit()">
