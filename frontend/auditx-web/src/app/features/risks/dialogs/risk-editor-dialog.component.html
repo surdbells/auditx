@@ -18,7 +18,11 @@
     <div class="risk-form__row">
       <mat-form-field appearance="outline">
         <mat-label>{{ 'risk.field.category' | t }}</mat-label>
-        <input matInput formControlName="category" autocomplete="off" />
+        <mat-select formControlName="category">
+          @for (c of categoryOptions(); track c.code) {
+            <mat-option [value]="c.code">{{ c.label }}</mat-option>
+          }
+        </mat-select>
       </mat-form-field>
       <app-searchable-select
         formControlName="ownerUserId"

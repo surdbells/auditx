@@ -22,6 +22,7 @@ import { RouterLink } from '@angular/router';
 
 import { RisksService } from '../../../core/services/risks.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
@@ -121,6 +122,8 @@ export class RiskRegisterComponent {
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
   readonly userLookup = inject(UserLookupService);
+  /** Resolves the stored risk-category code to its label (incl. inactive). */
+  readonly refLookup = inject(ReferenceDataLookupService);
 
   readonly displayedColumns = ['title', 'category', 'owner', 'rating', 'status', 'target', 'actions'];
   readonly statuses = RISK_STATUSES;

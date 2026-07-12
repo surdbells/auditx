@@ -26,6 +26,7 @@ import {
 } from '../../../core/models';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { EntityLookupService } from '../../../core/services/entity-lookup.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -65,12 +66,24 @@ export class RiskEditorDialogComponent {
   private readonly fb = inject(FormBuilder);
   readonly userLookup = inject(UserLookupService);
   readonly entityLookup = inject(EntityLookupService);
+  private readonly refLookup = inject(ReferenceDataLookupService);
   private readonly notify = inject(NotificationService);
   private readonly i18n = inject(TranslationService);
 
   readonly isEdit = !!this.data.risk;
   readonly ratings = [1, 2, 3, 4, 5];
   readonly strategies = RISK_STRATEGIES;
+
+  private readonly refCategories = this.refLookup.options('risk_category');
+  /** Active risk categories, plus the risk's current value if it predates the managed list (so edits keep it). */
+  readonly categoryOptions = computed<{ code: string; label: string }[]>(() => {
+    const opts = this.refCategories().map((c) => ({ code: c.code, label: c.label }));
+    const current = this.data.risk?.category;
+    if (current && !opts.some((o) => o.code === current)) {
+      return [{ code: current, label: this.refLookup.label('risk_category', current) }, ...opts];
+    }
+    return opts;
+  });
 
   readonly ownerOptions = computed<SelectOption[]>(() =>
     this.userLookup.options().map((u) => ({ value: u.id, label: u.displayName })),
@@ -82,7 +95,7 @@ export class RiskEditorDialogComponent {
   readonly form = this.fb.nonNullable.group({
     title: [this.data.risk?.title ?? '', [Validators.required, Validators.maxLength(300)]],
     description: [this.data.risk?.description ?? ''],
-    category: [this.data.risk?.category ?? '', [Validators.required, Validators.maxLength(100)]],
+    category: [this.data.risk?.category ?? '', [Validators.required]],
     ownerUserId: [this.data.risk?.ownerUserId ?? null as string | null, Validators.required],
     auditableEntityId: [this.data.risk?.auditableEntityId ?? null as string | null],
     inherentLikelihood: [this.data.risk?.inherentLikelihood ?? 3, Validators.required],

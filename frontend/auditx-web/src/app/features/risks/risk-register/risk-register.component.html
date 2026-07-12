@@ -72,7 +72,7 @@
 
             <ng-container matColumnDef="category">
               <th mat-header-cell *matHeaderCellDef>{{ 'risk.col.category' | t }}</th>
-              <td mat-cell *matCellDef="let r" class="muted">{{ r.category }}</td>
+              <td mat-cell *matCellDef="let r" class="muted">{{ refLookup.label('risk_category', r.category) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="owner">

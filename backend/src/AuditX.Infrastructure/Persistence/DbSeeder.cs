@@ -297,6 +297,19 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             (ReferenceDataCategories.SanctionCategory, "aml_kyc", "AML/KYC"),
             (ReferenceDataCategories.SanctionCategory, "credit", "Credit"),
             (ReferenceDataCategories.SanctionCategory, "operational", "Operational"),
+
+            // Risk categories — the CODE is stored on risk.category; label shown in the register + editor dropdown.
+            (ReferenceDataCategories.RiskCategory, "operational", "Operational"),
+            (ReferenceDataCategories.RiskCategory, "financial", "Financial"),
+            (ReferenceDataCategories.RiskCategory, "credit", "Credit"),
+            (ReferenceDataCategories.RiskCategory, "market", "Market"),
+            (ReferenceDataCategories.RiskCategory, "liquidity", "Liquidity"),
+            (ReferenceDataCategories.RiskCategory, "compliance", "Compliance"),
+            (ReferenceDataCategories.RiskCategory, "regulatory", "Regulatory"),
+            (ReferenceDataCategories.RiskCategory, "strategic", "Strategic"),
+            (ReferenceDataCategories.RiskCategory, "technology", "Technology / Cyber"),
+            (ReferenceDataCategories.RiskCategory, "reputational", "Reputational"),
+            (ReferenceDataCategories.RiskCategory, "fraud", "Fraud"),
         };
 
         // One round-trip: existing (category, code) pairs across the seeded categories. Include soft-deleted rows so

@@ -28,6 +28,9 @@ public static class ReferenceDataCategories
     /// <summary>Sanctions-grid categories (cash handling, process breach, …) used to key grid cells (M7).</summary>
     public const string SanctionCategory = "sanction_category";
 
+    /// <summary>Risk categories (operational, financial, compliance, …) used by the risk register.</summary>
+    public const string RiskCategory = "risk_category";
+
     /// <summary>Every category the store recognises, with its human label — the admin UI's manageable-list menu.</summary>
     public static readonly IReadOnlyList<ReferenceDataCategoryDescriptor> All =
     [
@@ -38,6 +41,7 @@ public static class ReferenceDataCategories
         new(EvidenceDocumentType, "Evidence document types"),
         new(EntityType, "Entity types"),
         new(SanctionCategory, "Sanction categories"),
+        new(RiskCategory, "Risk categories"),
     ];
 
     public static bool IsKnown(string? category) =>
