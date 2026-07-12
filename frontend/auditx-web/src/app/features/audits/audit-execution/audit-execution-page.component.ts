@@ -11,8 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 import { AuditsService } from '../../../core/services/audits.service';
-import { UsersService } from '../../../core/services/users.service';
-import { Audit, UserDto } from '../../../core/models';
+import { Audit } from '../../../core/models';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -22,8 +21,8 @@ import { AuditExecutionComponent } from './audit-execution.component';
 type ViewState = 'loading' | 'ready' | 'error';
 
 /**
- * Dedicated fieldwork/execution screen for a single audit (`/audits/:id/execute`). Loads the audit and the
- * user directory itself, then hosts {@link AuditExecutionComponent}; reloads the audit after any mutation.
+ * Dedicated fieldwork/execution screen for a single audit (`/audits/:id/execute`). Loads the audit, then hosts
+ * {@link AuditExecutionComponent} (which resolves user names via the shared directory); reloads after mutations.
  */
 @Component({
   selector: 'app-audit-execution-page',
@@ -59,7 +58,6 @@ type ViewState = 'loading' | 'ready' | 'error';
           </app-page-header>
           <app-audit-execution
             [audit]="a"
-            [userNames]="userNames()"
             (reloadRequested)="reload()"
           />
         }
@@ -92,11 +90,9 @@ export class AuditExecutionPageComponent {
   readonly id = input.required<string>();
 
   private readonly service = inject(AuditsService);
-  private readonly users = inject(UsersService);
 
   readonly state = signal<ViewState>('loading');
   readonly audit = signal<Audit | null>(null);
-  readonly userNames = signal<Record<string, string>>({});
 
   constructor() {
     queueMicrotask(() => this.fetch());
@@ -108,7 +104,6 @@ export class AuditExecutionPageComponent {
       next: (audit) => {
         this.audit.set(audit);
         this.state.set('ready');
-        this.ensureUsers();
       },
       error: () => this.state.set('error'),
     });
@@ -116,23 +111,5 @@ export class AuditExecutionPageComponent {
 
   reload(): void {
     this.service.getById(this.id()).subscribe({ next: (a) => this.audit.set(a) });
-  }
-
-  private ensureUsers(): void {
-    if (Object.keys(this.userNames()).length) {
-      return;
-    }
-    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
-      next: (page) => {
-        const map: Record<string, string> = {};
-        for (const u of page.items as UserDto[]) {
-          map[u.id] = u.displayName;
-        }
-        this.userNames.set(map);
-      },
-      error: () => {
-        // Non-fatal: ids display verbatim.
-      },
-    });
   }
 }

@@ -30,6 +30,7 @@ import { ExceptionsService } from '../../../core/services/exceptions.service';
 import { TemplatesService } from '../../../core/services/templates.service';
 import { AnnualPlansService } from '../../../core/services/annual-plans.service';
 import { UsersService } from '../../../core/services/users.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
@@ -186,7 +187,10 @@ export class AuditDetailComponent {
   private readonly exceptionsService = inject(ExceptionsService);
   private readonly templates = inject(TemplatesService);
   private readonly plans = inject(AnnualPlansService);
+  /** Active users for the team/checklist assignment pickers (assignable = active). */
   private readonly users = inject(UsersService);
+  /** Directory-backed user-name resolver for display (all users, no admin permission). */
+  readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -206,8 +210,6 @@ export class AuditDetailComponent {
   /** The annual-plan item this audit fulfils, resolved for the deep link (null until/unless resolved). */
   readonly planLink = signal<PlanItemLocator | null>(null);
   private resolvedPlanItemId: string | null = null;
-  /** userId → display name, resolved lazily. */
-  readonly userNames = signal<Record<string, string>>({});
   /** Exceptions raised against this audit (M6). */
   readonly exceptions = signal<ExceptionListItem[]>([]);
   /** The audit's activity timeline (lifecycle / team / section / checklist events). */
@@ -507,36 +509,24 @@ export class AuditDetailComponent {
     });
   }
 
-  /** Loads the active users once so ids resolve to display names. */
+  /** Loads the active-user list (for the team/checklist pickers) and warms the display-name directory. */
   private ensureUsers(): void {
+    this.userLookup.ensureLoaded();
     if (this.usersCache.length) {
-      this.indexUsers(this.usersCache);
       return;
     }
     this.users.list({ status: 'active', pageSize: 0 }).subscribe({
       next: (page) => {
         this.usersCache = page.items;
-        this.indexUsers(page.items);
       },
       error: () => {
-        // Non-fatal: ids will display verbatim.
+        // Non-fatal: the pickers fall back to empty; names still resolve via the directory.
       },
     });
   }
 
-  private indexUsers(users: UserDto[]): void {
-    const map: Record<string, string> = {};
-    for (const u of users) {
-      map[u.id] = u.displayName;
-    }
-    this.userNames.set(map);
-  }
-
   nameOf(userId: string | null | undefined): string {
-    if (!userId) {
-      return '—';
-    }
-    return this.userNames()[userId] ?? userId;
+    return this.userLookup.displayName(userId);
   }
 
   /* ---- Activity timeline ---- */

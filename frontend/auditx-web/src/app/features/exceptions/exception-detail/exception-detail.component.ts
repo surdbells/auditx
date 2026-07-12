@@ -19,6 +19,7 @@ import { Observable } from 'rxjs';
 
 import { ExceptionsService } from '../../../core/services/exceptions.service';
 import { UsersService } from '../../../core/services/users.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
@@ -170,7 +171,10 @@ export class ExceptionDetailComponent {
   readonly id = input.required<string>();
 
   private readonly service = inject(ExceptionsService);
+  /** Active users for the assignment/reassignment pickers (assignable = active). */
   private readonly users = inject(UsersService);
+  /** Directory-backed user-name resolver for display (all users, no admin permission). */
+  readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -180,7 +184,6 @@ export class ExceptionDetailComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly exception = signal<Exception | null>(null);
-  readonly userNames = signal<Record<string, string>>({});
   /** actionId → evidence list (lazy). */
   readonly evidence = signal<Record<string, EvidenceFile[]>>({});
   /** Linked controls + regulations (P1-B). */
@@ -305,35 +308,24 @@ export class ExceptionDetailComponent {
     });
   }
 
+  /** Loads the active-user list (for the assignment pickers) and warms the display-name directory. */
   private ensureUsers(): void {
+    this.userLookup.ensureLoaded();
     if (this.usersCache.length) {
-      this.indexUsers(this.usersCache);
       return;
     }
     this.users.list({ status: 'active', pageSize: 0 }).subscribe({
       next: (page) => {
         this.usersCache = page.items;
-        this.indexUsers(page.items);
       },
       error: () => {
-        // Non-fatal: ids display verbatim.
+        // Non-fatal: the pickers fall back to empty; names still resolve via the directory.
       },
     });
   }
 
-  private indexUsers(users: UserDto[]): void {
-    const map: Record<string, string> = {};
-    for (const u of users) {
-      map[u.id] = u.displayName;
-    }
-    this.userNames.set(map);
-  }
-
   nameOf(userId: string | null | undefined): string {
-    if (!userId) {
-      return '—';
-    }
-    return this.userNames()[userId] ?? userId;
+    return this.userLookup.displayName(userId);
   }
 
   private version(): string {
@@ -557,7 +549,6 @@ export class ExceptionDetailComponent {
     const data: ExceptionHistoryDialogData = {
       exceptionId: ex.id,
       title: ex.title,
-      userNames: this.userNames(),
     };
     this.dialog.open(ExceptionHistoryDialogComponent, { data, width: '520px' });
   }

@@ -22,7 +22,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime } from 'rxjs';
 
 import { ExceptionsService } from '../../../core/services/exceptions.service';
-import { UsersService } from '../../../core/services/users.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { AnnualPlansService } from '../../../core/services/annual-plans.service';
 import { AuditsService } from '../../../core/services/audits.service';
 import {
@@ -32,7 +32,6 @@ import {
   ExceptionSeverity,
   ExceptionStatusFilter,
   PlanListItem,
-  UserDto,
 } from '../../../core/models';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -133,7 +132,8 @@ function toIsoEnd(value: Date | null): string | undefined {
 })
 export class ExceptionsListComponent {
   private readonly service = inject(ExceptionsService);
-  private readonly users = inject(UsersService);
+  /** Directory-backed user-name resolver (all users, no admin permission required). */
+  readonly userLookup = inject(UserLookupService);
   private readonly plans = inject(AnnualPlansService);
   private readonly audits = inject(AuditsService);
   private readonly router = inject(Router);
@@ -200,7 +200,6 @@ export class ExceptionsListComponent {
   /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
   readonly loading = signal(false);
   readonly exporting = signal(false);
-  readonly userNames = signal<Record<string, string>>({});
   private readonly planList = signal<PlanListItem[]>([]);
   private readonly auditList = signal<AuditListItem[]>([]);
 
@@ -228,8 +227,6 @@ export class ExceptionsListComponent {
     () => this.state() === 'ready' && this.exceptions().length === 0,
   );
 
-  private usersCache: UserDto[] = [];
-
   /**
    * Extra drilldown filters arriving via query params (dashboard chart clicks) that have no visible
    * filter control on this page. Shown as a dismissible notice; cleared with {@link clearDrilldown}.
@@ -255,7 +252,7 @@ export class ExceptionsListComponent {
   });
 
   constructor() {
-    this.ensureUsers();
+    this.userLookup.ensureLoaded();
     this.loadPlans();
     this.loadAudits();
     this.applyQueryParams();
@@ -316,22 +313,6 @@ export class ExceptionsListComponent {
     this.fetchPage(1);
   }
 
-  private ensureUsers(): void {
-    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
-      next: (page) => {
-        this.usersCache = page.items;
-        const map: Record<string, string> = {};
-        for (const u of page.items) {
-          map[u.id] = u.displayName;
-        }
-        this.userNames.set(map);
-      },
-      error: () => {
-        // Non-fatal: ids display verbatim.
-      },
-    });
-  }
-
   /** Eagerly loads the annual-plan directory into the plan dropdown (one capped "load all" call). Non-fatal on error. */
   private loadPlans(): void {
     this.plans.list({ pageSize: 0 }).subscribe({
@@ -349,10 +330,7 @@ export class ExceptionsListComponent {
   }
 
   nameOf(userId: string | null | undefined): string {
-    if (!userId) {
-      return '—';
-    }
-    return this.userNames()[userId] ?? userId;
+    return this.userLookup.displayName(userId);
   }
 
   /** Resolves an audit id to its name for the grid; falls back to the raw id while unresolved. */

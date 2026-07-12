@@ -433,7 +433,7 @@
   "adminMisc.evidence.empty.title": "No flagged evidence",
   "adminMisc.evidence.empty.message": "All evidence files have passed integrity checks.",
   "adminMisc.evidence.column.filename": "Filename",
-  "adminMisc.evidence.column.auditId": "Audit ID",
+  "adminMisc.evidence.column.auditId": "Audit",
   "adminMisc.evidence.column.sha256": "SHA-256",
   "adminMisc.evidence.column.uploadedAt": "Uploaded at",
   "adminMisc.evidence.column.actions": "Actions",

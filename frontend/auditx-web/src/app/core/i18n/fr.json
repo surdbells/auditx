@@ -433,7 +433,7 @@
   "adminMisc.evidence.empty.title": "Aucune preuve signalée",
   "adminMisc.evidence.empty.message": "Tous les fichiers de preuve ont passé les contrôles d'intégrité.",
   "adminMisc.evidence.column.filename": "Nom du fichier",
-  "adminMisc.evidence.column.auditId": "ID d'audit",
+  "adminMisc.evidence.column.auditId": "Audit",
   "adminMisc.evidence.column.sha256": "SHA-256",
   "adminMisc.evidence.column.uploadedAt": "Téléversé le",
   "adminMisc.evidence.column.actions": "Actions",

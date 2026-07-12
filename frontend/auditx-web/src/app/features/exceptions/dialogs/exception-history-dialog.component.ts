@@ -8,6 +8,7 @@ import {
 } from '@angular/material/dialog';
 
 import { ExceptionsService } from '../../../core/services/exceptions.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { ExceptionHistoryEntry } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -15,8 +16,6 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 export interface ExceptionHistoryDialogData {
   exceptionId: string;
   title: string;
-  /** userId → display name, for resolving the actor. */
-  userNames: Record<string, string>;
 }
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -117,6 +116,7 @@ export class ExceptionHistoryDialogComponent {
     inject<MatDialogRef<ExceptionHistoryDialogComponent>>(MatDialogRef);
   private readonly service = inject(ExceptionsService);
   private readonly i18n = inject(TranslationService);
+  private readonly userLookup = inject(UserLookupService);
 
   readonly state = signal<LoadState>('loading');
   readonly entries = signal<ExceptionHistoryEntry[]>([]);
@@ -136,10 +136,13 @@ export class ExceptionHistoryDialogComponent {
   }
 
   nameOf(userId: string | null | undefined): string {
+    // Automated/system lifecycle events carry no actor id.
     if (!userId) {
       return this.i18n.translate('exceptions.history.system');
     }
-    return this.data.userNames[userId] ?? userId;
+    const name = this.userLookup.displayName(userId);
+    // Never surface a raw id: an unresolved actor (e.g. a deleted user) reads as "System".
+    return name === userId ? this.i18n.translate('exceptions.history.system') : name;
   }
 
   close(): void {

@@ -23,6 +23,7 @@ import { Observable } from 'rxjs';
 import { AuditsService } from '../../../core/services/audits.service';
 import { ExceptionsService } from '../../../core/services/exceptions.service';
 import { UsersService } from '../../../core/services/users.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
@@ -110,15 +111,16 @@ interface ProgressGroup {
 export class AuditExecutionComponent {
   /** The current audit aggregate (re-supplied by the parent after each reload). */
   readonly audit = input.required<Audit>();
-  /** userId → display name, resolved by the parent. */
-  readonly userNames = input.required<Record<string, string>>();
 
   /** Emitted after a version-bearing mutation so the parent reloads the audit. */
   readonly reloadRequested = output<void>();
 
   private readonly service = inject(AuditsService);
   private readonly exceptions = inject(ExceptionsService);
+  /** Active users for the raise-exception picker (assignable = active). */
   private readonly users = inject(UsersService);
+  /** Directory-backed user-name resolver for display (all users, no admin permission). */
+  private readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -292,10 +294,7 @@ export class AuditExecutionComponent {
   }
 
   nameOf(userId: string | null | undefined): string {
-    if (!userId) {
-      return '—';
-    }
-    return this.userNames()[userId] ?? userId;
+    return this.userLookup.displayName(userId);
   }
 
   private version(): string {
@@ -410,7 +409,6 @@ export class AuditExecutionComponent {
       auditId: this.audit().id,
       itemId: item.itemId,
       prompt: item.prompt,
-      userNames: this.userNames(),
     };
     this.dialog.open(ResponseHistoryDialogComponent, { data, width: '520px' });
   }

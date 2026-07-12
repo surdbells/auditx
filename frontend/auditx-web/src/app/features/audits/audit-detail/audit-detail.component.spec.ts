@@ -125,7 +125,25 @@ describe('AuditDetailComponent', () => {
     await fixture.whenStable();
     http.expectOne(`${BASE}/audits/a-1`).flush({ data: initial });
     await fixture.whenStable();
-    // ensureUsers loads active users
+    // Display names resolve via the directory-backed lookup (all users, no admin permission).
+    http
+      .expectOne((r) => r.url === `${BASE}/users/directory`)
+      .flush({
+        data: {
+          items: [
+            { id: 'u-lead', displayName: 'Lara Lead' },
+            { id: 'u-auditee', displayName: 'Aiden Auditee' },
+            { id: 'u-auditor', displayName: 'Andy Auditor' },
+          ],
+          total: 3,
+          page: 1,
+          pageSize: 5000,
+          totalPages: 1,
+          hasPrevious: false,
+          hasNext: false,
+        },
+      });
+    // ensureUsers still loads the active-user list for the team/checklist assignment pickers.
     http
       .expectOne((r) => r.url === `${BASE}/users`)
       .flush({

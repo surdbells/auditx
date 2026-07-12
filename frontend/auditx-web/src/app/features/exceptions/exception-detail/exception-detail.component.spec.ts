@@ -97,6 +97,22 @@ describe('ExceptionDetailComponent', () => {
 
     http.expectOne(`${BASE}/exceptions/x-1`).flush({ data: ex });
     await fixture.whenStable();
+    // Display names resolve via the directory-backed lookup (all users, no admin permission).
+    http.expectOne((r) => r.url === `${BASE}/users/directory`).flush({
+      data: {
+        items: [
+          { id: 'u-owner', displayName: 'Olive Owner' },
+          { id: 'u-raiser', displayName: 'Ray Raiser' },
+        ],
+        total: 2,
+        page: 1,
+        pageSize: 5000,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
+      },
+    });
+    // ensureUsers still loads the active-user list for the reassign / submit-MAP pickers.
     http.expectOne((r) => r.url === `${BASE}/users`).flush({
       data: {
         items: [

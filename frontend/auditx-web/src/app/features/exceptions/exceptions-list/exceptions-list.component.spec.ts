@@ -60,12 +60,16 @@ describe('ExceptionsListComponent', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // ensureUsers loads the active users.
-    http.expectOne((r) => r.url === `${BASE}/users`).flush({
+    // Owner names resolve via the directory-backed lookup (all users, no admin permission).
+    http.expectOne((r) => r.url === `${BASE}/users/directory`).flush({
       data: {
         items: [{ id: 'u-owner', displayName: 'Olive Owner' }],
-        nextCursor: null,
-        hasMore: false,
+        total: 1,
+        page: 1,
+        pageSize: 5000,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
       },
     });
     // The plan directory backs the plan dropdown filter (still cursor-paged).

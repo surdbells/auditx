@@ -8,14 +8,13 @@ import {
 } from '@angular/material/dialog';
 
 import { AuditsService } from '../../../core/services/audits.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { ResponseHistoryEntry } from '../../../core/models';
 
 export interface ResponseHistoryDialogData {
   auditId: string;
   itemId: string;
   prompt: string;
-  /** userId → display name, for resolving the actor. */
-  userNames: Record<string, string>;
 }
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -115,6 +114,7 @@ export class ResponseHistoryDialogComponent {
   private readonly dialogRef =
     inject<MatDialogRef<ResponseHistoryDialogComponent>>(MatDialogRef);
   private readonly service = inject(AuditsService);
+  private readonly userLookup = inject(UserLookupService);
 
   readonly state = signal<LoadState>('loading');
   readonly entries = signal<ResponseHistoryEntry[]>([]);
@@ -136,10 +136,12 @@ export class ResponseHistoryDialogComponent {
   }
 
   nameOf(userId: string | null | undefined): string {
+    // Automated/system events carry no actor id; an unresolved actor (deleted user) also reads as "System".
     if (!userId) {
       return 'System';
     }
-    return this.data.userNames[userId] ?? userId;
+    const name = this.userLookup.displayName(userId);
+    return name === userId ? 'System' : name;
   }
 
   close(): void {

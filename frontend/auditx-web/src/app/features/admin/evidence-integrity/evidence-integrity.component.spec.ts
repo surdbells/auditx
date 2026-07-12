@@ -56,6 +56,20 @@ describe('EvidenceIntegrityComponent', () => {
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+    // fetch() warms the audit-name directory; drain it (these tests assert the raw-id fallback).
+    for (const req of http.match((r) => r.url === `${BASE}/audits`)) {
+      req.flush({
+        data: {
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: 5000,
+          totalPages: 1,
+          hasPrevious: false,
+          hasNext: false,
+        },
+      });
+    }
   }
 
   afterEach(() => http.verify());

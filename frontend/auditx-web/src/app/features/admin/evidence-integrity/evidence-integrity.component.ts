@@ -13,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 
 import { AuditTrailService } from '../../../core/services/audit-trail.service';
+import { AuditLookupService } from '../../../core/services/audit-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { FlaggedEvidence } from '../../../core/models';
 import {
@@ -127,6 +128,8 @@ export class EvidenceIntegrityComponent {
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+  /** Resolves the flagged row's audit id to the audit's name (directory-backed). */
+  readonly auditLookup = inject(AuditLookupService);
 
   readonly guide = EVIDENCE_INTEGRITY_GUIDE;
 
@@ -151,6 +154,7 @@ export class EvidenceIntegrityComponent {
 
   fetch(): void {
     this.state.set('loading');
+    this.auditLookup.ensureLoaded();
     this.service.listFlagged().subscribe({
       next: (items) => {
         this.flagged.set(items);

@@ -38,12 +38,14 @@
               </td>
             </ng-container>
 
-            <!-- TODO(ux): auditId shown as raw id — no audit-name lookup is wired into this integrity grid yet. -->
             <ng-container matColumnDef="auditId">
               <th mat-header-cell *matHeaderCellDef>
                 {{ 'adminMisc.evidence.column.auditId' | t }}
               </th>
-              <td mat-cell *matCellDef="let e">{{ e.auditId }}</td>
+              <!-- Resolve the audit name; keep the raw id on hover for support/forensics. -->
+              <td mat-cell *matCellDef="let e" [title]="e.auditId">
+                {{ auditLookup.name(e.auditId) }}
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="sha256">

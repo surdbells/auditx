@@ -130,10 +130,6 @@ describe('AuditExecutionComponent', () => {
 
     fixture = TestBed.createComponent(AuditExecutionComponent);
     fixture.componentRef.setInput('audit', a);
-    fixture.componentRef.setInput('userNames', {
-      'u-auditor': 'Andy Auditor',
-      'u-lead': 'Lara Lead',
-    });
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
@@ -159,6 +155,23 @@ describe('AuditExecutionComponent', () => {
         .flush({ data: { count: 0, items: [] } });
     }
     fixture.detectChanges();
+    // Rendering a row's actor name triggers the directory-backed lookup — drain it if it fired.
+    for (const req of http.match((r) => r.url === `${BASE}/users/directory`)) {
+      req.flush({
+        data: {
+          items: [
+            { id: 'u-auditor', displayName: 'Andy Auditor' },
+            { id: 'u-lead', displayName: 'Lara Lead' },
+          ],
+          total: 2,
+          page: 1,
+          pageSize: 5000,
+          totalPages: 1,
+          hasPrevious: false,
+          hasNext: false,
+        },
+      });
+    }
   }
 
   afterEach(() => http.verify());

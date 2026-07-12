@@ -20,6 +20,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ReportsService } from '../../../core/services/reports.service';
 import { AuditsService } from '../../../core/services/audits.service';
 import { UsersService } from '../../../core/services/users.service';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
@@ -76,7 +77,10 @@ export class ReportViewerComponent {
 
   private readonly service = inject(ReportsService);
   private readonly audits = inject(AuditsService);
+  /** Active users for the distribute-report recipient picker (assignable = active). */
   private readonly users = inject(UsersService);
+  /** Directory-backed user-name resolver for the distribution log (all users, no admin permission). */
+  private readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
@@ -360,13 +364,10 @@ export class ReportViewerComponent {
       return row.recipientEmail;
     }
     if (row.recipientUserId) {
-      return this.nameOf(row.recipientUserId);
+      // Directory-backed: resolves any recipient (incl. since-deactivated users), unlike the active-only picker cache.
+      return this.userLookup.displayName(row.recipientUserId);
     }
     return '—';
-  }
-
-  private nameOf(userId: string): string {
-    return this.usersCache.find((u) => u.id === userId)?.displayName ?? userId;
   }
 
   private ensureUsers(onReady: () => void): void {
