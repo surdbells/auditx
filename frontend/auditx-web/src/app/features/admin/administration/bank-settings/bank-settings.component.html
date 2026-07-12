@@ -37,9 +37,9 @@
                 matButton="filled"
                 type="button"
                 (click)="saveOrg()"
-                [disabled]="orgForm.invalid || savingGroup() !== null"
+                [disabled]="orgForm.invalid || isSaving('org')"
               >
-                {{ savingGroup() === 'org' ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('org') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
               </button>
             </div>
           }
@@ -153,9 +153,9 @@
                 matButton="filled"
                 type="button"
                 (click)="saveBranding()"
-                [disabled]="brandingForm.invalid || savingGroup() !== null"
+                [disabled]="brandingForm.invalid || isSaving('branding')"
               >
-                {{ savingGroup() === 'branding' ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('branding') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
               </button>
             </div>
           }
@@ -187,9 +187,9 @@
                 matButton="filled"
                 type="button"
                 (click)="saveGovernance()"
-                [disabled]="governanceForm.invalid || savingGroup() !== null"
+                [disabled]="governanceForm.invalid || isSaving('governance')"
               >
-                {{ savingGroup() === 'governance' ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('governance') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
               </button>
             </div>
           }
@@ -204,14 +204,14 @@
           <mat-form-field appearance="outline" class="full">
             <mat-label>{{ 'administration.bankSettings.idleTimeoutMinutes' | t }}</mat-label>
             <input matInput type="number" formControlName="idleTimeoutMinutes" min="0" max="480" />
-            <mat-hint>{{ 'administration.bankSettings.idleTimeoutMinutesHint' | t }}</mat-hint>
           </mat-form-field>
+          <p class="settings__field-hint">{{ 'administration.bankSettings.idleTimeoutMinutesHint' | t }}</p>
 
           <mat-form-field appearance="outline" class="full">
             <mat-label>{{ 'administration.bankSettings.idleWarningSeconds' | t }}</mat-label>
             <input matInput type="number" formControlName="idleWarningSeconds" min="20" max="600" />
-            <mat-hint>{{ 'administration.bankSettings.idleWarningSecondsHint' | t }}</mat-hint>
           </mat-form-field>
+          <p class="settings__field-hint">{{ 'administration.bankSettings.idleWarningSecondsHint' | t }}</p>
 
           @if (canManageSettings()) {
             <div class="settings__actions">
@@ -219,9 +219,9 @@
                 matButton="filled"
                 type="button"
                 (click)="saveSession()"
-                [disabled]="sessionForm.invalid || savingGroup() !== null"
+                [disabled]="sessionForm.invalid || isSaving('session')"
               >
-                {{ savingGroup() === 'session' ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('session') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
               </button>
             </div>
           }
@@ -260,9 +260,9 @@
                 matButton="filled"
                 type="button"
                 (click)="saveGuide()"
-                [disabled]="guideForm.invalid || savingGroup() !== null"
+                [disabled]="guideForm.invalid || isSaving('guide')"
               >
-                {{ savingGroup() === 'guide' ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('guide') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
               </button>
             </div>
           }
@@ -277,8 +277,8 @@
           <mat-form-field appearance="outline" class="full">
             <mat-label>{{ 'administration.bankSettings.reportRetentionMonths' | t }}</mat-label>
             <input matInput type="number" formControlName="reportRetentionMonths" min="0" max="600" />
-            <mat-hint>{{ 'administration.bankSettings.reportRetentionHint' | t }}</mat-hint>
           </mat-form-field>
+          <p class="settings__field-hint">{{ 'administration.bankSettings.reportRetentionHint' | t }}</p>
 
           @if (canManageSettings()) {
             <div class="settings__actions">
@@ -286,9 +286,9 @@
                 matButton="filled"
                 type="button"
                 (click)="saveReports()"
-                [disabled]="reportsForm.invalid || savingGroup() !== null"
+                [disabled]="reportsForm.invalid || isSaving('reports')"
               >
-                {{ savingGroup() === 'reports' ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('reports') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
               </button>
             </div>
           }
@@ -316,9 +316,9 @@
                 matButton="filled"
                 type="button"
                 (click)="saveLimits()"
-                [disabled]="limitsForm.invalid || savingGroup() !== null"
+                [disabled]="limitsForm.invalid || isSaving('limits')"
               >
-                {{ savingGroup() === 'limits' ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.saveLimits' | t) }}
+                {{ isSaving('limits') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.saveLimits' | t) }}
               </button>
             </div>
           }

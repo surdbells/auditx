@@ -126,8 +126,24 @@ export class BankSettingsComponent {
   private readonly maxAssetBytes = 512 * 1024;
 
   readonly state = signal<ViewState>('loading');
-  /** Id of the section currently saving (null = idle). Only one save runs at a time. */
-  readonly savingGroup = signal<SaveGroup | null>(null);
+  /** Sections whose save is in flight — each card shows its own spinner and disables only its own button. */
+  private readonly savingGroups = signal<ReadonlySet<SaveGroup>>(new Set());
+
+  /** True while the given section's save is in flight. */
+  isSaving(group: SaveGroup): boolean {
+    return this.savingGroups().has(group);
+  }
+  private setSaving(group: SaveGroup, on: boolean): void {
+    this.savingGroups.update((s) => {
+      const next = new Set(s);
+      if (on) {
+        next.add(group);
+      } else {
+        next.delete(group);
+      }
+      return next;
+    });
+  }
   /** Data-URI previews for the logo/icon (mirror the form controls so OnPush re-renders on async reads). */
   readonly logoPreview = signal<string | null>(null);
   readonly iconPreview = signal<string | null>(null);
@@ -293,10 +309,13 @@ export class BankSettingsComponent {
       form.markAllAsTouched();
       return;
     }
-    if (!this.loaded || this.savingGroup() !== null) {
+    if (!this.loaded || this.isSaving(group)) {
       return;
     }
-    this.savingGroup.set(group);
+    this.setSaving(group, true);
+    // Apply this section's values to the baseline before sending, so a concurrent save of a
+    // different card merges onto them (each save is a full replace) and can't clobber this change.
+    this.loaded = { ...this.loaded, ...overrides } as BankSettings;
     this.admin
       .updateBankSettings({ ...this.baseRequest(), ...overrides })
       .subscribe({
@@ -318,9 +337,13 @@ export class BankSettingsComponent {
           this.notify.success(
             this.i18n.translate('administration.bankSettings.savedToast'),
           );
-          this.savingGroup.set(null);
+          this.setSaving(group, false);
         },
-        error: () => this.savingGroup.set(null),
+        error: () => {
+          this.setSaving(group, false);
+          // The optimistic baseline may be ahead of the server — refetch the source of truth.
+          this.fetch();
+        },
       });
   }
 
@@ -431,11 +454,11 @@ export class BankSettingsComponent {
       this.limitsForm.markAllAsTouched();
       return;
     }
-    if (this.savingGroup() !== null) {
+    if (this.isSaving('limits')) {
       return;
     }
     const v = this.limitsForm.getRawValue();
-    this.savingGroup.set('limits');
+    this.setSaving('limits', true);
     this.admin
       .updateResourceLimits({
         maxEvidenceFileMb: v.maxEvidenceFileMb,
@@ -453,9 +476,9 @@ export class BankSettingsComponent {
           this.notify.success(
             this.i18n.translate('administration.bankSettings.limitsSavedToast'),
           );
-          this.savingGroup.set(null);
+          this.setSaving('limits', false);
         },
-        error: () => this.savingGroup.set(null),
+        error: () => this.setSaving('limits', false),
       });
   }
 }

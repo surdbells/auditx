@@ -111,7 +111,7 @@ describe('BankSettingsComponent', () => {
     expect(req.request.body.adProvisioningFilterOuDn).toBe('OU=Audit,DC=corp');
     expect(req.request.body.adProvisioningFilterGroupSid).toBe('S-1-5-21-99');
     req.flush({ data: settings({ bankDisplayName: 'Renamed Bank' }) });
-    expect(component.savingGroup()).toBeNull();
+    expect(component.isSaving('org')).toBe(false);
   });
 
   it('saves only the branding section and does not drag along another section\'s unsaved edits', async () => {
@@ -127,7 +127,7 @@ describe('BankSettingsComponent', () => {
     expect(req.request.body.primaryColor).toBe('#112233');
     expect(req.request.body.bankDisplayName).toBe('ACME Bank'); // baseline, not the dirty org edit
     req.flush({ data: settings({ primaryColor: '#112233' }) });
-    expect(component.savingGroup()).toBeNull();
+    expect(component.isSaving('branding')).toBe(false);
   });
 
   it('loads branding into the colour controls and logo preview', async () => {
