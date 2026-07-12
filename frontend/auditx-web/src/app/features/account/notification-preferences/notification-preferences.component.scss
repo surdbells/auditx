@@ -3,6 +3,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  // The global card reset strips default padding; add our own so rows aren't flush to the edge.
+  padding: 0.5rem 1.5rem 1.25rem;
 }
 
 .prefs__row {

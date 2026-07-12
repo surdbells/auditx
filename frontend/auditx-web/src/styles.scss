@@ -251,6 +251,14 @@ body {
   padding: 0 !important;
 }
 
+// Analytics summary / breakdown cards place a `<dl>` straight inside the card
+// (no mat-card-content), and the global card reset strips default padding — so
+// give these bordered cards their own comfortable inset.
+[class*='__summary-card'].mat-mdc-card,
+[class*='__breakdown-card'].mat-mdc-card {
+  padding: 1.25rem 1.5rem;
+}
+
 // ---- Menus / dialogs / chips -------------------------------------------
 .mat-mdc-menu-panel {
   border-radius: 14px !important;

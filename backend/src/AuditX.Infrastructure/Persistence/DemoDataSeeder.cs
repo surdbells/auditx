@@ -194,7 +194,7 @@ public sealed class DemoDataSeeder(
     private async Task<DemoTemplates> SeedTemplatesAsync(CancellationToken ct)
     {
         var branch = BuildTemplate(
-            "Branch Operations Audit", "branch", "Standard operational audit for retail branches.",
+            "Branch Operations Audit", "branch_operations", "Standard operational audit for retail branches.",
             [
                 ("Cash & Teller", "Is cash counted and reconciled daily by two officers?", true),
                 ("Cash & Teller", "Are vault access logs complete and dual-controlled?", true),
@@ -206,7 +206,7 @@ public sealed class DemoDataSeeder(
             ]);
 
         var itgc = BuildTemplate(
-            "IT General Controls Review", "system", "General controls review over core banking and infrastructure.",
+            "IT General Controls Review", "it_general_controls", "General controls review over core banking and infrastructure.",
             [
                 ("Access Management", "Are privileged accounts reviewed quarterly?", true),
                 ("Access Management", "Is segregation of duties enforced in the core banking application?", true),
@@ -217,7 +217,7 @@ public sealed class DemoDataSeeder(
             ]);
 
         var credit = BuildTemplate(
-            "Credit Risk Review", "process", "Review of credit origination, approval and monitoring.",
+            "Credit Risk Review", "credit_review", "Review of credit origination, approval and monitoring.",
             [
                 ("Origination", "Are credit appraisals documented and independently reviewed?", true),
                 ("Origination", "Is collateral valuation current and within policy limits?", true),
@@ -301,12 +301,12 @@ public sealed class DemoDataSeeder(
 
         // One approved 2026 annual plan with six plan items scheduling audits of the entities above.
         var plan = AnnualPlan.Create("FY2026 Annual Audit Plan", new DateOnly(2026, 1, 1), new DateOnly(2026, 12, 31));
-        plan.AddItem(lagos.Id, "branch", new DateOnly(2026, 2, 1), new DateOnly(2026, 3, 15), 20m, users.Manager1Id);
-        plan.AddItem(abuja.Id, "branch", new DateOnly(2026, 3, 1), new DateOnly(2026, 4, 15), 18m, users.Manager1Id);
-        plan.AddItem(coreBanking.Id, "system", new DateOnly(2026, 4, 1), new DateOnly(2026, 5, 20), 25m, users.Manager2Id);
-        plan.AddItem(credit.Id, "process", new DateOnly(2026, 5, 1), new DateOnly(2026, 6, 20), 22m, users.Manager2Id);
-        plan.AddItem(treasury.Id, "process", new DateOnly(2026, 6, 1), new DateOnly(2026, 7, 20), 20m, users.Manager1Id);
-        plan.AddItem(ph.Id, "branch", new DateOnly(2026, 7, 1), new DateOnly(2026, 8, 15), 18m, users.Manager1Id);
+        plan.AddItem(lagos.Id, "branch_operations", new DateOnly(2026, 2, 1), new DateOnly(2026, 3, 15), 20m, users.Manager1Id);
+        plan.AddItem(abuja.Id, "branch_operations", new DateOnly(2026, 3, 1), new DateOnly(2026, 4, 15), 18m, users.Manager1Id);
+        plan.AddItem(coreBanking.Id, "it_general_controls", new DateOnly(2026, 4, 1), new DateOnly(2026, 5, 20), 25m, users.Manager2Id);
+        plan.AddItem(credit.Id, "credit_review", new DateOnly(2026, 5, 1), new DateOnly(2026, 6, 20), 22m, users.Manager2Id);
+        plan.AddItem(treasury.Id, "treasury", new DateOnly(2026, 6, 1), new DateOnly(2026, 7, 20), 20m, users.Manager1Id);
+        plan.AddItem(ph.Id, "branch_operations", new DateOnly(2026, 7, 1), new DateOnly(2026, 8, 15), 18m, users.Manager1Id);
 
         // Drive the plan to Approved (Draft → Submit → RecordDecision(Approved)) so audits can link to its items.
         plan.Submit(_now);
@@ -385,43 +385,43 @@ public sealed class DemoDataSeeder(
 
         // 1. Completed — Lagos branch, started 90d ago, completed 20d ago.
         var completed1 = await BuildAuditAsync(
-            "Lagos Main Branch Operations Audit FY2026", "branch", templates.BranchOps.Id, items[0].Id,
+            "Lagos Main Branch Operations Audit FY2026", "branch_operations", templates.BranchOps.Id, items[0].Id,
             users.Manager1Id, users.Auditee1Id, [users.Auditor1Id, users.Auditor2Id],
             startOffsetDays: -90, targetOffsetDays: -20, plan, ct);
 
         // 2. Completed — Core banking ITGC, started 80d ago, completed 15d ago.
         var completed2 = await BuildAuditAsync(
-            "Core Banking IT General Controls Review FY2026", "system", templates.ItGeneralControls.Id, items[2].Id,
+            "Core Banking IT General Controls Review FY2026", "it_general_controls", templates.ItGeneralControls.Id, items[2].Id,
             users.Manager2Id, users.Auditee2Id, [users.Auditor2Id, users.Auditor3Id],
             startOffsetDays: -80, targetOffsetDays: -15, plan, ct);
 
         // 3. Under review — Credit risk, started 40d ago.
         var underReview = await BuildAuditAsync(
-            "Credit Risk Review FY2026", "process", templates.CreditRisk.Id, items[3].Id,
+            "Credit Risk Review FY2026", "credit_review", templates.CreditRisk.Id, items[3].Id,
             users.Manager2Id, users.Auditee3Id, [users.Auditor1Id, users.Auditor3Id],
             startOffsetDays: -40, targetOffsetDays: 10, plan, ct);
 
         // 4. In progress — Abuja branch, started 25d ago.
         var inProgress1 = await BuildAuditAsync(
-            "Abuja Branch Operations Audit FY2026", "branch", templates.BranchOps.Id, items[1].Id,
+            "Abuja Branch Operations Audit FY2026", "branch_operations", templates.BranchOps.Id, items[1].Id,
             users.Manager1Id, users.Auditee2Id, [users.Auditor2Id],
             startOffsetDays: -25, targetOffsetDays: 20, plan, ct);
 
         // 5. In progress — Treasury, started 15d ago.
         var inProgress2 = await BuildAuditAsync(
-            "Treasury Controls Review FY2026", "process", templates.CreditRisk.Id, items[4].Id,
+            "Treasury Controls Review FY2026", "treasury", templates.CreditRisk.Id, items[4].Id,
             users.Manager1Id, users.Auditee3Id, [users.Auditor3Id],
             startOffsetDays: -15, targetOffsetDays: 30, plan, ct);
 
         // 6. Planned — Port Harcourt branch, starts in 10d (kept in Planned state).
         var planned = await BuildAuditAsync(
-            "Port Harcourt Branch Operations Audit FY2026", "branch", templates.BranchOps.Id, items[5].Id,
+            "Port Harcourt Branch Operations Audit FY2026", "branch_operations", templates.BranchOps.Id, items[5].Id,
             users.Manager1Id, users.Auditee3Id, [users.Auditor1Id],
             startOffsetDays: 10, targetOffsetDays: 55, plan, ct, stopAt: AuditLifecycleStage.Planned);
 
         // 7. Draft — Operations (no plan link), stays in Draft.
         var draft = await BuildAuditAsync(
-            "Operations & Settlements Review (Draft)", "process", templates.CreditRisk.Id, planItemId: null,
+            "Operations & Settlements Review (Draft)", "operational", templates.CreditRisk.Id, planItemId: null,
             users.Manager2Id, users.Auditee1Id, [users.Auditor2Id],
             startOffsetDays: 30, targetOffsetDays: 75, plan, ct, stopAt: AuditLifecycleStage.Draft);
 
