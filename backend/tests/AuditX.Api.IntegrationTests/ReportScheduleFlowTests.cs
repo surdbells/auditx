@@ -105,8 +105,11 @@ public sealed class ReportScheduleFlowTests(ApiFactory factory) : IClassFixture<
     [Fact]
     public async Task Scheduling_scorecards_requires_the_performance_analytics_permission()
     {
-        var admin = await LoginAsync("admin"); // holds ScheduleReports but NOT PerformanceAnalyticsView
-        var forbidden = await admin.PostAsJsonAsync("/api/v1/report-schedules", new
+        var admin = await LoginAsync("admin");
+        // A user without the analytics permission cannot schedule the sensitive scorecards kind.
+        // (The Administrator super-user now holds the full catalogue, so the negative case uses the auditee.)
+        var auditee = await LoginAsync("auditee");
+        var forbidden = await auditee.PostAsJsonAsync("/api/v1/report-schedules", new
         {
             name = "Board scorecards", kind = "performance_scorecards", cadence = "monthly", recipientEmails = new[] { "board@bank.local" },
         });
