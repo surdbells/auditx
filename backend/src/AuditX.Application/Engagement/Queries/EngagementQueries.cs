@@ -123,7 +123,7 @@ public sealed class ListMyEngagementsQueryHandler(
 
             items.Add(new EngagementBoardItemDto(
                 journey.AuditId, journey.Name, journey.AuditType, journey.Status, journey.Stage,
-                journey.ProgressPercent, journey.OpenExceptionCount,
+                journey.ProgressPercent, journey.OpenExceptionCount, journey.Version,
                 WaitingOnMe: journey.NextActions.Count > 0, journey.NextActions));
         }
 

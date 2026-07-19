@@ -1,3 +1,4 @@
+using AuditX.Application.Common.Concurrency;
 using AuditX.Application.Common.Enums;
 using AuditX.Application.Engagement.Dtos;
 using AuditX.Domain.Audits;
@@ -54,7 +55,7 @@ public static class EngagementJourneyResolver
 
         return new EngagementJourneyDto(
             audit.Id, audit.Name, audit.AuditType, audit.Status.ToSnake(),
-            stageCode, progress, openExceptions.Length, stages, actions);
+            stageCode, progress, openExceptions.Length, RowVersionToken.Encode(audit.Version), stages, actions);
     }
 
     private static string CurrentStage(AuditStatus status, bool anyOpenException, bool hasCompletedReport, bool hasDistributedReport)

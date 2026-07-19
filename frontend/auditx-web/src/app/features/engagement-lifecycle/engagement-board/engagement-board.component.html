@@ -1,0 +1,77 @@
+<app-page-header
+  [title]="'engagement.board.title' | t"
+  [subtitle]="'engagement.board.subtitle' | t"
+/>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'engagement.board.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'engagement.board.error' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    <div class="eb__toolbar">
+      <button
+        matButton="outlined"
+        type="button"
+        class="eb__filter"
+        [class.eb__filter--on]="waitingOnly()"
+        (click)="toggleWaiting()"
+      >
+        <app-icon [name]="waitingOnly() ? 'check' : 'filter_alt'" />
+        {{ 'engagement.board.waitingOnMe' | t }}
+        @if (waitingCount()) {
+          <span class="eb__count">{{ waitingCount() }}</span>
+        }
+      </button>
+    </div>
+
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="checklist"
+        [title]="(waitingOnly() ? 'engagement.board.empty.waitingTitle' : 'engagement.board.empty.title') | t"
+        [message]="(waitingOnly() ? 'engagement.board.empty.waitingMessage' : 'engagement.board.empty.message') | t"
+      />
+    } @else {
+      <div class="eb__grid">
+        @for (item of visible(); track item.auditId) {
+          <mat-card appearance="outlined" class="eb__card" [class.eb__card--waiting]="item.waitingOnMe">
+            <div class="eb__head">
+              <span class="eb__name">{{ item.name }}</span>
+              <span class="eb__stage" [attr.data-stage]="item.stage">{{ stageLabel(item.stage) }}</span>
+            </div>
+            <div class="eb__meta muted">
+              <span>{{ refLookup.label('audit_type', item.auditType) }}</span>
+              @if (item.openExceptionCount) {
+                <span class="eb__ex">
+                  <app-icon aria-hidden="true" name="report_problem" />
+                  {{ 'engagement.board.openExceptions' | t: { count: item.openExceptionCount } }}
+                </span>
+              }
+            </div>
+
+            <div class="eb__progress" [attr.aria-label]="'engagement.board.progress' | t: { pct: item.progressPercent }">
+              <div class="eb__progress-bar" [style.width.%]="item.progressPercent"></div>
+            </div>
+            <span class="eb__progress-label muted">{{ 'engagement.board.progress' | t: { pct: item.progressPercent } }}</span>
+
+            <div class="eb__actions">
+              @for (action of item.nextActions; track action.code) {
+                <button matButton="filled" type="button" [disabled]="busy()" (click)="act(item, action)">
+                  <app-icon aria-hidden="true" name="play_arrow" />
+                  {{ action.label }}
+                </button>
+              } @empty {
+                <span class="eb__idle muted">{{ 'engagement.board.noAction' | t }}</span>
+              }
+              <a matButton type="button" [routerLink]="['/engagement-lifecycle', item.auditId]">
+                {{ 'engagement.board.viewJourney' | t }}
+              </a>
+            </div>
+          </mat-card>
+        }
+      </div>
+    }
+  }
+}

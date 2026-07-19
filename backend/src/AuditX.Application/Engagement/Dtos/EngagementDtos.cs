@@ -25,6 +25,7 @@ public sealed record EngagementJourneyDto(
     string Stage,
     int ProgressPercent,
     int OpenExceptionCount,
+    string Version,
     IReadOnlyList<LifecycleStageDto> Stages,
     IReadOnlyList<NextActionDto> NextActions);
 
@@ -37,5 +38,6 @@ public sealed record EngagementBoardItemDto(
     string Stage,
     int ProgressPercent,
     int OpenExceptionCount,
+    string Version,
     bool WaitingOnMe,
     IReadOnlyList<NextActionDto> NextActions);

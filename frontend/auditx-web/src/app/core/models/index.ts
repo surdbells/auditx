@@ -26,3 +26,4 @@ export * from './search.models';
 export * from './saved-view.models';
 export * from './shared-link.models';
 export * from './report-schedule.models';
+export * from './engagement.models';
