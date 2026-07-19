@@ -32,6 +32,7 @@ public static class PermissionKeys
     // M4 — Audits
     public const string ViewAudits = "ViewAudits";
     public const string ViewAudit = "ViewAudit";
+    public const string ViewEngagementLifecycle = "ViewEngagementLifecycle";
     public const string CreateAudit = "CreateAudit";
     public const string ManageAudit = "ManageAudit";
 

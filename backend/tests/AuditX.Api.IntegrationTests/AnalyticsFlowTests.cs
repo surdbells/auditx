@@ -66,10 +66,10 @@ public sealed class AnalyticsFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     [Fact]
     public async Task Gated_dashboards_appear_for_holders_of_their_permission()
     {
-        var admin = await LoginAsync("admin");                  // holds Cia, not PerformanceAnalyticsView
+        var admin = await LoginAsync("admin");                  // the super-user: holds the full catalogue
         var adminSlugs = Slugs(await DataAsync(await admin.GetAsync("/api/v1/dashboards")));
         Assert.Contains("sanctions_consistency", adminSlugs);
-        Assert.DoesNotContain("function_performance", adminSlugs);
+        Assert.Contains("function_performance", adminSlugs);    // the super-user holds every permission
 
         var analyst = await AnalystAsync(admin);                // holds PerformanceAnalyticsView, not Cia
         var analystSlugs = Slugs(await DataAsync(await analyst.GetAsync("/api/v1/dashboards")));

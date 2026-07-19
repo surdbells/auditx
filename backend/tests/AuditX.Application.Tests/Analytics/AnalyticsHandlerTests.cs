@@ -124,10 +124,14 @@ public sealed class ListDashboardsQueryHandlerTests
 public sealed class AnalyticsPermissionCatalogueTests
 {
     [Fact]
-    public void Sensitive_query_access_is_catalogued_but_granted_to_no_built_in_role()
+    public void Sensitive_query_access_is_catalogued_but_granted_to_no_ordinary_built_in_role()
     {
         Assert.Contains(PermissionCatalogue.All, p => p.Key == PermissionKeys.SensitiveQueryAccess);
-        Assert.DoesNotContain(BuiltInRoles.All, r => r.Permissions.Contains(PermissionKeys.SensitiveQueryAccess));
+        // The AuditX Administrator super-user deliberately holds the full catalogue; no *ordinary* built-in
+        // role may hold this sensitive permission.
+        Assert.DoesNotContain(
+            BuiltInRoles.All.Where(r => r.Name != BuiltInRoles.AdministratorName),
+            r => r.Permissions.Contains(PermissionKeys.SensitiveQueryAccess));
     }
 
     [Fact]

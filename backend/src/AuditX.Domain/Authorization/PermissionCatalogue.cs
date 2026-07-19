@@ -34,6 +34,7 @@ public static class PermissionCatalogue
         // M4 — Audits
         new(PermissionKeys.ViewAudits, "View audits", "List audits within the user's scope.", "M4", PermissionScopeType.Global),
         new(PermissionKeys.ViewAudit, "View audit", "View a specific audit.", "M4", PermissionScopeType.Audit),
+        new(PermissionKeys.ViewEngagementLifecycle, "View engagement lifecycle", "See each engagement's lifecycle stage and its guided next step.", "M4", PermissionScopeType.Global),
         new(PermissionKeys.CreateAudit, "Create audit", "Create new audits.", "M4", PermissionScopeType.AuditType),
         new(PermissionKeys.ManageAudit, "Manage audit", "Manage an audit's team, checklist and lifecycle.", "M4", PermissionScopeType.Audit),
 

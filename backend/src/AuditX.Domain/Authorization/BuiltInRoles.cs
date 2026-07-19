@@ -19,7 +19,7 @@ public static class BuiltInRoles
         AuditorName,
         "Performs audit execution work and raises exceptions; cannot create audits.",
         [
-            PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.ViewTemplates,
+            PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.ViewEngagementLifecycle, PermissionKeys.ViewTemplates,
             PermissionKeys.ViewUniverse, PermissionKeys.RespondItem, PermissionKeys.UploadEvidence,
             PermissionKeys.ViewEvidence, PermissionKeys.ViewExceptions, PermissionKeys.RaiseException,
             PermissionKeys.SubmitMap, PermissionKeys.VerifyException, PermissionKeys.ViewReport, PermissionKeys.ViewAnalytics,
@@ -30,7 +30,7 @@ public static class BuiltInRoles
         AuditManagerName,
         "Owns the annual audit plan; creates and leads audits, reviews work, approves MAPs, closes exceptions and generates reports.",
         [
-            PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.CreateAudit, PermissionKeys.ManageAudit,
+            PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.ViewEngagementLifecycle, PermissionKeys.CreateAudit, PermissionKeys.ManageAudit,
             PermissionKeys.ViewTemplates, PermissionKeys.ViewUniverse, PermissionKeys.ViewPlan, PermissionKeys.ManagePlan, PermissionKeys.ViewCoverage,
             PermissionKeys.RespondItem, PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ManageEvidence,
             PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException,
@@ -47,7 +47,7 @@ public static class BuiltInRoles
         AuditeeName,
         "Reads exceptions assigned to them, submits MAPs and uploads remediation evidence.",
         [
-            PermissionKeys.ViewAudit, PermissionKeys.ViewExceptions, PermissionKeys.SubmitMap,
+            PermissionKeys.ViewAudit, PermissionKeys.ViewEngagementLifecycle, PermissionKeys.ViewExceptions, PermissionKeys.SubmitMap,
             PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ViewReport,
         ]);
 
