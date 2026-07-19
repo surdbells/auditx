@@ -19,7 +19,6 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -93,7 +92,6 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatSelectModule,
     MatSlideToggleModule,
     MatButtonModule,
-    IconComponent,
     TranslatePipe,
   ],
   templateUrl: './notification-rule-dialog.component.html',
