@@ -1,0 +1,63 @@
+<a matButton type="button" class="ej__back" [routerLink]="['/engagement-lifecycle']">
+  <app-icon aria-hidden="true" name="arrow_back" />
+  {{ 'engagement.journey.back' | t }}
+</a>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'engagement.journey.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'engagement.journey.error' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (journey(); as j) {
+      <header class="ej__header">
+        <div class="ej__title">
+          <h1 class="ej__name">{{ j.name }}</h1>
+          <span class="ej__stage" [attr.data-stage]="j.stage">{{ stageLabel(j.stage) }}</span>
+        </div>
+        <p class="ej__meta muted">
+          <span>{{ refLookup.label('audit_type', j.auditType) }}</span>
+          <span>·</span>
+          <span>{{ 'engagement.journey.progress' | t: { pct: j.progressPercent } }}</span>
+          @if (j.openExceptionCount) {
+            <span>·</span>
+            <span>{{ 'engagement.journey.openExceptions' | t: { count: j.openExceptionCount } }}</span>
+          }
+        </p>
+      </header>
+
+      <ol class="ej__timeline">
+        @for (stage of j.stages; track stage.code) {
+          <li class="ej__stage-row" [attr.data-state]="stage.state">
+            <span class="ej__marker" aria-hidden="true">
+              @if (stage.state === 'done') {
+                <app-icon name="check" />
+              }
+            </span>
+            <div class="ej__stage-body">
+              <span class="ej__stage-name">{{ stageLabel(stage.code) }}</span>
+
+              @if (stage.state === 'current') {
+                <mat-card appearance="outlined" class="ej__next">
+                  <span class="ej__next-title">{{ 'engagement.journey.nextSteps' | t }}</span>
+                  <div class="ej__actions">
+                    @for (action of actions(); track action.code) {
+                      <button matButton="filled" type="button" [disabled]="busy()" (click)="act(action)">
+                        <app-icon aria-hidden="true" name="play_arrow" />
+                        {{ action.label }}
+                      </button>
+                    } @empty {
+                      <span class="muted">{{ 'engagement.journey.noAction' | t }}</span>
+                    }
+                  </div>
+                </mat-card>
+              }
+            </div>
+          </li>
+        }
+      </ol>
+    }
+  }
+}

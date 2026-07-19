@@ -121,6 +121,7 @@ export class MainLayoutComponent {
         { labelKey: 'nav.universe', icon: 'account_tree', route: '/audit-universe', permissions: [Permissions.ViewUniverse] },
         { labelKey: 'nav.planning', icon: 'event_note', route: '/planning', permissions: [Permissions.ViewPlan] },
         { labelKey: 'nav.audits', icon: 'assignment', route: '/audits', permissions: [Permissions.ViewAudits] },
+        { labelKey: 'nav.engagementLifecycle', icon: 'route', route: '/engagement-lifecycle', permissions: [Permissions.ViewEngagementLifecycle] },
         { labelKey: 'nav.coverage', icon: 'grid_view', route: '/coverage', permissions: [Permissions.ViewCoverage] },
         { labelKey: 'nav.risks', icon: 'crisis_alert', route: '/risks', permissions: [Permissions.ViewRisk] },
         { labelKey: 'nav.controls', icon: 'fact_check', route: '/controls', permissions: [Permissions.ViewControls] },

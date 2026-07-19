@@ -317,6 +317,24 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'engagement-lifecycle',
+        title: 'Engagement Lifecycle · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewEngagementLifecycle)],
+        loadComponent: () =>
+          import('./features/engagement-lifecycle/engagement-board/engagement-board.component').then(
+            (m) => m.EngagementBoardComponent,
+          ),
+      },
+      {
+        path: 'engagement-lifecycle/:id',
+        title: 'Engagement journey · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewEngagementLifecycle)],
+        loadComponent: () =>
+          import('./features/engagement-lifecycle/engagement-journey/engagement-journey.component').then(
+            (m) => m.EngagementJourneyComponent,
+          ),
+      },
+      {
         path: 'audits/:id',
         title: 'Audit · AuditX',
         canActivate: [permissionGuard(Permissions.ViewAudit)],

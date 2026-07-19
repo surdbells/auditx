@@ -1,0 +1,124 @@
+.ej__back {
+  margin-bottom: 1rem;
+}
+
+.ej__header {
+  margin-bottom: 1.75rem;
+}
+.ej__title {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+.ej__name {
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+}
+.ej__stage {
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: color-mix(in srgb, var(--stage-hue, var(--mat-sys-on-surface-variant)) 16%, transparent);
+  color: color-mix(in srgb, var(--stage-hue, var(--mat-sys-on-surface-variant)) 80%, #000);
+}
+:host-context([data-theme='dark']) .ej__stage {
+  color: color-mix(in srgb, var(--stage-hue, var(--mat-sys-on-surface-variant)) 42%, #fff);
+  background: color-mix(in srgb, var(--stage-hue, var(--mat-sys-on-surface-variant)) 26%, transparent);
+}
+.ej__stage[data-stage='setup'] { --stage-hue: #616161; }
+.ej__stage[data-stage='planned'] { --stage-hue: #1565c0; }
+.ej__stage[data-stage='fieldwork'] { --stage-hue: #0d9488; }
+.ej__stage[data-stage='review'] { --stage-hue: #6a1b9a; }
+.ej__stage[data-stage='remediation'] { --stage-hue: #ef6c00; }
+.ej__stage[data-stage='reporting'] { --stage-hue: #1565c0; }
+.ej__stage[data-stage='closed'] { --stage-hue: #2e7d32; }
+.ej__stage[data-stage='cancelled'] { --stage-hue: #c62828; }
+
+.ej__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+}
+
+// ---- Vertical timeline -------------------------------------------------
+.ej__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 720px;
+}
+.ej__stage-row {
+  position: relative;
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+}
+// Connector line between markers.
+.ej__stage-row:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: 0;
+  width: 2px;
+  background: var(--mat-sys-outline-variant);
+}
+.ej__marker {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--mat-sys-outline);
+  background: var(--mat-sys-surface);
+  color: #fff;
+  font-size: 16px;
+}
+.ej__stage-row[data-state='done'] .ej__marker {
+  background: #2e7d32;
+  border-color: #2e7d32;
+}
+.ej__stage-row[data-state='current'] .ej__marker {
+  background: var(--mat-sys-primary);
+  border-color: var(--mat-sys-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--mat-sys-primary) 20%, transparent);
+}
+.ej__stage-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-top: 0.2rem;
+}
+.ej__stage-name {
+  font-weight: 600;
+}
+.ej__stage-row[data-state='pending'] .ej__stage-name {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.ej__next {
+  margin-top: 0.75rem;
+  padding: 1rem 1.15rem;
+}
+.ej__next-title {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+  margin-bottom: 0.65rem;
+}
+.ej__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

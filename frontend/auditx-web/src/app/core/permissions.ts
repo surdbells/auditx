@@ -41,6 +41,7 @@ export const Permissions = {
   // M4 — Audit Lifecycle
   ViewAudits: 'ViewAudits',
   ViewAudit: 'ViewAudit',
+  ViewEngagementLifecycle: 'ViewEngagementLifecycle',
   CreateAudit: 'CreateAudit',
   ManageAudit: 'ManageAudit',
 
