@@ -32,6 +32,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -45,6 +47,28 @@ const GENERATABLE: AuditStatus[] = ['under_review', 'completed'];
 const POLL_INTERVAL = 2000;
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for a single audit's reports panel (drives the walkthrough + the About panel). */
+const REPORTS_PANEL_GUIDE: PageGuide = {
+  id: 'reports-panel',
+  titleKey: 'reports.panel.title',
+  purposeKey: 'reports.panel.guide.purpose',
+  descriptionKey: 'reports.panel.guide.description',
+  actionKeys: ['reports.panel.guide.action.generate', 'reports.panel.guide.action.download', 'reports.panel.guide.action.open'],
+  sections: [
+    { selector: '.panel__generate', titleKey: 'reports.panel.guide.section.generate.title', bodyKey: 'reports.panel.guide.section.generate.body' },
+    { selector: '.panel__table-card', titleKey: 'reports.panel.guide.section.table.title', bodyKey: 'reports.panel.guide.section.table.body' },
+  ],
+  workflowKeys: ['reports.panel.guide.flow.generate', 'reports.panel.guide.flow.render', 'reports.panel.guide.flow.seal', 'reports.panel.guide.flow.distribute'],
+  dependsOnKeys: ['reports.panel.guide.dep.status'],
+  usedByKeys: ['reports.panel.guide.use.viewer', 'reports.panel.guide.use.ac'],
+  businessRuleKeys: ['reports.panel.guide.rule.states', 'reports.panel.guide.rule.hash'],
+  tipKeys: ['reports.panel.guide.tip.docx'],
+  permissionKeys: ['reports.panel.guide.perm.generate', 'reports.panel.guide.perm.view'],
+  faq: [
+    { questionKey: 'reports.panel.guide.faq.disabled.q', answerKey: 'reports.panel.guide.faq.disabled.a' },
+  ],
+};
 
 @Component({
   selector: 'app-reports-panel',
@@ -65,6 +89,7 @@ const DEFAULT_PAGE_SIZE = 25;
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     PaginatorComponent,
     TranslatePipe,
   ],
@@ -125,6 +150,8 @@ export class ReportsPanelComponent {
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.reports().length === 0,
   );
+
+  readonly guide = REPORTS_PANEL_GUIDE;
 
   constructor() {
     queueMicrotask(() => this.fetch());

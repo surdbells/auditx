@@ -3,6 +3,8 @@
   {{ 'engagement.journey.back' | t }}
 </a>
 
+<app-page-guide [guide]="guide" />
+
 @switch (state()) {
   @case ('loading') {
     <app-loading [message]="'engagement.journey.loading' | t" />

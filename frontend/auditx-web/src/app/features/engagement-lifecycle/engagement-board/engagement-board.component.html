@@ -3,6 +3,8 @@
   [subtitle]="'engagement.board.subtitle' | t"
 />
 
+<app-page-guide [guide]="guide" />
+
 @switch (state()) {
   @case ('loading') {
     <app-loading [message]="'engagement.board.loading' | t" />

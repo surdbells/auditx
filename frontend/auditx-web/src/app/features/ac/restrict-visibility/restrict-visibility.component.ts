@@ -23,8 +23,26 @@ import { UserDto } from '../../../core/models';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for restricting a finding's visibility (drives the walkthrough + the About panel). */
+const RESTRICT_VISIBILITY_GUIDE: PageGuide = {
+  id: 'ac-restrict-visibility',
+  titleKey: 'ac.restrictVisibility.title',
+  purposeKey: 'ac.restrictVisibility.guide.purpose',
+  descriptionKey: 'ac.restrictVisibility.guide.description',
+  actionKeys: ['ac.restrictVisibility.guide.action.select', 'ac.restrictVisibility.guide.action.apply'],
+  sections: [
+    { selector: '.restrict__form', titleKey: 'ac.restrictVisibility.guide.section.form.title', bodyKey: 'ac.restrictVisibility.guide.section.form.body' },
+  ],
+  businessRuleKeys: ['ac.restrictVisibility.guide.rule.default', 'ac.restrictVisibility.guide.rule.filtered'],
+  tipKeys: ['ac.restrictVisibility.guide.tip.reason'],
+  permissionKeys: ['ac.restrictVisibility.guide.perm.cia'],
+};
 
 /**
  * CIA: set the per-finding visibility allow-list. Users on the list see the
@@ -45,6 +63,8 @@ type ViewState = 'loading' | 'ready' | 'error';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
+    TranslatePipe,
   ],
   templateUrl: './restrict-visibility.component.html',
   styleUrl: './restrict-visibility.component.scss',
@@ -69,6 +89,8 @@ export class AcRestrictVisibilityComponent {
   readonly canRestrict = computed(() =>
     this.auth.hasPermission(Permissions.CIA),
   );
+
+  readonly guide = RESTRICT_VISIBILITY_GUIDE;
 
   constructor() {
     queueMicrotask(() => this.load());

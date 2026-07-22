@@ -28,10 +28,44 @@ import {
 import { IconComponent } from '../../../core/icons/icon.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the per-engagement journey timeline (drives the walkthrough + the About panel). */
+const ENGAGEMENT_JOURNEY_GUIDE: PageGuide = {
+  id: 'engagement-journey',
+  titleKey: 'engagement.journey.title',
+  purposeKey: 'engagement.journey.guide.purpose',
+  descriptionKey: 'engagement.journey.guide.description',
+  actionKeys: [
+    'engagement.journey.guide.action.act',
+    'engagement.journey.guide.action.back',
+  ],
+  sections: [
+    { selector: '.ej__timeline', titleKey: 'engagement.journey.guide.section.timeline.title', bodyKey: 'engagement.journey.guide.section.timeline.body' },
+    { selector: '.ej__next', titleKey: 'engagement.journey.guide.section.next.title', bodyKey: 'engagement.journey.guide.section.next.body' },
+  ],
+  workflowKeys: [
+    'engagement.journey.guide.flow.setup',
+    'engagement.journey.guide.flow.planned',
+    'engagement.journey.guide.flow.fieldwork',
+    'engagement.journey.guide.flow.review',
+    'engagement.journey.guide.flow.remediation',
+    'engagement.journey.guide.flow.reporting',
+    'engagement.journey.guide.flow.closed',
+  ],
+  dependsOnKeys: ['engagement.journey.guide.dep.board'],
+  businessRuleKeys: ['engagement.journey.guide.rule.currentOnly', 'engagement.journey.guide.rule.roleGated'],
+  tipKeys: ['engagement.journey.guide.tip.exceptions'],
+  permissionKeys: ['engagement.journey.guide.perm.view'],
+  faq: [
+    { questionKey: 'engagement.journey.guide.faq.noAction.q', answerKey: 'engagement.journey.guide.faq.noAction.a' },
+  ],
+};
 
 /**
  * The per-engagement lifecycle journey: a vertical timeline of stages (done / current / pending) with
@@ -48,6 +82,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     IconComponent,
     LoadingComponent,
     ErrorStateComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './engagement-journey.component.html',
@@ -70,6 +105,8 @@ export class EngagementJourneyComponent {
   readonly busy = signal(false);
 
   readonly actions = computed(() => this.journey()?.nextActions ?? []);
+
+  readonly guide = ENGAGEMENT_JOURNEY_GUIDE;
 
   constructor() {
     // Defer until the route-bound input is set.

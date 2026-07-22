@@ -53,8 +53,29 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for a rendered dashboard (drives the walkthrough + the About panel). */
+const DASHBOARD_VIEW_GUIDE: PageGuide = {
+  id: 'dashboard-view',
+  titleKey: 'analytics.view.guideTitle',
+  purposeKey: 'analytics.view.guide.purpose',
+  descriptionKey: 'analytics.view.guide.description',
+  actionKeys: ['analytics.view.guide.action.addWidget', 'analytics.view.guide.action.removeWidget', 'analytics.view.guide.action.refresh'],
+  sections: [
+    { selector: '.widgets__grid', titleKey: 'analytics.view.guide.section.widgets.title', bodyKey: 'analytics.view.guide.section.widgets.body' },
+  ],
+  usedByKeys: ['analytics.view.guide.use.list'],
+  businessRuleKeys: ['analytics.view.guide.rule.gated', 'analytics.view.guide.rule.live'],
+  tipKeys: ['analytics.view.guide.tip.drilldown'],
+  permissionKeys: ['analytics.view.guide.perm.view', 'analytics.view.guide.perm.configure'],
+  faq: [
+    { questionKey: 'analytics.view.guide.faq.unavailable.q', answerKey: 'analytics.view.guide.faq.unavailable.a' },
+  ],
+};
 
 /**
  * Renders one dashboard generically: each widget is dispatched by `widgetType`
@@ -79,6 +100,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     BarChartComponent,
     DonutChartComponent,
     GaugeChartComponent,
@@ -153,6 +175,8 @@ export class DashboardViewComponent {
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.widgets().length === 0,
   );
+
+  readonly guide = DASHBOARD_VIEW_GUIDE;
 
   constructor() {
     // Warm the directories so widget-table GUIDs resolve to names (both are idempotent + reactive).

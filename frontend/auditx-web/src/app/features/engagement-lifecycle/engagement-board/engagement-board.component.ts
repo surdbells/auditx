@@ -29,10 +29,46 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the engagement lifecycle board (drives the walkthrough + the About panel). */
+const ENGAGEMENT_BOARD_GUIDE: PageGuide = {
+  id: 'engagement-board',
+  titleKey: 'engagement.board.title',
+  purposeKey: 'engagement.board.guide.purpose',
+  descriptionKey: 'engagement.board.guide.description',
+  actionKeys: [
+    'engagement.board.guide.action.filter',
+    'engagement.board.guide.action.act',
+    'engagement.board.guide.action.journey',
+  ],
+  sections: [
+    { selector: '.eb__toolbar', titleKey: 'engagement.board.guide.section.toolbar.title', bodyKey: 'engagement.board.guide.section.toolbar.body' },
+    { selector: '.eb__grid', titleKey: 'engagement.board.guide.section.grid.title', bodyKey: 'engagement.board.guide.section.grid.body' },
+  ],
+  workflowKeys: [
+    'engagement.board.guide.flow.setup',
+    'engagement.board.guide.flow.planned',
+    'engagement.board.guide.flow.fieldwork',
+    'engagement.board.guide.flow.review',
+    'engagement.board.guide.flow.remediation',
+    'engagement.board.guide.flow.reporting',
+    'engagement.board.guide.flow.closed',
+  ],
+  dependsOnKeys: ['engagement.board.guide.dep.audits', 'engagement.board.guide.dep.teams'],
+  usedByKeys: ['engagement.board.guide.use.journey'],
+  businessRuleKeys: ['engagement.board.guide.rule.nextAction', 'engagement.board.guide.rule.roleGated'],
+  tipKeys: ['engagement.board.guide.tip.waiting', 'engagement.board.guide.tip.progress'],
+  permissionKeys: ['engagement.board.guide.perm.view'],
+  faq: [
+    { questionKey: 'engagement.board.guide.faq.action.q', answerKey: 'engagement.board.guide.faq.action.a' },
+  ],
+};
 
 /**
  * The Engagement Lifecycle portfolio board: every engagement the user is part of, each with its
@@ -51,6 +87,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './engagement-board.component.html',
@@ -76,6 +113,8 @@ export class EngagementBoardComponent {
   );
   readonly waitingCount = computed(() => this.items().filter((i) => i.waitingOnMe).length);
   readonly isEmpty = computed(() => this.state() === 'ready' && this.visible().length === 0);
+
+  readonly guide = ENGAGEMENT_BOARD_GUIDE;
 
   constructor() {
     this.fetch();

@@ -1,15 +1,17 @@
 <app-page-header
-  title="Plans awaiting decision"
-  subtitle="Submitted annual plans pending an audit-committee chair decision."
+  [title]="'ac.plansAwaiting.title' | t"
+  [subtitle]="'ac.plansAwaiting.subtitle' | t"
 />
+
+<app-page-guide [guide]="guide" />
 
 @switch (state()) {
   @case ('loading') {
-    <app-loading message="Loading plans…" />
+    <app-loading [message]="'ac.plansAwaiting.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the plans awaiting decision."
+      [message]="'ac.plansAwaiting.error' | t"
       (retry)="load()"
     />
   }
@@ -17,8 +19,8 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="how_to_vote"
-        title="No plans awaiting decision"
-        message="Submitted plans will appear here for committee review."
+        [title]="'ac.plansAwaiting.empty.title' | t"
+        [message]="'ac.plansAwaiting.empty.message' | t"
       />
     } @else {
       <mat-accordion class="plans">
@@ -38,10 +40,10 @@
             </mat-expansion-panel-header>
 
             <div class="plans__body">
-              <p class="plans__meta">{{ p.itemCount }} plan item(s).</p>
+              <p class="plans__meta">{{ 'ac.plansAwaiting.itemCount' | t: { count: p.itemCount } }}</p>
               <a matButton="outlined" [routerLink]="['/planning', p.id]">
                 <app-icon name="open_in_new" />
-                {{ canDecide() ? 'Review & decide' : 'Open plan' }}
+                {{ (canDecide() ? 'ac.plansAwaiting.reviewDecide' : 'ac.plansAwaiting.openPlan') | t }}
               </a>
 
               <app-ac-comments targetType="plan" [targetId]="p.id" />

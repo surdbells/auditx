@@ -16,6 +16,8 @@
   </div>
 </app-page-header>
 
+<app-page-guide [guide]="guide" />
+
 <mat-card appearance="outlined" class="orgunits__filters-card">
   <form [formGroup]="filters" class="orgunits__filters">
     <mat-checkbox formControlName="includeArchived">

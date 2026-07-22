@@ -11,6 +11,8 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { NotificationAdminService } from '../../../core/services/notifications-admin.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -23,6 +25,20 @@ interface PreferenceFlags {
   digests: boolean;
 }
 
+/** Contextual page guide for personal notification preferences (drives the walkthrough + the About panel). */
+const NOTIFICATION_PREFERENCES_GUIDE: PageGuide = {
+  id: 'account-notification-preferences',
+  titleKey: 'account.prefs.title',
+  purposeKey: 'account.prefs.guide.purpose',
+  descriptionKey: 'account.prefs.guide.description',
+  actionKeys: ['account.prefs.guide.action.sms', 'account.prefs.guide.action.digests'],
+  sections: [
+    { selector: '.prefs__card', titleKey: 'account.prefs.guide.section.toggles.title', bodyKey: 'account.prefs.guide.section.toggles.body' },
+  ],
+  businessRuleKeys: ['account.prefs.guide.rule.criticalAlways'],
+  permissionKeys: ['account.prefs.guide.perm.anyUser'],
+};
+
 @Component({
   selector: 'app-notification-preferences',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +47,7 @@ interface PreferenceFlags {
     MatSlideToggleModule,
     MatButtonModule,
     PageHeaderComponent,
+    PageGuideComponent,
     LoadingComponent,
     ErrorStateComponent,
     TranslatePipe,
@@ -48,6 +65,8 @@ export class NotificationPreferencesComponent {
 
   readonly smsNonCritical = signal(false);
   readonly digests = signal(false);
+
+  readonly guide = NOTIFICATION_PREFERENCES_GUIDE;
 
   constructor() {
     this.fetch();

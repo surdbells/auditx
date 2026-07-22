@@ -1,7 +1,9 @@
 <app-page-header
-  title="Restrict finding visibility"
-  subtitle="Limit who may see this finding's detail. Others see a restricted placeholder."
+  [title]="'ac.restrictVisibility.title' | t"
+  [subtitle]="'ac.restrictVisibility.subtitle' | t"
 />
+
+<app-page-guide [guide]="guide" />
 
 @switch (state()) {
   @case ('loading') {

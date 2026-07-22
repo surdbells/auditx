@@ -29,10 +29,28 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for risk-dimension configuration (drives the walkthrough + the About panel). */
+const RISK_DIMENSIONS_GUIDE: PageGuide = {
+  id: 'risk-dimensions',
+  titleKey: 'universe.dims.title',
+  purposeKey: 'universe.dims.guide.purpose',
+  descriptionKey: 'universe.dims.guide.description',
+  actionKeys: ['universe.dims.guide.action.create', 'universe.dims.guide.action.edit', 'universe.dims.guide.action.filter'],
+  sections: [
+    { selector: '.dims__table-card', titleKey: 'universe.dims.guide.section.table.title', bodyKey: 'universe.dims.guide.section.table.body' },
+  ],
+  usedByKeys: ['universe.dims.guide.use.universe', 'universe.dims.guide.use.heatmap'],
+  businessRuleKeys: ['universe.dims.guide.rule.weight', 'universe.dims.guide.rule.scale', 'universe.dims.guide.rule.deactivate'],
+  tipKeys: ['universe.dims.guide.tip.weights'],
+  permissionKeys: ['universe.dims.guide.perm.manage'],
+};
 
 @Component({
   selector: 'app-risk-dimensions',
@@ -49,6 +67,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './risk-dimensions.component.html',
@@ -90,6 +109,8 @@ export class RiskDimensionsComponent {
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.dimensions().length === 0,
   );
+
+  readonly guide = RISK_DIMENSIONS_GUIDE;
 
   constructor() {
     this.fetch();

@@ -3,6 +3,8 @@
   [subtitle]="'account.prefs.subtitle' | t"
 />
 
+<app-page-guide [guide]="guide" />
+
 @switch (state()) {
   @case ('loading') {
     <app-loading [message]="'account.prefs.loading' | t" />

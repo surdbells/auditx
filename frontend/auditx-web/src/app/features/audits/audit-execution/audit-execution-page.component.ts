@@ -15,10 +15,32 @@ import { Audit } from '../../../core/models';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AuditExecutionComponent } from './audit-execution.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for the fieldwork/execution screen (drives the walkthrough + the About panel). */
+const AUDIT_EXECUTION_GUIDE: PageGuide = {
+  id: 'audit-execution',
+  titleKey: 'audits.exec.guideTitle',
+  purposeKey: 'audits.exec.guide.purpose',
+  descriptionKey: 'audits.exec.guide.description',
+  actionKeys: [
+    'audits.exec.guide.action.respond',
+    'audits.exec.guide.action.evidence',
+    'audits.exec.guide.action.exception',
+    'audits.exec.guide.action.time',
+  ],
+  workflowKeys: ['audits.exec.guide.flow.assign', 'audits.exec.guide.flow.respond', 'audits.exec.guide.flow.evidence', 'audits.exec.guide.flow.review'],
+  dependsOnKeys: ['audits.exec.guide.dep.template', 'audits.exec.guide.dep.team'],
+  usedByKeys: ['audits.exec.guide.use.exceptions', 'audits.exec.guide.use.reports'],
+  businessRuleKeys: ['audits.exec.guide.rule.autoReview', 'audits.exec.guide.rule.assignment'],
+  tipKeys: ['audits.exec.guide.tip.evidence'],
+  permissionKeys: ['audits.exec.guide.perm.view'],
+};
 
 /**
  * Dedicated fieldwork/execution screen for a single audit (`/audits/:id/execute`). Loads the audit, then hosts
@@ -34,6 +56,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     AuditExecutionComponent,
     TranslatePipe,
   ],
@@ -56,6 +79,7 @@ type ViewState = 'loading' | 'ready' | 'error';
               {{ a.status.replaceAll('_', ' ') }}
             </span>
           </app-page-header>
+          <app-page-guide [guide]="guide" />
           <app-audit-execution
             [audit]="a"
             (reloadRequested)="reload()"
@@ -93,6 +117,8 @@ export class AuditExecutionPageComponent {
 
   readonly state = signal<ViewState>('loading');
   readonly audit = signal<Audit | null>(null);
+
+  readonly guide = AUDIT_EXECUTION_GUIDE;
 
   constructor() {
     queueMicrotask(() => this.fetch());

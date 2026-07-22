@@ -24,8 +24,27 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Contextual page guide for a recurrence-cluster drilldown (drives the walkthrough + the About panel). */
+const RECURRENCE_CLUSTER_DETAIL_GUIDE: PageGuide = {
+  id: 'recurrence-cluster-detail',
+  titleKey: 'analytics.detail.title',
+  purposeKey: 'analytics.detail.guide.purpose',
+  descriptionKey: 'analytics.detail.guide.description',
+  actionKeys: ['analytics.detail.guide.action.open'],
+  sections: [
+    { selector: '.cluster__summary', titleKey: 'analytics.detail.guide.section.summary.title', bodyKey: 'analytics.detail.guide.section.summary.body' },
+    { selector: '.cluster__table-card', titleKey: 'analytics.detail.guide.section.members.title', bodyKey: 'analytics.detail.guide.section.members.body' },
+  ],
+  dependsOnKeys: ['analytics.detail.guide.dep.clusters'],
+  usedByKeys: ['analytics.detail.guide.use.exceptions'],
+  businessRuleKeys: ['analytics.detail.guide.rule.window'],
+  permissionKeys: ['analytics.detail.guide.perm.view'],
+};
 
 /** Drilldown for a recurrence cluster: header metadata + member exceptions. */
 @Component({
@@ -43,6 +62,7 @@ type ViewState = 'loading' | 'ready' | 'error';
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
   ],
   templateUrl: './recurrence-cluster-detail.component.html',
   styleUrl: './recurrence-cluster-detail.component.scss',
@@ -79,6 +99,8 @@ export class RecurrenceClusterDetailComponent {
     () =>
       this.state() === 'ready' && (this.cluster()?.members.length ?? 0) === 0,
   );
+
+  readonly guide = RECURRENCE_CLUSTER_DETAIL_GUIDE;
 
   constructor() {
     queueMicrotask(() => this.fetch());

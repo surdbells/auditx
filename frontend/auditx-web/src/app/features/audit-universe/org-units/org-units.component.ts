@@ -34,6 +34,8 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 
@@ -43,6 +45,22 @@ type ViewState = 'loading' | 'ready' | 'error';
 interface OrgUnitRow extends OrgUnit {
   depth: number;
 }
+
+/** Contextual page guide for org-unit administration (drives the walkthrough + the About panel). */
+const ORG_UNITS_GUIDE: PageGuide = {
+  id: 'org-units',
+  titleKey: 'orgUnit.list.title',
+  purposeKey: 'orgUnit.list.guide.purpose',
+  descriptionKey: 'orgUnit.list.guide.description',
+  actionKeys: ['orgUnit.list.guide.action.create', 'orgUnit.list.guide.action.reparent', 'orgUnit.list.guide.action.archive'],
+  sections: [
+    { selector: '.orgunits__table-card', titleKey: 'orgUnit.list.guide.section.tree.title', bodyKey: 'orgUnit.list.guide.section.tree.body' },
+  ],
+  usedByKeys: ['orgUnit.list.guide.use.entities', 'orgUnit.list.guide.use.users', 'orgUnit.list.guide.use.scorecards'],
+  businessRuleKeys: ['orgUnit.list.guide.rule.noCycles', 'orgUnit.list.guide.rule.uniqueCode', 'orgUnit.list.guide.rule.archiveKeepsHistory'],
+  tipKeys: ['orgUnit.list.guide.tip.indent'],
+  permissionKeys: ['orgUnit.list.guide.perm.manage'],
+};
 
 /**
  * Org-unit (department / business-unit) administration. Manages the hierarchy
@@ -65,6 +83,7 @@ interface OrgUnitRow extends OrgUnit {
     EmptyStateComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   templateUrl: './org-units.component.html',
@@ -98,6 +117,8 @@ export class OrgUnitsComponent {
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.units().length === 0,
   );
+
+  readonly guide = ORG_UNITS_GUIDE;
 
   constructor() {
     this.fetch();

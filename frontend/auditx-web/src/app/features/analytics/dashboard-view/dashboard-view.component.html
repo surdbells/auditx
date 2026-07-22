@@ -20,6 +20,8 @@
   </div>
 </app-page-header>
 
+<app-page-guide [guide]="guide" />
+
 @switch (state()) {
   @case ('loading') {
     <app-loading [message]="'analytics.view.loading' | t" />

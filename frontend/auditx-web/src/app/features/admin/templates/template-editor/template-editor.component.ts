@@ -55,6 +55,8 @@ import { TemplateVersionsComponent } from '../template-versions/template-version
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -63,6 +65,34 @@ interface SectionGroup {
   name: string;
   items: TemplateItem[];
 }
+
+/** Contextual page guide for the checklist template editor (drives the walkthrough + the About panel). */
+const TEMPLATE_EDITOR_GUIDE: PageGuide = {
+  id: 'template-editor',
+  titleKey: 'templatesAdmin.editor.guideTitle',
+  purposeKey: 'templatesAdmin.editor.guide.purpose',
+  descriptionKey: 'templatesAdmin.editor.guide.description',
+  actionKeys: [
+    'templatesAdmin.editor.guide.action.sections',
+    'templatesAdmin.editor.guide.action.items',
+    'templatesAdmin.editor.guide.action.reorder',
+    'templatesAdmin.editor.guide.action.publish',
+  ],
+  sections: [
+    { selector: '.editor__form', titleKey: 'templatesAdmin.editor.guide.section.details.title', bodyKey: 'templatesAdmin.editor.guide.section.details.body' },
+    { selector: '.editor__sections', titleKey: 'templatesAdmin.editor.guide.section.structure.title', bodyKey: 'templatesAdmin.editor.guide.section.structure.body' },
+    { selector: '.editor__lifecycle', titleKey: 'templatesAdmin.editor.guide.section.lifecycle.title', bodyKey: 'templatesAdmin.editor.guide.section.lifecycle.body' },
+  ],
+  workflowKeys: ['templatesAdmin.editor.guide.flow.draft', 'templatesAdmin.editor.guide.flow.build', 'templatesAdmin.editor.guide.flow.publish', 'templatesAdmin.editor.guide.flow.copy'],
+  dependsOnKeys: ['templatesAdmin.editor.guide.dep.auditTypes'],
+  usedByKeys: ['templatesAdmin.editor.guide.use.audits'],
+  businessRuleKeys: ['templatesAdmin.editor.guide.rule.draftOnly', 'templatesAdmin.editor.guide.rule.immutableType', 'templatesAdmin.editor.guide.rule.newDraft'],
+  tipKeys: ['templatesAdmin.editor.guide.tip.dragDrop'],
+  permissionKeys: ['templatesAdmin.editor.guide.perm.manage'],
+  faq: [
+    { questionKey: 'templatesAdmin.editor.guide.faq.editPublished.q', answerKey: 'templatesAdmin.editor.guide.faq.editPublished.a' },
+  ],
+};
 
 @Component({
   selector: 'app-template-editor',
@@ -85,6 +115,7 @@ interface SectionGroup {
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TemplateVersionsComponent,
   ],
   templateUrl: './template-editor.component.html',
@@ -174,6 +205,8 @@ export class TemplateEditorComponent {
       (a, b) => a.orderIndex - b.orderIndex,
     ),
   );
+
+  readonly guide = TEMPLATE_EDITOR_GUIDE;
 
   constructor() {
     queueMicrotask(() => this.bootstrap());

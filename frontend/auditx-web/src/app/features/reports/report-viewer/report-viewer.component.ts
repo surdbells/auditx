@@ -42,6 +42,8 @@ import { ReportShareDialogComponent } from '../dialogs/report-share-dialog.compo
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../core/models/page-guide.models';
 import { PaginatorComponent } from '../../../shared/components/paginator/paginator.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
@@ -49,6 +51,33 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 type ViewState = 'loading' | 'ready' | 'error';
 
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Contextual page guide for the report viewer (drives the walkthrough + the About panel). */
+const REPORT_VIEWER_GUIDE: PageGuide = {
+  id: 'report-viewer',
+  titleKey: 'reports.viewer.guideTitle',
+  purposeKey: 'reports.viewer.guide.purpose',
+  descriptionKey: 'reports.viewer.guide.description',
+  actionKeys: [
+    'reports.viewer.guide.action.preview',
+    'reports.viewer.guide.action.verify',
+    'reports.viewer.guide.action.download',
+    'reports.viewer.guide.action.distribute',
+    'reports.viewer.guide.action.share',
+  ],
+  sections: [
+    { selector: '.viewer__card', titleKey: 'reports.viewer.guide.section.overview.title', bodyKey: 'reports.viewer.guide.section.overview.body' },
+    { selector: '.viewer__table-card', titleKey: 'reports.viewer.guide.section.distribution.title', bodyKey: 'reports.viewer.guide.section.distribution.body' },
+  ],
+  dependsOnKeys: ['reports.viewer.guide.dep.panel'],
+  usedByKeys: ['reports.viewer.guide.use.ac', 'reports.viewer.guide.use.sharedLinks'],
+  businessRuleKeys: ['reports.viewer.guide.rule.sealed', 'reports.viewer.guide.rule.pending'],
+  tipKeys: ['reports.viewer.guide.tip.verify'],
+  permissionKeys: ['reports.viewer.guide.perm.view', 'reports.viewer.guide.perm.distribute'],
+  faq: [
+    { questionKey: 'reports.viewer.guide.faq.hash.q', answerKey: 'reports.viewer.guide.faq.hash.a' },
+  ],
+};
 
 @Component({
   selector: 'app-report-viewer',
@@ -65,6 +94,7 @@ const DEFAULT_PAGE_SIZE = 25;
     LoadingComponent,
     ErrorStateComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     PaginatorComponent,
     TranslatePipe,
   ],
@@ -132,6 +162,8 @@ export class ReportViewerComponent {
   readonly artefacts = computed<ReportArtefact[]>(
     () => this.report()?.producedArtefacts ?? [],
   );
+
+  readonly guide = REPORT_VIEWER_GUIDE;
 
   constructor() {
     queueMicrotask(() => this.fetch());
