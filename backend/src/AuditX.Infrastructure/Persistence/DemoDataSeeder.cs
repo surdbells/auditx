@@ -20,6 +20,7 @@ using AuditX.Domain.Identity;
 using AuditX.Domain.Integrations;
 using AuditX.Domain.Planning;
 using AuditX.Domain.Reports;
+using AuditX.Domain.Risks;
 using AuditX.Domain.Sanctions;
 using AuditX.Domain.Templates;
 using AuditX.Domain.Universe;
@@ -70,6 +71,7 @@ public sealed class DemoDataSeeder(
         var (entities, plan) = await SeedUniverseAndPlanAsync(users, cancellationToken);
         await SeedOrgUnitsAsync(cancellationToken);
         await SeedComplianceAsync(users, entities, cancellationToken);
+        await SeedRisksAsync(users, entities, cancellationToken);
         var audits = await SeedAuditsAsync(users, templates, plan, entities, cancellationToken);
         await SeedResponsesAndEvidenceAsync(audits, users, cancellationToken);
         var exceptions = await SeedExceptionsAndMapsAsync(audits, entities, users, cancellationToken);
@@ -413,6 +415,115 @@ public sealed class DemoDataSeeder(
         AddControl("CTL-008", "Treasury deal confirmation", "Every treasury deal is independently confirmed before settlement.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Daily, users.Auditee3Id, entities.TreasuryId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
         AddControl("CTL-009", "KYC documentation review", "New-account KYC packs are sampled and reviewed monthly.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Monthly, users.Auditee1Id, entities.OperationsId, AuditX.Domain.Enums.ControlEffectiveness.PartiallyEffective);
         AddControl("CTL-010", "AML transaction monitoring", "Transactions are screened continuously for suspicious patterns.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee1Id, entities.OperationsId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+
+        await db.SaveChangesAsync(ct);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+    // P1-A — Enterprise risk register. Fifteen risks spanning every seeded risk_category reference-data code, a
+    // realistic status/band spread (Open/Assessed/Mitigating/Monitoring/Closed; Low through Critical), and a mix
+    // of entity-linked (org-unit roll-up) and enterprise-level (unlinked) risks, so the register, heatmap and
+    // risk-related analytics all land on populated, realistic data.
+    // ---------------------------------------------------------------------------------------------------------
+    private async Task SeedRisksAsync(DemoUsers users, DemoEntities entities, CancellationToken ct)
+    {
+        Risk AddRisk(
+            string title, string description, string category, Guid owner, Guid? entityId,
+            int inherentLikelihood, int inherentImpact, DateOnly targetDate, Guid identifiedBy,
+            int? residualLikelihood = null, int? residualImpact = null,
+            RiskTreatmentStrategy? strategy = null, string? treatmentPlan = null, DateOnly? nextReviewDate = null)
+        {
+            var risk = Risk.Register(title, description, category, owner, entityId, inherentLikelihood, inherentImpact, targetDate, identifiedBy, _now);
+            db.Risks.Add(risk);
+            if (residualLikelihood is { } rl && residualImpact is { } ri)
+            {
+                risk.Update(title, description, category, owner, entityId, inherentLikelihood, inherentImpact, rl, ri, strategy, treatmentPlan, targetDate, nextReviewDate);
+            }
+            return risk;
+        }
+
+        var creditConcentration = AddRisk(
+            "Concentration risk in top-20 credit exposures", "The top 20 obligors represent a disproportionate share of the loan book, exposing the bank to correlated default losses.",
+            "credit", users.Auditee3Id, entities.CreditId, 4, 4, Today.AddMonths(6), users.Auditor3Id,
+            residualLikelihood: 3, residualImpact: 3, strategy: RiskTreatmentStrategy.Mitigate,
+            treatmentPlan: "Diversify the large-exposure book and tighten single-obligor concentration limits.", nextReviewDate: Today.AddMonths(3));
+        creditConcentration.ChangeStatus(RiskStatus.Mitigating, null, users.Auditee3Id, _now);
+
+        AddRisk(
+            "Core banking system single point of failure", "The core banking platform runs on a single active instance with no automated failover, risking extended downtime on hardware failure.",
+            "technology", users.Auditee2Id, entities.CoreBankingId, 4, 5, Today.AddMonths(4), users.Auditor2Id);
+
+        var drGap = AddRisk(
+            "Data-centre disaster-recovery gap", "The DR site is not warm-standby; a primary data-centre outage would require a multi-day manual recovery.",
+            "technology", users.Auditee2Id, entities.DataCentreId, 3, 4, Today.AddMonths(5), users.Auditor2Id,
+            residualLikelihood: 2, residualImpact: 3, strategy: RiskTreatmentStrategy.Mitigate,
+            treatmentPlan: "Stand up a warm-standby DR site with automated failover testing.", nextReviewDate: Today.AddMonths(2));
+        drGap.ChangeStatus(RiskStatus.Monitoring, null, users.Auditee2Id, _now);
+
+        AddRisk(
+            "AML transaction-monitoring false-negative risk", "Rule thresholds have not been re-tuned since go-live, risking missed suspicious-activity patterns in the monitoring engine.",
+            "compliance", users.Auditee1Id, entities.OperationsId, 3, 4, Today.AddMonths(3), users.Auditor1Id);
+
+        var fxLimit = AddRisk(
+            "Treasury FX open-position limit breach", "Intraday FX open positions have approached the board-approved limit during volatile trading sessions.",
+            "market", users.Auditee3Id, entities.TreasuryId, 3, 3, Today.AddMonths(4), users.Auditor3Id,
+            residualLikelihood: 2, residualImpact: 2, strategy: RiskTreatmentStrategy.Mitigate,
+            treatmentPlan: "Add a real-time limit-breach alert to the treasury dealing system.", nextReviewDate: Today.AddMonths(6));
+
+        AddRisk(
+            "Cash/vault-handling fraud at branch level", "Dual-control lapses at high-cash branches create an opportunity for teller-level cash misappropriation.",
+            "fraud", users.Auditee1Id, entities.LagosBranchId, 2, 4, Today.AddMonths(2), users.Auditor1Id);
+
+        AddRisk(
+            "Third-party vendor cyber-security exposure", "Key vendors with network access have not been re-assessed against the bank's current cyber-security questionnaire.",
+            "technology", users.Auditee2Id, null, 4, 4, Today.AddMonths(3), users.Manager2Id);
+
+        var regReporting = AddRisk(
+            "Regulatory-return inaccuracy (CBN returns)", "Manual spreadsheet consolidation in the regulatory-returns process is prone to transcription error ahead of CBN submission deadlines.",
+            "regulatory", users.Auditee1Id, entities.OperationsId, 3, 3, Today.AddMonths(2), users.Auditor1Id,
+            residualLikelihood: 2, residualImpact: 2, strategy: RiskTreatmentStrategy.Mitigate,
+            treatmentPlan: "Automate the returns-consolidation workflow and add a four-eyes sign-off.", nextReviewDate: Today.AddMonths(4));
+        regReporting.ChangeStatus(RiskStatus.Mitigating, null, users.Auditee1Id, _now);
+
+        var liquidity = AddRisk(
+            "Liquidity coverage ratio stress risk", "A sustained deposit run-off scenario could pressure the LCR below the internal early-warning threshold before regulatory breach.",
+            "liquidity", users.Auditee3Id, entities.TreasuryId, 2, 5, Today.AddMonths(5), users.Manager1Id,
+            residualLikelihood: 2, residualImpact: 3, strategy: RiskTreatmentStrategy.Mitigate,
+            treatmentPlan: "Grow the high-quality liquid-asset buffer and diversify the funding base.", nextReviewDate: Today.AddMonths(3));
+
+        var keyPerson = AddRisk(
+            "Key-person dependency in core-banking support", "A single engineer holds undocumented tribal knowledge of core-banking batch jobs, risking a support gap on departure.",
+            "operational", users.Auditee2Id, entities.CoreBankingId, 3, 3, Today.AddMonths(4), users.Auditor2Id,
+            residualLikelihood: 2, residualImpact: 3, strategy: RiskTreatmentStrategy.Mitigate,
+            treatmentPlan: "Document runbooks and cross-train a second engineer.", nextReviewDate: Today.AddMonths(2));
+        keyPerson.ChangeStatus(RiskStatus.Monitoring, null, users.Auditee2Id, _now);
+
+        AddRisk(
+            "Reputational risk from social-media complaint escalation", "Unresolved customer complaints have shown a pattern of escalating publicly on social media before internal resolution.",
+            "reputational", users.Auditee1Id, null, 2, 3, Today.AddMonths(3), users.Manager1Id);
+
+        AddRisk(
+            "Strategic risk — delayed digital-channel migration", "The migration of retail customers to the digital banking channel is behind plan, prolonging reliance on higher-cost branch servicing.",
+            "strategic", users.Auditee1Id, null, 3, 4, Today.AddMonths(9), users.Manager2Id);
+
+        AddRisk(
+            "Credit risk model validation gap", "The retail-lending scorecard has not been independently revalidated since its last recalibration.",
+            "credit", users.Auditee3Id, entities.CreditId, 3, 4, Today.AddMonths(6), users.Auditor3Id);
+
+        var financialReporting = AddRisk(
+            "Financial-reporting misstatement risk in loan-loss provisioning", "IFRS 9 expected-credit-loss inputs rely on a manually-maintained spreadsheet model outside the core ledger.",
+            "financial", users.Auditee1Id, null, 3, 4, Today.AddMonths(3), users.Manager1Id,
+            residualLikelihood: 2, residualImpact: 3, strategy: RiskTreatmentStrategy.Mitigate,
+            treatmentPlan: "Migrate the ECL model into a controlled, version-managed calculation engine.", nextReviewDate: Today.AddMonths(5));
+
+        var citRisk = AddRisk(
+            "Legacy cash-in-transit risk (Port Harcourt)", "The branch's cash-in-transit provider used an unarmed escort model, exposing cash movements to robbery risk.",
+            "operational", users.Auditee3Id, entities.PhBranchId, 2, 3, Today.AddMonths(1), users.Auditor1Id,
+            residualLikelihood: 1, residualImpact: 2, strategy: RiskTreatmentStrategy.Transfer,
+            treatmentPlan: "Move to an armed-escort CIT provider under an insured contract.", nextReviewDate: Today.AddMonths(12));
+        citRisk.ChangeStatus(RiskStatus.Closed,
+            "CIT contract renegotiated with an armed-escort provider; residual exposure is now within the board-approved risk appetite.",
+            users.Auditee3Id, _now);
 
         await db.SaveChangesAsync(ct);
     }
