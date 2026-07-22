@@ -1,0 +1,131 @@
+name: Azure Deploy
+
+# Manual only — this never runs on push/PR. Trigger from the Actions tab once the secrets below are
+# configured and (for prod) the "prod" GitHub Environment has a required reviewer set.
+# See docs/AZURE_DEPLOYMENT_RUNBOOK.md for the full walkthrough and required repo/environment secrets.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target GitHub Environment (maps to an Azure resource group / Container Apps env)"
+        required: true
+        type: choice
+        options: [staging, prod]
+      imageTag:
+        description: "Image tag to build, push, and deploy (defaults to this commit's SHA)"
+        required: false
+        type: string
+
+permissions:
+  id-token: write # federated OIDC login to Azure — no client-secret stored in the repo
+  contents: read
+
+jobs:
+  build-and-push:
+    name: Build & push images to ACR
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    outputs:
+      imageTag: ${{ steps.tag.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        id: tag
+        run: echo "value=${{ inputs.imageTag || github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR login
+        run: az acr login --name ${{ secrets.ACR_NAME }}
+
+      - name: Build & push API image
+        run: |
+          docker build -f docker/Api.Dockerfile \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/auditx-api:${{ steps.tag.outputs.value }} .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/auditx-api:${{ steps.tag.outputs.value }}
+
+      - name: Build & push Web image
+        run: |
+          docker build -f docker/Web.Dockerfile \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/auditx-web:${{ steps.tag.outputs.value }} .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/auditx-web:${{ steps.tag.outputs.value }}
+
+  generate-migration-script:
+    name: Generate idempotent EF migration script
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Generate script (does NOT apply it — reviewed and run against the DB out-of-band, see runbook §4)
+        run: |
+          cd backend
+          dotnet tool install --global dotnet-ef
+          dotnet ef migrations script --idempotent \
+            --project src/AuditX.Infrastructure --startup-project src/AuditX.Api \
+            -o ../auditx-migrations-${{ needs.build-and-push.outputs.imageTag }}.sql
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: migration-script-${{ needs.build-and-push.outputs.imageTag }}
+          path: auditx-migrations-*.sql
+          retention-days: 90
+
+  provision:
+    name: Provision / update infrastructure (Bicep)
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-if (review before apply)
+        run: |
+          az deployment group what-if \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --template-file infra/azure/main.bicep \
+            --parameters infra/azure/main.parameters.json \
+            --parameters imageTag=${{ needs.build-and-push.outputs.imageTag }} \
+            --parameters sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }} \
+            --parameters jwtSigningKey=${{ secrets.JWT_SIGNING_KEY }} \
+            --parameters activeDirectoryServiceAccountPassword=${{ secrets.AD_SERVICE_ACCOUNT_PASSWORD }} \
+            --parameters corsOrigin=${{ vars.WEB_FQDN || '' }}
+
+      - name: Deploy
+        run: |
+          az deployment group create \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --template-file infra/azure/main.bicep \
+            --parameters infra/azure/main.parameters.json \
+            --parameters imageTag=${{ needs.build-and-push.outputs.imageTag }} \
+            --parameters sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }} \
+            --parameters jwtSigningKey=${{ secrets.JWT_SIGNING_KEY }} \
+            --parameters activeDirectoryServiceAccountPassword=${{ secrets.AD_SERVICE_ACCOUNT_PASSWORD }} \
+            --parameters corsOrigin=${{ vars.WEB_FQDN || '' }}
+
+  smoke-test:
+    name: Post-deploy smoke test
+    runs-on: ubuntu-latest
+    needs: provision
+    steps:
+      - name: Health check
+        run: |
+          curl -fsS https://${{ vars.WEB_FQDN }}/admin/health | tee /dev/stderr | grep -q '"status":"healthy"'

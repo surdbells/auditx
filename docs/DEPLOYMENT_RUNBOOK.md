@@ -119,44 +119,17 @@ The same steps run in `.github/workflows/ci.yml`.
 
 ## 2. Microsoft Azure
 
-A managed reference topology. Adjust to the bank's landing-zone standards (private endpoints, VNet, Front Door).
+**→ See [AZURE_DEPLOYMENT_RUNBOOK.md](AZURE_DEPLOYMENT_RUNBOOK.md) for the full walkthrough.**
 
-### Recommended services
-| Concern | Azure service |
-|---|---|
-| API | **App Service (Linux, .NET 10)** or Container Apps — 2+ instances |
-| SPA | **Static Web Apps** or an App Service serving the built `dist/` |
-| Database | **Azure SQL Database** (or SQL MI for full T-SQL/Agent parity) |
-| Cache/denylist | **Azure Cache for Redis** |
-| Secrets | **Azure Key Vault** (referenced from App Service config) |
-| DataProtection key ring | **Blob storage + Key Vault** (`PersistKeysToAzureBlobStorage` + `ProtectKeysWithAzureKeyVault`) or a mounted share via `DataProtection:KeyRingPath` |
-| Identity | the bank's AD via **VPN/ExpressRoute** to a reachable domain controller (LDAPS 636), or Entra Domain Services |
-| Files | **Azure Files** share mounted at `Storage:EvidenceRoot` |
-| TLS / WAF | **Application Gateway / Front Door** |
-
-### Steps
-1. **Provision** SQL DB, Redis, Key Vault, Storage, the App Services (IaC: Bicep/Terraform per the landing zone).
-2. **Secrets → Key Vault**: `Jwt--SigningKey`, the SQL connection string, the AD service-account password. Reference
-   them from App Service application settings as `@Microsoft.KeyVault(SecretUri=…)`.
-3. **App Service config** (application settings):
-   - `ASPNETCORE_ENVIRONMENT=Production`
-   - `ConnectionStrings__Default` (Azure SQL; `Encrypt=True`)
-   - `Identity__Provider=ActiveDirectory` + the `ActiveDirectory__*` keys
-   - `Redis__ConnectionString`
-   - `DataProtection__KeyRingPath` (mounted Azure Files) **or** wire blob+Key Vault DataProtection
-   - `Cors__Origins__0=https://<spa-host>`
-   - `Storage__EvidenceRoot` (mounted Azure Files)
-   - `Database__MigrateOnStartup=false`
-4. **Build & publish**:
-   ```bash
-   dotnet publish backend/src/AuditX.Api/AuditX.Api.csproj -c Release -o ./publish
-   # deploy ./publish via az webapp deploy / zip deploy / container image
-   cd frontend/auditx-web && npm ci && npm run build   # deploy dist/ to Static Web Apps / App Service
-   ```
-5. **Apply migrations** (controlled — see §4) from a pipeline step or a jump host.
-6. **Networking**: private endpoints for SQL/Redis/Storage/Key Vault; App Gateway/Front Door terminates TLS;
-   restrict the SPA origin via CORS; managed identity for Key Vault access.
-7. **Validate** with the §5 smoke tests against the public host.
+Reference topology: both the API and the SPA/nginx images from `docker/` deploy as **Azure Container Apps** in the
+same Container Apps Environment — the API with internal-only ingress, the SPA/nginx with external ingress and its
+existing same-origin `/api/*` reverse proxy (so the HttpOnly session cookie stays same-site, rather than splitting
+the SPA onto a separate origin like Static Web Apps). Azure SQL, Azure Cache for Redis, Key Vault (secrets
+referenced natively by the Container App via managed identity), and two Azure Files shares (evidence +
+DataProtection key ring, mounted as Container Apps volumes) round out the topology. IaC lives at
+[infra/azure/main.bicep](../infra/azure/main.bicep); a manual-dispatch GitHub Actions pipeline
+([.github/workflows/azure-deploy.yml](../.github/workflows/azure-deploy.yml)) builds the images, runs the Bicep
+deploy, and generates (but does not auto-apply) the EF migration script.
 
 > Scale-out note: because 2+ API instances share the DataProtection key ring and the Redis denylist, sessions and
 > M14 credential decryption work across instances. Hangfire recurring jobs are safe under multiple instances (SQL

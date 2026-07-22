@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namePrefix": { "value": "auditx" },
+    "environmentName": { "value": "prod" },
+    "sqlAdminLogin": { "value": "auditxadmin" },
+    "identityProvider": { "value": "ActiveDirectory" },
+    "activeDirectoryHost": { "value": "" },
+    "activeDirectoryBaseDn": { "value": "" },
+    "activeDirectoryServiceAccountDn": { "value": "" },
+    "activeDirectoryUpnSuffix": { "value": "" },
+    "activeDirectoryApiBaseUrl": { "value": "" },
+    "imageTag": { "value": "latest" },
+    "corsOrigin": { "value": "" },
+    "apiMinReplicas": { "value": 2 },
+    "apiMaxReplicas": { "value": 10 },
+    "webMinReplicas": { "value": 2 },
+    "webMaxReplicas": { "value": 6 }
+  }
+}
