@@ -69,10 +69,16 @@ public sealed record ExceptionRaisingRuleDto(Guid Id, string ResponseType, bool 
 /// <summary>An exception (finding) linked to a root-cause gap, with light display fields.</summary>
 public sealed record RootCauseGapLinkedExceptionDto(Guid LinkId, Guid ExceptionId, string Title, string Severity, string Status);
 
+/// <summary>One corrective action in a root-cause gap's remediation plan.</summary>
+public sealed record RootCauseGapRemediationDto(
+    Guid Id, string Description, Guid OwnerUserId, DateOnly? DueDate, string Status,
+    string? CompletionNote, Guid? CompletedByUserId, DateTimeOffset? CompletedAt, DateTimeOffset CreatedAt);
+
 public sealed record RootCauseGapDto(
     Guid Id, string Title, string? Description, string? Category, Guid OwnerUserId, DateOnly? TargetDate, string Status,
     Guid IdentifiedByUserId, DateTimeOffset IdentifiedAt, string? ClosureRationale, Guid? ClosedByUserId, DateTimeOffset? ClosedAt,
-    string Version, IReadOnlyList<RootCauseGapLinkedExceptionDto> LinkedExceptions);
+    string Version, IReadOnlyList<RootCauseGapLinkedExceptionDto> LinkedExceptions,
+    IReadOnlyList<RootCauseGapRemediationDto> Remediations);
 
 public sealed record RootCauseGapListItemDto(
     Guid Id, string Title, string? Category, Guid OwnerUserId, DateOnly? TargetDate, string Status, DateTimeOffset IdentifiedAt, int LinkedExceptionCount);

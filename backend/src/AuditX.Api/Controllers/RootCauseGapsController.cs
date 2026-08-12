@@ -57,4 +57,31 @@ public sealed class RootCauseGapsController(IDispatcher dispatcher) : ApiControl
     [HttpDelete("{id:guid}/exceptions/{exceptionId:guid}")]
     public async Task<IActionResult> UnlinkException(Guid id, Guid exceptionId, [FromQuery] string version, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new UnlinkExceptionFromGapCommand(id, exceptionId, version), cancellationToken));
+
+    // ---- Remediation plan (the corrective actions, each with its own owner + due date) ----
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpPost("{id:guid}/remediations")]
+    public async Task<IActionResult> AddRemediation(Guid id, [FromBody] AddGapRemediationRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new AddGapRemediationCommand(id, request.Description, request.OwnerUserId, request.DueDate, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpPatch("{id:guid}/remediations/{remediationId:guid}")]
+    public async Task<IActionResult> UpdateRemediation(Guid id, Guid remediationId, [FromBody] UpdateGapRemediationRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new UpdateGapRemediationCommand(id, remediationId, request.Description, request.OwnerUserId, request.DueDate, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpPost("{id:guid}/remediations/{remediationId:guid}/complete")]
+    public async Task<IActionResult> CompleteRemediation(Guid id, Guid remediationId, [FromBody] CompleteGapRemediationRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new CompleteGapRemediationCommand(id, remediationId, request.Note, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpPost("{id:guid}/remediations/{remediationId:guid}/reopen")]
+    public async Task<IActionResult> ReopenRemediation(Guid id, Guid remediationId, [FromBody] VersionOnlyRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ReopenGapRemediationCommand(id, remediationId, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpDelete("{id:guid}/remediations/{remediationId:guid}")]
+    public async Task<IActionResult> RemoveRemediation(Guid id, Guid remediationId, [FromQuery] string version, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new RemoveGapRemediationCommand(id, remediationId, version), cancellationToken));
 }

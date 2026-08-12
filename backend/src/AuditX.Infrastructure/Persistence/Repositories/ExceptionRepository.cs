@@ -184,7 +184,7 @@ public sealed class ExceptionRaisingRuleRepository(AppDbContext db) : IException
 public sealed class RootCauseGapRepository(AppDbContext db) : IRootCauseGapRepository
 {
     public Task<RootCauseGap?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => db.RootCauseGaps.Include(g => g.Links).FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
+        => db.RootCauseGaps.Include(g => g.Links).Include(g => g.Remediations).FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
 
     public async Task<PagedResult<RootCauseGap>> SearchAsync(RootCauseGapStatus? status, string? search, PageSpec page, CancellationToken cancellationToken = default)
     {

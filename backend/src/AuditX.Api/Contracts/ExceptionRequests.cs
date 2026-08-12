@@ -39,3 +39,9 @@ public sealed record UpdateRootCauseGapRequest(string Title, string? Description
 public sealed record CloseRootCauseGapRequest(string Rationale, string Version);
 
 public sealed record LinkExceptionToGapRequest(Guid ExceptionId, string Version);
+
+public sealed record AddGapRemediationRequest(string Description, Guid OwnerUserId, DateOnly? DueDate, string Version);
+
+public sealed record UpdateGapRemediationRequest(string Description, Guid OwnerUserId, DateOnly? DueDate, string Version);
+
+public sealed record CompleteGapRemediationRequest(string? Note, string Version);

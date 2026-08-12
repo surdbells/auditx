@@ -19,7 +19,16 @@ internal static class RootCauseGapMapping
         g.Id, g.Title, g.Description, g.Category, g.OwnerUserId, g.TargetDate, g.Status.ToSnake(),
         g.IdentifiedByUserId, g.IdentifiedAt, g.ClosureRationale, g.ClosedByUserId, g.ClosedAt,
         RowVersionToken.Encode(g.Version),
-        linked.Select(l => new RootCauseGapLinkedExceptionDto(l.LinkId, l.ExceptionId, l.Title, l.Severity.ToSnake(), l.Status.ToSnake())).ToArray());
+        linked.Select(l => new RootCauseGapLinkedExceptionDto(l.LinkId, l.ExceptionId, l.Title, l.Severity.ToSnake(), l.Status.ToSnake())).ToArray(),
+        // Open actions first (by soonest due date, undated last), then completed — the plan reads as a worklist.
+        g.Remediations
+            .OrderBy(r => r.Status == RootCauseGapRemediationStatus.Completed)
+            .ThenBy(r => r.DueDate ?? DateOnly.MaxValue)
+            .ThenBy(r => r.CreatedAt)
+            .Select(r => new RootCauseGapRemediationDto(
+                r.Id, r.Description, r.OwnerUserId, r.DueDate, r.Status.ToSnake(),
+                r.CompletionNote, r.CompletedByUserId, r.CompletedAt, r.CreatedAt))
+            .ToArray());
 
     public static RootCauseGapListItemDto ToListItemDto(this RootCauseGap g) => new(
         g.Id, g.Title, g.Category, g.OwnerUserId, g.TargetDate, g.Status.ToSnake(), g.IdentifiedAt, g.Links.Count);
@@ -136,6 +145,110 @@ public sealed class UnlinkExceptionFromGapCommandHandler(IRootCauseGapRepository
         gap.EnsureVersion(command.Version);
         gap.UnlinkException(command.ExceptionId);
         audit.Record(AuditEventTypes.RootCauseGapExceptionUnlinked, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.ExceptionId });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+    }
+}
+
+// ---- Remediation plan actions ----
+
+public sealed record AddGapRemediationCommand(Guid GapId, string Description, Guid OwnerUserId, DateOnly? DueDate, string Version) : ICommand<RootCauseGapDto>;
+
+public sealed class AddGapRemediationCommandValidator : AbstractValidator<AddGapRemediationCommand>
+{
+    public AddGapRemediationCommandValidator()
+    {
+        RuleFor(x => x.Description).NotEmpty().MaximumLength(2000);
+        RuleFor(x => x.OwnerUserId).NotEmpty();
+    }
+}
+
+public sealed class AddGapRemediationCommandHandler(IRootCauseGapRepository gaps, IUserRepository users, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    : ICommandHandler<AddGapRemediationCommand, RootCauseGapDto>
+{
+    public async Task<RootCauseGapDto> Handle(AddGapRemediationCommand command, CancellationToken cancellationToken)
+    {
+        var gap = await gaps.GetByIdAsync(command.GapId, cancellationToken) ?? throw new NotFoundException("Root-cause gap", command.GapId);
+        gap.EnsureVersion(command.Version);
+        _ = await users.GetByIdAsync(command.OwnerUserId, cancellationToken) ?? throw new NotFoundException("User", command.OwnerUserId);
+
+        var item = gap.AddRemediation(command.Description, command.OwnerUserId, command.DueDate, currentUser.UserId ?? Guid.Empty, clock.UtcNow);
+        audit.Record(AuditEventTypes.RootCauseGapRemediationAdded, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { item.Id, command.OwnerUserId });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+    }
+}
+
+public sealed record UpdateGapRemediationCommand(Guid GapId, Guid RemediationId, string Description, Guid OwnerUserId, DateOnly? DueDate, string Version) : ICommand<RootCauseGapDto>;
+
+public sealed class UpdateGapRemediationCommandValidator : AbstractValidator<UpdateGapRemediationCommand>
+{
+    public UpdateGapRemediationCommandValidator()
+    {
+        RuleFor(x => x.Description).NotEmpty().MaximumLength(2000);
+        RuleFor(x => x.OwnerUserId).NotEmpty();
+    }
+}
+
+public sealed class UpdateGapRemediationCommandHandler(IRootCauseGapRepository gaps, IUserRepository users, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<UpdateGapRemediationCommand, RootCauseGapDto>
+{
+    public async Task<RootCauseGapDto> Handle(UpdateGapRemediationCommand command, CancellationToken cancellationToken)
+    {
+        var gap = await gaps.GetByIdAsync(command.GapId, cancellationToken) ?? throw new NotFoundException("Root-cause gap", command.GapId);
+        gap.EnsureVersion(command.Version);
+        _ = await users.GetByIdAsync(command.OwnerUserId, cancellationToken) ?? throw new NotFoundException("User", command.OwnerUserId);
+
+        gap.UpdateRemediation(command.RemediationId, command.Description, command.OwnerUserId, command.DueDate);
+        audit.Record(AuditEventTypes.RootCauseGapRemediationUpdated, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.RemediationId });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+    }
+}
+
+public sealed record CompleteGapRemediationCommand(Guid GapId, Guid RemediationId, string? Note, string Version) : ICommand<RootCauseGapDto>;
+
+public sealed class CompleteGapRemediationCommandHandler(IRootCauseGapRepository gaps, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    : ICommandHandler<CompleteGapRemediationCommand, RootCauseGapDto>
+{
+    public async Task<RootCauseGapDto> Handle(CompleteGapRemediationCommand command, CancellationToken cancellationToken)
+    {
+        var gap = await gaps.GetByIdAsync(command.GapId, cancellationToken) ?? throw new NotFoundException("Root-cause gap", command.GapId);
+        gap.EnsureVersion(command.Version);
+        gap.CompleteRemediation(command.RemediationId, command.Note, currentUser.UserId ?? Guid.Empty, clock.UtcNow);
+        audit.Record(AuditEventTypes.RootCauseGapRemediationCompleted, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.RemediationId });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+    }
+}
+
+public sealed record ReopenGapRemediationCommand(Guid GapId, Guid RemediationId, string Version) : ICommand<RootCauseGapDto>;
+
+public sealed class ReopenGapRemediationCommandHandler(IRootCauseGapRepository gaps, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<ReopenGapRemediationCommand, RootCauseGapDto>
+{
+    public async Task<RootCauseGapDto> Handle(ReopenGapRemediationCommand command, CancellationToken cancellationToken)
+    {
+        var gap = await gaps.GetByIdAsync(command.GapId, cancellationToken) ?? throw new NotFoundException("Root-cause gap", command.GapId);
+        gap.EnsureVersion(command.Version);
+        gap.ReopenRemediation(command.RemediationId);
+        audit.Record(AuditEventTypes.RootCauseGapRemediationReopened, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.RemediationId });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+    }
+}
+
+public sealed record RemoveGapRemediationCommand(Guid GapId, Guid RemediationId, string Version) : ICommand<RootCauseGapDto>;
+
+public sealed class RemoveGapRemediationCommandHandler(IRootCauseGapRepository gaps, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<RemoveGapRemediationCommand, RootCauseGapDto>
+{
+    public async Task<RootCauseGapDto> Handle(RemoveGapRemediationCommand command, CancellationToken cancellationToken)
+    {
+        var gap = await gaps.GetByIdAsync(command.GapId, cancellationToken) ?? throw new NotFoundException("Root-cause gap", command.GapId);
+        gap.EnsureVersion(command.Version);
+        gap.RemoveRemediation(command.RemediationId);
+        audit.Record(AuditEventTypes.RootCauseGapRemediationRemoved, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.RemediationId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
     }

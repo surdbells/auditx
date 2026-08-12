@@ -97,6 +97,11 @@ public static class AuditEventTypes
     public const string RootCauseGapReopened = "root_cause_gap_reopened";
     public const string RootCauseGapExceptionLinked = "root_cause_gap_exception_linked";
     public const string RootCauseGapExceptionUnlinked = "root_cause_gap_exception_unlinked";
+    public const string RootCauseGapRemediationAdded = "root_cause_gap_remediation_added";
+    public const string RootCauseGapRemediationUpdated = "root_cause_gap_remediation_updated";
+    public const string RootCauseGapRemediationCompleted = "root_cause_gap_remediation_completed";
+    public const string RootCauseGapRemediationReopened = "root_cause_gap_remediation_reopened";
+    public const string RootCauseGapRemediationRemoved = "root_cause_gap_remediation_removed";
     public const string PlanCreated = "plan_created";
     public const string PlanUpdated = "plan_updated";
     public const string PlanItemAdded = "plan_item_added";

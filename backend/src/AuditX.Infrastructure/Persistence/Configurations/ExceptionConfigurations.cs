@@ -121,7 +121,29 @@ public sealed class RootCauseGapConfiguration : IEntityTypeConfiguration<RootCau
         builder.HasMany(g => g.Links).WithOne().HasForeignKey(l => l.RootCauseGapId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(g => g.Links).HasField("_links").UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.HasMany(g => g.Remediations).WithOne().HasForeignKey(r => r.RootCauseGapId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(g => g.Remediations).HasField("_remediations").UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasIndex(g => g.Status);
+    }
+}
+
+public sealed class RootCauseGapRemediationConfiguration : IEntityTypeConfiguration<RootCauseGapRemediation>
+{
+    public void Configure(EntityTypeBuilder<RootCauseGapRemediation> builder)
+    {
+        builder.ToTable("root_cause_gap_remediations");
+        builder.HasKey(r => r.Id);
+        builder.Property(r => r.Id).ValueGeneratedNever();
+
+        builder.Property(r => r.Description).HasMaxLength(2000).IsRequired();
+        builder.Property(r => r.CompletionNote).HasMaxLength(2000);
+        builder.Property(r => r.Status)
+            .HasConversion(new SnakeCaseEnumConverter<RootCauseGapRemediationStatus>())
+            .HasMaxLength(20)
+            .IsRequired();
+
+        builder.HasIndex(r => r.RootCauseGapId);
     }
 }
 

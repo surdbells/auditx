@@ -5136,5 +5136,20 @@
   "common.selectAll": "Select all",
   "common.clearAll": "Clear",
   "audits.history.observation": "Observation",
-  "audits.history.recommendation": "Recommendation"
+  "audits.history.recommendation": "Recommendation",
+  "rootCauseGaps.remediation.title": "Remediation plan",
+  "rootCauseGaps.remediation.description": "Corrective action",
+  "rootCauseGaps.remediation.owner": "Owner",
+  "rootCauseGaps.remediation.dueDate": "Due date",
+  "rootCauseGaps.remediation.add": "Add",
+  "rootCauseGaps.remediation.empty": "No remediation actions yet. Add the corrective actions that will close this gap.",
+  "rootCauseGaps.remediation.due": "due",
+  "rootCauseGaps.remediation.status.open": "Open",
+  "rootCauseGaps.remediation.status.completed": "Completed",
+  "rootCauseGaps.remediation.complete": "Mark complete",
+  "rootCauseGaps.remediation.reopen": "Reopen",
+  "rootCauseGaps.remediation.remove": "Remove",
+  "rootCauseGaps.remediation.notify.added": "Remediation action added.",
+  "rootCauseGaps.remediation.notify.completed": "Remediation action completed.",
+  "rootCauseGaps.remediation.notify.removed": "Remediation action removed."
 }

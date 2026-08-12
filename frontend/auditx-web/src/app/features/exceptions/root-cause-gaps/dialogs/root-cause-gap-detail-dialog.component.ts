@@ -20,10 +20,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { IconComponent } from '../../../../core/icons/icon.component';
 import { RootCauseGapsService } from '../../../../core/services/root-cause-gaps.service';
 import { ExceptionsService } from '../../../../core/services/exceptions.service';
+import { UsersService } from '../../../../core/services/users.service';
+import { UserLookupService } from '../../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
-import { ExceptionListItem, RootCauseGap } from '../../../../core/models';
+import { ExceptionListItem, RootCauseGap, RootCauseGapRemediation, UserDto } from '../../../../core/models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 
@@ -94,6 +96,71 @@ export interface RootCauseGapDetailDialogData {
                   <button matIconButton type="button" (click)="unlink(e.exceptionId)" [attr.aria-label]="'rootCauseGaps.unlink' | t">
                     <app-icon name="link_off" />
                   </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+
+        <h3 class="section-title">{{ 'rootCauseGaps.remediation.title' | t }}</h3>
+        @if (canManage() && g.status === 'open') {
+          <form [formGroup]="remediationForm" class="rem-add">
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>{{ 'rootCauseGaps.remediation.description' | t }}</mat-label>
+              <input matInput formControlName="description" autocomplete="off" />
+            </mat-form-field>
+            <div class="rem-add__row">
+              <mat-form-field appearance="outline" class="grow">
+                <mat-label>{{ 'rootCauseGaps.remediation.owner' | t }}</mat-label>
+                <mat-select formControlName="ownerUserId">
+                  @for (u of users(); track u.id) {
+                    <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'rootCauseGaps.remediation.dueDate' | t }}</mat-label>
+                <input matInput type="date" formControlName="dueDate" />
+              </mat-form-field>
+              <button matButton="filled" type="button"
+                [disabled]="!remediationForm.controls.description.value.trim() || !remediationForm.controls.ownerUserId.value"
+                (click)="addRemediation()">
+                <app-icon name="add" />
+                {{ 'rootCauseGaps.remediation.add' | t }}
+              </button>
+            </div>
+          </form>
+        }
+
+        @if (!g.remediations.length) {
+          <p class="muted">{{ 'rootCauseGaps.remediation.empty' | t }}</p>
+        } @else {
+          <ul class="links">
+            @for (r of g.remediations; track r.id) {
+              <li class="links__item" [class.rem--done]="r.status === 'completed'">
+                <div class="links__body">
+                  <span class="links__title">{{ r.description }}</span>
+                  <span class="muted links__meta">
+                    {{ nameOf(r.ownerUserId) }}
+                    @if (r.dueDate) { · {{ 'rootCauseGaps.remediation.due' | t }} {{ r.dueDate | date: 'mediumDate' }} }
+                    · <span class="status-badge" [attr.data-status]="r.status === 'completed' ? 'system' : 'in_progress'">{{ 'rootCauseGaps.remediation.status.' + r.status | t }}</span>
+                  </span>
+                </div>
+                @if (canManage() && g.status === 'open') {
+                  <div class="rem-actions">
+                    @if (r.status === 'open') {
+                      <button matIconButton type="button" (click)="completeRemediation(r)" [attr.aria-label]="'rootCauseGaps.remediation.complete' | t">
+                        <app-icon name="check_circle" />
+                      </button>
+                    } @else {
+                      <button matIconButton type="button" (click)="reopenRemediation(r)" [attr.aria-label]="'rootCauseGaps.remediation.reopen' | t">
+                        <app-icon name="refresh" />
+                      </button>
+                    }
+                    <button matIconButton type="button" (click)="removeRemediation(r)" [attr.aria-label]="'rootCauseGaps.remediation.remove' | t">
+                      <app-icon name="delete" />
+                    </button>
+                  </div>
                 }
               </li>
             }
@@ -192,6 +259,26 @@ export interface RootCauseGapDetailDialogData {
     .links__meta {
       font: var(--mat-sys-label-small);
     }
+    .rem-add {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 460px;
+    }
+    .rem-add__row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .rem-actions {
+      display: flex;
+      gap: 0.15rem;
+      flex: 0 0 auto;
+    }
+    .rem--done .links__title {
+      text-decoration: line-through;
+      color: var(--mat-sys-on-surface-variant);
+    }
     .meta {
       margin-top: 1rem;
       font: var(--mat-sys-label-small);
@@ -211,6 +298,8 @@ export class RootCauseGapDetailDialogComponent {
     inject<MatDialogRef<RootCauseGapDetailDialogComponent, boolean>>(MatDialogRef);
   private readonly service = inject(RootCauseGapsService);
   private readonly exceptions = inject(ExceptionsService);
+  private readonly usersService = inject(UsersService);
+  private readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
@@ -218,6 +307,7 @@ export class RootCauseGapDetailDialogComponent {
 
   readonly gap = signal<RootCauseGap | null>(null);
   readonly allFindings = signal<ExceptionListItem[]>([]);
+  readonly users = signal<UserDto[]>([]);
   /** True if any mutation happened, so the register refreshes on close. */
   private changed = false;
 
@@ -230,11 +320,18 @@ export class RootCauseGapDetailDialogComponent {
 
   readonly linkForm = this.fb.nonNullable.group({ exceptionId: [''] });
   readonly closeForm = this.fb.nonNullable.group({ rationale: [''] });
+  readonly remediationForm = this.fb.nonNullable.group({
+    description: [''],
+    ownerUserId: [''],
+    dueDate: [''],
+  });
 
   constructor() {
     this.refresh();
     // Load open findings for the link picker (load-all cap).
     this.exceptions.list({ status: 'open_any', pageSize: 0 }).subscribe((page) => this.allFindings.set(page.items));
+    // Active users back the remediation-owner picker.
+    this.usersService.list({ status: 'active', pageSize: 0 }).subscribe((page) => this.users.set(page.items));
   }
 
   private refresh(): void {
@@ -298,6 +395,74 @@ export class RootCauseGapDetailDialogComponent {
         this.notify.success(this.i18n.translate('rootCauseGaps.notify.reopened'));
       },
     });
+  }
+
+  addRemediation(): void {
+    const g = this.gap();
+    const v = this.remediationForm.getRawValue();
+    if (!g || !v.description.trim() || !v.ownerUserId) {
+      return;
+    }
+    this.service
+      .addRemediation(g.id, {
+        description: v.description.trim(),
+        ownerUserId: v.ownerUserId,
+        dueDate: v.dueDate || null,
+        version: g.version,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.gap.set(updated);
+          this.remediationForm.reset();
+          this.changed = true;
+          this.notify.success(this.i18n.translate('rootCauseGaps.remediation.notify.added'));
+        },
+      });
+  }
+
+  completeRemediation(r: RootCauseGapRemediation): void {
+    const g = this.gap();
+    if (!g) {
+      return;
+    }
+    this.service.completeRemediation(g.id, r.id, { note: null, version: g.version }).subscribe({
+      next: (updated) => {
+        this.gap.set(updated);
+        this.changed = true;
+        this.notify.success(this.i18n.translate('rootCauseGaps.remediation.notify.completed'));
+      },
+    });
+  }
+
+  reopenRemediation(r: RootCauseGapRemediation): void {
+    const g = this.gap();
+    if (!g) {
+      return;
+    }
+    this.service.reopenRemediation(g.id, r.id, g.version).subscribe({
+      next: (updated) => {
+        this.gap.set(updated);
+        this.changed = true;
+      },
+    });
+  }
+
+  removeRemediation(r: RootCauseGapRemediation): void {
+    const g = this.gap();
+    if (!g) {
+      return;
+    }
+    this.service.removeRemediation(g.id, r.id, g.version).subscribe({
+      next: (updated) => {
+        this.gap.set(updated);
+        this.changed = true;
+        this.notify.success(this.i18n.translate('rootCauseGaps.remediation.notify.removed'));
+      },
+    });
+  }
+
+  nameOf(userId: string): string {
+    return this.userLookup.displayName(userId);
   }
 
   /** Map a snake_case exception status to its (camelCase-keyed) label. */

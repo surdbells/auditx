@@ -299,6 +299,22 @@ export interface RootCauseGapLinkedException {
   status: ExceptionStatus;
 }
 
+/** Status of a single remediation action in a gap's plan. */
+export type RootCauseGapRemediationStatus = 'open' | 'completed';
+
+/** One corrective action in a root-cause gap's remediation plan, with its own owner + due date. */
+export interface RootCauseGapRemediation {
+  id: string;
+  description: string;
+  ownerUserId: string;
+  dueDate: string | null;
+  status: RootCauseGapRemediationStatus;
+  completionNote: string | null;
+  completedByUserId: string | null;
+  completedAt: string | null;
+  createdAt: string;
+}
+
 /** A systemic root-cause gap tracked across findings. */
 export interface RootCauseGap {
   id: string;
@@ -315,6 +331,7 @@ export interface RootCauseGap {
   closedAt: string | null;
   version: string;
   linkedExceptions: RootCauseGapLinkedException[];
+  remediations: RootCauseGapRemediation[];
 }
 
 /** Lightweight row for the root-cause-gaps register. */
@@ -353,6 +370,25 @@ export interface CloseRootCauseGapRequest {
 
 export interface LinkExceptionToGapRequest {
   exceptionId: string;
+  version: string;
+}
+
+export interface AddGapRemediationRequest {
+  description: string;
+  ownerUserId: string;
+  dueDate: string | null;
+  version: string;
+}
+
+export interface UpdateGapRemediationRequest {
+  description: string;
+  ownerUserId: string;
+  dueDate: string | null;
+  version: string;
+}
+
+export interface CompleteGapRemediationRequest {
+  note: string | null;
   version: string;
 }
 

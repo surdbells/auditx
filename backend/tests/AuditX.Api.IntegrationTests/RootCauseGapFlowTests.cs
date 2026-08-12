@@ -117,6 +117,65 @@ public sealed class RootCauseGapFlowTests(ApiFactory factory) : IClassFixture<Ap
     }
 
     [Fact]
+    public async Task Remediation_plan_add_complete_reopen_and_owner_are_tracked()
+    {
+        var admin = await AdminAsync();
+        var users = await UsersByEmailAsync(admin);
+        var owner = users["auditee@auditx.local"];
+
+        var gap = await DataAsync(await admin.PostAsJsonAsync("/api/v1/root-cause-gaps", new
+        {
+            title = "No segregation-of-duties policy", description = (string?)null, category = (string?)null,
+            ownerUserId = users["manager@auditx.local"], targetDate = (string?)null,
+        }));
+        var gapId = gap.GetProperty("id").GetGuid();
+
+        // Add a remediation action with its own owner + due date.
+        var withItem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/root-cause-gaps/{gapId}/remediations", new
+        {
+            description = "Draft and approve a segregation-of-duties policy", ownerUserId = owner, dueDate = "2027-06-30", version = Version(gap),
+        }));
+        var remediations = withItem.GetProperty("remediations").EnumerateArray().ToArray();
+        Assert.Single(remediations);
+        var remediationId = remediations[0].GetProperty("id").GetGuid();
+        Assert.Equal(owner, remediations[0].GetProperty("ownerUserId").GetGuid());
+        Assert.Equal("open", remediations[0].GetProperty("status").GetString());
+
+        // Complete it.
+        var completed = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/root-cause-gaps/{gapId}/remediations/{remediationId}/complete",
+            new { note = "Policy signed off by the board", version = Version(withItem) }));
+        Assert.Equal("completed", completed.GetProperty("remediations")[0].GetProperty("status").GetString());
+
+        // Reopen it.
+        var reopened = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/root-cause-gaps/{gapId}/remediations/{remediationId}/reopen",
+            new { version = Version(completed) }));
+        Assert.Equal("open", reopened.GetProperty("remediations")[0].GetProperty("status").GetString());
+
+        // Remove it.
+        var removed = await DataAsync(await admin.DeleteAsync($"/api/v1/root-cause-gaps/{gapId}/remediations/{remediationId}?version={Version(reopened)}"));
+        Assert.Empty(removed.GetProperty("remediations").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task Adding_a_remediation_without_an_owner_is_rejected()
+    {
+        var admin = await AdminAsync();
+        var users = await UsersByEmailAsync(admin);
+        var gap = await DataAsync(await admin.PostAsJsonAsync("/api/v1/root-cause-gaps", new
+        {
+            title = "Weak monitoring", description = (string?)null, category = (string?)null,
+            ownerUserId = users["manager@auditx.local"], targetDate = (string?)null,
+        }));
+        var gapId = gap.GetProperty("id").GetGuid();
+
+        var response = await admin.PostAsJsonAsync($"/api/v1/root-cause-gaps/{gapId}/remediations", new
+        {
+            description = "Do something", ownerUserId = Guid.Empty, dueDate = (string?)null, version = Version(gap),
+        });
+        Assert.Equal(HttpStatusCode.UnprocessableContent, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Closing_without_a_rationale_is_rejected()
     {
         var admin = await AdminAsync();

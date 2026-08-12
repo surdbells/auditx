@@ -56,4 +56,53 @@ public sealed class RootCauseGapTests
     [Fact]
     public void Reopening_an_open_gap_is_rejected()
         => Assert.Throws<InvalidStateTransitionException>(() => Open().Reopen());
+
+    [Fact]
+    public void Remediation_actions_carry_an_owner_and_move_open_to_completed()
+    {
+        var gap = Open();
+        var itemOwner = Guid.NewGuid();
+        var item = gap.AddRemediation("Draft and approve an SoD policy", itemOwner, new DateOnly(2027, 6, 30), Actor, Now);
+
+        Assert.Single(gap.Remediations);
+        Assert.Equal(itemOwner, item.OwnerUserId);
+        Assert.Equal(RootCauseGapRemediationStatus.Open, item.Status);
+
+        gap.CompleteRemediation(item.Id, "Policy signed off by the board", Actor, Now);
+        Assert.Equal(RootCauseGapRemediationStatus.Completed, item.Status);
+        Assert.Equal(Actor, item.CompletedByUserId);
+
+        gap.ReopenRemediation(item.Id);
+        Assert.Equal(RootCauseGapRemediationStatus.Open, item.Status);
+        Assert.Null(item.CompletedAt);
+    }
+
+    [Fact]
+    public void Adding_a_remediation_requires_an_owner_and_a_description()
+    {
+        var gap = Open();
+        Assert.Throws<DomainException>(() => gap.AddRemediation("do a thing", Guid.Empty, null, Actor, Now));
+        Assert.Throws<DomainException>(() => gap.AddRemediation("  ", Owner, null, Actor, Now));
+    }
+
+    [Fact]
+    public void A_closed_gap_rejects_remediation_changes()
+    {
+        var gap = Open();
+        var item = gap.AddRemediation("Fix it", Owner, null, Actor, Now);
+        gap.Close("Policy rolled out group-wide", Actor, Now);
+
+        Assert.Throws<InvalidStateTransitionException>(() => gap.AddRemediation("another", Owner, null, Actor, Now));
+        Assert.Throws<InvalidStateTransitionException>(() => gap.CompleteRemediation(item.Id, null, Actor, Now));
+        Assert.Throws<InvalidStateTransitionException>(() => gap.RemoveRemediation(item.Id));
+    }
+
+    [Fact]
+    public void Completing_an_already_completed_remediation_is_rejected()
+    {
+        var gap = Open();
+        var item = gap.AddRemediation("Fix it", Owner, null, Actor, Now);
+        gap.CompleteRemediation(item.Id, null, Actor, Now);
+        Assert.Throws<InvalidStateTransitionException>(() => gap.CompleteRemediation(item.Id, null, Actor, Now));
+    }
 }

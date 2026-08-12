@@ -16,6 +16,13 @@ public enum RootCauseGapStatus
     Closed,
 }
 
+/// <summary>Status of a single remediation action within a root-cause gap's remediation plan.</summary>
+public enum RootCauseGapRemediationStatus
+{
+    Open,
+    Completed,
+}
+
 /// <summary>
 /// The exception lifecycle (M6). Exactly seven persisted states (PRD/BRD authoritative). The Critical-closure
 /// CIA hold is modelled as the <c>CiaPending</c> flag within <see cref="PendingClosure"/>, not an eighth status.
