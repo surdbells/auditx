@@ -214,7 +214,8 @@ export class ItemEditorDialogComponent {
       [Validators.required],
     ],
     sectionName: [this.data.item?.sectionName ?? ''],
-    isRequired: [this.data.item?.isRequired ?? false],
+    // New template items are required by default; uncheck to make an item optional.
+    isRequired: [this.data.item?.isRequired ?? true],
     ratingScaleId: [parseRatingScaleId(this.data.item?.responseConfigJson)],
     riskRating: [(this.data.item?.riskRating ?? null) as ExceptionSeverity | null],
     controlId: [(this.data.item?.controlId ?? null) as string | null],

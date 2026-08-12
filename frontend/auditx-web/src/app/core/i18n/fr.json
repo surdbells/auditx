@@ -5132,5 +5132,7 @@
   "audits.kickoff.error.when": "Choisissez une date et une heure pour la réunion.",
   "audits.kickoff.action.schedule": "Planifier le lancement",
   "audits.kickoff.action.reschedule": "Reprogrammer",
-  "audits.notify.kickoffScheduled": "Réunion de lancement planifiée — l’audité a été notifié."
+  "audits.notify.kickoffScheduled": "Réunion de lancement planifiée — l’audité a été notifié.",
+  "common.selectAll": "Tout sélectionner",
+  "common.clearAll": "Effacer"
 }

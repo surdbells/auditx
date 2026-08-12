@@ -5132,5 +5132,7 @@
   "audits.kickoff.error.when": "Pick a date and time for the meeting.",
   "audits.kickoff.action.schedule": "Schedule kickoff",
   "audits.kickoff.action.reschedule": "Reschedule",
-  "audits.notify.kickoffScheduled": "Kickoff meeting scheduled — the auditee has been notified."
+  "audits.notify.kickoffScheduled": "Kickoff meeting scheduled — the auditee has been notified.",
+  "common.selectAll": "Select all",
+  "common.clearAll": "Clear"
 }

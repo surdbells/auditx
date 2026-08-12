@@ -19,6 +19,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectAllDirective } from '../../../../shared/directives/select-all.directive';
 
 import { CreateWebhookSubscriptionRequest, WebhookEventType } from '../../../../core/models';
 import { WebhooksService } from '../../../../core/services/webhooks.service';
@@ -46,6 +47,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectAllDirective,
     MatButtonModule,
     TranslatePipe,
   ],

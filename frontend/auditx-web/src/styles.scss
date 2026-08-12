@@ -446,3 +446,32 @@ html[data-theme='dark'] *::-webkit-scrollbar-thumb {
 .layout__main {
   min-width: 0;
 }
+
+// ---- Select-all / Clear header injected into every multi-select panel ---
+// The panel lives in the CDK overlay (outside component style scope), so this is global.
+.ax-select-all {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 0.25rem;
+  padding: 6px 8px;
+  background: var(--mat-sys-surface-container, #fff);
+  border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+}
+.ax-select-all__btn {
+  flex: 1;
+  appearance: none;
+  cursor: pointer;
+  border: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+  border-radius: 8px;
+  background: var(--mat-sys-surface, #fff);
+  color: var(--mat-sys-primary, #4f46e5);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 10px;
+}
+.ax-select-all__btn:hover {
+  background: var(--mat-sys-secondary-container, #eef);
+}

@@ -9,6 +9,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectAllDirective } from '../../../shared/directives/select-all.directive';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import {
@@ -50,6 +51,7 @@ const RESPONSE_TYPES: ResponseType[] = [
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectAllDirective,
     MatSlideToggleModule,
     MatButtonModule,
     TranslatePipe,

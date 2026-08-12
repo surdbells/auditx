@@ -15,6 +15,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectAllDirective } from '../../../shared/directives/select-all.directive';
 
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
@@ -55,6 +56,7 @@ function fromDateOnly(value: string): Date {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectAllDirective,
     MatDatepickerModule,
     MatButtonModule,
     TranslatePipe,

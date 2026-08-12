@@ -15,6 +15,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectAllDirective } from '../../../shared/directives/select-all.directive';
 
 import {
   AuditChecklistItem,
@@ -69,6 +70,7 @@ const TYPE_OPTIONS: TypeOption[] = [
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectAllDirective,
     MatCheckboxModule,
     MatButtonModule,
     SearchableSelectComponent,

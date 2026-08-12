@@ -12,6 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectAllDirective } from '../../../shared/directives/select-all.directive';
 
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { CreateAuditRequest, TemplateListItem, UserDto } from '../../../core/models';
@@ -79,6 +80,7 @@ function fromDateOnly(value: string | undefined): Date | null {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectAllDirective,
     MatDatepickerModule,
     MatButtonModule,
     IconComponent,
