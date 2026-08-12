@@ -65,22 +65,22 @@ public sealed class Template : AggregateRoot, ISoftDeletable
 
     public TemplateItem AddItem(
         string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired,
-        string? defaultAssignmentRuleJson, string? responseConfigJson = null, ExceptionSeverity? riskRating = null)
+        string? defaultAssignmentRuleJson, string? responseConfigJson = null, ExceptionSeverity? riskRating = null, Guid? controlId = null)
     {
         EnsureDraft();
         EnsureSectionExists(sectionName);
-        var item = new TemplateItem(Id, prompt, referenceNotes, responseType, sectionName, _items.Count, isRequired, defaultAssignmentRuleJson, responseConfigJson, riskRating);
+        var item = new TemplateItem(Id, prompt, referenceNotes, responseType, sectionName, _items.Count, isRequired, defaultAssignmentRuleJson, responseConfigJson, riskRating, controlId);
         _items.Add(item);
         return item;
     }
 
     public void UpdateItem(
         Guid itemId, string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired,
-        string? defaultAssignmentRuleJson, string? responseConfigJson = null, ExceptionSeverity? riskRating = null)
+        string? defaultAssignmentRuleJson, string? responseConfigJson = null, ExceptionSeverity? riskRating = null, Guid? controlId = null)
     {
         EnsureDraft();
         EnsureSectionExists(sectionName);
-        FindItem(itemId).Update(prompt, referenceNotes, responseType, sectionName, isRequired, defaultAssignmentRuleJson, responseConfigJson, riskRating);
+        FindItem(itemId).Update(prompt, referenceNotes, responseType, sectionName, isRequired, defaultAssignmentRuleJson, responseConfigJson, riskRating, controlId);
     }
 
     public void RemoveItem(Guid itemId)
@@ -172,7 +172,7 @@ public sealed class Template : AggregateRoot, ISoftDeletable
 
         var snapshot = _items
             .OrderBy(i => i.OrderIndex)
-            .Select(i => new TemplateItemSnapshot(i.Prompt, i.ReferenceNotes, i.ResponseType, i.SectionName, i.OrderIndex, i.IsRequired, i.DefaultAssignmentRuleJson, i.ResponseConfigJson, i.RiskRating))
+            .Select(i => new TemplateItemSnapshot(i.Prompt, i.ReferenceNotes, i.ResponseType, i.SectionName, i.OrderIndex, i.IsRequired, i.DefaultAssignmentRuleJson, i.ResponseConfigJson, i.RiskRating, i.ControlId))
             .ToArray();
 
         var version = new TemplateVersion(Id, CurrentVersion, publishedAtUtc, serializeSnapshot(snapshot));

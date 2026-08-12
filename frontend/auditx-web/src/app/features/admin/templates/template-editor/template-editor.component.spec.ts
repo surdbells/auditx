@@ -37,6 +37,7 @@ function template(overrides: Partial<Template> = {}): Template {
         defaultAssignmentRuleJson: null,
         responseConfigJson: null,
         riskRating: null,
+        controlId: null,
       },
     ],
     sections: [],
@@ -172,6 +173,7 @@ describe('TemplateEditorComponent', () => {
           defaultAssignmentRuleJson: null,
           responseConfigJson: null,
           riskRating: null,
+          controlId: null,
         },
       ],
     });

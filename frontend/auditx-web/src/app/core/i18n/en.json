@@ -5026,5 +5026,8 @@
   "exceptionRules.guide.rule.onePerType": "At most one rule per response type.",
   "exceptionRules.guide.tip.score": "Score-gating only affects Rating items, which are the only response type that earns a score.",
   "exceptionRules.guide.perm.manage": "Manage Configuration",
-  "nav.exceptionRules": "Exception rules"
+  "nav.exceptionRules": "Exception rules",
+  "templatesAdmin.item.control": "Control tested",
+  "templatesAdmin.item.noControl": "(No control)",
+  "templatesAdmin.item.controlHint": "The control this item tests. An exception raised against the item auto-links to it."
 }

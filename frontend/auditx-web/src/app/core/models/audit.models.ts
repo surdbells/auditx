@@ -67,6 +67,8 @@ export interface AuditChecklistItem {
   itemState: ChecklistItemState;
   /** How severe a failure of this item is; when set, drives the default severity of any exception raised against it. */
   riskRating?: ExceptionSeverity | null;
+  /** The internal control this item tests; an exception raised against it auto-links to this control. */
+  controlId?: string | null;
 }
 
 /** Full aggregate for a single audit. */
@@ -181,6 +183,7 @@ export interface AddChecklistItemRequest {
   assignedUserId?: string | null;
   version: string;
   riskRating?: ExceptionSeverity | null;
+  controlId?: string | null;
 }
 
 export interface UpdateChecklistItemRequest {
@@ -193,6 +196,7 @@ export interface UpdateChecklistItemRequest {
   assignedUserId?: string | null;
   version: string;
   riskRating?: ExceptionSeverity | null;
+  controlId?: string | null;
 }
 
 /** List query parameters for the audits list. */

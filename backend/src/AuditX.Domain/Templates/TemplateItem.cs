@@ -37,6 +37,9 @@ public sealed class TemplateItem : Entity
     /// <summary>How severe a failure of this item is, in control-test terms. Copied onto the audit's checklist item and, when set, drives the default severity of any exception raised against it.</summary>
     public ExceptionSeverity? RiskRating { get; private set; }
 
+    /// <summary>The internal control this item tests, if any. Copied onto the audit's checklist item; an exception raised against the item auto-links to this control.</summary>
+    public Guid? ControlId { get; private set; }
+
     internal TemplateItem(
         Guid templateId,
         string prompt,
@@ -47,7 +50,8 @@ public sealed class TemplateItem : Entity
         bool isRequired,
         string? defaultAssignmentRuleJson,
         string? responseConfigJson = null,
-        ExceptionSeverity? riskRating = null)
+        ExceptionSeverity? riskRating = null,
+        Guid? controlId = null)
     {
         TemplateId = templateId;
         Prompt = Guard.NotNullOrWhiteSpace(prompt, "template.item_prompt_required", "Item prompt is required.");
@@ -59,11 +63,12 @@ public sealed class TemplateItem : Entity
         DefaultAssignmentRuleJson = defaultAssignmentRuleJson;
         ResponseConfigJson = NormaliseConfig(responseConfigJson);
         RiskRating = riskRating;
+        ControlId = controlId;
     }
 
     internal void Update(
         string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired,
-        string? defaultAssignmentRuleJson, string? responseConfigJson = null, ExceptionSeverity? riskRating = null)
+        string? defaultAssignmentRuleJson, string? responseConfigJson = null, ExceptionSeverity? riskRating = null, Guid? controlId = null)
     {
         Prompt = Guard.NotNullOrWhiteSpace(prompt, "template.item_prompt_required", "Item prompt is required.");
         ReferenceNotes = referenceNotes;
@@ -73,6 +78,7 @@ public sealed class TemplateItem : Entity
         DefaultAssignmentRuleJson = defaultAssignmentRuleJson;
         ResponseConfigJson = NormaliseConfig(responseConfigJson);
         RiskRating = riskRating;
+        ControlId = controlId;
     }
 
     private static string? NormaliseConfig(string? json) => string.IsNullOrWhiteSpace(json) ? null : json.Trim();

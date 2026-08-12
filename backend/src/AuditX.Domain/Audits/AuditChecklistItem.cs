@@ -50,10 +50,13 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
     /// <summary>How severe a failure of this item is. Drives the default severity of any exception raised against it.</summary>
     public ExceptionSeverity? RiskRating { get; private set; }
 
+    /// <summary>The internal control this item tests, if any. An exception raised against the item auto-links to this control.</summary>
+    public Guid? ControlId { get; private set; }
+
     internal AuditChecklistItem(
         Guid auditId, string prompt, string? referenceNotes, ResponseType responseType,
         string? sectionName, int orderIndex, bool isRequired, Guid? assignedUserId, string? responseConfigJson = null,
-        ExceptionSeverity? riskRating = null)
+        ExceptionSeverity? riskRating = null, Guid? controlId = null)
     {
         AuditId = auditId;
         Prompt = Guard.NotNullOrWhiteSpace(prompt, "audit.item_prompt_required", "Checklist item prompt is required.");
@@ -65,11 +68,12 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
         IsRequired = isRequired;
         AssignedUserId = assignedUserId;
         RiskRating = riskRating;
+        ControlId = controlId;
     }
 
     internal void Update(
         string prompt, string? referenceNotes, ResponseType responseType, string? responseConfigJson, string? sectionName,
-        bool isRequired, Guid? assignedUserId, ExceptionSeverity? riskRating = null)
+        bool isRequired, Guid? assignedUserId, ExceptionSeverity? riskRating = null, Guid? controlId = null)
     {
         Prompt = Guard.NotNullOrWhiteSpace(prompt, "audit.item_prompt_required", "Checklist item prompt is required.");
         ReferenceNotes = referenceNotes;
@@ -79,6 +83,7 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
         IsRequired = isRequired;
         AssignedUserId = assignedUserId;
         RiskRating = riskRating;
+        ControlId = controlId;
     }
 
     private static string? NormaliseConfig(string? json) => string.IsNullOrWhiteSpace(json) ? null : json.Trim();

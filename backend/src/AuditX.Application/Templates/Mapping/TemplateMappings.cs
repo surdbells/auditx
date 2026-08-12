@@ -27,7 +27,7 @@ public static class TemplateMappings
     public static TemplateItemDto ToDto(this TemplateItem item) => new(
         item.Id, item.Prompt, item.ReferenceNotes, item.ResponseType.ToSnake(),
         item.SectionName, item.OrderIndex, item.IsRequired, item.DefaultAssignmentRuleJson,
-        item.ResponseConfigJson, item.RiskRating?.ToSnake());
+        item.ResponseConfigJson, item.RiskRating?.ToSnake(), item.ControlId);
 
     public static RatingScaleDto ToDto(this RatingScale scale) => new(scale.Id, scale.Name, scale.Description, scale.IsActive, scale.PointsJson);
 
@@ -43,7 +43,7 @@ public static class TemplateMappings
     public static TemplateItemSnapshotDto ToSnapshotDto(this TemplateItemSnapshot snapshot) => new(
         snapshot.Prompt, snapshot.ReferenceNotes, snapshot.ResponseType.ToSnake(),
         snapshot.SectionName, snapshot.OrderIndex, snapshot.IsRequired, snapshot.DefaultAssignmentRuleJson,
-        snapshot.ResponseConfigJson, snapshot.RiskRating?.ToSnake());
+        snapshot.ResponseConfigJson, snapshot.RiskRating?.ToSnake(), snapshot.ControlId);
 
     /// <summary>Serializer used by the aggregate when snapshotting items at publish time.</summary>
     public static string SerializeSnapshot(IReadOnlyList<TemplateItemSnapshot> snapshot) => AppJson.Serialize(snapshot);

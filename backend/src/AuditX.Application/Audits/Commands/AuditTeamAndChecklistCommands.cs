@@ -114,9 +114,9 @@ public sealed class TransferAuditLeadCommandHandler(
 }
 
 public sealed record AddAuditChecklistItemCommand(
-    Guid AuditId, string Prompt, string? ReferenceNotes, string ResponseType, string? ResponseConfigJson, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version, string? RiskRating = null) : ICommand<AuditDto>;
+    Guid AuditId, string Prompt, string? ReferenceNotes, string ResponseType, string? ResponseConfigJson, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version, string? RiskRating = null, Guid? ControlId = null) : ICommand<AuditDto>;
 
-public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IRatingScaleRepository ratingScales, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IRatingScaleRepository ratingScales, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<AddAuditChecklistItemCommand, AuditDto>
 {
     public async Task<AuditDto> Handle(AddAuditChecklistItemCommand command, CancellationToken cancellationToken)
@@ -126,8 +126,9 @@ public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits,
         await AuditParsing.EnsureAssigneeAsync(entity, command.AssignedUserId, users, cancellationToken);
         var responseType = AuditParsing.ParseResponseType(command.ResponseType);
         await TemplateItemValidation.EnsureRatingScaleValidAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
         var item = entity.AddChecklistItem(command.Prompt, command.ReferenceNotes, responseType, command.SectionName, command.IsRequired,
-            command.AssignedUserId, command.ResponseConfigJson, AuditParsing.ParseRiskRating(command.RiskRating));
+            command.AssignedUserId, command.ResponseConfigJson, AuditParsing.ParseRiskRating(command.RiskRating), command.ControlId);
         audit.Record(AuditEventTypes.AuditChecklistItemAdded, AuditTargetTypes.AuditChecklistItem, entity.Id, payload: new { itemId = item.Id });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return entity.ToDto();
@@ -135,9 +136,9 @@ public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits,
 }
 
 public sealed record EditAuditChecklistItemCommand(
-    Guid AuditId, Guid ItemId, string Prompt, string? ReferenceNotes, string ResponseType, string? ResponseConfigJson, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version, string? RiskRating = null) : ICommand<AuditDto>;
+    Guid AuditId, Guid ItemId, string Prompt, string? ReferenceNotes, string ResponseType, string? ResponseConfigJson, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version, string? RiskRating = null, Guid? ControlId = null) : ICommand<AuditDto>;
 
-public sealed class EditAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IRatingScaleRepository ratingScales, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class EditAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IRatingScaleRepository ratingScales, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<EditAuditChecklistItemCommand, AuditDto>
 {
     public async Task<AuditDto> Handle(EditAuditChecklistItemCommand command, CancellationToken cancellationToken)
@@ -147,8 +148,9 @@ public sealed class EditAuditChecklistItemCommandHandler(IAuditRepository audits
         await AuditParsing.EnsureAssigneeAsync(entity, command.AssignedUserId, users, cancellationToken);
         var responseType = AuditParsing.ParseResponseType(command.ResponseType);
         await TemplateItemValidation.EnsureRatingScaleValidAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
         entity.EditChecklistItem(command.ItemId, command.Prompt, command.ReferenceNotes, responseType, command.ResponseConfigJson,
-            command.SectionName, command.IsRequired, command.AssignedUserId, AuditParsing.ParseRiskRating(command.RiskRating));
+            command.SectionName, command.IsRequired, command.AssignedUserId, AuditParsing.ParseRiskRating(command.RiskRating), command.ControlId);
         audit.Record(AuditEventTypes.AuditChecklistItemEdited, AuditTargetTypes.AuditChecklistItem, entity.Id, payload: new { command.ItemId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return entity.ToDto();

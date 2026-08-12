@@ -38,4 +38,5 @@ public sealed record TemplateItemSnapshot(
     bool IsRequired,
     string? DefaultAssignmentRuleJson,
     string? ResponseConfigJson = null,
-    ExceptionSeverity? RiskRating = null);
+    ExceptionSeverity? RiskRating = null,
+    Guid? ControlId = null);

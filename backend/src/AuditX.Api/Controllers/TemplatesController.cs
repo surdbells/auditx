@@ -65,14 +65,14 @@ public sealed class TemplatesController(IDispatcher dispatcher) : ApiControllerB
     public async Task<IActionResult> AddItem(Guid id, [FromBody] TemplateItemRequest request, CancellationToken cancellationToken)
         => Created(await dispatcher.Send(new AddTemplateItemCommand(
             id, request.Prompt, request.ReferenceNotes, request.ResponseType, request.SectionName, request.IsRequired, request.DefaultAssignmentRuleJson,
-            request.ResponseConfigJson, request.RiskRating), cancellationToken));
+            request.ResponseConfigJson, request.RiskRating, request.ControlId), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageTemplates)]
     [HttpPatch("{id:guid}/items/{itemId:guid}")]
     public async Task<IActionResult> UpdateItem(Guid id, Guid itemId, [FromBody] TemplateItemRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new UpdateTemplateItemCommand(
             id, itemId, request.Prompt, request.ReferenceNotes, request.ResponseType, request.SectionName, request.IsRequired, request.DefaultAssignmentRuleJson,
-            request.ResponseConfigJson, request.RiskRating), cancellationToken));
+            request.ResponseConfigJson, request.RiskRating, request.ControlId), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageTemplates)]
     [HttpDelete("{id:guid}/items/{itemId:guid}")]

@@ -510,6 +510,7 @@ export class TemplateEditorComponent {
           defaultAssignmentRuleJson: movedItem.defaultAssignmentRuleJson,
           responseConfigJson: movedItem.responseConfigJson,
           riskRating: movedItem.riskRating,
+          controlId: movedItem.controlId,
         })
         .pipe(switchMap(() => reorder$))
         .subscribe({ next: () => this.refresh(), error: () => this.refresh() });

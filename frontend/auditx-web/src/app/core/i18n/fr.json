@@ -5026,5 +5026,8 @@
   "exceptionRules.guide.rule.onePerType": "Au plus une règle par type de réponse.",
   "exceptionRules.guide.tip.score": "Le seuil de score ne concerne que les éléments de type Note, seul type de réponse qui obtient un score.",
   "exceptionRules.guide.perm.manage": "Gérer la configuration",
-  "nav.exceptionRules": "Règles d'exception"
+  "nav.exceptionRules": "Règles d'exception",
+  "templatesAdmin.item.control": "Contrôle testé",
+  "templatesAdmin.item.noControl": "(Aucun contrôle)",
+  "templatesAdmin.item.controlHint": "Le contrôle testé par cet élément. Une exception soulevée pour cet élément s'y rattache automatiquement."
 }

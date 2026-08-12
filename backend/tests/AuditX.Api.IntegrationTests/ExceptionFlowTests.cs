@@ -102,6 +102,57 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     }
 
     [Fact]
+    public async Task An_exception_on_a_control_linked_item_auto_links_the_finding_to_that_control()
+    {
+        var admin = await AdminAsync();
+        var users = await UsersByEmailAsync(admin);
+
+        // Register a control the checklist item will test.
+        var control = await DataAsync(await admin.PostAsJsonAsync("/api/v1/controls", new
+        {
+            code = $"CTL-{Guid.NewGuid():N}".Substring(0, 12), title = "Dual authorisation", description = "Maker-checker on payments",
+            controlType = "preventive", frequency = "continuous", ownerUserId = users["manager@auditx.local"],
+        }));
+        var controlId = control.GetProperty("id").GetGuid();
+
+        var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
+        {
+            name = $"Ctrl-linked {Guid.NewGuid():N}", auditType = "branch", startDate = "2027-01-10", targetEndDate = "2027-02-10",
+            leadUserId = users["manager@auditx.local"], auditeeUserId = users["auditee@auditx.local"],
+        }));
+        var auditId = created.GetProperty("id").GetGuid();
+        var version = Version(created);
+
+        // Item that tests the control.
+        var withItem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Is dual authorisation enforced?", responseType = "pass_fail_na", isRequired = true, version, controlId }));
+        version = Version(withItem);
+        Assert.Equal(controlId, withItem.GetProperty("checklistItems")[0].GetProperty("controlId").GetGuid());
+
+        var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        version = Version(withTeam);
+        var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
+        version = Version(planned);
+        var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
+        var itemId = started.GetProperty("checklistItems")[0].GetProperty("id").GetGuid();
+
+        await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses",
+            new { verdict = "fail", comment = "no dual control", isDraft = false, version = await AuditVersionAsync(admin, auditId) }));
+
+        var raised = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = itemId, title = "Segregation gap", severity = "high",
+            rootCause = "no maker-checker", recommendation = "introduce dual control", ownerUserId = users["auditee@auditx.local"],
+        }));
+        var exceptionId = raised.GetProperty("id").GetGuid();
+
+        // The finding is auto-linked to the control the item tested — no manual link step.
+        var links = await DataAsync(await admin.GetAsync($"/api/v1/exceptions/{exceptionId}/links"));
+        var controls = links.GetProperty("controls").EnumerateArray().ToArray();
+        Assert.Contains(controls, c => c.GetProperty("controlId").GetGuid() == controlId);
+    }
+
+    [Fact]
     public async Task A_configured_rule_lets_an_na_response_be_exception_eligible()
     {
         var admin = await AdminAsync();

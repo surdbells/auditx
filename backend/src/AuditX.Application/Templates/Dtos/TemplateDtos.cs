@@ -10,7 +10,8 @@ public sealed record TemplateItemDto(
     bool IsRequired,
     string? DefaultAssignmentRuleJson,
     string? ResponseConfigJson,
-    string? RiskRating);
+    string? RiskRating,
+    Guid? ControlId);
 
 public sealed record RatingScaleDto(Guid Id, string Name, string? Description, bool IsActive, string PointsJson);
 
@@ -49,7 +50,8 @@ public sealed record TemplateItemSnapshotDto(
     bool IsRequired,
     string? DefaultAssignmentRuleJson,
     string? ResponseConfigJson,
-    string? RiskRating);
+    string? RiskRating,
+    Guid? ControlId);
 
 public sealed record TemplateVersionDetailDto(
     int VersionNumber,

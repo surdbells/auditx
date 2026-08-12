@@ -50,6 +50,8 @@ export interface TemplateItem {
   responseConfigJson: string | null;
   /** How severe a failure of this item is; when set, drives the default severity of any exception raised against it. */
   riskRating: ExceptionSeverity | null;
+  /** The internal control this item tests; an exception raised against the item auto-links to it. */
+  controlId: string | null;
 }
 
 /** A point on a rating scale: the value an auditor picks, its label, and its 0-100 score. */
@@ -120,6 +122,7 @@ export interface TemplateItemSnapshot {
   defaultAssignmentRuleJson: string | null;
   responseConfigJson: string | null;
   riskRating: ExceptionSeverity | null;
+  controlId: string | null;
 }
 
 /** Full detail of one published version. */
@@ -167,6 +170,7 @@ export interface SaveTemplateItemRequest {
   defaultAssignmentRuleJson: string | null;
   responseConfigJson?: string | null;
   riskRating?: ExceptionSeverity | null;
+  controlId?: string | null;
 }
 
 export interface ReorderItemsRequest {

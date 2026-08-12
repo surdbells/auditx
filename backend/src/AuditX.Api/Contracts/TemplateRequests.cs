@@ -12,7 +12,8 @@ public sealed record TemplateItemRequest(
     bool IsRequired,
     string? DefaultAssignmentRuleJson,
     string? ResponseConfigJson = null,
-    string? RiskRating = null);
+    string? RiskRating = null,
+    Guid? ControlId = null);
 
 public sealed record CreateRatingScaleRequest(string Name, string? Description, string PointsJson);
 

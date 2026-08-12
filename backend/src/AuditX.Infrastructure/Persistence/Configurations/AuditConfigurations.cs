@@ -131,7 +131,12 @@ public sealed class AuditChecklistItemConfiguration : IEntityTypeConfiguration<A
         builder.Property(i => i.HasException).HasDefaultValue(false);
         builder.Property(i => i.FailJustification);
 
+        // The control this item tests (M-controls). Restrict so a control can't be deleted out from under a
+        // running audit's checklist; the audit owns its own copy of the reference.
+        builder.HasOne<AuditX.Domain.Controls.Control>().WithMany().HasForeignKey(i => i.ControlId).OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(i => new { i.AuditId, i.OrderIndex });
         builder.HasIndex(i => i.AssignedUserId);
+        builder.HasIndex(i => i.ControlId);
     }
 }

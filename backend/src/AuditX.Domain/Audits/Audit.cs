@@ -285,22 +285,22 @@ public sealed class Audit : AggregateRoot
 
     public AuditChecklistItem AddChecklistItem(
         string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired,
-        Guid? assignedUserId, string? responseConfigJson = null, ExceptionSeverity? riskRating = null)
+        Guid? assignedUserId, string? responseConfigJson = null, ExceptionSeverity? riskRating = null, Guid? controlId = null)
     {
         EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
         var section = EnsureSection(sectionName);
-        var item = new AuditChecklistItem(Id, prompt, referenceNotes, responseType, section, _checklistItems.Count, isRequired, assignedUserId, responseConfigJson, riskRating);
+        var item = new AuditChecklistItem(Id, prompt, referenceNotes, responseType, section, _checklistItems.Count, isRequired, assignedUserId, responseConfigJson, riskRating, controlId);
         _checklistItems.Add(item);
         return item;
     }
 
     public void EditChecklistItem(
         Guid itemId, string prompt, string? referenceNotes, ResponseType responseType, string? responseConfigJson,
-        string? sectionName, bool isRequired, Guid? assignedUserId, ExceptionSeverity? riskRating = null)
+        string? sectionName, bool isRequired, Guid? assignedUserId, ExceptionSeverity? riskRating = null, Guid? controlId = null)
     {
         EnsureStatus("audit.checklist_locked", AuditStatus.Draft);
         var section = EnsureSection(sectionName);
-        FindItem(itemId).Update(prompt, referenceNotes, responseType, responseConfigJson, section, isRequired, assignedUserId, riskRating);
+        FindItem(itemId).Update(prompt, referenceNotes, responseType, responseConfigJson, section, isRequired, assignedUserId, riskRating, controlId);
     }
 
     public void RemoveChecklistItem(Guid itemId)

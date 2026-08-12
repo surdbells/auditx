@@ -47,6 +47,7 @@ public sealed class RaiseExceptionCommandHandler(
     IAuditRepository audits,
     IExceptionRepository exceptions,
     IExceptionRaisingRuleRepository raisingRules,
+    IFindingLinkRepository findingLinks,
     IUserRepository users,
     IPermissionResolver permissions,
     IExceptionDefaults defaults,
@@ -139,6 +140,15 @@ public sealed class RaiseExceptionCommandHandler(
         auditEntity.SetItemException(command.ChecklistItemId, true); // M5 write-back (cleared only on cancel)
         audit.Record(AuditEventTypes.ExceptionRaised, AuditTargetTypes.Exception, exception.Id,
             after: new { exception.Title, severity = severity.ToString(), exception.OwnerUserId, exception.IsRecurrence });
+
+        // Auto-link the finding to the control this item tests (P1-B): a failed control test IS a control
+        // deficiency, so the finding↔control link is created without the auditor re-picking the control.
+        if (item.ControlId is { } controlId)
+        {
+            findingLinks.AddControlLink(Domain.Compliance.ExceptionControlLink.Create(exception.Id, controlId, userId));
+            audit.Record(AuditEventTypes.FindingLinkAdded, AuditTargetTypes.Exception, exception.Id,
+                payload: new { ExceptionId = exception.Id, kind = "control", ControlId = controlId, auto = true });
+        }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return exception.ToDto(today);

@@ -103,12 +103,12 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpPost("{id:guid}/checklist/items")]
     public async Task<IActionResult> AddChecklistItem(Guid id, [FromBody] AddAuditChecklistItemRequest request, CancellationToken cancellationToken)
-        => Created(await dispatcher.Send(new AddAuditChecklistItemCommand(id, request.Prompt, request.ReferenceNotes, request.ResponseType, request.ResponseConfigJson, request.SectionName, request.IsRequired, request.AssignedUserId, request.Version, request.RiskRating), cancellationToken));
+        => Created(await dispatcher.Send(new AddAuditChecklistItemCommand(id, request.Prompt, request.ReferenceNotes, request.ResponseType, request.ResponseConfigJson, request.SectionName, request.IsRequired, request.AssignedUserId, request.Version, request.RiskRating, request.ControlId), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpPatch("{id:guid}/checklist/items/{itemId:guid}")]
     public async Task<IActionResult> EditChecklistItem(Guid id, Guid itemId, [FromBody] EditAuditChecklistItemRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new EditAuditChecklistItemCommand(id, itemId, request.Prompt, request.ReferenceNotes, request.ResponseType, request.ResponseConfigJson, request.SectionName, request.IsRequired, request.AssignedUserId, request.Version, request.RiskRating), cancellationToken));
+        => Envelope(await dispatcher.Send(new EditAuditChecklistItemCommand(id, itemId, request.Prompt, request.ReferenceNotes, request.ResponseType, request.ResponseConfigJson, request.SectionName, request.IsRequired, request.AssignedUserId, request.Version, request.RiskRating, request.ControlId), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpDelete("{id:guid}/checklist/items/{itemId:guid}")]

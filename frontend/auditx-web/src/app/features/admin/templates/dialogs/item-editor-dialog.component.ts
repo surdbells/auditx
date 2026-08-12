@@ -19,7 +19,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { RatingScalesService } from '../../../../core/services/rating-scales.service';
+import { ControlsService } from '../../../../core/services/controls.service';
 import {
+  ControlListItem,
   ExceptionSeverity,
   RatingScale,
   ResponseType,
@@ -132,6 +134,17 @@ function parseRatingScaleId(responseConfigJson: string | null | undefined): stri
           <mat-hint>{{ 'templatesAdmin.item.riskRatingHint' | t }}</mat-hint>
         </mat-form-field>
 
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'templatesAdmin.item.control' | t }}</mat-label>
+          <mat-select formControlName="controlId">
+            <mat-option [value]="null">{{ 'templatesAdmin.item.noControl' | t }}</mat-option>
+            @for (c of controls(); track c.id) {
+              <mat-option [value]="c.id">{{ c.code }} — {{ c.title }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>{{ 'templatesAdmin.item.controlHint' | t }}</mat-hint>
+        </mat-form-field>
+
         <mat-checkbox formControlName="isRequired">{{ 'templatesAdmin.editor.required' | t }}</mat-checkbox>
       </form>
     </mat-dialog-content>
@@ -176,6 +189,7 @@ export class ItemEditorDialogComponent {
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
   private readonly ratingScalesService = inject(RatingScalesService);
+  private readonly controlsService = inject(ControlsService);
 
   readonly responseTypes = RESPONSE_TYPES.map((rt) => ({
     value: rt.value,
@@ -190,6 +204,7 @@ export class ItemEditorDialogComponent {
   ];
 
   readonly ratingScales = signal<RatingScale[]>([]);
+  readonly controls = signal<ControlListItem[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     prompt: [this.data.item?.prompt ?? '', [Validators.required]],
@@ -202,10 +217,13 @@ export class ItemEditorDialogComponent {
     isRequired: [this.data.item?.isRequired ?? false],
     ratingScaleId: [parseRatingScaleId(this.data.item?.responseConfigJson)],
     riskRating: [(this.data.item?.riskRating ?? null) as ExceptionSeverity | null],
+    controlId: [(this.data.item?.controlId ?? null) as string | null],
   });
 
   constructor() {
     this.ratingScalesService.list('true').subscribe((scales) => this.ratingScales.set(scales));
+    // Load active controls for the picker (load-all cap; the register is small enough to list in a dropdown).
+    this.controlsService.list({ includeRetired: false, page: 1, pageSize: 0 }).subscribe((page) => this.controls.set(page.items));
 
     this.form.controls.responseType.valueChanges.subscribe((type) => {
       const ratingScaleId = this.form.controls.ratingScaleId;
@@ -242,6 +260,7 @@ export class ItemEditorDialogComponent {
         this.data.item?.defaultAssignmentRuleJson ?? null,
       responseConfigJson,
       riskRating: v.riskRating,
+      controlId: v.controlId,
     };
     this.dialogRef.close(result);
   }

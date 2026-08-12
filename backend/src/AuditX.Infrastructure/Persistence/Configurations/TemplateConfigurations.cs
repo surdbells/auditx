@@ -59,8 +59,11 @@ public sealed class TemplateItemConfiguration : IEntityTypeConfiguration<Templat
         builder.Property(i => i.RiskRating)
             .HasConversion(new SnakeCaseEnumConverter<ExceptionSeverity>())
             .HasMaxLength(40);
+        // The control this item tests. Restrict — a control referenced by a template can't be hard-deleted.
+        builder.HasOne<AuditX.Domain.Controls.Control>().WithMany().HasForeignKey(i => i.ControlId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(i => i.TemplateId);
+        builder.HasIndex(i => i.ControlId);
     }
 }
 
