@@ -5134,5 +5134,7 @@
   "audits.kickoff.action.reschedule": "Reschedule",
   "audits.notify.kickoffScheduled": "Kickoff meeting scheduled — the auditee has been notified.",
   "common.selectAll": "Select all",
-  "common.clearAll": "Clear"
+  "common.clearAll": "Clear",
+  "audits.history.observation": "Observation",
+  "audits.history.recommendation": "Recommendation"
 }

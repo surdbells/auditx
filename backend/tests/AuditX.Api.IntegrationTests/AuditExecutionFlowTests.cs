@@ -115,6 +115,59 @@ public sealed class AuditExecutionFlowTests(ApiFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public async Task Response_captures_observation_and_recommendation_and_shows_them_in_history()
+    {
+        var admin = await AdminAsync();
+        var users = await UsersByEmailAsync(admin);
+
+        var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
+        {
+            name = $"ObsRec {Guid.NewGuid():N}",
+            auditType = "branch",
+            startDate = "2027-01-10",
+            targetEndDate = "2027-02-10",
+            leadUserId = users["manager@auditx.local"],
+            auditeeUserId = users["auditee@auditx.local"],
+        }));
+        var auditId = created.GetProperty("id").GetGuid();
+        var version = Version(created);
+
+        var a1 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Segregation of duties enforced?", responseType = "pass_fail_na", isRequired = true, version }));
+        version = Version(a1);
+        var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        version = Version(withTeam);
+        var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
+        version = Version(planned);
+        var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
+        var itemId = started.GetProperty("checklistItems")[0].GetProperty("id").GetGuid();
+
+        // Finalise a Fail with an observation + recommendation.
+        var response = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses", new
+        {
+            verdict = "fail",
+            comment = "duties are combined",
+            observation = "The same clerk both posts and approves journal entries.",
+            recommendation = "Split posting and approval between two staff members.",
+            isDraft = false,
+            version = await VersionAsync(admin, auditId),
+        }));
+        Assert.Equal("The same clerk both posts and approves journal entries.", response.GetProperty("observation").GetString());
+        Assert.Equal("Split posting and approval between two staff members.", response.GetProperty("recommendation").GetString());
+
+        // The GET returns them, and the history timeline records them in the after-snapshot.
+        var fetched = await DataAsync(await admin.GetAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses"));
+        Assert.Equal("The same clerk both posts and approves journal entries.", fetched.GetProperty("observation").GetString());
+
+        var history = await DataAsync(await admin.GetAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses/history"));
+        var latest = history.EnumerateArray().Last();
+        using var state = JsonDocument.Parse(latest.GetProperty("stateJson").GetString()!);
+        Assert.Equal("The same clerk both posts and approves journal entries.", state.RootElement.GetProperty("observation").GetString());
+        Assert.Equal("Split posting and approval between two staff members.", state.RootElement.GetProperty("recommendation").GetString());
+    }
+
+    [Fact]
     public async Task Evidence_upload_rejects_disallowed_mime()
     {
         var admin = await AdminAsync();

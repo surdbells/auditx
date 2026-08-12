@@ -44,6 +44,10 @@ export interface RespondItemDialogData {
 export interface RespondItemDialogResult {
   verdict: ResponseVerdict | null;
   comment: string | null;
+  /** Auditor's observation — what was found. Optional. */
+  observation: string | null;
+  /** Auditor's recommendation — suggested corrective action. Optional. */
+  recommendation: string | null;
   /** Type-specific captured value, JSON-encoded (null for pure verdict types). */
   valueJson: string | null;
   /** True = Save draft, false = Submit. */
@@ -147,6 +151,18 @@ const failNaNeedsComment: ValidatorFn = (group): ValidationErrors | null => {
             <mat-error>A comment is required for Fail or N/A.</mat-error>
           }
         </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Observation (optional)</mat-label>
+          <textarea matInput formControlName="observation" rows="2"></textarea>
+          <mat-hint>What was found during the review.</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Recommendation (optional)</mat-label>
+          <textarea matInput formControlName="recommendation" rows="2"></textarea>
+          <mat-hint>The suggested corrective action.</mat-hint>
+        </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -223,6 +239,8 @@ export class RespondItemDialogComponent {
       verdict: [(this.data.current?.verdict ?? null) as ResponseVerdict | null],
       value: [parseValue(this.data.current?.valueJson ?? null)],
       comment: [this.data.current?.comment ?? ''],
+      observation: [this.data.current?.observation ?? ''],
+      recommendation: [this.data.current?.recommendation ?? ''],
     },
     { validators: [failNaNeedsComment] },
   );
@@ -295,6 +313,8 @@ export class RespondItemDialogComponent {
     this.dialogRef.close({
       verdict: v.verdict,
       comment: v.comment.trim() || null,
+      observation: v.observation.trim() || null,
+      recommendation: v.recommendation.trim() || null,
       valueJson: this.isValueType() ? buildValue(this.responseType, v.value) : null,
       isDraft,
     });

@@ -173,7 +173,7 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     // self-assessor without global RespondItem can still complete their own self-assessment.
     [HttpPost("{id:guid}/items/{itemId:guid}/responses")]
     public async Task<IActionResult> SubmitResponse(Guid id, Guid itemId, [FromBody] SubmitResponseRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new SubmitResponseCommand(id, itemId, request.Verdict, request.Comment, request.ValueJson, request.IsDraft, request.Version), cancellationToken));
+        => Envelope(await dispatcher.Send(new SubmitResponseCommand(id, itemId, request.Verdict, request.Comment, request.ValueJson, request.IsDraft, request.Version, request.Observation, request.Recommendation), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewAudit)]
     [HttpGet("{id:guid}/items/{itemId:guid}/responses")]

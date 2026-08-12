@@ -25,6 +25,8 @@ type LoadState = 'loading' | 'ready' | 'error';
 interface ResponseStateSnapshot {
   verdict?: 'pass' | 'fail' | 'na' | null;
   comment?: string | null;
+  observation?: string | null;
+  recommendation?: string | null;
   valueJson?: string | null;
   isDraft?: boolean;
   score?: number | null;
@@ -333,6 +335,18 @@ export class ResponseHistoryDialogComponent {
     const commentWas = before ? before.comment?.trim() || this.i18n.translate('audits.history.none') : null;
     if (after.comment || commentWas) {
       diffs.push(this.diff(this.i18n.translate('audits.history.comment'), commentWas, commentNow));
+    }
+
+    const observationNow = after.observation?.trim() || this.i18n.translate('audits.history.none');
+    const observationWas = before ? before.observation?.trim() || this.i18n.translate('audits.history.none') : null;
+    if (after.observation || (before && before.observation)) {
+      diffs.push(this.diff(this.i18n.translate('audits.history.observation'), observationWas, observationNow));
+    }
+
+    const recommendationNow = after.recommendation?.trim() || this.i18n.translate('audits.history.none');
+    const recommendationWas = before ? before.recommendation?.trim() || this.i18n.translate('audits.history.none') : null;
+    if (after.recommendation || (before && before.recommendation)) {
+      diffs.push(this.diff(this.i18n.translate('audits.history.recommendation'), recommendationWas, recommendationNow));
     }
 
     if (after.score !== null && after.score !== undefined) {

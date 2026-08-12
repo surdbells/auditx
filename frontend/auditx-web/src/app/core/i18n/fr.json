@@ -5134,5 +5134,7 @@
   "audits.kickoff.action.reschedule": "Reprogrammer",
   "audits.notify.kickoffScheduled": "Réunion de lancement planifiée — l’audité a été notifié.",
   "common.selectAll": "Tout sélectionner",
-  "common.clearAll": "Effacer"
+  "common.clearAll": "Effacer",
+  "audits.history.observation": "Observation",
+  "audits.history.recommendation": "Recommandation"
 }

@@ -4,7 +4,9 @@ using AuditX.Domain.Enums;
 namespace AuditX.Domain.Audits;
 
 /// <summary>Immutable snapshot of a response's mutable state, used for the audit-trail before/after.</summary>
-public sealed record ResponseState(ResponseVerdict? Verdict, string? Comment, string? ValueJson, bool IsDraft, int Version, decimal? Score = null);
+public sealed record ResponseState(
+    ResponseVerdict? Verdict, string? Comment, string? ValueJson, bool IsDraft, int Version,
+    decimal? Score = null, string? Observation = null, string? Recommendation = null);
 
 /// <summary>Result of recording a response: the entity, its before/after snapshots, and whether the audit auto-transitioned to Under Review.</summary>
 public sealed record ResponseMutation(ChecklistResponse Response, ResponseState? Before, ResponseState After, bool AutoTransitioned);
@@ -30,6 +32,12 @@ public sealed class ChecklistResponse : Entity, IBelongsToAggregate
     public ResponseVerdict? Verdict { get; private set; }
 
     public string? Comment { get; private set; }
+
+    /// <summary>Auditor's observation — what was seen/found. Free text, optional; captured alongside the verdict.</summary>
+    public string? Observation { get; private set; }
+
+    /// <summary>Auditor's recommendation — the suggested corrective action. Free text, optional.</summary>
+    public string? Recommendation { get; private set; }
 
     /// <summary>Type-specific captured value JSON for value response types (text/number/date/rating/choice). Opaque to the domain.</summary>
     public string? ValueJson { get; private set; }
@@ -60,14 +68,14 @@ public sealed class ChecklistResponse : Entity, IBelongsToAggregate
         ResponseVersion = 0;
     }
 
-    public ResponseState ToState() => new(Verdict, Comment, ValueJson, IsDraft, ResponseVersion, Score);
+    public ResponseState ToState() => new(Verdict, Comment, ValueJson, IsDraft, ResponseVersion, Score, Observation, Recommendation);
 
     /// <summary>
     /// Create-or-update the response (BR-M5-001/002). Verdict types require a verdict on finalise; value types
     /// (<paramref name="isValueType"/>) require a captured value instead, with the verdict optional so the item
     /// can still be marked Fail to drive an exception. A Fail/N-A verdict always requires a comment.
     /// </summary>
-    internal void Apply(ResponseVerdict? verdict, string? comment, string? valueJson, bool isDraft, Guid actorUserId, bool requireCommentOnPass, bool isValueType, DateTimeOffset nowUtc)
+    internal void Apply(ResponseVerdict? verdict, string? comment, string? valueJson, bool isDraft, Guid actorUserId, bool requireCommentOnPass, bool isValueType, DateTimeOffset nowUtc, string? observation = null, string? recommendation = null)
     {
         var trimmed = string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
         var value = string.IsNullOrWhiteSpace(valueJson) ? null : valueJson.Trim();
@@ -104,6 +112,8 @@ public sealed class ChecklistResponse : Entity, IBelongsToAggregate
 
         Verdict = verdict;
         Comment = trimmed;
+        Observation = string.IsNullOrWhiteSpace(observation) ? null : observation.Trim();
+        Recommendation = string.IsNullOrWhiteSpace(recommendation) ? null : recommendation.Trim();
         ValueJson = value;
         IsDraft = isDraft;
         ResponderUserId = actorUserId;

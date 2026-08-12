@@ -261,6 +261,10 @@ export interface ChecklistResponse {
   checklistItemId: string;
   verdict: ResponseVerdict | null;
   comment?: string | null;
+  /** Auditor's observation — what was found. Optional free text. */
+  observation?: string | null;
+  /** Auditor's recommendation — suggested corrective action. Optional free text. */
+  recommendation?: string | null;
   /** Type-specific captured value JSON (text/number/date/rating/choice). */
   valueJson?: string | null;
   responderUserId: string;
@@ -356,6 +360,8 @@ export interface FailWithoutExceptionResult {
 export interface SubmitResponseRequest {
   verdict?: ResponseVerdict | null;
   comment?: string | null;
+  observation?: string | null;
+  recommendation?: string | null;
   valueJson?: string | null;
   isDraft: boolean;
   version: string;

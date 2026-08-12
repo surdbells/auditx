@@ -15,7 +15,7 @@ using FluentValidation;
 
 namespace AuditX.Application.Execution.Commands;
 
-public sealed record SubmitResponseCommand(Guid AuditId, Guid ItemId, string? Verdict, string? Comment, string? ValueJson, bool IsDraft, string Version) : ICommand<ChecklistResponseDto>;
+public sealed record SubmitResponseCommand(Guid AuditId, Guid ItemId, string? Verdict, string? Comment, string? ValueJson, bool IsDraft, string Version, string? Observation = null, string? Recommendation = null) : ICommand<ChecklistResponseDto>;
 
 public sealed class SubmitResponseCommandValidator : AbstractValidator<SubmitResponseCommand>
 {
@@ -52,7 +52,7 @@ public sealed class SubmitResponseCommandHandler(
         var verdict = RespondAuthorization.ParseVerdict(command.Verdict, command.IsDraft);
         var settings = await bankSettings.GetAsync(cancellationToken);
 
-        var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, settings.RequireCommentOnPass, clock.UtcNow, command.ValueJson);
+        var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, settings.RequireCommentOnPass, clock.UtcNow, command.ValueJson, command.Observation, command.Recommendation);
 
         // Post-response scoring: computed here (the aggregate can't resolve a RatingScale) and applied to the
         // just-recorded response before it's persisted/snapshotted.
@@ -77,7 +77,7 @@ public sealed class SubmitResponseCommandHandler(
     }
 
     private static object? Snapshot(ResponseState? state)
-        => state is null ? null : new { verdict = state.Verdict is { } v ? v.ToSnake() : null, state.Comment, state.ValueJson, state.IsDraft, state.Version, state.Score };
+        => state is null ? null : new { verdict = state.Verdict is { } v ? v.ToSnake() : null, state.Comment, state.Observation, state.Recommendation, state.ValueJson, state.IsDraft, state.Version, state.Score };
 }
 
 public sealed record DiscardDraftCommand(Guid AuditId, Guid ItemId, string Version) : ICommand<Unit>;
