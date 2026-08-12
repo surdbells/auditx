@@ -91,3 +91,22 @@ public sealed class ExceptionRegulationLinkConfiguration : IEntityTypeConfigurat
         builder.HasIndex(l => l.RegulationId);
     }
 }
+
+public sealed class ControlRiskLinkConfiguration : IEntityTypeConfiguration<ControlRiskLink>
+{
+    public void Configure(EntityTypeBuilder<ControlRiskLink> builder)
+    {
+        builder.ToTable("control_risk_links");
+        builder.HasKey(l => l.Id);
+        builder.Property(l => l.Id).ValueGeneratedNever();
+
+        // Both registers are independent — restrict on both sides so neither a control nor a risk can be
+        // hard-deleted while a link references it (both are soft-deletable in practice).
+        builder.HasOne<Control>().WithMany().HasForeignKey(l => l.ControlId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<AuditX.Domain.Risks.Risk>().WithMany().HasForeignKey(l => l.RiskId).OnDelete(DeleteBehavior.Restrict);
+
+        // At most one link per (control, risk).
+        builder.HasIndex(l => new { l.ControlId, l.RiskId }).IsUnique();
+        builder.HasIndex(l => l.RiskId);
+    }
+}

@@ -22,3 +22,6 @@ public sealed record SetRegulationStatusRequest(bool IsActive, string Version);
 public sealed record LinkControlRequest(Guid ControlId);
 
 public sealed record LinkRegulationRequest(Guid RegulationId);
+
+// Control ↔ risk register link
+public sealed record LinkRiskToControlRequest(Guid RiskId);

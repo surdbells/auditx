@@ -185,3 +185,19 @@ export interface LinkControlRequest {
 export interface LinkRegulationRequest {
   regulationId: string;
 }
+
+/* ---- Control <-> risk register link ---- */
+
+/** A risk linked to a control (with the risk's title/category/status for display). */
+export interface ControlRiskLink {
+  linkId: string;
+  riskId: string;
+  title: string;
+  category: string;
+  status: string;
+  linkedAt: string;
+}
+
+export interface LinkRiskToControlRequest {
+  riskId: string;
+}

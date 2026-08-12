@@ -117,6 +117,9 @@
                     <button mat-menu-item type="button" (click)="edit(c)">
                       <app-icon name="edit" /><span>{{ 'control.actions.edit' | t }}</span>
                     </button>
+                    <button mat-menu-item type="button" (click)="manageRisks(c)">
+                      <app-icon name="link" /><span>{{ 'control.actions.linkedRisks' | t }}</span>
+                    </button>
                     <button mat-menu-item type="button" (click)="toggleActive(c)">
                       <app-icon [name]="c.isActive ? 'toggle_off' : 'toggle_on'" />
                       <span>{{ (c.isActive ? 'control.actions.retire' : 'control.actions.reactivate') | t }}</span>

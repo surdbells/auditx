@@ -18,3 +18,6 @@ public sealed record FindingControlLinkDto(Guid LinkId, Guid ControlId, string C
 
 /// <summary>A regulation linked to a finding (with the regulation's code/name for display).</summary>
 public sealed record FindingRegulationLinkDto(Guid LinkId, Guid RegulationId, string Code, string Name, DateTimeOffset LinkedAt);
+
+/// <summary>A risk linked to a control (with the risk's title/category/status for display on the control side).</summary>
+public sealed record ControlRiskLinkDto(Guid LinkId, Guid RiskId, string Title, string Category, string Status, DateTimeOffset LinkedAt);

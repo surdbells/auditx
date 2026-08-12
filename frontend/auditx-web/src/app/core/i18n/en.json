@@ -5029,5 +5029,14 @@
   "nav.exceptionRules": "Exception rules",
   "templatesAdmin.item.control": "Control tested",
   "templatesAdmin.item.noControl": "(No control)",
-  "templatesAdmin.item.controlHint": "The control this item tests. An exception raised against the item auto-links to it."
+  "templatesAdmin.item.controlHint": "The control this item tests. An exception raised against the item auto-links to it.",
+  "control.actions.linkedRisks": "Linked risks",
+  "control.risks.title": "Linked risks",
+  "control.risks.addLabel": "Add a risk this control mitigates",
+  "control.risks.add": "Link",
+  "control.risks.remove": "Unlink",
+  "control.risks.empty": "No risks linked to this control yet.",
+  "control.risks.close": "Close",
+  "control.risks.linked": "Risk linked to the control.",
+  "control.risks.unlinked": "Risk unlinked from the control."
 }

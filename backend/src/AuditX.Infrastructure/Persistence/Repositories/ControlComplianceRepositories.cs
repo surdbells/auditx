@@ -116,3 +116,21 @@ public sealed class FindingLinkRepository(AppDbContext db) : IFindingLinkReposit
 
     public void RemoveRegulationLink(ExceptionRegulationLink link) => db.ExceptionRegulationLinks.Remove(link);
 }
+
+public sealed class ControlRiskLinkRepository(AppDbContext db) : IControlRiskLinkRepository
+{
+    public async Task<IReadOnlyList<ControlRiskLinkRow>> ListRisksForControlAsync(Guid controlId, CancellationToken cancellationToken = default)
+        => await db.ControlRiskLinks.AsNoTracking()
+            .Where(l => l.ControlId == controlId)
+            .Join(db.Risks, l => l.RiskId, r => r.Id, (l, r) => new { l, r })
+            .OrderBy(x => x.r.Title)
+            .Select(x => new ControlRiskLinkRow(x.l.Id, x.r.Id, x.r.Title, x.r.Category, x.r.Status, x.l.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+    public Task<ControlRiskLink?> GetLinkAsync(Guid controlId, Guid riskId, CancellationToken cancellationToken = default)
+        => db.ControlRiskLinks.FirstOrDefaultAsync(l => l.ControlId == controlId && l.RiskId == riskId, cancellationToken);
+
+    public void Add(ControlRiskLink link) => db.ControlRiskLinks.Add(link);
+
+    public void Remove(ControlRiskLink link) => db.ControlRiskLinks.Remove(link);
+}

@@ -38,6 +38,10 @@ import {
   ControlEditorDialogData,
   ControlEditorResult,
 } from '../dialogs/control-editor-dialog.component';
+import {
+  ControlRisksDialogComponent,
+  ControlRisksDialogData,
+} from '../dialogs/control-risks-dialog.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
@@ -254,5 +258,14 @@ export class ControlRegisterComponent {
           },
         }),
     });
+  }
+
+  manageRisks(row: ControlListItem): void {
+    const data: ControlRisksDialogData = {
+      controlId: row.id,
+      controlCode: row.code,
+      controlTitle: row.title,
+    };
+    this.dialog.open(ControlRisksDialogComponent, { data, width: '520px' });
   }
 }

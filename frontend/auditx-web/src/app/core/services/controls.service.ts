@@ -6,6 +6,8 @@ import {
   Control,
   ControlListItem,
   ControlQuery,
+  ControlRiskLink,
+  LinkRiskToControlRequest,
   PagedResult,
   RegisterControlRequest,
   SetControlStatusRequest,
@@ -47,5 +49,19 @@ export class ControlsService {
 
   delete(id: string, version: string): Observable<void> {
     return this.api.deleteVoid(`/controls/${id}?version=${encodeURIComponent(version)}`);
+  }
+
+  /* ---- Linked risks (control ↔ risk register) ---- */
+
+  listRisks(id: string): Observable<ControlRiskLink[]> {
+    return this.api.get<ControlRiskLink[]>(`/controls/${id}/risks`);
+  }
+
+  linkRisk(id: string, body: LinkRiskToControlRequest): Observable<ControlRiskLink> {
+    return this.api.post<ControlRiskLink>(`/controls/${id}/risks`, body);
+  }
+
+  unlinkRisk(id: string, riskId: string): Observable<void> {
+    return this.api.deleteVoid(`/controls/${id}/risks/${riskId}`);
   }
 }

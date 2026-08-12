@@ -281,4 +281,51 @@ public sealed class ControlComplianceFlowTests(ApiFactory factory) : IClassFixtu
         Assert.True(row.GetProperty("linkedFindings").GetInt32() >= 1);
         Assert.True(row.GetProperty("openFindings").GetInt32() >= 1);
     }
+
+    [Fact]
+    public async Task Control_risk_link_is_idempotent_listable_and_removable()
+    {
+        var admin = await LoginAsync("admin");
+        var users = await UsersByEmailAsync(admin);
+        var owner = users["manager@auditx.local"];
+
+        var control = await RegisterControlAsync(admin, owner);
+        var controlId = control.GetProperty("id").GetGuid();
+
+        var risk = await DataAsync(await admin.PostAsJsonAsync("/api/v1/risks", new
+        {
+            title = $"Wire-transfer fraud {Guid.NewGuid():N}", description = "Unauthorised outbound payments",
+            category = "Operational", ownerUserId = owner, inherentLikelihood = 4, inherentImpact = 5,
+        }));
+        var riskId = risk.GetProperty("id").GetGuid();
+
+        // Link, then link again — idempotent (same link row, no duplicate, no error).
+        var linked = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/controls/{controlId}/risks", new { riskId }));
+        var firstLinkId = linked.GetProperty("linkId").GetGuid();
+        var relinked = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/controls/{controlId}/risks", new { riskId }));
+        Assert.Equal(firstLinkId, relinked.GetProperty("linkId").GetGuid());
+
+        // It shows up in the control's linked-risks list with the risk's title + status.
+        var list = await DataAsync(await admin.GetAsync($"/api/v1/controls/{controlId}/risks"));
+        var linkRow = list.EnumerateArray().Single();
+        Assert.Equal(riskId, linkRow.GetProperty("riskId").GetGuid());
+        Assert.Equal("open", linkRow.GetProperty("status").GetString());
+
+        // Unlink removes it.
+        (await admin.DeleteAsync($"/api/v1/controls/{controlId}/risks/{riskId}")).EnsureSuccessStatusCode();
+        var afterUnlink = await DataAsync(await admin.GetAsync($"/api/v1/controls/{controlId}/risks"));
+        Assert.Equal(0, afterUnlink.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Linking_an_unknown_risk_to_a_control_is_rejected()
+    {
+        var admin = await LoginAsync("admin");
+        var owner = (await UsersByEmailAsync(admin))["manager@auditx.local"];
+        var control = await RegisterControlAsync(admin, owner);
+        var controlId = control.GetProperty("id").GetGuid();
+
+        var response = await admin.PostAsJsonAsync($"/api/v1/controls/{controlId}/risks", new { riskId = Guid.NewGuid() });
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }

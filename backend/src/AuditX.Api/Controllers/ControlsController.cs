@@ -55,6 +55,26 @@ public sealed class ControlsController(IDispatcher dispatcher) : ApiControllerBa
         await dispatcher.Send(new DeleteControlCommand(id, version), cancellationToken);
         return NoContent();
     }
+
+    // ---- Linked risks (control↔risk many-to-many) ----
+
+    [RequirePermission(PermissionKeys.ViewControls)]
+    [HttpGet("{id:guid}/risks")]
+    public async Task<IActionResult> ListRisks(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListControlRisksQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageControls)]
+    [HttpPost("{id:guid}/risks")]
+    public async Task<IActionResult> LinkRisk(Guid id, [FromBody] LinkRiskToControlRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(new LinkRiskToControlCommand(id, request.RiskId), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageControls)]
+    [HttpDelete("{id:guid}/risks/{riskId:guid}")]
+    public async Task<IActionResult> UnlinkRisk(Guid id, Guid riskId, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new UnlinkRiskFromControlCommand(id, riskId), cancellationToken);
+        return NoContent();
+    }
 }
 
 /// <summary>Regulation / compliance register (P1-B). Reads require ViewControls; mutations require ManageControls.</summary>

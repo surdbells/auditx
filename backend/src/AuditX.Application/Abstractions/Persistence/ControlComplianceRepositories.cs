@@ -42,6 +42,21 @@ public interface IRegulationRepository
     void Add(Regulation regulation);
 }
 
+/// <summary>Enriched control↔risk link row (joined to the risk for display on the control side).</summary>
+public sealed record ControlRiskLinkRow(Guid LinkId, Guid RiskId, string Title, string Category, RiskStatus Status, DateTimeOffset LinkedAt);
+
+/// <summary>Persistence port for the control↔risk register link rows (P1-B).</summary>
+public interface IControlRiskLinkRepository
+{
+    Task<IReadOnlyList<ControlRiskLinkRow>> ListRisksForControlAsync(Guid controlId, CancellationToken cancellationToken = default);
+
+    Task<ControlRiskLink?> GetLinkAsync(Guid controlId, Guid riskId, CancellationToken cancellationToken = default);
+
+    void Add(ControlRiskLink link);
+
+    void Remove(ControlRiskLink link);
+}
+
 /// <summary>Enriched finding↔control link row (joined to the control for display).</summary>
 public sealed record FindingControlLinkRow(Guid LinkId, Guid ControlId, string Code, string Title, DateTimeOffset LinkedAt);
 
