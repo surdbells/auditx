@@ -130,6 +130,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<ExceptionRaisingRule> ExceptionRaisingRules => Set<ExceptionRaisingRule>();
 
+    public DbSet<RootCauseGap> RootCauseGaps => Set<RootCauseGap>();
+
+    public DbSet<RootCauseGapExceptionLink> RootCauseGapExceptionLinks => Set<RootCauseGapExceptionLink>();
+
     public DbSet<MapAction> MapActions => Set<MapAction>();
 
     public DbSet<FindingVerification> FindingVerifications => Set<FindingVerification>();

@@ -65,3 +65,14 @@ public sealed record ExceptionActionResult(ExceptionDto? Exception, Guid? Pendin
 public sealed record ExceptionHistoryEntryDto(Guid Id, string EventType, Guid? ActorUserId, DateTimeOffset OccurredAtUtc, string? PayloadJson);
 
 public sealed record ExceptionRaisingRuleDto(Guid Id, string ResponseType, bool AllowOnNa, decimal? ScoreThreshold, bool IsActive);
+
+/// <summary>An exception (finding) linked to a root-cause gap, with light display fields.</summary>
+public sealed record RootCauseGapLinkedExceptionDto(Guid LinkId, Guid ExceptionId, string Title, string Severity, string Status);
+
+public sealed record RootCauseGapDto(
+    Guid Id, string Title, string? Description, string? Category, Guid OwnerUserId, DateOnly? TargetDate, string Status,
+    Guid IdentifiedByUserId, DateTimeOffset IdentifiedAt, string? ClosureRationale, Guid? ClosedByUserId, DateTimeOffset? ClosedAt,
+    string Version, IReadOnlyList<RootCauseGapLinkedExceptionDto> LinkedExceptions);
+
+public sealed record RootCauseGapListItemDto(
+    Guid Id, string Title, string? Category, Guid OwnerUserId, DateOnly? TargetDate, string Status, DateTimeOffset IdentifiedAt, int LinkedExceptionCount);

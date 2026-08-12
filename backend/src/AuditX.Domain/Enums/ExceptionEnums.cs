@@ -9,6 +9,13 @@ public enum ExceptionSeverity
     Critical,
 }
 
+/// <summary>Lifecycle of a systemic root-cause gap tracked across findings.</summary>
+public enum RootCauseGapStatus
+{
+    Open,
+    Closed,
+}
+
 /// <summary>
 /// The exception lifecycle (M6). Exactly seven persisted states (PRD/BRD authoritative). The Critical-closure
 /// CIA hold is modelled as the <c>CiaPending</c> flag within <see cref="PendingClosure"/>, not an eighth status.

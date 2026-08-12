@@ -1,0 +1,30 @@
+.rcg__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.rcg__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.rcg__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.rcg__table {
+  width: 100%;
+}
+
+.rcg__title-link {
+  padding: 0;
+  min-width: 0;
+  font-weight: 500;
+  text-align: left;
+}
+
+.rcg__cat {
+  font-size: 0.8125rem;
+}

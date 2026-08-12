@@ -180,3 +180,36 @@ public sealed class ExceptionRaisingRuleRepository(AppDbContext db) : IException
 
     public void Add(ExceptionRaisingRule rule) => db.ExceptionRaisingRules.Add(rule);
 }
+
+public sealed class RootCauseGapRepository(AppDbContext db) : IRootCauseGapRepository
+{
+    public Task<RootCauseGap?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => db.RootCauseGaps.Include(g => g.Links).FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
+
+    public async Task<PagedResult<RootCauseGap>> SearchAsync(RootCauseGapStatus? status, string? search, PageSpec page, CancellationToken cancellationToken = default)
+    {
+        var query = db.RootCauseGaps.AsNoTracking().Include(g => g.Links).AsQueryable();
+        if (status is { } s)
+        {
+            query = query.Where(g => g.Status == s);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(g => g.Title.Contains(term) || (g.Description != null && g.Description.Contains(term)));
+        }
+
+        return await query.OrderByDescending(g => g.IdentifiedAt).ThenBy(g => g.Id).ToPagedResultAsync(page, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<RootCauseGapLinkedExceptionRow>> ListLinkedExceptionsAsync(Guid gapId, CancellationToken cancellationToken = default)
+        => await db.RootCauseGapExceptionLinks.AsNoTracking()
+            .Where(l => l.RootCauseGapId == gapId)
+            .Join(db.Exceptions, l => l.ExceptionId, e => e.Id, (l, e) => new { l, e })
+            .OrderBy(x => x.e.Title)
+            .Select(x => new RootCauseGapLinkedExceptionRow(x.l.Id, x.e.Id, x.e.Title, x.e.Severity, x.e.Status))
+            .ToListAsync(cancellationToken);
+
+    public void Add(RootCauseGap gap) => db.RootCauseGaps.Add(gap);
+}

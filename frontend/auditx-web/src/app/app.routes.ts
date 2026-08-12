@@ -426,6 +426,15 @@ export const routes: Routes = [
           ).then((m) => m.ExceptionsListComponent),
       },
       {
+        path: 'root-cause-gaps',
+        title: 'Root-cause Gaps · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewExceptions)],
+        loadComponent: () =>
+          import(
+            './features/exceptions/root-cause-gaps/root-cause-gaps.component'
+          ).then((m) => m.RootCauseGapsComponent),
+      },
+      {
         path: 'exceptions/:id',
         title: 'Exception · AuditX',
         canActivate: [permissionGuard(Permissions.ViewExceptions)],

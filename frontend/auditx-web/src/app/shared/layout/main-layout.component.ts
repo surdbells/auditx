@@ -127,6 +127,7 @@ export class MainLayoutComponent {
         { labelKey: 'nav.controls', icon: 'fact_check', route: '/controls', permissions: [Permissions.ViewControls] },
         { labelKey: 'nav.compliance', icon: 'account_balance', route: '/compliance', permissions: [Permissions.ViewControls] },
         { labelKey: 'nav.exceptions', icon: 'report_problem', route: '/exceptions', permissions: [Permissions.ViewExceptions] },
+        { labelKey: 'nav.rootCauseGaps', icon: 'account_tree', route: '/root-cause-gaps', permissions: [Permissions.ViewExceptions] },
       ],
     },
     {

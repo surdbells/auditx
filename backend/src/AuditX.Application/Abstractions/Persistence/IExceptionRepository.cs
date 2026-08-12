@@ -50,3 +50,19 @@ public interface IExceptionRaisingRuleRepository
 
     void Add(ExceptionRaisingRule rule);
 }
+
+/// <summary>Enriched root-cause-gap↔exception link row (joined to the finding for display).</summary>
+public sealed record RootCauseGapLinkedExceptionRow(Guid LinkId, Guid ExceptionId, string Title, ExceptionSeverity Severity, ExceptionStatus Status);
+
+/// <summary>Persistence for <see cref="RootCauseGap"/> aggregates (with their exception links loaded).</summary>
+public interface IRootCauseGapRepository
+{
+    Task<RootCauseGap?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<PagedResult<RootCauseGap>> SearchAsync(RootCauseGapStatus? status, string? search, PageSpec page, CancellationToken cancellationToken = default);
+
+    /// <summary>The findings linked to a gap, joined to the exception for title/severity/status display.</summary>
+    Task<IReadOnlyList<RootCauseGapLinkedExceptionRow>> ListLinkedExceptionsAsync(Guid gapId, CancellationToken cancellationToken = default);
+
+    void Add(RootCauseGap gap);
+}

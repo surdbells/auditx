@@ -1,0 +1,106 @@
+<app-page-header
+  [title]="'rootCauseGaps.title' | t"
+  [subtitle]="'rootCauseGaps.subtitle' | t"
+>
+  @if (canManage()) {
+    <button actions matButton="filled" type="button" (click)="create()">
+      <app-icon name="add" />
+      {{ 'rootCauseGaps.newGap' | t }}
+    </button>
+  }
+</app-page-header>
+
+<app-page-guide [guide]="guide" />
+
+<mat-card appearance="outlined" class="rcg__filters-card">
+  <form [formGroup]="filters" class="rcg__filters">
+    <mat-form-field appearance="outline">
+      <mat-label>{{ 'rootCauseGaps.field.status' | t }}</mat-label>
+      <mat-select formControlName="status">
+        @for (o of filterOptions; track o.value) {
+          <mat-option [value]="o.value">{{ o.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </form>
+</mat-card>
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'rootCauseGaps.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'rootCauseGaps.error.load' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="account_tree"
+        [title]="'rootCauseGaps.emptyTitle' | t"
+        [message]="'rootCauseGaps.emptyMessage' | t"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="rcg__table-card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="gaps()" class="rcg__table">
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef>{{ 'rootCauseGaps.field.title' | t }}</th>
+              <td mat-cell *matCellDef="let g">
+                <button matButton type="button" class="rcg__title-link" (click)="open(g)">{{ g.title }}</button>
+                @if (g.category) {
+                  <div class="muted rcg__cat">{{ g.category }}</div>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="owner">
+              <th mat-header-cell *matHeaderCellDef>{{ 'rootCauseGaps.field.owner' | t }}</th>
+              <td mat-cell *matCellDef="let g">{{ ownerName(g.ownerUserId) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="linked">
+              <th mat-header-cell *matHeaderCellDef>{{ 'rootCauseGaps.field.findings' | t }}</th>
+              <td mat-cell *matCellDef="let g">{{ g.linkedExceptionCount }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="target">
+              <th mat-header-cell *matHeaderCellDef>{{ 'rootCauseGaps.field.targetDate' | t }}</th>
+              <td mat-cell *matCellDef="let g">{{ g.targetDate ?? '—' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'rootCauseGaps.field.status' | t }}</th>
+              <td mat-cell *matCellDef="let g">
+                <span class="status-badge" [attr.data-status]="g.status === 'open' ? 'in_progress' : 'system'">
+                  {{ 'rootCauseGaps.status.' + g.status | t }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'rootCauseGaps.field.actionsAria' | t"></th>
+              <td mat-cell *matCellDef="let g">
+                <button matIconButton type="button" [matMenuTriggerFor]="rowMenu" [attr.aria-label]="'rootCauseGaps.actions.menuAria' | t: { title: g.title }">
+                  <app-icon name="more_vert" />
+                </button>
+                <mat-menu #rowMenu="matMenu">
+                  <button mat-menu-item type="button" (click)="open(g)">
+                    <app-icon name="visibility" /><span>{{ 'rootCauseGaps.actions.manage' | t }}</span>
+                  </button>
+                  @if (canManage() && g.status === 'open') {
+                    <button mat-menu-item type="button" (click)="edit(g)">
+                      <app-icon name="edit" /><span>{{ 'rootCauseGaps.actions.edit' | t }}</span>
+                    </button>
+                  }
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

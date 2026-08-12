@@ -285,3 +285,80 @@ export interface UpdateExceptionRaisingRuleRequest {
   scoreThreshold: number | null;
   isActive: boolean;
 }
+
+/* ---- Root-cause gaps (P2) ---- */
+
+export type RootCauseGapStatus = 'open' | 'closed';
+
+/** A finding linked to a root-cause gap, with light display fields. */
+export interface RootCauseGapLinkedException {
+  linkId: string;
+  exceptionId: string;
+  title: string;
+  severity: ExceptionSeverity;
+  status: ExceptionStatus;
+}
+
+/** A systemic root-cause gap tracked across findings. */
+export interface RootCauseGap {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  ownerUserId: string;
+  targetDate: string | null;
+  status: RootCauseGapStatus;
+  identifiedByUserId: string;
+  identifiedAt: string;
+  closureRationale: string | null;
+  closedByUserId: string | null;
+  closedAt: string | null;
+  version: string;
+  linkedExceptions: RootCauseGapLinkedException[];
+}
+
+/** Lightweight row for the root-cause-gaps register. */
+export interface RootCauseGapListItem {
+  id: string;
+  title: string;
+  category: string | null;
+  ownerUserId: string;
+  targetDate: string | null;
+  status: RootCauseGapStatus;
+  identifiedAt: string;
+  linkedExceptionCount: number;
+}
+
+export interface CreateRootCauseGapRequest {
+  title: string;
+  description: string | null;
+  category: string | null;
+  ownerUserId: string;
+  targetDate: string | null;
+}
+
+export interface UpdateRootCauseGapRequest {
+  title: string;
+  description: string | null;
+  category: string | null;
+  ownerUserId: string;
+  targetDate: string | null;
+  version: string;
+}
+
+export interface CloseRootCauseGapRequest {
+  rationale: string;
+  version: string;
+}
+
+export interface LinkExceptionToGapRequest {
+  exceptionId: string;
+  version: string;
+}
+
+export interface RootCauseGapQuery {
+  status?: RootCauseGapStatus | 'all' | '';
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}

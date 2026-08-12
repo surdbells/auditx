@@ -30,3 +30,12 @@ public sealed record CloseExceptionRequest(string? ClosureNote, string Version);
 public sealed record CreateExceptionRaisingRuleRequest(string ResponseType, bool AllowOnNa, decimal? ScoreThreshold);
 
 public sealed record UpdateExceptionRaisingRuleRequest(bool AllowOnNa, decimal? ScoreThreshold, bool IsActive);
+
+// Root-cause gaps
+public sealed record CreateRootCauseGapRequest(string Title, string? Description, string? Category, Guid OwnerUserId, DateOnly? TargetDate);
+
+public sealed record UpdateRootCauseGapRequest(string Title, string? Description, string? Category, Guid OwnerUserId, DateOnly? TargetDate, string Version);
+
+public sealed record CloseRootCauseGapRequest(string Rationale, string Version);
+
+public sealed record LinkExceptionToGapRequest(Guid ExceptionId, string Version);

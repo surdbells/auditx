@@ -82,6 +82,7 @@ public static class DependencyInjection
         services.AddScoped<IControlTestRepository, ControlTestRepository>();
         services.AddScoped<IExceptionRepository, ExceptionRepository>();
         services.AddScoped<IExceptionRaisingRuleRepository, ExceptionRaisingRuleRepository>();
+        services.AddScoped<IRootCauseGapRepository, RootCauseGapRepository>();
         services.AddScoped<ISanctionsCaseRepository, SanctionsCaseRepository>();
         services.AddScoped<ISanctionsGridRepository, SanctionsGridRepository>();
         services.AddScoped<ISanctionsAppealRepository, SanctionsAppealRepository>();

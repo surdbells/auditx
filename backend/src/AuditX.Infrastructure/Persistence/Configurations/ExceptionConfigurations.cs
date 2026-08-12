@@ -99,3 +99,45 @@ public sealed class ExceptionRaisingRuleConfiguration : IEntityTypeConfiguration
         builder.HasIndex(r => r.ResponseType).IsUnique();
     }
 }
+
+public sealed class RootCauseGapConfiguration : IEntityTypeConfiguration<RootCauseGap>
+{
+    public void Configure(EntityTypeBuilder<RootCauseGap> builder)
+    {
+        builder.ToTable("root_cause_gaps");
+        builder.HasKey(g => g.Id);
+        builder.Property(g => g.Id).ValueGeneratedNever();
+
+        builder.Property(g => g.Title).HasMaxLength(255).IsRequired();
+        builder.Property(g => g.Description).HasMaxLength(4000);
+        builder.Property(g => g.Category).HasMaxLength(100);
+        builder.Property(g => g.ClosureRationale).HasMaxLength(2000);
+        builder.Property(g => g.Status)
+            .HasConversion(new SnakeCaseEnumConverter<RootCauseGapStatus>())
+            .HasMaxLength(20)
+            .IsRequired();
+        builder.Property(g => g.Version).IsRowVersion();
+
+        builder.HasMany(g => g.Links).WithOne().HasForeignKey(l => l.RootCauseGapId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(g => g.Links).HasField("_links").UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasIndex(g => g.Status);
+    }
+}
+
+public sealed class RootCauseGapExceptionLinkConfiguration : IEntityTypeConfiguration<RootCauseGapExceptionLink>
+{
+    public void Configure(EntityTypeBuilder<RootCauseGapExceptionLink> builder)
+    {
+        builder.ToTable("root_cause_gap_exception_links");
+        builder.HasKey(l => l.Id);
+        builder.Property(l => l.Id).ValueGeneratedNever();
+
+        // The finding lives independently of the gap — restrict so a finding can't be hard-deleted via the link,
+        // while the link cascades when its owning gap is removed (configured on the gap side above).
+        builder.HasOne<AuditException>().WithMany().HasForeignKey(l => l.ExceptionId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(l => new { l.RootCauseGapId, l.ExceptionId }).IsUnique();
+        builder.HasIndex(l => l.ExceptionId);
+    }
+}
