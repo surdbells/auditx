@@ -128,6 +128,8 @@ export interface CreateAuditRequest {
   scopeDescription?: string | null;
   templateId?: string | null;
   planItemId?: string | null;
+  /** Required when planItemId is set — which of the item's (possibly several) entities this audit is for. */
+  entityId?: string | null;
   leadUserId: string;
   auditeeUserId: string;
   teamMemberUserIds?: string[];

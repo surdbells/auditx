@@ -44,6 +44,7 @@ import {
   PlanDecisionRequest,
   PlanExecution,
   PlanItem,
+  PlanItemEntityLink,
   PlanItemProgress,
   ReferenceDataItem,
   SubmitRevisionRequest,
@@ -186,9 +187,14 @@ export class PlanDetailComponent {
   /** A drag handle column is shown only while the plan's items are reorderable. */
   readonly itemColumns = computed(() =>
     this.isEditable()
-      ? ['drag', 'auditType', 'planned', 'effort', 'lead', 'status', 'actions']
-      : ['auditType', 'planned', 'effort', 'lead', 'status', 'actions'],
+      ? ['drag', 'auditType', 'entities', 'planned', 'effort', 'lead', 'status', 'actions']
+      : ['auditType', 'entities', 'planned', 'effort', 'lead', 'status', 'actions'],
   );
+
+  /** Human name for an entity link, resolved through the directory (falls back to the id while loading). */
+  entityName(link: PlanItemEntityLink): string {
+    return this.entityLookup.name(link.entityId);
+  }
 
   readonly guide = PLAN_DETAIL_GUIDE;
 
@@ -258,7 +264,7 @@ export class PlanDetailComponent {
     return [...p.items]
       .sort((a, b) => a.orderIndex - b.orderIndex)
       .map((it) => ({
-        label: this.entityLookup.name(it.entityId),
+        label: it.entityLinks.map((l) => this.entityLookup.name(l.entityId)).join(', '),
         start: it.plannedStartDate,
         end: it.plannedEndDate,
         tone: it.status,
@@ -266,9 +272,11 @@ export class PlanDetailComponent {
       }));
   });
 
-  /** Real per-item checklist progress from the execution roll-up, indexed by plan-item id. */
-  progressFor(item: PlanItem): PlanItemProgress | undefined {
-    return this.execution()?.itemProgress?.find((p) => p.planItemId === item.id);
+  /** Real per-entity checklist progress from the execution roll-up, for one entity of a plan item. */
+  progressFor(item: PlanItem, entityId: string): PlanItemProgress | undefined {
+    return this.execution()?.itemProgress?.find(
+      (p) => p.planItemId === item.id && p.entityId === entityId,
+    );
   }
 
   readonly statusCounts = computed(() => {
@@ -324,7 +332,12 @@ export class PlanDetailComponent {
 
   addItem(): void {
     const openDialog = (entities: EntityListItem[]): void => {
-      const data: PlanItemDialogData = { entities };
+      const p = this.plan();
+      const data: PlanItemDialogData = {
+        entities,
+        planPeriodStart: p?.periodStart ?? '',
+        planPeriodEnd: p?.periodEnd ?? '',
+      };
       this.dialog
         .open(PlanItemDialogComponent, { data, width: '600px' })
         .afterClosed()
@@ -355,11 +368,12 @@ export class PlanDetailComponent {
   }
 
   /**
-   * Launch an audit from an approved plan item: fetch the entities / users / published templates, open the
-   * create-audit dialog prefilled from the item, and on create link the audit back (the backend sets the plan
-   * item's linkedAuditId), then jump to the new audit.
+   * Launch an audit for one entity of an approved plan item: fetch the entities / users / published templates,
+   * open the create-audit dialog prefilled from the item + chosen entity, and on create link the audit back to
+   * that entity link (the backend sets its linkedAuditId), then jump to the new audit. A plan item can cover
+   * several entities — each is launched, tracked and completed independently.
    */
-  launchAudit(item: PlanItem): void {
+  launchAudit(item: PlanItem, link: PlanItemEntityLink): void {
     const open = (
       entities: EntityListItem[],
       users: UserDto[],
@@ -368,13 +382,14 @@ export class PlanDetailComponent {
     ): void => {
       const typeLabel =
         auditTypes.find((t) => t.code === item.auditType)?.label ?? item.auditType;
-      const entity = entities.find((e) => e.id === item.entityId)?.name;
+      const entity = entities.find((e) => e.id === link.entityId)?.name;
       const entityName = entity ?? typeLabel;
       const planItem: CreateAuditPlanItemContext = {
         planItemId: item.id,
         auditType: item.auditType,
         auditTypeLabel: typeLabel,
         leadUserId: item.assignedLeadUserId,
+        entityId: link.entityId,
         entityName,
         suggestedName: entity ? `${entity} — ${typeLabel}` : typeLabel,
         plannedStartDate: item.plannedStartDate,
@@ -395,7 +410,7 @@ export class PlanDetailComponent {
                   name: created.name,
                 }),
               );
-              this.refresh(); // the item now carries linkedAuditId → shows "Open audit"
+              this.refresh(); // this entity link now carries linkedAuditId → shows "Open audit"
               void this.router.navigate(['/audits', created.id]);
             },
           });
@@ -420,10 +435,10 @@ export class PlanDetailComponent {
     });
   }
 
-  /** Open the audit already launched from this plan item. */
-  openLinkedAudit(item: PlanItem): void {
-    if (item.linkedAuditId) {
-      void this.router.navigate(['/audits', item.linkedAuditId]);
+  /** Open the audit already launched for this entity link. */
+  openLinkedAudit(link: PlanItemEntityLink): void {
+    if (link.linkedAuditId) {
+      void this.router.navigate(['/audits', link.linkedAuditId]);
     }
   }
 
@@ -483,6 +498,7 @@ export class PlanDetailComponent {
   submitRevision(): void {
     const data: SubmitRevisionDialogData = {
       items: this.plan()?.items ?? [],
+      canApplyMinorRevision: this.plan()?.canApplyMinorRevision ?? false,
     };
     this.dialog
       .open(SubmitRevisionDialogComponent, { data, width: '560px' })

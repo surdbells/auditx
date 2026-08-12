@@ -59,6 +59,13 @@
         }
       </div>
 
+      @if (p.revisionReason) {
+        <mat-card appearance="outlined" class="detail__decision-card">
+          <h3 class="detail__card-title">{{ 'planning.detail.revisionReasonTitle' | t }}</h3>
+          <p>{{ p.revisionReason }}</p>
+        </mat-card>
+      }
+
       @if (p.approvalDecision; as decision) {
         <mat-card appearance="outlined" class="detail__decision-card">
           <h3 class="detail__card-title">
@@ -199,6 +206,21 @@
                 <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colAuditType' | t }}</th>
                 <td mat-cell *matCellDef="let i">{{ refLookup.label('audit_type', i.auditType) }}</td>
               </ng-container>
+              <ng-container matColumnDef="entities">
+                <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colEntities' | t }}</th>
+                <td mat-cell *matCellDef="let i">
+                  <div class="detail__entity-chips">
+                    @for (link of i.entityLinks; track link.id) {
+                      <span class="detail__entity-chip">
+                        {{ entityName(link) }}
+                        <span class="status-badge" [attr.data-status]="link.status">
+                          {{ link.status.replace('_', ' ') }}
+                        </span>
+                      </span>
+                    }
+                  </div>
+                </td>
+              </ng-container>
               <ng-container matColumnDef="planned">
                 <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colPlanned' | t }}</th>
                 <td mat-cell *matCellDef="let i">
@@ -223,11 +245,14 @@
                     <span class="status-badge" [attr.data-status]="i.status">
                       {{ i.status.replace('_', ' ') }}
                     </span>
-                    @if (progressFor(i); as pr) {
-                      @if (pr.linkedAuditId && pr.totalChecklistItems > 0) {
-                        <span class="detail__item-progress muted">
-                          {{ 'planning.detail.itemChecklist' | t: { responded: pr.respondedChecklistItems, total: pr.totalChecklistItems, percent: pr.percentComplete } }}
-                        </span>
+                    @for (link of i.entityLinks; track link.id) {
+                      @if (progressFor(i, link.entityId); as pr) {
+                        @if (pr.linkedAuditId && pr.totalChecklistItems > 0) {
+                          <span class="detail__item-progress muted">
+                            {{ entityName(link) }}:
+                            {{ 'planning.detail.itemChecklist' | t: { responded: pr.respondedChecklistItems, total: pr.totalChecklistItems, percent: pr.percentComplete } }}
+                          </span>
+                        }
                       }
                     }
                   </div>
@@ -236,39 +261,48 @@
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'planning.detail.actionsLabel' | t"></th>
                 <td mat-cell *matCellDef="let i">
-                  @if (i.linkedAuditId) {
-                    <button
-                      matButton
-                      type="button"
-                      (click)="openLinkedAudit(i)"
-                      [matTooltip]="'planning.detail.openAuditTip' | t"
-                    >
-                      <app-icon name="open_in_new" />
-                      {{ 'planning.detail.openAudit' | t }}
-                    </button>
-                  } @else if (canCreateAudit()) {
-                    <!-- Always show the Launch affordance; disable (with a hint) until the plan is linkable so the
-                         plan → audit workflow is discoverable rather than silently missing. The span carries the
-                         tooltip so it still surfaces while the button is disabled. -->
-                    <span
-                      [matTooltip]="
-                        (canLaunchAudits()
-                          ? 'planning.detail.launchAuditTip'
-                          : 'planning.detail.launchLockedTip'
-                        ) | t
-                      "
-                    >
-                      <button
-                        matButton="filled"
-                        type="button"
-                        (click)="launchAudit(i)"
-                        [disabled]="!canLaunchAudits()"
-                      >
-                        <app-icon name="rocket_launch" />
-                        {{ 'planning.detail.launchAudit' | t }}
-                      </button>
-                    </span>
-                  }
+                  <div class="detail__item-actions">
+                    @for (link of i.entityLinks; track link.id) {
+                      <div class="detail__item-action-row">
+                        @if (i.entityLinks.length > 1) {
+                          <span class="muted detail__action-entity">{{ entityName(link) }}</span>
+                        }
+                        @if (link.linkedAuditId) {
+                          <button
+                            matButton
+                            type="button"
+                            (click)="openLinkedAudit(link)"
+                            [matTooltip]="'planning.detail.openAuditTip' | t"
+                          >
+                            <app-icon name="open_in_new" />
+                            {{ 'planning.detail.openAudit' | t }}
+                          </button>
+                        } @else if (canCreateAudit()) {
+                          <!-- Always show the Launch affordance; disable (with a hint) until the plan is linkable so
+                               the plan → audit workflow is discoverable rather than silently missing. The span
+                               carries the tooltip so it still surfaces while the button is disabled. -->
+                          <span
+                            [matTooltip]="
+                              (canLaunchAudits()
+                                ? 'planning.detail.launchAuditTip'
+                                : 'planning.detail.launchLockedTip'
+                              ) | t
+                            "
+                          >
+                            <button
+                              matButton="filled"
+                              type="button"
+                              (click)="launchAudit(i, link)"
+                              [disabled]="!canLaunchAudits()"
+                            >
+                              <app-icon name="rocket_launch" />
+                              {{ 'planning.detail.launchAudit' | t }}
+                            </button>
+                          </span>
+                        }
+                      </div>
+                    }
+                  </div>
                   @if (canManage() && isEditable()) {
                     <button
                       matIconButton

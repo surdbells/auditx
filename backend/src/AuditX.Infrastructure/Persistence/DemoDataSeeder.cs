@@ -304,12 +304,12 @@ public sealed class DemoDataSeeder(
 
         // One approved 2026 annual plan with six plan items scheduling audits of the entities above.
         var plan = AnnualPlan.Create("FY2026 Annual Audit Plan", new DateOnly(2026, 1, 1), new DateOnly(2026, 12, 31));
-        plan.AddItem(lagos.Id, "branch_operations", new DateOnly(2026, 2, 1), new DateOnly(2026, 3, 15), 20m, users.Manager1Id);
-        plan.AddItem(abuja.Id, "branch_operations", new DateOnly(2026, 3, 1), new DateOnly(2026, 4, 15), 18m, users.Manager1Id);
-        plan.AddItem(coreBanking.Id, "it_general_controls", new DateOnly(2026, 4, 1), new DateOnly(2026, 5, 20), 25m, users.Manager2Id);
-        plan.AddItem(credit.Id, "credit_review", new DateOnly(2026, 5, 1), new DateOnly(2026, 6, 20), 22m, users.Manager2Id);
-        plan.AddItem(treasury.Id, "treasury", new DateOnly(2026, 6, 1), new DateOnly(2026, 7, 20), 20m, users.Manager1Id);
-        plan.AddItem(ph.Id, "branch_operations", new DateOnly(2026, 7, 1), new DateOnly(2026, 8, 15), 18m, users.Manager1Id);
+        plan.AddItem([lagos.Id], "branch_operations", new DateOnly(2026, 2, 1), new DateOnly(2026, 3, 15), 20m, users.Manager1Id);
+        plan.AddItem([abuja.Id], "branch_operations", new DateOnly(2026, 3, 1), new DateOnly(2026, 4, 15), 18m, users.Manager1Id);
+        plan.AddItem([coreBanking.Id], "it_general_controls", new DateOnly(2026, 4, 1), new DateOnly(2026, 5, 20), 25m, users.Manager2Id);
+        plan.AddItem([credit.Id], "credit_review", new DateOnly(2026, 5, 1), new DateOnly(2026, 6, 20), 22m, users.Manager2Id);
+        plan.AddItem([treasury.Id], "treasury", new DateOnly(2026, 6, 1), new DateOnly(2026, 7, 20), 20m, users.Manager1Id);
+        plan.AddItem([ph.Id], "branch_operations", new DateOnly(2026, 7, 1), new DateOnly(2026, 8, 15), 18m, users.Manager1Id);
 
         // Drive the plan to Approved (Draft → Submit → RecordDecision(Approved)) so audits can link to its items.
         plan.Submit(_now);
@@ -609,7 +609,8 @@ public sealed class DemoDataSeeder(
         var startDate = Today.AddDays(startOffsetDays);
         var targetEnd = Today.AddDays(targetOffsetDays);
 
-        var auditableEntityId = planItemId is { } pid ? plan.Items.FirstOrDefault(i => i.Id == pid)?.EntityId : null;
+        // Every demo plan item covers exactly one entity, so its first (only) entity link is the audited entity.
+        var auditableEntityId = planItemId is { } pid ? plan.Items.FirstOrDefault(i => i.Id == pid)?.EntityLinks.FirstOrDefault()?.EntityId : null;
         var data = new CreateAuditData(
             name, auditType, startDate, targetEnd, ScopeDescription: $"Scope: {name}.",
             templateId, TemplateVersion: null, planItemId, auditableEntityId, leadId, auditeeId, auditorIds);
@@ -617,9 +618,9 @@ public sealed class DemoDataSeeder(
         var audit = await auditCreationService.BuildAsync(data, createdBy: leadId, _now, ct);
         db.Audits.Add(audit);
 
-        if (planItemId is { } linkItemId && plan.Status == PlanStatus.Approved)
+        if (planItemId is { } linkItemId && auditableEntityId is { } linkEntityId && plan.Status == PlanStatus.Approved)
         {
-            plan.LinkAuditToItem(linkItemId, audit.Id);
+            plan.LinkAuditToItem(linkItemId, linkEntityId, audit.Id);
         }
 
         // Advance the lifecycle to the requested stage. Draft → Plan → Start → (responses recorded later) →

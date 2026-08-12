@@ -43,7 +43,7 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> Create([FromBody] CreateAuditRequest request, CancellationToken cancellationToken)
         => Created(await dispatcher.Send(new CreateAuditCommand(
             request.Name, request.AuditType, request.StartDate, request.TargetEndDate, request.ScopeDescription,
-            request.TemplateId, request.PlanItemId, request.LeadUserId, request.AuditeeUserId, request.TeamMemberUserIds,
+            request.TemplateId, request.PlanItemId, request.EntityId, request.LeadUserId, request.AuditeeUserId, request.TeamMemberUserIds,
             request.BackdatingOverride, request.BackdatingReason), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageAudit)]

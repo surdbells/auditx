@@ -28,6 +28,8 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface SubmitRevisionDialogData {
   items: PlanItem[];
+  /** Whether this deployment allows a "minor" (direct, no-re-approval) revision of an approved plan. */
+  canApplyMinorRevision: boolean;
 }
 
 function toDateOnly(value: Date | null): string {
@@ -65,9 +67,12 @@ function toDateOnly(value: Date | null): string {
     <mat-dialog-content>
       <form [formGroup]="form" class="form">
         <mat-radio-group formControlName="kind" class="kind">
-          <mat-radio-button value="minor">
+          <mat-radio-button value="minor" [disabled]="!data.canApplyMinorRevision">
             {{ 'planning.revisionDialog.minor' | t }}
           </mat-radio-button>
+          @if (!data.canApplyMinorRevision) {
+            <p class="hint hint--indent">{{ 'planning.revisionDialog.minorLockedHint' | t }}</p>
+          }
           <mat-radio-button value="material">
             {{ 'planning.revisionDialog.material' | t }}
           </mat-radio-button>
@@ -107,6 +112,12 @@ function toDateOnly(value: Date | null): string {
             {{ 'planning.revisionDialog.materialHint' | t }}
           </p>
         }
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'planning.revisionDialog.reason' | t }}</mat-label>
+          <textarea matInput formControlName="reason" rows="2"></textarea>
+          <mat-hint>{{ 'planning.revisionDialog.reasonHint' | t }}</mat-hint>
+        </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -140,6 +151,10 @@ function toDateOnly(value: Date | null): string {
     }
     .hint {
       color: var(--mat-sys-on-surface-variant);
+      font-size: 0.85rem;
+    }
+    .hint--indent {
+      margin: -0.35rem 0 0.5rem 2rem;
     }
     @media (max-width: 560px) {
       .form {
@@ -160,13 +175,19 @@ export class SubmitRevisionDialogComponent {
   private readonly fb = inject(FormBuilder);
 
   readonly form = this.fb.nonNullable.group({
-    kind: ['minor' as PlanRevisionKind, [Validators.required]],
+    kind: [
+      (this.data.canApplyMinorRevision ? 'minor' : 'material') as PlanRevisionKind,
+      [Validators.required],
+    ],
     itemId: [''],
     newStartDate: [null as Date | null],
     newEndDate: [null as Date | null],
+    reason: [''],
   });
 
-  readonly kindSignal = signal<PlanRevisionKind>('minor');
+  readonly kindSignal = signal<PlanRevisionKind>(
+    this.data.canApplyMinorRevision ? 'minor' : 'material',
+  );
 
   readonly isMinor = computed(() => this.kindSignal() === 'minor');
 
@@ -186,6 +207,7 @@ export class SubmitRevisionDialogComponent {
 
   submit(): void {
     const v = this.form.getRawValue();
+    const reason = v.reason.trim() || undefined;
     if (v.kind === 'minor') {
       if (!v.itemId || !v.newStartDate || !v.newEndDate) {
         this.form.markAllAsTouched();
@@ -196,9 +218,10 @@ export class SubmitRevisionDialogComponent {
         itemId: v.itemId,
         newStartDate: toDateOnly(v.newStartDate),
         newEndDate: toDateOnly(v.newEndDate),
+        reason,
       });
     } else {
-      this.dialogRef.close({ kind: 'material' });
+      this.dialogRef.close({ kind: 'material', reason });
     }
   }
 

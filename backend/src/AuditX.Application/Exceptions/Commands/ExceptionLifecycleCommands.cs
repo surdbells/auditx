@@ -45,7 +45,6 @@ public sealed class RaiseExceptionCommandValidator : AbstractValidator<RaiseExce
 public sealed class RaiseExceptionCommandHandler(
     IAuditRepository audits,
     IExceptionRepository exceptions,
-    IAnnualPlanRepository plans,
     IUserRepository users,
     IPermissionResolver permissions,
     IExceptionDefaults defaults,
@@ -93,12 +92,8 @@ public sealed class RaiseExceptionCommandHandler(
             _ = Guard.NotNullOrWhiteSpace(command.OverrideRationale, "exception.override_rationale_required", "A rationale is required when overriding the target date.");
         }
 
-        // Denormalise the universe entity (via the plan link) for recurrence keying; null → recurrence skipped.
-        Guid? auditableEntityId = null;
-        if (auditEntity.PlanItemId is { } planItemId && await plans.GetByPlanItemIdAsync(planItemId, cancellationToken) is { } plan)
-        {
-            auditableEntityId = plan.Items.FirstOrDefault(i => i.Id == planItemId)?.EntityId;
-        }
+        // Denormalise the universe entity for recurrence keying; null (an ad-hoc audit) → recurrence skipped.
+        var auditableEntityId = auditEntity.AuditableEntityId;
 
         // Normalise the category the same way the domain persists it, so the recurrence lookup keys match.
         var normalizedCategory = string.IsNullOrWhiteSpace(command.Category) ? null : command.Category.Trim();

@@ -10,6 +10,7 @@ public sealed record BankSettingsDto(
     int MaxAuditEvidenceGb,
     bool AllowOverlappingPlanPeriods,
     bool AllowAuditLaunchBeforeApproval,
+    bool AllowMinorPlanRevisionAfterApproval,
     string PrimaryColor,
     string AccentColor,
     string? LogoDataUri,

@@ -22,6 +22,8 @@ export interface Entity {
   compositeInherentScore: number | null;
   compositeResidualScore: number | null;
   lastAuditedAt: string | null;
+  /** How many times per year this entity is expected to be audited (coverage target); null when unset. */
+  expectedAuditsPerYear: number | null;
   version: number;
 }
 
@@ -74,6 +76,7 @@ export interface CreateEntityRequest {
   parentEntityId?: string | null;
   ownerUserId?: string | null;
   orgUnitId?: string | null;
+  expectedAuditsPerYear?: number | null;
 }
 
 export interface UpdateEntityRequest {
@@ -83,6 +86,7 @@ export interface UpdateEntityRequest {
   ownerUserId?: string | null;
   parentEntityId?: string | null;
   orgUnitId?: string | null;
+  expectedAuditsPerYear?: number | null;
   version: number;
 }
 

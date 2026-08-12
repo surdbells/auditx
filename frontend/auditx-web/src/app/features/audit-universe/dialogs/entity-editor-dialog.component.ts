@@ -122,6 +122,10 @@ export class EntityEditorDialogComponent {
     parentEntityId: [this.data.entity?.parentEntityId ?? ''],
     ownerUserId: [this.data.entity?.ownerUserId ?? ''],
     orgUnitId: [this.data.entity?.orgUnitId ?? null as string | null],
+    expectedAuditsPerYear: [
+      this.data.entity?.expectedAuditsPerYear ?? (null as number | null),
+      [Validators.min(1)],
+    ],
   });
 
   readonly savingMeta = signal(false);
@@ -227,6 +231,7 @@ export class EntityEditorDialogComponent {
           ownerUserId: v.ownerUserId.trim() || null,
           parentEntityId: v.parentEntityId || null,
           orgUnitId: v.orgUnitId || null,
+          expectedAuditsPerYear: v.expectedAuditsPerYear,
           version: current.version,
         })
         .subscribe({
@@ -250,6 +255,7 @@ export class EntityEditorDialogComponent {
           parentEntityId: v.parentEntityId || null,
           ownerUserId: v.ownerUserId.trim() || null,
           orgUnitId: v.orgUnitId || null,
+          expectedAuditsPerYear: v.expectedAuditsPerYear,
         })
         .subscribe({
           next: (created) => {

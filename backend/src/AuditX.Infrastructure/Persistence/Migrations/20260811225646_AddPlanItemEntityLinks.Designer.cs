@@ -4,6 +4,7 @@ using AuditX.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,13 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuditX.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811225646_AddPlanItemEntityLinks")]
+    partial class AddPlanItemEntityLinks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -2478,10 +2481,6 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("allow_audit_launch_before_approval");
 
-                    b.Property<bool>("AllowMinorPlanRevisionAfterApproval")
-                        .HasColumnType("bit")
-                        .HasColumnName("allow_minor_plan_revision_after_approval");
-
                     b.Property<bool>("AllowOverlappingPlanPeriods")
                         .HasColumnType("bit")
                         .HasColumnName("allow_overlapping_plan_periods");
@@ -3637,10 +3636,6 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly>("PeriodStart")
                         .HasColumnType("date")
                         .HasColumnName("period_start");
-
-                    b.Property<string>("RevisionReason")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("revision_reason");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -5238,10 +5233,6 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("entity_type");
-
-                    b.Property<int?>("ExpectedAuditsPerYear")
-                        .HasColumnType("int")
-                        .HasColumnName("expected_audits_per_year");
 
                     b.Property<string>("InherentRiskScoresJson")
                         .IsRequired()

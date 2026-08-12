@@ -4,6 +4,7 @@ using AuditX.Application.Common.Enums;
 using AuditX.Application.Risks;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Execution;
+using AuditX.Domain.Planning;
 using AuditX.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,8 +29,10 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
             .CountAsync(a => a.Status == AuditStatus.Planned || a.Status == AuditStatus.InProgress || a.Status == AuditStatus.UnderReview, cancellationToken);
         var auditsCompleted = await db.Audits.AsNoTracking().CountAsync(a => a.Status == AuditStatus.Completed, cancellationToken);
 
-        var planItemsTotal = await db.PlanItems.AsNoTracking().CountAsync(cancellationToken);
-        var planItemsCompleted = await db.PlanItems.AsNoTracking().CountAsync(i => i.Status == PlanItemStatus.Completed, cancellationToken);
+        // Plan items now schedule one or more entities (M-multi-entity); the entity link, not the item, is the
+        // atomic unit of work — one audit per entity — so completion is counted at that level.
+        var planItemsTotal = await db.PlanItemEntityLinks.AsNoTracking().CountAsync(cancellationToken);
+        var planItemsCompleted = await db.PlanItemEntityLinks.AsNoTracking().CountAsync(l => l.Status == PlanItemStatus.Completed, cancellationToken);
 
         var openBacklog = await db.Exceptions.AsNoTracking().CountAsync(e => OpenStatuses.Contains(e.Status), cancellationToken);
         var closed = await db.Exceptions.AsNoTracking().CountAsync(e => e.Status == ExceptionStatus.Closed, cancellationToken);
@@ -269,8 +272,8 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
     {
         var totalPlans = await db.AnnualPlans.AsNoTracking().CountAsync(cancellationToken);
 
-        var byStatus = await db.PlanItems.AsNoTracking()
-            .GroupBy(i => i.Status)
+        var byStatus = await db.PlanItemEntityLinks.AsNoTracking()
+            .GroupBy(l => l.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);
 
@@ -458,17 +461,27 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
 
     public async Task<IReadOnlyList<AuditorWorkloadDto>> AuditorWorkloadAsync(Guid? annualPlanId = null, CancellationToken cancellationToken = default)
     {
-        // Forward-looking commitment = open (Planned / InProgress) plan items that carry a lead assignment.
+        // Forward-looking commitment = open (Planned / InProgress) plan items that carry a lead assignment. Status
+        // is a client-side roll-up over each item's per-entity links, so fetch the link statuses and roll up here.
         var itemsQuery = db.PlanItems.AsNoTracking()
-            .Where(i => i.AssignedLeadUserId != null
-                && (i.Status == PlanItemStatus.Planned || i.Status == PlanItemStatus.InProgress));
+            .Where(i => i.AssignedLeadUserId != null);
         if (annualPlanId is { } planId)
         {
             itemsQuery = itemsQuery.Where(i => i.AnnualPlanId == planId);
         }
 
-        var loadByLead = (await itemsQuery
-            .GroupBy(i => i.AssignedLeadUserId!.Value)
+        var leadItems = await itemsQuery
+            .Select(i => new
+            {
+                LeadUserId = i.AssignedLeadUserId!.Value,
+                i.EstimatedEffortDays,
+                LinkStatuses = i.EntityLinks.Select(l => l.Status).ToList(),
+            })
+            .ToListAsync(cancellationToken);
+
+        var loadByLead = leadItems
+            .Where(i => PlanItem.ComputeRollupStatus(i.LinkStatuses) is PlanItemStatus.Planned or PlanItemStatus.InProgress)
+            .GroupBy(i => i.LeadUserId)
             .Select(g => new
             {
                 LeadUserId = g.Key,
@@ -476,7 +489,6 @@ public sealed class AnalyticsQueryService(AppDbContext db, IClock clock) : IAnal
                 // A null estimate contributes zero days rather than dropping the item from the count.
                 PlannedEffortDays = g.Sum(i => i.EstimatedEffortDays ?? 0m),
             })
-            .ToListAsync(cancellationToken))
             .ToDictionary(x => x.LeadUserId);
 
         // Every user with a declared capacity — so an auditor with capacity but no current load still appears.

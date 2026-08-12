@@ -8,6 +8,7 @@ public sealed record CreateAuditRequest(
     string? ScopeDescription,
     Guid? TemplateId,
     Guid? PlanItemId,
+    Guid? EntityId,
     Guid LeadUserId,
     Guid AuditeeUserId,
     IReadOnlyList<Guid>? TeamMemberUserIds,

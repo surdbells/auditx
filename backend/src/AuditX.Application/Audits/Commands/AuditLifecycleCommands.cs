@@ -116,15 +116,14 @@ public sealed class TransitionAuditCommandHandler(
         var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
         entity.Complete(today);
 
-        // Cross-module on completion (US-M3-011 / US-M3-019): update the linked plan item + entity last-audited.
-        if (entity.PlanItemId is { } planItemId)
+        // Cross-module on completion (US-M3-011 / US-M3-019): update the linked plan item's entity + its last-audited stamp.
+        if (entity.PlanItemId is { } planItemId && entity.AuditableEntityId is { } completedEntityId)
         {
             var plan = await plans.GetByPlanItemIdAsync(planItemId, cancellationToken);
             if (plan is not null)
             {
-                plan.MarkPlanItemCompleted(planItemId);
-                var item = plan.Items.FirstOrDefault(i => i.Id == planItemId);
-                if (item is not null && await universe.GetByIdAsync(item.EntityId, cancellationToken) is { } auditedEntity)
+                plan.MarkPlanItemCompleted(planItemId, completedEntityId);
+                if (await universe.GetByIdAsync(completedEntityId, cancellationToken) is { } auditedEntity)
                 {
                     auditedEntity.MarkAudited(clock.UtcNow);
                 }
@@ -147,9 +146,10 @@ public sealed class CancelAuditCommandHandler(
         entity.EnsureVersion(command.Version);
         entity.Cancel(command.Reason, clock.UtcNow);
 
-        if (entity.PlanItemId is { } planItemId && await plans.GetByPlanItemIdAsync(planItemId, cancellationToken) is { } plan)
+        if (entity.PlanItemId is { } planItemId && entity.AuditableEntityId is { } cancelledEntityId
+            && await plans.GetByPlanItemIdAsync(planItemId, cancellationToken) is { } plan)
         {
-            plan.MarkPlanItemDeferred(planItemId);
+            plan.MarkPlanItemDeferred(planItemId, cancelledEntityId);
         }
 
         audit.Record(AuditEventTypes.AuditCancelled, AuditTargetTypes.Audit, entity.Id, payload: new { command.Reason });

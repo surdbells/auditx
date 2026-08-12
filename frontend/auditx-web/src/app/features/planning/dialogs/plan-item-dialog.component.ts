@@ -24,6 +24,9 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 export interface PlanItemDialogData {
   /** Universe entities selectable for this plan item. */
   entities: EntityListItem[];
+  /** The parent plan's period (ISO yyyy-MM-dd) — item dates default into and are clamped to this range. */
+  planPeriodStart: string;
+  planPeriodEnd: string;
 }
 
 function toDateOnly(value: Date | null): string {
@@ -34,6 +37,12 @@ function toDateOnly(value: Date | null): string {
   const m = String(value.getMonth() + 1).padStart(2, '0');
   const d = String(value.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+/** Parses an ISO yyyy-MM-dd string as a local Date (avoids UTC-parsing shifting the day). */
+function fromDateOnly(value: string): Date {
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
 @Component({
@@ -56,12 +65,13 @@ function toDateOnly(value: Date | null): string {
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
           <mat-label>{{ 'planning.itemDialog.entity' | t }}</mat-label>
-          <mat-select formControlName="entityId">
+          <mat-select formControlName="entityIds" multiple>
             @for (e of data.entities; track e.id) {
               <mat-option [value]="e.id">{{ e.name }}</mat-option>
             }
           </mat-select>
-          @if (form.controls.entityId.hasError('required') && form.controls.entityId.touched) {
+          <mat-hint>{{ 'planning.itemDialog.entityHint' | t }}</mat-hint>
+          @if (form.controls.entityIds.hasError('required') && form.controls.entityIds.touched) {
             <mat-error>{{ 'planning.itemDialog.entityRequired' | t }}</mat-error>
           }
         </mat-form-field>
@@ -81,17 +91,36 @@ function toDateOnly(value: Date | null): string {
         <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>{{ 'planning.itemDialog.plannedStart' | t }}</mat-label>
-            <input matInput [matDatepicker]="startPicker" formControlName="plannedStartDate" />
+            <input
+              matInput
+              [matDatepicker]="startPicker"
+              [min]="periodStart"
+              [max]="periodEnd"
+              formControlName="plannedStartDate"
+            />
             <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
             <mat-datepicker #startPicker />
+            @if (form.controls.plannedStartDate.hasError('matDatepickerMin') || form.controls.plannedStartDate.hasError('matDatepickerMax')) {
+              <mat-error>{{ 'planning.itemDialog.dateOutOfPeriod' | t }}</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>{{ 'planning.itemDialog.plannedEnd' | t }}</mat-label>
-            <input matInput [matDatepicker]="endPicker" formControlName="plannedEndDate" />
+            <input
+              matInput
+              [matDatepicker]="endPicker"
+              [min]="periodStart"
+              [max]="periodEnd"
+              formControlName="plannedEndDate"
+            />
             <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
             <mat-datepicker #endPicker />
+            @if (form.controls.plannedEndDate.hasError('matDatepickerMin') || form.controls.plannedEndDate.hasError('matDatepickerMax')) {
+              <mat-error>{{ 'planning.itemDialog.dateOutOfPeriod' | t }}</mat-error>
+            }
           </mat-form-field>
         </div>
+        <p class="hint">{{ 'planning.itemDialog.periodHint' | t: { start: data.planPeriodStart, end: data.planPeriodEnd } }}</p>
 
         <div class="row">
           <mat-form-field appearance="outline">
@@ -133,6 +162,11 @@ function toDateOnly(value: Date | null): string {
     .full {
       width: 100%;
     }
+    .hint {
+      margin: -0.5rem 0 0.5rem;
+      font: var(--mat-sys-body-small);
+      color: var(--mat-sys-on-surface-variant);
+    }
     @media (max-width: 560px) {
       .form {
         min-width: auto;
@@ -157,11 +191,16 @@ export class PlanItemDialogComponent {
   /** Active audit-type reference-data items (lazy-loaded). */
   readonly auditTypes = this.refLookup.options('audit_type');
 
+  /** The plan's period as Dates — bound to the datepickers' [min]/[max] so an out-of-period date can't be picked. */
+  readonly periodStart = fromDateOnly(this.data.planPeriodStart);
+  readonly periodEnd = fromDateOnly(this.data.planPeriodEnd);
+
   readonly form = this.fb.nonNullable.group({
-    entityId: ['', [Validators.required]],
+    entityIds: [[] as string[], [Validators.required]],
     auditType: ['', [Validators.required]],
-    plannedStartDate: [null as Date | null, [Validators.required]],
-    plannedEndDate: [null as Date | null, [Validators.required]],
+    // Default into the plan's own period — an audit must happen as planned, never outside it.
+    plannedStartDate: [this.periodStart as Date | null, [Validators.required]],
+    plannedEndDate: [this.periodEnd as Date | null, [Validators.required]],
     estimatedEffortDays: [null as number | null],
     assignedLeadUserId: [''],
   });
@@ -177,7 +216,7 @@ export class PlanItemDialogComponent {
     }
     const v = this.form.getRawValue();
     this.dialogRef.close({
-      entityId: v.entityId,
+      entityIds: v.entityIds,
       auditType: v.auditType.trim(),
       plannedStartDate: toDateOnly(v.plannedStartDate),
       plannedEndDate: toDateOnly(v.plannedEndDate),

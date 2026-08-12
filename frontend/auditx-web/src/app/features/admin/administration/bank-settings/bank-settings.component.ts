@@ -185,6 +185,7 @@ export class BankSettingsComponent {
   readonly governanceForm = this.fb.nonNullable.group({
     allowOverlappingPlanPeriods: [false],
     allowAuditLaunchBeforeApproval: [false],
+    allowMinorPlanRevisionAfterApproval: [false],
   });
 
   readonly sessionForm = this.fb.nonNullable.group({
@@ -249,6 +250,7 @@ export class BankSettingsComponent {
     this.governanceForm.reset({
       allowOverlappingPlanPeriods: s.allowOverlappingPlanPeriods,
       allowAuditLaunchBeforeApproval: s.allowAuditLaunchBeforeApproval,
+      allowMinorPlanRevisionAfterApproval: s.allowMinorPlanRevisionAfterApproval,
     });
     this.sessionForm.reset({
       idleTimeoutMinutes: s.idleTimeoutMinutes,
@@ -286,6 +288,7 @@ export class BankSettingsComponent {
       adProvisioningFilterGroupSid: b.adProvisioningFilterGroupSid,
       allowOverlappingPlanPeriods: b.allowOverlappingPlanPeriods,
       allowAuditLaunchBeforeApproval: b.allowAuditLaunchBeforeApproval,
+      allowMinorPlanRevisionAfterApproval: b.allowMinorPlanRevisionAfterApproval,
       primaryColor: b.primaryColor,
       accentColor: b.accentColor,
       logoDataUri: b.logoDataUri,
@@ -371,6 +374,7 @@ export class BankSettingsComponent {
     this.saveGroup('governance', this.governanceForm, {
       allowOverlappingPlanPeriods: v.allowOverlappingPlanPeriods,
       allowAuditLaunchBeforeApproval: v.allowAuditLaunchBeforeApproval,
+      allowMinorPlanRevisionAfterApproval: v.allowMinorPlanRevisionAfterApproval,
     });
   }
 

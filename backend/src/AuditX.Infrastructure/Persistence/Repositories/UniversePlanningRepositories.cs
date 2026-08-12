@@ -111,14 +111,14 @@ public sealed class EntityTypeTaxonomyRepository(AppDbContext db) : IEntityTypeT
 public sealed class AnnualPlanRepository(AppDbContext db) : IAnnualPlanRepository
 {
     public Task<AnnualPlan?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => db.AnnualPlans.Include(p => p.Items).FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        => db.AnnualPlans.Include(p => p.Items).ThenInclude(i => i.EntityLinks).FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
     public Task<AnnualPlan?> GetByPlanItemIdAsync(Guid planItemId, CancellationToken cancellationToken = default)
-        => db.AnnualPlans.Include(p => p.Items).FirstOrDefaultAsync(p => p.Items.Any(i => i.Id == planItemId), cancellationToken);
+        => db.AnnualPlans.Include(p => p.Items).ThenInclude(i => i.EntityLinks).FirstOrDefaultAsync(p => p.Items.Any(i => i.Id == planItemId), cancellationToken);
 
     public async Task<PagedResult<AnnualPlan>> SearchAsync(string? status, PageSpec page, CancellationToken cancellationToken = default)
     {
-        var query = db.AnnualPlans.AsNoTracking().Include(p => p.Items).AsQueryable();
+        var query = db.AnnualPlans.AsNoTracking().Include(p => p.Items).ThenInclude(i => i.EntityLinks).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(status))
         {

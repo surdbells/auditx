@@ -21,6 +21,7 @@ function entity(overrides: Partial<Entity> = {}): Entity {
     compositeInherentScore: null,
     compositeResidualScore: null,
     lastAuditedAt: null,
+    expectedAuditsPerYear: null,
     version: 1,
     ...overrides,
   };

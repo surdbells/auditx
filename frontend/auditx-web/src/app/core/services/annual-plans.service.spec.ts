@@ -18,6 +18,8 @@ function plan(overrides: Partial<Plan> = {}): Plan {
     approvedAt: null,
     approvalDecision: null,
     canLaunchAudits: false,
+    canApplyMinorRevision: false,
+    revisionReason: null,
     items: [],
     ...overrides,
   };
@@ -26,15 +28,14 @@ function plan(overrides: Partial<Plan> = {}): Plan {
 function planItem(overrides: Partial<PlanItem> = {}): PlanItem {
   return {
     id: 'i-1',
-    entityId: 'e-1',
     auditType: 'AML',
     plannedStartDate: '2026-02-01',
     plannedEndDate: '2026-03-01',
     estimatedEffortDays: 10,
     assignedLeadUserId: null,
-    linkedAuditId: null,
     status: 'planned',
     orderIndex: 0,
+    entityLinks: [{ id: 'l-1', entityId: 'e-1', linkedAuditId: null, status: 'planned' }],
     ...overrides,
   };
 }
@@ -102,7 +103,7 @@ describe('AnnualPlansService', () => {
     let result: PlanItem | undefined;
     service
       .addItem('p-1', {
-        entityId: 'e-1',
+        entityIds: ['e-1'],
         auditType: 'AML',
         plannedStartDate: '2026-02-01',
         plannedEndDate: '2026-03-01',

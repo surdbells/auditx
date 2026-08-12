@@ -12,6 +12,8 @@ export interface BankSettings {
   maxAuditEvidenceGb: number;
   allowOverlappingPlanPeriods: boolean;
   allowAuditLaunchBeforeApproval: boolean;
+  /** When true, an Approved plan's items may still be edited directly (no re-approval); when false, the plan is fully locked and a material revision (re-approval) is the only route to change it. */
+  allowMinorPlanRevisionAfterApproval: boolean;
   primaryColor: string;
   accentColor: string;
   logoDataUri: string | null;
@@ -36,6 +38,7 @@ export interface UpdateBankSettingsRequest {
   adProvisioningFilterGroupSid: string | null;
   allowOverlappingPlanPeriods: boolean;
   allowAuditLaunchBeforeApproval: boolean;
+  allowMinorPlanRevisionAfterApproval: boolean;
   primaryColor: string;
   accentColor: string;
   logoDataUri: string | null;

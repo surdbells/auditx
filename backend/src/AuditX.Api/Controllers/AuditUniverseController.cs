@@ -28,12 +28,12 @@ public sealed class AuditUniverseController(IDispatcher dispatcher) : ApiControl
     [RequirePermission(PermissionKeys.ManageUniverse)]
     [HttpPost("entities")]
     public async Task<IActionResult> CreateEntity([FromBody] CreateEntityRequest request, CancellationToken cancellationToken)
-        => Created(await dispatcher.Send(new CreateEntityCommand(request.Name, request.EntityType, request.Description, request.ParentEntityId, request.OwnerUserId, request.OrgUnitId), cancellationToken));
+        => Created(await dispatcher.Send(new CreateEntityCommand(request.Name, request.EntityType, request.Description, request.ParentEntityId, request.OwnerUserId, request.OrgUnitId, request.ExpectedAuditsPerYear), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUniverse)]
     [HttpPatch("entities/{id:guid}")]
     public async Task<IActionResult> UpdateEntity(Guid id, [FromBody] UpdateEntityRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new UpdateEntityCommand(id, request.Name, request.EntityType, request.Description, request.OwnerUserId, request.ParentEntityId, request.Version, request.OrgUnitId), cancellationToken));
+        => Envelope(await dispatcher.Send(new UpdateEntityCommand(id, request.Name, request.EntityType, request.Description, request.OwnerUserId, request.ParentEntityId, request.Version, request.OrgUnitId, request.ExpectedAuditsPerYear), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUniverse)]
     [HttpDelete("entities/{id:guid}")]

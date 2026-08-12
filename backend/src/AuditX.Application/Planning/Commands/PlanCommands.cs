@@ -5,6 +5,7 @@ using AuditX.Application.Common.Messaging;
 using AuditX.Application.Planning.Dtos;
 using AuditX.Application.Planning.Mapping;
 using AuditX.Domain.AuditTrail;
+using AuditX.Domain.Common;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Planning;
 using FluentValidation;
@@ -39,7 +40,7 @@ public sealed class CreatePlanCommandHandler(
         plans.Add(plan);
         audit.Record(AuditEventTypes.PlanCreated, AuditTargetTypes.AnnualPlan, plan.Id, after: new { plan.PeriodLabel, plan.PeriodStart, plan.PeriodEnd });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval), PlanRevisionPolicy.CanApplyMinorRevision(plan.Status, bank.AllowMinorPlanRevisionAfterApproval));
     }
 }
 
@@ -62,19 +63,19 @@ public sealed class UpdatePlanCommandHandler(
         plan.UpdatePeriod(command.PeriodLabel.Trim(), command.PeriodStart, command.PeriodEnd);
         audit.Record(AuditEventTypes.PlanUpdated, AuditTargetTypes.AnnualPlan, plan.Id);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval), PlanRevisionPolicy.CanApplyMinorRevision(plan.Status, bank.AllowMinorPlanRevisionAfterApproval));
     }
 }
 
 public sealed record AddPlanItemCommand(
-    Guid PlanId, Guid EntityId, string AuditType, DateOnly PlannedStartDate, DateOnly PlannedEndDate, decimal? EstimatedEffortDays, Guid? AssignedLeadUserId)
+    Guid PlanId, IReadOnlyList<Guid> EntityIds, string AuditType, DateOnly PlannedStartDate, DateOnly PlannedEndDate, decimal? EstimatedEffortDays, Guid? AssignedLeadUserId)
     : ICommand<PlanItemDto>;
 
 public sealed class AddPlanItemCommandValidator : AbstractValidator<AddPlanItemCommand>
 {
     public AddPlanItemCommandValidator()
     {
-        RuleFor(x => x.EntityId).NotEmpty();
+        RuleFor(x => x.EntityIds).NotEmpty();
         RuleFor(x => x.AuditType).NotEmpty();
     }
 }
@@ -86,11 +87,16 @@ public sealed class AddPlanItemCommandHandler(
     public async Task<PlanItemDto> Handle(AddPlanItemCommand command, CancellationToken cancellationToken)
     {
         var plan = await plans.GetByIdAsync(command.PlanId, cancellationToken) ?? throw new NotFoundException("Plan", command.PlanId);
-        var entity = await entities.GetByIdAsync(command.EntityId, cancellationToken)
-            ?? throw new ConflictException("plan.entity_archived", "The referenced universe entity does not exist or is archived.");
 
-        var item = plan.AddItem(command.EntityId, command.AuditType.Trim(), command.PlannedStartDate, command.PlannedEndDate, command.EstimatedEffortDays, command.AssignedLeadUserId);
-        audit.Record(AuditEventTypes.PlanItemAdded, AuditTargetTypes.AnnualPlan, plan.Id, payload: new { itemId = item.Id, entity.Id, command.AuditType });
+        var distinctEntityIds = command.EntityIds.Distinct().ToArray();
+        foreach (var entityId in distinctEntityIds)
+        {
+            _ = await entities.GetByIdAsync(entityId, cancellationToken)
+                ?? throw new ConflictException("plan.entity_archived", "One or more referenced universe entities do not exist or are archived.");
+        }
+
+        var item = plan.AddItem(distinctEntityIds, command.AuditType.Trim(), command.PlannedStartDate, command.PlannedEndDate, command.EstimatedEffortDays, command.AssignedLeadUserId);
+        audit.Record(AuditEventTypes.PlanItemAdded, AuditTargetTypes.AnnualPlan, plan.Id, payload: new { itemId = item.Id, entityIds = distinctEntityIds, command.AuditType });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return item.ToDto();
     }
@@ -138,7 +144,7 @@ public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IBankS
         audit.Record(AuditEventTypes.PlanSubmitted, AuditTargetTypes.AnnualPlan, plan.Id);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         var bank = await settings.GetAsync(cancellationToken);
-        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval), PlanRevisionPolicy.CanApplyMinorRevision(plan.Status, bank.AllowMinorPlanRevisionAfterApproval));
     }
 }
 
@@ -162,11 +168,11 @@ public sealed class RecordPlanDecisionCommandHandler(
         audit.Record(AuditEventTypes.PlanDecisionRecorded, AuditTargetTypes.AnnualPlan, plan.Id, after: new { decision = outcome.ToString(), decidedBy });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         var bank = await settings.GetAsync(cancellationToken);
-        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval), PlanRevisionPolicy.CanApplyMinorRevision(plan.Status, bank.AllowMinorPlanRevisionAfterApproval));
     }
 }
 
-public sealed record SubmitPlanRevisionCommand(Guid PlanId, string Kind, Guid? ItemId, DateOnly? NewStartDate, DateOnly? NewEndDate) : ICommand<PlanDto>;
+public sealed record SubmitPlanRevisionCommand(Guid PlanId, string Kind, Guid? ItemId, DateOnly? NewStartDate, DateOnly? NewEndDate, string? Reason) : ICommand<PlanDto>;
 
 public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans, IBankSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<SubmitPlanRevisionCommand, PlanDto>
@@ -174,9 +180,19 @@ public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans
     public async Task<PlanDto> Handle(SubmitPlanRevisionCommand command, CancellationToken cancellationToken)
     {
         var plan = await plans.GetByIdAsync(command.PlanId, cancellationToken) ?? throw new NotFoundException("Plan", command.PlanId);
+        var bank = await settings.GetAsync(cancellationToken);
 
         if (string.Equals(command.Kind, "minor", StringComparison.OrdinalIgnoreCase))
         {
+            // Once Approved, a plan is fully locked by default — "an audit must happen as planned". A bank may opt
+            // into this lighter-weight, no-re-approval-needed shortcut for flexibility.
+            if (plan.Status == PlanStatus.Approved && !bank.AllowMinorPlanRevisionAfterApproval)
+            {
+                throw new InvalidStateTransitionException(
+                    "plan.minor_revision_disabled",
+                    "This deployment does not allow direct edits to an approved plan. Submit a material revision instead, which re-opens the plan for Audit-Committee re-approval.");
+            }
+
             if (command.ItemId is not { } itemId || command.NewStartDate is not { } start || command.NewEndDate is not { } end)
             {
                 throw new ConflictException("plan.minor_revision_invalid", "A minor revision requires an item id and new dates.");
@@ -186,17 +202,16 @@ public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans
         }
         else if (string.Equals(command.Kind, "material", StringComparison.OrdinalIgnoreCase))
         {
-            plan.BeginMaterialRevision(clock.UtcNow);
+            plan.BeginMaterialRevision(command.Reason, clock.UtcNow);
         }
         else
         {
             throw new ConflictException("plan.invalid_revision_kind", $"Unknown revision kind '{command.Kind}'.");
         }
 
-        audit.Record(AuditEventTypes.PlanRevisionSubmitted, AuditTargetTypes.AnnualPlan, plan.Id, payload: new { command.Kind });
+        audit.Record(AuditEventTypes.PlanRevisionSubmitted, AuditTargetTypes.AnnualPlan, plan.Id, payload: new { command.Kind, command.Reason });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        var bank = await settings.GetAsync(cancellationToken);
-        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval));
+        return plan.ToDto(PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval), PlanRevisionPolicy.CanApplyMinorRevision(plan.Status, bank.AllowMinorPlanRevisionAfterApproval));
     }
 }
 

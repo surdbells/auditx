@@ -25,7 +25,7 @@ public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> UpdateBankSettings([FromBody] UpdateBankSettingsRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new UpdateBankSettingsCommand(
             request.BankDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid,
-            request.AllowOverlappingPlanPeriods, request.AllowAuditLaunchBeforeApproval,
+            request.AllowOverlappingPlanPeriods, request.AllowAuditLaunchBeforeApproval, request.AllowMinorPlanRevisionAfterApproval,
             request.PrimaryColor, request.AccentColor, request.LogoDataUri, request.IconDataUri,
             request.ShowOverview, request.ShowWalkthrough, request.ReportRetentionMonths, request.AutoStartWalkthrough,
             request.IdleTimeoutMinutes, request.IdleWarningSeconds), cancellationToken));

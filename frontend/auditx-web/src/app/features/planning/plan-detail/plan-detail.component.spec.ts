@@ -28,6 +28,8 @@ function plan(status: PlanStatus = 'draft', overrides: Partial<Plan> = {}): Plan
     approvedAt: null,
     approvalDecision: null,
     canLaunchAudits: status === 'approved',
+    canApplyMinorRevision: false,
+    revisionReason: null,
     items: [],
     ...overrides,
   };

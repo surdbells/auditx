@@ -96,18 +96,17 @@ public sealed class CoverageQueryService(AppDbContext db, IClock clock, ITaxonom
         }
 
         // Cells = COMPLETED audits per (audited entity's entity_type, audit's audit_type) within the window.
-        // An audit reaches an entity through its plan item (audit.plan_item_id → plan_item.entity_id →
-        // auditable_entity.entity_type); audits without a plan item have no universe-entity linkage and are
-        // therefore not attributable to an entity_type row. The window is keyed on actual_end_date (set on
-        // completion), expressed as a DateOnly cutoff to match the column type.
+        // An audit carries its audited entity directly (audit.auditable_entity_id → auditable_entity.entity_type,
+        // set at creation time from the plan item's chosen entity for a plan-launched audit); an ad-hoc audit
+        // carries none and is therefore not attributable to an entity_type row. The window is keyed on
+        // actual_end_date (set on completion), expressed as a DateOnly cutoff to match the column type.
         var cutoff = DateOnly.FromDateTime(clock.UtcNow.AddMonths(-windowMonths).UtcDateTime);
         var counts = await (
             from audit in db.Audits.AsNoTracking()
             where audit.Status == Domain.Enums.AuditStatus.Completed
                 && audit.ActualEndDate != null && audit.ActualEndDate >= cutoff
-                && audit.PlanItemId != null
-            join planItem in db.PlanItems.AsNoTracking() on audit.PlanItemId equals planItem.Id
-            join entity in db.AuditUniverseEntities.AsNoTracking() on planItem.EntityId equals entity.Id
+                && audit.AuditableEntityId != null
+            join entity in db.AuditUniverseEntities.AsNoTracking() on audit.AuditableEntityId equals entity.Id
             group audit by new { entity.EntityType, audit.AuditType } into g
             select new { g.Key.EntityType, g.Key.AuditType, Count = g.Count() })
             .ToListAsync(cancellationToken);

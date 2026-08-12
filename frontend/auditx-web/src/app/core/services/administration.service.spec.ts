@@ -45,6 +45,7 @@ describe('AdministrationService', () => {
         adProvisioningFilterGroupSid: null,
         allowOverlappingPlanPeriods: false,
         allowAuditLaunchBeforeApproval: false,
+        allowMinorPlanRevisionAfterApproval: false,
         primaryColor: '#4f46e5',
         accentColor: '#7c3aed',
         logoDataUri: null,

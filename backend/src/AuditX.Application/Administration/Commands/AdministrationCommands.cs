@@ -19,7 +19,7 @@ namespace AuditX.Application.Administration.Commands;
 
 public sealed record UpdateBankSettingsCommand(
     string BankDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
-    bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval,
+    bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval, bool AllowMinorPlanRevisionAfterApproval,
     string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri,
     bool ShowOverview, bool ShowWalkthrough, int ReportRetentionMonths, bool AutoStartWalkthrough,
     int IdleTimeoutMinutes, int IdleWarningSeconds)
@@ -69,6 +69,7 @@ public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository set
         bank.SetAdProvisioningFilter(command.AdProvisioningFilterOuDn, command.AdProvisioningFilterGroupSid);
         bank.SetAllowOverlappingPlanPeriods(command.AllowOverlappingPlanPeriods);
         bank.SetAllowAuditLaunchBeforeApproval(command.AllowAuditLaunchBeforeApproval);
+        bank.SetAllowMinorPlanRevisionAfterApproval(command.AllowMinorPlanRevisionAfterApproval);
         bank.SetPageGuideVisibility(command.ShowOverview, command.ShowWalkthrough, command.AutoStartWalkthrough);
         bank.SetReportRetentionMonths(command.ReportRetentionMonths);
         bank.SetIdleTimeout(command.IdleTimeoutMinutes, command.IdleWarningSeconds);
@@ -77,7 +78,7 @@ public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository set
         // field IS recorded so security-relevant changes (e.g. disabling the idle logout) stay attributable.
         audit.Record(AuditEventTypes.BankSettingsUpdated, AuditTargetTypes.BankSettings, bank.Id, after: new
         {
-            bank.BankDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval,
+            bank.BankDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval, bank.AllowMinorPlanRevisionAfterApproval,
             bank.ShowOverview, bank.ShowWalkthrough, bank.AutoStartWalkthrough,
             bank.ReportRetentionMonths, bank.IdleTimeoutMinutes, bank.IdleWarningSeconds,
             bank.PrimaryColor, bank.AccentColor, hasLogo = bank.LogoDataUri is not null, hasIcon = bank.IconDataUri is not null,

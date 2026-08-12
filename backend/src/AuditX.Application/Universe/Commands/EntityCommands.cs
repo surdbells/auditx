@@ -13,7 +13,8 @@ using FluentValidation;
 namespace AuditX.Application.Universe.Commands;
 
 public sealed record CreateEntityCommand(
-    string Name, string EntityType, string? Description, Guid? ParentEntityId, Guid? OwnerUserId, Guid? OrgUnitId = null)
+    string Name, string EntityType, string? Description, Guid? ParentEntityId, Guid? OwnerUserId,
+    Guid? OrgUnitId = null, int? ExpectedAuditsPerYear = null)
     : ICommand<EntityDto>;
 
 public sealed class CreateEntityCommandValidator : AbstractValidator<CreateEntityCommand>
@@ -22,6 +23,7 @@ public sealed class CreateEntityCommandValidator : AbstractValidator<CreateEntit
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(255);
         RuleFor(x => x.EntityType).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.ExpectedAuditsPerYear).GreaterThan(0).When(x => x.ExpectedAuditsPerYear is not null);
     }
 }
 
@@ -55,6 +57,7 @@ public sealed class CreateEntityCommandHandler(
         var owner = command.OwnerUserId ?? currentUser.UserId;
         var entity = AuditableEntity.Create(command.EntityType.Trim(), command.Name.Trim(), command.Description, command.ParentEntityId, owner);
         entity.SetOrgUnit(command.OrgUnitId);
+        entity.SetExpectedAuditsPerYear(command.ExpectedAuditsPerYear);
         entities.Add(entity);
         audit.Record(AuditEventTypes.EntityCreated, AuditTargetTypes.AuditUniverseEntity, entity.Id,
             after: new { entity.Name, entity.EntityType, entity.ParentEntityId, entity.OwnerUserId, entity.OrgUnitId });
@@ -72,8 +75,19 @@ public sealed class CreateEntityCommandHandler(
 }
 
 public sealed record UpdateEntityCommand(
-    Guid Id, string Name, string EntityType, string? Description, Guid? OwnerUserId, Guid? ParentEntityId, string Version, Guid? OrgUnitId = null)
+    Guid Id, string Name, string EntityType, string? Description, Guid? OwnerUserId, Guid? ParentEntityId, string Version,
+    Guid? OrgUnitId = null, int? ExpectedAuditsPerYear = null)
     : ICommand<EntityDto>;
+
+public sealed class UpdateEntityCommandValidator : AbstractValidator<UpdateEntityCommand>
+{
+    public UpdateEntityCommandValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.EntityType).NotEmpty().MaximumLength(100);
+        RuleFor(x => x.ExpectedAuditsPerYear).GreaterThan(0).When(x => x.ExpectedAuditsPerYear is not null);
+    }
+}
 
 public sealed class UpdateEntityCommandHandler(
     IAuditUniverseRepository entities,
@@ -119,6 +133,7 @@ public sealed class UpdateEntityCommandHandler(
 
         entity.UpdateDetails(command.Name.Trim(), command.EntityType.Trim(), command.Description, command.OwnerUserId);
         entity.SetOrgUnit(command.OrgUnitId);
+        entity.SetExpectedAuditsPerYear(command.ExpectedAuditsPerYear);
         audit.Record(AuditEventTypes.EntityUpdated, AuditTargetTypes.AuditUniverseEntity, entity.Id,
             before: before, after: new { entity.Name, entity.EntityType, entity.ParentEntityId, entity.OwnerUserId, entity.OrgUnitId });
         await unitOfWork.SaveChangesAsync(cancellationToken);

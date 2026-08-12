@@ -55,6 +55,15 @@
       [clearable]="true"
       [clearLabel]="'universe.value.noneDash' | t"
     />
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>{{ 'universe.field.expectedAuditsPerYear' | t }}</mat-label>
+      <input matInput type="number" min="1" formControlName="expectedAuditsPerYear" />
+      <mat-hint>{{ 'universe.field.expectedAuditsPerYearHint' | t }}</mat-hint>
+      @if (form.controls.expectedAuditsPerYear.hasError('min')) {
+        <mat-error>{{ 'universe.error.expectedAuditsPerYearInvalid' | t }}</mat-error>
+      }
+    </mat-form-field>
   </form>
 
   @if (canManage()) {

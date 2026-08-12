@@ -47,7 +47,7 @@ public sealed class AnnualPlansController(IDispatcher dispatcher) : ApiControlle
     [RequirePermission(PermissionKeys.ManagePlan)]
     [HttpPost("{id:guid}/items")]
     public async Task<IActionResult> AddItem(Guid id, [FromBody] AddPlanItemRequest request, CancellationToken cancellationToken)
-        => Created(await dispatcher.Send(new AddPlanItemCommand(id, request.EntityId, request.AuditType, request.PlannedStartDate, request.PlannedEndDate, request.EstimatedEffortDays, request.AssignedLeadUserId), cancellationToken));
+        => Created(await dispatcher.Send(new AddPlanItemCommand(id, request.EntityIds, request.AuditType, request.PlannedStartDate, request.PlannedEndDate, request.EstimatedEffortDays, request.AssignedLeadUserId), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManagePlan)]
     [HttpDelete("{id:guid}/items/{itemId:guid}")]
@@ -73,7 +73,7 @@ public sealed class AnnualPlansController(IDispatcher dispatcher) : ApiControlle
     [RequirePermission(PermissionKeys.ManagePlan)]
     [HttpPost("{id:guid}/submit-revision")]
     public async Task<IActionResult> SubmitRevision(Guid id, [FromBody] SubmitPlanRevisionRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new SubmitPlanRevisionCommand(id, request.Kind, request.ItemId, request.NewStartDate, request.NewEndDate), cancellationToken));
+        => Envelope(await dispatcher.Send(new SubmitPlanRevisionCommand(id, request.Kind, request.ItemId, request.NewStartDate, request.NewEndDate, request.Reason), cancellationToken));
 
     [RequirePermission(PermissionKeys.AcChair)]
     [HttpPost("{id:guid}/decision")]

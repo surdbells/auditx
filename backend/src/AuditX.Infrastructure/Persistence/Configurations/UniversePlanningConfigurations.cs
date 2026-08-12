@@ -98,16 +98,34 @@ public sealed class PlanItemConfiguration : IEntityTypeConfiguration<PlanItem>
 
         builder.Property(i => i.AuditType).HasMaxLength(100).IsRequired();
         builder.Property(i => i.EstimatedEffortDays).HasColumnType("decimal(6,1)");
-        builder.Property(i => i.Status)
+        // Status is computed from EntityLinks — not a mapped column.
+        builder.Ignore(i => i.Status);
+
+        builder.HasIndex(i => new { i.AnnualPlanId, i.PlannedStartDate });
+
+        builder.HasMany(i => i.EntityLinks).WithOne().HasForeignKey(l => l.PlanItemId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(i => i.EntityLinks).HasField("_entityLinks").UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+public sealed class PlanItemEntityLinkConfiguration : IEntityTypeConfiguration<PlanItemEntityLink>
+{
+    public void Configure(EntityTypeBuilder<PlanItemEntityLink> builder)
+    {
+        builder.ToTable("plan_item_entity_links");
+        builder.HasKey(l => l.Id);
+        builder.Property(l => l.Id).ValueGeneratedNever();
+
+        builder.Property(l => l.Status)
             .HasConversion(new SnakeCaseEnumConverter<PlanItemStatus>())
             .HasMaxLength(30)
             .IsRequired();
 
-        builder.HasIndex(i => new { i.AnnualPlanId, i.PlannedStartDate });
-        builder.HasIndex(i => i.EntityId);
+        builder.HasIndex(l => new { l.PlanItemId, l.EntityId }).IsUnique();
+        builder.HasIndex(l => l.EntityId);
 
-        // 1:1 integrity: a live audit link belongs to exactly one plan item (nulls excluded so a deferred/
-        // unlaunched item — whose link is cleared — never collides).
-        builder.HasIndex(i => i.LinkedAuditId).IsUnique().HasFilter("[linked_audit_id] IS NOT NULL");
+        // 1:1 integrity: a live audit link belongs to exactly one plan-item entity link (nulls excluded so a
+        // deferred/unlaunched link — whose reference is cleared — never collides).
+        builder.HasIndex(l => l.LinkedAuditId).IsUnique().HasFilter("[linked_audit_id] IS NOT NULL");
     }
 }

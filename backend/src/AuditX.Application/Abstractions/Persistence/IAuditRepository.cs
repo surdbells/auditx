@@ -4,8 +4,8 @@ using AuditX.Domain.Enums;
 
 namespace AuditX.Application.Abstractions.Persistence;
 
-/// <summary>Checklist-completion rollup for the audit linked to a given plan item (feeds plan-progress aggregation).</summary>
-public sealed record PlanItemAuditProgress(Guid PlanItemId, Guid AuditId, AuditStatus AuditStatus, int TotalChecklistItems, int RespondedChecklistItems);
+/// <summary>Checklist-completion rollup for the audit linked to one entity of a plan item (feeds plan-progress aggregation).</summary>
+public sealed record PlanItemAuditProgress(Guid PlanItemId, Guid EntityId, Guid AuditId, AuditStatus AuditStatus, int TotalChecklistItems, int RespondedChecklistItems);
 
 public interface IAuditRepository
 {

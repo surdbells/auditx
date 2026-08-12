@@ -19,6 +19,7 @@ function settings(overrides: Partial<BankSettings> = {}): BankSettings {
     maxAuditEvidenceGb: 10,
     allowOverlappingPlanPeriods: false,
     allowAuditLaunchBeforeApproval: false,
+    allowMinorPlanRevisionAfterApproval: false,
     primaryColor: '#4f46e5',
     accentColor: '#7c3aed',
     logoDataUri: null,

@@ -39,6 +39,9 @@ public sealed class AuditableEntity : AggregateRoot, ISoftDeletable
 
     public DateTimeOffset? LastAuditedAt { get; private set; }
 
+    /// <summary>How many times per year this entity is expected to be audited (coverage target). Optional.</summary>
+    public int? ExpectedAuditsPerYear { get; private set; }
+
     /// <summary>Optimistic-concurrency token (rowversion) for safe concurrent edits (US-M3-004).</summary>
     public byte[] Version { get; private set; } = [];
 
@@ -87,6 +90,17 @@ public sealed class AuditableEntity : AggregateRoot, ISoftDeletable
 
     /// <summary>Assigns (or clears) the organisational unit this entity rolls up to.</summary>
     public void SetOrgUnit(Guid? orgUnitId) => OrgUnitId = orgUnitId;
+
+    /// <summary>Sets (or clears, with null) the expected annual audit frequency used as a coverage target.</summary>
+    public void SetExpectedAuditsPerYear(int? value)
+    {
+        if (value is { } v && v <= 0)
+        {
+            throw new DomainException("universe.expected_audits_invalid", "Expected audits per year must be a positive number.");
+        }
+
+        ExpectedAuditsPerYear = value;
+    }
 
     /// <summary>
     /// Apply a complete set of inherent and/or residual scores and recompute the composites. Each side

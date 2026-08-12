@@ -20,6 +20,8 @@ public sealed record CreateAuditCommand(
     string? ScopeDescription,
     Guid? TemplateId,
     Guid? PlanItemId,
+    // Required when PlanItemId is set — which of the item's (possibly several) entities this audit is for.
+    Guid? EntityId,
     Guid LeadUserId,
     Guid AuditeeUserId,
     IReadOnlyList<Guid>? TeamMemberUserIds,
@@ -34,6 +36,8 @@ public sealed class CreateAuditCommandValidator : AbstractValidator<CreateAuditC
         RuleFor(x => x.AuditType).NotEmpty().MaximumLength(100);
         RuleFor(x => x.LeadUserId).NotEmpty();
         RuleFor(x => x.AuditeeUserId).NotEmpty();
+        RuleFor(x => x.EntityId).NotEmpty().When(x => x.PlanItemId is not null)
+            .WithMessage("An entity is required when launching from a plan item.");
     }
 }
 
@@ -73,11 +77,20 @@ public sealed class CreateAuditCommandHandler(
             throw new NotFoundException("Plan item", planItemId);
         }
 
+        // A plan item can cover several entities; confirm the caller's chosen entity is actually one of them.
+        if (command.PlanItemId is { } checkItemId && command.EntityId is { } checkEntityId)
+        {
+            var item = plan!.Items.FirstOrDefault(i => i.Id == checkItemId);
+            if (item is null || item.EntityLinks.All(l => l.EntityId != checkEntityId))
+            {
+                throw new ConflictException("plan.item_entity_not_found", "This entity is not part of the plan item.");
+            }
+        }
+
         var targetEnd = command.TargetEndDate ?? ComputeDefaultTargetEnd(command, plan);
-        // Link the audit directly to the entity it covers, sourced from the plan item when plan-launched.
-        var auditableEntityId = command.PlanItemId is { } eid
-            ? plan?.Items.FirstOrDefault(i => i.Id == eid)?.EntityId
-            : null;
+        // Link the audit directly to the entity it covers — the caller's choice when plan-launched (a plan
+        // item may cover several entities, each getting its own audit), or unset for an ad-hoc audit.
+        var auditableEntityId = command.PlanItemId is not null ? command.EntityId : null;
         var data = new CreateAuditData(
             command.Name, command.AuditType, command.StartDate, targetEnd, command.ScopeDescription,
             command.TemplateId, null, command.PlanItemId, auditableEntityId, command.LeadUserId, command.AuditeeUserId,
@@ -85,11 +98,11 @@ public sealed class CreateAuditCommandHandler(
 
         var auditEntity = await creationService.BuildAsync(data, currentUser.UserId, clock.UtcNow, cancellationToken);
 
-        if (command.PlanItemId is { } linkItemId)
+        if (command.PlanItemId is { } linkItemId && command.EntityId is { } linkEntityId)
         {
             var bank = await settings.GetAsync(cancellationToken);
             // throws plan.item_not_linkable (409) unless the plan is Approved (or the deployment allows pre-approval launch)
-            plan!.LinkAuditToItem(linkItemId, auditEntity.Id, bank.AllowAuditLaunchBeforeApproval);
+            plan!.LinkAuditToItem(linkItemId, linkEntityId, auditEntity.Id, bank.AllowAuditLaunchBeforeApproval);
         }
 
         audits.Add(auditEntity);

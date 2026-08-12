@@ -11,7 +11,7 @@ Infrastructure project and run automatically on application startup.
 | **Schema migrations** | `backend/src/AuditX.Infrastructure/Persistence/Migrations/` (EF Core, code-first) |
 | **Model snapshot** | `backend/src/AuditX.Infrastructure/Persistence/Migrations/AppDbContextModelSnapshot.cs` |
 | **Entity ↔ table mapping** | `backend/src/AuditX.Infrastructure/Persistence/Configurations/*.cs` (snake_case tables) |
-| **Seed data** | `backend/src/AuditX.Infrastructure/Persistence/DbSeeder.cs` (idempotent; built-in roles + permission sets, bank settings, risk dimensions, entity-type taxonomy, notification default rules/templates, and — only when the Development identity provider is active — the seeded dev users) |
+| **Seed data** | `backend/src/AuditX.Infrastructure/Persistence/DbSeeder.cs` (idempotent; built-in roles + permission sets, institution settings, risk dimensions, entity-type taxonomy, notification default rules/templates, and — only when the Development identity provider is active — the seeded dev users) |
 | **Append-only audit-trail trigger** | created inside the `InitialCreate` migration (rejects `UPDATE`/`DELETE` on `audit_trail`) |
 
 ## How it's applied

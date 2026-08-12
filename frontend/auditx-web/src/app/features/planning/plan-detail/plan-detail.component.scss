@@ -60,6 +60,34 @@
   font-variant-numeric: tabular-nums;
 }
 
+.detail__entity-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.detail__entity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.detail__item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+.detail__item-action-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.detail__action-entity {
+  font: var(--mat-sys-label-small);
+  min-width: 5rem;
+}
+
 .detail__exec-counts {
   display: flex;
   flex-wrap: wrap;

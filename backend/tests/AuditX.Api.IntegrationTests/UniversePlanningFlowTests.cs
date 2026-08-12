@@ -91,14 +91,14 @@ public sealed class UniversePlanningFlowTests(ApiFactory factory) : IClassFixtur
         var earlySubmit = await admin.PostAsync($"/api/v1/annual-plans/{planId}/submit", null);
         Assert.Equal(HttpStatusCode.UnprocessableContent, earlySubmit.StatusCode);
 
-        await admin.PostAsJsonAsync($"/api/v1/annual-plans/{planId}/items", new
+        (await admin.PostAsJsonAsync($"/api/v1/annual-plans/{planId}/items", new
         {
-            entityId,
+            entityIds = new[] { entityId },
             auditType = "process_review",
             plannedStartDate = "2099-03-01",
             plannedEndDate = "2099-03-31",
             estimatedEffortDays = 10,
-        });
+        })).EnsureSuccessStatusCode();
 
         var submitted = await DataAsync(await admin.PostAsync($"/api/v1/annual-plans/{planId}/submit", null));
         Assert.Equal("submitted", submitted.GetProperty("status").GetString());
@@ -106,7 +106,7 @@ public sealed class UniversePlanningFlowTests(ApiFactory factory) : IClassFixtur
         // Item outside the plan period → 422.
         var badItem = await admin.PostAsJsonAsync($"/api/v1/annual-plans/{planId}/items", new
         {
-            entityId,
+            entityIds = new[] { entityId },
             auditType = "x",
             plannedStartDate = "2100-01-01",
             plannedEndDate = "2100-02-01",

@@ -35,6 +35,8 @@ export interface CreateAuditPlanItemContext {
   /** Human label for the audit type (banner display). */
   auditTypeLabel: string;
   leadUserId: string | null;
+  /** Which of the plan item's (possibly several) entities this audit is for. */
+  entityId: string;
   /** Human label for the audited entity (for the suggested name + banner). */
   entityName: string;
   /** Pre-suggested audit name, e.g. "Branch Ops — 2026 Plan". */
@@ -296,6 +298,7 @@ export class CreateAuditDialogComponent {
       auditType: v.auditType.trim(),
       templateId: v.templateId || null,
       planItemId: this.data.planItem?.planItemId ?? null,
+      entityId: this.data.planItem?.entityId ?? null,
       scopeDescription: v.scopeDescription.trim() || null,
       startDate: toDateOnly(v.startDate),
       targetEndDate: v.targetEndDate ? toDateOnly(v.targetEndDate) : null,

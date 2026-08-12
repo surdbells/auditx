@@ -32,7 +32,8 @@ public sealed class GetPlanQueryHandler(IAnnualPlanRepository plans, IBankSettin
         var plan = await plans.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Plan", query.Id);
         var bank = await settings.GetAsync(cancellationToken);
         var canLaunch = PlanLaunchPolicy.CanLaunchAudits(plan.Status, bank.AllowAuditLaunchBeforeApproval);
-        return plan.ToDto(canLaunch);
+        var canApplyMinorRevision = PlanRevisionPolicy.CanApplyMinorRevision(plan.Status, bank.AllowMinorPlanRevisionAfterApproval);
+        return plan.ToDto(canLaunch, canApplyMinorRevision);
     }
 }
 
@@ -79,21 +80,22 @@ public sealed class PlanExecutionQueryHandler(IAnnualPlanRepository plans, IAudi
             .Select(i => i.ToDto())
             .ToArray();
 
-        // Real progress: aggregate checklist-item completion across every audit the plan's items have launched.
+        // Real progress: aggregate checklist-item completion across every audit the plan's items have launched
+        // (one per entity per item, since a single item can now cover several entities).
         var progressRows = await audits.GetChecklistProgressByPlanItemIdsAsync(items.Select(i => i.Id).ToArray(), cancellationToken);
-        var byPlanItem = progressRows.ToDictionary(r => r.PlanItemId);
+        var byPlanItemEntity = progressRows.ToDictionary(r => (r.PlanItemId, r.EntityId));
 
-        var itemProgress = items.Select(i =>
+        var itemProgress = items.SelectMany(i => i.EntityLinks.Select(link =>
         {
-            byPlanItem.TryGetValue(i.Id, out var row);
+            byPlanItemEntity.TryGetValue((i.Id, link.EntityId), out var row);
             var itemTotal = row?.TotalChecklistItems ?? 0;
             var itemResponded = row?.RespondedChecklistItems ?? 0;
             var itemPct = itemTotal == 0 ? 0m : Math.Round((decimal)itemResponded / itemTotal * 100m, 1, MidpointRounding.AwayFromZero);
             return new PlanItemProgressDto(
-                i.Id, i.LinkedAuditId,
+                i.Id, link.EntityId, link.LinkedAuditId,
                 row is null ? null : Common.Enums.EnumExtensions.ToSnake(row.AuditStatus),
                 itemTotal, itemResponded, itemPct);
-        }).ToArray();
+        })).ToArray();
 
         var totalChecklist = progressRows.Sum(r => r.TotalChecklistItems);
         var respondedChecklist = progressRows.Sum(r => r.RespondedChecklistItems);

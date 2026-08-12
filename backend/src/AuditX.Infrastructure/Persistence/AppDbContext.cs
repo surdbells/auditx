@@ -84,6 +84,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<PlanItem> PlanItems => Set<PlanItem>();
 
+    public DbSet<PlanItemEntityLink> PlanItemEntityLinks => Set<PlanItemEntityLink>();
+
     public DbSet<Audit> Audits => Set<Audit>();
 
     public DbSet<AuditTeamMember> AuditTeamMembers => Set<AuditTeamMember>();

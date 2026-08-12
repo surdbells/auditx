@@ -37,17 +37,26 @@ export interface PlanDecision {
   decidedAt: string | null;
 }
 
-export interface PlanItem {
+/** One entity a plan item covers, and the (at most one live) audit launched for it. */
+export interface PlanItemEntityLink {
   id: string;
   entityId: string;
+  linkedAuditId: string | null;
+  status: PlanItemStatus;
+}
+
+export interface PlanItem {
+  id: string;
   auditType: string;
   plannedStartDate: string;
   plannedEndDate: string;
   estimatedEffortDays: number | null;
   assignedLeadUserId: string | null;
-  linkedAuditId: string | null;
+  /** Roll-up: in_progress if any entity is; completed only once every entity is; else planned/deferred. */
   status: PlanItemStatus;
   orderIndex: number;
+  /** One or more entities this item covers — each gets its own independently-launched audit. */
+  entityLinks: PlanItemEntityLink[];
 }
 
 /** Locates a plan item within its owning plan — backs the audit → plan deep link. */
@@ -73,6 +82,10 @@ export interface Plan {
   approvalDecision: PlanDecision | null;
   /** True when the plan's items may be turned into audits (approved plan, or a deployment that allows pre-approval launch). */
   canLaunchAudits: boolean;
+  /** True when an Approved plan may still be edited directly via a "minor revision" (no re-approval) — off by default. */
+  canApplyMinorRevision: boolean;
+  /** Why the current material revision was requested, if any (set when the plan was re-opened for AC re-approval). */
+  revisionReason: string | null;
   items: PlanItem[];
 }
 
@@ -86,9 +99,10 @@ export interface PlanListItem {
   itemCount: number;
 }
 
-/** Real checklist-completion progress of the audit a plan item drives (indexed by planItemId). */
+/** Real checklist-completion progress of the audit launched for one entity of a plan item. */
 export interface PlanItemProgress {
   planItemId: string;
+  entityId: string;
   linkedAuditId: string | null;
   auditStatus: string | null;
   totalChecklistItems: number;
@@ -118,7 +132,7 @@ export interface SavePlanRequest {
 }
 
 export interface AddPlanItemRequest {
-  entityId: string;
+  entityIds: string[];
   auditType: string;
   plannedStartDate: string;
   plannedEndDate: string;
@@ -131,6 +145,8 @@ export interface SubmitRevisionRequest {
   itemId?: string;
   newStartDate?: string;
   newEndDate?: string;
+  /** Optional context for why the change is requested — shown to the AC chair for a material revision. */
+  reason?: string;
 }
 
 export interface PlanDecisionRequest {

@@ -61,7 +61,7 @@ public sealed class AuditorWorkloadFlowTests(ApiFactory factory) : IClassFixture
         {
             (await admin.PostAsJsonAsync($"/api/v1/annual-plans/{planId}/items", new
             {
-                entityId,
+                entityIds = new[] { entityId },
                 auditType = "process_review",
                 plannedStartDate = "2098-03-01",
                 plannedEndDate = "2098-03-31",

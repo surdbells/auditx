@@ -84,9 +84,10 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
         }
 
         return await db.Audits.AsNoTracking()
-            .Where(a => a.PlanItemId != null && planItemIds.Contains(a.PlanItemId.Value))
+            .Where(a => a.PlanItemId != null && a.AuditableEntityId != null && planItemIds.Contains(a.PlanItemId.Value))
             .Select(a => new PlanItemAuditProgress(
                 a.PlanItemId!.Value,
+                a.AuditableEntityId!.Value,
                 a.Id,
                 a.Status,
                 a.ChecklistItems.Count,

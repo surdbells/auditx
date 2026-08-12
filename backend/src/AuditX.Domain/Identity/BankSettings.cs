@@ -47,6 +47,14 @@ public sealed class BankSettings : Entity
     /// </summary>
     public bool AllowAuditLaunchBeforeApproval { get; private set; }
 
+    /// <summary>
+    /// When true, an Approved plan's items may still be edited directly via a "minor revision" (date shift,
+    /// no re-approval) after approval; when false (default), an Approved plan is fully locked and the only
+    /// way to change it is a "material revision", which re-opens it for Audit-Committee re-approval — an
+    /// audit must happen as planned unless the bank explicitly opts into lighter-weight post-approval edits.
+    /// </summary>
+    public bool AllowMinorPlanRevisionAfterApproval { get; private set; }
+
     /// <summary>Primary brand colour (hex, e.g. <c>#4f46e5</c>) applied to the UI theme.</summary>
     public string PrimaryColor { get; private set; } = "#4f46e5";
 
@@ -114,6 +122,8 @@ public sealed class BankSettings : Entity
     public void SetAllowOverlappingPlanPeriods(bool value) => AllowOverlappingPlanPeriods = value;
 
     public void SetAllowAuditLaunchBeforeApproval(bool value) => AllowAuditLaunchBeforeApproval = value;
+
+    public void SetAllowMinorPlanRevisionAfterApproval(bool value) => AllowMinorPlanRevisionAfterApproval = value;
 
     /// <summary>Sets the page-guide behaviour: the "Overview" / "Walkthrough" buttons and the auto-start tour.</summary>
     public void SetPageGuideVisibility(bool showOverview, bool showWalkthrough, bool autoStartWalkthrough)

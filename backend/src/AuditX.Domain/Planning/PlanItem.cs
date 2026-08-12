@@ -3,16 +3,20 @@ using AuditX.Domain.Enums;
 
 namespace AuditX.Domain.Planning;
 
-/// <summary>A single planned audit within an annual plan (M3). Status is driven by the linked audit (M4).</summary>
+/// <summary>
+/// A single scheduled slot within an annual plan (M3): an audit type + date range + lead, covering one or more
+/// auditable entities. Each entity gets its own <see cref="PlanItemEntityLink"/> and, once launched, its own
+/// independent audit — the item is the shared schedule, not a 1:1 audit template.
+/// </summary>
 public sealed class PlanItem : Entity
 {
+    private readonly List<PlanItemEntityLink> _entityLinks = [];
+
     private PlanItem()
     {
     }
 
     public Guid AnnualPlanId { get; private set; }
-
-    public Guid EntityId { get; private set; }
 
     public string AuditType { get; private set; } = null!;
 
@@ -24,23 +28,52 @@ public sealed class PlanItem : Entity
 
     public Guid? AssignedLeadUserId { get; private set; }
 
-    public Guid? LinkedAuditId { get; private set; }
-
-    public PlanItemStatus Status { get; private set; } = PlanItemStatus.Planned;
-
     /// <summary>Display order within the plan (manually reorderable while the plan is editable).</summary>
     public int OrderIndex { get; private set; }
 
-    internal PlanItem(Guid annualPlanId, Guid entityId, string auditType, DateOnly start, DateOnly end, decimal? effortDays, Guid? assignedLeadUserId, int orderIndex)
+    public IReadOnlyList<PlanItemEntityLink> EntityLinks => _entityLinks.AsReadOnly();
+
+    /// <summary>Roll-up for list display: InProgress if any entity is; else Completed only if every entity is; else Planned.</summary>
+    public PlanItemStatus Status => ComputeRollupStatus(_entityLinks.Select(l => l.Status));
+
+    /// <summary>
+    /// The same roll-up <see cref="Status"/> computes, exposed for callers (e.g. analytics) that can only fetch
+    /// entity-link statuses via a translated query and must roll them up client-side.
+    /// </summary>
+    public static PlanItemStatus ComputeRollupStatus(IEnumerable<PlanItemStatus> entityLinkStatuses)
     {
+        var statuses = entityLinkStatuses as IReadOnlyCollection<PlanItemStatus> ?? entityLinkStatuses.ToList();
+        if (statuses.Any(s => s == PlanItemStatus.InProgress))
+        {
+            return PlanItemStatus.InProgress;
+        }
+        if (statuses.Count > 0 && statuses.All(s => s == PlanItemStatus.Completed))
+        {
+            return PlanItemStatus.Completed;
+        }
+        if (statuses.All(s => s is PlanItemStatus.Completed or PlanItemStatus.Deferred) && statuses.Any(s => s == PlanItemStatus.Deferred))
+        {
+            return PlanItemStatus.Deferred;
+        }
+        return PlanItemStatus.Planned;
+    }
+
+    internal PlanItem(Guid annualPlanId, IReadOnlyList<Guid> entityIds, string auditType, DateOnly start, DateOnly end, decimal? effortDays, Guid? assignedLeadUserId, int orderIndex)
+    {
+        var distinctEntityIds = entityIds.Distinct().ToArray();
+        Guard.Against(distinctEntityIds.Length == 0, "plan.item_entities_required", "At least one entity is required.");
+
         AnnualPlanId = annualPlanId;
-        EntityId = entityId;
         AuditType = Guard.NotNullOrWhiteSpace(auditType, "plan.audit_type_required", "Audit type is required.");
         SetDates(start, end);
         EstimatedEffortDays = effortDays;
         AssignedLeadUserId = assignedLeadUserId;
         OrderIndex = orderIndex;
-        Status = PlanItemStatus.Planned;
+
+        foreach (var entityId in distinctEntityIds)
+        {
+            _entityLinks.Add(new PlanItemEntityLink(Id, entityId));
+        }
     }
 
     internal void SetOrder(int orderIndex) => OrderIndex = orderIndex;
@@ -56,28 +89,13 @@ public sealed class PlanItem : Entity
         PlannedEndDate = end;
     }
 
-    internal void LinkAudit(Guid auditId)
-    {
-        // 1:1 invariant: a plan item drives exactly one live audit. A deferred item has had its link cleared
-        // (see MarkDeferred) so it can be re-launched; any other item that still carries a link is protected.
-        if (LinkedAuditId is not null)
-        {
-            throw new DomainException("plan.item_already_linked", "This plan item already has a linked audit.");
-        }
+    internal void LinkAudit(Guid entityId, Guid auditId) => FindLink(entityId).LinkAudit(auditId);
 
-        LinkedAuditId = auditId;
-        Status = PlanItemStatus.InProgress;
-    }
+    internal void MarkCompleted(Guid entityId) => FindLink(entityId).MarkCompleted();
 
-    internal void MarkCompleted() => Status = PlanItemStatus.Completed;
+    internal void MarkDeferred(Guid entityId) => FindLink(entityId).MarkDeferred();
 
-    /// <summary>
-    /// The linked audit was cancelled: defer the item and clear the dangling link so the item can be
-    /// re-launched (a cancelled audit is a dead end that must not keep the item permanently occupied).
-    /// </summary>
-    internal void MarkDeferred()
-    {
-        LinkedAuditId = null;
-        Status = PlanItemStatus.Deferred;
-    }
+    private PlanItemEntityLink FindLink(Guid entityId)
+        => _entityLinks.FirstOrDefault(l => l.EntityId == entityId)
+            ?? throw new DomainException("plan.item_entity_not_found", "This entity is not part of the plan item.");
 }

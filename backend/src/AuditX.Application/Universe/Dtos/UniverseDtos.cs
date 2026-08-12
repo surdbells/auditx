@@ -13,6 +13,7 @@ public sealed record EntityDto(
     decimal? CompositeInherentScore,
     decimal? CompositeResidualScore,
     DateTimeOffset? LastAuditedAt,
+    int? ExpectedAuditsPerYear,
     string Version);
 
 public sealed record RiskDimensionDto(

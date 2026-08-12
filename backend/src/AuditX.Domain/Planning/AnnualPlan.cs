@@ -39,6 +39,9 @@ public sealed class AnnualPlan : AggregateRoot
 
     public string? ApprovalDecisionJson { get; private set; }
 
+    /// <summary>Why the current material revision was requested (optional — set when re-opening an Approved plan).</summary>
+    public string? RevisionReason { get; private set; }
+
     public IReadOnlyList<PlanItem> Items => _items.AsReadOnly();
 
     public ApprovalDecisionRecord? ApprovalDecision => ApprovalDecisionJson is null
@@ -74,11 +77,11 @@ public sealed class AnnualPlan : AggregateRoot
         PeriodEnd = periodEnd;
     }
 
-    public PlanItem AddItem(Guid entityId, string auditType, DateOnly start, DateOnly end, decimal? effortDays, Guid? assignedLeadUserId)
+    public PlanItem AddItem(IReadOnlyList<Guid> entityIds, string auditType, DateOnly start, DateOnly end, decimal? effortDays, Guid? assignedLeadUserId)
     {
         EnsureStatus("plan.not_editable", PlanStatus.Draft, PlanStatus.RevisionsRequested);
         EnsureWithinPeriod(start, end);
-        var item = new PlanItem(Id, entityId, auditType, start, end, effortDays, assignedLeadUserId, _items.Count);
+        var item = new PlanItem(Id, entityIds, auditType, start, end, effortDays, assignedLeadUserId, _items.Count);
         _items.Add(item);
         return item;
     }
@@ -150,12 +153,13 @@ public sealed class AnnualPlan : AggregateRoot
         RaiseDomainEvent(new PlanDecidedEvent(Id, outcome.ToString(), decidedBy));
     }
 
-    /// <summary>Material revision of an approved plan: re-opens for AC re-approval.</summary>
-    public void BeginMaterialRevision(DateTimeOffset nowUtc)
+    /// <summary>Material revision of an approved plan: re-opens for AC re-approval. The reason is optional context for the reviewer.</summary>
+    public void BeginMaterialRevision(string? reason, DateTimeOffset nowUtc)
     {
         EnsureStatus("plan.not_revisable", PlanStatus.Approved);
         Status = PlanStatus.RevisionSubmitted;
         SubmittedAt = nowUtc;
+        RevisionReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
     }
 
     /// <summary>Minor revision of an approved plan: adjust a plan item's dates in place, staying Approved.</summary>
@@ -174,12 +178,12 @@ public sealed class AnnualPlan : AggregateRoot
     }
 
     /// <summary>
-    /// Link a freshly-created audit to a plan item. By default audits may only be launched from an
+    /// Link a freshly-created audit to one entity of a plan item. By default audits may only be launched from an
     /// <see cref="PlanStatus.Approved"/> plan (the Audit-Committee governance gate). When the deployment
     /// opts in via <c>BankSettings.AllowAuditLaunchBeforeApproval</c>, the caller passes
     /// <paramref name="allowBeforeApproval"/> = true and audits may be launched from any non-closed plan.
     /// </summary>
-    public void LinkAuditToItem(Guid itemId, Guid auditId, bool allowBeforeApproval = false)
+    public void LinkAuditToItem(Guid itemId, Guid entityId, Guid auditId, bool allowBeforeApproval = false)
     {
         var linkable = allowBeforeApproval ? Status != PlanStatus.Closed : Status == PlanStatus.Approved;
         if (!linkable)
@@ -192,15 +196,15 @@ public sealed class AnnualPlan : AggregateRoot
         }
 
         var item = FindItem(itemId);
-        item.LinkAudit(auditId);
+        item.LinkAudit(entityId, auditId);
         RaiseDomainEvent(new PlanItemLinkedToAuditEvent(item.Id, auditId));
     }
 
-    /// <summary>Mark a plan item completed when its linked audit completes (M4 → M3, US-M3-019).</summary>
-    public void MarkPlanItemCompleted(Guid itemId) => FindItem(itemId).MarkCompleted();
+    /// <summary>Mark a plan item's entity completed when its linked audit completes (M4 → M3, US-M3-019).</summary>
+    public void MarkPlanItemCompleted(Guid itemId, Guid entityId) => FindItem(itemId).MarkCompleted(entityId);
 
-    /// <summary>Mark a plan item deferred when its linked audit is cancelled/deferred (M4 → M3).</summary>
-    public void MarkPlanItemDeferred(Guid itemId) => FindItem(itemId).MarkDeferred();
+    /// <summary>Mark a plan item's entity deferred when its linked audit is cancelled/deferred (M4 → M3).</summary>
+    public void MarkPlanItemDeferred(Guid itemId, Guid entityId) => FindItem(itemId).MarkDeferred(entityId);
 
     private void EnsureWithinPeriod(DateOnly start, DateOnly end)
     {

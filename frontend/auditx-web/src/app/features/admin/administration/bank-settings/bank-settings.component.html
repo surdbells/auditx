@@ -181,6 +181,13 @@
             <p class="settings__toggle-hint">{{ 'administration.bankSettings.allowLaunchBeforeApprovalHint' | t }}</p>
           </div>
 
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="allowMinorPlanRevisionAfterApproval">
+              {{ 'administration.bankSettings.allowMinorRevision' | t }}
+            </mat-slide-toggle>
+            <p class="settings__toggle-hint">{{ 'administration.bankSettings.allowMinorRevisionHint' | t }}</p>
+          </div>
+
           @if (canManageSettings()) {
             <div class="settings__actions">
               <button

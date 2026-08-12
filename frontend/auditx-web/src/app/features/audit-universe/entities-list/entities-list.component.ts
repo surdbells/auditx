@@ -130,6 +130,7 @@ export class EntitiesListComponent {
     'owner',
     'residual',
     'lastAudited',
+    'expectedAuditsPerYear',
     'actions',
   ];
 
