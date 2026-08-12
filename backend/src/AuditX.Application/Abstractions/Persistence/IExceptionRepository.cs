@@ -38,3 +38,15 @@ public interface IExceptionRepository
 
     void Add(AuditException exception);
 }
+
+/// <summary>Persistence for bank-configurable <see cref="ExceptionRaisingRule"/>s — one per <see cref="ResponseType"/>.</summary>
+public interface IExceptionRaisingRuleRepository
+{
+    Task<ExceptionRaisingRule?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<ExceptionRaisingRule?> GetByResponseTypeAsync(ResponseType responseType, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ExceptionRaisingRule>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    void Add(ExceptionRaisingRule rule);
+}

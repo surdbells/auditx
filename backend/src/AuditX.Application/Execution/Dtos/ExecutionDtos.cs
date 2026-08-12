@@ -20,7 +20,8 @@ public sealed record ChecklistProgressDto(
     int TotalItems, int RespondedItems, int InProgressItems, int NotStartedItems,
     IReadOnlyList<ChecklistProgressItemDto> Items);
 
-public sealed record ResponseHistoryEntryDto(Guid Id, string EventType, Guid? ActorUserId, DateTimeOffset OccurredAtUtc, string? StateJson);
+public sealed record ResponseHistoryEntryDto(
+    Guid Id, string EventType, Guid? ActorUserId, DateTimeOffset OccurredAtUtc, string? StateJson, string? BeforeStateJson = null);
 
 public sealed record ReviewSummaryDto(int TotalItems, int Responded, int Pass, int Fail, int Na, int Exceptions);
 

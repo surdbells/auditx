@@ -21,7 +21,7 @@ export interface ResponseHistoryDialogData {
 
 type LoadState = 'loading' | 'ready' | 'error';
 
-/** The verdict/comment/score snapshot recorded on a response event (see ResponseCommands.Snapshot on the backend). */
+/** The verdict/comment/value/score snapshot recorded on a response event (see ResponseCommands.Snapshot on the backend). */
 interface ResponseStateSnapshot {
   verdict?: 'pass' | 'fail' | 'na' | null;
   comment?: string | null;
@@ -30,13 +30,26 @@ interface ResponseStateSnapshot {
   score?: number | null;
 }
 
-/** A history entry with its state snapshot pre-parsed (null when the entry carries no/unparseable state). */
-interface HistoryRow {
-  entry: ResponseHistoryEntry;
-  state: ResponseStateSnapshot | null;
+/** A single before/after field the timeline compares: "was" is null when there's nothing to compare against (the entry that first recorded the response). */
+interface FieldDiff {
+  label: string;
+  was: string | null;
+  now: string;
+  changed: boolean;
 }
 
-/** Read-only timeline of the lifecycle events recorded against a response — what was actually done at each step, not just the event name. */
+/** A history entry with its before/after snapshots pre-parsed and diffed into a display-ready row. */
+interface HistoryRow {
+  entry: ResponseHistoryEntry;
+  after: ResponseStateSnapshot | null;
+  diffs: FieldDiff[];
+}
+
+/**
+ * Full before/after timeline of the lifecycle events recorded against a response: what it was, what it became,
+ * who changed it and when — not just the latest state. Every edit (not only the first response) shows a
+ * decision/value/comment/score comparison so a reviewer can see exactly what moved.
+ */
 @Component({
   selector: 'app-response-history-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,20 +76,33 @@ interface HistoryRow {
                   <div class="timeline__body">
                     <div class="timeline__head">
                       <span class="timeline__event">{{ eventLabel(row.entry.eventType) }}</span>
-                      @if (row.state?.verdict) {
-                        <span class="verdict-chip" [attr.data-verdict]="row.state!.verdict">
-                          {{ verdictLabel(row.state!.verdict) }}
+                      @if (row.after?.verdict) {
+                        <span class="verdict-chip" [attr.data-verdict]="row.after!.verdict">
+                          {{ verdictLabel(row.after!.verdict) }}
                         </span>
                       }
-                      @if (row.state?.isDraft) {
+                      @if (row.after?.isDraft) {
                         <span class="verdict-chip" data-verdict="draft">{{ 'audits.verdict.draft' | t }}</span>
                       }
-                      @if (row.state?.score !== null && row.state?.score !== undefined) {
-                        <span class="score-chip">{{ 'audits.history.score' | t: { score: row.state!.score } }}</span>
+                      @if (row.after?.score !== null && row.after?.score !== undefined) {
+                        <span class="score-chip">{{ 'audits.history.score' | t: { score: row.after!.score } }}</span>
                       }
                     </div>
-                    @if (row.state?.comment) {
-                      <p class="timeline__comment">{{ row.state!.comment }}</p>
+                    @if (row.diffs.length) {
+                      <dl class="timeline__diff">
+                        @for (d of row.diffs; track d.label) {
+                          <div class="diff-row">
+                            <dt class="diff-row__label">{{ d.label }}</dt>
+                            <dd class="diff-row__value">
+                              @if (d.was !== null && d.changed) {
+                                <span class="diff-row__was">{{ d.was }}</span>
+                                <span class="diff-row__arrow" aria-hidden="true">→</span>
+                              }
+                              <span class="diff-row__now">{{ d.now }}</span>
+                            </dd>
+                          </div>
+                        }
+                      </dl>
                     }
                     <span class="muted timeline__meta">
                       {{ nameOf(row.entry.actorUserId) }} ·
@@ -106,7 +132,7 @@ interface HistoryRow {
       list-style: none;
       margin: 0;
       padding: 0;
-      min-width: 420px;
+      min-width: 460px;
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
@@ -127,8 +153,9 @@ interface HistoryRow {
     .timeline__body {
       display: flex;
       flex-direction: column;
-      gap: 0.15rem;
+      gap: 0.3rem;
       min-width: 0;
+      flex: 1;
     }
     .timeline__head {
       display: flex;
@@ -139,13 +166,49 @@ interface HistoryRow {
     .timeline__event {
       font-weight: 500;
     }
-    .timeline__comment {
-      margin: 0.1rem 0 0;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
     .timeline__meta {
       font: var(--mat-sys-label-small);
+    }
+    .timeline__diff {
+      margin: 0.15rem 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: 8px;
+      background: var(--mat-sys-surface-container-low);
+    }
+    .diff-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: baseline;
+      font-size: 0.8125rem;
+    }
+    .diff-row__label {
+      flex: 0 0 auto;
+      min-width: 5.5rem;
+      color: var(--mat-sys-on-surface-variant);
+      font-weight: 500;
+    }
+    .diff-row__value {
+      margin: 0;
+      display: flex;
+      gap: 0.4rem;
+      align-items: baseline;
+      flex-wrap: wrap;
+      overflow-wrap: anywhere;
+    }
+    .diff-row__was {
+      color: var(--mat-sys-on-surface-variant);
+      text-decoration: line-through;
+      text-decoration-color: var(--mat-sys-outline-variant);
+    }
+    .diff-row__arrow {
+      color: var(--mat-sys-on-surface-variant);
+    }
+    .diff-row__now {
+      color: var(--mat-sys-on-surface);
+      font-weight: 500;
     }
     .verdict-chip {
       padding: 0.1rem 0.5rem;
@@ -199,7 +262,7 @@ export class ResponseHistoryDialogComponent {
       .getResponseHistory(this.data.auditId, this.data.itemId)
       .subscribe({
         next: (entries) => {
-          this.rows.set(entries.map((entry) => ({ entry, state: this.parseState(entry.stateJson) })));
+          this.rows.set(entries.map((entry) => this.toRow(entry)));
           this.state.set('ready');
         },
         error: () => this.state.set('error'),
@@ -215,7 +278,7 @@ export class ResponseHistoryDialogComponent {
 
   verdictLabel(verdict: string | null | undefined): string {
     if (!verdict) {
-      return '';
+      return this.i18n.translate('audits.history.none');
     }
     const key = `audits.verdict.${verdict}`;
     const label = this.i18n.translate(key);
@@ -233,6 +296,69 @@ export class ResponseHistoryDialogComponent {
 
   close(): void {
     this.dialogRef.close();
+  }
+
+  private toRow(entry: ResponseHistoryEntry): HistoryRow {
+    const before = this.parseState(entry.beforeStateJson);
+    const after = this.parseState(entry.stateJson);
+    return { entry, after, diffs: this.buildDiffs(before, after) };
+  }
+
+  /**
+   * Field-by-field comparison so a reviewer sees exactly what changed, not just the resulting state: the
+   * decision (verdict), the captured value (for value-type items), the comment, and the score. A field is
+   * included whenever the "after" state carries it; "was" stays null (no strikethrough/arrow) when there's no
+   * prior state to compare against or the field is unchanged.
+   */
+  private buildDiffs(before: ResponseStateSnapshot | null, after: ResponseStateSnapshot | null): FieldDiff[] {
+    if (!after) {
+      return [];
+    }
+
+    const diffs: FieldDiff[] = [];
+
+    const decisionNow = this.verdictLabel(after.verdict);
+    const decisionWas = before ? this.verdictLabel(before.verdict) : null;
+    if (after.verdict || decisionWas) {
+      diffs.push(this.diff(this.i18n.translate('audits.history.decision'), decisionWas, decisionNow));
+    }
+
+    const valueNow = this.describeValue(after.valueJson);
+    const valueWas = before ? this.describeValue(before.valueJson) : null;
+    if (valueNow || valueWas) {
+      diffs.push(this.diff(this.i18n.translate('audits.history.value'), valueWas, valueNow ?? this.i18n.translate('audits.history.none')));
+    }
+
+    const commentNow = after.comment?.trim() || this.i18n.translate('audits.history.none');
+    const commentWas = before ? before.comment?.trim() || this.i18n.translate('audits.history.none') : null;
+    if (after.comment || commentWas) {
+      diffs.push(this.diff(this.i18n.translate('audits.history.comment'), commentWas, commentNow));
+    }
+
+    if (after.score !== null && after.score !== undefined) {
+      const scoreWas = before?.score !== null && before?.score !== undefined ? String(before.score) : null;
+      diffs.push(this.diff(this.i18n.translate('audits.history.scoreLabel'), scoreWas, String(after.score)));
+    }
+
+    return diffs;
+  }
+
+  private diff(label: string, was: string | null, now: string): FieldDiff {
+    return { label, was, now, changed: was !== null && was !== now };
+  }
+
+  /** Extract the type-specific scalar from a captured value JSON (e.g. {"rating":4} -> "4"), for display only. */
+  private describeValue(valueJson: string | null | undefined): string | null {
+    if (!valueJson) {
+      return null;
+    }
+    try {
+      const v = JSON.parse(valueJson) as Record<string, unknown>;
+      const raw = v['text'] ?? v['number'] ?? v['date'] ?? v['rating'] ?? v['choice'];
+      return raw === undefined || raw === null ? null : String(raw);
+    } catch {
+      return null;
+    }
   }
 
   private parseState(stateJson: string | null | undefined): ResponseStateSnapshot | null {

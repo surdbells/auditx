@@ -46,6 +46,7 @@ public sealed class RaiseExceptionCommandValidator : AbstractValidator<RaiseExce
 public sealed class RaiseExceptionCommandHandler(
     IAuditRepository audits,
     IExceptionRepository exceptions,
+    IExceptionRaisingRuleRepository raisingRules,
     IUserRepository users,
     IPermissionResolver permissions,
     IExceptionDefaults defaults,
@@ -71,11 +72,16 @@ public sealed class RaiseExceptionCommandHandler(
             ? throw new DomainException("exception.severity_required", "This item has no risk rating, so a severity must be selected.")
             : ExceptionParsing.ParseSeverity(command.Severity));
 
-        // Pass/N-A gate (US-M5-017 / BR-M6-001): an exception can only be raised on a finalised Fail.
-        var hasFail = auditEntity.Responses.Any(r => r.ChecklistItemId == item.Id && !r.IsDraft && r.Verdict == ResponseVerdict.Fail);
-        if (!hasFail)
+        // Eligibility gate (US-M5-017 / BR-M6-001): a Fail verdict is always eligible; a bank-configured
+        // ExceptionRaisingRule can extend eligibility for this item's response type to N/A and/or a low score
+        // (e.g. a poor Rating response). Unconfigured response types keep the original Fail-only behaviour.
+        var response = auditEntity.Responses.FirstOrDefault(r => r.ChecklistItemId == item.Id && !r.IsDraft);
+        var rule = await raisingRules.GetByResponseTypeAsync(item.ResponseType, cancellationToken);
+        var eligible = response is not null
+            && (response.Verdict == ResponseVerdict.Fail || (rule?.IsEligible(response.Verdict, response.Score) ?? false));
+        if (!eligible)
         {
-            throw new DomainException("exception.item_not_fail", "An exception can only be raised on an item with a Fail response.");
+            throw new DomainException("exception.item_not_fail", "An exception can only be raised on an item with a Fail response (or another response this bank has configured as exception-eligible).");
         }
 
         var owner = await users.GetByIdAsync(command.OwnerUserId, cancellationToken);

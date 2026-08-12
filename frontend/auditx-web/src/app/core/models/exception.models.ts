@@ -9,6 +9,8 @@
  * Evidence reuses the M5 `EvidenceFile` aggregate (no version on evidence ops).
  */
 
+import type { ResponseType } from './template.models';
+
 /** Severity of a raised exception. */
 export type ExceptionSeverity = 'low' | 'medium' | 'high' | 'critical';
 
@@ -256,4 +258,30 @@ export interface ExceptionQuery {
   nonConformanceCategory?: string;
   page?: number;
   pageSize?: number;
+}
+
+/**
+ * A bank-configurable rule extending which finalised responses of a given response type are eligible for an
+ * exception. A Fail verdict is always eligible regardless of any rule; a rule only adds N/A and/or a low-score
+ * path on top of that base case.
+ */
+export interface ExceptionRaisingRule {
+  id: string;
+  responseType: ResponseType;
+  allowOnNa: boolean;
+  /** A finalised response scoring at or below this (0-100) is eligible regardless of verdict; null = not score-gated. */
+  scoreThreshold: number | null;
+  isActive: boolean;
+}
+
+export interface CreateExceptionRaisingRuleRequest {
+  responseType: ResponseType;
+  allowOnNa: boolean;
+  scoreThreshold: number | null;
+}
+
+export interface UpdateExceptionRaisingRuleRequest {
+  allowOnNa: boolean;
+  scoreThreshold: number | null;
+  isActive: boolean;
 }

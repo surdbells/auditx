@@ -213,3 +213,23 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
     public async Task<IActionResult> CiaCountersign(Guid id, [FromBody] VersionOnlyRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new CiaCountersignCommand(id, request.Version), cancellationToken));
 }
+
+[Authorize]
+[Route("api/v1/exception-raising-rules")]
+public sealed class ExceptionRaisingRulesController(IDispatcher dispatcher) : ApiControllerBase
+{
+    [RequirePermission(PermissionKeys.ViewConfig)]
+    [HttpGet]
+    public async Task<IActionResult> List(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListExceptionRaisingRulesQuery(), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageConfiguration)]
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateExceptionRaisingRuleRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(new CreateExceptionRaisingRuleCommand(request.ResponseType, request.AllowOnNa, request.ScoreThreshold), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageConfiguration)]
+    [HttpPatch("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateExceptionRaisingRuleRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new UpdateExceptionRaisingRuleCommand(id, request.AllowOnNa, request.ScoreThreshold, request.IsActive), cancellationToken));
+}

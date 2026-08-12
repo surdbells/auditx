@@ -58,7 +58,7 @@ public sealed class GetResponseHistoryQueryHandler(IAuditRepository audits, IAud
         var entries = await trail.GetForTargetAsync(AuditTargetTypes.ChecklistResponse, response.Id, eventType: null, limit: 200, cancellationToken);
         return entries
             .OrderBy(e => e.OccurredAtUtc)
-            .Select(e => new ResponseHistoryEntryDto(e.Id, e.EventType, e.ActorUserId, e.OccurredAtUtc, e.AfterStateJson))
+            .Select(e => new ResponseHistoryEntryDto(e.Id, e.EventType, e.ActorUserId, e.OccurredAtUtc, e.AfterStateJson, e.BeforeStateJson))
             .ToArray();
     }
 }

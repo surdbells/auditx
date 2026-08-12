@@ -1,0 +1,86 @@
+<app-page-header
+  [title]="'exceptionRules.title' | t"
+  [subtitle]="'exceptionRules.subtitle' | t"
+>
+  @if (canManage()) {
+    <button actions matButton="filled" type="button" (click)="create()">
+      <app-icon name="add" />
+      {{ 'exceptionRules.newRule' | t }}
+    </button>
+  }
+</app-page-header>
+
+<app-page-guide [guide]="guide" />
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'exceptionRules.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state [message]="'exceptionRules.error.load' | t" (retry)="fetch()" />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="rule"
+        [title]="'exceptionRules.emptyTitle' | t"
+        [message]="'exceptionRules.emptyMessage' | t"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="exc-rules__table-card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="rules()" class="exc-rules__table">
+            <ng-container matColumnDef="responseType">
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptionRules.field.responseType' | t }}</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="exc-rules__type">{{ responseTypeLabel(r.responseType) }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="allowOnNa">
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptionRules.field.allowOnNa' | t }}</th>
+              <td mat-cell *matCellDef="let r">
+                {{ (r.allowOnNa ? 'common.yes' : 'common.no') | t }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="scoreThreshold">
+              <th mat-header-cell *matHeaderCellDef>{{ 'exceptionRules.field.scoreThreshold' | t }}</th>
+              <td mat-cell *matCellDef="let r">
+                {{ r.scoreThreshold === null ? '—' : ('exceptionRules.value.atOrBelow' | t: { score: r.scoreThreshold }) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="active">
+              <th mat-header-cell *matHeaderCellDef>{{ 'universe.field.status' | t }}</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="status-badge" [attr.data-status]="r.isActive ? 'active' : 'deactivated'">
+                  {{ r.isActive ? ('universe.value.active' | t) : ('universe.value.inactive' | t) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef [attr.aria-label]="'universe.field.actionsAria' | t"></th>
+              <td mat-cell *matCellDef="let r">
+                @if (canManage()) {
+                  <button
+                    matIconButton
+                    type="button"
+                    (click)="edit(r)"
+                    [attr.aria-label]="'universe.actions.editAria' | t: { name: responseTypeLabel(r.responseType) }"
+                  >
+                    <app-icon name="edit" />
+                  </button>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+      </mat-card>
+    }
+  }
+}

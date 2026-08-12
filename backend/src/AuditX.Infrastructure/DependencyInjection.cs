@@ -79,6 +79,7 @@ public static class DependencyInjection
         services.AddScoped<IRegulationRepository, RegulationRepository>();
         services.AddScoped<IFindingLinkRepository, FindingLinkRepository>();
         services.AddScoped<IExceptionRepository, ExceptionRepository>();
+        services.AddScoped<IExceptionRaisingRuleRepository, ExceptionRaisingRuleRepository>();
         services.AddScoped<ISanctionsCaseRepository, SanctionsCaseRepository>();
         services.AddScoped<ISanctionsGridRepository, SanctionsGridRepository>();
         services.AddScoped<ISanctionsAppealRepository, SanctionsAppealRepository>();

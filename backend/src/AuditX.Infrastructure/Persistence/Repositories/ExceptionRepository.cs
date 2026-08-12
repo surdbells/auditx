@@ -166,3 +166,17 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
 
     public void Add(AuditException exception) => db.Exceptions.Add(exception);
 }
+
+public sealed class ExceptionRaisingRuleRepository(AppDbContext db) : IExceptionRaisingRuleRepository
+{
+    public Task<ExceptionRaisingRule?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => db.ExceptionRaisingRules.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+
+    public Task<ExceptionRaisingRule?> GetByResponseTypeAsync(ResponseType responseType, CancellationToken cancellationToken = default)
+        => db.ExceptionRaisingRules.AsNoTracking().FirstOrDefaultAsync(r => r.ResponseType == responseType, cancellationToken);
+
+    public async Task<IReadOnlyList<ExceptionRaisingRule>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await db.ExceptionRaisingRules.AsNoTracking().OrderBy(r => r.ResponseType).ToListAsync(cancellationToken);
+
+    public void Add(ExceptionRaisingRule rule) => db.ExceptionRaisingRules.Add(rule);
+}

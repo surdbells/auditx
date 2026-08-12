@@ -561,6 +561,15 @@ export const routes: Routes = [
           ).then((m) => m.ConfigurationListComponent),
       },
       {
+        path: 'admin/exception-raising-rules',
+        title: 'Exception Rules · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewConfig)],
+        loadComponent: () =>
+          import(
+            './features/admin/exception-raising-rules/exception-raising-rules.component'
+          ).then((m) => m.ExceptionRaisingRulesComponent),
+      },
+      {
         path: 'admin/reference-data',
         title: 'Reference data · AuditX',
         canActivate: [permissionGuard(Permissions.ManageConfiguration)],

@@ -63,3 +63,5 @@ public sealed record ExceptionListItemDto(
 public sealed record ExceptionActionResult(ExceptionDto? Exception, Guid? PendingActionId);
 
 public sealed record ExceptionHistoryEntryDto(Guid Id, string EventType, Guid? ActorUserId, DateTimeOffset OccurredAtUtc, string? PayloadJson);
+
+public sealed record ExceptionRaisingRuleDto(Guid Id, string ResponseType, bool AllowOnNa, decimal? ScoreThreshold, bool IsActive);

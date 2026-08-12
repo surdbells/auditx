@@ -102,6 +102,55 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     }
 
     [Fact]
+    public async Task A_configured_rule_lets_an_na_response_be_exception_eligible()
+    {
+        var admin = await AdminAsync();
+
+        // Configure a rule allowing exceptions on N/A for pass_fail_na items (idempotent: an earlier test run
+        // in the same shared DB may already have created it, in which case Create returns 409 and we edit).
+        var existing = await DataAsync(await admin.GetAsync("/api/v1/exception-raising-rules"));
+        var already = existing.EnumerateArray().FirstOrDefault(r => r.GetProperty("responseType").GetString() == "pass_fail_na");
+        if (already.ValueKind == JsonValueKind.Undefined)
+        {
+            var create = await admin.PostAsJsonAsync("/api/v1/exception-raising-rules", new { responseType = "pass_fail_na", allowOnNa = true, scoreThreshold = (decimal?)null });
+            create.EnsureSuccessStatusCode();
+        }
+        else
+        {
+            (await admin.PatchAsJsonAsync($"/api/v1/exception-raising-rules/{already.GetProperty("id").GetGuid()}", new { allowOnNa = true, scoreThreshold = (decimal?)null, isActive = true })).EnsureSuccessStatusCode();
+        }
+
+        // Seed an audit whose one item gets a finalised N/A response.
+        var users = await UsersByEmailAsync(admin);
+        var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
+        {
+            name = $"NA-eligible {Guid.NewGuid():N}", auditType = "branch", startDate = "2027-01-10", targetEndDate = "2027-02-10",
+            leadUserId = users["manager@auditx.local"], auditeeUserId = users["auditee@auditx.local"],
+        }));
+        var auditId = created.GetProperty("id").GetGuid();
+        var version = Version(created);
+        var withItem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items", new { prompt = "Q", responseType = "pass_fail_na", isRequired = true, version }));
+        version = Version(withItem);
+        var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        version = Version(withTeam);
+        var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
+        version = Version(planned);
+        var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
+        var naItem = started.GetProperty("checklistItems").EnumerateArray().First().GetProperty("id").GetGuid();
+
+        await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{naItem}/responses",
+            new { verdict = "na", comment = "Not applicable this cycle", isDraft = false, version = await AuditVersionAsync(admin, auditId) }));
+
+        // With the rule active, an exception can now be raised on the N/A response.
+        var raised = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = naItem, title = "N/A but risky", severity = "medium",
+            rootCause = "scope excluded", recommendation = "revisit scope", ownerUserId = users["auditee@auditx.local"],
+        }));
+        Assert.Equal("open", raised.GetProperty("status").GetString());
+    }
+
+    [Fact]
     public async Task Severity_is_derived_from_the_items_risk_rating_when_it_has_one()
     {
         var admin = await AdminAsync();

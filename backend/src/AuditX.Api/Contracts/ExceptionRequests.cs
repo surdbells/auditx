@@ -26,3 +26,7 @@ public sealed record VersionOnlyRequest(string Version);
 public sealed record ReasonVersionRequest(string Reason, string Version);
 
 public sealed record CloseExceptionRequest(string? ClosureNote, string Version);
+
+public sealed record CreateExceptionRaisingRuleRequest(string ResponseType, bool AllowOnNa, decimal? ScoreThreshold);
+
+public sealed record UpdateExceptionRaisingRuleRequest(bool AllowOnNa, decimal? ScoreThreshold, bool IsActive);

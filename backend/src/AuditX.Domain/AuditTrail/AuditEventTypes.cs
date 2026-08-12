@@ -90,6 +90,7 @@ public static class AuditEventTypes
     public const string OrgUnitArchived = "org_unit_archived";
     public const string RiskDimensionConfigured = "risk_dimension_configured";
     public const string RatingScaleConfigured = "rating_scale_configured";
+    public const string ExceptionRaisingRuleConfigured = "exception_raising_rule_configured";
     public const string PlanCreated = "plan_created";
     public const string PlanUpdated = "plan_updated";
     public const string PlanItemAdded = "plan_item_added";
@@ -279,6 +280,7 @@ public static class AuditTargetTypes
     public const string OrgUnit = "org_unit";
     public const string RiskDimension = "risk_dimension";
     public const string RatingScale = "rating_scale";
+    public const string ExceptionRaisingRule = "exception_raising_rule";
     public const string EntityTypeTaxonomy = "entity_type_taxonomy";
     public const string AnnualPlan = "annual_plan";
     public const string PlanItem = "plan_item";

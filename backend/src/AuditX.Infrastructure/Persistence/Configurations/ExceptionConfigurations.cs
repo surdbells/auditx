@@ -81,3 +81,21 @@ public sealed class FindingVerificationConfiguration : IEntityTypeConfiguration<
         builder.HasIndex(v => v.ExceptionId);
     }
 }
+
+public sealed class ExceptionRaisingRuleConfiguration : IEntityTypeConfiguration<ExceptionRaisingRule>
+{
+    public void Configure(EntityTypeBuilder<ExceptionRaisingRule> builder)
+    {
+        builder.ToTable("exception_raising_rules");
+        builder.HasKey(r => r.Id);
+        builder.Property(r => r.Id).ValueGeneratedNever();
+
+        builder.Property(r => r.ResponseType)
+            .HasConversion(new SnakeCaseEnumConverter<ResponseType>())
+            .HasMaxLength(30)
+            .IsRequired();
+        builder.Property(r => r.ScoreThreshold).HasColumnType("decimal(5,2)");
+
+        builder.HasIndex(r => r.ResponseType).IsUnique();
+    }
+}

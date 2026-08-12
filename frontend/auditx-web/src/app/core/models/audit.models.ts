@@ -281,7 +281,10 @@ export interface ResponseHistoryEntry {
   eventType: string;
   actorUserId?: string | null;
   occurredAtUtc: string;
+  /** State immediately after this event (the "now" side of the comparison). */
   stateJson?: string | null;
+  /** State immediately before this event (the "was" side); null for the entry that first created the response. */
+  beforeStateJson?: string | null;
 }
 
 /** Review-time summary counts across the checklist. */

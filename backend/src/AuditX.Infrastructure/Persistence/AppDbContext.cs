@@ -124,6 +124,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<AuditException> Exceptions => Set<AuditException>();
 
+    public DbSet<ExceptionRaisingRule> ExceptionRaisingRules => Set<ExceptionRaisingRule>();
+
     public DbSet<MapAction> MapActions => Set<MapAction>();
 
     public DbSet<FindingVerification> FindingVerifications => Set<FindingVerification>();

@@ -187,6 +187,7 @@ export class MainLayoutComponent {
           permissions: [Permissions.ViewConfig, Permissions.ManageConfiguration],
         },
         { labelKey: 'nav.referenceData', icon: 'list_alt', route: '/admin/reference-data', permissions: [Permissions.ManageConfiguration] },
+        { labelKey: 'nav.exceptionRules', icon: 'rule', route: '/admin/exception-raising-rules', permissions: [Permissions.ViewConfig] },
       ],
     },
     {
