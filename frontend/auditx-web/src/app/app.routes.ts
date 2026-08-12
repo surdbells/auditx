@@ -94,6 +94,15 @@ export const routes: Routes = [
           ).then((m) => m.TemplatesListComponent),
       },
       {
+        path: 'admin/templates/rating-scales',
+        title: 'Rating Scales · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewTemplates)],
+        loadComponent: () =>
+          import(
+            './features/admin/templates/rating-scales/rating-scales.component'
+          ).then((m) => m.RatingScalesComponent),
+      },
+      {
         path: 'admin/templates/new',
         title: 'New template · AuditX',
         canActivate: [permissionGuard(Permissions.ViewTemplates)],

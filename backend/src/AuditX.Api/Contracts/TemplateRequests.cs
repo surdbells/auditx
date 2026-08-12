@@ -10,7 +10,13 @@ public sealed record TemplateItemRequest(
     string ResponseType,
     string? SectionName,
     bool IsRequired,
-    string? DefaultAssignmentRuleJson);
+    string? DefaultAssignmentRuleJson,
+    string? ResponseConfigJson = null,
+    string? RiskRating = null);
+
+public sealed record CreateRatingScaleRequest(string Name, string? Description, string PointsJson);
+
+public sealed record UpdateRatingScaleRequest(string? Name, string? Description, string? PointsJson, bool? IsActive);
 
 public sealed record ReorderItemsRequest(IReadOnlyList<Guid> OrderedItemIds);
 

@@ -26,6 +26,7 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         var rolesByName = await SeedBuiltInRolesAsync(cancellationToken);
         await SeedMakerCheckerGatesAsync(cancellationToken);
         await SeedRiskDimensionsAsync(cancellationToken);
+        await SeedRatingScalesAsync(cancellationToken);
         await SeedReferenceDataAsync(cancellationToken);
         await SeedSanctionsRolesAsync(cancellationToken);
         await SeedAcRolesAsync(cancellationToken);
@@ -222,6 +223,26 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         {
             db.RiskDimensions.Add(Domain.Universe.RiskDimension.Create(name, weight: 1.00m, scaleMin: 1, scaleMax: 5, scaleLabelOverridesJson: null));
         }
+    }
+
+    /// <summary>Baseline rating scales for Rating-type checklist items — a 1-5 control-effectiveness scale.</summary>
+    private async Task SeedRatingScalesAsync(CancellationToken cancellationToken)
+    {
+        if (await db.RatingScales.AnyAsync(cancellationToken))
+        {
+            return;
+        }
+
+        const string points = """
+            [
+                {"value":1,"label":"Ineffective","score":0},
+                {"value":2,"label":"Weak","score":25},
+                {"value":3,"label":"Partially Effective","score":50},
+                {"value":4,"label":"Effective","score":75},
+                {"value":5,"label":"Highly Effective","score":100}
+            ]
+            """;
+        db.RatingScales.Add(Domain.Templates.RatingScale.Create("Control Effectiveness (1-5)", "Standard 1-5 control-effectiveness rating scale.", points));
     }
 
     /// <summary>

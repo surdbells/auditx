@@ -42,14 +42,6 @@
         </p>
       }
 
-      <mat-form-field appearance="outline" class="full">
-        <mat-label>{{ 'procedure.field.summary' | t }}</mat-label>
-        <textarea matInput formControlName="summary" rows="2"></textarea>
-        @if (form.controls.summary.hasError('required') && form.controls.summary.touched) {
-          <mat-error>{{ 'procedure.error.summaryRequired' | t }}</mat-error>
-        }
-      </mat-form-field>
-
       @if (isSampling()) {
         <div class="proc__sampling">
           <mat-form-field appearance="outline">
@@ -84,6 +76,14 @@
           <input matInput formControlName="counterparty" autocomplete="off" />
         </mat-form-field>
       }
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'procedure.field.summary' | t }}</mat-label>
+        <textarea matInput formControlName="summary" rows="2"></textarea>
+        @if (form.controls.summary.hasError('required') && form.controls.summary.touched) {
+          <mat-error>{{ 'procedure.error.summaryRequired' | t }}</mat-error>
+        }
+      </mat-form-field>
 
       <div class="proc__form-actions">
         <button matButton type="button" (click)="cancelAdd()">{{ 'procedure.actions.cancel' | t }}</button>

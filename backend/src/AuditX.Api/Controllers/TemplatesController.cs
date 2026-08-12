@@ -64,13 +64,15 @@ public sealed class TemplatesController(IDispatcher dispatcher) : ApiControllerB
     [HttpPost("{id:guid}/items")]
     public async Task<IActionResult> AddItem(Guid id, [FromBody] TemplateItemRequest request, CancellationToken cancellationToken)
         => Created(await dispatcher.Send(new AddTemplateItemCommand(
-            id, request.Prompt, request.ReferenceNotes, request.ResponseType, request.SectionName, request.IsRequired, request.DefaultAssignmentRuleJson), cancellationToken));
+            id, request.Prompt, request.ReferenceNotes, request.ResponseType, request.SectionName, request.IsRequired, request.DefaultAssignmentRuleJson,
+            request.ResponseConfigJson, request.RiskRating), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageTemplates)]
     [HttpPatch("{id:guid}/items/{itemId:guid}")]
     public async Task<IActionResult> UpdateItem(Guid id, Guid itemId, [FromBody] TemplateItemRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new UpdateTemplateItemCommand(
-            id, itemId, request.Prompt, request.ReferenceNotes, request.ResponseType, request.SectionName, request.IsRequired, request.DefaultAssignmentRuleJson), cancellationToken));
+            id, itemId, request.Prompt, request.ReferenceNotes, request.ResponseType, request.SectionName, request.IsRequired, request.DefaultAssignmentRuleJson,
+            request.ResponseConfigJson, request.RiskRating), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageTemplates)]
     [HttpDelete("{id:guid}/items/{itemId:guid}")]
@@ -154,4 +156,24 @@ public sealed class TemplatesController(IDispatcher dispatcher) : ApiControllerB
     [HttpPost("{id:guid}/clone")]
     public async Task<IActionResult> Clone(Guid id, [FromBody] CloneTemplateRequest request, CancellationToken cancellationToken)
         => Created(await dispatcher.Send(new CloneTemplateCommand(id, request.NewName), cancellationToken));
+}
+
+[Authorize]
+[Route("api/v1/rating-scales")]
+public sealed class RatingScalesController(IDispatcher dispatcher) : ApiControllerBase
+{
+    [RequirePermission(PermissionKeys.ViewTemplates)]
+    [HttpGet]
+    public async Task<IActionResult> List([FromQuery] string? active, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListRatingScalesQuery(active), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageTemplates)]
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateRatingScaleRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(new CreateRatingScaleCommand(request.Name, request.Description, request.PointsJson), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageTemplates)]
+    [HttpPatch("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRatingScaleRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new UpdateRatingScaleCommand(id, request.Name, request.Description, request.PointsJson, request.IsActive), cancellationToken));
 }

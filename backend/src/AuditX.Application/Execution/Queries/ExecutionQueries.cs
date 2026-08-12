@@ -80,7 +80,7 @@ public sealed class GetChecklistProgressQueryHandler(IAuditRepository audits)
                 return new ChecklistProgressItemDto(
                     i.Id, i.SectionName, i.OrderIndex, i.Prompt, i.ItemState.ToSnake(),
                     finalised?.Verdict is { } v ? v.ToSnake() : null, i.IsRequired, i.AssignedUserId, i.HasException,
-                    i.ResponseType.ToSnake(), i.ResponseConfigJson, finalised?.ValueJson);
+                    i.ResponseType.ToSnake(), i.ResponseConfigJson, finalised?.ValueJson, finalised?.Score, i.RiskRating?.ToSnake());
             })
             .ToArray();
 

@@ -31,6 +31,12 @@ public sealed class TemplateItem : Entity
     /// <summary>Optional JSON describing how this item should be assigned when an audit is created (US-M2-007).</summary>
     public string? DefaultAssignmentRuleJson { get; private set; }
 
+    /// <summary>Optional per-type configuration JSON (e.g. choice options, rating scale id, numeric unit/bounds). Opaque to the domain; copied onto the audit's checklist item at audit creation.</summary>
+    public string? ResponseConfigJson { get; private set; }
+
+    /// <summary>How severe a failure of this item is, in control-test terms. Copied onto the audit's checklist item and, when set, drives the default severity of any exception raised against it.</summary>
+    public ExceptionSeverity? RiskRating { get; private set; }
+
     internal TemplateItem(
         Guid templateId,
         string prompt,
@@ -39,7 +45,9 @@ public sealed class TemplateItem : Entity
         string? sectionName,
         int orderIndex,
         bool isRequired,
-        string? defaultAssignmentRuleJson)
+        string? defaultAssignmentRuleJson,
+        string? responseConfigJson = null,
+        ExceptionSeverity? riskRating = null)
     {
         TemplateId = templateId;
         Prompt = Guard.NotNullOrWhiteSpace(prompt, "template.item_prompt_required", "Item prompt is required.");
@@ -49,9 +57,13 @@ public sealed class TemplateItem : Entity
         OrderIndex = orderIndex;
         IsRequired = isRequired;
         DefaultAssignmentRuleJson = defaultAssignmentRuleJson;
+        ResponseConfigJson = NormaliseConfig(responseConfigJson);
+        RiskRating = riskRating;
     }
 
-    internal void Update(string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired, string? defaultAssignmentRuleJson)
+    internal void Update(
+        string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired,
+        string? defaultAssignmentRuleJson, string? responseConfigJson = null, ExceptionSeverity? riskRating = null)
     {
         Prompt = Guard.NotNullOrWhiteSpace(prompt, "template.item_prompt_required", "Item prompt is required.");
         ReferenceNotes = referenceNotes;
@@ -59,7 +71,11 @@ public sealed class TemplateItem : Entity
         SectionName = sectionName;
         IsRequired = isRequired;
         DefaultAssignmentRuleJson = defaultAssignmentRuleJson;
+        ResponseConfigJson = NormaliseConfig(responseConfigJson);
+        RiskRating = riskRating;
     }
+
+    private static string? NormaliseConfig(string? json) => string.IsNullOrWhiteSpace(json) ? null : json.Trim();
 
     internal void SetOrder(int orderIndex) => OrderIndex = orderIndex;
 

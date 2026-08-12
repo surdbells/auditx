@@ -36,4 +36,6 @@ public sealed record TemplateItemSnapshot(
     string? SectionName,
     int OrderIndex,
     bool IsRequired,
-    string? DefaultAssignmentRuleJson);
+    string? DefaultAssignmentRuleJson,
+    string? ResponseConfigJson = null,
+    ExceptionSeverity? RiskRating = null);

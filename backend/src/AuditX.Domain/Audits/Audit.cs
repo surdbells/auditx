@@ -283,20 +283,24 @@ public sealed class Audit : AggregateRoot
 
     // ---- Checklist ----
 
-    public AuditChecklistItem AddChecklistItem(string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired, Guid? assignedUserId, string? responseConfigJson = null)
+    public AuditChecklistItem AddChecklistItem(
+        string prompt, string? referenceNotes, ResponseType responseType, string? sectionName, bool isRequired,
+        Guid? assignedUserId, string? responseConfigJson = null, ExceptionSeverity? riskRating = null)
     {
         EnsureStatus("audit.checklist_locked", AuditStatus.Draft, AuditStatus.InProgress);
         var section = EnsureSection(sectionName);
-        var item = new AuditChecklistItem(Id, prompt, referenceNotes, responseType, section, _checklistItems.Count, isRequired, assignedUserId, responseConfigJson);
+        var item = new AuditChecklistItem(Id, prompt, referenceNotes, responseType, section, _checklistItems.Count, isRequired, assignedUserId, responseConfigJson, riskRating);
         _checklistItems.Add(item);
         return item;
     }
 
-    public void EditChecklistItem(Guid itemId, string prompt, string? referenceNotes, ResponseType responseType, string? responseConfigJson, string? sectionName, bool isRequired, Guid? assignedUserId)
+    public void EditChecklistItem(
+        Guid itemId, string prompt, string? referenceNotes, ResponseType responseType, string? responseConfigJson,
+        string? sectionName, bool isRequired, Guid? assignedUserId, ExceptionSeverity? riskRating = null)
     {
         EnsureStatus("audit.checklist_locked", AuditStatus.Draft);
         var section = EnsureSection(sectionName);
-        FindItem(itemId).Update(prompt, referenceNotes, responseType, responseConfigJson, section, isRequired, assignedUserId);
+        FindItem(itemId).Update(prompt, referenceNotes, responseType, responseConfigJson, section, isRequired, assignedUserId, riskRating);
     }
 
     public void RemoveChecklistItem(Guid itemId)
@@ -499,6 +503,17 @@ public sealed class Audit : AggregateRoot
 
     /// <summary>Set/clear the item-level exception flag (M6 hook).</summary>
     public void SetItemException(Guid itemId, bool hasException) => FindItem(itemId).MarkHasException(hasException);
+
+    /// <summary>
+    /// Apply a post-response score computed by the application layer (it alone can resolve a RatingScale) to
+    /// the response just recorded by <see cref="RecordResponse"/>.
+    /// </summary>
+    public void SetResponseScore(Guid itemId, decimal? score)
+    {
+        var response = _responses.FirstOrDefault(r => r.ChecklistItemId == itemId)
+            ?? throw new DomainException("response.not_found", "There is no response to score.");
+        response.SetScore(score);
+    }
 
     private void Transition(AuditStatus to, string? reason, params AuditStatus[] from)
     {

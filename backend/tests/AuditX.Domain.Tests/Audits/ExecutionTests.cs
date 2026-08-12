@@ -146,6 +146,28 @@ public sealed class ExecutionTests
     }
 
     [Fact]
+    public void Response_score_is_applied_and_cleared_by_the_next_edit()
+    {
+        var a = InProgressAudit(items: 2); // avoid auto-transition
+        var item = FirstItemId(a);
+        a.RecordResponse(item, ResponseVerdict.Pass, null, isDraft: false, Actor, false, Now);
+
+        a.SetResponseScore(item, 100m);
+        Assert.Equal(100m, a.Responses[0].Score);
+
+        // A material edit invalidates the previously computed score — the caller must recompute and re-apply it.
+        a.RecordResponse(item, ResponseVerdict.Fail, "control missing", isDraft: false, Actor, false, Now);
+        Assert.Null(a.Responses[0].Score);
+    }
+
+    [Fact]
+    public void Scoring_an_unknown_item_is_rejected()
+    {
+        var a = InProgressAudit();
+        Assert.Throws<DomainException>(() => a.SetResponseScore(Guid.NewGuid(), 50m));
+    }
+
+    [Fact]
     public void Fail_judgement_only_on_failed_items()
     {
         var a = InProgressAudit(items: 2);

@@ -4,7 +4,7 @@ using AuditX.Domain.Enums;
 namespace AuditX.Domain.Audits;
 
 /// <summary>Immutable snapshot of a response's mutable state, used for the audit-trail before/after.</summary>
-public sealed record ResponseState(ResponseVerdict? Verdict, string? Comment, string? ValueJson, bool IsDraft, int Version);
+public sealed record ResponseState(ResponseVerdict? Verdict, string? Comment, string? ValueJson, bool IsDraft, int Version, decimal? Score = null);
 
 /// <summary>Result of recording a response: the entity, its before/after snapshots, and whether the audit auto-transitioned to Under Review.</summary>
 public sealed record ResponseMutation(ChecklistResponse Response, ResponseState? Before, ResponseState After, bool AutoTransitioned);
@@ -43,6 +43,15 @@ public sealed class ChecklistResponse : Entity, IBelongsToAggregate
 
     public DateTimeOffset? RespondedAt { get; private set; }
 
+    /// <summary>
+    /// A 0-100 score derived from this response once finalised (post-response scoring). Pass/Fail/N-A verdicts
+    /// score via a fixed mapping; a Rating value scores via its configured <c>RatingScale</c> point. Value types
+    /// with no inherent right answer (text/numeric/date/multiple-choice) are never scored. Computed by the
+    /// application layer (it alone can resolve a RatingScale) and applied via <see cref="SetScore"/>; null while
+    /// a draft or before the item type/config yields a mapped score.
+    /// </summary>
+    public decimal? Score { get; private set; }
+
     internal ChecklistResponse(Guid auditId, Guid checklistItemId, Guid responderUserId)
     {
         AuditId = auditId;
@@ -51,7 +60,7 @@ public sealed class ChecklistResponse : Entity, IBelongsToAggregate
         ResponseVersion = 0;
     }
 
-    public ResponseState ToState() => new(Verdict, Comment, ValueJson, IsDraft, ResponseVersion);
+    public ResponseState ToState() => new(Verdict, Comment, ValueJson, IsDraft, ResponseVersion, Score);
 
     /// <summary>
     /// Create-or-update the response (BR-M5-001/002). Verdict types require a verdict on finalise; value types
@@ -100,5 +109,10 @@ public sealed class ChecklistResponse : Entity, IBelongsToAggregate
         ResponderUserId = actorUserId;
         RespondedAt = nowUtc;
         ResponseVersion++;
+        // A material edit invalidates any previously computed score; the caller recomputes and re-applies it.
+        Score = null;
     }
+
+    /// <summary>Apply the post-response score computed by the application layer (see <see cref="Score"/>).</summary>
+    internal void SetScore(decimal? score) => Score = score;
 }

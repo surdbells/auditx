@@ -48,3 +48,25 @@ public sealed class TemplateRepository(AppDbContext db) : ITemplateRepository
 
     public void Add(Template template) => db.Templates.Add(template);
 }
+
+public sealed class RatingScaleRepository(AppDbContext db) : IRatingScaleRepository
+{
+    public Task<RatingScale?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => db.RatingScales.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+    public Task<RatingScale?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
+        => db.RatingScales.FirstOrDefaultAsync(s => s.Name == name, cancellationToken);
+
+    public async Task<IReadOnlyList<RatingScale>> GetAllAsync(bool? activeOnly, CancellationToken cancellationToken = default)
+    {
+        var query = db.RatingScales.AsNoTracking().AsQueryable();
+        if (activeOnly is { } active)
+        {
+            query = query.Where(s => s.IsActive == active);
+        }
+
+        return await query.OrderBy(s => s.Name).ToListAsync(cancellationToken);
+    }
+
+    public void Add(RatingScale scale) => db.RatingScales.Add(scale);
+}

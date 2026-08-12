@@ -974,6 +974,9 @@ export class AuditDetailComponent {
             isRequired: result.isRequired,
             assignedUserId: result.assignedUserId,
             version: this.version(),
+            // This dialog doesn't offer a risk-rating control — carry the item's existing rating through
+            // unchanged so an unrelated edit (e.g. a prompt fix) doesn't silently clear it.
+            riskRating: item.riskRating,
           }),
           this.i18n.translate('audits.notify.itemUpdated'),
         );

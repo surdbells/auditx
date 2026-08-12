@@ -4705,7 +4705,6 @@
   "identity.roleEditor.guide.faq.builtIn.a": "Il s'agit d'un rôle système intégré, verrouillé en lecture seule ; créez plutôt un rôle personnalisé.",
   "identity.roleEditor.guide.faq.inherit.q": "Que fait l'héritage d'un rôle parent ?",
   "identity.roleEditor.guide.faq.inherit.a": "Le rôle acquiert automatiquement toutes les permissions de ses rôles parents en plus de celles que vous sélectionnez ici.",
-
   "engagement.board.guide.purpose": "Voyez en un coup d'œil chaque mission dont vous faites partie et la prochaine étape à accomplir sur chacune.",
   "engagement.board.guide.description": "Le tableau du cycle de vie des missions est votre vue de portefeuille sur chaque audit auquel vous participez — son étape actuelle, son avancement, et l'action suivante déterminée par le système selon votre rôle, avec un bouton pour agir immédiatement.",
   "engagement.board.guide.action.filter": "Activez « En attente de moi » pour ne voir que les missions nécessitant votre action",
@@ -4732,7 +4731,6 @@
   "engagement.board.guide.perm.view": "Consulter le cycle de vie des missions",
   "engagement.board.guide.faq.action.q": "Comment le système détermine-t-il mon action suivante ?",
   "engagement.board.guide.faq.action.a": "Il lit l'étape actuelle du cycle de vie de l'audit et votre rôle dans l'équipe, et pour la remédiation, la propriété de l'exception — puis détermine la seule étape suivante pertinente pour vous.",
-
   "engagement.journey.guide.purpose": "Suivez le cycle de vie d'une mission étape par étape, avec l'action de l'étape en cours mise en avant.",
   "engagement.journey.guide.description": "Une chronologie verticale de chaque étape que traverse une mission, de la mise en place à la clôture. Les étapes terminées sont marquées comme accomplies, l'étape en cours est mise en évidence avec votre prochaine action, et les étapes futures restent grisées jusqu'à leur tour.",
   "engagement.journey.guide.action.act": "Agissez sur le bouton d'action mis en évidence à l'étape en cours",
@@ -4755,7 +4753,6 @@
   "engagement.journey.guide.perm.view": "Consulter le cycle de vie des missions",
   "engagement.journey.guide.faq.noAction.q": "Pourquoi l'étape en cours ne montre-t-elle aucune action pour moi ?",
   "engagement.journey.guide.faq.noAction.a": "La prochaine meilleure action dépend du rôle — si rien n'attend spécifiquement votre rôle à cette étape, la chronologie l'indique plutôt que d'afficher une action qui ne vous concerne pas.",
-
   "ac.plansAwaiting.guide.purpose": "Offrir au président du comité d'audit une file unique des plans annuels nécessitant une décision.",
   "ac.plansAwaiting.guide.description": "Chaque plan annuel soumis ou en révision soumise apparaît ici pour examen. Développez un plan pour voir sa période et son nombre d'éléments, ajoutez un commentaire de discussion, ou ouvrez-le pour approuver, rejeter ou demander une révision.",
   "ac.plansAwaiting.guide.action.expand": "Développez un plan pour voir sa période et son nombre d'éléments",
@@ -4776,7 +4773,6 @@
   "ac.plansAwaiting.guide.perm.member": "Membre du comité d'audit (consulter, commenter)",
   "ac.plansAwaiting.guide.faq.decide.q": "Où puis-je réellement approuver ou rejeter un plan ?",
   "ac.plansAwaiting.guide.faq.decide.a": "Cet écran est une file d'attente — ouvrez le plan (« Examiner et décider ») pour enregistrer la décision sur l'écran de détail du plan existant.",
-
   "ac.restrictVisibility.title": "Restreindre la visibilité d'une constatation",
   "ac.restrictVisibility.subtitle": "Limitez qui peut voir le détail de cette constatation. Les autres voient un espace réservé restreint.",
   "ac.restrictVisibility.guide.purpose": "Permettre à un Directeur de l'audit interne de limiter le détail d'une constatation sensible à une liste nominative.",
@@ -4789,7 +4785,6 @@
   "ac.restrictVisibility.guide.rule.filtered": "Le backend filtre à la lecture selon le demandeur — il n'existe pas de copie « restreinte » distincte de la constatation.",
   "ac.restrictVisibility.guide.tip.reason": "Enregistrer un motif aide un examinateur ultérieur à comprendre pourquoi la restriction a été appliquée.",
   "ac.restrictVisibility.guide.perm.cia": "Directeur de l'audit interne (CIA)",
-
   "templatesAdmin.editor.guideTitle": "Éditeur de modèle",
   "templatesAdmin.editor.guide.purpose": "Construire et maintenir la structure d'un modèle de liste de contrôle tout au long de son cycle brouillon → publié.",
   "templatesAdmin.editor.guide.description": "Définissez le nom, le type d'audit et la description du modèle, puis construisez sa liste de contrôle en sections d'éléments ordonnés. Une fois publié, un modèle est verrouillé — le modifier à nouveau crée une nouvelle version brouillon.",
@@ -4816,7 +4811,6 @@
   "templatesAdmin.editor.guide.perm.manage": "Gérer les modèles",
   "templatesAdmin.editor.guide.faq.editPublished.q": "Puis-je modifier directement un modèle publié ?",
   "templatesAdmin.editor.guide.faq.editPublished.a": "Non — la publication le verrouille. Utilisez « Nouvelle version brouillon » pour créer une copie modifiable ; les audits utilisant déjà la version publiée ne sont pas affectés.",
-
   "account.prefs.guide.purpose": "Choisissez comment AuditX vous contacte pour les notifications non critiques.",
   "account.prefs.guide.description": "Les notifications critiques vous parviennent toujours. Ces deux réglages contrôlent des canaux de priorité inférieure : le SMS pour les alertes non critiques, et le regroupement des notifications courantes dans un résumé plutôt qu'une à une.",
   "account.prefs.guide.action.sms": "Activer ou non l'envoi de SMS pour les alertes non critiques",
@@ -4825,7 +4819,6 @@
   "account.prefs.guide.section.toggles.body": "Les modifications sont enregistrées immédiatement et s'appliquent uniquement aux notifications futures.",
   "account.prefs.guide.rule.criticalAlways": "Les notifications critiques (par ex. alertes de sécurité et de conformité) ne sont jamais supprimées par ces préférences.",
   "account.prefs.guide.perm.anyUser": "Tout utilisateur connecté (réglage personnel)",
-
   "universe.dims.guide.purpose": "Définir les dimensions pondérées utilisées pour coter le risque inhérent et résiduel de chaque entité auditable.",
   "universe.dims.guide.description": "Chaque dimension (par ex. impact financier, exposition réglementaire) a un poids et une échelle de cotation. Ensemble, elles produisent le score de risque composite qui pilote la priorisation de l'univers d'audit et la carte de chaleur des risques.",
   "universe.dims.guide.action.create": "Créer une nouvelle dimension de risque",
@@ -4840,7 +4833,6 @@
   "universe.dims.guide.rule.deactivate": "Désactiver une dimension conserve les scores historiques mais l'exclut des nouvelles évaluations.",
   "universe.dims.guide.tip.weights": "Gardez des poids proportionnés entre les dimensions — une seule dimension surpondérée peut dominer le score composite.",
   "universe.dims.guide.perm.manage": "Gérer la configuration",
-
   "orgUnit.list.guide.purpose": "Maintenir la hiérarchie des départements/unités d'affaires à laquelle se rattachent entités, utilisateurs et tableaux de bord.",
   "orgUnit.list.guide.description": "Un arbre d'unités organisationnelles, depuis le siège social. Les entités auditables et les utilisateurs sont chacun rattachés à une unité, et les tableaux de bord par département agrègent les données d'audit et d'exception selon cette hiérarchie.",
   "orgUnit.list.guide.action.create": "Créer une nouvelle unité sous une unité parente",
@@ -4856,7 +4848,6 @@
   "orgUnit.list.guide.rule.archiveKeepsHistory": "Archiver une unité la masque pour les nouveaux rattachements mais conserve ses données historiques intactes.",
   "orgUnit.list.guide.tip.indent": "L'indentation indique la profondeur — repérez ainsi en un coup d'œil la place d'une unité dans la hiérarchie.",
   "orgUnit.list.guide.perm.manage": "Gérer l'univers d'audit",
-
   "audits.exec.guideTitle": "Travaux de terrain",
   "audits.exec.guide.purpose": "Réalisez les travaux de terrain : répondez aux éléments de la liste de contrôle, joignez des preuves et soulevez des constatations, le tout depuis un seul écran.",
   "audits.exec.guide.description": "L'écran d'exécution dédié à la liste de contrôle d'un audit. Répondez à chaque élément, joignez des preuves à l'appui, enregistrez le temps passé, et soulevez une exception directement lorsqu'un contrôle est défaillant — sans quitter la liste de contrôle.",
@@ -4876,7 +4867,6 @@
   "audits.exec.guide.rule.assignment": "Un élément peut porter une règle d'assignation limitant qui peut y répondre.",
   "audits.exec.guide.tip.evidence": "Joignez les preuves au niveau de l'élément pour qu'un examinateur puisse relier chaque réponse à son justificatif.",
   "audits.exec.guide.perm.view": "Consulter l'audit",
-
   "reports.panel.guide.purpose": "Générer, suivre et télécharger les versions de rapport autonomes de cet audit.",
   "reports.panel.guide.description": "Chaque rapport jamais généré pour cet audit, chaque version scellée par un hachage SHA-256 à son achèvement. Générez une nouvelle version une fois l'audit en révision ou terminé ; téléchargez toute version terminée dans ses formats produits.",
   "reports.panel.guide.action.generate": "Générer une nouvelle version de rapport (avec export DOCX facultatif)",
@@ -4900,7 +4890,6 @@
   "reports.panel.guide.perm.view": "Consulter le rapport",
   "reports.panel.guide.faq.disabled.q": "Pourquoi le bouton Générer est-il désactivé ?",
   "reports.panel.guide.faq.disabled.a": "La génération de rapport n'est possible qu'une fois l'audit en révision ou terminé, afin que le rapport reflète des travaux de terrain achevés.",
-
   "reports.viewer.guideTitle": "Visionneuse de rapport",
   "reports.viewer.guide.purpose": "Consulter, vérifier, distribuer et partager une version de rapport.",
   "reports.viewer.guide.description": "La source de vérité unique pour un rapport terminé : un aperçu intégré du contenu scellé exact, une vérification du hachage contre toute altération, la distribution aux destinataires et le journal de distribution.",
@@ -4923,7 +4912,6 @@
   "reports.viewer.guide.perm.distribute": "Distribuer le rapport",
   "reports.viewer.guide.faq.hash.q": "Contre quoi le hachage SHA-256 protège-t-il réellement ?",
   "reports.viewer.guide.faq.hash.a": "Il prouve que le fichier téléchargé est identique octet pour octet à ce qui a été généré et scellé — « Vérifier le hachage » le recalcule et signale tout écart, par ex. dû à une altération ou une corruption.",
-
   "analytics.view.guideTitle": "Tableau de bord",
   "analytics.view.guide.purpose": "Consulter les widgets d'un tableau de bord en direct, chacun alimenté par une requête analytique en temps réel.",
   "analytics.view.guide.description": "Un tableau de bord est une collection nommée de widgets — chiffres clés, tableaux et graphiques — chacun calculé à partir des données actuelles. Les widgets pour lesquels vous n'avez pas la permission se dégradent en espace réservé verrouillé plutôt que d'être totalement masqués.",
@@ -4940,7 +4928,6 @@
   "analytics.view.guide.perm.configure": "Configurer les tableaux de bord (ajouter/retirer des widgets)",
   "analytics.view.guide.faq.unavailable.q": "Pourquoi un widget indique-t-il que les données sont indisponibles ?",
   "analytics.view.guide.faq.unavailable.a": "Le backend dégrade un widget que vous n'avez pas la permission de consulter en espace réservé verrouillé plutôt qu'en erreur, afin que le reste du tableau de bord continue de s'afficher normalement.",
-
   "analytics.detail.guide.purpose": "Explorer une grappe de récurrence et ses constatations membres.",
   "analytics.detail.guide.description": "Une grappe de récurrence regroupe des constatations clôturées qui se répètent sur la même entité/catégorie dans une fenêtre de détection — un signal qu'un contrôle ne tient pas. Cet écran montre les faits de la grappe et chaque constatation membre.",
   "analytics.detail.guide.action.open": "Ouvrir le détail complet d'une constatation membre",
@@ -4952,15 +4939,49 @@
   "analytics.detail.guide.use.exceptions": "Les constatations membres renvoient au registre des exceptions",
   "analytics.detail.guide.rule.window": "Une grappe ne se forme que lorsque des constatations éligibles se répètent dans la fenêtre de détection configurée.",
   "analytics.detail.guide.perm.view": "Consulter les analyses",
-
   "audits.history.close": "Fermer",
   "audits.history.score": "Score : {{score}}",
   "audits.history.event.item_responded": "Réponse enregistrée",
   "audits.history.event.item_response_overridden": "Réponse remplacée",
   "audits.history.event.draft_discarded": "Brouillon abandonné",
-
   "planning.itemDialog.periodHint": "Les dates doivent être comprises dans la période du plan ({{start}} – {{end}}) — un audit doit avoir lieu comme prévu.",
   "planning.itemDialog.dateOutOfPeriod": "Cette date doit être comprise dans la période du plan.",
   "planning.itemDialog.entityHint": "Sélectionnez une ou plusieurs entités — chacune reçoit son propre audit, lancé et suivi indépendamment.",
-  "planning.detail.colEntities": "Entités"
+  "planning.detail.colEntities": "Entités",
+  "templatesAdmin.responseType.rating": "Note",
+  "templatesAdmin.item.ratingScale": "Échelle de notation",
+  "templatesAdmin.item.riskRating": "Niveau de risque",
+  "templatesAdmin.item.noRiskRating": "(Aucun niveau de risque)",
+  "templatesAdmin.item.riskRatingHint": "Une fois défini, ce niveau devient la gravité par défaut de toute exception soulevée pour cet élément.",
+  "templatesAdmin.error.ratingScaleRequired": "Sélectionnez une échelle de notation.",
+  "templatesAdmin.list.ratingScales": "Échelles de notation",
+  "templatesAdmin.ratingScaleDialog.newTitle": "Nouvelle échelle de notation",
+  "templatesAdmin.ratingScaleDialog.editTitle": "Modifier l'échelle de notation",
+  "templatesAdmin.ratingScaleDialog.description": "Description",
+  "templatesAdmin.ratingScaleDialog.points": "Points de l'échelle",
+  "templatesAdmin.ratingScaleDialog.addPoint": "Ajouter un point",
+  "templatesAdmin.ratingScaleDialog.removePoint": "Supprimer le point",
+  "templatesAdmin.ratingScaleDialog.pointValue": "Valeur",
+  "templatesAdmin.ratingScaleDialog.pointLabel": "Libellé",
+  "templatesAdmin.ratingScaleDialog.pointScore": "Score",
+  "templatesAdmin.ratingScales.title": "Échelles de notation",
+  "templatesAdmin.ratingScales.subtitle": "Échelles étiquetées réutilisables pour les éléments de contrôle de type Note, et le score de chaque point.",
+  "templatesAdmin.ratingScales.newScale": "Nouvelle échelle",
+  "templatesAdmin.ratingScales.loading": "Chargement des échelles de notation…",
+  "templatesAdmin.ratingScales.error.load": "Impossible de charger les échelles de notation.",
+  "templatesAdmin.ratingScales.emptyTitle": "Aucune échelle de notation",
+  "templatesAdmin.ratingScales.emptyMessage": "Créez une échelle pour rendre le type de réponse Note disponible sur les éléments de contrôle.",
+  "templatesAdmin.ratingScales.notify.created": "Échelle de notation « {{name}} » créée.",
+  "templatesAdmin.ratingScales.notify.updated": "Échelle de notation « {{name}} » mise à jour.",
+  "templatesAdmin.ratingScales.guide.purpose": "Définir des échelles étiquetées réutilisables pour les éléments de contrôle de type Note, et le score de chaque point.",
+  "templatesAdmin.ratingScales.guide.description": "Une échelle de notation est un ensemble de points (par ex. 1=Faible .. 5=Excellent), chacun portant un score de 0 à 100. Tout élément de contrôle utilisant le type de réponse Note référence une échelle ; le point choisi par l'auditeur détermine la notation post-réponse.",
+  "templatesAdmin.ratingScales.guide.action.create": "Créer une nouvelle échelle de notation",
+  "templatesAdmin.ratingScales.guide.action.edit": "Modifier les points d'une échelle ou la désactiver",
+  "templatesAdmin.ratingScales.guide.section.table.title": "La liste des échelles",
+  "templatesAdmin.ratingScales.guide.section.table.body": "Les points de chaque échelle, affichés sous la forme valeur = libellé (score). Désactiver une échelle arrête sa proposition sur les nouveaux éléments sans affecter les éléments qui la référencent déjà.",
+  "templatesAdmin.ratingScales.guide.use.items": "Éléments de contrôle de type Note, dans les modèles et sur les audits en cours",
+  "templatesAdmin.ratingScales.guide.rule.scoring": "Le score obtenu par la réponse d'un auditeur provient directement du point qu'il sélectionne sur l'échelle configurée de l'élément.",
+  "templatesAdmin.ratingScales.guide.rule.deactivate": "Désactiver une échelle la préserve pour les éléments qui la référencent déjà mais la masque pour la configuration de nouveaux éléments.",
+  "templatesAdmin.ratingScales.guide.tip.reuse": "Réutilisez une échelle sur plusieurs modèles plutôt que d'en créer des quasi-doublons — cela garantit la cohérence de la notation.",
+  "templatesAdmin.ratingScales.guide.perm.manage": "Gérer les modèles"
 }

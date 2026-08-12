@@ -2,7 +2,7 @@ namespace AuditX.Application.Execution.Dtos;
 
 public sealed record ChecklistResponseDto(
     Guid Id, Guid AuditId, Guid ChecklistItemId, string? Verdict, string? Comment, string? ValueJson,
-    Guid ResponderUserId, bool IsDraft, int ResponseVersion, DateTimeOffset? RespondedAt);
+    Guid ResponderUserId, bool IsDraft, int ResponseVersion, DateTimeOffset? RespondedAt, decimal? Score = null);
 
 public sealed record EvidenceFileDto(
     Guid Id, Guid AuditId, string ContextType, Guid ContextId, string OriginalFilename, string MimeType,
@@ -14,7 +14,7 @@ public sealed record EvidenceDownloadResult(string FileName, string MimeType, by
 public sealed record ChecklistProgressItemDto(
     Guid ItemId, string? SectionName, int OrderIndex, string Prompt, string ItemState,
     string? Verdict, bool IsRequired, Guid? AssignedUserId, bool HasException,
-    string ResponseType, string? ResponseConfigJson, string? ValueJson);
+    string ResponseType, string? ResponseConfigJson, string? ValueJson, decimal? Score = null, string? RiskRating = null);
 
 public sealed record ChecklistProgressDto(
     int TotalItems, int RespondedItems, int InProgressItems, int NotStartedItems,

@@ -35,6 +35,8 @@ function template(overrides: Partial<Template> = {}): Template {
         orderIndex: 0,
         isRequired: true,
         defaultAssignmentRuleJson: null,
+        responseConfigJson: null,
+        riskRating: null,
       },
     ],
     sections: [],
@@ -168,6 +170,8 @@ describe('TemplateEditorComponent', () => {
           orderIndex: 1,
           isRequired: false,
           defaultAssignmentRuleJson: null,
+          responseConfigJson: null,
+          riskRating: null,
         },
       ],
     });

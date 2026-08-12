@@ -6,7 +6,8 @@ public sealed record AuditSectionDto(Guid Id, string Name, int OrderIndex);
 
 public sealed record AuditChecklistItemDto(
     Guid Id, string? SectionName, int OrderIndex, string Prompt, string? ReferenceNotes,
-    string ResponseType, string? ResponseConfigJson, Guid? AssignedUserId, bool IsRequired, string ItemState);
+    string ResponseType, string? ResponseConfigJson, Guid? AssignedUserId, bool IsRequired, string ItemState,
+    string? RiskRating = null);
 
 public sealed record AuditDto(
     Guid Id,

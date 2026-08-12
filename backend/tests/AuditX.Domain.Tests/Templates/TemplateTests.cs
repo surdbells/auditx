@@ -148,4 +148,59 @@ public sealed class TemplateTests
         template.Unarchive();
         Assert.Equal(TemplateStatus.Published, template.Status);
     }
+
+    [Fact]
+    public void AddItem_carries_response_config_and_risk_rating()
+    {
+        var template = Template.CreateDraft("T", "branch", null);
+        var item = template.AddItem(
+            "Rate control effectiveness", null, ResponseType.Rating, null, isRequired: true,
+            defaultAssignmentRuleJson: null, responseConfigJson: "{\"ratingScaleId\":\"" + Guid.NewGuid() + "\"}", riskRating: ExceptionSeverity.High);
+
+        Assert.Equal(ExceptionSeverity.High, item.RiskRating);
+        Assert.Contains("ratingScaleId", item.ResponseConfigJson);
+    }
+
+    [Fact]
+    public void Publish_snapshot_includes_response_config_and_risk_rating()
+    {
+        var template = Template.CreateDraft("T", "branch", null);
+        template.AddItem(
+            "Rate control effectiveness", null, ResponseType.Rating, null, isRequired: true,
+            defaultAssignmentRuleJson: null, responseConfigJson: "{\"ratingScaleId\":\"abc\"}", riskRating: ExceptionSeverity.Critical);
+
+        var version = template.Publish(Now, Serialize);
+        Assert.Contains("ratingScaleId", version.ItemsSnapshotJson);
+
+        var snapshot = JsonSerializer.Deserialize<List<TemplateItemSnapshot>>(version.ItemsSnapshotJson)!;
+        Assert.Equal(ExceptionSeverity.Critical, snapshot[0].RiskRating);
+    }
+}
+
+public sealed class RatingScaleTests
+{
+    [Fact]
+    public void Create_requires_a_name()
+        => Assert.Throws<DomainException>(() => RatingScale.Create(" ", null, "[{\"value\":1,\"label\":\"Poor\",\"score\":0}]"));
+
+    [Fact]
+    public void Create_requires_points_json()
+        => Assert.Throws<DomainException>(() => RatingScale.Create("Effectiveness", null, " "));
+
+    [Fact]
+    public void Update_can_deactivate_without_touching_points()
+    {
+        var scale = RatingScale.Create("Effectiveness", "1-5", "[{\"value\":1,\"label\":\"Poor\",\"score\":0}]");
+        scale.Update(null, null, null, isActive: false);
+        Assert.False(scale.IsActive);
+        Assert.Equal("[{\"value\":1,\"label\":\"Poor\",\"score\":0}]", scale.PointsJson);
+    }
+
+    [Fact]
+    public void Update_replaces_points_when_provided()
+    {
+        var scale = RatingScale.Create("Effectiveness", null, "[{\"value\":1,\"label\":\"Poor\",\"score\":0}]");
+        scale.Update(null, null, "[{\"value\":1,\"label\":\"Weak\",\"score\":10}]", null);
+        Assert.Contains("Weak", scale.PointsJson);
+    }
 }

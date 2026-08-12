@@ -76,6 +76,7 @@ public sealed class ChecklistResponseConfiguration : IEntityTypeConfiguration<Ch
             .HasConversion(new SnakeCaseEnumConverter<ResponseVerdict>())
             .HasMaxLength(10);
         builder.Property(r => r.Comment);
+        builder.Property(r => r.Score).HasColumnType("decimal(5,2)");
 
         // Referential integrity to the owning checklist item (Restrict avoids multiple cascade paths from audits).
         builder.HasOne<AuditChecklistItem>().WithMany().HasForeignKey(r => r.ChecklistItemId).OnDelete(DeleteBehavior.Restrict);
@@ -122,6 +123,10 @@ public sealed class AuditChecklistItemConfiguration : IEntityTypeConfiguration<A
             .HasConversion(new SnakeCaseEnumConverter<ChecklistItemState>())
             .HasMaxLength(30)
             .IsRequired();
+        builder.Property(i => i.ResponseConfigJson);
+        builder.Property(i => i.RiskRating)
+            .HasConversion(new SnakeCaseEnumConverter<ExceptionSeverity>())
+            .HasMaxLength(20);
 
         builder.Property(i => i.HasException).HasDefaultValue(false);
         builder.Property(i => i.FailJustification);

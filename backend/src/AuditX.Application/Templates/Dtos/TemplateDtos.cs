@@ -8,7 +8,11 @@ public sealed record TemplateItemDto(
     string? SectionName,
     int OrderIndex,
     bool IsRequired,
-    string? DefaultAssignmentRuleJson);
+    string? DefaultAssignmentRuleJson,
+    string? ResponseConfigJson,
+    string? RiskRating);
+
+public sealed record RatingScaleDto(Guid Id, string Name, string? Description, bool IsActive, string PointsJson);
 
 public sealed record TemplateSectionDto(Guid Id, string Name, int OrderIndex);
 
@@ -43,7 +47,9 @@ public sealed record TemplateItemSnapshotDto(
     string? SectionName,
     int OrderIndex,
     bool IsRequired,
-    string? DefaultAssignmentRuleJson);
+    string? DefaultAssignmentRuleJson,
+    string? ResponseConfigJson,
+    string? RiskRating);
 
 public sealed record TemplateVersionDetailDto(
     int VersionNumber,

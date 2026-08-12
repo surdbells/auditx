@@ -21,3 +21,15 @@ public interface ITemplateRepository
 
     void Add(Template template);
 }
+
+/// <summary>Persistence operations for bank-configurable <see cref="RatingScale"/>s.</summary>
+public interface IRatingScaleRepository
+{
+    Task<RatingScale?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<RatingScale?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<RatingScale>> GetAllAsync(bool? activeOnly, CancellationToken cancellationToken = default);
+
+    void Add(RatingScale scale);
+}

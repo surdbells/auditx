@@ -1,0 +1,40 @@
+.rating-scales__filters-card {
+  margin-bottom: 1.25rem;
+}
+
+.rating-scales__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.rating-scales__table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.rating-scales__table {
+  width: 100%;
+}
+
+.rating-scales__name {
+  font-weight: 500;
+}
+
+.rating-scales__desc {
+  font-size: 0.8125rem;
+}
+
+.rating-scales__points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.rating-scales__point {
+  font-size: 0.8125rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-container-high, #e8e8e8);
+}

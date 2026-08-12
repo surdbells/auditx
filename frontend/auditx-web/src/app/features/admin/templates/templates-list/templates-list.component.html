@@ -2,12 +2,18 @@
   [title]="'templatesAdmin.list.title' | t"
   [subtitle]="'templatesAdmin.list.subtitle' | t"
 >
-  @if (canManage()) {
-    <button actions matButton="filled" type="button" (click)="createTemplate()" data-guide="create">
-      <app-icon name="add" />
-      {{ 'templatesAdmin.list.newTemplate' | t }}
-    </button>
-  }
+  <div actions class="templates__header-actions">
+    <a matButton routerLink="/admin/templates/rating-scales">
+      <app-icon name="tune" />
+      {{ 'templatesAdmin.list.ratingScales' | t }}
+    </a>
+    @if (canManage()) {
+      <button matButton="filled" type="button" (click)="createTemplate()" data-guide="create">
+        <app-icon name="add" />
+        {{ 'templatesAdmin.list.newTemplate' | t }}
+      </button>
+    }
+  </div>
 </app-page-header>
 
 <app-page-guide [guide]="guide" />

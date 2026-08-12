@@ -154,7 +154,8 @@ export interface ExceptionHistoryEntry {
 export interface RaiseExceptionRequest {
   checklistItemId: string;
   title: string;
-  severity: ExceptionSeverity;
+  /** Omit when the item has a risk rating — the server derives severity from it and ignores this field. */
+  severity?: ExceptionSeverity | null;
   rootCause: string;
   recommendation: string;
   category?: string | null;

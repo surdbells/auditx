@@ -588,6 +588,7 @@ export class AuditExecutionComponent {
       rootCause: comment,
       recommendation: comment,
       users,
+      itemRiskRating: item.riskRating,
     };
     this.dialog
       .open(RaiseExceptionDialogComponent, { data, width: '560px' })

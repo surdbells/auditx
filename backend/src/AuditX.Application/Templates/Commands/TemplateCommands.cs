@@ -1,7 +1,10 @@
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Exceptions;
+using AuditX.Application.Common.Json;
 using AuditX.Application.Common.Messaging;
+using AuditX.Application.Exceptions.Commands;
+using AuditX.Application.Templates;
 using AuditX.Application.Templates.Dtos;
 using AuditX.Application.Templates.Mapping;
 using AuditX.Domain.AuditTrail;
@@ -19,6 +22,27 @@ internal static class TemplateParsing
         return Enum.TryParse<ResponseType>(normalised, ignoreCase: true, out var parsed)
             ? parsed
             : throw new ConflictException("invalid_response_type", $"Unknown response type '{value}'.");
+    }
+
+    public static ExceptionSeverity? ParseRiskRating(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : ExceptionParsing.ParseSeverity(value);
+
+    /// <summary>Pull the referenced rating-scale id out of a Rating item's opaque ResponseConfigJson, if present.</summary>
+    public static Guid? ParseRatingScaleId(string? responseConfigJson)
+    {
+        if (string.IsNullOrWhiteSpace(responseConfigJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            return AppJson.Deserialize<RatingResponseConfig>(responseConfigJson)?.RatingScaleId;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
     }
 }
 
@@ -75,21 +99,26 @@ public sealed class UpdateTemplateMetadataCommandHandler(ITemplateRepository tem
 
 public sealed record AddTemplateItemCommand(
     Guid TemplateId, string Prompt, string? ReferenceNotes, string ResponseType,
-    string? SectionName, bool IsRequired, string? DefaultAssignmentRuleJson) : ICommand<TemplateDto>;
+    string? SectionName, bool IsRequired, string? DefaultAssignmentRuleJson,
+    string? ResponseConfigJson = null, string? RiskRating = null) : ICommand<TemplateDto>;
 
 public sealed class AddTemplateItemCommandValidator : AbstractValidator<AddTemplateItemCommand>
 {
     public AddTemplateItemCommandValidator() => RuleFor(x => x.Prompt).NotEmpty().MaximumLength(2000);
 }
 
-public sealed class AddTemplateItemCommandHandler(ITemplateRepository templates, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class AddTemplateItemCommandHandler(ITemplateRepository templates, IRatingScaleRepository ratingScales, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<AddTemplateItemCommand, TemplateDto>
 {
     public async Task<TemplateDto> Handle(AddTemplateItemCommand command, CancellationToken cancellationToken)
     {
         var template = await templates.GetByIdAsync(command.TemplateId, cancellationToken) ?? throw new NotFoundException("Template", command.TemplateId);
-        var item = template.AddItem(command.Prompt, command.ReferenceNotes, TemplateParsing.ParseResponseType(command.ResponseType),
-            command.SectionName, command.IsRequired, command.DefaultAssignmentRuleJson);
+        var responseType = TemplateParsing.ParseResponseType(command.ResponseType);
+        await TemplateItemValidation.EnsureRatingScaleValidAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+
+        var item = template.AddItem(command.Prompt, command.ReferenceNotes, responseType,
+            command.SectionName, command.IsRequired, command.DefaultAssignmentRuleJson,
+            command.ResponseConfigJson, TemplateParsing.ParseRiskRating(command.RiskRating));
         audit.Record(AuditEventTypes.TemplateItemAdded, AuditTargetTypes.Template, template.Id, payload: new { itemId = item.Id, item.Prompt });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return template.ToDto();
@@ -98,19 +127,43 @@ public sealed class AddTemplateItemCommandHandler(ITemplateRepository templates,
 
 public sealed record UpdateTemplateItemCommand(
     Guid TemplateId, Guid ItemId, string Prompt, string? ReferenceNotes, string ResponseType,
-    string? SectionName, bool IsRequired, string? DefaultAssignmentRuleJson) : ICommand<TemplateDto>;
+    string? SectionName, bool IsRequired, string? DefaultAssignmentRuleJson,
+    string? ResponseConfigJson = null, string? RiskRating = null) : ICommand<TemplateDto>;
 
-public sealed class UpdateTemplateItemCommandHandler(ITemplateRepository templates, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class UpdateTemplateItemCommandHandler(ITemplateRepository templates, IRatingScaleRepository ratingScales, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateTemplateItemCommand, TemplateDto>
 {
     public async Task<TemplateDto> Handle(UpdateTemplateItemCommand command, CancellationToken cancellationToken)
     {
         var template = await templates.GetByIdAsync(command.TemplateId, cancellationToken) ?? throw new NotFoundException("Template", command.TemplateId);
-        template.UpdateItem(command.ItemId, command.Prompt, command.ReferenceNotes, TemplateParsing.ParseResponseType(command.ResponseType),
-            command.SectionName, command.IsRequired, command.DefaultAssignmentRuleJson);
+        var responseType = TemplateParsing.ParseResponseType(command.ResponseType);
+        await TemplateItemValidation.EnsureRatingScaleValidAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+
+        template.UpdateItem(command.ItemId, command.Prompt, command.ReferenceNotes, responseType,
+            command.SectionName, command.IsRequired, command.DefaultAssignmentRuleJson,
+            command.ResponseConfigJson, TemplateParsing.ParseRiskRating(command.RiskRating));
         audit.Record(AuditEventTypes.TemplateItemEdited, AuditTargetTypes.Template, template.Id, payload: new { itemId = command.ItemId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return template.ToDto();
+    }
+}
+
+/// <summary>A Rating item must reference an existing rating scale; other response types carry no such constraint.</summary>
+internal static class TemplateItemValidation
+{
+    public static async Task EnsureRatingScaleValidAsync(ResponseType responseType, string? responseConfigJson, IRatingScaleRepository ratingScales, CancellationToken cancellationToken)
+    {
+        if (responseType != ResponseType.Rating)
+        {
+            return;
+        }
+
+        var ratingScaleId = TemplateParsing.ParseRatingScaleId(responseConfigJson)
+            ?? throw new ConflictException("template.rating_scale_required", "A rating item must reference a rating scale.");
+        if (await ratingScales.GetByIdAsync(ratingScaleId, cancellationToken) is null)
+        {
+            throw new NotFoundException("Rating scale", ratingScaleId);
+        }
     }
 }
 
@@ -275,7 +328,8 @@ public sealed class CloneTemplateCommandHandler(ITemplateRepository templates, I
 
         foreach (var item in source.Items.OrderBy(i => i.OrderIndex))
         {
-            clone.AddItem(item.Prompt, item.ReferenceNotes, item.ResponseType, item.SectionName, item.IsRequired, item.DefaultAssignmentRuleJson);
+            clone.AddItem(item.Prompt, item.ReferenceNotes, item.ResponseType, item.SectionName, item.IsRequired,
+                item.DefaultAssignmentRuleJson, item.ResponseConfigJson, item.RiskRating);
         }
 
         templates.Add(clone);

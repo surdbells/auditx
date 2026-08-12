@@ -4705,7 +4705,6 @@
   "identity.roleEditor.guide.faq.builtIn.a": "It is a built-in system role, which is locked as read-only; create a custom role instead.",
   "identity.roleEditor.guide.faq.inherit.q": "What does inheriting from a parent role do?",
   "identity.roleEditor.guide.faq.inherit.a": "The role automatically gains all of its parent roles' permissions on top of the ones you select here.",
-
   "engagement.board.guide.purpose": "See every engagement you're part of and the one next step to take on each, at a glance.",
   "engagement.board.guide.description": "The Engagement Lifecycle board is your portfolio view across every audit you're on — its current stage, progress, and the role-scoped action the system has decided is next for you, with a button to act on it immediately.",
   "engagement.board.guide.action.filter": "Toggle 'Waiting on me' to see only engagements needing your action",
@@ -4732,7 +4731,6 @@
   "engagement.board.guide.perm.view": "View Engagement Lifecycle",
   "engagement.board.guide.faq.action.q": "How does the system decide my next action?",
   "engagement.board.guide.faq.action.a": "It reads the audit's current lifecycle stage plus your role on the team and, for remediation, exception ownership — then resolves the single next step that makes sense for you.",
-
   "engagement.journey.guide.purpose": "Follow one engagement's lifecycle stage by stage, with the current step's action front and centre.",
   "engagement.journey.guide.description": "A vertical timeline of every stage an engagement passes through, from setup to closure. Completed stages are marked done, the current stage is highlighted with your next action, and future stages are greyed out until their turn.",
   "engagement.journey.guide.action.act": "Act on the highlighted next-step button at the current stage",
@@ -4755,7 +4753,6 @@
   "engagement.journey.guide.perm.view": "View Engagement Lifecycle",
   "engagement.journey.guide.faq.noAction.q": "Why does the current stage show no action for me?",
   "engagement.journey.guide.faq.noAction.a": "The next best action is role-scoped — if nothing is waiting specifically on your role at this stage, the timeline says so rather than showing an action that isn't yours to take.",
-
   "ac.plansAwaiting.guide.purpose": "Give the AC chair a single queue of annual plans that need a decision.",
   "ac.plansAwaiting.guide.description": "Every submitted or revision-submitted annual plan lands here for review. Expand a plan to see its item count, add a discussion comment, or open it to approve, reject or request a revision.",
   "ac.plansAwaiting.guide.action.expand": "Expand a plan to see its period and item count",
@@ -4776,7 +4773,6 @@
   "ac.plansAwaiting.guide.perm.member": "Audit Committee Member (view, comment)",
   "ac.plansAwaiting.guide.faq.decide.q": "Where do I actually approve or reject a plan?",
   "ac.plansAwaiting.guide.faq.decide.a": "This screen is a queue — open the plan (\"Review & decide\") to record the decision on the existing plan-detail screen.",
-
   "ac.restrictVisibility.title": "Restrict finding visibility",
   "ac.restrictVisibility.subtitle": "Limit who may see this finding's detail. Others see a restricted placeholder.",
   "ac.restrictVisibility.guide.purpose": "Let a Chief Internal Auditor limit a sensitive finding's detail to a named allow-list.",
@@ -4789,7 +4785,6 @@
   "ac.restrictVisibility.guide.rule.filtered": "The backend filters at read time per requester — there is no separate 'restricted' copy of the finding.",
   "ac.restrictVisibility.guide.tip.reason": "Recording a reason helps a later reviewer understand why the restriction was applied.",
   "ac.restrictVisibility.guide.perm.cia": "Chief Internal Auditor (CIA)",
-
   "templatesAdmin.editor.guideTitle": "Template editor",
   "templatesAdmin.editor.guide.purpose": "Build and maintain a checklist template's structure through its draft → published lifecycle.",
   "templatesAdmin.editor.guide.description": "Set the template's name, audit type and description, then build its checklist as sections of ordered items. Once published, a template is locked — editing again creates a new draft version.",
@@ -4816,7 +4811,6 @@
   "templatesAdmin.editor.guide.perm.manage": "Manage Templates",
   "templatesAdmin.editor.guide.faq.editPublished.q": "Can I edit a published template directly?",
   "templatesAdmin.editor.guide.faq.editPublished.a": "No — publishing locks it. Use 'New draft version' to start an editable copy; audits already using the published version are unaffected.",
-
   "account.prefs.guide.purpose": "Choose how AuditX reaches you for non-critical notifications.",
   "account.prefs.guide.description": "Critical notifications always reach you. These two toggles control lower-priority channels: SMS for non-critical alerts, and batching routine notifications into a digest instead of one-by-one.",
   "account.prefs.guide.action.sms": "Toggle SMS delivery for non-critical alerts",
@@ -4825,7 +4819,6 @@
   "account.prefs.guide.section.toggles.body": "Changes save immediately and apply to future notifications only.",
   "account.prefs.guide.rule.criticalAlways": "Critical notifications (e.g. security and compliance alerts) are never suppressed by these preferences.",
   "account.prefs.guide.perm.anyUser": "Any signed-in user (personal setting)",
-
   "universe.dims.guide.purpose": "Define the weighted dimensions used to score every auditable entity's inherent and residual risk.",
   "universe.dims.guide.description": "Each dimension (e.g. financial impact, regulatory exposure) has a weight and a rating scale. Together they produce the composite risk score that drives audit-universe prioritisation and the risk heatmap.",
   "universe.dims.guide.action.create": "Create a new risk dimension",
@@ -4840,7 +4833,6 @@
   "universe.dims.guide.rule.deactivate": "Deactivating a dimension preserves historic scores but excludes it from new assessments.",
   "universe.dims.guide.tip.weights": "Keep weights proportionate across dimensions — a single overweighted dimension can dominate the composite score.",
   "universe.dims.guide.perm.manage": "Manage Configuration",
-
   "orgUnit.list.guide.purpose": "Maintain the department/business-unit hierarchy that entities, users and scorecards roll up to.",
   "orgUnit.list.guide.description": "A tree of organisational units, from Head Office down. Auditable entities and users are each assigned to a unit, and department scorecards aggregate audit and exception data by this hierarchy.",
   "orgUnit.list.guide.action.create": "Create a new org unit under a parent",
@@ -4856,7 +4848,6 @@
   "orgUnit.list.guide.rule.archiveKeepsHistory": "Archiving a unit hides it from new assignments but keeps its historic data intact.",
   "orgUnit.list.guide.tip.indent": "Indentation shows depth — use it to spot a unit's place in the hierarchy at a glance.",
   "orgUnit.list.guide.perm.manage": "Manage Audit Universe",
-
   "audits.exec.guideTitle": "Fieldwork",
   "audits.exec.guide.purpose": "Do the fieldwork: respond to checklist items, attach evidence and raise findings, all from one screen.",
   "audits.exec.guide.description": "The dedicated execution screen for an audit's checklist. Respond to each item, attach supporting evidence, log time, and raise an exception directly where a control fails — without leaving the checklist.",
@@ -4876,7 +4867,6 @@
   "audits.exec.guide.rule.assignment": "An item can carry an assignment rule scoping who may respond to it.",
   "audits.exec.guide.tip.evidence": "Attach evidence at the item level so a reviewer can trace each response back to its support.",
   "audits.exec.guide.perm.view": "View Audit",
-
   "reports.panel.guide.purpose": "Generate, track and download this audit's standalone report versions.",
   "reports.panel.guide.description": "Every report ever generated for this audit, each version sealed with a SHA-256 hash at completion. Generate a new version once the audit is under review or completed; download any completed version in its produced formats.",
   "reports.panel.guide.action.generate": "Generate a new report version (optionally with a DOCX export)",
@@ -4900,7 +4890,6 @@
   "reports.panel.guide.perm.view": "View Report",
   "reports.panel.guide.faq.disabled.q": "Why is the Generate button disabled?",
   "reports.panel.guide.faq.disabled.a": "Report generation is only available once the audit has reached Under Review or Completed, so the report reflects finished fieldwork.",
-
   "reports.viewer.guideTitle": "Report viewer",
   "reports.viewer.guide.purpose": "View, verify, distribute and share one report version.",
   "reports.viewer.guide.description": "The single source of truth for a completed report: an inline preview of the exact sealed content, hash verification against tampering, distribution to recipients, and the distribution log.",
@@ -4923,7 +4912,6 @@
   "reports.viewer.guide.perm.distribute": "Distribute Report",
   "reports.viewer.guide.faq.hash.q": "What does the SHA-256 hash actually protect against?",
   "reports.viewer.guide.faq.hash.a": "It proves the downloaded file is byte-for-byte what was generated and sealed — 'Verify hash' recomputes it and flags any mismatch, e.g. from tampering or corruption.",
-
   "analytics.view.guideTitle": "Dashboard",
   "analytics.view.guide.purpose": "See a live dashboard's widgets, each backed by a real-time analytics query.",
   "analytics.view.guide.description": "A dashboard is a named collection of widgets — key figures, tables and charts — each computed from the current data. Widgets you don't have permission for degrade to a locked placeholder rather than being hidden outright.",
@@ -4940,7 +4928,6 @@
   "analytics.view.guide.perm.configure": "Configure Dashboards (add/remove widgets)",
   "analytics.view.guide.faq.unavailable.q": "Why does a widget say data is unavailable?",
   "analytics.view.guide.faq.unavailable.a": "The backend degrades a widget you don't have permission to view to a locked placeholder rather than an error, so the rest of the dashboard still renders normally.",
-
   "analytics.detail.guide.purpose": "Drill into one recurrence cluster and its member findings.",
   "analytics.detail.guide.description": "A recurrence cluster groups closed findings that recur against the same entity/category within a detection window — a signal that a control isn't holding. This screen shows the cluster's facts and every member finding.",
   "analytics.detail.guide.action.open": "Open a member finding's full exception detail",
@@ -4952,15 +4939,49 @@
   "analytics.detail.guide.use.exceptions": "Member findings link back to the exception register",
   "analytics.detail.guide.rule.window": "A cluster only forms when qualifying findings recur within the configured detection window.",
   "analytics.detail.guide.perm.view": "View Analytics",
-
   "audits.history.close": "Close",
   "audits.history.score": "Score: {{score}}",
   "audits.history.event.item_responded": "Response recorded",
   "audits.history.event.item_response_overridden": "Response overridden",
   "audits.history.event.draft_discarded": "Draft discarded",
-
   "planning.itemDialog.periodHint": "Dates must fall within the plan's period ({{start}} – {{end}}) — an audit must happen as planned.",
   "planning.itemDialog.dateOutOfPeriod": "This date must fall within the plan's period.",
   "planning.itemDialog.entityHint": "Select one or more entities — each gets its own audit, launched and tracked independently.",
-  "planning.detail.colEntities": "Entities"
+  "planning.detail.colEntities": "Entities",
+  "templatesAdmin.responseType.rating": "Rating",
+  "templatesAdmin.item.ratingScale": "Rating scale",
+  "templatesAdmin.item.riskRating": "Risk rating",
+  "templatesAdmin.item.noRiskRating": "(No risk rating)",
+  "templatesAdmin.item.riskRatingHint": "When set, this becomes the default severity for any exception raised against this item.",
+  "templatesAdmin.error.ratingScaleRequired": "Select a rating scale.",
+  "templatesAdmin.list.ratingScales": "Rating scales",
+  "templatesAdmin.ratingScaleDialog.newTitle": "New rating scale",
+  "templatesAdmin.ratingScaleDialog.editTitle": "Edit rating scale",
+  "templatesAdmin.ratingScaleDialog.description": "Description",
+  "templatesAdmin.ratingScaleDialog.points": "Scale points",
+  "templatesAdmin.ratingScaleDialog.addPoint": "Add point",
+  "templatesAdmin.ratingScaleDialog.removePoint": "Remove point",
+  "templatesAdmin.ratingScaleDialog.pointValue": "Value",
+  "templatesAdmin.ratingScaleDialog.pointLabel": "Label",
+  "templatesAdmin.ratingScaleDialog.pointScore": "Score",
+  "templatesAdmin.ratingScales.title": "Rating Scales",
+  "templatesAdmin.ratingScales.subtitle": "Reusable labelled scales for Rating-type checklist items, and the score each point earns.",
+  "templatesAdmin.ratingScales.newScale": "New scale",
+  "templatesAdmin.ratingScales.loading": "Loading rating scales…",
+  "templatesAdmin.ratingScales.error.load": "We couldn't load the rating scales.",
+  "templatesAdmin.ratingScales.emptyTitle": "No rating scales yet",
+  "templatesAdmin.ratingScales.emptyMessage": "Create a scale to make the Rating response type available on checklist items.",
+  "templatesAdmin.ratingScales.notify.created": "Rating scale \"{{name}}\" created.",
+  "templatesAdmin.ratingScales.notify.updated": "Rating scale \"{{name}}\" updated.",
+  "templatesAdmin.ratingScales.guide.purpose": "Define reusable labelled scales for Rating-type checklist items, and the score each point earns.",
+  "templatesAdmin.ratingScales.guide.description": "A rating scale is a set of points (e.g. 1=Poor .. 5=Excellent), each carrying a 0-100 score. Any checklist item using the Rating response type references one scale; the auditor's chosen point drives post-response scoring.",
+  "templatesAdmin.ratingScales.guide.action.create": "Create a new rating scale",
+  "templatesAdmin.ratingScales.guide.action.edit": "Edit a scale's points or deactivate it",
+  "templatesAdmin.ratingScales.guide.section.table.title": "The scale list",
+  "templatesAdmin.ratingScales.guide.section.table.body": "Each scale's points, shown as value = label (score). Deactivating a scale stops it being offered on new checklist items without breaking items that already reference it.",
+  "templatesAdmin.ratingScales.guide.use.items": "Rating-type checklist items, in templates and on live audits",
+  "templatesAdmin.ratingScales.guide.rule.scoring": "The score an auditor's response earns comes directly from the point they select on the item's configured scale.",
+  "templatesAdmin.ratingScales.guide.rule.deactivate": "Deactivating a scale preserves it for items that already reference it but hides it from new item configuration.",
+  "templatesAdmin.ratingScales.guide.tip.reuse": "Reuse one scale across many templates rather than creating near-duplicates — it keeps scoring consistent.",
+  "templatesAdmin.ratingScales.guide.perm.manage": "Manage Templates"
 }

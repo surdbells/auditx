@@ -64,7 +64,8 @@ public sealed class AuditCreationService(ITemplateRepository templates)
 
         foreach (var item in snapshot.OrderBy(i => i.OrderIndex))
         {
-            audit.AddChecklistItem(item.Prompt, item.ReferenceNotes, item.ResponseType, item.SectionName, item.IsRequired, assignedUserId: null);
+            audit.AddChecklistItem(item.Prompt, item.ReferenceNotes, item.ResponseType, item.SectionName, item.IsRequired,
+                assignedUserId: null, item.ResponseConfigJson, item.RiskRating);
         }
 
         return audit;

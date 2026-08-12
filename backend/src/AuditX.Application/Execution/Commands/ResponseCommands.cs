@@ -7,6 +7,7 @@ using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Execution.Dtos;
 using AuditX.Application.Execution.Mapping;
+using AuditX.Application.Execution.Services;
 using AuditX.Domain.Audits;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Authorization;
@@ -32,6 +33,7 @@ public sealed class SubmitResponseCommandHandler(
     IAuditRepository audits,
     IPermissionResolver permissions,
     IBankSettingsRepository bankSettings,
+    IResponseScoringService scoring,
     ICurrentUser currentUser,
     IAuditRecorder audit,
     IClock clock,
@@ -52,10 +54,16 @@ public sealed class SubmitResponseCommandHandler(
 
         var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, settings.RequireCommentOnPass, clock.UtcNow, command.ValueJson);
 
+        // Post-response scoring: computed here (the aggregate can't resolve a RatingScale) and applied to the
+        // just-recorded response before it's persisted/snapshotted.
+        var score = await scoring.ComputeScoreAsync(
+            item.ResponseType, item.ResponseConfigJson, mutation.Response.Verdict, mutation.Response.ValueJson, command.IsDraft, cancellationToken);
+        entity.SetResponseScore(command.ItemId, score);
+
         audit.Record(
             isOverride ? AuditEventTypes.ItemResponseOverridden : AuditEventTypes.ItemResponded,
             AuditTargetTypes.ChecklistResponse, mutation.Response.Id,
-            before: Snapshot(mutation.Before), after: Snapshot(mutation.After));
+            before: Snapshot(mutation.Before), after: Snapshot(mutation.Response.ToState()));
 
         // Finalising the last item auto-transitions to Under Review inside the aggregate; record that
         // lifecycle change in the trail too, so the auto path matches the explicit transition path.
@@ -69,7 +77,7 @@ public sealed class SubmitResponseCommandHandler(
     }
 
     private static object? Snapshot(ResponseState? state)
-        => state is null ? null : new { verdict = state.Verdict is { } v ? v.ToSnake() : null, state.Comment, state.ValueJson, state.IsDraft, state.Version };
+        => state is null ? null : new { verdict = state.Verdict is { } v ? v.ToSnake() : null, state.Comment, state.ValueJson, state.IsDraft, state.Version, state.Score };
 }
 
 public sealed record DiscardDraftCommand(Guid AuditId, Guid ItemId, string Version) : ICommand<Unit>;

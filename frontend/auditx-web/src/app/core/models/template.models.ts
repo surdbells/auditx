@@ -1,3 +1,5 @@
+import type { ExceptionSeverity } from './exception.models';
+
 /** Lifecycle state of an audit template. */
 export type TemplateStatus = 'draft' | 'published' | 'archived';
 
@@ -44,6 +46,39 @@ export interface TemplateItem {
   orderIndex: number;
   isRequired: boolean;
   defaultAssignmentRuleJson: string | null;
+  /** Per-type config, e.g. `{"ratingScaleId":"..."}` for a Rating item. Opaque JSON. */
+  responseConfigJson: string | null;
+  /** How severe a failure of this item is; when set, drives the default severity of any exception raised against it. */
+  riskRating: ExceptionSeverity | null;
+}
+
+/** A point on a rating scale: the value an auditor picks, its label, and its 0-100 score. */
+export interface RatingScalePoint {
+  value: number;
+  label: string;
+  score: number;
+}
+
+/** A bank-configurable, reusable labelled scale for Rating-type checklist items. */
+export interface RatingScale {
+  id: string;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  pointsJson: string;
+}
+
+export interface CreateRatingScaleRequest {
+  name: string;
+  description: string | null;
+  pointsJson: string;
+}
+
+export interface UpdateRatingScaleRequest {
+  name?: string;
+  description?: string | null;
+  pointsJson?: string;
+  isActive?: boolean;
 }
 
 /** A named grouping of template items. */
@@ -83,6 +118,8 @@ export interface TemplateItemSnapshot {
   orderIndex: number;
   isRequired: boolean;
   defaultAssignmentRuleJson: string | null;
+  responseConfigJson: string | null;
+  riskRating: ExceptionSeverity | null;
 }
 
 /** Full detail of one published version. */
@@ -128,6 +165,8 @@ export interface SaveTemplateItemRequest {
   sectionName: string;
   isRequired: boolean;
   defaultAssignmentRuleJson: string | null;
+  responseConfigJson?: string | null;
+  riskRating?: ExceptionSeverity | null;
 }
 
 export interface ReorderItemsRequest {

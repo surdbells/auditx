@@ -10,6 +10,7 @@
  */
 
 import { ResponseType } from './template.models';
+import type { ExceptionSeverity } from './exception.models';
 
 /** Lifecycle state of an audit. */
 export type AuditStatus =
@@ -64,6 +65,8 @@ export interface AuditChecklistItem {
   assignedUserId: string | null;
   isRequired: boolean;
   itemState: ChecklistItemState;
+  /** How severe a failure of this item is; when set, drives the default severity of any exception raised against it. */
+  riskRating?: ExceptionSeverity | null;
 }
 
 /** Full aggregate for a single audit. */
@@ -177,6 +180,7 @@ export interface AddChecklistItemRequest {
   isRequired: boolean;
   assignedUserId?: string | null;
   version: string;
+  riskRating?: ExceptionSeverity | null;
 }
 
 export interface UpdateChecklistItemRequest {
@@ -188,6 +192,7 @@ export interface UpdateChecklistItemRequest {
   isRequired: boolean;
   assignedUserId?: string | null;
   version: string;
+  riskRating?: ExceptionSeverity | null;
 }
 
 /** List query parameters for the audits list. */
@@ -224,6 +229,8 @@ export interface ChecklistResponse {
   isDraft: boolean;
   responseVersion: number;
   respondedAt?: string | null;
+  /** 0-100 post-response score once finalised (see ResponseType-specific scoring rules); null if unscored. */
+  score?: number | null;
 }
 
 /** An evidence file attached to a response. */
@@ -255,6 +262,8 @@ export interface ChecklistProgressItem {
   responseType: ResponseType;
   responseConfigJson?: string | null;
   valueJson?: string | null;
+  score?: number | null;
+  riskRating?: ExceptionSeverity | null;
 }
 
 /** Aggregate progress across an audit's checklist. */

@@ -51,12 +51,31 @@ public sealed class TemplateItemConfiguration : IEntityTypeConfiguration<Templat
         builder.Property(i => i.ReferenceNotes);
         builder.Property(i => i.SectionName).HasMaxLength(200);
         builder.Property(i => i.DefaultAssignmentRuleJson);
+        builder.Property(i => i.ResponseConfigJson);
         builder.Property(i => i.ResponseType)
             .HasConversion(new SnakeCaseEnumConverter<ResponseType>())
             .HasMaxLength(40)
             .IsRequired();
+        builder.Property(i => i.RiskRating)
+            .HasConversion(new SnakeCaseEnumConverter<ExceptionSeverity>())
+            .HasMaxLength(40);
 
         builder.HasIndex(i => i.TemplateId);
+    }
+}
+
+public sealed class RatingScaleConfiguration : IEntityTypeConfiguration<RatingScale>
+{
+    public void Configure(EntityTypeBuilder<RatingScale> builder)
+    {
+        builder.ToTable("rating_scales");
+        builder.HasKey(s => s.Id);
+        builder.Property(s => s.Id).ValueGeneratedNever();
+
+        builder.Property(s => s.Name).HasMaxLength(100).IsRequired();
+        builder.Property(s => s.Description).HasMaxLength(500);
+        builder.Property(s => s.PointsJson).IsRequired();
+        builder.HasIndex(s => s.Name).IsUnique();
     }
 }
 

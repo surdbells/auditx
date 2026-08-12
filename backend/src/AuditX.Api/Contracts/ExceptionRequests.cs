@@ -1,7 +1,7 @@
 namespace AuditX.Api.Contracts;
 
 public sealed record RaiseExceptionRequest(
-    Guid ChecklistItemId, string Title, string Severity, string RootCause, string Recommendation,
+    Guid ChecklistItemId, string Title, string? Severity, string RootCause, string Recommendation,
     string? Category, string? RootCauseCategory, Guid OwnerUserId, DateOnly? TargetDateOverride, string? OverrideRationale,
     string? NonConformanceCategory = null);
 

@@ -101,6 +101,75 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         Assert.Equal(1, list.GetArrayLength());
     }
 
+    [Fact]
+    public async Task Severity_is_derived_from_the_items_risk_rating_when_it_has_one()
+    {
+        var admin = await AdminAsync();
+        var users = await UsersByEmailAsync(admin);
+        var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
+        {
+            name = $"Risk-rated {Guid.NewGuid():N}",
+            auditType = "branch",
+            startDate = "2027-01-10",
+            targetEndDate = "2027-02-10",
+            leadUserId = users["manager@auditx.local"],
+            auditeeUserId = users["auditee@auditx.local"],
+        }));
+        var auditId = created.GetProperty("id").GetGuid();
+        var version = Version(created);
+
+        // Two Critical-risk-rated items — one raised without a severity, one with a (should-be-ignored) override.
+        var withItem0 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Q0", responseType = "pass_fail_na", isRequired = true, version, riskRating = "critical" }));
+        version = Version(withItem0);
+        var withItem1 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Q1", responseType = "pass_fail_na", isRequired = true, version, riskRating = "critical" }));
+        version = Version(withItem1);
+        var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        version = Version(withTeam);
+        var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
+        version = Version(planned);
+        var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
+
+        var items = started.GetProperty("checklistItems").EnumerateArray().OrderBy(i => i.GetProperty("orderIndex").GetInt32()).ToArray();
+        var item0 = items[0].GetProperty("id").GetGuid();
+        var item1 = items[1].GetProperty("id").GetGuid();
+        Assert.Equal("critical", items[0].GetProperty("riskRating").GetString());
+
+        await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{item0}/responses",
+            new { verdict = "fail", comment = "control missing", isDraft = false, version = await AuditVersionAsync(admin, auditId) }));
+        await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{item1}/responses",
+            new { verdict = "fail", comment = "control missing", isDraft = false, version = await AuditVersionAsync(admin, auditId) }));
+
+        // No severity supplied — the item's own Critical risk rating drives it.
+        var raised = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = item0, title = "Segregation gap", rootCause = "no maker-checker",
+            recommendation = "introduce dual control", ownerUserId = users["auditee@auditx.local"],
+        }));
+        Assert.Equal("critical", raised.GetProperty("severity").GetString());
+
+        // A caller-supplied severity is ignored in favour of the item's risk rating.
+        var raisedWithIgnoredOverride = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = item1, title = "Segregation gap 2", severity = "low", rootCause = "x", recommendation = "y", ownerUserId = users["auditee@auditx.local"],
+        }));
+        Assert.Equal("critical", raisedWithIgnoredOverride.GetProperty("severity").GetString());
+    }
+
+    [Fact]
+    public async Task Raising_without_severity_on_an_unrated_item_is_rejected()
+    {
+        var admin = await AdminAsync();
+        var (auditId, failItem, _, owner) = await SeedAuditWithResponsesAsync(admin);
+
+        var response = await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = failItem, title = "No severity given", rootCause = "x", recommendation = "y", ownerUserId = owner,
+        });
+        Assert.Equal(HttpStatusCode.UnprocessableContent, response.StatusCode);
+    }
+
     /// <summary>Grant the Audit Manager role (ViewAnalytics) to 'manager' and log in as an analyst.</summary>
     private async Task<HttpClient> AnalystAsync(HttpClient admin)
     {

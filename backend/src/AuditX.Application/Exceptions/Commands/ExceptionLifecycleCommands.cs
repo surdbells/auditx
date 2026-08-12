@@ -24,7 +24,7 @@ internal static class ExceptionParsing
 }
 
 public sealed record RaiseExceptionCommand(
-    Guid AuditId, Guid ChecklistItemId, string Title, string Severity, string RootCause, string Recommendation,
+    Guid AuditId, Guid ChecklistItemId, string Title, string? Severity, string RootCause, string Recommendation,
     string? Category, string? RootCauseCategory, Guid OwnerUserId, DateOnly? TargetDateOverride, string? OverrideRationale,
     string? NonConformanceCategory = null) : ICommand<ExceptionDto>;
 
@@ -35,7 +35,8 @@ public sealed class RaiseExceptionCommandValidator : AbstractValidator<RaiseExce
         RuleFor(x => x.AuditId).NotEmpty();
         RuleFor(x => x.ChecklistItemId).NotEmpty();
         RuleFor(x => x.Title).NotEmpty().MaximumLength(255);
-        RuleFor(x => x.Severity).NotEmpty();
+        // Severity is required only when the item carries no risk rating to derive it from — enforced in the
+        // handler, which is the only place that has the item loaded.
         RuleFor(x => x.RootCause).NotEmpty();
         RuleFor(x => x.Recommendation).NotEmpty();
         RuleFor(x => x.OwnerUserId).NotEmpty();
@@ -60,10 +61,15 @@ public sealed class RaiseExceptionCommandHandler(
         var auditEntity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
         await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         var userId = currentUser.UserId ?? throw new UnauthorizedException();
-        var severity = ExceptionParsing.ParseSeverity(command.Severity);
 
         var item = auditEntity.ChecklistItems.FirstOrDefault(i => i.Id == command.ChecklistItemId)
             ?? throw new NotFoundException("Checklist item", command.ChecklistItemId);
+
+        // Severity is derived from the item's risk rating when it has one — the item's own assessed risk is the
+        // authoritative severity, not a free user choice. Only an unrated item falls back to a manual selection.
+        var severity = item.RiskRating ?? (string.IsNullOrWhiteSpace(command.Severity)
+            ? throw new DomainException("exception.severity_required", "This item has no risk rating, so a severity must be selected.")
+            : ExceptionParsing.ParseSeverity(command.Severity));
 
         // Pass/N-A gate (US-M5-017 / BR-M6-001): an exception can only be raised on a finalised Fail.
         var hasFail = auditEntity.Responses.Any(r => r.ChecklistItemId == item.Id && !r.IsDraft && r.Verdict == ResponseVerdict.Fail);

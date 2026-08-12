@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  signal,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -20,8 +21,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 
+import { RatingScalesService } from '../../../core/services/rating-scales.service';
 import {
   ChecklistResponse,
+  RatingScalePoint,
   ResponseType,
   ResponseVerdict,
   VALUE_RESPONSE_TYPES,
@@ -111,8 +114,8 @@ const failNaNeedsComment: ValidatorFn = (group): ValidationErrors | null => {
               <div class="rating">
                 <span class="rating__label">Rating</span>
                 <mat-radio-group formControlName="value" class="verdicts">
-                  @for (n of ratingScale(); track n) {
-                    <mat-radio-button [value]="n.toString()">{{ n }}</mat-radio-button>
+                  @for (p of ratingScale(); track p.value) {
+                    <mat-radio-button [value]="p.value.toString()">{{ p.label ? p.value + ' – ' + p.label : p.value }}</mat-radio-button>
                   }
                 </mat-radio-group>
               </div>
@@ -207,9 +210,11 @@ export class RespondItemDialogComponent {
     MatDialogRef<RespondItemDialogComponent, RespondItemDialogResult>
   >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly ratingScalesService = inject(RatingScalesService);
 
   readonly responseType = this.data.responseType;
   private readonly config = parseConfig(this.data.responseConfigJson ?? null);
+  private readonly ratingScalePoints = signal<RatingScalePoint[] | null>(null);
 
   readonly isValueType = computed(() => VALUE_RESPONSE_TYPES.includes(this.responseType));
 
@@ -222,13 +227,30 @@ export class RespondItemDialogComponent {
     { validators: [failNaNeedsComment] },
   );
 
+  constructor() {
+    if (this.responseType === 'rating' && this.config.ratingScaleId) {
+      const scaleId = this.config.ratingScaleId;
+      this.ratingScalesService.list('all').subscribe((scales) => {
+        const scale = scales.find((s) => s.id === scaleId);
+        if (scale) {
+          this.ratingScalePoints.set(parsePoints(scale.pointsJson));
+        }
+      });
+    }
+  }
+
   choices(): string[] {
     return this.config.options ?? [];
   }
 
-  ratingScale(): number[] {
+  /** Labelled scale points when a RatingScale is configured; a bare 1..max fallback otherwise. */
+  ratingScale(): RatingScalePoint[] {
+    const points = this.ratingScalePoints();
+    if (points) {
+      return points;
+    }
     const max = this.config.max ?? 5;
-    return Array.from({ length: max }, (_, i) => i + 1);
+    return Array.from({ length: max }, (_, i) => ({ value: i + 1, label: '', score: 0 }));
   }
 
   unit(): string {
@@ -287,6 +309,7 @@ interface ParsedConfig {
   options?: string[];
   max?: number;
   unit?: string;
+  ratingScaleId?: string;
 }
 
 function parseConfig(json: string | null): ParsedConfig {
@@ -297,6 +320,15 @@ function parseConfig(json: string | null): ParsedConfig {
     return JSON.parse(json) as ParsedConfig;
   } catch {
     return {};
+  }
+}
+
+function parsePoints(pointsJson: string): RatingScalePoint[] {
+  try {
+    const parsed = JSON.parse(pointsJson);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
 }
 

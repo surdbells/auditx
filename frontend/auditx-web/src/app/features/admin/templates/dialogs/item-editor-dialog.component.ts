@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   inject,
+  signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,7 +18,10 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
+import { RatingScalesService } from '../../../../core/services/rating-scales.service';
 import {
+  ExceptionSeverity,
+  RatingScale,
   ResponseType,
   SaveTemplateItemRequest,
   TemplateItem,
@@ -32,7 +36,20 @@ export interface ItemEditorDialogData {
 
 const RESPONSE_TYPES: { value: ResponseType; labelKey: string }[] = [
   { value: 'pass_fail_na', labelKey: 'templatesAdmin.responseType.passFailNa' },
+  { value: 'rating', labelKey: 'templatesAdmin.responseType.rating' },
 ];
+
+function parseRatingScaleId(responseConfigJson: string | null | undefined): string {
+  if (!responseConfigJson) {
+    return '';
+  }
+  try {
+    const parsed = JSON.parse(responseConfigJson) as { ratingScaleId?: string };
+    return parsed.ratingScaleId ?? '';
+  } catch {
+    return '';
+  }
+}
 
 @Component({
   selector: 'app-item-editor-dialog',
@@ -90,6 +107,31 @@ const RESPONSE_TYPES: { value: ResponseType; labelKey: string }[] = [
           </mat-form-field>
         </div>
 
+        @if (form.controls.responseType.value === 'rating') {
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>{{ 'templatesAdmin.item.ratingScale' | t }}</mat-label>
+            <mat-select formControlName="ratingScaleId">
+              @for (rs of ratingScales(); track rs.id) {
+                <mat-option [value]="rs.id">{{ rs.name }}</mat-option>
+              }
+            </mat-select>
+            @if (form.controls.ratingScaleId.hasError('required') && form.controls.ratingScaleId.touched) {
+              <mat-error>{{ 'templatesAdmin.error.ratingScaleRequired' | t }}</mat-error>
+            }
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'templatesAdmin.item.riskRating' | t }}</mat-label>
+          <mat-select formControlName="riskRating">
+            <mat-option [value]="null">{{ 'templatesAdmin.item.noRiskRating' | t }}</mat-option>
+            @for (s of severities; track s.value) {
+              <mat-option [value]="s.value">{{ s.label }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>{{ 'templatesAdmin.item.riskRatingHint' | t }}</mat-hint>
+        </mat-form-field>
+
         <mat-checkbox formControlName="isRequired">{{ 'templatesAdmin.editor.required' | t }}</mat-checkbox>
       </form>
     </mat-dialog-content>
@@ -133,11 +175,21 @@ export class ItemEditorDialogComponent {
     );
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+  private readonly ratingScalesService = inject(RatingScalesService);
 
   readonly responseTypes = RESPONSE_TYPES.map((rt) => ({
     value: rt.value,
     label: this.i18n.translate(rt.labelKey),
   }));
+
+  readonly severities: { value: ExceptionSeverity; label: string }[] = [
+    { value: 'low', label: this.i18n.translate('exceptions.severity.low') },
+    { value: 'medium', label: this.i18n.translate('exceptions.severity.medium') },
+    { value: 'high', label: this.i18n.translate('exceptions.severity.high') },
+    { value: 'critical', label: this.i18n.translate('exceptions.severity.critical') },
+  ];
+
+  readonly ratingScales = signal<RatingScale[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     prompt: [this.data.item?.prompt ?? '', [Validators.required]],
@@ -148,7 +200,27 @@ export class ItemEditorDialogComponent {
     ],
     sectionName: [this.data.item?.sectionName ?? ''],
     isRequired: [this.data.item?.isRequired ?? false],
+    ratingScaleId: [parseRatingScaleId(this.data.item?.responseConfigJson)],
+    riskRating: [(this.data.item?.riskRating ?? null) as ExceptionSeverity | null],
   });
+
+  constructor() {
+    this.ratingScalesService.list('true').subscribe((scales) => this.ratingScales.set(scales));
+
+    this.form.controls.responseType.valueChanges.subscribe((type) => {
+      const ratingScaleId = this.form.controls.ratingScaleId;
+      if (type === 'rating') {
+        ratingScaleId.addValidators(Validators.required);
+      } else {
+        ratingScaleId.clearValidators();
+      }
+      ratingScaleId.updateValueAndValidity();
+    });
+    if (this.form.controls.responseType.value === 'rating') {
+      this.form.controls.ratingScaleId.addValidators(Validators.required);
+      this.form.controls.ratingScaleId.updateValueAndValidity();
+    }
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -156,6 +228,10 @@ export class ItemEditorDialogComponent {
       return;
     }
     const v = this.form.getRawValue();
+    const responseConfigJson =
+      v.responseType === 'rating' && v.ratingScaleId
+        ? JSON.stringify({ ratingScaleId: v.ratingScaleId })
+        : (this.data.item?.responseConfigJson ?? null);
     const result: SaveTemplateItemRequest = {
       prompt: v.prompt.trim(),
       referenceNotes: v.referenceNotes.trim(),
@@ -164,6 +240,8 @@ export class ItemEditorDialogComponent {
       isRequired: v.isRequired,
       defaultAssignmentRuleJson:
         this.data.item?.defaultAssignmentRuleJson ?? null,
+      responseConfigJson,
+      riskRating: v.riskRating,
     };
     this.dialogRef.close(result);
   }

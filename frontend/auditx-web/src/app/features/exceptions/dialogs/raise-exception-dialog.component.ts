@@ -32,6 +32,8 @@ export interface RaiseExceptionDialogData {
   recommendation?: string;
   /** Users selectable as the exception owner. */
   users: UserDto[];
+  /** When set, severity is derived from the item's own risk rating — the picker is hidden, not just defaulted. */
+  itemRiskRating?: ExceptionSeverity | null;
 }
 
 /** Converts a Date to an ISO `yyyy-MM-dd` DateOnly string. */
@@ -72,14 +74,22 @@ function toDateOnly(value: Date | null): string {
         </mat-form-field>
 
         <div class="row">
-          <mat-form-field appearance="outline">
-            <mat-label>Severity</mat-label>
-            <mat-select formControlName="severity">
-              @for (s of severities; track s.value) {
-                <mat-option [value]="s.value">{{ s.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          @if (derivedSeverityLabel()) {
+            <mat-form-field appearance="outline">
+              <mat-label>Severity</mat-label>
+              <input matInput [value]="derivedSeverityLabel()" disabled />
+              <mat-hint>Set by this item's risk rating.</mat-hint>
+            </mat-form-field>
+          } @else {
+            <mat-form-field appearance="outline">
+              <mat-label>Severity</mat-label>
+              <mat-select formControlName="severity">
+                @for (s of severities; track s.value) {
+                  <mat-option [value]="s.value">{{ s.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
           <mat-form-field appearance="outline">
             <mat-label>Owner</mat-label>
             <mat-select formControlName="ownerUserId">
@@ -226,6 +236,12 @@ export class RaiseExceptionDialogComponent {
   /** Active non-conformance taxonomy items, lazy-loaded. */
   readonly nonConformances = this.refLookup.options('non_conformance_category');
 
+  /** Human label for the item's derived severity, or '' when the item has no risk rating (manual picker shown). */
+  derivedSeverityLabel(): string {
+    const rating = this.data.itemRiskRating;
+    return rating ? this.severities.find((s) => s.value === rating)?.label ?? '' : '';
+  }
+
   readonly form = this.fb.nonNullable.group({
     title: [this.data.title ?? '', [Validators.required, Validators.maxLength(300)]],
     severity: ['medium' as ExceptionSeverity, [Validators.required]],
@@ -268,7 +284,7 @@ export class RaiseExceptionDialogComponent {
     this.dialogRef.close({
       checklistItemId: this.data.checklistItemId,
       title: v.title.trim(),
-      severity: v.severity,
+      severity: this.derivedSeverityLabel() ? null : v.severity,
       rootCause: v.rootCause.trim(),
       recommendation: v.recommendation.trim(),
       category: v.category.trim() || null,
