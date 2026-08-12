@@ -93,4 +93,8 @@ public static class ResponseOptions
     };
 
     public static string DefaultsJson(ResponseType type) => AppJson.Serialize(Defaults(type));
+
+    /// <summary>Whether a resolved option list is the built-in default (so the UI can flag genuine customisation).</summary>
+    public static bool MatchesDefaults(ResponseType type, IReadOnlyList<ResponseOption> options)
+        => AppJson.Serialize(options) == DefaultsJson(type);
 }

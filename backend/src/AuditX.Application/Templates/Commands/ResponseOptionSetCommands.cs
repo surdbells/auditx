@@ -60,7 +60,7 @@ public sealed class UpdateResponseOptionSetCommandHandler(IResponseOptionSetRepo
 
         audit.Record(AuditEventTypes.ResponseOptionSetUpdated, AuditTargetTypes.ResponseOptionSet, set.Id, after: new { responseType = type.ToSnake(), optionCount = parsed.Count });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return ResponseOptionSetSupport.ToDto(type, parsed, RowVersionToken.Encode(set.Version), isCustomised: true);
+        return ResponseOptionSetSupport.ToDto(type, parsed, RowVersionToken.Encode(set.Version), isCustomised: !ResponseOptions.MatchesDefaults(type, parsed));
     }
 }
 
@@ -94,7 +94,7 @@ public sealed class GetResponseOptionSetQueryHandler(IResponseOptionSetRepositor
         var type = ResponseOptionSetSupport.ParseResponseType(query.ResponseType);
         var set = await sets.GetByResponseTypeAsync(type, cancellationToken);
         var options = (set is null ? null : ResponseOptions.TryParse(set.OptionsJson)) ?? ResponseOptions.Defaults(type);
-        return ResponseOptionSetSupport.ToDto(type, options, set is null ? null : RowVersionToken.Encode(set.Version), isCustomised: set is not null);
+        return ResponseOptionSetSupport.ToDto(type, options, set is null ? null : RowVersionToken.Encode(set.Version), isCustomised: !ResponseOptions.MatchesDefaults(type, options));
     }
 }
 
@@ -112,7 +112,7 @@ public sealed class ListResponseOptionSetsQueryHandler(IResponseOptionSetReposit
         {
             byType.TryGetValue(type, out var set);
             var options = (set is null ? null : ResponseOptions.TryParse(set.OptionsJson)) ?? ResponseOptions.Defaults(type);
-            return ResponseOptionSetSupport.ToDto(type, options, set is null ? null : RowVersionToken.Encode(set.Version), isCustomised: set is not null);
+            return ResponseOptionSetSupport.ToDto(type, options, set is null ? null : RowVersionToken.Encode(set.Version), isCustomised: !ResponseOptions.MatchesDefaults(type, options));
         }).ToArray();
     }
 }
