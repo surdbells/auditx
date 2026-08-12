@@ -110,3 +110,20 @@ public sealed class ControlRiskLinkConfiguration : IEntityTypeConfiguration<Cont
         builder.HasIndex(l => l.RiskId);
     }
 }
+
+public sealed class ControlTestConfiguration : IEntityTypeConfiguration<ControlTest>
+{
+    public void Configure(EntityTypeBuilder<ControlTest> builder)
+    {
+        builder.ToTable("control_tests");
+        builder.HasKey(t => t.Id);
+        builder.Property(t => t.Id).ValueGeneratedNever();
+
+        builder.Property(t => t.Result).HasConversion(new SnakeCaseEnumConverter<ControlEffectiveness>()).HasMaxLength(30).IsRequired();
+        builder.Property(t => t.Notes).HasMaxLength(2000);
+
+        builder.HasOne<Control>().WithMany().HasForeignKey(t => t.ControlId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(t => t.ControlId);
+        builder.HasIndex(t => t.AuditId);
+    }
+}

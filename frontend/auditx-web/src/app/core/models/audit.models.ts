@@ -268,6 +268,8 @@ export interface ChecklistProgressItem {
   valueJson?: string | null;
   score?: number | null;
   riskRating?: ExceptionSeverity | null;
+  /** The control this item tests, if any — enables the "record control test" action once responded. */
+  controlId?: string | null;
 }
 
 /** Aggregate progress across an audit's checklist. */

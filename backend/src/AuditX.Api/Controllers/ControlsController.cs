@@ -75,6 +75,18 @@ public sealed class ControlsController(IDispatcher dispatcher) : ApiControllerBa
         await dispatcher.Send(new UnlinkRiskFromControlCommand(id, riskId), cancellationToken);
         return NoContent();
     }
+
+    // ---- Effectiveness tests (append-only history; drives the control's current effectiveness) ----
+
+    [RequirePermission(PermissionKeys.ViewControls)]
+    [HttpGet("{id:guid}/tests")]
+    public async Task<IActionResult> ListTests(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListControlTestsQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageControls)]
+    [HttpPost("{id:guid}/tests")]
+    public async Task<IActionResult> RecordTest(Guid id, [FromBody] RecordControlTestRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(new RecordControlTestCommand(id, request.AuditId, request.ChecklistItemId, request.Result, request.Notes), cancellationToken));
 }
 
 /// <summary>Regulation / compliance register (P1-B). Reads require ViewControls; mutations require ManageControls.</summary>

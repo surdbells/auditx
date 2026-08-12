@@ -5038,5 +5038,13 @@
   "control.risks.empty": "Aucun risque lié à ce contrôle pour le moment.",
   "control.risks.close": "Fermer",
   "control.risks.linked": "Risque lié au contrôle.",
-  "control.risks.unlinked": "Risque délié du contrôle."
+  "control.risks.unlinked": "Risque délié du contrôle.",
+  "audits.actions.recordControlTest": "Enregistrer un test de contrôle",
+  "controlTest.dialog.title": "Enregistrer un test de contrôle",
+  "controlTest.dialog.result": "Résultat d'efficacité",
+  "controlTest.dialog.resultHint": "Pré-rempli à partir de la réponse de cet élément — modifiez-le si votre jugement diffère.",
+  "controlTest.dialog.notes": "Notes (facultatif)",
+  "controlTest.dialog.record": "Enregistrer le test",
+  "controlTest.dialog.cancel": "Annuler",
+  "controlTest.notify.recorded": "Test de contrôle enregistré ; l'efficacité du contrôle a été mise à jour."
 }

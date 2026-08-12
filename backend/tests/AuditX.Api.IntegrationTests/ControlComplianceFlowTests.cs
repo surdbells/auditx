@@ -328,4 +328,81 @@ public sealed class ControlComplianceFlowTests(ApiFactory factory) : IClassFixtu
         var response = await admin.PostAsJsonAsync($"/api/v1/controls/{controlId}/risks", new { riskId = Guid.NewGuid() });
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Recording_a_test_from_a_failed_item_marks_the_control_ineffective_and_logs_history()
+    {
+        var admin = await LoginAsync("admin");
+        var users = await UsersByEmailAsync(admin);
+        var owner = users["manager@auditx.local"];
+
+        var control = await RegisterControlAsync(admin, owner);
+        var controlId = control.GetProperty("id").GetGuid();
+        Assert.Equal("not_tested", control.GetProperty("effectiveness").GetString());
+
+        // Audit whose item tests this control, responded Fail.
+        var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
+        {
+            name = $"Ctrl-test {Guid.NewGuid():N}", auditType = "branch", startDate = "2027-01-10", targetEndDate = "2027-02-10",
+            leadUserId = owner, auditeeUserId = users["auditee@auditx.local"],
+        }));
+        var auditId = created.GetProperty("id").GetGuid();
+        var version = Version(created);
+        var withItem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Is the control operating?", responseType = "pass_fail_na", isRequired = true, version, controlId }));
+        version = Version(withItem);
+        var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        version = Version(withTeam);
+        var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
+        version = Version(planned);
+        var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
+        var itemId = started.GetProperty("checklistItems")[0].GetProperty("id").GetGuid();
+
+        await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses",
+            new { verdict = "fail", comment = "control not operating", isDraft = false, version = await AuditVersionAsync(admin, auditId) }));
+
+        // Record the test with no explicit result — derived from the Fail response → ineffective.
+        var test = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/controls/{controlId}/tests",
+            new { auditId, checklistItemId = itemId, result = (string?)null, notes = "Observed during fieldwork" }));
+        Assert.Equal("ineffective", test.GetProperty("result").GetString());
+
+        // The control's current effectiveness now reflects the test, with a last-tested date.
+        var refreshed = await DataAsync(await admin.GetAsync($"/api/v1/controls/{controlId}"));
+        Assert.Equal("ineffective", refreshed.GetProperty("effectiveness").GetString());
+        Assert.False(string.IsNullOrEmpty(refreshed.GetProperty("lastTestedDate").GetString()));
+
+        // The test appears in the append-only history.
+        var history = await DataAsync(await admin.GetAsync($"/api/v1/controls/{controlId}/tests"));
+        Assert.Equal(1, history.GetArrayLength());
+        Assert.Equal(itemId, history[0].GetProperty("checklistItemId").GetGuid());
+    }
+
+    [Fact]
+    public async Task Recording_a_test_for_an_item_that_tests_a_different_control_is_rejected()
+    {
+        var admin = await LoginAsync("admin");
+        var users = await UsersByEmailAsync(admin);
+        var owner = users["manager@auditx.local"];
+
+        var testedControl = await RegisterControlAsync(admin, owner);
+        var otherControl = await RegisterControlAsync(admin, owner);
+        var testedControlId = testedControl.GetProperty("id").GetGuid();
+        var otherControlId = otherControl.GetProperty("id").GetGuid();
+
+        var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
+        {
+            name = $"Ctrl-mismatch {Guid.NewGuid():N}", auditType = "branch", startDate = "2027-01-10", targetEndDate = "2027-02-10",
+            leadUserId = owner, auditeeUserId = users["auditee@auditx.local"],
+        }));
+        var auditId = created.GetProperty("id").GetGuid();
+        var version = Version(created);
+        var withItem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Q", responseType = "pass_fail_na", isRequired = true, version, controlId = testedControlId }));
+        var itemId = withItem.GetProperty("checklistItems")[0].GetProperty("id").GetGuid();
+
+        // Try to record a test for OTHER control from an item that tests TESTED control → rejected.
+        var response = await admin.PostAsJsonAsync($"/api/v1/controls/{otherControlId}/tests",
+            new { auditId, checklistItemId = itemId, result = "effective", notes = (string?)null });
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
 }

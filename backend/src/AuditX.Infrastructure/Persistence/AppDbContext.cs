@@ -124,6 +124,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<ControlRiskLink> ControlRiskLinks => Set<ControlRiskLink>();
 
+    public DbSet<ControlTest> ControlTests => Set<ControlTest>();
+
     public DbSet<AuditException> Exceptions => Set<AuditException>();
 
     public DbSet<ExceptionRaisingRule> ExceptionRaisingRules => Set<ExceptionRaisingRule>();

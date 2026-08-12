@@ -134,3 +134,14 @@ public sealed class ControlRiskLinkRepository(AppDbContext db) : IControlRiskLin
 
     public void Remove(ControlRiskLink link) => db.ControlRiskLinks.Remove(link);
 }
+
+public sealed class ControlTestRepository(AppDbContext db) : IControlTestRepository
+{
+    public async Task<IReadOnlyList<ControlTest>> ListForControlAsync(Guid controlId, CancellationToken cancellationToken = default)
+        => await db.ControlTests.AsNoTracking()
+            .Where(t => t.ControlId == controlId)
+            .OrderByDescending(t => t.TestedAt)
+            .ToListAsync(cancellationToken);
+
+    public void Add(ControlTest test) => db.ControlTests.Add(test);
+}

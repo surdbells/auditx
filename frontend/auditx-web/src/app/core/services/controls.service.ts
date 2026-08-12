@@ -7,8 +7,10 @@ import {
   ControlListItem,
   ControlQuery,
   ControlRiskLink,
+  ControlTest,
   LinkRiskToControlRequest,
   PagedResult,
+  RecordControlTestRequest,
   RegisterControlRequest,
   SetControlStatusRequest,
   UpdateControlRequest,
@@ -63,5 +65,15 @@ export class ControlsService {
 
   unlinkRisk(id: string, riskId: string): Observable<void> {
     return this.api.deleteVoid(`/controls/${id}/risks/${riskId}`);
+  }
+
+  /* ---- Effectiveness tests ---- */
+
+  listTests(id: string): Observable<ControlTest[]> {
+    return this.api.get<ControlTest[]>(`/controls/${id}/tests`);
+  }
+
+  recordTest(id: string, body: RecordControlTestRequest): Observable<ControlTest> {
+    return this.api.post<ControlTest>(`/controls/${id}/tests`, body);
   }
 }

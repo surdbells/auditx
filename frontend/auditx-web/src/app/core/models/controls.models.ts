@@ -201,3 +201,28 @@ export interface ControlRiskLink {
 export interface LinkRiskToControlRequest {
   riskId: string;
 }
+
+/* ---- Control effectiveness tests ---- */
+
+/** One recorded test of a control's effectiveness (append-only history). */
+export interface ControlTest {
+  id: string;
+  controlId: string;
+  auditId: string | null;
+  checklistItemId: string | null;
+  result: ControlEffectiveness;
+  testedByUserId: string;
+  testedAt: string;
+  notes: string | null;
+}
+
+/**
+ * Record a control test. Supply auditId + checklistItemId together for an audit-driven test (result may be
+ * omitted to derive it from the item's response); omit both and supply result for an ad-hoc test.
+ */
+export interface RecordControlTestRequest {
+  auditId?: string | null;
+  checklistItemId?: string | null;
+  result?: ControlEffectiveness | null;
+  notes?: string | null;
+}

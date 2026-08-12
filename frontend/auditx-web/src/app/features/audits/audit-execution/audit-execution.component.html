@@ -171,6 +171,13 @@
                 {{ 'audits.actions.raiseException' | t }}
               </button>
             }
+            <!-- Record a control test from a responded item that tests a control (managers). -->
+            @if (canRecordControlTest() && item.controlId && item.itemState === 'responded') {
+              <button matButton="tonal" type="button" (click)="recordControlTest(item)">
+                <app-icon name="fact_check" />
+                {{ 'audits.actions.recordControlTest' | t }}
+              </button>
+            }
             @if (canManage() && !isReadOnly()) {
               <button matButton type="button" (click)="assign(item)">
                 <app-icon name="person" />

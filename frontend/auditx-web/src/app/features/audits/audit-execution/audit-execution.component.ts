@@ -23,6 +23,7 @@ import { Observable } from 'rxjs';
 
 import { AuditsService } from '../../../core/services/audits.service';
 import { ExceptionsService } from '../../../core/services/exceptions.service';
+import { ControlsService } from '../../../core/services/controls.service';
 import { UsersService } from '../../../core/services/users.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -33,6 +34,7 @@ import {
   ChecklistProgress,
   ChecklistProgressItem,
   ChecklistResponse,
+  ControlEffectiveness,
   EvidenceFile,
   ProblemDetails,
   RaiseExceptionRequest,
@@ -49,6 +51,11 @@ import {
   RespondItemDialogData,
   RespondItemDialogResult,
 } from '../dialogs/respond-item-dialog.component';
+import {
+  RecordControlTestDialogComponent,
+  RecordControlTestDialogData,
+  RecordControlTestDialogResult,
+} from '../dialogs/record-control-test-dialog.component';
 import {
   AssignItemDialogComponent,
   AssignItemDialogData,
@@ -70,6 +77,7 @@ import {
   TransitionReasonResult,
 } from '../dialogs/transition-reason-dialog.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { AuditTimePanelComponent } from './audit-time-panel.component';
 import { AuditProceduresPanelComponent } from './audit-procedures-panel.component';
 import { AuditEvidencePanelComponent } from './audit-evidence-panel.component';
@@ -119,6 +127,7 @@ export class AuditExecutionComponent {
 
   private readonly service = inject(AuditsService);
   private readonly exceptions = inject(ExceptionsService);
+  private readonly controls = inject(ControlsService);
   /** Active users for the raise-exception picker (assignable = active). */
   private readonly users = inject(UsersService);
   /** Directory-backed user-name resolver for display (all users, no admin permission). */
@@ -126,6 +135,7 @@ export class AuditExecutionComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
+  private readonly i18n = inject(TranslationService);
 
   readonly progress = signal<ChecklistProgress | null>(null);
   readonly summary = signal<ReviewSummary | null>(null);
@@ -173,6 +183,10 @@ export class AuditExecutionComponent {
   );
   readonly canRaiseException = computed(() =>
     this.auth.hasPermission(Permissions.RaiseException),
+  );
+  /** Recording a control test needs the controls-manage permission (it updates the control register). */
+  readonly canRecordControlTest = computed(() =>
+    this.auth.hasPermission(Permissions.ManageControls),
   );
   /** Show the time/effort panel to anyone who can log or view time entries. */
   readonly canViewTime = computed(
@@ -575,6 +589,51 @@ export class AuditExecutionComponent {
       },
       error: () => this.openRaiseDialog(item, []),
     });
+  }
+
+  /* ---- Record a control test from a responded, control-linked item ---- */
+
+  recordControlTest(item: ChecklistProgressItem): void {
+    if (!item.controlId) {
+      return;
+    }
+    const controlId = item.controlId;
+    const data: RecordControlTestDialogData = {
+      prompt: item.prompt,
+      suggested: this.suggestEffectiveness(item),
+    };
+    this.dialog
+      .open(RecordControlTestDialogComponent, { data, width: '460px' })
+      .afterClosed()
+      .subscribe((result?: RecordControlTestDialogResult) => {
+        if (!result) {
+          return;
+        }
+        this.controls
+          .recordTest(controlId, {
+            auditId: this.audit().id,
+            checklistItemId: item.itemId,
+            result: result.result,
+            notes: result.notes,
+          })
+          .subscribe({
+            next: () => this.notify.success(this.i18n.translate('controlTest.notify.recorded')),
+          });
+      });
+  }
+
+  /** Mirror the backend's suggestion so the dialog opens pre-filled: Pass→Effective, Fail→Ineffective, else by score band. */
+  private suggestEffectiveness(item: ChecklistProgressItem): ControlEffectiveness {
+    if (item.verdict === 'pass') {
+      return 'effective';
+    }
+    if (item.verdict === 'fail') {
+      return 'ineffective';
+    }
+    if (item.score !== null && item.score !== undefined) {
+      return item.score >= 75 ? 'effective' : item.score >= 50 ? 'partially_effective' : 'ineffective';
+    }
+    return 'partially_effective';
   }
 
   private openRaiseDialog(

@@ -137,6 +137,7 @@ public static class AuditEventTypes
     public const string RegulationDeleted = "regulation_deleted";
     public const string ControlRiskLinked = "control_risk_linked";
     public const string ControlRiskUnlinked = "control_risk_unlinked";
+    public const string ControlTested = "control_tested";
     public const string FindingLinkAdded = "finding_link_added";
     public const string FindingLinkRemoved = "finding_link_removed";
 

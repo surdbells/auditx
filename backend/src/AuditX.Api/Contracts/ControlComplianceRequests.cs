@@ -25,3 +25,7 @@ public sealed record LinkRegulationRequest(Guid RegulationId);
 
 // Control ↔ risk register link
 public sealed record LinkRiskToControlRequest(Guid RiskId);
+
+// Control effectiveness test (audit-driven when AuditId+ChecklistItemId set; ad-hoc otherwise). Result optional
+// when audit-driven (derived from the item's response); required for an ad-hoc test.
+public sealed record RecordControlTestRequest(Guid? AuditId, Guid? ChecklistItemId, string? Result, string? Notes);

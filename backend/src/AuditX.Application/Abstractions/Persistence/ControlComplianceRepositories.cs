@@ -45,6 +45,14 @@ public interface IRegulationRepository
 /// <summary>Enriched control↔risk link row (joined to the risk for display on the control side).</summary>
 public sealed record ControlRiskLinkRow(Guid LinkId, Guid RiskId, string Title, string Category, RiskStatus Status, DateTimeOffset LinkedAt);
 
+/// <summary>Persistence for the append-only <see cref="ControlTest"/> history.</summary>
+public interface IControlTestRepository
+{
+    Task<IReadOnlyList<ControlTest>> ListForControlAsync(Guid controlId, CancellationToken cancellationToken = default);
+
+    void Add(ControlTest test);
+}
+
 /// <summary>Persistence port for the control↔risk register link rows (P1-B).</summary>
 public interface IControlRiskLinkRepository
 {

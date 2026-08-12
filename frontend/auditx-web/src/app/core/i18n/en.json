@@ -5038,5 +5038,13 @@
   "control.risks.empty": "No risks linked to this control yet.",
   "control.risks.close": "Close",
   "control.risks.linked": "Risk linked to the control.",
-  "control.risks.unlinked": "Risk unlinked from the control."
+  "control.risks.unlinked": "Risk unlinked from the control.",
+  "audits.actions.recordControlTest": "Record control test",
+  "controlTest.dialog.title": "Record control test",
+  "controlTest.dialog.result": "Effectiveness result",
+  "controlTest.dialog.resultHint": "Pre-filled from this item's response — override if your judgment differs.",
+  "controlTest.dialog.notes": "Notes (optional)",
+  "controlTest.dialog.record": "Record test",
+  "controlTest.dialog.cancel": "Cancel",
+  "controlTest.notify.recorded": "Control test recorded; the control's effectiveness has been updated."
 }

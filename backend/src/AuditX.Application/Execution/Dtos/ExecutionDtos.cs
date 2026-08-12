@@ -14,7 +14,8 @@ public sealed record EvidenceDownloadResult(string FileName, string MimeType, by
 public sealed record ChecklistProgressItemDto(
     Guid ItemId, string? SectionName, int OrderIndex, string Prompt, string ItemState,
     string? Verdict, bool IsRequired, Guid? AssignedUserId, bool HasException,
-    string ResponseType, string? ResponseConfigJson, string? ValueJson, decimal? Score = null, string? RiskRating = null);
+    string ResponseType, string? ResponseConfigJson, string? ValueJson, decimal? Score = null, string? RiskRating = null,
+    Guid? ControlId = null);
 
 public sealed record ChecklistProgressDto(
     int TotalItems, int RespondedItems, int InProgressItems, int NotStartedItems,

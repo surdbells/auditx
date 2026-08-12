@@ -83,6 +83,17 @@ public sealed class Control : AggregateRoot, ISoftDeletable
         LastTestedDate = effectiveness == ControlEffectiveness.NotTested ? null : lastTestedDate;
     }
 
+    /// <summary>
+    /// Record the outcome of testing this control (typically via an audit checklist item that tests it): sets the
+    /// current effectiveness and last-tested date. A test result is always a concrete outcome, never NotTested.
+    /// </summary>
+    public void RecordTest(ControlEffectiveness result, DateOnly testedDate)
+    {
+        Guard.Against(result == ControlEffectiveness.NotTested, "control.test_result_required", "A control test must record a concrete effectiveness outcome.");
+        Effectiveness = result;
+        LastTestedDate = testedDate;
+    }
+
     public void SetActive(bool active) => IsActive = active;
 
     public void SoftDelete(Guid? deletedBy, DateTimeOffset deletedAtUtc)
