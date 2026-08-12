@@ -37,6 +37,7 @@ public static class PermissionCatalogue
         new(PermissionKeys.ViewEngagementLifecycle, "View engagement lifecycle", "See each engagement's lifecycle stage and its guided next step.", "M4", PermissionScopeType.Global),
         new(PermissionKeys.CreateAudit, "Create audit", "Create new audits.", "M4", PermissionScopeType.AuditType),
         new(PermissionKeys.ManageAudit, "Manage audit", "Manage an audit's team, checklist and lifecycle.", "M4", PermissionScopeType.Audit),
+        new(PermissionKeys.RunSelfAssessment, "Run self-assessment", "Create and complete a self-assessment audit of one's own area.", "M4", PermissionScopeType.Global),
 
         // M5 — Execution
         new(PermissionKeys.RespondItem, "Respond to items", "Record verdicts and comments on checklist items.", "M5", PermissionScopeType.Audit),

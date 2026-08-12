@@ -26,6 +26,7 @@ public sealed record AuditDto(
     Guid AuditeeUserId,
     string? CancellationReason,
     decimal? BudgetedHours,
+    bool IsSelfAssessment,
     string Version,
     IReadOnlyList<AuditTeamMemberDto> TeamMembers,
     IReadOnlyList<AuditSectionDto> Sections,
@@ -33,7 +34,7 @@ public sealed record AuditDto(
 
 public sealed record AuditListItemDto(
     Guid Id, string Name, string AuditType, string Status, DateOnly StartDate, DateOnly TargetEndDate,
-    Guid LeadUserId, int ChecklistItemCount, int RespondedItemCount);
+    Guid LeadUserId, int ChecklistItemCount, int RespondedItemCount, bool IsSelfAssessment = false);
 
 public sealed record AuditCountsDto(IReadOnlyDictionary<string, int> ByStatus);
 

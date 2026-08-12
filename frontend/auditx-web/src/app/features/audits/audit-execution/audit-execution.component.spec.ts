@@ -34,6 +34,7 @@ function audit(status: AuditStatus = 'in_progress', overrides: Partial<Audit> = 
     auditeeUserId: 'u-auditee',
     cancellationReason: null,
     budgetedHours: null,
+    isSelfAssessment: false,
     version: 'v1',
     teamMembers: [
       {

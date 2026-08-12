@@ -51,6 +51,42 @@ public sealed class AuditTests
         Assert.Equal("audit.no_auditor", ex.Code);
     }
 
+    private static Audit NewSelfAssessment()
+        => Audit.Create("Self review", "branch", Start, End, null, null, null, null, null, Lead, Lead, null, Lead, Now, isSelfAssessment: true);
+
+    [Fact]
+    public void Self_assessment_allows_lead_equal_auditee_and_adds_a_single_member()
+    {
+        var a = NewSelfAssessment();
+        Assert.True(a.IsSelfAssessment);
+        Assert.Equal(Lead, a.LeadUserId);
+        Assert.Equal(Lead, a.AuditeeUserId);
+        Assert.Single(a.TeamMembers); // one Lead member, not a duplicated Lead + Auditee
+        Assert.Equal(TeamRole.Lead, a.TeamMembers[0].TeamRole);
+    }
+
+    [Fact]
+    public void Self_assessment_rejects_distinct_lead_and_auditee()
+        => Assert.Throws<DomainException>(() =>
+            Audit.Create("X", "t", Start, End, null, null, null, null, null, Lead, Auditee, null, Lead, Now, isSelfAssessment: true));
+
+    [Fact]
+    public void Self_assessment_plans_without_an_auditor()
+    {
+        var a = NewSelfAssessment();
+        a.AddChecklistItem("Q", null, ResponseType.PassFailNa, null, true, null);
+        a.Plan(); // no auditor added — the assessor is the only member
+        Assert.Equal(AuditStatus.Planned, a.Status);
+    }
+
+    [Fact]
+    public void Self_assessment_still_requires_a_checklist_item_to_plan()
+    {
+        var a = NewSelfAssessment();
+        var ex = Assert.Throws<DomainException>(a.Plan);
+        Assert.Equal("audit.checklist_empty", ex.Code);
+    }
+
     [Fact]
     public void Full_happy_path_to_completed()
     {

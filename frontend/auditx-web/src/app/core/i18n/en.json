@@ -5108,5 +5108,17 @@
   "rootCauseGaps.guide.rule.rationale": "Closing a gap requires a rationale (≥10 chars) evidencing the systemic remediation.",
   "rootCauseGaps.guide.rule.lock": "A closed gap is locked; reopen it to change its details or links.",
   "rootCauseGaps.guide.tip.recurring": "The exceptions tracker flags recurring findings — those are prime candidates to group under a gap.",
-  "rootCauseGaps.guide.perm.manage": "Manage Exceptions"
+  "rootCauseGaps.guide.perm.manage": "Manage Exceptions",
+  "audits.actions.selfAssessment": "Self-assessment",
+  "audits.selfAssessment.dialogTitle": "Start a self-assessment",
+  "audits.selfAssessment.dialogHint": "You will assess your own area against a published checklist. You are both the lead and the auditee — no independent auditor is involved.",
+  "audits.selfAssessment.field.template": "Checklist template",
+  "audits.selfAssessment.hint.template": "Required. Its checklist items are loaded into your self-assessment.",
+  "audits.selfAssessment.error.template": "Choose a template to assess against.",
+  "audits.selfAssessment.error.name": "A name is required.",
+  "audits.selfAssessment.error.startDate": "A start date is required.",
+  "audits.selfAssessment.action.start": "Start self-assessment",
+  "audits.selfAssessment.noTemplates": "No published templates are available. Publish a checklist template first.",
+  "audits.selfAssessment.badge": "Self-assessment",
+  "audits.selfAssessment.badgeTitle": "A self-assessment: the area owner assessed their own area."
 }

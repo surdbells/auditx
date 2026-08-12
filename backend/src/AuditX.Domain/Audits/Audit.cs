@@ -48,6 +48,12 @@ public sealed class Audit : AggregateRoot
 
     public Guid AuditeeUserId { get; private set; }
 
+    /// <summary>
+    /// True for a self-assessment: the area owner assesses their own area, so the lead and auditee are the same
+    /// person and no independent auditor is required. Reuses the whole checklist/response/exception engine.
+    /// </summary>
+    public bool IsSelfAssessment { get; private set; }
+
     public string ConfigurationVersionsJson { get; private set; } = "{}";
 
     public string? CancellationReason { get; private set; }
@@ -72,16 +78,24 @@ public sealed class Audit : AggregateRoot
     public static Audit Create(
         string name, string auditType, DateOnly startDate, DateOnly targetEndDate,
         string? scopeDescription, Guid? templateId, int? templateVersion, Guid? planItemId, Guid? auditableEntityId,
-        Guid leadUserId, Guid auditeeUserId, string? configurationVersionsJson, Guid? createdBy, DateTimeOffset nowUtc)
+        Guid leadUserId, Guid auditeeUserId, string? configurationVersionsJson, Guid? createdBy, DateTimeOffset nowUtc,
+        bool isSelfAssessment = false)
     {
         if (targetEndDate < startDate)
         {
             throw new DomainException("audit.target_before_start", "Target end date must be on or after the start date.");
         }
 
-        if (leadUserId == auditeeUserId)
+        // Independence: a normal audit needs a separate lead and auditee. A self-assessment is the exception —
+        // the area owner assesses their own area, so the two are deliberately the same person.
+        if (leadUserId == auditeeUserId && !isSelfAssessment)
         {
             throw new DomainException("audit.lead_auditee_same_user", "The lead and the auditee must be different users.");
+        }
+
+        if (isSelfAssessment && leadUserId != auditeeUserId)
+        {
+            throw new DomainException("audit.self_assessment_single_user", "A self-assessment's assessor is both the lead and the auditee.");
         }
 
         var audit = new Audit
@@ -97,12 +111,19 @@ public sealed class Audit : AggregateRoot
             AuditableEntityId = auditableEntityId,
             LeadUserId = leadUserId,
             AuditeeUserId = auditeeUserId,
+            IsSelfAssessment = isSelfAssessment,
             ConfigurationVersionsJson = string.IsNullOrWhiteSpace(configurationVersionsJson) ? "{}" : configurationVersionsJson,
             Status = AuditStatus.Draft,
         };
 
+        // For a self-assessment the one person is the assessor — add them once (as Lead) rather than duplicating
+        // the same user under two team roles.
         audit._teamMembers.Add(new AuditTeamMember(audit.Id, leadUserId, TeamRole.Lead, createdBy, nowUtc));
-        audit._teamMembers.Add(new AuditTeamMember(audit.Id, auditeeUserId, TeamRole.Auditee, createdBy, nowUtc));
+        if (!isSelfAssessment)
+        {
+            audit._teamMembers.Add(new AuditTeamMember(audit.Id, auditeeUserId, TeamRole.Auditee, createdBy, nowUtc));
+        }
+
         audit.RaiseDomainEvent(new AuditCreatedEvent(audit.Id, audit.Name, audit.AuditType, audit.PlanItemId));
         return audit;
     }
@@ -358,7 +379,9 @@ public sealed class Audit : AggregateRoot
             throw new DomainException("audit.checklist_empty", "An audit needs at least one checklist item before planning.");
         }
 
-        if (!ActiveTeam.Any(m => m.TeamRole == TeamRole.Auditor))
+        // A self-assessment has no independent auditor — the assessor (lead) does the work themselves — so the
+        // "needs an auditor" gate applies only to normal audits.
+        if (!IsSelfAssessment && !ActiveTeam.Any(m => m.TeamRole == TeamRole.Auditor))
         {
             throw new DomainException("audit.no_auditor", "An audit needs at least one auditor before planning.");
         }

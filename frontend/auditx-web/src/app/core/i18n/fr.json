@@ -5108,5 +5108,17 @@
   "rootCauseGaps.guide.rule.rationale": "Clôturer un écart nécessite une justification (≥10 caractères) attestant la remédiation systémique.",
   "rootCauseGaps.guide.rule.lock": "Un écart clôturé est verrouillé ; rouvrez-le pour modifier ses détails ou ses liens.",
   "rootCauseGaps.guide.tip.recurring": "Le suivi des exceptions signale les constats récurrents — de bons candidats à regrouper sous un écart.",
-  "rootCauseGaps.guide.perm.manage": "Gérer les exceptions"
+  "rootCauseGaps.guide.perm.manage": "Gérer les exceptions",
+  "audits.actions.selfAssessment": "Auto-évaluation",
+  "audits.selfAssessment.dialogTitle": "Démarrer une auto-évaluation",
+  "audits.selfAssessment.dialogHint": "Vous évaluerez votre propre domaine à partir d’une liste de contrôle publiée. Vous êtes à la fois le responsable et l’audité — aucun auditeur indépendant n’intervient.",
+  "audits.selfAssessment.field.template": "Modèle de liste de contrôle",
+  "audits.selfAssessment.hint.template": "Obligatoire. Ses points de contrôle sont chargés dans votre auto-évaluation.",
+  "audits.selfAssessment.error.template": "Choisissez un modèle à évaluer.",
+  "audits.selfAssessment.error.name": "Un nom est requis.",
+  "audits.selfAssessment.error.startDate": "Une date de début est requise.",
+  "audits.selfAssessment.action.start": "Démarrer l’auto-évaluation",
+  "audits.selfAssessment.noTemplates": "Aucun modèle publié n’est disponible. Publiez d’abord un modèle de liste de contrôle.",
+  "audits.selfAssessment.badge": "Auto-évaluation",
+  "audits.selfAssessment.badgeTitle": "Une auto-évaluation : le propriétaire du domaine a évalué son propre domaine."
 }

@@ -63,6 +63,8 @@ public sealed class TransitionAuditCommandHandler(
     IAuditRepository audits,
     IAnnualPlanRepository plans,
     IAuditUniverseRepository universe,
+    IPermissionResolver permissions,
+    ICurrentUser currentUser,
     IAuditRecorder audit,
     IClock clock,
     IUnitOfWork unitOfWork)
@@ -71,6 +73,7 @@ public sealed class TransitionAuditCommandHandler(
     public async Task<AuditDto> Handle(TransitionAuditCommand command, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Audit", command.Id);
+        await AuditManageAuthorization.EnsureCanManageAsync(entity, currentUser.UserId, permissions, cancellationToken);
         entity.EnsureVersion(command.Version);
         var target = command.TargetState.Replace("-", "_").ToLowerInvariant();
 

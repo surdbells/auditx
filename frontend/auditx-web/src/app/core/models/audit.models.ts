@@ -89,6 +89,8 @@ export interface Audit {
   cancellationReason: string | null;
   /** Planned-effort budget in hours (P0-B budget-vs-actual baseline); null when unset. */
   budgetedHours: number | null;
+  /** True when the area owner is assessing their own area (lead == auditee, no independent auditor). */
+  isSelfAssessment: boolean;
   version: string;
   teamMembers: AuditTeamMember[];
   sections: AuditSection[];
@@ -106,6 +108,8 @@ export interface AuditListItem {
   leadUserId: string;
   checklistItemCount: number;
   respondedItemCount: number;
+  /** True for a self-assessment (area owner assessing their own area). */
+  isSelfAssessment: boolean;
 }
 
 /** Aggregate counts by status. */
@@ -140,6 +144,21 @@ export interface CreateAuditRequest {
   teamMemberUserIds?: string[];
   backdatingOverride: boolean;
   backdatingReason?: string | null;
+}
+
+/**
+ * Start a self-assessment: the current user assesses their own area (they become both lead and auditee).
+ * A published template is required — the self-assessor holds RunSelfAssessment but not ManageAudit, so the
+ * checklist must be seeded from a template rather than hand-authored.
+ */
+export interface CreateSelfAssessmentRequest {
+  name: string;
+  auditType: string;
+  startDate: string;
+  targetEndDate?: string | null;
+  scopeDescription?: string | null;
+  templateId: string;
+  auditableEntityId?: string | null;
 }
 
 export interface UpdateAuditRequest {

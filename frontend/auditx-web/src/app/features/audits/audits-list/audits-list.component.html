@@ -2,6 +2,12 @@
   [title]="'audits.list.title' | t"
   [subtitle]="'audits.list.subtitle' | t"
 >
+  @if (canSelfAssess()) {
+    <button actions matButton type="button" (click)="startSelfAssessment()" data-guide="self-assessment">
+      <app-icon name="fact_check" />
+      {{ 'audits.actions.selfAssessment' | t }}
+    </button>
+  }
   @if (canCreate()) {
     <button actions matButton="filled" type="button" (click)="create()" data-guide="create">
       <app-icon name="add" />
@@ -70,6 +76,12 @@
               <th mat-header-cell *matHeaderCellDef>{{ 'audits.column.name' | t }}</th>
               <td mat-cell *matCellDef="let a">
                 <span class="audits__name">{{ a.name }}</span>
+                @if (a.isSelfAssessment) {
+                  <span class="audits__self-badge" [title]="'audits.selfAssessment.badgeTitle' | t">
+                    <app-icon name="fact_check" />
+                    {{ 'audits.selfAssessment.badge' | t }}
+                  </span>
+                }
               </td>
             </ng-container>
 

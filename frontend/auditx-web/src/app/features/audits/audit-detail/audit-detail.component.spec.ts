@@ -64,6 +64,7 @@ function audit(status: AuditStatus = 'draft', overrides: Partial<Audit> = {}): A
     auditeeUserId: 'u-auditee',
     cancellationReason: null,
     budgetedHours: null,
+    isSelfAssessment: false,
     version: 'v1',
     teamMembers: [],
     sections: [],

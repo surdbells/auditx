@@ -68,6 +68,7 @@ function audit(status: AuditStatus = 'under_review'): Audit {
     auditeeUserId: 'u-auditee',
     cancellationReason: null,
     budgetedHours: null,
+    isSelfAssessment: false,
     version: 'v1',
     teamMembers: [],
     sections: [],

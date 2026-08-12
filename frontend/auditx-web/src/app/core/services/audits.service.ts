@@ -19,6 +19,7 @@ import {
   ChecklistProgress,
   ChecklistResponse,
   CreateAuditRequest,
+  CreateSelfAssessmentRequest,
   PagedResult,
   EvidenceFile,
   FailJudgementRequest,
@@ -65,6 +66,11 @@ export class AuditsService {
 
   create(body: CreateAuditRequest): Observable<Audit> {
     return this.api.post<Audit>('/audits', body);
+  }
+
+  /** Start a self-assessment of the current user's own area (they become both lead and auditee). */
+  createSelfAssessment(body: CreateSelfAssessmentRequest): Observable<Audit> {
+    return this.api.post<Audit>('/audits/self-assessment', body);
   }
 
   update(id: string, body: UpdateAuditRequest): Observable<Audit> {

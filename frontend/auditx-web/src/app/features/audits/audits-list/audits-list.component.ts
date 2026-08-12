@@ -30,6 +30,7 @@ import {
   AuditListItem,
   AuditStatus,
   CreateAuditRequest,
+  CreateSelfAssessmentRequest,
   TemplateListItem,
   UserDto,
 } from '../../../core/models';
@@ -37,6 +38,10 @@ import {
   CreateAuditDialogComponent,
   CreateAuditDialogData,
 } from '../dialogs/create-audit-dialog.component';
+import {
+  SelfAssessmentDialogComponent,
+  SelfAssessmentDialogData,
+} from '../dialogs/self-assessment-dialog.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
@@ -171,6 +176,10 @@ export class AuditsListComponent {
     this.auth.hasPermission(Permissions.CreateAudit),
   );
 
+  readonly canSelfAssess = computed(() =>
+    this.auth.hasPermission(Permissions.RunSelfAssessment),
+  );
+
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.audits().length === 0,
   );
@@ -285,6 +294,45 @@ export class AuditsListComponent {
         withTemplates(page.items);
       },
       error: () => withTemplates([]),
+    });
+  }
+
+  /** Start a self-assessment: the current user assesses their own area from a published template. */
+  startSelfAssessment(): void {
+    const openDialog = (templates: TemplateListItem[]): void => {
+      if (!templates.length) {
+        this.notify.error(this.i18n.translate('audits.selfAssessment.noTemplates'));
+        return;
+      }
+      const data: SelfAssessmentDialogData = { templates };
+      this.dialog
+        .open(SelfAssessmentDialogComponent, { data, width: '560px' })
+        .afterClosed()
+        .subscribe((result?: CreateSelfAssessmentRequest) => {
+          if (!result) {
+            return;
+          }
+          this.service.createSelfAssessment(result).subscribe({
+            next: (created) => {
+              this.notify.success(
+                this.i18n.translate('audits.notify.created', { name: created.name }),
+              );
+              void this.router.navigate(['/audits', created.id]);
+            },
+          });
+        });
+    };
+
+    if (this.templatesCache.length) {
+      openDialog(this.templatesCache);
+      return;
+    }
+    this.templates.list({ status: 'published', pageSize: 0 }).subscribe({
+      next: (page) => {
+        this.templatesCache = page.items;
+        openDialog(page.items);
+      },
+      error: () => openDialog([]),
     });
   }
 

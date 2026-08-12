@@ -20,7 +20,8 @@ public sealed record CreateAuditData(
     Guid? AuditableEntityId,
     Guid LeadUserId,
     Guid AuditeeUserId,
-    IReadOnlyList<Guid> TeamMemberUserIds);
+    IReadOnlyList<Guid> TeamMemberUserIds,
+    bool IsSelfAssessment = false);
 
 /// <summary>
 /// Builds an <see cref="Audit"/> aggregate, copying the template's latest published version items into
@@ -50,7 +51,7 @@ public sealed class AuditCreationService(ITemplateRepository templates)
         var audit = Audit.Create(
             data.Name.Trim(), data.AuditType.Trim(), data.StartDate, data.TargetEndDate,
             data.ScopeDescription, data.TemplateId, templateVersion, data.PlanItemId, data.AuditableEntityId,
-            data.LeadUserId, data.AuditeeUserId, configurationVersionsJson: "{}", createdBy, nowUtc);
+            data.LeadUserId, data.AuditeeUserId, configurationVersionsJson: "{}", createdBy, nowUtc, data.IsSelfAssessment);
 
         foreach (var userId in data.TeamMemberUserIds.Distinct())
         {

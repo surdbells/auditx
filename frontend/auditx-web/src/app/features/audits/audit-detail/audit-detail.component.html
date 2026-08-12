@@ -74,6 +74,12 @@
         <span class="status-badge" [attr.data-status]="a.status">
           {{ a.status.replace('_', ' ') }}
         </span>
+        @if (a.isSelfAssessment) {
+          <span class="status-badge detail__self-badge" [title]="'audits.selfAssessment.badgeTitle' | t">
+            <app-icon name="fact_check" />
+            {{ 'audits.selfAssessment.badge' | t }}
+          </span>
+        }
         @if (a.actualEndDate) {
           <span class="muted">{{ 'audits.detail.ended' | t: { date: (a.actualEndDate | date: 'mediumDate') } }}</span>
         }

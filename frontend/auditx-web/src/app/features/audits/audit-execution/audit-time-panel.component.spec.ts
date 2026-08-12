@@ -40,6 +40,7 @@ function audit(): Audit {
     auditeeUserId: 'u2',
     cancellationReason: null,
     budgetedHours: 40,
+    isSelfAssessment: false,
     version: 'v1',
     teamMembers: [],
     sections: [],

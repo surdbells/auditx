@@ -12,6 +12,20 @@
   margin-bottom: 1.25rem;
 }
 
+.detail__self-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+
+  app-icon {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
 .detail__notice {
   margin-bottom: 1.25rem;
   padding: 1rem 1.25rem;

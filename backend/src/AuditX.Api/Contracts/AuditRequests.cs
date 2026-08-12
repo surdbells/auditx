@@ -15,6 +15,15 @@ public sealed record CreateAuditRequest(
     bool BackdatingOverride,
     string? BackdatingReason);
 
+public sealed record CreateSelfAssessmentRequest(
+    string Name,
+    string AuditType,
+    DateOnly StartDate,
+    DateOnly? TargetEndDate,
+    string? ScopeDescription,
+    Guid? TemplateId,
+    Guid? AuditableEntityId);
+
 public sealed record UpdateAuditRequest(string Name, string? ScopeDescription, DateOnly StartDate, DateOnly TargetEndDate, string Version);
 
 public sealed record SetAuditBudgetRequest(decimal? BudgetedHours, string Version);

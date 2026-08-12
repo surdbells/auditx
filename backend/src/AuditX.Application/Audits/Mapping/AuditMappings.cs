@@ -24,6 +24,7 @@ public static class AuditMappings
         audit.AuditeeUserId,
         audit.CancellationReason,
         audit.BudgetedHours,
+        audit.IsSelfAssessment,
         RowVersionToken.Encode(audit.Version),
         audit.TeamMembers.Select(m => new AuditTeamMemberDto(m.Id, m.UserId, m.TeamRole.ToSnake(), m.IsActive, m.AddedAt, m.RemovedAt)).ToArray(),
         audit.Sections.OrderBy(s => s.OrderIndex).Select(s => new AuditSectionDto(s.Id, s.Name, s.OrderIndex)).ToArray(),
@@ -36,5 +37,6 @@ public static class AuditMappings
 
     public static AuditListItemDto ToListItemDto(this Audit audit) => new(
         audit.Id, audit.Name, audit.AuditType, audit.Status.ToSnake(), audit.StartDate, audit.TargetEndDate,
-        audit.LeadUserId, audit.ChecklistItems.Count, audit.ChecklistItems.Count(i => i.ItemState == ChecklistItemState.Responded));
+        audit.LeadUserId, audit.ChecklistItems.Count, audit.ChecklistItems.Count(i => i.ItemState == ChecklistItemState.Responded),
+        audit.IsSelfAssessment);
 }

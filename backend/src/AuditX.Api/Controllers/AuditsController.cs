@@ -46,6 +46,14 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
             request.TemplateId, request.PlanItemId, request.EntityId, request.LeadUserId, request.AuditeeUserId, request.TeamMemberUserIds,
             request.BackdatingOverride, request.BackdatingReason), cancellationToken));
 
+    /// <summary>Start a self-assessment of one's own area (the caller is both assessor and auditee).</summary>
+    [RequirePermission(PermissionKeys.RunSelfAssessment)]
+    [HttpPost("self-assessment")]
+    public async Task<IActionResult> CreateSelfAssessment([FromBody] CreateSelfAssessmentRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(new CreateSelfAssessmentCommand(
+            request.Name, request.AuditType, request.StartDate, request.TargetEndDate, request.ScopeDescription,
+            request.TemplateId, request.AuditableEntityId), cancellationToken));
+
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAuditRequest request, CancellationToken cancellationToken)
@@ -56,7 +64,8 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> SetBudget(Guid id, [FromBody] SetAuditBudgetRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new SetAuditBudgetCommand(id, request.BudgetedHours, request.Version), cancellationToken));
 
-    [RequirePermission(PermissionKeys.ManageAudit)]
+    // Lifecycle authorisation is resource-scoped (ManageAudit on a normal audit, or the self-assessor with
+    // RunSelfAssessment) and enforced in the handler, so a self-assessor can drive their own assessment.
     [HttpPost("{id:guid}/transition")]
     public async Task<IActionResult> Transition(Guid id, [FromBody] TransitionAuditRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new TransitionAuditCommand(id, request.TargetState, request.Reason, request.Version), cancellationToken));
@@ -153,7 +162,9 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
 
     // ---- M5 execution / fieldwork ----
 
-    [RequirePermission(PermissionKeys.RespondItem)]
+    // Authorisation for responding is resource-scoped (RespondItem on a normal audit, or RunSelfAssessment as the
+    // self-assessor) and enforced in the handler's RespondAuthorization — not a coarse controller gate — so a
+    // self-assessor without global RespondItem can still complete their own self-assessment.
     [HttpPost("{id:guid}/items/{itemId:guid}/responses")]
     public async Task<IActionResult> SubmitResponse(Guid id, Guid itemId, [FromBody] SubmitResponseRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new SubmitResponseCommand(id, itemId, request.Verdict, request.Comment, request.ValueJson, request.IsDraft, request.Version), cancellationToken));
@@ -163,7 +174,7 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> GetResponse(Guid id, Guid itemId, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetChecklistResponseQuery(id, itemId), cancellationToken));
 
-    [RequirePermission(PermissionKeys.RespondItem)]
+    // Discard is authorised in the handler (only the draft's author or an audit manager may discard).
     [HttpDelete("{id:guid}/items/{itemId:guid}/responses/draft")]
     public async Task<IActionResult> DiscardDraft(Guid id, Guid itemId, [FromQuery] string version, CancellationToken cancellationToken)
     {

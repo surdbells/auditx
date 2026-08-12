@@ -20,6 +20,7 @@ function item(id: string, name: string): AuditListItem {
     leadUserId: 'u-lead',
     checklistItemCount: 4,
     respondedItemCount: 1,
+    isSelfAssessment: false,
   };
 }
 

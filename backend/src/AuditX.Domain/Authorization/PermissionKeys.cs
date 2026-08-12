@@ -35,6 +35,7 @@ public static class PermissionKeys
     public const string ViewEngagementLifecycle = "ViewEngagementLifecycle";
     public const string CreateAudit = "CreateAudit";
     public const string ManageAudit = "ManageAudit";
+    public const string RunSelfAssessment = "RunSelfAssessment";
 
     // M5 — Execution
     public const string RespondItem = "RespondItem";

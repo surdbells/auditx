@@ -45,10 +45,10 @@ public static class BuiltInRoles
 
     public static readonly BuiltInRoleDefinition Auditee = new(
         AuditeeName,
-        "Reads exceptions assigned to them, submits MAPs and uploads remediation evidence.",
+        "Reads exceptions assigned to them, submits MAPs, uploads remediation evidence, and runs self-assessments of their own area.",
         [
             PermissionKeys.ViewAudit, PermissionKeys.ViewEngagementLifecycle, PermissionKeys.ViewExceptions, PermissionKeys.SubmitMap,
-            PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ViewReport,
+            PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ViewReport, PermissionKeys.RunSelfAssessment,
         ]);
 
     public static readonly BuiltInRoleDefinition Administrator = new(

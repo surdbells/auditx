@@ -44,6 +44,7 @@ export const Permissions = {
   ViewEngagementLifecycle: 'ViewEngagementLifecycle',
   CreateAudit: 'CreateAudit',
   ManageAudit: 'ManageAudit',
+  RunSelfAssessment: 'RunSelfAssessment',
 
   // M5 — Audit Execution / Fieldwork
   RespondItem: 'RespondItem',
