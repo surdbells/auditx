@@ -5,6 +5,10 @@ public enum NotificationChannel
 {
     Email,
     Sms,
+
+    /// <summary>Posts to a Microsoft Teams channel via an incoming webhook. Channel-scoped (one webhook = one
+    /// team channel), so it is delivered once per (event, rule) rather than once per recipient.</summary>
+    Teams,
 }
 
 /// <summary>Lifecycle of a single notification dispatch (M10).</summary>

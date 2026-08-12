@@ -129,7 +129,7 @@ public sealed class CreateOrOverrideTemplateCommandHandler(INotificationTemplate
 public sealed record RetryDispatchCommand(Guid Id) : ICommand<NotificationDispatchDto>;
 
 public sealed class RetryDispatchCommandHandler(
-    INotificationDispatchRepository dispatches, IEmailSender emailSender, ISmsSender smsSender, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    INotificationDispatchRepository dispatches, IEmailSender emailSender, ISmsSender smsSender, ITeamsSender teamsSender, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<RetryDispatchCommand, NotificationDispatchDto>
 {
     public async Task<NotificationDispatchDto> Handle(RetryDispatchCommand command, CancellationToken cancellationToken)
@@ -142,9 +142,7 @@ public sealed class RetryDispatchCommandHandler(
 
         dispatch.Requeue();
 
-        var result = dispatch.Channel == NotificationChannel.Email
-            ? await emailSender.SendAsync(dispatch.RecipientAddress, dispatch.RenderedSubject, dispatch.RenderedBody, cancellationToken)
-            : await smsSender.SendAsync(dispatch.RecipientAddress, dispatch.RenderedBody, cancellationToken);
+        var result = await Services.ChannelDispatcher.SendAsync(dispatch, emailSender, smsSender, teamsSender, cancellationToken);
 
         if (result.Success)
         {

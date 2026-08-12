@@ -70,6 +70,12 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> Transition(Guid id, [FromBody] TransitionAuditRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new TransitionAuditCommand(id, request.TargetState, request.Reason, request.Version), cancellationToken));
 
+    // Same resource-scoped authorisation as a transition (enforced in the handler): the audit's manager or the
+    // self-assessor may schedule its pre-audit kickoff meeting.
+    [HttpPost("{id:guid}/kickoff")]
+    public async Task<IActionResult> ScheduleKickoff(Guid id, [FromBody] ScheduleKickoffRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ScheduleAuditKickoffCommand(id, request.ScheduledAtUtc, request.Location, request.Agenda, request.Version), cancellationToken));
+
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(Guid id, [FromBody] CancelAuditRequest request, CancellationToken cancellationToken)

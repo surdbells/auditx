@@ -22,6 +22,7 @@ public sealed class NotificationIngestServiceTests
     private readonly ITemplateRenderer _renderer = Substitute.For<ITemplateRenderer>();
     private readonly IEmailSender _email = Substitute.For<IEmailSender>();
     private readonly ISmsSender _sms = Substitute.For<ISmsSender>();
+    private readonly ITeamsSender _teams = Substitute.For<ITeamsSender>();
     private readonly IAuditRecorder _audit = Substitute.For<IAuditRecorder>();
     private readonly IClock _clock = Substitute.For<IClock>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
@@ -42,7 +43,9 @@ public sealed class NotificationIngestServiceTests
         _dispatches.TryClaimAsync(Arg.Any<NotificationDispatch>(), Arg.Any<CancellationToken>()).Returns(true);
         _email.SendAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(ChannelSendResult.Sent("msg-1"));
-        return new NotificationIngestService(_rules, _templates, _dispatches, _users, _renderer, _email, _sms, _audit, _clock, _uow,
+        _teams.SendAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(ChannelSendResult.Sent("teams-1"));
+        return new NotificationIngestService(_rules, _templates, _dispatches, _users, _renderer, _email, _sms, _teams, _audit, _clock, _uow,
             Substitute.For<ILogger<NotificationIngestService>>());
     }
 
@@ -107,6 +110,38 @@ public sealed class NotificationIngestServiceTests
     }
 
     [Fact]
+    public async Task Teams_channel_posts_once_per_rule_as_a_broadcast_not_per_recipient()
+    {
+        var svc = Build();
+        _teams.IsConfigured(Arg.Any<string?>()).Returns(true);
+        // Two recipients so a per-recipient fan-out would post to Teams twice; the broadcast must post exactly once.
+        var other = User.ProvisionFromDirectory("asmith", "asmith@bank.local", "S-1-5-21-100", "asmith@bank.local", "Ann", "Smith");
+        _users.GetActiveByRoleNameAsync("Auditee", Arg.Any<CancellationToken>()).Returns([Recipient, other]);
+        var roleRule = NotificationRule.Create(
+            "exception_raised", "rule", "{\"type\":\"role\",\"value\":\"Auditee\"}", "[\"email\",\"teams\"]", "exception_raised", true, true);
+        _rules.GetActiveByEventTypeAsync("exception_raised", Arg.Any<CancellationToken>()).Returns([roleRule]);
+
+        await svc.ProcessAsync(Envelope("High"));
+
+        // One Teams post to the channel reference (never the URL); both recipients still get their own email.
+        await _teams.Received(1).SendAsync(ITeamsSender.DefaultChannelRef, Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _email.Received(2).SendAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Teams_channel_is_skipped_when_no_webhook_is_configured()
+    {
+        var svc = Build();
+        _teams.IsConfigured(Arg.Any<string?>()).Returns(false);
+        _rules.GetActiveByEventTypeAsync("exception_raised", Arg.Any<CancellationToken>()).Returns([Rule("[\"email\",\"teams\"]")]);
+
+        await svc.ProcessAsync(Envelope("High"));
+
+        await _teams.DidNotReceive().SendAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _email.Received(1).SendAsync(Recipient.Email!, "Subject", "Body", Arg.Any<CancellationToken>()); // email still sent
+    }
+
+    [Fact]
     public async Task Invalid_recipient_json_on_a_rule_is_isolated_and_does_not_throw()
     {
         var svc = Build();
@@ -148,7 +183,7 @@ public sealed class RetryDispatchCommandHandlerTests
         var email = Substitute.For<IEmailSender>();
 
         var handler = new RetryDispatchCommandHandler(
-            dispatches, email, Substitute.For<ISmsSender>(), Substitute.For<IAuditRecorder>(),
+            dispatches, email, Substitute.For<ISmsSender>(), Substitute.For<ITeamsSender>(), Substitute.For<IAuditRecorder>(),
             Substitute.For<IClock>(), Substitute.For<IUnitOfWork>());
 
         var ex = await Assert.ThrowsAsync<ConflictException>(() =>

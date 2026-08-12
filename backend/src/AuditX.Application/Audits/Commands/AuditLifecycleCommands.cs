@@ -56,6 +56,30 @@ public sealed class SetAuditBudgetCommandHandler(
     }
 }
 
+/// <summary>
+/// Schedule (or reschedule) the pre-audit kickoff meeting. Gated the same way as a lifecycle transition
+/// (ManageAudit on this audit, or the self-assessor on their own assessment). Raising the domain event gives
+/// the auditee advance notice through the M10 notification pipeline.
+/// </summary>
+public sealed record ScheduleAuditKickoffCommand(Guid Id, DateTimeOffset ScheduledAtUtc, string? Location, string? Agenda, string Version) : ICommand<AuditDto>;
+
+public sealed class ScheduleAuditKickoffCommandHandler(
+    IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    : ICommandHandler<ScheduleAuditKickoffCommand, AuditDto>
+{
+    public async Task<AuditDto> Handle(ScheduleAuditKickoffCommand command, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Audit", command.Id);
+        await AuditManageAuthorization.EnsureCanManageAsync(entity, currentUser.UserId, permissions, cancellationToken);
+        entity.EnsureVersion(command.Version);
+        entity.ScheduleKickoff(command.ScheduledAtUtc, command.Location, command.Agenda, clock.UtcNow);
+        audit.Record(AuditEventTypes.AuditKickoffScheduled, AuditTargetTypes.Audit, entity.Id,
+            after: new { scheduledAtUtc = command.ScheduledAtUtc, entity.KickoffLocation });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto();
+    }
+}
+
 /// <summary>Transition an audit through its lifecycle (US-M4-010/011/012/013/016/017).</summary>
 public sealed record TransitionAuditCommand(Guid Id, string TargetState, string? Reason, string Version) : ICommand<AuditDto>;
 

@@ -22,6 +22,8 @@ public sealed class AuditConfiguration : IEntityTypeConfiguration<Audit>
         builder.Property(a => a.LastTransitionReason);
         builder.Property(a => a.BudgetedHours).HasPrecision(9, 2);
         builder.Property(a => a.IsSelfAssessment).HasDefaultValue(false);
+        builder.Property(a => a.KickoffLocation).HasMaxLength(512);
+        builder.Property(a => a.KickoffAgenda).HasMaxLength(4000);
         builder.Property(a => a.Version).IsRowVersion();
         builder.Property(a => a.Status)
             .HasConversion(new SnakeCaseEnumConverter<AuditStatus>())

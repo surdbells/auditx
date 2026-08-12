@@ -5120,5 +5120,17 @@
   "audits.selfAssessment.action.start": "Start self-assessment",
   "audits.selfAssessment.noTemplates": "No published templates are available. Publish a checklist template first.",
   "audits.selfAssessment.badge": "Self-assessment",
-  "audits.selfAssessment.badgeTitle": "A self-assessment: the area owner assessed their own area."
+  "audits.selfAssessment.badgeTitle": "A self-assessment: the area owner assessed their own area.",
+  "audits.kickoff.cardTitle": "Kickoff meeting",
+  "audits.kickoff.none": "No kickoff meeting has been scheduled yet.",
+  "audits.kickoff.dialogTitle": "Schedule kickoff meeting",
+  "audits.kickoff.dialogHint": "Set a pre-audit kickoff meeting. The auditee is notified automatically once it is scheduled.",
+  "audits.kickoff.field.when": "Date & time",
+  "audits.kickoff.field.location": "Location / join link",
+  "audits.kickoff.field.agenda": "Agenda",
+  "audits.kickoff.hint.location": "A room, dial-in, or a Teams / Meet join link.",
+  "audits.kickoff.error.when": "Pick a date and time for the meeting.",
+  "audits.kickoff.action.schedule": "Schedule kickoff",
+  "audits.kickoff.action.reschedule": "Reschedule",
+  "audits.notify.kickoffScheduled": "Kickoff meeting scheduled — the auditee has been notified."
 }

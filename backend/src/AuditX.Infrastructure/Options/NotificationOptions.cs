@@ -8,6 +8,17 @@ public sealed class NotificationOptions
     public SmtpOptions Smtp { get; set; } = new();
 
     public SmsOptions Sms { get; set; } = new();
+
+    public TeamsOptions Teams { get; set; } = new();
+}
+
+public sealed class TeamsOptions
+{
+    /// <summary>
+    /// Microsoft Teams incoming-webhook URL for the default channel. When empty, Teams notifications are skipped
+    /// (never attempted). Treat as a secret — supply via environment / secret store, not source control.
+    /// </summary>
+    public string? DefaultWebhookUrl { get; set; }
 }
 
 public sealed class SmtpOptions

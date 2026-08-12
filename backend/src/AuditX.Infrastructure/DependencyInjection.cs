@@ -194,11 +194,13 @@ public static class DependencyInjection
         {
             services.AddScoped<Application.Abstractions.Notifications.IEmailSender, Notifications.LoggingEmailSender>();
             services.AddScoped<Application.Abstractions.Notifications.ISmsSender, Notifications.LoggingSmsSender>();
+            services.AddScoped<Application.Abstractions.Notifications.ITeamsSender, Notifications.LoggingTeamsSender>();
         }
         else
         {
             services.AddScoped<Application.Abstractions.Notifications.IEmailSender, Notifications.SmtpEmailSender>();
             services.AddScoped<Application.Abstractions.Notifications.ISmsSender, Notifications.HttpSmsSender>();
+            services.AddScoped<Application.Abstractions.Notifications.ITeamsSender, Notifications.TeamsWebhookSender>();
         }
 
         // Identity provider: seeded Development users locally, Active Directory over LDAPS, or the bank's

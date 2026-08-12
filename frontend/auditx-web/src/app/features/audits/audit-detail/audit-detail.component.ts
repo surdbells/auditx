@@ -43,6 +43,7 @@ import {
   ExceptionListItem,
   PlanItemLocator,
   ProblemDetails,
+  ScheduleKickoffRequest,
   TransitionTarget,
   UserDto,
 } from '../../../core/models';
@@ -71,6 +72,10 @@ import {
   TransitionReasonDialogData,
   TransitionReasonResult,
 } from '../dialogs/transition-reason-dialog.component';
+import {
+  ScheduleKickoffDialogComponent,
+  ScheduleKickoffDialogData,
+} from '../dialogs/schedule-kickoff-dialog.component';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -379,6 +384,11 @@ export class AuditDetailComponent {
   /** Cancel is available in any non-terminal state. */
   readonly canCancel = computed(
     () => this.canManage() && !this.isReadOnly(),
+  );
+
+  /** A pre-audit kickoff may be scheduled while the audit is still in its pre-fieldwork window (draft or planned). */
+  readonly canScheduleKickoff = computed(
+    () => this.canManage() && (this.isDraft() || this.isPlanned()),
   );
 
   /** Checklist items may be added in draft + in_progress. */
@@ -760,6 +770,31 @@ export class AuditDetailComponent {
             version: this.version(),
           }),
           this.i18n.translate('audits.notify.cancelled'),
+        );
+      });
+  }
+
+  scheduleKickoff(): void {
+    const a = this.audit();
+    if (!a) {
+      return;
+    }
+    const data: ScheduleKickoffDialogData = {
+      version: this.version(),
+      scheduledAtUtc: a.kickoffScheduledAtUtc,
+      location: a.kickoffLocation,
+      agenda: a.kickoffAgenda,
+    };
+    this.dialog
+      .open(ScheduleKickoffDialogComponent, { data, width: '520px' })
+      .afterClosed()
+      .subscribe((result?: ScheduleKickoffRequest) => {
+        if (!result) {
+          return;
+        }
+        this.runMutation(
+          this.service.scheduleKickoff(this.id(), result),
+          this.i18n.translate('audits.notify.kickoffScheduled'),
         );
       });
   }

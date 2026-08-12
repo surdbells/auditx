@@ -40,6 +40,12 @@
 .detail__card-title {
   margin: 0;
   font: var(--mat-sys-title-medium);
+
+  app-icon {
+    vertical-align: text-bottom;
+    margin-right: 0.35rem;
+    color: var(--mat-sys-primary);
+  }
 }
 
 .detail__card-head {

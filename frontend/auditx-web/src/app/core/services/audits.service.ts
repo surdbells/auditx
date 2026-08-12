@@ -21,6 +21,7 @@ import {
   CreateAuditRequest,
   CreateSelfAssessmentRequest,
   PagedResult,
+  ScheduleKickoffRequest,
   EvidenceFile,
   FailJudgementRequest,
   FailWithoutExceptionResult,
@@ -81,6 +82,11 @@ export class AuditsService {
 
   transition(id: string, body: TransitionAuditRequest): Observable<Audit> {
     return this.api.post<Audit>(`/audits/${id}/transition`, body);
+  }
+
+  /** Schedule (or reschedule) the pre-audit kickoff meeting. */
+  scheduleKickoff(id: string, body: ScheduleKickoffRequest): Observable<Audit> {
+    return this.api.post<Audit>(`/audits/${id}/kickoff`, body);
   }
 
   cancel(id: string, body: CancelAuditRequest): Observable<Audit> {

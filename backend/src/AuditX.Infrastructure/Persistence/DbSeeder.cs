@@ -66,6 +66,11 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
                 "You have been added to an audit", "You have been added to audit {{ AuditId }} as {{ Role }}."),
             ("audit_lead_transferred", "audit_lead_transferred", "payload_derived", "IncomingLeadUserId", "[\"email\"]",
                 "You are now the audit lead", "You are now the lead for audit {{ AuditId }}."),
+            // Pre-audit notice to the auditee. Rule opts into Teams as well as email; the Teams post only fires when
+            // a webhook is configured (Notifications:Teams:DefaultWebhookUrl), otherwise it is silently skipped.
+            ("audit_kickoff_scheduled", "audit_kickoff_scheduled", "payload_derived", "AuditeeUserId", "[\"email\",\"teams\"]",
+                "Audit kickoff meeting scheduled",
+                "A kickoff meeting for \"{{ AuditName }}\" is scheduled for {{ ScheduledAtUtc }}. Location / join: {{ Location }}. Please make yourself available."),
             ("item_assigned", "item_assigned", "payload_derived", "AssigneeUserId", "[\"email\"]",
                 "A checklist item was assigned to you", "Checklist item {{ ItemId }} on audit {{ AuditId }} has been assigned to you."),
             ("exception_raised", "exception_raised", "payload_derived", "OwnerUserId", "[\"email\"]",

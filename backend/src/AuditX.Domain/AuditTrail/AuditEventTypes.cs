@@ -152,6 +152,7 @@ public static class AuditEventTypes
     public const string TimeEntryAmended = "time_entry_amended";
     public const string TimeEntryDeleted = "time_entry_deleted";
     public const string AuditBudgetSet = "audit_budget_set";
+    public const string AuditKickoffScheduled = "audit_kickoff_scheduled";
 
     // P2-C execution procedures (sampling / interview / walkthrough)
     public const string ProcedureRecorded = "procedure_recorded";

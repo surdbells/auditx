@@ -91,6 +91,12 @@ export interface Audit {
   budgetedHours: number | null;
   /** True when the area owner is assessing their own area (lead == auditee, no independent auditor). */
   isSelfAssessment: boolean;
+  /** When the pre-audit kickoff meeting is scheduled (ISO), or null if none has been scheduled. */
+  kickoffScheduledAtUtc: string | null;
+  /** Where the kickoff meeting is held — a room, a dial-in, or a join URL. Null when unset. */
+  kickoffLocation: string | null;
+  /** Free-text agenda for the kickoff meeting. Null when unset. */
+  kickoffAgenda: string | null;
   version: string;
   teamMembers: AuditTeamMember[];
   sections: AuditSection[];
@@ -172,6 +178,15 @@ export interface UpdateAuditRequest {
 export interface TransitionAuditRequest {
   targetState: TransitionTarget;
   reason?: string | null;
+  version: string;
+}
+
+/** Schedule (or reschedule) the pre-audit kickoff meeting. */
+export interface ScheduleKickoffRequest {
+  /** ISO date-time for the meeting; must be in the future. */
+  scheduledAtUtc: string;
+  location?: string | null;
+  agenda?: string | null;
   version: string;
 }
 

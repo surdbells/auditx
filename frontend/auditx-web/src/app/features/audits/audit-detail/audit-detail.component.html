@@ -145,6 +145,44 @@
         }
       </mat-card>
 
+      <!-- Pre-audit kickoff meeting -->
+      @if (a.kickoffScheduledAtUtc || canScheduleKickoff()) {
+        <mat-card appearance="outlined" class="detail__card">
+          <div class="detail__card-head">
+            <h3 class="detail__card-title">
+              <app-icon name="fact_check" />
+              {{ 'audits.kickoff.cardTitle' | t }}
+            </h3>
+            @if (canScheduleKickoff()) {
+              <button matButton type="button" (click)="scheduleKickoff()">
+                <app-icon name="event" />
+                {{ a.kickoffScheduledAtUtc ? ('audits.kickoff.action.reschedule' | t) : ('audits.kickoff.action.schedule' | t) }}
+              </button>
+            }
+          </div>
+          @if (a.kickoffScheduledAtUtc) {
+            <dl class="detail__grid">
+              <div>
+                <dt>{{ 'audits.kickoff.field.when' | t }}</dt>
+                <dd>{{ a.kickoffScheduledAtUtc | date: 'medium' }}</dd>
+              </div>
+              <div>
+                <dt>{{ 'audits.kickoff.field.location' | t }}</dt>
+                <dd>{{ a.kickoffLocation || '—' }}</dd>
+              </div>
+            </dl>
+            @if (a.kickoffAgenda) {
+              <div class="detail__scope">
+                <dt>{{ 'audits.kickoff.field.agenda' | t }}</dt>
+                <dd>{{ a.kickoffAgenda }}</dd>
+              </div>
+            }
+          } @else {
+            <p class="muted">{{ 'audits.kickoff.none' | t }}</p>
+          }
+        </mat-card>
+      }
+
       <!-- Team -->
       <mat-card appearance="outlined" class="detail__card" data-guide="team">
         <div class="detail__card-head">

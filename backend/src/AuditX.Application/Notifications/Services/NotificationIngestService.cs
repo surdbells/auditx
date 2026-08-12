@@ -23,6 +23,7 @@ public sealed class NotificationIngestService(
     ITemplateRenderer renderer,
     IEmailSender emailSender,
     ISmsSender smsSender,
+    ITeamsSender teamsSender,
     IAuditRecorder audit,
     IClock clock,
     IUnitOfWork unitOfWork,
@@ -85,9 +86,7 @@ public sealed class NotificationIngestService(
         {
             try
             {
-                var result = dispatch.Channel == NotificationChannel.Email
-                    ? await emailSender.SendAsync(dispatch.RecipientAddress, dispatch.RenderedSubject, dispatch.RenderedBody, cancellationToken)
-                    : await smsSender.SendAsync(dispatch.RecipientAddress, dispatch.RenderedBody, cancellationToken);
+                var result = await ChannelDispatcher.SendAsync(dispatch, emailSender, smsSender, teamsSender, cancellationToken);
 
                 if (result.Success)
                 {
@@ -121,10 +120,23 @@ public sealed class NotificationIngestService(
         var recipients = await ResolveRecipientsAsync(rule.RecipientResolutionJson, payload, cancellationToken);
         var channels = ParseChannels(rule.ChannelsJson, severity);
 
+        // Teams is channel-scoped (a webhook posts to a team channel, not a person), so it fires ONCE per
+        // (event, rule) — not once per recipient — and only when a webhook is configured. The null-recipient
+        // row makes the unique idempotency index enforce that single post.
+        if (channels.Contains(NotificationChannel.Teams) && teamsSender.IsConfigured())
+        {
+            await CreateAndSendTeamsBroadcastAsync(rule, envelope, model, severity, cancellationToken);
+        }
+
         foreach (var recipient in recipients)
         {
             foreach (var channel in channels)
             {
+                if (channel == NotificationChannel.Teams)
+                {
+                    continue; // handled once above as a broadcast, not per recipient.
+                }
+
                 if (channel == NotificationChannel.Sms)
                 {
                     // SMS is dormant until the directory provides phone numbers; honour non-critical opt-out otherwise.
@@ -172,9 +184,7 @@ public sealed class NotificationIngestService(
             return; // another worker already claimed this (event, rule, recipient, channel).
         }
 
-        var result = channel == NotificationChannel.Email
-            ? await emailSender.SendAsync(address, subject, body, cancellationToken)
-            : await smsSender.SendAsync(address, body, cancellationToken);
+        var result = await ChannelDispatcher.SendAsync(dispatch, emailSender, smsSender, teamsSender, cancellationToken);
 
         if (result.Success)
         {
@@ -187,6 +197,47 @@ public sealed class NotificationIngestService(
 
         audit.RecordAs(ActorType.System, "notifications", null, AuditEventTypes.NotificationDispatched, AuditTargetTypes.NotificationDispatch, dispatch.Id,
             after: new { dispatch.EventType, channel = channel.ToString(), status = dispatch.Status.ToString() });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Create + send a single Teams broadcast for a rule (no per-recipient fan-out). Renders the rule's Email
+    /// template — bodies are channel-agnostic and no Teams-specific templates are seeded — and addresses the
+    /// dispatch to the stable channel reference (never the secret webhook URL).
+    /// </summary>
+    private async Task CreateAndSendTeamsBroadcastAsync(NotificationRule rule, DomainEventEnvelope envelope, IReadOnlyDictionary<string, object?> model, string? severity, CancellationToken cancellationToken)
+    {
+        if (await dispatches.ExistsAsync(envelope.EventId, rule.Id, recipientUserId: null, NotificationChannel.Teams, cancellationToken))
+        {
+            return;
+        }
+
+        var template = await templates.ResolveAsync(rule.TemplateKey, NotificationChannel.Email, cancellationToken);
+        var (subject, body) = template is null
+            ? ($"AuditX notification: {envelope.EventType}", $"Event '{envelope.EventType}' occurred.")
+            : renderer.Render(template.SubjectTemplate, template.BodyTemplate, model);
+
+        var dispatch = NotificationDispatch.Create(
+            envelope.EventId, envelope.EventType, rule.Id, recipientUserId: null, ITeamsSender.DefaultChannelRef,
+            NotificationChannel.Teams, rule.TemplateKey, template?.Version ?? 0, subject, body, severity);
+
+        if (!await dispatches.TryClaimAsync(dispatch, cancellationToken))
+        {
+            return; // another worker already posted this (event, rule) to Teams.
+        }
+
+        var result = await ChannelDispatcher.SendAsync(dispatch, emailSender, smsSender, teamsSender, cancellationToken);
+        if (result.Success)
+        {
+            dispatch.RecordDelivered(clock.UtcNow, result.ProviderMessageId, result.ProviderResponse);
+        }
+        else
+        {
+            dispatch.RecordFailure(clock.UtcNow, result.Error ?? "send failed", result.IsPermanentFailure);
+        }
+
+        audit.RecordAs(ActorType.System, "notifications", null, AuditEventTypes.NotificationDispatched, AuditTargetTypes.NotificationDispatch, dispatch.Id,
+            after: new { dispatch.EventType, channel = "Teams", status = dispatch.Status.ToString() });
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
@@ -295,6 +346,10 @@ public sealed class NotificationIngestService(
                 else if (string.Equals(name, "sms", StringComparison.OrdinalIgnoreCase))
                 {
                     set.Add(NotificationChannel.Sms);
+                }
+                else if (string.Equals(name, "teams", StringComparison.OrdinalIgnoreCase))
+                {
+                    set.Add(NotificationChannel.Teams);
                 }
                 else if (string.Equals(name, "both", StringComparison.OrdinalIgnoreCase))
                 {

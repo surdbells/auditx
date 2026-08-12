@@ -63,6 +63,15 @@ public sealed class Audit : AggregateRoot
     /// <summary>Planned effort in hours — the budget baseline for budget-vs-actual (P0-B). Null when unset.</summary>
     public decimal? BudgetedHours { get; private set; }
 
+    /// <summary>When the pre-audit kickoff meeting is scheduled for; null until one is set. Rescheduling overwrites it.</summary>
+    public DateTimeOffset? KickoffScheduledAtUtc { get; private set; }
+
+    /// <summary>Where the kickoff meeting is held — a room, a dial-in, or a Teams/Meet join URL. Null when unset.</summary>
+    public string? KickoffLocation { get; private set; }
+
+    /// <summary>Free-text agenda for the kickoff meeting. Null when unset.</summary>
+    public string? KickoffAgenda { get; private set; }
+
     public byte[] Version { get; private set; } = [];
 
     public IReadOnlyList<AuditTeamMember> TeamMembers => _teamMembers.AsReadOnly();
@@ -152,6 +161,23 @@ public sealed class Audit : AggregateRoot
         }
 
         BudgetedHours = hours;
+    }
+
+    /// <summary>
+    /// Schedule (or reschedule) the pre-audit kickoff meeting. Only meaningful before fieldwork begins, so it is
+    /// restricted to Draft / Planned. Raises <see cref="AuditKickoffScheduledEvent"/> so the auditee is notified in
+    /// advance. Rescheduling simply overwrites the details and re-raises the event.
+    /// </summary>
+    public void ScheduleKickoff(DateTimeOffset scheduledAtUtc, string? location, string? agenda, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("audit.kickoff_locked", AuditStatus.Draft, AuditStatus.Planned);
+        Guard.Against(scheduledAtUtc <= nowUtc, "audit.kickoff_in_past", "The kickoff meeting must be scheduled for a future time.");
+
+        KickoffScheduledAtUtc = scheduledAtUtc;
+        KickoffLocation = string.IsNullOrWhiteSpace(location) ? null : location.Trim();
+        KickoffAgenda = string.IsNullOrWhiteSpace(agenda) ? null : agenda.Trim();
+
+        RaiseDomainEvent(new AuditKickoffScheduledEvent(Id, Name, scheduledAtUtc, KickoffLocation, AuditeeUserId, LeadUserId));
     }
 
     // ---- Team management ----

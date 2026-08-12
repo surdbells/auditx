@@ -30,6 +30,8 @@ public sealed record SetAuditBudgetRequest(decimal? BudgetedHours, string Versio
 
 public sealed record TransitionAuditRequest(string TargetState, string? Reason, string Version);
 
+public sealed record ScheduleKickoffRequest(DateTimeOffset ScheduledAtUtc, string? Location, string? Agenda, string Version);
+
 public sealed record CancelAuditRequest(string Reason, string Version);
 
 public sealed record AddAuditTeamMemberRequest(Guid UserId, string TeamRole, string Version);

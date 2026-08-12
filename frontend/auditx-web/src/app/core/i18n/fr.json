@@ -5120,5 +5120,17 @@
   "audits.selfAssessment.action.start": "Démarrer l’auto-évaluation",
   "audits.selfAssessment.noTemplates": "Aucun modèle publié n’est disponible. Publiez d’abord un modèle de liste de contrôle.",
   "audits.selfAssessment.badge": "Auto-évaluation",
-  "audits.selfAssessment.badgeTitle": "Une auto-évaluation : le propriétaire du domaine a évalué son propre domaine."
+  "audits.selfAssessment.badgeTitle": "Une auto-évaluation : le propriétaire du domaine a évalué son propre domaine.",
+  "audits.kickoff.cardTitle": "Réunion de lancement",
+  "audits.kickoff.none": "Aucune réunion de lancement n’a encore été planifiée.",
+  "audits.kickoff.dialogTitle": "Planifier la réunion de lancement",
+  "audits.kickoff.dialogHint": "Fixez une réunion de lancement préalable à l’audit. L’audité est notifié automatiquement une fois la réunion planifiée.",
+  "audits.kickoff.field.when": "Date et heure",
+  "audits.kickoff.field.location": "Lieu / lien de connexion",
+  "audits.kickoff.field.agenda": "Ordre du jour",
+  "audits.kickoff.hint.location": "Une salle, une conférence téléphonique ou un lien Teams / Meet.",
+  "audits.kickoff.error.when": "Choisissez une date et une heure pour la réunion.",
+  "audits.kickoff.action.schedule": "Planifier le lancement",
+  "audits.kickoff.action.reschedule": "Reprogrammer",
+  "audits.notify.kickoffScheduled": "Réunion de lancement planifiée — l’audité a été notifié."
 }

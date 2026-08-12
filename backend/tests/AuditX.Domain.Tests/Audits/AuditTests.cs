@@ -88,6 +88,34 @@ public sealed class AuditTests
     }
 
     [Fact]
+    public void ScheduleKickoff_sets_details_and_raises_event()
+    {
+        var a = New();
+        var when = Now.AddDays(3);
+        a.ScheduleKickoff(when, "  Teams: https://join  ", "  Walk the scope  ", Now);
+
+        Assert.Equal(when, a.KickoffScheduledAtUtc);
+        Assert.Equal("Teams: https://join", a.KickoffLocation); // trimmed
+        Assert.Equal("Walk the scope", a.KickoffAgenda);
+        var ev = Assert.Single(a.DomainEvents.OfType<Domain.Audits.Events.AuditKickoffScheduledEvent>());
+        Assert.Equal(Auditee, ev.AuditeeUserId);
+        Assert.Equal(when, ev.ScheduledAtUtc);
+    }
+
+    [Fact]
+    public void ScheduleKickoff_rejects_a_past_time()
+        => Assert.Throws<DomainException>(() => New().ScheduleKickoff(Now.AddDays(-1), null, null, Now));
+
+    [Fact]
+    public void ScheduleKickoff_is_blocked_once_fieldwork_is_underway()
+    {
+        var a = ReadyToPlan();
+        a.Plan();
+        a.Start(); // InProgress — past the pre-audit window
+        Assert.Throws<InvalidStateTransitionException>(() => a.ScheduleKickoff(Now.AddDays(2), null, null, Now));
+    }
+
+    [Fact]
     public void Full_happy_path_to_completed()
     {
         var a = ReadyToPlan();

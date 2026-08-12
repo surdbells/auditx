@@ -22,6 +22,13 @@ public sealed record AuditTeamMemberRemovedEvent(Guid AuditId, Guid UserId) : Au
 
 public sealed record AuditLeadTransferredEvent(Guid AuditId, Guid OutgoingLeadUserId, Guid IncomingLeadUserId) : AuditEvent;
 
+/// <summary>
+/// A pre-audit kickoff meeting was scheduled (or rescheduled). Carries the auditee so the notification
+/// pipeline can give them advance notice, plus the meeting time / location for the message body.
+/// </summary>
+public sealed record AuditKickoffScheduledEvent(
+    Guid AuditId, string AuditName, DateTimeOffset ScheduledAtUtc, string? Location, Guid AuditeeUserId, Guid LeadUserId) : AuditEvent;
+
 // ---- M5 Execution ----
 
 public sealed record ItemRespondedEvent(Guid AuditId, Guid ItemId, Guid ResponseId, ResponseVerdict? Verdict, bool IsDraft) : AuditEvent;
