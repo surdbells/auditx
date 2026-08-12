@@ -9,7 +9,8 @@ public static class ExecutionMappings
 {
     public static ChecklistResponseDto ToDto(this ChecklistResponse r) => new(
         r.Id, r.AuditId, r.ChecklistItemId, r.Verdict is { } v ? v.ToSnake() : null, r.Comment, r.ValueJson,
-        r.ResponderUserId, r.IsDraft, r.ResponseVersion, r.RespondedAt, r.Score, r.Observation, r.Recommendation);
+        r.ResponderUserId, r.IsDraft, r.ResponseVersion, r.RespondedAt, r.Score, r.Observation, r.Recommendation,
+        r.SelectedOptionCode, r.SelectedOptionLabel);
 
     public static EvidenceFileDto ToDto(this EvidenceFile e) => new(
         e.Id, e.AuditId, e.ContextType.ToSnake(), e.ContextId, e.OriginalFilename, e.MimeType,

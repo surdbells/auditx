@@ -27,6 +27,8 @@ interface ResponseStateSnapshot {
   comment?: string | null;
   observation?: string | null;
   recommendation?: string | null;
+  /** Label of the org-defined conclusion option chosen, when a custom option set governed the item. */
+  selectedOptionLabel?: string | null;
   valueJson?: string | null;
   isDraft?: boolean;
   score?: number | null;
@@ -319,9 +321,10 @@ export class ResponseHistoryDialogComponent {
 
     const diffs: FieldDiff[] = [];
 
-    const decisionNow = this.verdictLabel(after.verdict);
-    const decisionWas = before ? this.verdictLabel(before.verdict) : null;
-    if (after.verdict || decisionWas) {
+    // Prefer the organisation's own conclusion label when one was recorded; fall back to the canonical verdict.
+    const decisionNow = after.selectedOptionLabel?.trim() || this.verdictLabel(after.verdict);
+    const decisionWas = before ? before.selectedOptionLabel?.trim() || this.verdictLabel(before.verdict) : null;
+    if (after.verdict || after.selectedOptionLabel || decisionWas) {
       diffs.push(this.diff(this.i18n.translate('audits.history.decision'), decisionWas, decisionNow));
     }
 

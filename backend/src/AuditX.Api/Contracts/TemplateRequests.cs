@@ -19,6 +19,9 @@ public sealed record CreateRatingScaleRequest(string Name, string? Description, 
 
 public sealed record UpdateRatingScaleRequest(string? Name, string? Description, string? PointsJson, bool? IsActive);
 
+/// <summary>Replace a response type's conclusion options; OptionsJson is a JSON array of {code,label,order,score,isDeficiency,isNotApplicable,requiresComment}.</summary>
+public sealed record UpdateResponseOptionSetRequest(string OptionsJson);
+
 public sealed record ReorderItemsRequest(IReadOnlyList<Guid> OrderedItemIds);
 
 public sealed record AddSectionRequest(string Name);

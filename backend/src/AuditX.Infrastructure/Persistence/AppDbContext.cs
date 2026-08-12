@@ -54,6 +54,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<RatingScale> RatingScales => Set<RatingScale>();
 
+    public DbSet<ResponseOptionSet> ResponseOptionSets => Set<ResponseOptionSet>();
+
     public DbSet<TemplateItem> TemplateItems => Set<TemplateItem>();
 
     public DbSet<TemplateSection> TemplateSections => Set<TemplateSection>();

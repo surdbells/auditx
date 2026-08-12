@@ -3,7 +3,7 @@ namespace AuditX.Application.Execution.Dtos;
 public sealed record ChecklistResponseDto(
     Guid Id, Guid AuditId, Guid ChecklistItemId, string? Verdict, string? Comment, string? ValueJson,
     Guid ResponderUserId, bool IsDraft, int ResponseVersion, DateTimeOffset? RespondedAt, decimal? Score = null,
-    string? Observation = null, string? Recommendation = null);
+    string? Observation = null, string? Recommendation = null, string? SelectedOptionCode = null, string? SelectedOptionLabel = null);
 
 public sealed record EvidenceFileDto(
     Guid Id, Guid AuditId, string ContextType, Guid ContextId, string OriginalFilename, string MimeType,

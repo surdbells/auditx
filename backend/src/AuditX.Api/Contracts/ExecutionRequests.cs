@@ -1,6 +1,6 @@
 namespace AuditX.Api.Contracts;
 
-public sealed record SubmitResponseRequest(string? Verdict, string? Comment, string? ValueJson, bool IsDraft, string Version, string? Observation = null, string? Recommendation = null);
+public sealed record SubmitResponseRequest(string? Verdict, string? Comment, string? ValueJson, bool IsDraft, string Version, string? Observation = null, string? Recommendation = null, string? SelectedOptionCode = null);
 
 public sealed record AssignItemRequest(Guid? AssigneeUserId, string Version);
 

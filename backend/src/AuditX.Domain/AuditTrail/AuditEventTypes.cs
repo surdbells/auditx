@@ -90,6 +90,7 @@ public static class AuditEventTypes
     public const string OrgUnitArchived = "org_unit_archived";
     public const string RiskDimensionConfigured = "risk_dimension_configured";
     public const string RatingScaleConfigured = "rating_scale_configured";
+    public const string ResponseOptionSetUpdated = "response_option_set_updated";
     public const string ExceptionRaisingRuleConfigured = "exception_raising_rule_configured";
     public const string RootCauseGapOpened = "root_cause_gap_opened";
     public const string RootCauseGapUpdated = "root_cause_gap_updated";
@@ -295,6 +296,7 @@ public static class AuditTargetTypes
     public const string OrgUnit = "org_unit";
     public const string RiskDimension = "risk_dimension";
     public const string RatingScale = "rating_scale";
+    public const string ResponseOptionSet = "response_option_set";
     public const string ExceptionRaisingRule = "exception_raising_rule";
     public const string RootCauseGap = "root_cause_gap";
     public const string EntityTypeTaxonomy = "entity_type_taxonomy";

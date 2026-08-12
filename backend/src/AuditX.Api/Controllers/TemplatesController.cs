@@ -177,3 +177,33 @@ public sealed class RatingScalesController(IDispatcher dispatcher) : ApiControll
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRatingScaleRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new UpdateRatingScaleCommand(id, request.Name, request.Description, request.PointsJson, request.IsActive), cancellationToken));
 }
+
+/// <summary>
+/// Organisation-defined conclusion option sets for verdict-based response types (M4). Lets a deployment relabel
+/// and re-score the choices an auditor picks (e.g. Compliant / Partially Compliant / Non-Compliant / N-A). Reads
+/// require ViewTemplates; writes require ManageTemplates.
+/// </summary>
+[Authorize]
+[Route("api/v1/response-option-sets")]
+public sealed class ResponseOptionSetsController(IDispatcher dispatcher) : ApiControllerBase
+{
+    [RequirePermission(PermissionKeys.ViewTemplates)]
+    [HttpGet]
+    public async Task<IActionResult> List(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListResponseOptionSetsQuery(), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewTemplates)]
+    [HttpGet("{responseType}")]
+    public async Task<IActionResult> Get(string responseType, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetResponseOptionSetQuery(responseType), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageTemplates)]
+    [HttpPut("{responseType}")]
+    public async Task<IActionResult> Update(string responseType, [FromBody] UpdateResponseOptionSetRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new UpdateResponseOptionSetCommand(responseType, request.OptionsJson), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageTemplates)]
+    [HttpPost("{responseType}/reset")]
+    public async Task<IActionResult> Reset(string responseType, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ResetResponseOptionSetCommand(responseType), cancellationToken));
+}

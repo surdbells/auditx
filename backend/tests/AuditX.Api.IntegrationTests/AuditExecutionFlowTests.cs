@@ -168,6 +168,59 @@ public sealed class AuditExecutionFlowTests(ApiFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public async Task Custom_conclusion_option_drives_verdict_score_and_label()
+    {
+        var admin = await AdminAsync();
+        var users = await UsersByEmailAsync(admin);
+
+        // The organisation defines its own conclusion options for pass_fail_na.
+        const string optionsJson = """
+            [
+              {"code":"compliant","label":"Compliant","order":0,"score":100,"isDeficiency":false,"isNotApplicable":false,"requiresComment":false},
+              {"code":"partial","label":"Partially Compliant","order":1,"score":50,"isDeficiency":true,"isNotApplicable":false,"requiresComment":true},
+              {"code":"noncompliant","label":"Non-Compliant","order":2,"score":0,"isDeficiency":true,"isNotApplicable":false,"requiresComment":true},
+              {"code":"na","label":"Not Applicable","order":3,"score":null,"isDeficiency":false,"isNotApplicable":true,"requiresComment":true}
+            ]
+            """;
+        var set = await DataAsync(await admin.PutAsJsonAsync("/api/v1/response-option-sets/pass_fail_na", new { optionsJson }));
+        Assert.True(set.GetProperty("isCustomised").GetBoolean());
+        Assert.Equal(4, set.GetProperty("options").GetArrayLength());
+
+        var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
+        {
+            name = $"Options {Guid.NewGuid():N}", auditType = "branch", startDate = "2027-01-10", targetEndDate = "2027-02-10",
+            leadUserId = users["manager@auditx.local"], auditeeUserId = users["auditee@auditx.local"],
+        }));
+        var auditId = created.GetProperty("id").GetGuid();
+        var version = Version(created);
+        var a1 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Reconciliations performed?", responseType = "pass_fail_na", isRequired = true, version }));
+        version = Version(a1);
+        var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        version = Version(withTeam);
+        var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
+        version = Version(planned);
+        var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
+        var itemId = started.GetProperty("checklistItems")[0].GetProperty("id").GetGuid();
+
+        // Choosing "Partially Compliant" (a finding, score 50) derives Fail, scores 50, and snapshots the label.
+        var response = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses", new
+        {
+            selectedOptionCode = "partial", comment = "Two of five accounts reconciled", isDraft = false, version = await VersionAsync(admin, auditId),
+        }));
+        Assert.Equal("fail", response.GetProperty("verdict").GetString());
+        Assert.Equal(50, response.GetProperty("score").GetInt32());
+        Assert.Equal("partial", response.GetProperty("selectedOptionCode").GetString());
+        Assert.Equal("Partially Compliant", response.GetProperty("selectedOptionLabel").GetString());
+
+        // Reset restores the built-in labels.
+        var reset = await DataAsync(await admin.PostAsync("/api/v1/response-option-sets/pass_fail_na/reset", null));
+        Assert.False(reset.GetProperty("isCustomised").GetBoolean());
+        Assert.Equal("Pass", reset.GetProperty("options").EnumerateArray().First().GetProperty("label").GetString());
+    }
+
+    [Fact]
     public async Task Evidence_upload_rejects_disallowed_mime()
     {
         var admin = await AdminAsync();

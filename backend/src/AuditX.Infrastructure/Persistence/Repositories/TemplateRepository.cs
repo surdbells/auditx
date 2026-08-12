@@ -70,3 +70,14 @@ public sealed class RatingScaleRepository(AppDbContext db) : IRatingScaleReposit
 
     public void Add(RatingScale scale) => db.RatingScales.Add(scale);
 }
+
+public sealed class ResponseOptionSetRepository(AppDbContext db) : IResponseOptionSetRepository
+{
+    public Task<ResponseOptionSet?> GetByResponseTypeAsync(ResponseType responseType, CancellationToken cancellationToken = default)
+        => db.ResponseOptionSets.FirstOrDefaultAsync(s => s.ResponseType == responseType, cancellationToken);
+
+    public async Task<IReadOnlyList<ResponseOptionSet>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await db.ResponseOptionSets.AsNoTracking().OrderBy(s => s.ResponseType).ToListAsync(cancellationToken);
+
+    public void Add(ResponseOptionSet set) => db.ResponseOptionSets.Add(set);
+}

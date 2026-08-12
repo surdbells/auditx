@@ -202,3 +202,35 @@ export interface TemplateQuery {
   page?: number;
   pageSize?: number;
 }
+
+/* ---- Organisation-defined response option sets (custom conclusion labels) ---- */
+
+/** One organisation-defined conclusion option for a verdict-based response type. */
+export interface ResponseOption {
+  code: string;
+  label: string;
+  order: number;
+  /** 0-100 score fed to post-response scoring; null = unscored. */
+  score: number | null;
+  /** This conclusion is a finding — drives exception-raising / the fail worklist. */
+  isDeficiency: boolean;
+  /** Excluded from scoring (like N/A). */
+  isNotApplicable: boolean;
+  /** Forces a comment when chosen. */
+  requiresComment: boolean;
+}
+
+/** The conclusion option set governing one response type. */
+export interface ResponseOptionSet {
+  /** snake_case response type, e.g. 'pass_fail_na' or 'yes_no'. */
+  responseType: string;
+  /** True when the org has customised the set (false = built-in defaults are in effect). */
+  isCustomised: boolean;
+  options: ResponseOption[];
+  version: string | null;
+}
+
+export interface UpdateResponseOptionSetRequest {
+  /** JSON array of ResponseOption. */
+  optionsJson: string;
+}

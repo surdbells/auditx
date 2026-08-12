@@ -265,6 +265,10 @@ export interface ChecklistResponse {
   observation?: string | null;
   /** Auditor's recommendation — suggested corrective action. Optional free text. */
   recommendation?: string | null;
+  /** The org-defined conclusion option chosen (code), when a custom option set governs the item. */
+  selectedOptionCode?: string | null;
+  /** The chosen option's label, snapshotted at response time. */
+  selectedOptionLabel?: string | null;
   /** Type-specific captured value JSON (text/number/date/rating/choice). */
   valueJson?: string | null;
   responderUserId: string;
@@ -362,6 +366,8 @@ export interface SubmitResponseRequest {
   comment?: string | null;
   observation?: string | null;
   recommendation?: string | null;
+  /** The org-defined conclusion option code; the server derives the canonical verdict + score from it. */
+  selectedOptionCode?: string | null;
   valueJson?: string | null;
   isDraft: boolean;
   version: string;

@@ -81,6 +81,8 @@ public sealed class ChecklistResponseConfiguration : IEntityTypeConfiguration<Ch
         builder.Property(r => r.Comment);
         builder.Property(r => r.Observation).HasMaxLength(4000);
         builder.Property(r => r.Recommendation).HasMaxLength(4000);
+        builder.Property(r => r.SelectedOptionCode).HasMaxLength(50);
+        builder.Property(r => r.SelectedOptionLabel).HasMaxLength(100);
         builder.Property(r => r.Score).HasColumnType("decimal(5,2)");
 
         // Referential integrity to the owning checklist item (Restrict avoids multiple cascade paths from audits).

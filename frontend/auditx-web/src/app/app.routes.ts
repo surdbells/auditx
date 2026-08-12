@@ -103,6 +103,15 @@ export const routes: Routes = [
           ).then((m) => m.RatingScalesComponent),
       },
       {
+        path: 'admin/response-labels',
+        title: 'Response Labels · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewTemplates)],
+        loadComponent: () =>
+          import(
+            './features/admin/templates/response-labels/response-labels.component'
+          ).then((m) => m.ResponseLabelsComponent),
+      },
+      {
         path: 'admin/templates/new',
         title: 'New template · AuditX',
         canActivate: [permissionGuard(Permissions.ViewTemplates)],

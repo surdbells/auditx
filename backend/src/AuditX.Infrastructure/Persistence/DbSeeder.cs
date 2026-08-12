@@ -27,6 +27,7 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         await SeedMakerCheckerGatesAsync(cancellationToken);
         await SeedRiskDimensionsAsync(cancellationToken);
         await SeedRatingScalesAsync(cancellationToken);
+        await SeedResponseOptionSetsAsync(cancellationToken);
         await SeedReferenceDataAsync(cancellationToken);
         await SeedSanctionsRolesAsync(cancellationToken);
         await SeedAcRolesAsync(cancellationToken);
@@ -248,6 +249,23 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
             ]
             """;
         db.RatingScales.Add(Domain.Templates.RatingScale.Create("Control Effectiveness (1-5)", "Standard 1-5 control-effectiveness rating scale.", points));
+    }
+
+    /// <summary>
+    /// Seed the built-in conclusion option sets (which reproduce the fixed Pass/Fail/N-A behaviour) for each
+    /// verdict-based response type, so a deployment starts with an editable set. Idempotent per response type.
+    /// </summary>
+    private async Task SeedResponseOptionSetsAsync(CancellationToken cancellationToken)
+    {
+        var existing = await db.ResponseOptionSets.Select(s => s.ResponseType).ToListAsync(cancellationToken);
+        foreach (var type in new[] { Domain.Enums.ResponseType.PassFailNa, Domain.Enums.ResponseType.YesNo })
+        {
+            if (!existing.Contains(type))
+            {
+                db.ResponseOptionSets.Add(Domain.Templates.ResponseOptionSet.Create(
+                    type, Application.Templates.ResponseOptions.DefaultsJson(type)));
+            }
+        }
     }
 
     /// <summary>

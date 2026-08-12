@@ -82,6 +82,26 @@ public sealed class RatingScaleConfiguration : IEntityTypeConfiguration<RatingSc
     }
 }
 
+public sealed class ResponseOptionSetConfiguration : IEntityTypeConfiguration<ResponseOptionSet>
+{
+    public void Configure(EntityTypeBuilder<ResponseOptionSet> builder)
+    {
+        builder.ToTable("response_option_sets");
+        builder.HasKey(s => s.Id);
+        builder.Property(s => s.Id).ValueGeneratedNever();
+
+        builder.Property(s => s.ResponseType)
+            .HasConversion(new SnakeCaseEnumConverter<ResponseType>())
+            .HasMaxLength(30)
+            .IsRequired();
+        builder.Property(s => s.OptionsJson).IsRequired();
+        builder.Property(s => s.Version).IsRowVersion();
+
+        // One option set governs one response type.
+        builder.HasIndex(s => s.ResponseType).IsUnique();
+    }
+}
+
 public sealed class TemplateSectionConfiguration : IEntityTypeConfiguration<TemplateSection>
 {
     public void Configure(EntityTypeBuilder<TemplateSection> builder)

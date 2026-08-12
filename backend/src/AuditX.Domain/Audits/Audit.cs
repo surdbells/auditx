@@ -477,7 +477,7 @@ public sealed class Audit : AggregateRoot
     /// when the last item is finalised, auto-transitions the audit to Under Review (US-M4-009) in the same
     /// aggregate mutation. Authorisation (assignee / manager override) is enforced in the application layer.
     /// </summary>
-    public ResponseMutation RecordResponse(Guid itemId, ResponseVerdict? verdict, string? comment, bool isDraft, Guid actorUserId, bool requireCommentOnPass, DateTimeOffset nowUtc, string? valueJson = null, string? observation = null, string? recommendation = null)
+    public ResponseMutation RecordResponse(Guid itemId, ResponseVerdict? verdict, string? comment, bool isDraft, Guid actorUserId, bool requireCommentOnPass, DateTimeOffset nowUtc, string? valueJson = null, string? observation = null, string? recommendation = null, string? selectedOptionCode = null, string? selectedOptionLabel = null)
     {
         EnsureStatus("audit.responses_locked", AuditStatus.InProgress);
         var item = FindItem(itemId);
@@ -490,7 +490,7 @@ public sealed class Audit : AggregateRoot
             _responses.Add(response);
         }
 
-        response.Apply(verdict, comment, valueJson, isDraft, actorUserId, requireCommentOnPass, item.ResponseType.IsValueType(), nowUtc, observation, recommendation);
+        response.Apply(verdict, comment, valueJson, isDraft, actorUserId, requireCommentOnPass, item.ResponseType.IsValueType(), nowUtc, observation, recommendation, selectedOptionCode, selectedOptionLabel);
         item.SetState(isDraft ? ChecklistItemState.InProgress : ChecklistItemState.Responded);
         RaiseDomainEvent(new ItemRespondedEvent(Id, itemId, response.Id, verdict, isDraft));
 

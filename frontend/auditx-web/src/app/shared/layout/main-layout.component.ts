@@ -178,6 +178,7 @@ export class MainLayoutComponent {
       items: [
         { labelKey: 'nav.orgUnits', icon: 'account_tree', route: '/audit-universe/org-units', permissions: [Permissions.ViewUniverse] },
         { labelKey: 'nav.templates', icon: 'description', route: '/admin/templates', permissions: [Permissions.ViewTemplates] },
+        { labelKey: 'nav.responseLabels', icon: 'checklist', route: '/admin/response-labels', permissions: [Permissions.ViewTemplates] },
         { labelKey: 'nav.reportTemplates', icon: 'summarize', route: '/admin/report-templates', permissions: [Permissions.ConfigureReports] },
         { labelKey: 'nav.reportSchedules', icon: 'schedule_send', route: '/admin/report-schedules', permissions: [Permissions.ScheduleReports] },
         { labelKey: 'nav.notifications', icon: 'notifications', route: '/admin/notifications', permissions: [Permissions.ConfigureNotifications] },

@@ -33,3 +33,13 @@ public interface IRatingScaleRepository
 
     void Add(RatingScale scale);
 }
+
+/// <summary>Persistence operations for organisation-defined <see cref="ResponseOptionSet"/>s.</summary>
+public interface IResponseOptionSetRepository
+{
+    Task<ResponseOptionSet?> GetByResponseTypeAsync(ResponseType responseType, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ResponseOptionSet>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    void Add(ResponseOptionSet set);
+}

@@ -22,9 +22,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 
 import { RatingScalesService } from '../../../core/services/rating-scales.service';
+import { ResponseOptionSetsService } from '../../../core/services/response-option-sets.service';
 import {
   ChecklistResponse,
   RatingScalePoint,
+  ResponseOption,
+  ResponseOptionSet,
   ResponseType,
   ResponseVerdict,
   VALUE_RESPONSE_TYPES,
@@ -43,6 +46,8 @@ export interface RespondItemDialogData {
 
 export interface RespondItemDialogResult {
   verdict: ResponseVerdict | null;
+  /** The chosen organisation-defined conclusion option code, when a custom option set governs the item. */
+  selectedOptionCode: string | null;
   comment: string | null;
   /** Auditor's observation — what was found. Optional. */
   observation: string | null;
@@ -54,15 +59,6 @@ export interface RespondItemDialogResult {
   isDraft: boolean;
 }
 
-/** A comment is required when the verdict is Fail or N/A (runs on the group to read the sibling verdict). */
-const failNaNeedsComment: ValidatorFn = (group): ValidationErrors | null => {
-  const verdict = group.get('verdict')?.value as ResponseVerdict | null;
-  const comment = ((group.get('comment')?.value as string) ?? '').trim();
-  if ((verdict === 'fail' || verdict === 'na') && !comment) {
-    return { commentRequired: true };
-  }
-  return null;
-};
 
 @Component({
   selector: 'app-respond-item-dialog',
@@ -82,17 +78,25 @@ const failNaNeedsComment: ValidatorFn = (group): ValidationErrors | null => {
       <form [formGroup]="form" class="form">
         <!-- Verdict types capture the conclusion directly -->
         @if (!isValueType()) {
-          <mat-radio-group formControlName="verdict" class="verdicts">
-            @if (responseType === 'yes_no') {
-              <mat-radio-button value="pass">Yes</mat-radio-button>
-              <mat-radio-button value="fail">No</mat-radio-button>
-              <mat-radio-button value="na">N/A</mat-radio-button>
-            } @else {
-              <mat-radio-button value="pass">Pass</mat-radio-button>
-              <mat-radio-button value="fail">Fail</mat-radio-button>
-              <mat-radio-button value="na">N/A</mat-radio-button>
-            }
-          </mat-radio-group>
+          @if (usesOptionSet()) {
+            <mat-radio-group formControlName="selectedOptionCode" class="choices">
+              @for (o of optionSet()!.options; track o.code) {
+                <mat-radio-button [value]="o.code">{{ o.label }}</mat-radio-button>
+              }
+            </mat-radio-group>
+          } @else {
+            <mat-radio-group formControlName="verdict" class="verdicts">
+              @if (responseType === 'yes_no') {
+                <mat-radio-button value="pass">Yes</mat-radio-button>
+                <mat-radio-button value="fail">No</mat-radio-button>
+                <mat-radio-button value="na">N/A</mat-radio-button>
+              } @else {
+                <mat-radio-button value="pass">Pass</mat-radio-button>
+                <mat-radio-button value="fail">Fail</mat-radio-button>
+                <mat-radio-button value="na">N/A</mat-radio-button>
+              }
+            </mat-radio-group>
+          }
         } @else {
           <!-- Value types capture a typed value -->
           @switch (responseType) {
@@ -227,22 +231,37 @@ export class RespondItemDialogComponent {
   >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
   private readonly ratingScalesService = inject(RatingScalesService);
+  private readonly responseOptionSets = inject(ResponseOptionSetsService);
 
   readonly responseType = this.data.responseType;
   private readonly config = parseConfig(this.data.responseConfigJson ?? null);
   private readonly ratingScalePoints = signal<RatingScalePoint[] | null>(null);
+  /** The org-defined conclusion options for this verdict-based type, once loaded. */
+  readonly optionSet = signal<ResponseOptionSet | null>(null);
 
   readonly isValueType = computed(() => VALUE_RESPONSE_TYPES.includes(this.responseType));
+
+  /** True when a custom option set governs this item (verdict type with configured options). */
+  usesOptionSet(): boolean {
+    return !this.isValueType() && (this.optionSet()?.options.length ?? 0) > 0;
+  }
+
+  /** A comment is mandatory for a Fail/N-A verdict, or for a chosen option that is a finding / N/A / requires-comment. */
+  private readonly commentValidator: ValidatorFn = (group): ValidationErrors | null => {
+    const comment = ((group.get('comment')?.value as string) ?? '').trim();
+    return this.commentRequired() && !comment ? { commentRequired: true } : null;
+  };
 
   readonly form = this.fb.nonNullable.group(
     {
       verdict: [(this.data.current?.verdict ?? null) as ResponseVerdict | null],
+      selectedOptionCode: [this.data.current?.selectedOptionCode ?? ''],
       value: [parseValue(this.data.current?.valueJson ?? null)],
       comment: [this.data.current?.comment ?? ''],
       observation: [this.data.current?.observation ?? ''],
       recommendation: [this.data.current?.recommendation ?? ''],
     },
-    { validators: [failNaNeedsComment] },
+    { validators: [this.commentValidator] },
   );
 
   constructor() {
@@ -255,6 +274,24 @@ export class RespondItemDialogComponent {
         }
       });
     }
+
+    // Verdict-based types can be governed by an organisation-defined option set; load it so the auditor picks
+    // the org's own labels. On failure we silently keep the built-in Pass/Fail/N-A radios.
+    if (!this.isValueType()) {
+      this.responseOptionSets.get(this.responseType).subscribe({
+        next: (set) => {
+          this.optionSet.set(set);
+          this.form.controls.comment.updateValueAndValidity();
+        },
+        error: () => this.optionSet.set(null),
+      });
+    }
+  }
+
+  /** The option the auditor has currently selected, when an option set is in use. */
+  private selectedOption(): ResponseOption | null {
+    const code = this.form.controls.selectedOptionCode.value;
+    return this.optionSet()?.options.find((o) => o.code === code) ?? null;
   }
 
   choices(): string[] {
@@ -275,19 +312,26 @@ export class RespondItemDialogComponent {
     return this.config.unit ?? '';
   }
 
-  /** True when the chosen verdict makes a comment mandatory. */
+  /** True when the chosen conclusion makes a comment mandatory. */
   commentRequired(): boolean {
+    if (this.usesOptionSet()) {
+      const o = this.selectedOption();
+      return !!o && (o.requiresComment || o.isDeficiency || o.isNotApplicable);
+    }
     const v = this.form.controls.verdict.value;
     return v === 'fail' || v === 'na';
   }
 
-  /** Value types need a value to submit; verdict types need a verdict. */
+  /** Value types need a value; option-driven types need a chosen option; plain verdict types need a verdict. */
   canSubmit(): boolean {
     if (this.form.hasError('commentRequired')) {
       return false;
     }
     if (this.isValueType()) {
       return this.form.controls.value.value.trim().length > 0;
+    }
+    if (this.usesOptionSet()) {
+      return !!this.form.controls.selectedOptionCode.value;
     }
     return !!this.form.controls.verdict.value;
   }
@@ -310,8 +354,11 @@ export class RespondItemDialogComponent {
 
   private close(isDraft: boolean): void {
     const v = this.form.getRawValue();
+    const usingOptions = this.usesOptionSet();
     this.dialogRef.close({
-      verdict: v.verdict,
+      // When an option set is in use the server derives the canonical verdict from the chosen option.
+      verdict: usingOptions ? null : v.verdict,
+      selectedOptionCode: usingOptions ? v.selectedOptionCode || null : null,
       comment: v.comment.trim() || null,
       observation: v.observation.trim() || null,
       recommendation: v.recommendation.trim() || null,

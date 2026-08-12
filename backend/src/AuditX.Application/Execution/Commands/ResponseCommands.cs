@@ -8,6 +8,7 @@ using AuditX.Application.Common.Messaging;
 using AuditX.Application.Execution.Dtos;
 using AuditX.Application.Execution.Mapping;
 using AuditX.Application.Execution.Services;
+using AuditX.Application.Templates;
 using AuditX.Domain.Audits;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Authorization;
@@ -15,7 +16,7 @@ using FluentValidation;
 
 namespace AuditX.Application.Execution.Commands;
 
-public sealed record SubmitResponseCommand(Guid AuditId, Guid ItemId, string? Verdict, string? Comment, string? ValueJson, bool IsDraft, string Version, string? Observation = null, string? Recommendation = null) : ICommand<ChecklistResponseDto>;
+public sealed record SubmitResponseCommand(Guid AuditId, Guid ItemId, string? Verdict, string? Comment, string? ValueJson, bool IsDraft, string Version, string? Observation = null, string? Recommendation = null, string? SelectedOptionCode = null) : ICommand<ChecklistResponseDto>;
 
 public sealed class SubmitResponseCommandValidator : AbstractValidator<SubmitResponseCommand>
 {
@@ -34,6 +35,7 @@ public sealed class SubmitResponseCommandHandler(
     IPermissionResolver permissions,
     IBankSettingsRepository bankSettings,
     IResponseScoringService scoring,
+    IResponseOptionSetRepository optionSets,
     ICurrentUser currentUser,
     IAuditRecorder audit,
     IClock clock,
@@ -49,15 +51,29 @@ public sealed class SubmitResponseCommandHandler(
         var item = entity.ChecklistItems.FirstOrDefault(i => i.Id == command.ItemId) ?? throw new NotFoundException("Checklist item", command.ItemId);
         var isOverride = await RespondAuthorization.EnsureCanRespondAsync(entity, item, userId, permissions, cancellationToken);
 
-        var verdict = RespondAuthorization.ParseVerdict(command.Verdict, command.IsDraft);
+        // Resolve the organisation-defined conclusion option, if one was chosen for a verdict-based item. The
+        // option carries its own semantics (score, is-a-finding, N/A, requires-comment); the engine derives a
+        // canonical Pass/Fail/N-A verdict from it so exception-raising, analytics and reporting stay stable.
+        ResponseOption? option = null;
+        if (!string.IsNullOrWhiteSpace(command.SelectedOptionCode) && ResponseOptions.SupportsOptionSet(item.ResponseType))
+        {
+            var set = await optionSets.GetByResponseTypeAsync(item.ResponseType, cancellationToken);
+            var options = (set is null ? null : ResponseOptions.TryParse(set.OptionsJson)) ?? ResponseOptions.Defaults(item.ResponseType);
+            option = options.FirstOrDefault(o => string.Equals(o.Code, command.SelectedOptionCode, StringComparison.OrdinalIgnoreCase))
+                ?? throw new ConflictException("response.unknown_option", $"Unknown conclusion option '{command.SelectedOptionCode}'.");
+        }
+
+        var verdict = option?.CanonicalVerdict ?? RespondAuthorization.ParseVerdict(command.Verdict, command.IsDraft);
         var settings = await bankSettings.GetAsync(cancellationToken);
+        var requireCommentOnPass = settings.RequireCommentOnPass || (option?.RequiresComment ?? false);
 
-        var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, settings.RequireCommentOnPass, clock.UtcNow, command.ValueJson, command.Observation, command.Recommendation);
+        var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, requireCommentOnPass, clock.UtcNow, command.ValueJson, command.Observation, command.Recommendation, option?.Code, option?.Label);
 
-        // Post-response scoring: computed here (the aggregate can't resolve a RatingScale) and applied to the
-        // just-recorded response before it's persisted/snapshotted.
-        var score = await scoring.ComputeScoreAsync(
-            item.ResponseType, item.ResponseConfigJson, mutation.Response.Verdict, mutation.Response.ValueJson, command.IsDraft, cancellationToken);
+        // Post-response scoring: a custom option supplies its own 0-100 score (N/A excluded); otherwise fall back to
+        // the standard mapping (which the aggregate can't compute — it can't resolve a RatingScale).
+        var score = option is not null
+            ? (command.IsDraft || option.IsNotApplicable ? null : option.Score)
+            : await scoring.ComputeScoreAsync(item.ResponseType, item.ResponseConfigJson, mutation.Response.Verdict, mutation.Response.ValueJson, command.IsDraft, cancellationToken);
         entity.SetResponseScore(command.ItemId, score);
 
         audit.Record(
@@ -77,7 +93,7 @@ public sealed class SubmitResponseCommandHandler(
     }
 
     private static object? Snapshot(ResponseState? state)
-        => state is null ? null : new { verdict = state.Verdict is { } v ? v.ToSnake() : null, state.Comment, state.Observation, state.Recommendation, state.ValueJson, state.IsDraft, state.Version, state.Score };
+        => state is null ? null : new { verdict = state.Verdict is { } v ? v.ToSnake() : null, state.Comment, state.Observation, state.Recommendation, state.SelectedOptionCode, state.SelectedOptionLabel, state.ValueJson, state.IsDraft, state.Version, state.Score };
 }
 
 public sealed record DiscardDraftCommand(Guid AuditId, Guid ItemId, string Version) : ICommand<Unit>;

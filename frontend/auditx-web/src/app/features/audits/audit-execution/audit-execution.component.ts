@@ -456,6 +456,7 @@ export class AuditExecutionComponent {
         this.service
           .submitResponse(this.audit().id, item.itemId, {
             verdict: result.verdict,
+            selectedOptionCode: result.selectedOptionCode,
             comment: result.comment,
             observation: result.observation,
             recommendation: result.recommendation,
