@@ -111,3 +111,8 @@ delivered codebase (backend domain areas + API controllers + Angular feature are
 *Cross-cutting throughout:* Clean Architecture (Domain/Application/Infrastructure/API), hand-rolled CQRS,
 optimistic concurrency (rowversion), permission-based authorisation, and the append-only audit trail.
 See **[PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md)** for architecture, setup, and operations.
+
+For a detailed, per-submodule reference with the API surface, domain aggregates, permissions and business
+rules, see **[AuditX-Module-Reference.pdf](AuditX-Module-Reference.pdf)** (source:
+[AuditX-Module-Reference.html](AuditX-Module-Reference.html) — regenerate with
+`chrome --headless=new --no-pdf-header-footer --print-to-pdf=AuditX-Module-Reference.pdf AuditX-Module-Reference.html`).

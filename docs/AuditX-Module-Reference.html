@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AuditX — Module &amp; Submodule Reference</title>
+<style>
+  :root{
+    --ink:#1e2330; --muted:#59617a; --faint:#8a91a6; --line:#e4e7f0; --line2:#eef1f7;
+    --accent:#4f46e5; --accent-soft:#eef0fe; --accent-ink:#3730a3;
+    --teal:#0e7490; --green:#15803d; --amber:#b45309;
+  }
+  *{box-sizing:border-box}
+  @page{ size:A4; margin:15mm 14mm 14mm; }
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{
+    font-family:"Segoe UI",-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink); font-size:9.4px; line-height:1.5; margin:0;
+  }
+  code{ font-family:"Cascadia Code",Consolas,"SFMono-Regular",monospace; font-size:0.86em;
+    background:#f3f4f9; border:1px solid var(--line); border-radius:3px; padding:0 3px; color:#334; }
+
+  /* ---- Cover ---- */
+  .cover{ border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:14px; }
+  .cover .kicker{ font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
+    font-weight:700; margin:0 0 4px; }
+  .cover h1{ font-size:24px; letter-spacing:-.02em; margin:0 0 6px; }
+  .cover .sub{ color:var(--muted); font-size:11px; max-width:150mm; margin:0; }
+  .cover .stamp{ color:var(--faint); font-size:8.5px; margin-top:8px; }
+
+  .intro{ display:grid; grid-template-columns:1.55fr 1fr; gap:14px; margin-bottom:14px; }
+  .intro p{ margin:0 0 6px; color:#333a4d; }
+  .legend{ background:#f7f8fc; border:1px solid var(--line); border-radius:8px; padding:9px 11px; }
+  .legend h4{ margin:0 0 5px; font-size:8.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--faint); }
+  .legend ul{ margin:0; padding-left:14px; }
+  .legend li{ margin:2px 0; color:var(--muted); }
+
+  .toc{ border:1px solid var(--line); border-radius:8px; padding:9px 12px 10px; margin-bottom:16px; }
+  .toc h4{ margin:0 0 6px; font-size:8.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--faint); }
+  .toc ol{ margin:0; padding:0; list-style:none; columns:3; column-gap:16px; }
+  .toc li{ font-size:9px; margin:2px 0; break-inside:avoid; color:#33384a; }
+  .toc li b{ color:var(--accent); font-variant-numeric:tabular-nums; }
+
+  /* ---- Module ---- */
+  .module{ margin:0 0 12px; }
+  .module-head{ display:flex; gap:9px; align-items:flex-start; break-after:avoid; break-inside:avoid;
+    border-top:1px solid var(--line); padding-top:9px; }
+  .badge{ flex:0 0 auto; width:22px; height:22px; border-radius:6px; background:var(--accent);
+    color:#fff; font-weight:700; font-size:10px; display:flex; align-items:center; justify-content:center;
+    font-variant-numeric:tabular-nums; margin-top:1px; }
+  .module-head h2{ font-size:14px; letter-spacing:-.01em; margin:0; display:flex; align-items:baseline; gap:7px; }
+  .mtag{ font-size:8px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft);
+    border-radius:999px; padding:1px 6px; letter-spacing:.03em; }
+  .meta{ display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:3px; font-size:8.3px; color:var(--muted); }
+  .meta b{ color:var(--faint); font-weight:600; text-transform:uppercase; letter-spacing:.05em; font-size:7.6px; }
+  .overview{ margin:6px 0 6px 31px; color:#333a4d; }
+  dl.subs{ margin:0 0 0 31px; }
+  .sub{ break-inside:avoid; padding:3px 0; border-bottom:1px solid var(--line2); display:grid;
+    grid-template-columns:44mm 1fr; gap:10px; }
+  .sub:last-child{ border-bottom:none; }
+  .sub dt{ font-weight:700; color:var(--ink); }
+  .sub dt .rt{ display:block; font-weight:400; font-size:7.8px; color:var(--faint);
+    font-family:"Cascadia Code",Consolas,monospace; margin-top:1px; }
+  .sub dd{ margin:0; color:#3b4258; }
+
+  .foot{ margin-top:16px; padding-top:8px; border-top:1px solid var(--line); color:var(--faint);
+    font-size:8px; display:flex; justify-content:space-between; }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <p class="kicker">AuditX Enterprise · On-Premises Edition</p>
+  <h1>Module &amp; Submodule Reference</h1>
+  <p class="sub">A complete, verified map of every functional module in the internal-audit platform and the
+  submodules within it — with the API surface, primary domain aggregates, permissions, and the business rules that
+  govern each area. Compiled directly from the source (controllers, domain aggregates, and Angular feature areas).</p>
+  <p class="stamp">ASP.NET Core 10 · Angular 21 · Clean Architecture (Domain / Application / Infrastructure / API) · hand-rolled CQRS · EF Core 10 / SQL Server</p>
+</header>
+
+<div class="intro">
+  <div>
+    <p><b>How the platform is organised.</b> AuditX follows the audit value chain end to end: it maintains the
+    <i>audit universe</i> and a risk-based <i>annual plan</i>, authors reusable <i>checklist templates</i>, runs
+    <i>audit engagements</i> and <i>fieldwork</i>, tracks <i>findings</i> to remediation, governs <i>controls</i>,
+    <i>compliance</i> and <i>enterprise risk</i>, administers <i>sanctions</i>, and delivers <i>reporting</i>,
+    <i>analytics</i> and <i>audit-committee</i> governance — all on a hardened, single-tenant on-premises stack.</p>
+    <p>Every module is a vertical slice (domain → application → infrastructure → API → Angular feature), guarded by
+    fine-grained permissions, optimistic concurrency, and an append-only audit trail.</p>
+  </div>
+  <div class="legend">
+    <h4>Reading the entries</h4>
+    <ul>
+      <li><b>API</b> — REST base route(s) under <code>/api/v1</code>.</li>
+      <li><b>Aggregate</b> — the primary DDD domain root.</li>
+      <li><b>Perms</b> — representative permission keys gating the area.</li>
+      <li><b>UI</b> — the Angular feature folder.</li>
+      <li>Every endpoint returns an enveloped <code>{ data }</code>; mutations echo a <code>version</code> rowversion for concurrency.</li>
+    </ul>
+  </div>
+</div>
+
+<nav class="toc">
+  <h4>Contents — 15 modules</h4>
+  <ol>
+    <li><b>01</b> · Identity &amp; Access</li>
+    <li><b>02</b> · Audit Universe &amp; Org Structure</li>
+    <li><b>03</b> · Annual Planning</li>
+    <li><b>04</b> · Checklist Templates</li>
+    <li><b>05</b> · Audit Engagements</li>
+    <li><b>06</b> · Execution &amp; Fieldwork</li>
+    <li><b>07</b> · Findings &amp; Exceptions</li>
+    <li><b>08</b> · Controls &amp; Compliance</li>
+    <li><b>09</b> · Enterprise Risk</li>
+    <li><b>10</b> · Sanctions &amp; Discipline</li>
+    <li><b>11</b> · Reporting</li>
+    <li><b>12</b> · Analytics</li>
+    <li><b>13</b> · Audit Committee</li>
+    <li><b>14</b> · Notifications</li>
+    <li><b>15</b> · Platform &amp; Administration</li>
+  </ol>
+</nav>
+
+<!-- ===================== 01 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">01</div>
+    <div>
+      <h2>Identity &amp; Access <span class="mtag">M1</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/auth</code> <code>/users</code> <code>/roles</code> <code>/permissions</code> <code>/maker-checker</code></span>
+        <span><b>Aggregate</b> User · Role · UserRole · MakerCheckerAction</span>
+        <span><b>UI</b> <code>features/auth</code>, <code>features/admin/identity</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">Authenticates staff against Active Directory (no passwords stored) and governs who can do what
+  through AuditX-owned roles, scoped permissions, dual control, and time-bounded delegation.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Authentication &amp; sessions<span class="rt">POST /auth/login · GET /auth/sso · /auth/session</span></dt>
+      <dd>AD credentials validated by an LDAP bind, or Kerberos/IWA single sign-on; a Development provider covers local use.
+      Sessions are short-lived JWTs in HttpOnly cookies (8h sliding / 24h absolute) with a Redis denylist for revocation; the session endpoint re-verifies AD account status on every call.</dd></div>
+    <div class="sub"><dt>Users &amp; provisioning<span class="rt">/users · /users/me · /users/directory</span></dt>
+      <dd>Just-in-time provisioning creates users in an <i>awaiting-role</i> state; granting the first role activates them.
+      Supports deactivation/reactivation, per-user annual capacity (person-days), notification preferences, and a lightweight id→name directory any signed-in user can read.</dd></div>
+    <div class="sub"><dt>Roles &amp; inheritance<span class="rt">/roles (ManageRoles)</span></dt>
+      <dd>Roles are AuditX-owned and independent of AD groups, with an acyclic inheritance graph and permission keys validated against the catalogue.
+      Four built-in roles (Auditor, Audit Manager, Auditee, Administrator) are immutable; the Administrator holds every permission. Permission changes are maker-checker gated.</dd></div>
+    <div class="sub"><dt>Permission catalogue<span class="rt">GET /permissions/catalogue</span></dt>
+      <dd>The full machine-readable catalogue of permission keys and their scopes, used to drive the role editor and to validate grants. Scoped permissions can be global or bound to a specific resource.</dd></div>
+    <div class="sub"><dt>Maker-checker (dual control)<span class="rt">/maker-checker · gates</span></dt>
+      <dd>High-risk actions are captured as pending actions with a serialized payload replayed on approval; a maker can never approve their own action, and rejections need a ≥20-char reason.
+      Admin-configurable gates cover role-permission change, template publish, MAP approval, sanctions-grid edit, and config activation.</dd></div>
+    <div class="sub"><dt>Delegation<span class="rt">/users/{id}/delegations (Delegate)</span></dt>
+      <dd>Time-bounded delegation of a role from one user to another (modelled on the UserRole entity); the delegated authority only confers permission inside its window. An hourly background job expires elapsed delegations; either party can terminate early.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 02 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">02</div>
+    <div>
+      <h2>Audit Universe &amp; Org Structure <span class="mtag">M2 · M3</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/audit-universe</code> <code>/risk-dimensions</code> <code>/org-units</code></span>
+        <span><b>Aggregate</b> AuditableEntity · RiskDimension · OrgUnit</span>
+        <span><b>UI</b> <code>features/audit-universe</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">The catalogue of everything auditable and the organisational tree it rolls up to — the risk-based
+  foundation the annual plan prioritises against.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Auditable entities<span class="rt">/audit-universe/entities</span></dt>
+      <dd>Branches, processes, systems, vendors and products, with owner, org-unit, an acyclic parent hierarchy, and a last-audited stamp set when an audit completes.
+      Each entity carries an <i>expected-audits-per-year</i> coverage target and supports CSV bulk import (soft-delete/archive on removal).</dd></div>
+    <div class="sub"><dt>Risk scoring &amp; dimensions<span class="rt">/entities/{id}/risk-scores · /risk-dimensions</span></dt>
+      <dd>Entities are scored against a configurable set of weighted risk dimensions; the composite is a weight-normalised average over each dimension's min/max scale, with full score history.
+      Scoring rejects incomplete/unknown/out-of-range inputs so prioritisation stays defensible.</dd></div>
+    <div class="sub"><dt>Organisational units<span class="rt">/org-units (ManageUniverse)</span></dt>
+      <dd>An acyclic division → department → branch/unit tree with unique codes; the roll-up dimension for org-based reporting. Units can be renamed, reparented, archived and restored.</dd></div>
+    <div class="sub"><dt>Org-unit scorecards<span class="rt">GET /analytics/org-units</span></dt>
+      <dd>Department / business-unit scorecards that aggregate audits and findings up the org-unit subtree, so a parent unit reflects the activity of all its children.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 03 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">03</div>
+    <div>
+      <h2>Annual Planning <span class="mtag">M3</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/annual-plans</code> <code>/coverage-analytics</code></span>
+        <span><b>Aggregate</b> AnnualPlan · PlanItem · PlanItemEntityLink</span>
+        <span><b>UI</b> <code>features/planning</code>, <code>features/coverage</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">Builds the period audit plan, routes it through audit-committee approval, and locks it once approved
+  so audits happen as planned unless a governed revision is made.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Plans &amp; lifecycle<span class="rt">Draft → Submitted → Approved → Closed</span></dt>
+      <dd>Period-scoped plans move Draft → Submitted → (Revisions Requested / Approved) → Closed; submit requires at least one item and raises an event for the committee. Editing is confined to Draft (and Revisions-Requested).</dd></div>
+    <div class="sub"><dt>Multi-entity plan items<span class="rt">POST /{id}/items</span></dt>
+      <dd>One plan item is a single schedule (audit type + window + lead) that can cover several entities; each entity gets its own link and its own independently-launched audit, with a rolled-up item status.
+      Item dates must fall inside the plan period and stay ordered.</dd></div>
+    <div class="sub"><dt>Committee routing<span class="rt">/submit · /decision (ACChair)</span></dt>
+      <dd>The plan is submitted for approval; the committee chair records a decision (approve / request revisions / reject) with comments, persisted as an immutable decision record. Approval stamps the approval time.</dd></div>
+    <div class="sub"><dt>Post-approval governance<span class="rt">/submit-revision</span></dt>
+      <dd>An approved plan locks: a <i>minor</i> revision shifts item dates in place and stays approved, while a <i>material</i> revision re-opens the plan for committee re-approval. A bank setting can permit launching audits before approval.</dd></div>
+    <div class="sub"><dt>Coverage analytics<span class="rt">/coverage-analytics (ViewCoverage)</span></dt>
+      <dd>Not-audited-since, high-risk coverage gaps, and a coverage matrix over a window — the views that expose where the universe is under-covered relative to its risk and expected frequency.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 04 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">04</div>
+    <div>
+      <h2>Checklist Templates <span class="mtag">M2</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/templates</code> <code>/rating-scales</code> <code>/response-option-sets</code></span>
+        <span><b>Aggregate</b> Template · TemplateVersion · RatingScale · ResponseOptionSet</span>
+        <span><b>UI</b> <code>features/admin/templates</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">Reusable, versioned checklists that seed an audit's fieldwork, plus the organisation-configurable
+  scoring and conclusion vocabularies that back them.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Template authoring &amp; publish<span class="rt">/templates (ManageTemplates)</span></dt>
+      <dd>Draft authoring of sections and items, then publish (maker-checker gated) into an immutable version; a new draft can be spun from a published template, and templates can be cloned, archived and diffed across versions.</dd></div>
+    <div class="sub"><dt>Sections &amp; items<span class="rt">/{id}/items · /{id}/sections</span></dt>
+      <dd>Ordered sections and items; each item declares a response type, reference notes, required flag, optional default-assignment rule, per-type config, an item risk rating (drives default exception severity), and an optional linked control.
+      Response types are PassFailNa and YesNo (verdict) plus Text, Numeric, Date, Rating and MultipleChoice (value).</dd></div>
+    <div class="sub"><dt>Rating scales<span class="rt">/rating-scales</span></dt>
+      <dd>Reusable labelled 0–100 point sets referenced by Rating-type items; the point an auditor selects drives the item's post-response score.</dd></div>
+    <div class="sub"><dt>Response option sets<span class="rt">/response-option-sets</span></dt>
+      <dd>Organisation-defined conclusion options per verdict type — relabel and re-score the choices (e.g. Compliant / Partially Compliant / Non-Compliant / N-A). Each option carries its own score and semantics, and the engine derives a canonical Pass/Fail/N-A so scoring, findings and reports keep working; resettable to defaults.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 05 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">05</div>
+    <div>
+      <h2>Audit Engagements <span class="mtag">M4</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/audits</code></span>
+        <span><b>Aggregate</b> Audit · AuditTeamMember · AuditSection · AuditChecklistItem</span>
+        <span><b>UI</b> <code>features/audits</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">The engagement itself — its lifecycle state machine, team, checklist, and the pre-audit and
+  self-assessment modes that adapt how an audit is run.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Lifecycle<span class="rt">Draft → Planned → In&nbsp;Progress → Under&nbsp;Review → Completed</span></dt>
+      <dd>Planning requires a checklist item and an auditor; review can auto-trigger when the last item is finalised; completion stamps the actual end date and updates the linked plan item and entity.
+      Return-to-progress, reopen and cancel (≥20-char reason) round out the machine; transitions are resource-scoped in the handler.</dd></div>
+    <div class="sub"><dt>Team management<span class="rt">/{id}/team · /transfer-lead</span></dt>
+      <dd>Lead, auditee and auditor membership with lead transfer; the sole lead or auditee can't simply be removed, and a member's items must be reassigned before they leave.</dd></div>
+    <div class="sub"><dt>Checklist authoring<span class="rt">/{id}/checklist/items · /sections</span></dt>
+      <dd>First-class item and section CRUD with reorder and drag-drop <i>arrange</i> (cross-section moves that auto-create sections). Items are copied from the template version at creation, so a running audit is decoupled from later template edits.</dd></div>
+    <div class="sub"><dt>Item assignment<span class="rt">/{id}/items/{itemId}/assignment · bulk-reassign</span></dt>
+      <dd>Assign or clear the owner of a checklist item (must be an active team member), individually or in bulk.</dd></div>
+    <div class="sub"><dt>Kickoff meeting<span class="rt">POST /{id}/kickoff</span></dt>
+      <dd>Schedule or reschedule a pre-audit kickoff meeting (time, location/join link, agenda); scheduling notifies the auditee in advance through the notification pipeline.</dd></div>
+    <div class="sub"><dt>Self-assessment mode<span class="rt">POST /audits/self-assessment (RunSelfAssessment)</span></dt>
+      <dd>The area owner assesses their own area — the same person is both lead and auditee, no independent auditor is required, and only they may respond — reusing the full checklist/response/exception engine from a published template.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 06 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">06</div>
+    <div>
+      <h2>Execution &amp; Fieldwork <span class="mtag">M5</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/audits/{id}/…responses</code> <code>/evidence</code> <code>/evidence-requests</code> <code>/time-entries</code> <code>/procedures</code></span>
+        <span><b>Aggregate</b> ChecklistResponse · EvidenceFile · EvidenceRequest · TimeEntry · AuditProcedure</span>
+        <span><b>UI</b> <code>features/audits/audit-execution</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">The working-paper layer: recording conclusions and their evidence, and capturing the effort and
+  procedures behind the fieldwork.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Checklist responses<span class="rt">POST /{id}/items/{itemId}/responses</span></dt>
+      <dd>One create-or-update response per item: verdict (or custom option), captured value, comment, <i>observation</i> and <i>recommendation</i>, with a 0–100 post-response score and full before/after edit history.
+      Fail/N-A always require a comment; a material edit re-computes the score.</dd></div>
+    <div class="sub"><dt>Evidence<span class="rt">/{id}/responses/{rid}/evidence · /evidence/flagged</span></dt>
+      <dd>Uploads are magic-byte + declared-MIME validated and SHA-256 hashed, then re-verified on every download — a mismatch flags the file and blocks reads until an admin unflags it. Per-file and per-audit size caps apply; deletes are soft with a mandatory reason.</dd></div>
+    <div class="sub"><dt>Evidence requests<span class="rt">/{id}/evidence-requests (RespondItem)</span></dt>
+      <dd>The expected/requested side of evidence — request a document (type, due date), then mark received or waive (with reason); overdue-but-still-requested items drive missing-evidence reporting.</dd></div>
+    <div class="sub"><dt>Time tracking<span class="rt">/{id}/time-entries · /summary (LogTime)</span></dt>
+      <dd>Logged effort by category (Fieldwork, Review, Reporting, Planning, Administration) with amendments; the sum is the "actual" side of budget-vs-actual against the audit's budgeted hours, grouped by auditor for utilisation.</dd></div>
+    <div class="sub"><dt>Procedures<span class="rt">/{id}/procedures (RespondItem)</span></dt>
+      <dd>Typed fieldwork procedures — sampling, interview and walkthrough — with a coherent sampling chain (population ≥ sample size ≥ items tested ≥ exceptions found) so the analytics error-rate never counts orphan exceptions.</dd></div>
+    <div class="sub"><dt>Review worklists<span class="rt">/{id}/review/fail-without-exception · /summary</span></dt>
+      <dd>Surfaces failed items that lack a raised exception and lets a manager record a justification that a Fail needs no exception, plus a review-summary roll-up before sign-off.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 07 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">07</div>
+    <div>
+      <h2>Findings &amp; Exceptions <span class="mtag">M6</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/exceptions</code> <code>/exception-raising-rules</code> <code>/root-cause-gaps</code></span>
+        <span><b>Aggregate</b> AuditException · MapAction · FindingVerification · RootCauseGap</span>
+        <span><b>UI</b> <code>features/exceptions</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">The finding lifecycle from being raised through management action, closure and follow-up — plus the
+  systemic root-cause register that ties recurring findings together.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Exceptions &amp; the finding register<span class="rt">/exceptions (ViewExceptions)</span></dt>
+      <dd>Findings carry severity (defaulted from the item's risk rating), owner, financial impact, root-cause and non-conformance categories, and recurrence links; a cross-audit tracker and hash-stamped CSV export span the whole register.
+      Severity/owner changes need reasons and are blocked once terminal.</dd></div>
+    <div class="sub"><dt>Status lifecycle<span class="rt">Open → MapSubmitted → MapApproved → PendingClosure → Closed</span></dt>
+      <dd>Exactly seven states (plus Cancelled/Rejected edges). A Critical finding's closure sets a CIA-hold flag inside PendingClosure and stays there until the Chief Internal Auditor countersigns; reopening a closed finding increments a reopen count.</dd></div>
+    <div class="sub"><dt>Management action plans (MAP)<span class="rt">/{id}/map · /map/approve · /map/mark-complete</span></dt>
+      <dd>The auditee submits remediation actions (owner, target date, expected evidence), which are approved (maker-checker gated) or rejected; completing every action moves the finding to pending-closure. Actions accept their own evidence uploads.</dd></div>
+    <div class="sub"><dt>Verification &amp; links<span class="rt">/verifications · /controls · /regulations</span></dt>
+      <dd>Post-closure follow-up verifications (passed / partially / failed) provide durable assurance, and findings link many-to-many to the controls and regulations they implicate — powering compliance-by-regulation and control-failure analytics.</dd></div>
+    <div class="sub"><dt>Exception-raising rules<span class="rt">/exception-raising-rules</span></dt>
+      <dd>Bank-configurable rules that <i>extend</i> when a response is eligible to raise a finding — on an N/A verdict, or a score at/below a threshold — over and above the always-eligible Fail verdict.</dd></div>
+    <div class="sub"><dt>Root-cause gaps &amp; remediation plans<span class="rt">/root-cause-gaps</span></dt>
+      <dd>Systemic weaknesses tracked as first-class open→closed items that link the contributing findings, each with a remediation plan of corrective actions that carry their own owner, due date and Open→Completed state.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 08 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">08</div>
+    <div>
+      <h2>Controls &amp; Compliance</h2>
+      <div class="meta">
+        <span><b>API</b> <code>/controls</code> <code>/regulations</code></span>
+        <span><b>Aggregate</b> Control · ControlTest · ControlRiskLink · Regulation</span>
+        <span><b>UI</b> <code>features/controls</code>, <code>features/compliance</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">The internal-control register and its effectiveness testing, wired to the risks it mitigates, the
+  items that test it, and the regulations it satisfies.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Control register<span class="rt">/controls (ViewControls / ManageControls)</span></dt>
+      <dd>Controls with an immutable code, type (Preventive / Detective / Corrective / Directive), frequency, owner and covered entity; effectiveness starts Not-Tested and any assessed effectiveness requires a last-tested date. Controls can be activated or retired.</dd></div>
+    <div class="sub"><dt>Effectiveness testing<span class="rt">/controls/{id}/tests</span></dt>
+      <dd>Append-only tests — driven by a checklist item during an audit or recorded ad-hoc — set the control's current effectiveness (Effective / Partially / Ineffective) and last-tested date; the latest test reflects onto the control.</dd></div>
+    <div class="sub"><dt>Risk &amp; item linkage<span class="rt">/controls/{id}/risks · item↔control</span></dt>
+      <dd>Controls link many-to-many to enterprise risks (neither register owns the other), and checklist items reference the control they test so that raising a finding auto-links it to that control.</dd></div>
+    <div class="sub"><dt>Regulations register<span class="rt">/regulations</span></dt>
+      <dd>Regulatory obligations with an immutable code, issuing authority and category; findings link to regulations to power the compliance-by-regulation report.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 09 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">09</div>
+    <div>
+      <h2>Enterprise Risk</h2>
+      <div class="meta">
+        <span><b>API</b> <code>/risks</code></span>
+        <span><b>Aggregate</b> Risk</span>
+        <span><b>UI</b> <code>features/risks</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">A standalone enterprise-risk register with inherent/residual likelihood-and-impact scoring and an
+  ISO-31000 treatment lifecycle — distinct from the universe's audit-prioritisation dimensions.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Risk register &amp; scoring<span class="rt">/risks (ViewRisk / ManageRisk)</span></dt>
+      <dd>Each risk scores likelihood × impact on a 1–5 scale; the current score is the residual where assessed, else inherent, driving a Low/Medium/High/Critical band and the 5×5 heatmap. Residual may not exceed inherent, and a complete residual pair auto-advances the risk to Assessed.</dd></div>
+    <div class="sub"><dt>Treatment &amp; lifecycle<span class="rt">/{id}/transition</span></dt>
+      <dd>Status flows Open → Assessed → Mitigating → Monitoring → Closed (terminal, with a rationale); the treatment strategy is Accept / Mitigate / Transfer / Avoid, and an optional entity link enables org-unit roll-ups.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 10 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">10</div>
+    <div>
+      <h2>Sanctions &amp; Discipline <span class="mtag">M7</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/sanctions/cases</code> <code>/sanctions/grid</code></span>
+        <span><b>Aggregate</b> SanctionsCase · SanctionsAppeal · SanctionsGridVersion</span>
+        <span><b>UI</b> <code>features/admin/sanctions</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">The disciplinary workflow triggered from a finding and run through recommendation, HR, the
+  disciplinary committee and appeal — deliberately decoupled from the finding it came from.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Case lifecycle<span class="rt">recommendation → HR → DC → appeal → closed</span></dt>
+      <dd>A case is triggered off an exception (copying its category/severity at trigger), a recommendation is drafted against the grid and submitted, HR records an outcome or refers to the disciplinary committee, the committee decides (with a voting record), and either party may appeal.
+      The case never reads or writes the originating finding's state.</dd></div>
+    <div class="sub"><dt>Grid consult &amp; deviation<span class="rt">/cases/{id}/recommendation</span></dt>
+      <dd>The recommendation consults the active sanctions grid for the recommended range; an out-of-range recommendation requires a documented deviation reason, keeping outcomes consistent and defensible.</dd></div>
+    <div class="sub"><dt>Appeals<span class="rt">/cases/{id}/appeals · /appeals/{id}/decision</span></dt>
+      <dd>An appeal is its own record routed to the configured appeals authority (default CIA) and decided once; the outcome propagates onto the case trail. Segregation of duties keeps closure a write-permission action, not a viewer's.</dd></div>
+    <div class="sub"><dt>Sanctions grid<span class="rt">/sanctions/grid (ViewGrid / ManageGrid)</span></dt>
+      <dd>The versioned offence-matrix mapping (category | severity | recurrence) → recommended range; exactly one version is active bank-wide, and activating a new version is maker-checker dual-controlled with a reason.</dd></div>
+    <div class="sub"><dt>Case dossier<span class="rt">POST /cases/{id}/dossier</span></dt>
+      <dd>Generates a hash-stamped case dossier document (SHA-256 header) capturing the case record for HR/committee review.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 11 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">11</div>
+    <div>
+      <h2>Reporting <span class="mtag">M8</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/reports</code> <code>/report-templates</code> <code>/report-schedules</code> <code>/shared-links</code></span>
+        <span><b>Aggregate</b> Report · ReportDistribution · ReportTemplate · SharedLink</span>
+        <span><b>UI</b> <code>features/reports</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">Tamper-evident report generation, distribution with delivery confirmation, and the templates,
+  schedules and shareable links around it.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Report generation<span class="rt">/audits/{id}/reports · /reports/standalone</span></dt>
+      <dd>Per-audit engagement reports and standalone cross-audit reports (executive summary, plan status, KPI pack) render asynchronously and record a canonical HTML SHA-256; the template definition is snapshotted at start so historical reports render as issued.
+      Formats produced: HTML, PDF, CSV, XLSX (DOCX on request); completed reports are immutable.</dd></div>
+    <div class="sub"><dt>Integrity verification<span class="rt">/reports/{id}/download · /verify-hash</span></dt>
+      <dd>Every download re-verifies the SHA-256 and stamps it on the response; a recompute-and-compare endpoint and a hash-mismatch alert event provide tamper evidence without mutating content.</dd></div>
+    <div class="sub"><dt>Distribution &amp; delivery<span class="rt">/reports/{id}/distribute · /distributions/{id}/outcome</span></dt>
+      <dd>Distribute to users, emails or roles and record a per-recipient delivery outcome (delivered / bounced), with a full distribution log.</dd></div>
+    <div class="sub"><dt>Templates &amp; schedules<span class="rt">/report-templates · /report-schedules</span></dt>
+      <dd>Bank-configurable report layouts (versioned, activated with a reason) and recurring schedules that auto-generate a standalone report on a cadence and email recipients, executed by a background runner as the System actor.</dd></div>
+    <div class="sub"><dt>Shared links<span class="rt">/reports/{id}/share · /shared-links/{slug}</span></dt>
+      <dd>Opaque, optionally-expiring links that are a reference — not an access grant: resolving a slug returns only the target descriptor, and the viewer must still authenticate and hold the report's permission. Links are revocable and retained for the trail.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 12 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">12</div>
+    <div>
+      <h2>Analytics <span class="mtag">M9</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/analytics</code> <code>/dashboards</code></span>
+        <span><b>Aggregate</b> KPI query services · Dashboard · widgets · snapshot fact table</span>
+        <span><b>UI</b> <code>features/analytics</code>, <code>features/dashboard</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">A read-only KPI suite over the whole platform, with trend history and configurable dashboards —
+  and a hard privacy rule that no analytics projection exposes a sanctions subject's identity.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Function &amp; portfolio KPIs<span class="rt">function-performance · exception-portfolio · material-findings · plan-status</span></dt>
+      <dd>Headline health of the audit function, the finding portfolio, material findings and annual-plan status (the source for the plan Gantt) — the bank-wide read-only indicators for management.</dd></div>
+    <div class="sub"><dt>Performance scorecards<span class="rt">performance-scorecards · auditor-throughput (PerformanceAnalyticsView)</span></dt>
+      <dd>Per-auditor and team throughput scorecards, gated by a dedicated permission and suppressing the caller's own row unless they are the CIA — so performance data is seen appropriately.</dd></div>
+    <div class="sub"><dt>Coverage, workload &amp; risk<span class="rt">coverage · auditor-workload · risk-heatmap · control-effectiveness · compliance-by-regulation</span></dt>
+      <dd>Coverage heatmap, workload-versus-capacity, the 5×5 risk heatmap, control-effectiveness mix and compliance-by-regulation — plus budget-vs-actual, utilisation, finding follow-up, procedure error-rates and evidence turnaround.</dd></div>
+    <div class="sub"><dt>Recurrence detection<span class="rt">recurrence-clusters</span></dt>
+      <dd>A daily scan clusters recurring control weaknesses across the finding history and raises an alert when a new cluster crosses the recurrence threshold.</dd></div>
+    <div class="sub"><dt>Trends &amp; comparison<span class="rt">trend · metric-comparison · snapshots/capture</span></dt>
+      <dd>Time-series from a daily KPI snapshot fact table, with month/quarter/year-over-year deltas and a linear forecast; snapshots can be force-captured for the day.</dd></div>
+    <div class="sub"><dt>Configurable dashboards<span class="rt">/dashboards (ConfigureDashboards)</span></dt>
+      <dd>Widget-composed dashboards with an optional per-dashboard permission enforced in-handler, so a caller never even learns a gated dashboard (e.g. sanctions consistency) exists.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 13 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">13</div>
+    <div>
+      <h2>Audit Committee <span class="mtag">M13</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/ac-packs</code> <code>/ac-action-items</code> <code>/ac-comments</code> <code>/ac-dashboard</code></span>
+        <span><b>Aggregate</b> AcPack · AcActionItem · AcComment · FindingVisibilityRestriction</span>
+        <span><b>UI</b> <code>features/ac</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">The committee-facing layer: assembling and distributing board packs, tracking committee actions, and
+  the collaboration and visibility controls around them.</p>
+  <dl class="subs">
+    <div class="sub"><dt>AC packs<span class="rt">/ac-packs (generate / approve / distribute)</span></dt>
+      <dd>A period pack snapshots the analytics into immutable content and a canonical SHA-256; the CIA adds supplementary narrative and single-actor approves it (which re-seals the hash to include the text) before distribution. Members only see approved/distributed packs.</dd></div>
+    <div class="sub"><dt>Action items<span class="rt">/ac-action-items</span></dt>
+      <dd>Committee-raised follow-ups that flow Open → In-Progress → Closed (closure requires a written response) → Acknowledged by the chair (terminal).</dd></div>
+    <div class="sub"><dt>Dashboard &amp; comments<span class="rt">/ac-dashboard · /ac-comments</span></dt>
+      <dd>A read-only committee dashboard of live aggregates (never subject identity) and polymorphic comment threads on pack contents and other targets.</dd></div>
+    <div class="sub"><dt>Finding visibility<span class="rt">/findings/{type}/{id}/restrict-visibility (CIA)</span></dt>
+      <dd>A per-finding allow-list, set by the CIA, applied per-requester at read time so sensitive findings are seen only by named people.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 14 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">14</div>
+    <div>
+      <h2>Notifications <span class="mtag">M10</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/notification-rules</code> <code>/notification-templates</code> <code>/notification-dispatches</code></span>
+        <span><b>Aggregate</b> NotificationRule · NotificationTemplate · NotificationDispatch</span>
+        <span><b>UI</b> <code>features/admin/notifications</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">A durable, data-driven pipeline that turns domain events into templated messages over email, SMS and
+  Microsoft Teams, with retries and a dead-letter queue.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Rules &amp; event catalogue<span class="rt">/notification-rules · /admin/events/catalogue</span></dt>
+      <dd>Each rule maps a subscribable domain event to recipients (role, named users, or a user id derived from the event payload) and channels; rules can be previewed for their resolved recipients and rendered template before going live.</dd></div>
+    <div class="sub"><dt>Templates<span class="rt">/notification-templates</span></dt>
+      <dd>Per-channel message templates with bank overrides on top of seeded system defaults.</dd></div>
+    <div class="sub"><dt>Channels<span class="rt">Email · SMS · Teams</span></dt>
+      <dd>Email over SMTP, SMS over the bank gateway, and Microsoft Teams via an incoming webhook (delivered once per event/rule as a channel broadcast rather than per recipient), routed centrally.</dd></div>
+    <div class="sub"><dt>Dispatch, retry &amp; dead-letter<span class="rt">/notification-dispatches · /dead-letter (AdminOps)</span></dt>
+      <dd>Every send is a tracked dispatch with backoff retries (1m / 5m / 15m / 1h) before dead-lettering; the dead-letter queue and manual re-queue are ops-only.</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 15 ===================== -->
+<section class="module">
+  <div class="module-head">
+    <div class="badge">15</div>
+    <div>
+      <h2>Platform &amp; Administration <span class="mtag">M11 · M14</span></h2>
+      <div class="meta">
+        <span><b>API</b> <code>/admin</code> <code>/audit-trail</code> <code>/configurations</code> <code>/reference-data</code> <code>/integrations</code> <code>/engagements</code></span>
+        <span><b>Aggregate</b> BankSettings · Configuration · Integration · SavedView · AuditTrail</span>
+        <span><b>UI</b> <code>features/admin/*</code>, <code>features/engagement-lifecycle</code></span>
+      </div>
+    </div>
+  </div>
+  <p class="overview">The cross-cutting administration and platform services every other module relies on.</p>
+  <dl class="subs">
+    <div class="sub"><dt>Bank settings &amp; ops<span class="rt">/admin (bank-settings, resource-limits, releases, restore, support-channel)</span></dt>
+      <dd>Bank identity, branding, retention and session settings; resource limits; bulk user operations; signed offline release installs; backup restore-drills and approval-gated object restore; and system-health.</dd></div>
+    <div class="sub"><dt>Audit trail<span class="rt">/audit-trail (ViewAuditTrail / ExportAuditTrail)</span></dt>
+      <dd>An append-only activity log with before/after snapshots, enforced at the database by a trigger; queryable by actor/type/object/date with facets, per-object history, and a tamper-evident hash-stamped export.</dd></div>
+    <div class="sub"><dt>Configuration &amp; reference data<span class="rt">/configurations · /reference-data</span></dt>
+      <dd>A generic versioned config store (draft → activate → rollback, one active version per domain, maker-checker-gated activation) and the managed reference-data lists (audit types, categories, document types) that back every dropdown.</dd></div>
+    <div class="sub"><dt>Integrations &amp; webhooks<span class="rt">/integrations · /webhook-subscriptions</span></dt>
+      <dd>Configurable outbound integrations with health checks and fallbacks, and HMAC-signed webhook subscriptions to a curated event catalogue with a delivery log and retry.</dd></div>
+    <div class="sub"><dt>Saved views &amp; search<span class="rt">/saved-views · /search</span></dt>
+      <dd>Per-user (optionally shared) named filter sets that pre-fill a screen's filters, and a cross-module global search that only returns hits the caller is permitted to see.</dd></div>
+    <div class="sub"><dt>Engagement lifecycle<span class="rt">/engagements (ViewEngagementLifecycle)</span></dt>
+      <dd>A read-only portfolio board and per-engagement journey (setup → fieldwork → review → remediation → reporting → closed) with a deterministic <i>next-best-action</i> engine that only suggests actions the user is permitted and positioned to take.</dd></div>
+    <div class="sub"><dt>Branding &amp; health<span class="rt">/branding (anon) · /admin/health (anon)</span></dt>
+      <dd>A public branding endpoint so the login shell can theme itself before a session exists, and an anonymous liveness/readiness probe checking the database and Redis.</dd></div>
+  </dl>
+</section>
+
+<div class="foot">
+  <span>AuditX Enterprise — Module &amp; Submodule Reference · generated from source</span>
+  <span>Confidential — internal use</span>
+</div>
+
+</body>
+</html>
