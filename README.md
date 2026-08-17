@@ -4,9 +4,12 @@ Enterprise internal-audit platform for a bank's Internal Audit function, deploye
 the bank's network. Built to the AuditX BRD/PRD/User-Story Catalogue v2.0 and the Claude Code Project
 Standards (ASP.NET Core 10 + Angular, Clean Architecture).
 
-> **Status:** Foundation + **Module M1 (Identity, Roles, Permissions, Maker-Checker, Delegation)**
-> delivered end-to-end. Modules M2–M15 follow the same vertical-slice pattern. See
-> [architecture.md](architecture.md).
+> **Status:** Full platform delivered end-to-end across all modules — identity, universe & planning,
+> templates, engagements & fieldwork, findings & remediation, controls & compliance, sanctions, reporting,
+> analytics, audit committee, and notifications.
+>
+> **Documentation:** [docs/MODULES.md](docs/MODULES.md) (module & submodule map) ·
+> [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md) (architecture, setup, operations).
 
 ## What's implemented
 
