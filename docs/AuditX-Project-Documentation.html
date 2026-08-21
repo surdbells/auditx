@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AuditX — Project Documentation</title>
+<style>
+  :root{
+    --ink:#1e2330; --muted:#59617a; --faint:#8a91a6; --line:#e4e7f0; --line2:#eef1f7;
+    --accent:#4f46e5; --accent-soft:#eef0fe; --accent-ink:#3730a3; --code-bg:#f4f5fa;
+  }
+  *{box-sizing:border-box}
+  @page{ size:A4; margin:16mm 15mm 15mm; }
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{
+    font-family:"Segoe UI",-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink); font-size:10.3px; line-height:1.55; margin:0;
+  }
+  p{ margin:0 0 7px; color:#333a4d; }
+  a{ color:var(--accent); text-decoration:none; }
+  code{ font-family:"Cascadia Code",Consolas,"SFMono-Regular",monospace; font-size:0.86em;
+    background:var(--code-bg); border:1px solid var(--line); border-radius:3px; padding:0 3px; color:#33384a; }
+  b, strong{ color:var(--ink); }
+
+  /* Cover */
+  .cover{ border-bottom:2px solid var(--accent); padding-bottom:13px; margin-bottom:15px; }
+  .cover .kicker{ font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
+    font-weight:700; margin:0 0 5px; }
+  .cover h1{ font-size:26px; letter-spacing:-.02em; margin:0 0 7px; }
+  .cover .sub{ color:var(--muted); font-size:11.5px; max-width:165mm; margin:0; }
+  .cover .stamp{ color:var(--faint); font-size:9px; margin-top:9px; }
+
+  /* Sections */
+  h2{ font-size:14.5px; letter-spacing:-.01em; margin:16px 0 7px; padding-top:9px;
+    border-top:1px solid var(--line); display:flex; align-items:baseline; gap:8px; break-after:avoid; }
+  h2 .n{ display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px;
+    padding:0 5px; background:var(--accent); color:#fff; border-radius:5px; font-size:11px; font-weight:700;
+    font-variant-numeric:tabular-nums; position:relative; top:-1px; }
+  h3{ font-size:11px; margin:10px 0 4px; color:var(--accent-ink); break-after:avoid; }
+
+  ul{ margin:0 0 8px; padding-left:16px; }
+  li{ margin:2.5px 0; color:#333a4d; }
+  li::marker{ color:var(--faint); }
+
+  /* Tables */
+  table{ width:100%; border-collapse:collapse; margin:4px 0 10px; font-size:9.6px; break-inside:avoid; }
+  th,td{ text-align:left; padding:4px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  thead th{ background:#f7f8fc; color:var(--faint); font-size:8.4px; text-transform:uppercase;
+    letter-spacing:.05em; border-bottom:1px solid var(--line); }
+  tbody tr:nth-child(even){ background:#fafbfe; }
+  td code{ font-size:0.88em; }
+
+  /* Code / pre blocks */
+  pre{ font-family:"Cascadia Code",Consolas,"SFMono-Regular",monospace; font-size:8.9px; line-height:1.5;
+    background:var(--code-bg); border:1px solid var(--line); border-left:3px solid var(--accent);
+    border-radius:6px; padding:9px 11px; margin:4px 0 10px; overflow-x:auto; white-space:pre; color:#2c3142;
+    break-inside:avoid; }
+  pre code{ background:none; border:none; padding:0; color:inherit; }
+
+  .note{ background:#f7f8fc; border:1px solid var(--line); border-radius:8px; padding:9px 12px; margin:6px 0 10px; }
+  .note p:last-child{ margin-bottom:0; }
+
+  .foot{ margin-top:18px; padding-top:9px; border-top:1px solid var(--line); color:var(--faint);
+    font-size:8.5px; display:flex; justify-content:space-between; }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <p class="kicker">AuditX Enterprise · On-Premises Edition</p>
+  <h1>Project Documentation</h1>
+  <p class="sub">AuditX is an enterprise <b>internal-audit platform</b> for a bank's Internal Audit function,
+  deployed single-tenant inside the bank's network. It covers the full audit value chain — the audit universe and
+  risk-based annual plan, checklist templates, audit engagements and fieldwork, findings and remediation, controls
+  and compliance, sanctions, reporting, analytics, and audit-committee governance — on a hardened, on-premises stack.</p>
+  <p class="stamp">Architecture · Stack · Data &amp; security model · Local setup · Testing · Deployment · Conventions&nbsp;&nbsp;|&nbsp;&nbsp;For the module-by-module feature map, see the Module &amp; Submodule Reference.</p>
+</header>
+
+<h2><span class="n">1</span> Technology stack</h2>
+<table>
+  <thead><tr><th style="width:26%">Area</th><th>Technology</th></tr></thead>
+  <tbody>
+    <tr><td>Backend</td><td>.NET&nbsp;10 · ASP.NET&nbsp;Core&nbsp;10 (controllers) · EF&nbsp;Core&nbsp;10 (code-first, GUID keys) · SQL&nbsp;Server&nbsp;2022</td></tr>
+    <tr><td>Caching / jobs</td><td>Redis&nbsp;7 (session denylist, cache) · Hangfire (durable background jobs)</td></tr>
+    <tr><td>Messaging</td><td>RabbitMQ (integration events) · in-process domain-event dispatch</td></tr>
+    <tr><td>Auth</td><td>Active Directory (LDAPS + Kerberos/IWA), JWT session cookies · AD-over-REST gateway · Development provider locally</td></tr>
+    <tr><td>Frontend</td><td>Angular&nbsp;21 (standalone components, signals) · Angular Material (skinned) · Tailwind&nbsp;v4 · SCSS · Lucide icons · PWA</td></tr>
+    <tr><td>Observability</td><td>Serilog structured logging · dependency health probes · append-only audit trail</td></tr>
+    <tr><td>Infra</td><td>Docker / Docker Compose · Nginx · GitHub Actions CI</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="n">2</span> Architecture</h2>
+<p><b>Clean Architecture</b> with a strict dependency rule (outer depends on inner only):</p>
+<pre>AuditX.Domain          Entities, aggregates, value objects, domain events, invariants. No framework deps.
+AuditX.Application     Use cases (CQRS commands/queries + handlers), DTOs, validation, port interfaces.
+AuditX.Infrastructure  EF Core, repositories, identity providers, notification channels, jobs, external adapters.
+AuditX.Api             ASP.NET Core controllers, auth filters, request contracts, composition root.</pre>
+<p>Key patterns and conventions:</p>
+<ul>
+  <li><b>CQRS</b> — a hand-rolled <code>IDispatcher</code> routes <code>ICommand</code>/<code>IQuery</code> to their handlers; FluentValidation runs in the pipeline. No MediatR.</li>
+  <li><b>DDD aggregates</b> — <code>AggregateRoot</code>/<code>Entity</code> bases, <code>Guard</code>/<code>DomainException</code>/<code>InvalidStateTransitionException</code> for invariants; child entities implement <code>IBelongsToAggregate</code> so their mutations promote the root's rowversion.</li>
+  <li><b>Optimistic concurrency</b> — every aggregate carries a <code>byte[]</code> rowversion; write handlers call <code>EnsureVersion(...)</code> and return <code>409 Conflict</code> on a stale token (<code>RowVersionToken</code> base64 round-trips it).</li>
+  <li><b>Authorization</b> — permission-based (<code>[RequirePermission(key)]</code> + <code>IPermissionResolver</code>); resource-scoped checks are enforced inside handlers. Roles are AuditX-owned and independent of AD groups.</li>
+  <li><b>Audit trail</b> — an append-only activity log with before/after JSON snapshots, enforced at the database by a trigger; the <code>AuditingSaveChangesInterceptor</code> stamps created/updated audit fields.</li>
+  <li><b>Domain events → notifications</b> — post-commit events are serialised and handed to the M10 notification pipeline (rules → recipients → templated dispatch over Email/SMS/Teams) via a durable Hangfire job.</li>
+  <li><b>API envelope</b> — responses are wrapped <code>{ data, … }</code>; enums serialise as snake_case; the SPA echoes the <code>version</code> token on every mutation for concurrency.</li>
+</ul>
+
+<h2><span class="n">3</span> Repository layout</h2>
+<pre>backend/
+  AuditX.slnx
+  src/
+    AuditX.Domain/          domain model (Audits, Planning, Exceptions, Controls, Templates, …)
+    AuditX.Application/     CQRS handlers, DTOs, abstractions (ports)
+    AuditX.Infrastructure/  EF Core persistence + migrations, identity, notifications, jobs
+    AuditX.Api/             controllers, contracts, filters, Program.cs
+  tests/
+    AuditX.Domain.Tests/         aggregate/invariant unit tests
+    AuditX.Application.Tests/     command/query handler + service unit tests
+    AuditX.Infrastructure.Tests/ persistence/adapter tests
+    AuditX.Api.IntegrationTests/ end-to-end HTTP tests on real SQL Server (Testcontainers)
+frontend/
+  auditx-web/               Angular workspace (features/, core/, shared/)
+database/                   SQL helper scripts (EF migrations live under Infrastructure)
+docker/                     Dockerfiles + nginx config
+docs/                       this documentation, ADRs, deployment runbooks
+.github/                    CI workflows</pre>
+<p>The Angular app mirrors the backend: <code>core/</code> (services, models, i18n, permissions, icons),
+<code>shared/</code> (layout, reusable components, directives), and one folder per <b>feature area</b> under
+<code>features/</code> (audits, planning, exceptions, controls, analytics, ac, reports, admin, …).</p>
+
+<h2><span class="n">4</span> Data &amp; persistence</h2>
+<ul>
+  <li><b>EF Core code-first</b>, GUID (v7) keys, snake_case tables/columns, enum-to-snake conversions.</li>
+  <li><b>61 migrations</b> applied automatically on API start when <code>Database:MigrateOnStartup</code> is enabled.</li>
+  <li><b>Seeding</b> — on startup the API seeds built-in roles, the permission catalogue, maker-checker gates, risk
+  dimensions, rating scales, <b>response option sets</b>, reference data, and notification defaults (all idempotent).
+  A richer demo dataset (populated audits, plan, universe, controls, findings) seeds when <code>Database:SeedDemoData=true</code>.</li>
+</ul>
+
+<h2><span class="n">5</span> Security model</h2>
+<ul>
+  <li>No stored user passwords; authentication is delegated to Active Directory. Sessions are short-lived JWTs in HttpOnly cookies with a Redis denylist for revocation.</li>
+  <li>Fine-grained <b>permissions</b> gate every endpoint; sensitive/resource-scoped operations re-check scope in the handler. The <b>Administrator</b> role holds the full catalogue.</li>
+  <li><b>Maker-checker</b> dual control gates configurable high-risk actions (e.g. template publish, MAP approval, sanctions-grid edit, config activation).</li>
+  <li><b>Integrity</b> — reports and AC packs are SHA-256 hash-verified; the audit trail is append-only and DB-enforced; evidence uploads are magic-byte + hash validated and re-verified on read.</li>
+</ul>
+
+<h2><span class="n">6</span> Running locally</h2>
+<h3>Option A — Docker Compose (everything)</h3>
+<pre>docker compose up -d --build</pre>
+<p>The API auto-applies migrations and seeds data on startup. Ports come from the committed compose file
+(<code>8080</code> API / <code>4200</code> web); this machine's <code>docker-compose.override.yml</code> remaps them:</p>
+<table>
+  <thead><tr><th>Service</th><th>This machine</th><th>Default</th></tr></thead>
+  <tbody>
+    <tr><td>API</td><td>http://localhost:8085 (Swagger at <code>/swagger</code>)</td><td>8080</td></tr>
+    <tr><td>Web (SPA)</td><td>http://localhost:4288</td><td>4200</td></tr>
+    <tr><td>SQL Server</td><td>14330</td><td>1433</td></tr>
+    <tr><td>Redis</td><td>63790</td><td>6379</td></tr>
+    <tr><td>RabbitMQ</td><td>56720 / 15673 (mgmt)</td><td>5672 / 15672</td></tr>
+  </tbody>
+</table>
+<p>After a code change, rebuild just the affected container, e.g. <code>docker compose up -d --build api</code>
+(auto-migrates) or <code>docker compose up -d --build web</code>.</p>
+<h3>Option B — Host</h3>
+<ol>
+  <li>Dependencies: <code>docker compose up -d sqlserver redis rabbitmq</code></li>
+  <li>Backend: <code>dotnet run --project backend/src/AuditX.Api</code></li>
+  <li>Frontend: <code>cd frontend/auditx-web &amp;&amp; npm install &amp;&amp; npm start</code> (dev server on <code>:4222</code> proxying the API)</li>
+</ol>
+<h3>Demo users (Development identity provider)</h3>
+<p>Password <code>Passw0rd!</code> for all. <code>admin</code> (Administrator — all permissions),
+<code>manager</code> (Audit Manager), <code>auditor</code> (Auditor), <code>auditee</code> (Auditee — self-assessment, MAP submission).</p>
+
+<h2><span class="n">7</span> Testing</h2>
+<table>
+  <thead><tr><th style="width:34%">Suite</th><th>Scope</th></tr></thead>
+  <tbody>
+    <tr><td><code>AuditX.Domain.Tests</code></td><td>aggregate invariants &amp; state machines (unit)</td></tr>
+    <tr><td><code>AuditX.Application.Tests</code></td><td>command/query handlers &amp; services (unit, NSubstitute)</td></tr>
+    <tr><td><code>AuditX.Infrastructure.Tests</code></td><td>persistence &amp; adapters</td></tr>
+    <tr><td><code>AuditX.Api.IntegrationTests</code></td><td>~58 end-to-end HTTP flows against a real SQL Server via Testcontainers</td></tr>
+    <tr><td><code>frontend/auditx-web</code></td><td>509 Karma/Jasmine specs</td></tr>
+  </tbody>
+</table>
+<pre># backend
+cd backend &amp;&amp; dotnet test AuditX.slnx
+# frontend
+cd frontend/auditx-web &amp;&amp; npx ng test --watch=false --browsers=ChromeHeadless &amp;&amp; npx ng build</pre>
+<p>Integration tests require Docker (Testcontainers spins up SQL Server + Redis). i18n has parallel
+<code>en.json</code>/<code>fr.json</code> dictionaries kept at strict key parity.</p>
+
+<h2><span class="n">8</span> Deployment</h2>
+<p>Production is on-premises single-tenant. See the runbooks:</p>
+<ul>
+  <li><b>DEPLOYMENT_RUNBOOK.md</b> — on-prem deployment.</li>
+  <li><b>AZURE_DEPLOYMENT_RUNBOOK.md</b> — Azure Container Apps + IaC.</li>
+  <li><b>adr/</b> — architecture decision records.</li>
+</ul>
+<div class="note">
+  <p>Production must set the real identity provider (<code>Identity:Provider = ActiveDirectory</code> or
+  <code>ActiveDirectoryRest</code>), the SMTP / SMS gateway / Teams webhook, and <b>disable</b> the Development
+  provider and demo seeding.</p>
+</div>
+
+<h2><span class="n">9</span> Conventions</h2>
+<ul>
+  <li><b>Commits</b> follow Conventional Commits (<code>feat(…)</code>, <code>fix(…)</code>, <code>test(…)</code>).</li>
+  <li><b>Frontend</b> — standalone components, signals, OnPush; Tailwind v4 + skinned Material; Lucide icons via
+  <code>&lt;app-icon name="…"&gt;</code>; every user-facing string localised (en/fr).</li>
+  <li><b>Backend</b> — one vertical slice per feature (domain → application → infrastructure → api → tests); new
+  config is seeded idempotently; new domain events are added to the notification catalogue.</li>
+</ul>
+
+<div class="foot">
+  <span>AuditX Enterprise — Project Documentation</span>
+  <span>Confidential — internal use</span>
+</div>
+
+</body>
+</html>
