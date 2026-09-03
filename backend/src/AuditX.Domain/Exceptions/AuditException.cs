@@ -193,6 +193,29 @@ public sealed class AuditException : AggregateRoot
         RaiseDomainEvent(new ExceptionSeverityChangedEvent(Id, before, newSeverity, actorUserId, trimmed));
     }
 
+    /// <summary>
+    /// Marks (or clears) this finding as a recurrence of a prior finding — the same weakness surfacing again.
+    /// Recurrence is a classification, so it is editable while the finding is not terminal; it may not point at
+    /// itself. Clearing passes a null prior id. Feeds recurrence analytics and the finding register's recurrence filter.
+    /// </summary>
+    public void SetRecurrence(bool isRecurrence, Guid? recurrenceOfExceptionId, Guid actorUserId)
+    {
+        EnsureNotTerminal("exception.recurrence_locked");
+        if (isRecurrence)
+        {
+            Guard.Against(recurrenceOfExceptionId is null || recurrenceOfExceptionId == Guid.Empty,
+                "exception.recurrence_target_required", "The prior finding this recurs from is required.");
+            Guard.Against(recurrenceOfExceptionId == Id, "exception.recurrence_self", "A finding cannot be a recurrence of itself.");
+            IsRecurrence = true;
+            RecurrenceOfExceptionId = recurrenceOfExceptionId;
+        }
+        else
+        {
+            IsRecurrence = false;
+            RecurrenceOfExceptionId = null;
+        }
+    }
+
     public void Reassign(Guid newOwnerUserId, Guid actorUserId)
     {
         EnsureNotTerminal("exception.owner_locked");

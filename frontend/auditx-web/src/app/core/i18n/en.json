@@ -5172,5 +5172,14 @@
   "responseLabels.save": "Save",
   "responseLabels.error.invalid": "Every option needs a label, and at least one must be a real conclusion (not all N/A).",
   "responseLabels.notify.saved": "Response labels saved.",
-  "responseLabels.notify.reset": "Response labels reset to defaults."
+  "responseLabels.notify.reset": "Response labels reset to defaults.",
+  "exceptions.recurrence.mark": "Mark as recurrence",
+  "exceptions.recurrence.clear": "Clear recurrence",
+  "exceptions.recurrence.dialogTitle": "Mark as a recurrence",
+  "exceptions.recurrence.dialogHint": "Link this finding to the earlier finding it repeats. Recurrences feed the recurrence analytics and the register filter.",
+  "exceptions.recurrence.priorFinding": "Prior finding",
+  "exceptions.recurrence.selectPrior": "Select the prior finding.",
+  "exceptions.recurrence.noCandidates": "No other findings are available to link to.",
+  "exceptions.recurrence.notify.marked": "Finding marked as a recurrence.",
+  "exceptions.recurrence.notify.cleared": "Recurrence cleared."
 }

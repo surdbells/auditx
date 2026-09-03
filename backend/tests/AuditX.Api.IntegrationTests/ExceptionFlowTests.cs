@@ -75,6 +75,41 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     }
 
     [Fact]
+    public async Task Finding_can_be_marked_and_cleared_as_a_recurrence()
+    {
+        var admin = await AdminAsync();
+        var (a1, fail1, _, owner1) = await SeedAuditWithResponsesAsync(admin);
+        var prior = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{a1}/exceptions", new
+        {
+            checklistItemId = fail1, title = "Prior segregation gap", severity = "medium", rootCause = "x", recommendation = "y", ownerUserId = owner1,
+        }));
+        var priorId = prior.GetProperty("id").GetGuid();
+
+        var (a2, fail2, _, owner2) = await SeedAuditWithResponsesAsync(admin);
+        var current = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{a2}/exceptions", new
+        {
+            checklistItemId = fail2, title = "Same gap again", severity = "medium", rootCause = "x", recommendation = "y", ownerUserId = owner2,
+        }));
+        var currentId = current.GetProperty("id").GetGuid();
+
+        // Mark the current finding as a recurrence of the prior one.
+        var marked = await DataAsync(await admin.PatchAsJsonAsync($"/api/v1/exceptions/{currentId}/recurrence",
+            new { isRecurrence = true, recurrenceOfExceptionId = priorId, version = current.GetProperty("version").GetString() }));
+        Assert.True(marked.GetProperty("isRecurrence").GetBoolean());
+        Assert.Equal(priorId, marked.GetProperty("recurrenceOfExceptionId").GetGuid());
+
+        // Clear it.
+        var cleared = await DataAsync(await admin.PatchAsJsonAsync($"/api/v1/exceptions/{currentId}/recurrence",
+            new { isRecurrence = false, recurrenceOfExceptionId = (Guid?)null, version = marked.GetProperty("version").GetString() }));
+        Assert.False(cleared.GetProperty("isRecurrence").GetBoolean());
+
+        // A finding cannot be a recurrence of itself → 422.
+        var self = await admin.PatchAsJsonAsync($"/api/v1/exceptions/{currentId}/recurrence",
+            new { isRecurrence = true, recurrenceOfExceptionId = currentId, version = cleared.GetProperty("version").GetString() });
+        Assert.Equal(HttpStatusCode.UnprocessableContent, self.StatusCode);
+    }
+
+    [Fact]
     public async Task Raise_is_gated_to_failed_items_and_starts_open()
     {
         var admin = await AdminAsync();

@@ -37,6 +37,30 @@ public sealed class AuditExceptionTests
     }
 
     [Fact]
+    public void Set_recurrence_marks_and_clears_and_guards()
+    {
+        var e = New();
+        var prior = Guid.NewGuid();
+
+        e.SetRecurrence(true, prior, Actor);
+        Assert.True(e.IsRecurrence);
+        Assert.Equal(prior, e.RecurrenceOfExceptionId);
+
+        e.SetRecurrence(false, null, Actor);
+        Assert.False(e.IsRecurrence);
+        Assert.Null(e.RecurrenceOfExceptionId);
+
+        // Marking as a recurrence needs a prior finding, and it cannot recur of itself.
+        Assert.Throws<DomainException>(() => e.SetRecurrence(true, null, Actor));
+        Assert.Throws<DomainException>(() => e.SetRecurrence(true, e.Id, Actor));
+
+        // Terminal findings are locked.
+        var cancelled = New();
+        cancelled.Cancel("Raised in error; duplicate of an existing finding.", Actor, Now);
+        Assert.Throws<InvalidStateTransitionException>(() => cancelled.SetRecurrence(true, prior, Actor));
+    }
+
+    [Fact]
     public void Severity_change_requires_a_reason()
     {
         var e = New();

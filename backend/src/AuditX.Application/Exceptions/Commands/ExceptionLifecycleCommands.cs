@@ -203,6 +203,34 @@ public sealed class ReassignExceptionOwnerCommandHandler(
     }
 }
 
+/// <summary>Mark (or clear) a finding as a recurrence of a prior finding (US: recurrence tracking).</summary>
+public sealed record SetExceptionRecurrenceCommand(Guid ExceptionId, bool IsRecurrence, Guid? RecurrenceOfExceptionId, string Version) : ICommand<ExceptionDto>;
+
+public sealed class SetExceptionRecurrenceCommandHandler(
+    IExceptionRepository exceptions, IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    : ICommandHandler<SetExceptionRecurrenceCommand, ExceptionDto>
+{
+    public async Task<ExceptionDto> Handle(SetExceptionRecurrenceCommand command, CancellationToken cancellationToken)
+    {
+        var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
+        var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
+        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        exception.EnsureVersion(command.Version);
+
+        // When marking as a recurrence, the referenced prior finding must exist.
+        if (command.IsRecurrence && command.RecurrenceOfExceptionId is { } priorId)
+        {
+            _ = await exceptions.GetByIdAsync(priorId, cancellationToken) ?? throw new NotFoundException("Exception", priorId);
+        }
+
+        exception.SetRecurrence(command.IsRecurrence, command.RecurrenceOfExceptionId, currentUser.UserId ?? Guid.Empty);
+        audit.Record(AuditEventTypes.ExceptionRecurrenceMarked, AuditTargetTypes.Exception, exception.Id,
+            after: new { exception.IsRecurrence, exception.RecurrenceOfExceptionId });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return exception.ToDto(DateOnly.FromDateTime(clock.UtcNow.UtcDateTime));
+    }
+}
+
 public sealed record CancelExceptionCommand(Guid ExceptionId, string Reason, string Version) : ICommand<ExceptionDto>;
 
 public sealed class CancelExceptionCommandHandler(

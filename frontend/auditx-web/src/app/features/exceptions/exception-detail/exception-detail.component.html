@@ -22,6 +22,17 @@
               <app-icon name="person" />
               {{ 'exceptions.action.reassignOwner' | t }}
             </button>
+            @if (exception()?.isRecurrence) {
+              <button matButton type="button" (click)="clearRecurrence()">
+                <app-icon name="replay" />
+                {{ 'exceptions.recurrence.clear' | t }}
+              </button>
+            } @else {
+              <button matButton type="button" (click)="markRecurrence()">
+                <app-icon name="replay" />
+                {{ 'exceptions.recurrence.mark' | t }}
+              </button>
+            }
           }
           @if (canCancelNow()) {
             <button matButton type="button" (click)="cancel()">

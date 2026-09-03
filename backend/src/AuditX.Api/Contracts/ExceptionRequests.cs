@@ -17,6 +17,8 @@ public sealed record AddVerificationRequest(string Result, string? Notes, string
 
 public sealed record ReassignOwnerRequest(Guid OwnerUserId, string Version);
 
+public sealed record SetRecurrenceRequest(bool IsRecurrence, Guid? RecurrenceOfExceptionId, string Version);
+
 public sealed record MapActionRequest(string Description, Guid OwnerUserId, DateOnly TargetDate, string? ExpectedEvidenceType);
 
 public sealed record SubmitMapRequest(IReadOnlyList<MapActionRequest> Actions, string Version);

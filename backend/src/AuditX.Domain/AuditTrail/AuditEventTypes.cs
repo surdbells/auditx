@@ -186,6 +186,7 @@ public static class AuditEventTypes
     public const string ExceptionRaised = "exception_raised";
     public const string FindingRegisterExported = "finding_register_exported";
     public const string ExceptionSeverityChanged = "exception_severity_changed";
+    public const string ExceptionRecurrenceMarked = "exception_recurrence_marked";
     public const string ExceptionOwnerReassigned = "exception_owner_reassigned";
     public const string MapSubmitted = "map_submitted";
     public const string MapApproved = "map_approved";

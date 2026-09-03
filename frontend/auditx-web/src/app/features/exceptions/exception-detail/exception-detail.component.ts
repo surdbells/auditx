@@ -56,6 +56,11 @@ import {
   ReassignOwnerDialogResult,
 } from '../dialogs/reassign-owner-dialog.component';
 import {
+  MarkRecurrenceDialogComponent,
+  MarkRecurrenceDialogData,
+  MarkRecurrenceDialogResult,
+} from '../dialogs/mark-recurrence-dialog.component';
+import {
   ExceptionReasonDialogComponent,
   ExceptionReasonDialogData,
   ExceptionReasonResult,
@@ -494,6 +499,47 @@ export class ExceptionDetailComponent {
           this.i18n.translate('exceptions.notify.ownerReassigned'),
         );
       });
+  }
+
+  markRecurrence(): void {
+    const ex = this.exception();
+    if (!ex) {
+      return;
+    }
+    // Offer recent findings (excluding this one) as the prior finding this one recurs from.
+    this.service.list({ pageSize: 100 }).subscribe((page) => {
+      const candidates = page.items
+        .filter((i) => i.id !== ex.id)
+        .map((i) => ({ id: i.id, title: i.title }));
+      const data: MarkRecurrenceDialogData = { candidates, currentPriorId: ex.recurrenceOfExceptionId ?? null };
+      this.dialog
+        .open(MarkRecurrenceDialogComponent, { data, width: '480px' })
+        .afterClosed()
+        .subscribe((result?: MarkRecurrenceDialogResult) => {
+          if (!result) {
+            return;
+          }
+          this.runMutation(
+            this.service.setRecurrence(this.id(), {
+              isRecurrence: true,
+              recurrenceOfExceptionId: result.recurrenceOfExceptionId,
+              version: this.version(),
+            }),
+            this.i18n.translate('exceptions.recurrence.notify.marked'),
+          );
+        });
+    });
+  }
+
+  clearRecurrence(): void {
+    this.runMutation(
+      this.service.setRecurrence(this.id(), {
+        isRecurrence: false,
+        recurrenceOfExceptionId: null,
+        version: this.version(),
+      }),
+      this.i18n.translate('exceptions.recurrence.notify.cleared'),
+    );
   }
 
   cancel(): void {

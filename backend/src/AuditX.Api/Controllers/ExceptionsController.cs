@@ -117,6 +117,11 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
     public async Task<IActionResult> ReassignOwner(Guid id, [FromBody] ReassignOwnerRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new ReassignExceptionOwnerCommand(id, request.OwnerUserId, request.Version), cancellationToken));
 
+    [RequirePermission(PermissionKeys.ManageException)]
+    [HttpPatch("api/v1/exceptions/{id:guid}/recurrence")]
+    public async Task<IActionResult> SetRecurrence(Guid id, [FromBody] SetRecurrenceRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SetExceptionRecurrenceCommand(id, request.IsRecurrence, request.RecurrenceOfExceptionId, request.Version), cancellationToken));
+
     [RequirePermission(PermissionKeys.CancelException)]
     [HttpPost("api/v1/exceptions/{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(Guid id, [FromBody] ReasonVersionRequest request, CancellationToken cancellationToken)

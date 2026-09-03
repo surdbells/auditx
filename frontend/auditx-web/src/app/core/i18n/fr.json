@@ -5172,5 +5172,14 @@
   "responseLabels.save": "Enregistrer",
   "responseLabels.error.invalid": "Chaque option doit avoir un libellé, et au moins une doit être une vraie conclusion (pas toutes N/A).",
   "responseLabels.notify.saved": "Libellés de réponse enregistrés.",
-  "responseLabels.notify.reset": "Libellés de réponse réinitialisés."
+  "responseLabels.notify.reset": "Libellés de réponse réinitialisés.",
+  "exceptions.recurrence.mark": "Marquer comme récurrence",
+  "exceptions.recurrence.clear": "Effacer la récurrence",
+  "exceptions.recurrence.dialogTitle": "Marquer comme récurrence",
+  "exceptions.recurrence.dialogHint": "Reliez ce constat au constat antérieur qu’il répète. Les récurrences alimentent l’analyse des récurrences et le filtre du registre.",
+  "exceptions.recurrence.priorFinding": "Constat antérieur",
+  "exceptions.recurrence.selectPrior": "Sélectionnez le constat antérieur.",
+  "exceptions.recurrence.noCandidates": "Aucun autre constat disponible à relier.",
+  "exceptions.recurrence.notify.marked": "Constat marqué comme récurrence.",
+  "exceptions.recurrence.notify.cleared": "Récurrence effacée."
 }

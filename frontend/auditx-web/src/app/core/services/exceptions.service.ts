@@ -163,6 +163,14 @@ export class ExceptionsService {
     return this.api.patch<Exception>(`/exceptions/${id}/owner`, body);
   }
 
+  /** Mark (or clear) a finding as a recurrence of a prior finding. */
+  setRecurrence(
+    id: string,
+    body: { isRecurrence: boolean; recurrenceOfExceptionId: string | null; version: string },
+  ): Observable<Exception> {
+    return this.api.patch<Exception>(`/exceptions/${id}/recurrence`, body);
+  }
+
   cancel(id: string, body: ReasonVersionRequest): Observable<Exception> {
     return this.api.post<Exception>(`/exceptions/${id}/cancel`, body);
   }
