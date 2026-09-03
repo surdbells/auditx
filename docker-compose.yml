@@ -67,6 +67,8 @@ services:
       # Seed the rich, interconnected demo dataset (every module populated) for this local demo stack. Idempotent
       # and gated: never enable in a production deployment. Log in as admin / manager / auditor / auditee (Passw0rd!).
       Database__SeedDemoData: "true"
+      # Public web base URL used to build deep links in notification emails (e.g. the evidence-request upload link).
+      Notifications__WebBaseUrl: "http://localhost:4288"
       ConnectionStrings__Default: "Server=sqlserver,1433;Database=auditx;User Id=sa;Password=Auditx_Local_Dev_123;TrustServerCertificate=True;Encrypt=False"
       Redis__ConnectionString: "redis:6379"
       Identity__Provider: "Development"
