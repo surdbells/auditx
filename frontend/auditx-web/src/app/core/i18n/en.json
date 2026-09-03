@@ -5181,5 +5181,22 @@
   "exceptions.recurrence.selectPrior": "Select the prior finding.",
   "exceptions.recurrence.noCandidates": "No other findings are available to link to.",
   "exceptions.recurrence.notify.marked": "Finding marked as a recurrence.",
-  "exceptions.recurrence.notify.cleared": "Recurrence cleared."
+  "exceptions.recurrence.notify.cleared": "Recurrence cleared.",
+  "nav.myEvidenceRequests": "My evidence requests",
+  "evidence.field.requestedFrom": "Request from (auditee)",
+  "evidence.field.purpose": "Purpose",
+  "evidence.error.recipientRequired": "Select the auditee to request from.",
+  "evidence.requestedFromLabel": "from",
+  "evidence.purpose.review_document": "Audit document (for review)",
+  "evidence.purpose.finding_evidence": "Evidence (backs a finding)",
+  "myEvidence.title": "My evidence requests",
+  "myEvidence.subtitle": "Documents auditors have requested from you. Upload each one here — it goes straight to the auditor.",
+  "myEvidence.loading": "Loading your requests…",
+  "myEvidence.empty.title": "Nothing requested",
+  "myEvidence.empty.message": "You have no outstanding document requests.",
+  "myEvidence.due": "Due",
+  "myEvidence.overdue": "Overdue",
+  "myEvidence.upload": "Upload document",
+  "myEvidence.uploadAnother": "Upload another",
+  "myEvidence.notify.uploaded": "Document uploaded. Thank you."
 }

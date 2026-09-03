@@ -113,7 +113,10 @@ export class MainLayoutComponent {
     {
       titleKey: 'nav.section.overview',
       collapsible: false,
-      items: [{ labelKey: 'nav.dashboard', icon: 'dashboard', route: '/dashboard', permissions: [] }],
+      items: [
+        { labelKey: 'nav.dashboard', icon: 'dashboard', route: '/dashboard', permissions: [] },
+        { labelKey: 'nav.myEvidenceRequests', icon: 'upload_file', route: '/my/evidence-requests', permissions: [] },
+      ],
     },
     {
       titleKey: 'nav.section.audit',

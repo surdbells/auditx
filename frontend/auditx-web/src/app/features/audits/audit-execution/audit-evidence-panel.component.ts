@@ -19,12 +19,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { EvidenceRequestsService } from '../../../core/services/evidence-requests.service';
+import { AuditsService } from '../../../core/services/audits.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { Permissions } from '../../../core/permissions';
-import { Audit, EvidenceRequest } from '../../../core/models';
+import { Audit, EvidenceFile, EvidenceRequest } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
 import {
@@ -72,6 +73,7 @@ export class AuditEvidencePanelComponent {
   });
 
   private readonly service = inject(EvidenceRequestsService);
+  private readonly audits = inject(AuditsService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
@@ -97,11 +99,18 @@ export class AuditEvidencePanelComponent {
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(300)]],
+    requestedFromUserId: ['', [Validators.required]],
+    purpose: ['review_document'],
     documentType: [''],
     checklistItemId: [''],
     dueDate: [''],
     notes: [''],
   });
+
+  /** Active team members — the people a document can be requested from (the auditee is one). */
+  readonly recipients = computed(() =>
+    this.audit().teamMembers.filter((m) => m.isActive).map((m) => ({ id: m.userId, name: this.lookup.displayName(m.userId) })),
+  );
 
   constructor() {
     // The user directory + document types load lazily on first use (mirrors the procedures panel).
@@ -142,7 +151,11 @@ export class AuditEvidencePanelComponent {
 
   startAdd(): void {
     this.adding.set(true);
-    this.form.reset({ title: '', documentType: '', checklistItemId: this.scopedItemId() ?? '', dueDate: '', notes: '' });
+    // Default the auditee to the audit's auditee.
+    this.form.reset({
+      title: '', requestedFromUserId: this.audit().auditeeUserId ?? '', purpose: 'review_document',
+      documentType: '', checklistItemId: this.scopedItemId() ?? '', dueDate: '', notes: '',
+    });
   }
 
   cancelAdd(): void {
@@ -159,6 +172,8 @@ export class AuditEvidencePanelComponent {
     this.service
       .request(this.audit().id, {
         title: v.title.trim(),
+        requestedFromUserId: v.requestedFromUserId,
+        purpose: (v.purpose as 'review_document' | 'finding_evidence') || 'review_document',
         documentType: v.documentType || null,
         checklistItemId: v.checklistItemId || null,
         dueDate: v.dueDate || null,
@@ -205,6 +220,20 @@ export class AuditEvidencePanelComponent {
           },
         });
       });
+  }
+
+  /** Download a document the auditee uploaded against a request. */
+  download(r: EvidenceRequest, f: EvidenceFile): void {
+    this.audits.downloadEvidence(r.auditId, f.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = f.originalFilename;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+    });
   }
 
   remove(r: EvidenceRequest): void {

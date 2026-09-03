@@ -5181,5 +5181,22 @@
   "exceptions.recurrence.selectPrior": "Sélectionnez le constat antérieur.",
   "exceptions.recurrence.noCandidates": "Aucun autre constat disponible à relier.",
   "exceptions.recurrence.notify.marked": "Constat marqué comme récurrence.",
-  "exceptions.recurrence.notify.cleared": "Récurrence effacée."
+  "exceptions.recurrence.notify.cleared": "Récurrence effacée.",
+  "nav.myEvidenceRequests": "Mes demandes de pièces",
+  "evidence.field.requestedFrom": "Demander à (audité)",
+  "evidence.field.purpose": "Objet",
+  "evidence.error.recipientRequired": "Sélectionnez l’audité à qui adresser la demande.",
+  "evidence.requestedFromLabel": "à",
+  "evidence.purpose.review_document": "Document d’audit (pour revue)",
+  "evidence.purpose.finding_evidence": "Preuve (étaye un constat)",
+  "myEvidence.title": "Mes demandes de pièces",
+  "myEvidence.subtitle": "Documents demandés par les auditeurs. Téléversez chacun ici — il parvient directement à l’auditeur.",
+  "myEvidence.loading": "Chargement de vos demandes…",
+  "myEvidence.empty.title": "Aucune demande",
+  "myEvidence.empty.message": "Vous n’avez aucune demande de document en attente.",
+  "myEvidence.due": "Échéance",
+  "myEvidence.overdue": "En retard",
+  "myEvidence.upload": "Téléverser le document",
+  "myEvidence.uploadAnother": "Téléverser un autre",
+  "myEvidence.notify.uploaded": "Document téléversé. Merci."
 }

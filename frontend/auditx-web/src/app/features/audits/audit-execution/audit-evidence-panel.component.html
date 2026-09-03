@@ -21,6 +21,27 @@
 
       <div class="evi__row">
         <mat-form-field appearance="outline">
+          <mat-label>{{ 'evidence.field.requestedFrom' | t }}</mat-label>
+          <mat-select formControlName="requestedFromUserId">
+            @for (u of recipients(); track u.id) {
+              <mat-option [value]="u.id">{{ u.name }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.requestedFromUserId.hasError('required') && form.controls.requestedFromUserId.touched) {
+            <mat-error>{{ 'evidence.error.recipientRequired' | t }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'evidence.field.purpose' | t }}</mat-label>
+          <mat-select formControlName="purpose">
+            <mat-option value="review_document">{{ 'evidence.purpose.review_document' | t }}</mat-option>
+            <mat-option value="finding_evidence">{{ 'evidence.purpose.finding_evidence' | t }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="evi__row">
+        <mat-form-field appearance="outline">
           <mat-label>{{ 'evidence.field.documentType' | t }}</mat-label>
           <mat-select formControlName="documentType">
             <mat-option [value]="''">{{ 'evidence.value.noType' | t }}</mat-option>
@@ -99,15 +120,26 @@
             }
           </div>
           <p class="muted evi__item-meta">
+            {{ 'evidence.purpose.' + r.purpose | t }} ·
             @if (documentTypeLabel(r.documentType); as dt) { {{ dt }} · }
-            {{ 'evidence.field.dueDate' | t }}: {{ r.dueDate ?? '—' }} ·
-            {{ nameOf(r.requestedByUserId) }}
+            {{ 'evidence.requestedFromLabel' | t }} {{ nameOf(r.requestedFromUserId) }} ·
+            {{ 'evidence.field.dueDate' | t }}: {{ r.dueDate ?? '—' }}
             @if (r.status === 'waived' && r.waiveReason) {
               · {{ 'evidence.waivedLabel' | t }}: {{ r.waiveReason }}
             }
           </p>
           @if (promptFor(r.checklistItemId); as prompt) {
             <p class="muted evi__item-item">↳ {{ prompt }}</p>
+          }
+          @if (r.files.length) {
+            <ul class="evi__files">
+              @for (f of r.files; track f.id) {
+                <li class="evi__file">
+                  <app-icon inline name="description" />
+                  <button matButton type="button" (click)="download(r, f)">{{ f.originalFilename }}</button>
+                </li>
+              }
+            </ul>
           }
         </li>
       }

@@ -444,6 +444,15 @@ export const routes: Routes = [
           ).then((m) => m.RootCauseGapsComponent),
       },
       {
+        // Auditee's personal document-request worklist (reached from the request email). Any signed-in user.
+        path: 'my/evidence-requests',
+        title: 'My Evidence Requests · AuditX',
+        loadComponent: () =>
+          import(
+            './features/evidence-requests/my-evidence-requests.component'
+          ).then((m) => m.MyEvidenceRequestsComponent),
+      },
+      {
         path: 'exceptions/:id',
         title: 'Exception · AuditX',
         canActivate: [permissionGuard(Permissions.ViewExceptions)],
