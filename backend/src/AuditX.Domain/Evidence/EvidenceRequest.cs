@@ -1,15 +1,17 @@
 using AuditX.Domain.Common;
 using AuditX.Domain.Enums;
+using AuditX.Domain.Evidence.Events;
 
 namespace AuditX.Domain.Evidence;
 
 /// <summary>
 /// A request for a specific piece of audit evidence (P2-D): the "expected / requested" side of evidence, distinct
-/// from the uploaded <c>EvidenceFile</c> ("received"). Outstanding until the auditor marks it received or formally
-/// waives it — the substrate for missing / pending-evidence and evidence-by-type reporting. A standalone
-/// soft-deletable aggregate linked to an audit (like <c>AuditProcedure</c>); rowversion-guarded.
+/// from the uploaded <c>EvidenceFile</c> ("received"). The auditor addresses it to an auditee, who is emailed a
+/// link and uploads the document — which marks the request received and surfaces on the auditor's screen.
+/// Outstanding until an upload arrives (or the auditor marks it received / waives it) — the substrate for
+/// missing / pending-evidence and evidence-by-type reporting. A standalone soft-deletable aggregate; rowversion-guarded.
 /// </summary>
-public sealed class EvidenceRequest : Entity, ISoftDeletable
+public sealed class EvidenceRequest : AggregateRoot, ISoftDeletable
 {
     private EvidenceRequest()
     {
@@ -19,6 +21,15 @@ public sealed class EvidenceRequest : Entity, ISoftDeletable
 
     /// <summary>Optional link to the checklist item this evidence supports.</summary>
     public Guid? ChecklistItemId { get; private set; }
+
+    /// <summary>Optional link to the finding this evidence backs (when <see cref="Purpose"/> is FindingEvidence).</summary>
+    public Guid? ExceptionId { get; private set; }
+
+    /// <summary>Whether this is a general review document or evidence that backs a finding.</summary>
+    public EvidenceRequestPurpose Purpose { get; private set; }
+
+    /// <summary>The auditee the document is requested from (emailed the upload link).</summary>
+    public Guid RequestedFromUserId { get; private set; }
 
     public string Title { get; private set; } = null!;
 
@@ -50,24 +61,54 @@ public sealed class EvidenceRequest : Entity, ISoftDeletable
     public Guid? DeletedBy { get; private set; }
 
     public static EvidenceRequest Request(
-        Guid auditId, Guid? checklistItemId, string title, string? documentType, Guid requestedByUserId,
+        Guid auditId, string auditName, Guid? checklistItemId, Guid? exceptionId, EvidenceRequestPurpose purpose,
+        string title, string? documentType, Guid requestedByUserId, Guid requestedFromUserId,
         DateOnly requestedOn, DateOnly? dueDate, string? notes)
     {
         Guard.Against(auditId == Guid.Empty, "evidence_request.audit_required", "An audit is required.");
         Guard.Against(requestedByUserId == Guid.Empty, "evidence_request.requester_required", "A requester is required.");
+        Guard.Against(requestedFromUserId == Guid.Empty, "evidence_request.recipient_required", "The auditee to request from is required.");
 
-        return new EvidenceRequest
+        var request = new EvidenceRequest
         {
             AuditId = auditId,
             ChecklistItemId = checklistItemId,
+            ExceptionId = exceptionId,
+            Purpose = purpose,
             Title = Guard.NotNullOrWhiteSpace(title, "evidence_request.title_required", "A title is required."),
             DocumentType = Normalise(documentType),
             RequestedByUserId = requestedByUserId,
+            RequestedFromUserId = requestedFromUserId,
             RequestedOn = requestedOn,
             DueDate = dueDate,
             Status = EvidenceRequestStatus.Requested,
             Notes = Normalise(notes),
         };
+
+        // Notify the auditee (email with an upload link) via the M10 pipeline.
+        request.RaiseDomainEvent(new EvidenceRequestedEvent(
+            request.Id, auditId, auditName, requestedFromUserId, requestedByUserId, request.Title, dueDate?.ToString("yyyy-MM-dd")));
+        return request;
+    }
+
+    /// <summary>
+    /// Records that the auditee uploaded a document against this request. The first upload moves the request from
+    /// Requested to Received (attributed to the uploader); further uploads add more files without re-transitioning.
+    /// A waived request cannot receive uploads.
+    /// </summary>
+    public void RecordUpload(Guid uploadedByUserId, DateTimeOffset nowUtc)
+    {
+        if (Status == EvidenceRequestStatus.Waived)
+        {
+            throw new InvalidStateTransitionException("evidence_request.waived", "This request was waived and can no longer receive documents.");
+        }
+
+        if (Status == EvidenceRequestStatus.Requested)
+        {
+            Status = EvidenceRequestStatus.Received;
+            ReceivedByUserId = uploadedByUserId;
+            ReceivedAt = nowUtc;
+        }
     }
 
     /// <summary>Marks the requested evidence as received (only from Requested).</summary>

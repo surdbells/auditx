@@ -13,3 +13,10 @@ public sealed record EvidenceUploadedEvent(Guid EvidenceId, Guid AuditId, Eviden
 public sealed record EvidenceHashMismatchEvent(Guid EvidenceId, Guid AuditId, string ExpectedHash) : EvidenceEvent;
 
 public sealed record EvidenceUnflaggedEvent(Guid EvidenceId, Guid AuditId, string Resolution) : EvidenceEvent;
+
+/// <summary>
+/// An auditor requested a document from an auditee (P2-D). Carries the auditee so the notification pipeline can
+/// email them a link to upload it. <see cref="AuditName"/> and <see cref="DueDate"/> populate the message body.
+/// </summary>
+public sealed record EvidenceRequestedEvent(
+    Guid EvidenceRequestId, Guid AuditId, string AuditName, Guid RequestedFromUserId, Guid RequestedByUserId, string Title, string? DueDate) : EvidenceEvent;

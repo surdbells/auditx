@@ -8,11 +8,39 @@ public sealed class EvidenceRequestTests
 {
     private static readonly Guid AuditId = Guid.NewGuid();
     private static readonly Guid User = Guid.NewGuid();
+    private static readonly Guid Auditee = Guid.NewGuid();
     private static readonly DateOnly Requested = new(2027, 1, 10);
     private static readonly DateTimeOffset Now = DateTimeOffset.UnixEpoch;
 
     private static EvidenceRequest New(DateOnly? due = null)
-        => EvidenceRequest.Request(AuditId, null, "Signed dual-authorisation matrix", "policy_procedure", User, Requested, due, null);
+        => EvidenceRequest.Request(AuditId, "Branch Audit", null, null, EvidenceRequestPurpose.ReviewDocument,
+            "Signed dual-authorisation matrix", "policy_procedure", User, Auditee, Requested, due, null);
+
+    [Fact]
+    public void Request_emits_event_and_records_the_auditee()
+    {
+        var r = New();
+        Assert.Equal(Auditee, r.RequestedFromUserId);
+        Assert.Contains(r.DomainEvents, e => e is AuditX.Domain.Evidence.Events.EvidenceRequestedEvent);
+    }
+
+    [Fact]
+    public void Recording_an_upload_marks_received_then_stays_received()
+    {
+        var r = New();
+        r.RecordUpload(Auditee, Now);
+        Assert.Equal(EvidenceRequestStatus.Received, r.Status);
+        Assert.Equal(Auditee, r.ReceivedByUserId);
+
+        // Further uploads keep it received (more documents can arrive) without throwing.
+        r.RecordUpload(Auditee, Now);
+        Assert.Equal(EvidenceRequestStatus.Received, r.Status);
+
+        // A waived request rejects uploads.
+        var waived = New();
+        waived.Waive("no longer needed");
+        Assert.Throws<InvalidStateTransitionException>(() => waived.RecordUpload(Auditee, Now));
+    }
 
     [Fact]
     public void Request_starts_outstanding()

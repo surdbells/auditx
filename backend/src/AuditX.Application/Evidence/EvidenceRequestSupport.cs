@@ -2,10 +2,22 @@ using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Domain.Audits;
 using AuditX.Domain.Authorization;
+using AuditX.Domain.Common;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Evidence;
 
 namespace AuditX.Application.Evidence;
+
+internal static class EvidenceRequestSupport
+{
+    /// <summary>Parse the request purpose (snake_case); defaults to a review document when unspecified.</summary>
+    public static EvidenceRequestPurpose ParsePurpose(string? value)
+        => string.IsNullOrWhiteSpace(value)
+            ? EvidenceRequestPurpose.ReviewDocument
+            : Enum.TryParse<EvidenceRequestPurpose>(value.Replace("_", string.Empty), ignoreCase: true, out var p)
+                ? p
+                : throw new DomainException("evidence_request.invalid_purpose", $"Unknown evidence-request purpose '{value}'.");
+}
 
 internal static class EvidenceRequestConcurrency
 {

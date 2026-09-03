@@ -17,12 +17,33 @@ public sealed class EvidenceRequestsController(IDispatcher dispatcher) : ApiCont
     [HttpPost("api/v1/audits/{auditId:guid}/evidence-requests")]
     public async Task<IActionResult> Create(Guid auditId, [FromBody] RequestEvidenceRequest request, CancellationToken cancellationToken)
         => Created(await dispatcher.Send(new RequestEvidenceCommand(
-            auditId, request.ChecklistItemId, request.Title, request.DocumentType, request.DueDate, request.Notes), cancellationToken));
+            auditId, request.ChecklistItemId, request.ExceptionId, request.Purpose, request.Title, request.DocumentType,
+            request.RequestedFromUserId, request.DueDate, request.Notes), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewAudit)]
     [HttpGet("api/v1/audits/{auditId:guid}/evidence-requests")]
     public async Task<IActionResult> List(Guid auditId, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ListAuditEvidenceRequestsQuery(auditId), cancellationToken));
+
+    /// <summary>The current user's (auditee's) own document requests — their upload worklist. Owner-scoped, no permission gate.</summary>
+    [HttpGet("api/v1/my/evidence-requests")]
+    public async Task<IActionResult> Mine([FromQuery] bool? outstandingOnly, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new MyEvidenceRequestsQuery(outstandingOnly ?? false), cancellationToken));
+
+    /// <summary>The auditee uploads a document against a request. Recipient-or-manager is enforced in the handler.</summary>
+    [HttpPost("api/v1/evidence-requests/{id:guid}/files")]
+    [RequestSizeLimit(6L * 1024 * 1024 * 1024)]
+    public async Task<IActionResult> UploadFile(Guid id, IFormFile file, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest();
+        }
+
+        using var memory = new MemoryStream();
+        await file.CopyToAsync(memory, cancellationToken);
+        return Envelope(await dispatcher.Send(new UploadEvidenceRequestFileCommand(id, memory.ToArray(), file.FileName, file.ContentType), cancellationToken));
+    }
 
     [RequirePermission(PermissionKeys.RespondItem)]
     [HttpPost("api/v1/evidence-requests/{id:guid}/received")]

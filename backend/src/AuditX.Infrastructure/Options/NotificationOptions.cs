@@ -10,6 +10,12 @@ public sealed class NotificationOptions
     public SmsOptions Sms { get; set; } = new();
 
     public TeamsOptions Teams { get; set; } = new();
+
+    /// <summary>
+    /// Public base URL of the AuditX web app (e.g. <c>https://auditx.bank.local</c>), used to build deep links in
+    /// notification emails. Leave empty in development; templates then fall back to a relative path.
+    /// </summary>
+    public string WebBaseUrl { get; set; } = string.Empty;
 }
 
 public sealed class TeamsOptions

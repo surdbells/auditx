@@ -48,3 +48,13 @@ public interface ITemplateRenderer
 {
     (string? Subject, string Body) Render(string? subjectTemplate, string bodyTemplate, IReadOnlyDictionary<string, object?> model);
 }
+
+/// <summary>
+/// Supplies the web app's public base URL (e.g. <c>https://auditx.bank.local</c>) so notification templates can
+/// build deep links into the SPA (exposed to every template as <c>{{ AppBaseUrl }}</c>). Empty when unconfigured,
+/// in which case templates fall back to a relative path.
+/// </summary>
+public interface IAppUrlProvider
+{
+    string WebBaseUrl { get; }
+}

@@ -24,6 +24,7 @@ public sealed class NotificationIngestService(
     IEmailSender emailSender,
     ISmsSender smsSender,
     ITeamsSender teamsSender,
+    IAppUrlProvider appUrls,
     IAuditRecorder audit,
     IClock clock,
     IUnitOfWork unitOfWork,
@@ -36,7 +37,7 @@ public sealed class NotificationIngestService(
     {
         using var doc = ParseOrThrow(samplePayloadJson, "notification.invalid_payload_json");
         var payload = doc.RootElement;
-        var model = BuildModel(payload);
+        var model = new Dictionary<string, object?>(BuildModel(payload), StringComparer.Ordinal) { ["AppBaseUrl"] = appUrls.WebBaseUrl };
         var recipients = await ResolveRecipientsAsync(recipientResolutionJson, payload, cancellationToken);
 
         var template = await templates.ResolveAsync(templateKey, NotificationChannel.Email, cancellationToken);
@@ -61,7 +62,7 @@ public sealed class NotificationIngestService(
         var severity = payload.ValueKind == JsonValueKind.Object && payload.TryGetProperty("Severity", out var sev) && sev.ValueKind == JsonValueKind.String
             ? sev.GetString()
             : null;
-        var model = BuildModel(payload);
+        var model = new Dictionary<string, object?>(BuildModel(payload), StringComparer.Ordinal) { ["AppBaseUrl"] = appUrls.WebBaseUrl };
 
         foreach (var rule in activeRules)
         {

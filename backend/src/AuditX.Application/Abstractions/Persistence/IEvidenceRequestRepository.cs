@@ -11,5 +11,8 @@ public interface IEvidenceRequestRepository
     /// <summary>All live evidence requests for an audit, outstanding first then most-recent.</summary>
     Task<IReadOnlyList<EvidenceRequest>> ListByAuditAsync(Guid auditId, CancellationToken cancellationToken = default);
 
+    /// <summary>Live requests addressed to a given auditee (their upload worklist); outstanding first, then most-recent.</summary>
+    Task<IReadOnlyList<EvidenceRequest>> ListByRequestedFromAsync(Guid requestedFromUserId, bool outstandingOnly, CancellationToken cancellationToken = default);
+
     void Add(EvidenceRequest request);
 }

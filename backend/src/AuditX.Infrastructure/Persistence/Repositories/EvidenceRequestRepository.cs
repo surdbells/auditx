@@ -19,5 +19,20 @@ public sealed class EvidenceRequestRepository(AppDbContext db) : IEvidenceReques
             .ThenByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<EvidenceRequest>> ListByRequestedFromAsync(Guid requestedFromUserId, bool outstandingOnly, CancellationToken cancellationToken = default)
+    {
+        var q = db.EvidenceRequests.AsNoTracking().Where(r => r.RequestedFromUserId == requestedFromUserId);
+        if (outstandingOnly)
+        {
+            q = q.Where(r => r.Status == EvidenceRequestStatus.Requested);
+        }
+
+        return await q
+            .OrderBy(r => r.Status == EvidenceRequestStatus.Requested ? 0 : 1)
+            .ThenByDescending(r => r.RequestedOn)
+            .ThenByDescending(r => r.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
     public void Add(EvidenceRequest request) => db.EvidenceRequests.Add(request);
 }

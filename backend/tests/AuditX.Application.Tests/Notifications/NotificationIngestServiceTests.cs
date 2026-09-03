@@ -45,7 +45,9 @@ public sealed class NotificationIngestServiceTests
             .Returns(ChannelSendResult.Sent("msg-1"));
         _teams.SendAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(ChannelSendResult.Sent("teams-1"));
-        return new NotificationIngestService(_rules, _templates, _dispatches, _users, _renderer, _email, _sms, _teams, _audit, _clock, _uow,
+        var appUrls = Substitute.For<IAppUrlProvider>();
+        appUrls.WebBaseUrl.Returns(string.Empty);
+        return new NotificationIngestService(_rules, _templates, _dispatches, _users, _renderer, _email, _sms, _teams, appUrls, _audit, _clock, _uow,
             Substitute.For<ILogger<NotificationIngestService>>());
     }
 

@@ -44,7 +44,7 @@ public static class NotificationEvents
         "audit_team_member_added", "audit_lead_transferred", "audit_transitioned", "audit_completed", "audit_cancelled",
         "audit_kickoff_scheduled",
         // M5 execution
-        "item_assigned",
+        "item_assigned", "evidence_requested",
         // M6 exceptions
         "exception_raised", "exception_owner_reassigned", "map_submitted", "map_approved", "map_rejected",
         "map_completed", "exception_pending_cia", "exception_closed", "exception_cancelled",

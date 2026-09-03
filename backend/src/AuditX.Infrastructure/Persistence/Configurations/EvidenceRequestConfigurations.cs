@@ -24,6 +24,12 @@ public sealed class EvidenceRequestConfiguration : IEntityTypeConfiguration<Evid
             .HasConversion(new SnakeCaseEnumConverter<EvidenceRequestStatus>())
             .HasMaxLength(20)
             .IsRequired();
+        builder.Property(r => r.Purpose)
+            .HasConversion(new SnakeCaseEnumConverter<EvidenceRequestPurpose>())
+            .HasMaxLength(20)
+            .IsRequired()
+            .HasDefaultValue(EvidenceRequestPurpose.ReviewDocument);
+        builder.HasIndex(r => r.RequestedFromUserId);
 
         // Soft-delete: live rows only in normal reads.
         builder.HasQueryFilter(r => !r.IsDeleted);

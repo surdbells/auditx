@@ -74,6 +74,10 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
                 "A kickoff meeting for \"{{ AuditName }}\" is scheduled for {{ ScheduledAtUtc }}. Location / join: {{ Location }}. Please make yourself available."),
             ("item_assigned", "item_assigned", "payload_derived", "AssigneeUserId", "[\"email\"]",
                 "A checklist item was assigned to you", "Checklist item {{ ItemId }} on audit {{ AuditId }} has been assigned to you."),
+            // Auditor requests a document from an auditee → email the auditee a link to upload it (US: evidence request).
+            ("evidence_requested", "evidence_requested", "payload_derived", "RequestedFromUserId", "[\"email\"]",
+                "A document has been requested from you",
+                "You have been asked to provide \"{{ Title }}\" for the audit \"{{ AuditName }}\" (due {{ DueDate }}). Please upload it at {{ AppBaseUrl }}/my/evidence-requests."),
             ("exception_raised", "exception_raised", "payload_derived", "OwnerUserId", "[\"email\"]",
                 "An exception was raised against you", "Exception {{ ExceptionId }} ({{ Severity }}) was raised on audit {{ AuditId }}. Please review."),
             ("exception_owner_reassigned", "exception_owner_reassigned", "payload_derived", "NewOwnerUserId", "[\"email\"]",

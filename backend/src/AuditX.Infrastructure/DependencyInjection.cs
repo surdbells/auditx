@@ -191,6 +191,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationDispatchRepository, NotificationDispatchRepository>();
         services.AddScoped<Messaging.NotificationIngestJob>();
         services.AddSingleton<Application.Abstractions.Notifications.ITemplateRenderer, Notifications.SimpleTemplateRenderer>();
+        services.AddSingleton<Application.Abstractions.Notifications.IAppUrlProvider, Notifications.AppUrlProvider>();
         if (identityOptions.UseDevelopmentProvider)
         {
             services.AddScoped<Application.Abstractions.Notifications.IEmailSender, Notifications.LoggingEmailSender>();

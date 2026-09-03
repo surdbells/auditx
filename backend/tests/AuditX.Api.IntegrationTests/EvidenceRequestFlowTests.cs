@@ -1,5 +1,7 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 
 namespace AuditX.Api.IntegrationTests;
@@ -77,18 +79,20 @@ public sealed class EvidenceRequestFlowTests(ApiFactory factory) : IClassFixture
     public async Task Request_receive_waive_and_evidence_analytics()
     {
         var admin = await LoginAsync("admin"); // RespondItem + ManageAudit
+        var users = await UsersByEmailAsync(admin);
+        var auditee = users["auditee@auditx.local"];
         var auditId = await SeedInProgressAuditAsync(admin);
 
         var req1 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/evidence-requests", new
         {
-            title = "Signed dual-authorisation matrix", documentType = "approval_signoff", dueDate = "2027-01-25",
+            requestedFromUserId = auditee, title = "Signed dual-authorisation matrix", documentType = "approval_signoff", dueDate = "2027-01-25",
         }));
         Assert.Equal("requested", req1.GetProperty("status").GetString());
         Assert.False(req1.GetProperty("isOverdue").GetBoolean());
 
         var req2 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/evidence-requests", new
         {
-            title = "Reconciliation for December", documentType = "reconciliation",
+            requestedFromUserId = auditee, title = "Reconciliation for December", documentType = "reconciliation",
         }));
 
         // Receive the first, waive the second.
@@ -117,6 +121,75 @@ public sealed class EvidenceRequestFlowTests(ApiFactory factory) : IClassFixture
         var summary = await DataAsync(await analyst.GetAsync("/api/v1/analytics/evidence"));
         Assert.True(summary.GetProperty("received").GetInt32() >= 1);
         Assert.True(summary.GetProperty("waived").GetInt32() >= 1);
+    }
+
+    [Fact]
+    public async Task Auditee_sees_the_request_uploads_a_document_and_it_shows_to_the_auditor()
+    {
+        var admin = await LoginAsync("admin");
+        var users = await UsersByEmailAsync(admin);
+        var auditeeId = users["auditee@auditx.local"];
+        var auditId = await SeedInProgressAuditAsync(admin);
+
+        // The auditor requests a document from the auditee.
+        var req = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/evidence-requests", new
+        {
+            requestedFromUserId = auditeeId, purpose = "review_document", title = "Board-approved SoD policy", documentType = "policy_procedure",
+        }));
+        var requestId = req.GetProperty("id").GetGuid();
+        Assert.Equal(auditeeId, req.GetProperty("requestedFromUserId").GetGuid());
+        Assert.Empty(req.GetProperty("files").EnumerateArray());
+
+        // The auditee sees it on their own worklist.
+        var auditee = await LoginAsync("auditee");
+        var mine = await DataAsync(await auditee.GetAsync("/api/v1/my/evidence-requests?outstandingOnly=true"));
+        Assert.Contains(mine.EnumerateArray(), r => r.GetProperty("id").GetGuid() == requestId);
+
+        // The auditee uploads the document (valid %PDF).
+        var pdf = Encoding.ASCII.GetBytes("%PDF-1.4\n%AuditX requested document\n");
+        using var form = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(pdf);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        form.Add(fileContent, "file", "sod-policy.pdf");
+        var uploaded = await DataAsync(await auditee.PostAsync($"/api/v1/evidence-requests/{requestId}/files", form));
+
+        // Upload marks the request received and attaches the file.
+        Assert.Equal("received", uploaded.GetProperty("status").GetString());
+        Assert.Single(uploaded.GetProperty("files").EnumerateArray());
+
+        // It now shows on the auditor's screen (the per-audit list) with the uploaded document + download works.
+        var list = await DataAsync(await admin.GetAsync($"/api/v1/audits/{auditId}/evidence-requests"));
+        var row = list.EnumerateArray().First(r => r.GetProperty("id").GetGuid() == requestId);
+        Assert.Equal("received", row.GetProperty("status").GetString());
+        var evidenceId = row.GetProperty("files")[0].GetProperty("id").GetGuid();
+        var download = await admin.GetAsync($"/api/v1/audits/{auditId}/evidence/{evidenceId}");
+        download.EnsureSuccessStatusCode();
+        Assert.Equal(pdf.Length, (await download.Content.ReadAsByteArrayAsync()).Length);
+    }
+
+    [Fact]
+    public async Task Only_the_requested_auditee_may_upload_against_a_request()
+    {
+        var admin = await LoginAsync("admin");
+        var users = await UsersByEmailAsync(admin);
+        var auditId = await SeedInProgressAuditAsync(admin);
+
+        // Request from the auditee.
+        var req = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/evidence-requests", new
+        {
+            requestedFromUserId = users["auditee@auditx.local"], title = "Requested from the auditee",
+        }));
+        var requestId = req.GetProperty("id").GetGuid();
+
+        // A different user (the auditor, not the recipient, no ManageAudit) cannot upload → 403.
+        var auditor = await LoginAsync("auditor");
+        var pdf = Encoding.ASCII.GetBytes("%PDF-1.4\n");
+        using var form = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(pdf);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        form.Add(fileContent, "file", "x.pdf");
+        var resp = await auditor.PostAsync($"/api/v1/evidence-requests/{requestId}/files", form);
+        Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
     }
 
     [Fact]
