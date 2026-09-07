@@ -1,0 +1,429 @@
+[
+  {
+    "n": 1,
+    "label": "Login",
+    "path": "/login",
+    "file": "01-login.png",
+    "ok": true
+  },
+  {
+    "n": 2,
+    "label": "Dashboard",
+    "path": "/dashboard",
+    "file": "02-dashboard.png",
+    "ok": true
+  },
+  {
+    "n": 3,
+    "label": "My Evidence Requests (auditee upload worklist)",
+    "path": "/my/evidence-requests",
+    "file": "03-my-evidence-requests-auditee-upload-worklist.png",
+    "ok": true
+  },
+  {
+    "n": 4,
+    "label": "Audit Universe — Entities",
+    "path": "/audit-universe",
+    "file": "04-audit-universe-entities.png",
+    "ok": true
+  },
+  {
+    "n": 5,
+    "label": "Risk Scoring Dimensions",
+    "path": "/audit-universe/risk-dimensions",
+    "file": "05-risk-scoring-dimensions.png",
+    "ok": true
+  },
+  {
+    "n": 6,
+    "label": "Organisational Units",
+    "path": "/audit-universe/org-units",
+    "file": "06-organisational-units.png",
+    "ok": true
+  },
+  {
+    "n": 7,
+    "label": "Annual Plans",
+    "path": "/planning",
+    "file": "07-annual-plans.png",
+    "ok": true
+  },
+  {
+    "n": 8,
+    "label": "Annual Plan — detail",
+    "path": "/planning/019ff571-b0cd-7594-b68a-4888a59ac879",
+    "file": "08-annual-plan-detail.png",
+    "ok": true
+  },
+  {
+    "n": 9,
+    "label": "Coverage Analytics",
+    "path": "/coverage",
+    "file": "09-coverage-analytics.png",
+    "ok": true
+  },
+  {
+    "n": 10,
+    "label": "Checklist Templates",
+    "path": "/admin/templates",
+    "file": "10-checklist-templates.png",
+    "ok": true
+  },
+  {
+    "n": 11,
+    "label": "Template Editor",
+    "path": "/admin/templates/019ff590-8cde-7145-8f5d-1e4cf5108f73",
+    "file": "11-template-editor.png",
+    "ok": true
+  },
+  {
+    "n": 12,
+    "label": "Rating Scales",
+    "path": "/admin/templates/rating-scales",
+    "file": "12-rating-scales.png",
+    "ok": true
+  },
+  {
+    "n": 13,
+    "label": "Response Labels (custom option sets)",
+    "path": "/admin/response-labels",
+    "file": "13-response-labels-custom-option-sets.png",
+    "ok": true
+  },
+  {
+    "n": 14,
+    "label": "Audits",
+    "path": "/audits",
+    "file": "14-audits.png",
+    "ok": true
+  },
+  {
+    "n": 15,
+    "label": "Audit — detail",
+    "path": "/audits/019ff490-2094-7a14-afc7-0e90674a0133",
+    "file": "15-audit-detail.png",
+    "ok": true
+  },
+  {
+    "n": 16,
+    "label": "Audit Execution / Fieldwork",
+    "path": "/audits/019ff490-2094-7a14-afc7-0e90674a0133/execute",
+    "file": "16-audit-execution-fieldwork.png",
+    "ok": true
+  },
+  {
+    "n": 17,
+    "label": "Audit Reports",
+    "path": "/audits/019ff490-2094-7a14-afc7-0e90674a0133/reports",
+    "file": "17-audit-reports.png",
+    "ok": true
+  },
+  {
+    "n": 18,
+    "label": "Engagement Lifecycle — portfolio board",
+    "path": "/engagement-lifecycle",
+    "file": "18-engagement-lifecycle-portfolio-board.png",
+    "ok": true
+  },
+  {
+    "n": 19,
+    "label": "Engagement Journey / next-best-action",
+    "path": "/engagement-lifecycle/019ff490-2094-7a14-afc7-0e90674a0133",
+    "file": "19-engagement-journey-next-best-action.png",
+    "ok": true
+  },
+  {
+    "n": 20,
+    "label": "Findings / Exceptions register",
+    "path": "/exceptions",
+    "file": "20-findings-exceptions-register.png",
+    "ok": true
+  },
+  {
+    "n": 21,
+    "label": "Finding — detail",
+    "path": "/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be",
+    "file": "21-finding-detail.png",
+    "ok": true
+  },
+  {
+    "n": 22,
+    "label": "Root-cause Gaps",
+    "path": "/root-cause-gaps",
+    "file": "22-root-cause-gaps.png",
+    "ok": true
+  },
+  {
+    "n": 23,
+    "label": "Control Register",
+    "path": "/controls",
+    "file": "23-control-register.png",
+    "ok": true
+  },
+  {
+    "n": 24,
+    "label": "Regulations Register",
+    "path": "/compliance",
+    "file": "24-regulations-register.png",
+    "ok": true
+  },
+  {
+    "n": 25,
+    "label": "Enterprise Risk Register",
+    "path": "/risks",
+    "file": "25-enterprise-risk-register.png",
+    "ok": true
+  },
+  {
+    "n": 26,
+    "label": "Exception-raising Rules",
+    "path": "/admin/exception-raising-rules",
+    "file": "26-exception-raising-rules.png",
+    "ok": true
+  },
+  {
+    "n": 27,
+    "label": "Sanctions Cases",
+    "path": "/admin/sanctions",
+    "file": "27-sanctions-cases.png",
+    "ok": true
+  },
+  {
+    "n": 28,
+    "label": "Sanctions Case — detail",
+    "path": "/admin/sanctions/019ff490-378e-7018-9baa-59ca1c41f7fc",
+    "file": "28-sanctions-case-detail.png",
+    "ok": true
+  },
+  {
+    "n": 29,
+    "label": "Disciplinary Committee Queue",
+    "path": "/admin/sanctions/dc-queue",
+    "file": "29-disciplinary-committee-queue.png",
+    "ok": true
+  },
+  {
+    "n": 30,
+    "label": "Sanctions Grid",
+    "path": "/admin/sanctions/grid",
+    "file": "30-sanctions-grid.png",
+    "ok": true
+  },
+  {
+    "n": 31,
+    "label": "Reports",
+    "path": "/reports",
+    "file": "31-reports.png",
+    "ok": true
+  },
+  {
+    "n": 32,
+    "label": "Report Templates",
+    "path": "/admin/report-templates",
+    "file": "32-report-templates.png",
+    "ok": true
+  },
+  {
+    "n": 33,
+    "label": "Report Schedules",
+    "path": "/admin/report-schedules",
+    "file": "33-report-schedules.png",
+    "ok": true
+  },
+  {
+    "n": 34,
+    "label": "Analytics — KPIs",
+    "path": "/analytics",
+    "file": "34-analytics-kpis.png",
+    "ok": true
+  },
+  {
+    "n": 35,
+    "label": "Custom Dashboard",
+    "path": "/analytics/dashboards/audit_committee",
+    "file": "35-custom-dashboard.png",
+    "ok": true
+  },
+  {
+    "n": 36,
+    "label": "Performance Scorecards",
+    "path": "/analytics/scorecards",
+    "file": "36-performance-scorecards.png",
+    "ok": true
+  },
+  {
+    "n": 37,
+    "label": "Auditor Throughput",
+    "path": "/analytics/auditor-throughput",
+    "file": "37-auditor-throughput.png",
+    "ok": true
+  },
+  {
+    "n": 38,
+    "label": "Org-unit Scorecards",
+    "path": "/analytics/org-units",
+    "file": "38-org-unit-scorecards.png",
+    "ok": true
+  },
+  {
+    "n": 39,
+    "label": "Budget vs Actual",
+    "path": "/analytics/time-budget",
+    "file": "39-budget-vs-actual.png",
+    "ok": true
+  },
+  {
+    "n": 40,
+    "label": "Auditor Workload",
+    "path": "/analytics/auditor-workload",
+    "file": "40-auditor-workload.png",
+    "ok": true
+  },
+  {
+    "n": 41,
+    "label": "KPI Trends",
+    "path": "/analytics/trends",
+    "file": "41-kpi-trends.png",
+    "ok": true
+  },
+  {
+    "n": 42,
+    "label": "Risk Heatmap",
+    "path": "/analytics/risk-heatmap",
+    "file": "42-risk-heatmap.png",
+    "ok": true
+  },
+  {
+    "n": 43,
+    "label": "Controls Compliance",
+    "path": "/analytics/controls-compliance",
+    "file": "43-controls-compliance.png",
+    "ok": true
+  },
+  {
+    "n": 44,
+    "label": "Recurrence Clusters",
+    "path": "/analytics/recurrence-clusters",
+    "file": "44-recurrence-clusters.png",
+    "ok": true
+  },
+  {
+    "n": 45,
+    "label": "Recurrence Cluster — detail",
+    "path": "/analytics/recurrence-clusters/019ff490-4199-7944-a88c-abf45ff7218e",
+    "file": "45-recurrence-cluster-detail.png",
+    "ok": true
+  },
+  {
+    "n": 46,
+    "label": "Audit Committee — workspace",
+    "path": "/ac",
+    "file": "46-audit-committee-workspace.png",
+    "ok": true
+  },
+  {
+    "n": 47,
+    "label": "Users",
+    "path": "/admin/users",
+    "file": "47-users.png",
+    "ok": true
+  },
+  {
+    "n": 48,
+    "label": "User — detail",
+    "path": "/admin/users/019ff490-1471-72ec-8e36-0c2e40b59417",
+    "file": "48-user-detail.png",
+    "ok": true
+  },
+  {
+    "n": 49,
+    "label": "Roles",
+    "path": "/admin/roles",
+    "file": "49-roles.png",
+    "ok": true
+  },
+  {
+    "n": 50,
+    "label": "Role Editor",
+    "path": "/admin/roles/019ff490-0d9a-7ace-a420-db5751978c63",
+    "file": "50-role-editor.png",
+    "ok": true
+  },
+  {
+    "n": 51,
+    "label": "Maker-checker Queue",
+    "path": "/admin/maker-checker",
+    "file": "51-maker-checker-queue.png",
+    "ok": true
+  },
+  {
+    "n": 52,
+    "label": "Bank Settings / Administration",
+    "path": "/admin/administration",
+    "file": "52-bank-settings-administration.png",
+    "ok": true
+  },
+  {
+    "n": 53,
+    "label": "Audit Trail",
+    "path": "/admin/audit-trail",
+    "file": "53-audit-trail.png",
+    "ok": true
+  },
+  {
+    "n": 54,
+    "label": "Configuration Store",
+    "path": "/admin/configuration",
+    "file": "54-configuration-store.png",
+    "ok": true
+  },
+  {
+    "n": 55,
+    "label": "Configuration — exception defaults",
+    "path": "/admin/configuration/exception_defaults",
+    "file": "55-configuration-exception-defaults.png",
+    "ok": true
+  },
+  {
+    "n": 56,
+    "label": "Reference Data",
+    "path": "/admin/reference-data",
+    "file": "56-reference-data.png",
+    "ok": true
+  },
+  {
+    "n": 57,
+    "label": "Integrations",
+    "path": "/admin/integrations",
+    "file": "57-integrations.png",
+    "ok": true
+  },
+  {
+    "n": 58,
+    "label": "Webhooks",
+    "path": "/admin/webhooks",
+    "file": "58-webhooks.png",
+    "ok": true
+  },
+  {
+    "n": 59,
+    "label": "Notifications (rules / templates / dispatches)",
+    "path": "/admin/notifications",
+    "file": "59-notifications-rules-templates-dispatches.png",
+    "ok": true
+  },
+  {
+    "n": 60,
+    "label": "Evidence Integrity (flagged files)",
+    "path": "/admin/evidence-integrity",
+    "file": "60-evidence-integrity-flagged-files.png",
+    "ok": true
+  },
+  {
+    "n": 61,
+    "label": "My Notification Preferences",
+    "path": "/account/notification-preferences",
+    "file": "61-my-notification-preferences.png",
+    "ok": true
+  }
+]

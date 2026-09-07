@@ -1,0 +1,596 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>AuditX — Screens</title>
+<style>
+  :root{ --ink:#1e2330; --muted:#59617a; --faint:#8a91a6; --line:#e4e7f0; --accent:#4f46e5; --accent-soft:#eef0fe; }
+  *{box-sizing:border-box}
+  @page{ size:A4; margin:12mm 12mm 12mm; }
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{ font-family:"Segoe UI",-apple-system,Roboto,Arial,sans-serif; color:var(--ink); margin:0; font-size:11px; }
+  code{ font-family:"Cascadia Code",Consolas,monospace; font-size:0.85em; background:#f3f4f9; border:1px solid var(--line); border-radius:3px; padding:0 4px; color:#334; }
+
+  .cover{ height:271mm; display:flex; flex-direction:column; justify-content:center; }
+  .cover .kicker{ font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); font-weight:700; margin:0 0 8px; }
+  .cover h1{ font-size:34px; letter-spacing:-.02em; margin:0 0 10px; }
+  .cover p{ color:var(--muted); font-size:14px; max-width:150mm; margin:0; }
+  .cover .meta{ margin-top:16px; color:var(--faint); font-size:11px; }
+  .page-break{ break-after:page; }
+
+  .toc h2{ font-size:18px; margin:0 0 10px; border-bottom:2px solid var(--accent); padding-bottom:6px; }
+  .toc-sec{ break-inside:avoid; margin:0 0 8px; }
+  .toc-sec h3{ font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); margin:8px 0 3px; }
+  .toc-sec ul{ margin:0; padding:0; list-style:none; columns:2; column-gap:14px; }
+  .toc-sec li{ font-size:10px; margin:2px 0; break-inside:avoid; color:#33384a; }
+  .toc-sec li b{ color:var(--accent); font-variant-numeric:tabular-nums; }
+  .toc-sec li code{ color:var(--muted); }
+
+  .shot{ break-before:page; break-inside:avoid; margin:0; height:271mm; display:flex; flex-direction:column; }
+  figcaption{ display:flex; align-items:baseline; gap:9px; border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:8px; }
+  figcaption .num{ background:var(--accent); color:#fff; border-radius:5px; font-weight:700; font-size:11px; padding:2px 7px; font-variant-numeric:tabular-nums; }
+  figcaption .cap-label{ font-size:15px; font-weight:700; letter-spacing:-.01em; }
+  figcaption .cap-path{ margin-left:auto; font-family:"Cascadia Code",Consolas,monospace; font-size:10px; color:var(--faint); }
+  .shot-img{ flex:1; display:flex; align-items:flex-start; justify-content:center; min-height:0; }
+  .shot-img img{ max-width:100%; max-height:250mm; object-fit:contain; border:1px solid var(--line); border-radius:6px; box-shadow:0 1px 4px rgba(30,35,48,.08); }
+</style></head><body>
+
+<section class="cover page-break">
+  <p class="kicker">AuditX Enterprise · On-Premises Edition</p>
+  <h1>Application Screens</h1>
+  <p>A labelled screenshot of every screen in the internal-audit platform — captured from the running application, signed in as an administrator, with the screen name and its in-app route on each page.</p>
+  <p class="meta">61 screens · captured 2026-09-07 · light theme, 1440&nbsp;px width</p>
+</section>
+
+<section class="toc page-break">
+  <h2>Contents</h2>
+  <div class="toc-sec"><h3>Getting started</h3><ul><li><b>01</b> Login <code>/login</code></li><li><b>02</b> Dashboard <code>/dashboard</code></li><li><b>03</b> My Evidence Requests (auditee upload worklist) <code>/my/evidence-requests</code></li></ul></div><div class="toc-sec"><h3>Audit universe &amp; planning</h3><ul><li><b>04</b> Audit Universe — Entities <code>/audit-universe</code></li><li><b>05</b> Risk Scoring Dimensions <code>/audit-universe/risk-dimensions</code></li><li><b>06</b> Organisational Units <code>/audit-universe/org-units</code></li><li><b>07</b> Annual Plans <code>/planning</code></li><li><b>08</b> Annual Plan — detail <code>/planning/019ff571-b0cd-7594-b68a-4888a59ac879</code></li><li><b>09</b> Coverage Analytics <code>/coverage</code></li></ul></div><div class="toc-sec"><h3>Templates &amp; response config</h3><ul><li><b>10</b> Checklist Templates <code>/admin/templates</code></li><li><b>11</b> Template Editor <code>/admin/templates/019ff590-8cde-7145-8f5d-1e4cf5108f73</code></li><li><b>12</b> Rating Scales <code>/admin/templates/rating-scales</code></li><li><b>13</b> Response Labels (custom option sets) <code>/admin/response-labels</code></li></ul></div><div class="toc-sec"><h3>Audits &amp; execution</h3><ul><li><b>14</b> Audits <code>/audits</code></li><li><b>15</b> Audit — detail <code>/audits/019ff490-2094-7a14-afc7-0e90674a0133</code></li><li><b>16</b> Audit Execution / Fieldwork <code>/audits/019ff490-2094-7a14-afc7-0e90674a0133/execute</code></li><li><b>17</b> Audit Reports <code>/audits/019ff490-2094-7a14-afc7-0e90674a0133/reports</code></li><li><b>18</b> Engagement Lifecycle — portfolio board <code>/engagement-lifecycle</code></li><li><b>19</b> Engagement Journey / next-best-action <code>/engagement-lifecycle/019ff490-2094-7a14-afc7-0e90674a0133</code></li></ul></div><div class="toc-sec"><h3>Findings, controls &amp; risk</h3><ul><li><b>20</b> Findings / Exceptions register <code>/exceptions</code></li><li><b>21</b> Finding — detail <code>/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be</code></li><li><b>22</b> Root-cause Gaps <code>/root-cause-gaps</code></li><li><b>23</b> Control Register <code>/controls</code></li><li><b>24</b> Regulations Register <code>/compliance</code></li><li><b>25</b> Enterprise Risk Register <code>/risks</code></li><li><b>26</b> Exception-raising Rules <code>/admin/exception-raising-rules</code></li></ul></div><div class="toc-sec"><h3>Sanctions</h3><ul><li><b>27</b> Sanctions Cases <code>/admin/sanctions</code></li><li><b>28</b> Sanctions Case — detail <code>/admin/sanctions/019ff490-378e-7018-9baa-59ca1c41f7fc</code></li><li><b>29</b> Disciplinary Committee Queue <code>/admin/sanctions/dc-queue</code></li><li><b>30</b> Sanctions Grid <code>/admin/sanctions/grid</code></li></ul></div><div class="toc-sec"><h3>Reporting</h3><ul><li><b>31</b> Reports <code>/reports</code></li><li><b>32</b> Report Templates <code>/admin/report-templates</code></li><li><b>33</b> Report Schedules <code>/admin/report-schedules</code></li><li><b>34</b> Analytics — KPIs <code>/analytics</code></li></ul></div><div class="toc-sec"><h3>Analytics</h3><ul><li><b>35</b> Custom Dashboard <code>/analytics/dashboards/audit_committee</code></li><li><b>36</b> Performance Scorecards <code>/analytics/scorecards</code></li><li><b>37</b> Auditor Throughput <code>/analytics/auditor-throughput</code></li><li><b>38</b> Org-unit Scorecards <code>/analytics/org-units</code></li><li><b>39</b> Budget vs Actual <code>/analytics/time-budget</code></li><li><b>40</b> Auditor Workload <code>/analytics/auditor-workload</code></li><li><b>41</b> KPI Trends <code>/analytics/trends</code></li><li><b>42</b> Risk Heatmap <code>/analytics/risk-heatmap</code></li><li><b>43</b> Controls Compliance <code>/analytics/controls-compliance</code></li><li><b>44</b> Recurrence Clusters <code>/analytics/recurrence-clusters</code></li><li><b>45</b> Recurrence Cluster — detail <code>/analytics/recurrence-clusters/019ff490-4199-7944-a88c-abf45ff7218e</code></li><li><b>46</b> Audit Committee — workspace <code>/ac</code></li></ul></div><div class="toc-sec"><h3>Audit committee</h3><ul><li><b>46</b> Audit Committee — workspace <code>/ac</code></li></ul></div><div class="toc-sec"><h3>Identity &amp; access</h3><ul><li><b>47</b> Users <code>/admin/users</code></li><li><b>48</b> User — detail <code>/admin/users/019ff490-1471-72ec-8e36-0c2e40b59417</code></li><li><b>49</b> Roles <code>/admin/roles</code></li><li><b>50</b> Role Editor <code>/admin/roles/019ff490-0d9a-7ace-a420-db5751978c63</code></li><li><b>51</b> Maker-checker Queue <code>/admin/maker-checker</code></li></ul></div><div class="toc-sec"><h3>Platform administration</h3><ul><li><b>52</b> Bank Settings / Administration <code>/admin/administration</code></li><li><b>53</b> Audit Trail <code>/admin/audit-trail</code></li><li><b>54</b> Configuration Store <code>/admin/configuration</code></li><li><b>55</b> Configuration — exception defaults <code>/admin/configuration/exception_defaults</code></li><li><b>56</b> Reference Data <code>/admin/reference-data</code></li><li><b>57</b> Integrations <code>/admin/integrations</code></li><li><b>58</b> Webhooks <code>/admin/webhooks</code></li><li><b>59</b> Notifications (rules / templates / dispatches) <code>/admin/notifications</code></li><li><b>60</b> Evidence Integrity (flagged files) <code>/admin/evidence-integrity</code></li><li><b>61</b> My Notification Preferences <code>/account/notification-preferences</code></li></ul></div>
+</section>
+
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">01</span>
+      <span class="cap-label">Login</span>
+      <span class="cap-path">/login</span>
+    </figcaption>
+    <div class="shot-img"><img src="./01-login.png" alt="Login"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">02</span>
+      <span class="cap-label">Dashboard</span>
+      <span class="cap-path">/dashboard</span>
+    </figcaption>
+    <div class="shot-img"><img src="./02-dashboard.png" alt="Dashboard"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">03</span>
+      <span class="cap-label">My Evidence Requests (auditee upload worklist)</span>
+      <span class="cap-path">/my/evidence-requests</span>
+    </figcaption>
+    <div class="shot-img"><img src="./03-my-evidence-requests-auditee-upload-worklist.png" alt="My Evidence Requests (auditee upload worklist)"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">04</span>
+      <span class="cap-label">Audit Universe — Entities</span>
+      <span class="cap-path">/audit-universe</span>
+    </figcaption>
+    <div class="shot-img"><img src="./04-audit-universe-entities.png" alt="Audit Universe — Entities"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">05</span>
+      <span class="cap-label">Risk Scoring Dimensions</span>
+      <span class="cap-path">/audit-universe/risk-dimensions</span>
+    </figcaption>
+    <div class="shot-img"><img src="./05-risk-scoring-dimensions.png" alt="Risk Scoring Dimensions"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">06</span>
+      <span class="cap-label">Organisational Units</span>
+      <span class="cap-path">/audit-universe/org-units</span>
+    </figcaption>
+    <div class="shot-img"><img src="./06-organisational-units.png" alt="Organisational Units"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">07</span>
+      <span class="cap-label">Annual Plans</span>
+      <span class="cap-path">/planning</span>
+    </figcaption>
+    <div class="shot-img"><img src="./07-annual-plans.png" alt="Annual Plans"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">08</span>
+      <span class="cap-label">Annual Plan — detail</span>
+      <span class="cap-path">/planning/019ff571-b0cd-7594-b68a-4888a59ac879</span>
+    </figcaption>
+    <div class="shot-img"><img src="./08-annual-plan-detail.png" alt="Annual Plan — detail"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">09</span>
+      <span class="cap-label">Coverage Analytics</span>
+      <span class="cap-path">/coverage</span>
+    </figcaption>
+    <div class="shot-img"><img src="./09-coverage-analytics.png" alt="Coverage Analytics"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">10</span>
+      <span class="cap-label">Checklist Templates</span>
+      <span class="cap-path">/admin/templates</span>
+    </figcaption>
+    <div class="shot-img"><img src="./10-checklist-templates.png" alt="Checklist Templates"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">11</span>
+      <span class="cap-label">Template Editor</span>
+      <span class="cap-path">/admin/templates/019ff590-8cde-7145-8f5d-1e4cf5108f73</span>
+    </figcaption>
+    <div class="shot-img"><img src="./11-template-editor.png" alt="Template Editor"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">12</span>
+      <span class="cap-label">Rating Scales</span>
+      <span class="cap-path">/admin/templates/rating-scales</span>
+    </figcaption>
+    <div class="shot-img"><img src="./12-rating-scales.png" alt="Rating Scales"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">13</span>
+      <span class="cap-label">Response Labels (custom option sets)</span>
+      <span class="cap-path">/admin/response-labels</span>
+    </figcaption>
+    <div class="shot-img"><img src="./13-response-labels-custom-option-sets.png" alt="Response Labels (custom option sets)"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">14</span>
+      <span class="cap-label">Audits</span>
+      <span class="cap-path">/audits</span>
+    </figcaption>
+    <div class="shot-img"><img src="./14-audits.png" alt="Audits"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">15</span>
+      <span class="cap-label">Audit — detail</span>
+      <span class="cap-path">/audits/019ff490-2094-7a14-afc7-0e90674a0133</span>
+    </figcaption>
+    <div class="shot-img"><img src="./15-audit-detail.png" alt="Audit — detail"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">16</span>
+      <span class="cap-label">Audit Execution / Fieldwork</span>
+      <span class="cap-path">/audits/019ff490-2094-7a14-afc7-0e90674a0133/execute</span>
+    </figcaption>
+    <div class="shot-img"><img src="./16-audit-execution-fieldwork.png" alt="Audit Execution / Fieldwork"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">17</span>
+      <span class="cap-label">Audit Reports</span>
+      <span class="cap-path">/audits/019ff490-2094-7a14-afc7-0e90674a0133/reports</span>
+    </figcaption>
+    <div class="shot-img"><img src="./17-audit-reports.png" alt="Audit Reports"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">18</span>
+      <span class="cap-label">Engagement Lifecycle — portfolio board</span>
+      <span class="cap-path">/engagement-lifecycle</span>
+    </figcaption>
+    <div class="shot-img"><img src="./18-engagement-lifecycle-portfolio-board.png" alt="Engagement Lifecycle — portfolio board"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">19</span>
+      <span class="cap-label">Engagement Journey / next-best-action</span>
+      <span class="cap-path">/engagement-lifecycle/019ff490-2094-7a14-afc7-0e90674a0133</span>
+    </figcaption>
+    <div class="shot-img"><img src="./19-engagement-journey-next-best-action.png" alt="Engagement Journey / next-best-action"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">20</span>
+      <span class="cap-label">Findings / Exceptions register</span>
+      <span class="cap-path">/exceptions</span>
+    </figcaption>
+    <div class="shot-img"><img src="./20-findings-exceptions-register.png" alt="Findings / Exceptions register"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">21</span>
+      <span class="cap-label">Finding — detail</span>
+      <span class="cap-path">/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be</span>
+    </figcaption>
+    <div class="shot-img"><img src="./21-finding-detail.png" alt="Finding — detail"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">22</span>
+      <span class="cap-label">Root-cause Gaps</span>
+      <span class="cap-path">/root-cause-gaps</span>
+    </figcaption>
+    <div class="shot-img"><img src="./22-root-cause-gaps.png" alt="Root-cause Gaps"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">23</span>
+      <span class="cap-label">Control Register</span>
+      <span class="cap-path">/controls</span>
+    </figcaption>
+    <div class="shot-img"><img src="./23-control-register.png" alt="Control Register"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">24</span>
+      <span class="cap-label">Regulations Register</span>
+      <span class="cap-path">/compliance</span>
+    </figcaption>
+    <div class="shot-img"><img src="./24-regulations-register.png" alt="Regulations Register"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">25</span>
+      <span class="cap-label">Enterprise Risk Register</span>
+      <span class="cap-path">/risks</span>
+    </figcaption>
+    <div class="shot-img"><img src="./25-enterprise-risk-register.png" alt="Enterprise Risk Register"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">26</span>
+      <span class="cap-label">Exception-raising Rules</span>
+      <span class="cap-path">/admin/exception-raising-rules</span>
+    </figcaption>
+    <div class="shot-img"><img src="./26-exception-raising-rules.png" alt="Exception-raising Rules"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">27</span>
+      <span class="cap-label">Sanctions Cases</span>
+      <span class="cap-path">/admin/sanctions</span>
+    </figcaption>
+    <div class="shot-img"><img src="./27-sanctions-cases.png" alt="Sanctions Cases"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">28</span>
+      <span class="cap-label">Sanctions Case — detail</span>
+      <span class="cap-path">/admin/sanctions/019ff490-378e-7018-9baa-59ca1c41f7fc</span>
+    </figcaption>
+    <div class="shot-img"><img src="./28-sanctions-case-detail.png" alt="Sanctions Case — detail"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">29</span>
+      <span class="cap-label">Disciplinary Committee Queue</span>
+      <span class="cap-path">/admin/sanctions/dc-queue</span>
+    </figcaption>
+    <div class="shot-img"><img src="./29-disciplinary-committee-queue.png" alt="Disciplinary Committee Queue"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">30</span>
+      <span class="cap-label">Sanctions Grid</span>
+      <span class="cap-path">/admin/sanctions/grid</span>
+    </figcaption>
+    <div class="shot-img"><img src="./30-sanctions-grid.png" alt="Sanctions Grid"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">31</span>
+      <span class="cap-label">Reports</span>
+      <span class="cap-path">/reports</span>
+    </figcaption>
+    <div class="shot-img"><img src="./31-reports.png" alt="Reports"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">32</span>
+      <span class="cap-label">Report Templates</span>
+      <span class="cap-path">/admin/report-templates</span>
+    </figcaption>
+    <div class="shot-img"><img src="./32-report-templates.png" alt="Report Templates"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">33</span>
+      <span class="cap-label">Report Schedules</span>
+      <span class="cap-path">/admin/report-schedules</span>
+    </figcaption>
+    <div class="shot-img"><img src="./33-report-schedules.png" alt="Report Schedules"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">34</span>
+      <span class="cap-label">Analytics — KPIs</span>
+      <span class="cap-path">/analytics</span>
+    </figcaption>
+    <div class="shot-img"><img src="./34-analytics-kpis.png" alt="Analytics — KPIs"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">35</span>
+      <span class="cap-label">Custom Dashboard</span>
+      <span class="cap-path">/analytics/dashboards/audit_committee</span>
+    </figcaption>
+    <div class="shot-img"><img src="./35-custom-dashboard.png" alt="Custom Dashboard"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">36</span>
+      <span class="cap-label">Performance Scorecards</span>
+      <span class="cap-path">/analytics/scorecards</span>
+    </figcaption>
+    <div class="shot-img"><img src="./36-performance-scorecards.png" alt="Performance Scorecards"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">37</span>
+      <span class="cap-label">Auditor Throughput</span>
+      <span class="cap-path">/analytics/auditor-throughput</span>
+    </figcaption>
+    <div class="shot-img"><img src="./37-auditor-throughput.png" alt="Auditor Throughput"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">38</span>
+      <span class="cap-label">Org-unit Scorecards</span>
+      <span class="cap-path">/analytics/org-units</span>
+    </figcaption>
+    <div class="shot-img"><img src="./38-org-unit-scorecards.png" alt="Org-unit Scorecards"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">39</span>
+      <span class="cap-label">Budget vs Actual</span>
+      <span class="cap-path">/analytics/time-budget</span>
+    </figcaption>
+    <div class="shot-img"><img src="./39-budget-vs-actual.png" alt="Budget vs Actual"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">40</span>
+      <span class="cap-label">Auditor Workload</span>
+      <span class="cap-path">/analytics/auditor-workload</span>
+    </figcaption>
+    <div class="shot-img"><img src="./40-auditor-workload.png" alt="Auditor Workload"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">41</span>
+      <span class="cap-label">KPI Trends</span>
+      <span class="cap-path">/analytics/trends</span>
+    </figcaption>
+    <div class="shot-img"><img src="./41-kpi-trends.png" alt="KPI Trends"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">42</span>
+      <span class="cap-label">Risk Heatmap</span>
+      <span class="cap-path">/analytics/risk-heatmap</span>
+    </figcaption>
+    <div class="shot-img"><img src="./42-risk-heatmap.png" alt="Risk Heatmap"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">43</span>
+      <span class="cap-label">Controls Compliance</span>
+      <span class="cap-path">/analytics/controls-compliance</span>
+    </figcaption>
+    <div class="shot-img"><img src="./43-controls-compliance.png" alt="Controls Compliance"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">44</span>
+      <span class="cap-label">Recurrence Clusters</span>
+      <span class="cap-path">/analytics/recurrence-clusters</span>
+    </figcaption>
+    <div class="shot-img"><img src="./44-recurrence-clusters.png" alt="Recurrence Clusters"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">45</span>
+      <span class="cap-label">Recurrence Cluster — detail</span>
+      <span class="cap-path">/analytics/recurrence-clusters/019ff490-4199-7944-a88c-abf45ff7218e</span>
+    </figcaption>
+    <div class="shot-img"><img src="./45-recurrence-cluster-detail.png" alt="Recurrence Cluster — detail"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">46</span>
+      <span class="cap-label">Audit Committee — workspace</span>
+      <span class="cap-path">/ac</span>
+    </figcaption>
+    <div class="shot-img"><img src="./46-audit-committee-workspace.png" alt="Audit Committee — workspace"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">47</span>
+      <span class="cap-label">Users</span>
+      <span class="cap-path">/admin/users</span>
+    </figcaption>
+    <div class="shot-img"><img src="./47-users.png" alt="Users"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">48</span>
+      <span class="cap-label">User — detail</span>
+      <span class="cap-path">/admin/users/019ff490-1471-72ec-8e36-0c2e40b59417</span>
+    </figcaption>
+    <div class="shot-img"><img src="./48-user-detail.png" alt="User — detail"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">49</span>
+      <span class="cap-label">Roles</span>
+      <span class="cap-path">/admin/roles</span>
+    </figcaption>
+    <div class="shot-img"><img src="./49-roles.png" alt="Roles"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">50</span>
+      <span class="cap-label">Role Editor</span>
+      <span class="cap-path">/admin/roles/019ff490-0d9a-7ace-a420-db5751978c63</span>
+    </figcaption>
+    <div class="shot-img"><img src="./50-role-editor.png" alt="Role Editor"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">51</span>
+      <span class="cap-label">Maker-checker Queue</span>
+      <span class="cap-path">/admin/maker-checker</span>
+    </figcaption>
+    <div class="shot-img"><img src="./51-maker-checker-queue.png" alt="Maker-checker Queue"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">52</span>
+      <span class="cap-label">Bank Settings / Administration</span>
+      <span class="cap-path">/admin/administration</span>
+    </figcaption>
+    <div class="shot-img"><img src="./52-bank-settings-administration.png" alt="Bank Settings / Administration"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">53</span>
+      <span class="cap-label">Audit Trail</span>
+      <span class="cap-path">/admin/audit-trail</span>
+    </figcaption>
+    <div class="shot-img"><img src="./53-audit-trail.png" alt="Audit Trail"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">54</span>
+      <span class="cap-label">Configuration Store</span>
+      <span class="cap-path">/admin/configuration</span>
+    </figcaption>
+    <div class="shot-img"><img src="./54-configuration-store.png" alt="Configuration Store"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">55</span>
+      <span class="cap-label">Configuration — exception defaults</span>
+      <span class="cap-path">/admin/configuration/exception_defaults</span>
+    </figcaption>
+    <div class="shot-img"><img src="./55-configuration-exception-defaults.png" alt="Configuration — exception defaults"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">56</span>
+      <span class="cap-label">Reference Data</span>
+      <span class="cap-path">/admin/reference-data</span>
+    </figcaption>
+    <div class="shot-img"><img src="./56-reference-data.png" alt="Reference Data"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">57</span>
+      <span class="cap-label">Integrations</span>
+      <span class="cap-path">/admin/integrations</span>
+    </figcaption>
+    <div class="shot-img"><img src="./57-integrations.png" alt="Integrations"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">58</span>
+      <span class="cap-label">Webhooks</span>
+      <span class="cap-path">/admin/webhooks</span>
+    </figcaption>
+    <div class="shot-img"><img src="./58-webhooks.png" alt="Webhooks"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">59</span>
+      <span class="cap-label">Notifications (rules / templates / dispatches)</span>
+      <span class="cap-path">/admin/notifications</span>
+    </figcaption>
+    <div class="shot-img"><img src="./59-notifications-rules-templates-dispatches.png" alt="Notifications (rules / templates / dispatches)"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">60</span>
+      <span class="cap-label">Evidence Integrity (flagged files)</span>
+      <span class="cap-path">/admin/evidence-integrity</span>
+    </figcaption>
+    <div class="shot-img"><img src="./60-evidence-integrity-flagged-files.png" alt="Evidence Integrity (flagged files)"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">61</span>
+      <span class="cap-label">My Notification Preferences</span>
+      <span class="cap-path">/account/notification-preferences</span>
+    </figcaption>
+    <div class="shot-img"><img src="./61-my-notification-preferences.png" alt="My Notification Preferences"></div>
+  </figure>
+
+</body></html>
