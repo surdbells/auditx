@@ -1,55 +1,86 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>AuditX — Screens</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>AuditX — Annotated Screens</title>
 <style>
-  :root{ --ink:#1e2330; --muted:#59617a; --faint:#8a91a6; --line:#e4e7f0; --accent:#4f46e5; --accent-soft:#eef0fe; }
+  :root{ --ink:#1e2330; --muted:#59617a; --faint:#8a91a6; --line:#e4e7f0; --accent:#4f46e5; --accent-soft:#eef0fe; --green:#16a34a; }
   *{box-sizing:border-box}
-  @page{ size:A4; margin:12mm 12mm 12mm; }
+  @page{ size:A4; margin:11mm 11mm 11mm; }
   html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   body{ font-family:"Segoe UI",-apple-system,Roboto,Arial,sans-serif; color:var(--ink); margin:0; font-size:11px; }
-  code{ font-family:"Cascadia Code",Consolas,monospace; font-size:0.85em; background:#f3f4f9; border:1px solid var(--line); border-radius:3px; padding:0 4px; color:#334; }
+  code{ font-family:"Cascadia Code",Consolas,monospace; font-size:.85em; background:#f3f4f9; border:1px solid var(--line); border-radius:3px; padding:0 4px; color:#334; }
 
-  .cover{ height:271mm; display:flex; flex-direction:column; justify-content:center; }
+  .cover{ height:273mm; display:flex; flex-direction:column; justify-content:center; }
   .cover .kicker{ font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); font-weight:700; margin:0 0 8px; }
-  .cover h1{ font-size:34px; letter-spacing:-.02em; margin:0 0 10px; }
-  .cover p{ color:var(--muted); font-size:14px; max-width:150mm; margin:0; }
-  .cover .meta{ margin-top:16px; color:var(--faint); font-size:11px; }
+  .cover h1{ font-size:36px; letter-spacing:-.02em; margin:0 0 12px; }
+  .cover p{ color:var(--muted); font-size:14px; max-width:155mm; margin:0 0 8px; line-height:1.5; }
+  .cover .legend-key{ margin-top:20px; border:1px solid var(--line); border-radius:8px; padding:14px 16px; max-width:150mm; background:#fafbff; }
+  .cover .legend-key h4{ margin:0 0 8px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); }
+  .cover .legend-key ul{ margin:0; padding-left:0; list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:5px 18px; }
+  .cover .legend-key li{ font-size:10.5px; color:#33384a; display:flex; gap:7px; align-items:flex-start; }
+  .cover .legend-key .pin{ flex:0 0 16px; height:16px; border-radius:50%; background:var(--accent); color:#fff; font-weight:700; font-size:10px; display:inline-flex; align-items:center; justify-content:center; }
+  .cover .meta{ margin-top:18px; color:var(--faint); font-size:11px; }
   .page-break{ break-after:page; }
 
   .toc h2{ font-size:18px; margin:0 0 10px; border-bottom:2px solid var(--accent); padding-bottom:6px; }
-  .toc-sec{ break-inside:avoid; margin:0 0 8px; }
-  .toc-sec h3{ font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); margin:8px 0 3px; }
+  .toc-sec{ break-inside:avoid; margin:0 0 7px; }
+  .toc-sec h3{ font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); margin:8px 0 3px; }
+  .toc-aud h3{ color:var(--green); }
   .toc-sec ul{ margin:0; padding:0; list-style:none; columns:2; column-gap:14px; }
   .toc-sec li{ font-size:10px; margin:2px 0; break-inside:avoid; color:#33384a; }
-  .toc-sec li b{ color:var(--accent); font-variant-numeric:tabular-nums; }
+  .toc-sec li b{ color:var(--accent); font-variant-numeric:tabular-nums; margin-right:3px; }
+  .toc-aud li b{ color:var(--green); }
   .toc-sec li code{ color:var(--muted); }
 
-  .shot{ break-before:page; break-inside:avoid; margin:0; height:271mm; display:flex; flex-direction:column; }
-  figcaption{ display:flex; align-items:baseline; gap:9px; border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:8px; }
-  figcaption .num{ background:var(--accent); color:#fff; border-radius:5px; font-weight:700; font-size:11px; padding:2px 7px; font-variant-numeric:tabular-nums; }
+  .divider{ break-before:page; height:70mm; display:flex; flex-direction:column; justify-content:center; border-left:5px solid var(--accent); padding-left:16px; }
+  .divider-eyebrow{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:700; }
+  .divider h2{ font-size:26px; margin:6px 0 6px; letter-spacing:-.01em; }
+  .divider p{ margin:0; color:var(--muted); font-size:12.5px; max-width:150mm; line-height:1.5; }
+  .divider-aud{ border-left-color:var(--green); }
+  .divider-aud .divider-eyebrow{ color:var(--green); }
+
+  .shot{ break-before:page; break-inside:avoid; margin:0; height:273mm; display:flex; flex-direction:column; }
+  figcaption{ display:flex; align-items:baseline; gap:9px; border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:4px; }
+  figcaption .num{ background:var(--accent); color:#fff; border-radius:5px; font-weight:700; font-size:11px; padding:2px 8px; font-variant-numeric:tabular-nums; }
   figcaption .cap-label{ font-size:15px; font-weight:700; letter-spacing:-.01em; }
+  figcaption .persona{ background:var(--green); color:#fff; font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; border-radius:4px; padding:2px 7px; }
   figcaption .cap-path{ margin-left:auto; font-family:"Cascadia Code",Consolas,monospace; font-size:10px; color:var(--faint); }
+  .cap-desc{ margin:0 0 8px; font-size:11px; color:#4a5169; line-height:1.45; max-width:180mm; }
   .shot-img{ flex:1; display:flex; align-items:flex-start; justify-content:center; min-height:0; }
-  .shot-img img{ max-width:100%; max-height:250mm; object-fit:contain; border:1px solid var(--line); border-radius:6px; box-shadow:0 1px 4px rgba(30,35,48,.08); }
+  .shot-img img{ max-width:100%; max-height:238mm; object-fit:contain; border:1px solid var(--line); border-radius:6px; box-shadow:0 1px 4px rgba(30,35,48,.08); }
 </style></head><body>
 
 <section class="cover page-break">
   <p class="kicker">AuditX Enterprise · On-Premises Edition</p>
-  <h1>Application Screens</h1>
-  <p>A labelled screenshot of every screen in the internal-audit platform — captured from the running application, signed in as an administrator, with the screen name and its in-app route on each page.</p>
-  <p class="meta">61 screens · captured 2026-09-07 · light theme, 1440&nbsp;px width</p>
+  <h1>Application Screens — Annotated</h1>
+  <p>Every screen in the internal-audit platform, captured from the running application and marked up in place. On each screen, numbered pins call out the elements, and a footer band names the screen, explains what it is for, and lists what each pin points to.</p>
+  <p>The main set is captured as an administrator. A closing section re-captures the auditee’s own screens while signed in <em>as the auditee</em>, so you can see the permission-scoped experience.</p>
+  <div class="legend-key">
+    <h4>What the pins mean (shell, common to every screen)</h4>
+    <ul>
+      <li><span class="pin">1</span><span>Module navigation — the left rail, filtered to your permissions.</span></li>
+      <li><span class="pin">2</span><span>Global search, plus theme, text-size and language.</span></li>
+      <li><span class="pin">3</span><span>Signed-in account and sign out.</span></li>
+      <li><span class="pin">4</span><span>Screen title and its primary actions.</span></li>
+      <li><span class="pin">5</span><span>The screen’s main workspace (described per screen).</span></li>
+    </ul>
+  </div>
+  <p class="meta">61 administrator screens · 5 auditee screens · captured 2026-09-07 · light theme, 1440&nbsp;px width</p>
 </section>
 
 <section class="toc page-break">
   <h2>Contents</h2>
-  <div class="toc-sec"><h3>Getting started</h3><ul><li><b>01</b> Login <code>/login</code></li><li><b>02</b> Dashboard <code>/dashboard</code></li><li><b>03</b> My Evidence Requests (auditee upload worklist) <code>/my/evidence-requests</code></li></ul></div><div class="toc-sec"><h3>Audit universe &amp; planning</h3><ul><li><b>04</b> Audit Universe — Entities <code>/audit-universe</code></li><li><b>05</b> Risk Scoring Dimensions <code>/audit-universe/risk-dimensions</code></li><li><b>06</b> Organisational Units <code>/audit-universe/org-units</code></li><li><b>07</b> Annual Plans <code>/planning</code></li><li><b>08</b> Annual Plan — detail <code>/planning/019ff571-b0cd-7594-b68a-4888a59ac879</code></li><li><b>09</b> Coverage Analytics <code>/coverage</code></li></ul></div><div class="toc-sec"><h3>Templates &amp; response config</h3><ul><li><b>10</b> Checklist Templates <code>/admin/templates</code></li><li><b>11</b> Template Editor <code>/admin/templates/019ff590-8cde-7145-8f5d-1e4cf5108f73</code></li><li><b>12</b> Rating Scales <code>/admin/templates/rating-scales</code></li><li><b>13</b> Response Labels (custom option sets) <code>/admin/response-labels</code></li></ul></div><div class="toc-sec"><h3>Audits &amp; execution</h3><ul><li><b>14</b> Audits <code>/audits</code></li><li><b>15</b> Audit — detail <code>/audits/019ff490-2094-7a14-afc7-0e90674a0133</code></li><li><b>16</b> Audit Execution / Fieldwork <code>/audits/019ff490-2094-7a14-afc7-0e90674a0133/execute</code></li><li><b>17</b> Audit Reports <code>/audits/019ff490-2094-7a14-afc7-0e90674a0133/reports</code></li><li><b>18</b> Engagement Lifecycle — portfolio board <code>/engagement-lifecycle</code></li><li><b>19</b> Engagement Journey / next-best-action <code>/engagement-lifecycle/019ff490-2094-7a14-afc7-0e90674a0133</code></li></ul></div><div class="toc-sec"><h3>Findings, controls &amp; risk</h3><ul><li><b>20</b> Findings / Exceptions register <code>/exceptions</code></li><li><b>21</b> Finding — detail <code>/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be</code></li><li><b>22</b> Root-cause Gaps <code>/root-cause-gaps</code></li><li><b>23</b> Control Register <code>/controls</code></li><li><b>24</b> Regulations Register <code>/compliance</code></li><li><b>25</b> Enterprise Risk Register <code>/risks</code></li><li><b>26</b> Exception-raising Rules <code>/admin/exception-raising-rules</code></li></ul></div><div class="toc-sec"><h3>Sanctions</h3><ul><li><b>27</b> Sanctions Cases <code>/admin/sanctions</code></li><li><b>28</b> Sanctions Case — detail <code>/admin/sanctions/019ff490-378e-7018-9baa-59ca1c41f7fc</code></li><li><b>29</b> Disciplinary Committee Queue <code>/admin/sanctions/dc-queue</code></li><li><b>30</b> Sanctions Grid <code>/admin/sanctions/grid</code></li></ul></div><div class="toc-sec"><h3>Reporting</h3><ul><li><b>31</b> Reports <code>/reports</code></li><li><b>32</b> Report Templates <code>/admin/report-templates</code></li><li><b>33</b> Report Schedules <code>/admin/report-schedules</code></li><li><b>34</b> Analytics — KPIs <code>/analytics</code></li></ul></div><div class="toc-sec"><h3>Analytics</h3><ul><li><b>35</b> Custom Dashboard <code>/analytics/dashboards/audit_committee</code></li><li><b>36</b> Performance Scorecards <code>/analytics/scorecards</code></li><li><b>37</b> Auditor Throughput <code>/analytics/auditor-throughput</code></li><li><b>38</b> Org-unit Scorecards <code>/analytics/org-units</code></li><li><b>39</b> Budget vs Actual <code>/analytics/time-budget</code></li><li><b>40</b> Auditor Workload <code>/analytics/auditor-workload</code></li><li><b>41</b> KPI Trends <code>/analytics/trends</code></li><li><b>42</b> Risk Heatmap <code>/analytics/risk-heatmap</code></li><li><b>43</b> Controls Compliance <code>/analytics/controls-compliance</code></li><li><b>44</b> Recurrence Clusters <code>/analytics/recurrence-clusters</code></li><li><b>45</b> Recurrence Cluster — detail <code>/analytics/recurrence-clusters/019ff490-4199-7944-a88c-abf45ff7218e</code></li><li><b>46</b> Audit Committee — workspace <code>/ac</code></li></ul></div><div class="toc-sec"><h3>Audit committee</h3><ul><li><b>46</b> Audit Committee — workspace <code>/ac</code></li></ul></div><div class="toc-sec"><h3>Identity &amp; access</h3><ul><li><b>47</b> Users <code>/admin/users</code></li><li><b>48</b> User — detail <code>/admin/users/019ff490-1471-72ec-8e36-0c2e40b59417</code></li><li><b>49</b> Roles <code>/admin/roles</code></li><li><b>50</b> Role Editor <code>/admin/roles/019ff490-0d9a-7ace-a420-db5751978c63</code></li><li><b>51</b> Maker-checker Queue <code>/admin/maker-checker</code></li></ul></div><div class="toc-sec"><h3>Platform administration</h3><ul><li><b>52</b> Bank Settings / Administration <code>/admin/administration</code></li><li><b>53</b> Audit Trail <code>/admin/audit-trail</code></li><li><b>54</b> Configuration Store <code>/admin/configuration</code></li><li><b>55</b> Configuration — exception defaults <code>/admin/configuration/exception_defaults</code></li><li><b>56</b> Reference Data <code>/admin/reference-data</code></li><li><b>57</b> Integrations <code>/admin/integrations</code></li><li><b>58</b> Webhooks <code>/admin/webhooks</code></li><li><b>59</b> Notifications (rules / templates / dispatches) <code>/admin/notifications</code></li><li><b>60</b> Evidence Integrity (flagged files) <code>/admin/evidence-integrity</code></li><li><b>61</b> My Notification Preferences <code>/account/notification-preferences</code></li></ul></div>
+  <div class="toc-sec"><h3>Getting started</h3><ul><li><b>01</b> Login <code>/login</code></li><li><b>02</b> Dashboard <code>/dashboard</code></li><li><b>03</b> My Evidence Requests <code>/my/evidence-requests</code></li></ul></div><div class="toc-sec"><h3>Audit universe &amp; planning</h3><ul><li><b>04</b> Audit Universe — Entities <code>/audit-universe</code></li><li><b>05</b> Risk Scoring Dimensions <code>/audit-universe/risk-dimensions</code></li><li><b>06</b> Organisational Units <code>/audit-universe/org-units</code></li><li><b>07</b> Annual Plans <code>/planning</code></li><li><b>08</b> Annual Plan — detail <code>/planning/019ff571-b0cd-7594-b68a-4888a59ac879</code></li><li><b>09</b> Coverage Analytics <code>/coverage</code></li></ul></div><div class="toc-sec"><h3>Templates &amp; response config</h3><ul><li><b>10</b> Checklist Templates <code>/admin/templates</code></li><li><b>11</b> Template Editor <code>/admin/templates/019ff590-8cde-7145-8f5d-1e4cf5108f73</code></li><li><b>12</b> Rating Scales <code>/admin/templates/rating-scales</code></li><li><b>13</b> Response Labels <code>/admin/response-labels</code></li></ul></div><div class="toc-sec"><h3>Audits &amp; execution</h3><ul><li><b>14</b> Audits <code>/audits</code></li><li><b>15</b> Audit — detail <code>/audits/019ff490-2094-7a14-afc7-0e90674a0133</code></li><li><b>16</b> Audit Execution / Fieldwork <code>/audits/019ff490-2094-7a14-afc7-0e90674a0133/execute</code></li><li><b>17</b> Audit Reports <code>/audits/019ff490-2094-7a14-afc7-0e90674a0133/reports</code></li><li><b>18</b> Engagement Lifecycle — portfolio board <code>/engagement-lifecycle</code></li><li><b>19</b> Engagement Journey / next-best-action <code>/engagement-lifecycle/019ff490-2094-7a14-afc7-0e90674a0133</code></li></ul></div><div class="toc-sec"><h3>Findings, controls &amp; risk</h3><ul><li><b>20</b> Findings / Exceptions register <code>/exceptions</code></li><li><b>21</b> Finding — detail <code>/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be</code></li><li><b>22</b> Root-cause Gaps <code>/root-cause-gaps</code></li><li><b>23</b> Control Register <code>/controls</code></li><li><b>24</b> Regulations Register <code>/compliance</code></li><li><b>25</b> Enterprise Risk Register <code>/risks</code></li><li><b>26</b> Exception-raising Rules <code>/admin/exception-raising-rules</code></li></ul></div><div class="toc-sec"><h3>Sanctions</h3><ul><li><b>27</b> Sanctions Cases <code>/admin/sanctions</code></li><li><b>28</b> Sanctions Case — detail <code>/admin/sanctions/019ff490-378e-7018-9baa-59ca1c41f7fc</code></li><li><b>29</b> Disciplinary Committee Queue <code>/admin/sanctions/dc-queue</code></li><li><b>30</b> Sanctions Grid <code>/admin/sanctions/grid</code></li></ul></div><div class="toc-sec"><h3>Reporting</h3><ul><li><b>31</b> Reports <code>/reports</code></li><li><b>32</b> Report Templates <code>/admin/report-templates</code></li><li><b>33</b> Report Schedules <code>/admin/report-schedules</code></li></ul></div><div class="toc-sec"><h3>Analytics</h3><ul><li><b>34</b> Analytics — KPIs <code>/analytics</code></li><li><b>35</b> Custom Dashboard <code>/analytics/dashboards/audit_committee</code></li><li><b>36</b> Performance Scorecards <code>/analytics/scorecards</code></li><li><b>37</b> Auditor Throughput <code>/analytics/auditor-throughput</code></li><li><b>38</b> Org-unit Scorecards <code>/analytics/org-units</code></li><li><b>39</b> Budget vs Actual <code>/analytics/time-budget</code></li><li><b>40</b> Auditor Workload <code>/analytics/auditor-workload</code></li><li><b>41</b> KPI Trends <code>/analytics/trends</code></li><li><b>42</b> Risk Heatmap <code>/analytics/risk-heatmap</code></li><li><b>43</b> Controls Compliance <code>/analytics/controls-compliance</code></li><li><b>44</b> Recurrence Clusters <code>/analytics/recurrence-clusters</code></li><li><b>45</b> Recurrence Cluster — detail <code>/analytics/recurrence-clusters/019ff490-4199-7944-a88c-abf45ff7218e</code></li></ul></div><div class="toc-sec"><h3>Audit committee</h3><ul><li><b>46</b> Audit Committee — workspace <code>/ac</code></li></ul></div><div class="toc-sec"><h3>Identity &amp; access</h3><ul><li><b>47</b> Users <code>/admin/users</code></li><li><b>48</b> User — detail <code>/admin/users/019ff490-1471-72ec-8e36-0c2e40b59417</code></li><li><b>49</b> Roles <code>/admin/roles</code></li><li><b>50</b> Role Editor <code>/admin/roles/019ff490-0d9a-7ace-a420-db5751978c63</code></li><li><b>51</b> Maker-checker Queue <code>/admin/maker-checker</code></li></ul></div><div class="toc-sec"><h3>Platform administration</h3><ul><li><b>52</b> Bank Settings / Administration <code>/admin/administration</code></li><li><b>53</b> Audit Trail <code>/admin/audit-trail</code></li><li><b>54</b> Configuration Store <code>/admin/configuration</code></li><li><b>55</b> Configuration — exception defaults <code>/admin/configuration/exception_defaults</code></li><li><b>56</b> Reference Data <code>/admin/reference-data</code></li><li><b>57</b> Integrations <code>/admin/integrations</code></li><li><b>58</b> Webhooks <code>/admin/webhooks</code></li><li><b>59</b> Notifications <code>/admin/notifications</code></li><li><b>60</b> Evidence Integrity <code>/admin/evidence-integrity</code></li><li><b>61</b> My Notification Preferences <code>/account/notification-preferences</code></li></ul></div>
+  <div class="toc-sec toc-aud"><h3>Auditee perspective — signed in as the auditee</h3><ul><li><b>A1</b> Dashboard <code>/dashboard</code></li><li><b>A2</b> My Evidence Requests <code>/my/evidence-requests</code></li><li><b>A3</b> Findings / Exceptions register <code>/exceptions</code></li><li><b>A4</b> Finding — detail <code>/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be</code></li><li><b>A5</b> Engagement Lifecycle — portfolio board <code>/engagement-lifecycle</code></li></ul></div>
 </section>
 
-
+<section class="divider"><span class="divider-eyebrow">Section</span><h2>Getting started</h2>
+    <p>3 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">01</span>
       <span class="cap-label">Login</span>
+      
       <span class="cap-path">/login</span>
     </figcaption>
+    <p class="cap-desc">The single sign-in page. Staff authenticate with their bank username and password; sessions are permission-scoped, so each user only sees the modules their role allows.</p>
     <div class="shot-img"><img src="./01-login.png" alt="Login"></div>
   </figure>
 
@@ -57,26 +88,32 @@
     <figcaption>
       <span class="num">02</span>
       <span class="cap-label">Dashboard</span>
+      
       <span class="cap-path">/dashboard</span>
     </figcaption>
+    <p class="cap-desc">The landing workspace after sign-in. It summarises the work that matters to the signed-in user — open audits, findings awaiting action, evidence requests and upcoming deadlines — with quick links into each.</p>
     <div class="shot-img"><img src="./02-dashboard.png" alt="Dashboard"></div>
   </figure>
 
   <figure class="shot">
     <figcaption>
       <span class="num">03</span>
-      <span class="cap-label">My Evidence Requests (auditee upload worklist)</span>
+      <span class="cap-label">My Evidence Requests</span>
+      
       <span class="cap-path">/my/evidence-requests</span>
     </figcaption>
+    <p class="cap-desc">The auditee worklist. When an auditor requests a document, it lands here; the auditee uploads the requested files straight against each request, and the status flips to Received on the auditor’s side.</p>
     <div class="shot-img"><img src="./03-my-evidence-requests-auditee-upload-worklist.png" alt="My Evidence Requests (auditee upload worklist)"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Audit universe &amp; planning</h2>
+    <p>6 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">04</span>
       <span class="cap-label">Audit Universe — Entities</span>
+      
       <span class="cap-path">/audit-universe</span>
     </figcaption>
+    <p class="cap-desc">The catalogue of everything that can be audited — branches, processes, systems, products. Each entity carries an inherent-risk score that drives how often it is picked up in the annual plan.</p>
     <div class="shot-img"><img src="./04-audit-universe-entities.png" alt="Audit Universe — Entities"></div>
   </figure>
 
@@ -84,8 +121,10 @@
     <figcaption>
       <span class="num">05</span>
       <span class="cap-label">Risk Scoring Dimensions</span>
+      
       <span class="cap-path">/audit-universe/risk-dimensions</span>
     </figcaption>
+    <p class="cap-desc">The weighted factors (e.g. financial exposure, regulatory impact, change velocity) that combine into each entity’s risk score. Editing the weights here re-prioritises the whole universe.</p>
     <div class="shot-img"><img src="./05-risk-scoring-dimensions.png" alt="Risk Scoring Dimensions"></div>
   </figure>
 
@@ -93,8 +132,10 @@
     <figcaption>
       <span class="num">06</span>
       <span class="cap-label">Organisational Units</span>
+      
       <span class="cap-path">/audit-universe/org-units</span>
     </figcaption>
+    <p class="cap-desc">The bank’s org structure — divisions, departments and branches — used to scope audits, route findings to the right owner, and roll analytics up by unit.</p>
     <div class="shot-img"><img src="./06-organisational-units.png" alt="Organisational Units"></div>
   </figure>
 
@@ -102,8 +143,10 @@
     <figcaption>
       <span class="num">07</span>
       <span class="cap-label">Annual Plans</span>
+      
       <span class="cap-path">/planning</span>
     </figcaption>
+    <p class="cap-desc">The yearly audit programme. Plans list the engagements scheduled for the year, their status, and how they map back to risk coverage; approval is maker-checker controlled.</p>
     <div class="shot-img"><img src="./07-annual-plans.png" alt="Annual Plans"></div>
   </figure>
 
@@ -111,8 +154,10 @@
     <figcaption>
       <span class="num">08</span>
       <span class="cap-label">Annual Plan — detail</span>
+      
       <span class="cap-path">/planning/019ff571-b0cd-7594-b68a-4888a59ac879</span>
     </figcaption>
+    <p class="cap-desc">One plan opened up — the engagements it contains, their timing on a Gantt-style timeline, resourcing, and the risk it covers. Where the plan is built and submitted for approval.</p>
     <div class="shot-img"><img src="./08-annual-plan-detail.png" alt="Annual Plan — detail"></div>
   </figure>
 
@@ -120,17 +165,21 @@
     <figcaption>
       <span class="num">09</span>
       <span class="cap-label">Coverage Analytics</span>
+      
       <span class="cap-path">/coverage</span>
     </figcaption>
+    <p class="cap-desc">Shows how much of the audit universe the plan actually covers — which high-risk entities are scheduled and which are being left unaudited — so gaps are visible before the year starts.</p>
     <div class="shot-img"><img src="./09-coverage-analytics.png" alt="Coverage Analytics"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Templates &amp; response config</h2>
+    <p>4 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">10</span>
       <span class="cap-label">Checklist Templates</span>
+      
       <span class="cap-path">/admin/templates</span>
     </figcaption>
+    <p class="cap-desc">Reusable checklists auditors run during fieldwork. Templates standardise the questions asked for a given audit type so every engagement is executed consistently.</p>
     <div class="shot-img"><img src="./10-checklist-templates.png" alt="Checklist Templates"></div>
   </figure>
 
@@ -138,8 +187,10 @@
     <figcaption>
       <span class="num">11</span>
       <span class="cap-label">Template Editor</span>
+      
       <span class="cap-path">/admin/templates/019ff590-8cde-7145-8f5d-1e4cf5108f73</span>
     </figcaption>
+    <p class="cap-desc">Build or edit a checklist — add sections and items, mark items required (default) or optional, and set the response type each item expects. Versioned so in-flight audits keep their original wording.</p>
     <div class="shot-img"><img src="./11-template-editor.png" alt="Template Editor"></div>
   </figure>
 
@@ -147,26 +198,32 @@
     <figcaption>
       <span class="num">12</span>
       <span class="cap-label">Rating Scales</span>
+      
       <span class="cap-path">/admin/templates/rating-scales</span>
     </figcaption>
+    <p class="cap-desc">The rating scales used across audits (e.g. risk ratings, maturity levels). Defined once and reused so ratings mean the same thing everywhere.</p>
     <div class="shot-img"><img src="./12-rating-scales.png" alt="Rating Scales"></div>
   </figure>
 
   <figure class="shot">
     <figcaption>
       <span class="num">13</span>
-      <span class="cap-label">Response Labels (custom option sets)</span>
+      <span class="cap-label">Response Labels</span>
+      
       <span class="cap-path">/admin/response-labels</span>
     </figcaption>
+    <p class="cap-desc">Lets the organisation name its own answer options per response type — the words behind Pass / Fail / Partial and any other set — so checklists speak the bank’s language.</p>
     <div class="shot-img"><img src="./13-response-labels-custom-option-sets.png" alt="Response Labels (custom option sets)"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Audits &amp; execution</h2>
+    <p>6 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">14</span>
       <span class="cap-label">Audits</span>
+      
       <span class="cap-path">/audits</span>
     </figcaption>
+    <p class="cap-desc">The register of all audit engagements with their status, lead auditor, scope and dates. The entry point into executing, reviewing and reporting on each audit.</p>
     <div class="shot-img"><img src="./14-audits.png" alt="Audits"></div>
   </figure>
 
@@ -174,8 +231,10 @@
     <figcaption>
       <span class="num">15</span>
       <span class="cap-label">Audit — detail</span>
+      
       <span class="cap-path">/audits/019ff490-2094-7a14-afc7-0e90674a0133</span>
     </figcaption>
+    <p class="cap-desc">A single engagement’s home — scope, team, timeline, linked findings and evidence, and the actions to move it through its lifecycle.</p>
     <div class="shot-img"><img src="./15-audit-detail.png" alt="Audit — detail"></div>
   </figure>
 
@@ -183,8 +242,10 @@
     <figcaption>
       <span class="num">16</span>
       <span class="cap-label">Audit Execution / Fieldwork</span>
+      
       <span class="cap-path">/audits/019ff490-2094-7a14-afc7-0e90674a0133/execute</span>
     </figcaption>
+    <p class="cap-desc">Where auditors do fieldwork — work through the checklist, record responses with observations and recommendations, attach evidence, and raise exceptions as issues are found.</p>
     <div class="shot-img"><img src="./16-audit-execution-fieldwork.png" alt="Audit Execution / Fieldwork"></div>
   </figure>
 
@@ -192,8 +253,10 @@
     <figcaption>
       <span class="num">17</span>
       <span class="cap-label">Audit Reports</span>
+      
       <span class="cap-path">/audits/019ff490-2094-7a14-afc7-0e90674a0133/reports</span>
     </figcaption>
+    <p class="cap-desc">The reports produced for an engagement — draft, review and issue the audit report, with findings and management responses pulled through automatically.</p>
     <div class="shot-img"><img src="./17-audit-reports.png" alt="Audit Reports"></div>
   </figure>
 
@@ -201,8 +264,10 @@
     <figcaption>
       <span class="num">18</span>
       <span class="cap-label">Engagement Lifecycle — portfolio board</span>
+      
       <span class="cap-path">/engagement-lifecycle</span>
     </figcaption>
+    <p class="cap-desc">A portfolio board of every live engagement grouped by lifecycle stage (planning → fieldwork → reporting → closed), giving audit management a single view of where everything sits.</p>
     <div class="shot-img"><img src="./18-engagement-lifecycle-portfolio-board.png" alt="Engagement Lifecycle — portfolio board"></div>
   </figure>
 
@@ -210,17 +275,21 @@
     <figcaption>
       <span class="num">19</span>
       <span class="cap-label">Engagement Journey / next-best-action</span>
+      
       <span class="cap-path">/engagement-lifecycle/019ff490-2094-7a14-afc7-0e90674a0133</span>
     </figcaption>
+    <p class="cap-desc">One engagement’s journey through its stages, surfacing the next best action and any blockers so the lead auditor always knows what to do next.</p>
     <div class="shot-img"><img src="./19-engagement-journey-next-best-action.png" alt="Engagement Journey / next-best-action"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Findings, controls &amp; risk</h2>
+    <p>7 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">20</span>
       <span class="cap-label">Findings / Exceptions register</span>
+      
       <span class="cap-path">/exceptions</span>
     </figcaption>
+    <p class="cap-desc">The central register of exceptions (findings) raised across all audits — severity, owner, due date and remediation status — filterable and the source of most reporting.</p>
     <div class="shot-img"><img src="./20-findings-exceptions-register.png" alt="Findings / Exceptions register"></div>
   </figure>
 
@@ -228,8 +297,10 @@
     <figcaption>
       <span class="num">21</span>
       <span class="cap-label">Finding — detail</span>
+      
       <span class="cap-path">/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be</span>
     </figcaption>
+    <p class="cap-desc">One finding in full — the issue, root cause, agreed management action plan (MAP), owner and evidence. Auditees submit their MAP and upload remediation evidence here; it can also be flagged as a recurrence.</p>
     <div class="shot-img"><img src="./21-finding-detail.png" alt="Finding — detail"></div>
   </figure>
 
@@ -237,8 +308,10 @@
     <figcaption>
       <span class="num">22</span>
       <span class="cap-label">Root-cause Gaps</span>
+      
       <span class="cap-path">/root-cause-gaps</span>
     </figcaption>
+    <p class="cap-desc">Groups findings by their underlying root-cause gap so systemic weaknesses — not just individual issues — become visible and can be remediated at source.</p>
     <div class="shot-img"><img src="./22-root-cause-gaps.png" alt="Root-cause Gaps"></div>
   </figure>
 
@@ -246,8 +319,10 @@
     <figcaption>
       <span class="num">23</span>
       <span class="cap-label">Control Register</span>
+      
       <span class="cap-path">/controls</span>
     </figcaption>
+    <p class="cap-desc">The library of controls the bank relies on, their owners and how they map to risks and regulations — the backbone for control-testing and compliance reporting.</p>
     <div class="shot-img"><img src="./23-control-register.png" alt="Control Register"></div>
   </figure>
 
@@ -255,8 +330,10 @@
     <figcaption>
       <span class="num">24</span>
       <span class="cap-label">Regulations Register</span>
+      
       <span class="cap-path">/compliance</span>
     </figcaption>
+    <p class="cap-desc">The regulatory obligations the bank is subject to, mapped to the controls that satisfy them, so compliance coverage can be evidenced.</p>
     <div class="shot-img"><img src="./24-regulations-register.png" alt="Regulations Register"></div>
   </figure>
 
@@ -264,8 +341,10 @@
     <figcaption>
       <span class="num">25</span>
       <span class="cap-label">Enterprise Risk Register</span>
+      
       <span class="cap-path">/risks</span>
     </figcaption>
+    <p class="cap-desc">The enterprise risks the audit function tracks — likelihood, impact and treatment — linked to the controls and audits that provide assurance over them.</p>
     <div class="shot-img"><img src="./25-enterprise-risk-register.png" alt="Enterprise Risk Register"></div>
   </figure>
 
@@ -273,17 +352,21 @@
     <figcaption>
       <span class="num">26</span>
       <span class="cap-label">Exception-raising Rules</span>
+      
       <span class="cap-path">/admin/exception-raising-rules</span>
     </figcaption>
+    <p class="cap-desc">Rules that auto-raise exceptions when a checklist response meets defined conditions, so material issues are captured consistently rather than relying on memory.</p>
     <div class="shot-img"><img src="./26-exception-raising-rules.png" alt="Exception-raising Rules"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Sanctions</h2>
+    <p>4 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">27</span>
       <span class="cap-label">Sanctions Cases</span>
+      
       <span class="cap-path">/admin/sanctions</span>
     </figcaption>
+    <p class="cap-desc">Disciplinary/sanctions cases arising from audit findings — who, what and the current stage — managed through to a decision.</p>
     <div class="shot-img"><img src="./27-sanctions-cases.png" alt="Sanctions Cases"></div>
   </figure>
 
@@ -291,8 +374,10 @@
     <figcaption>
       <span class="num">28</span>
       <span class="cap-label">Sanctions Case — detail</span>
+      
       <span class="cap-path">/admin/sanctions/019ff490-378e-7018-9baa-59ca1c41f7fc</span>
     </figcaption>
+    <p class="cap-desc">A single sanctions case — the linked finding, the people involved, the timeline of actions, and the disciplinary decision with its audit trail.</p>
     <div class="shot-img"><img src="./28-sanctions-case-detail.png" alt="Sanctions Case — detail"></div>
   </figure>
 
@@ -300,8 +385,10 @@
     <figcaption>
       <span class="num">29</span>
       <span class="cap-label">Disciplinary Committee Queue</span>
+      
       <span class="cap-path">/admin/sanctions/dc-queue</span>
     </figcaption>
+    <p class="cap-desc">The queue of cases awaiting the disciplinary committee, prioritised so nothing sits unreviewed past its SLA.</p>
     <div class="shot-img"><img src="./29-disciplinary-committee-queue.png" alt="Disciplinary Committee Queue"></div>
   </figure>
 
@@ -309,17 +396,21 @@
     <figcaption>
       <span class="num">30</span>
       <span class="cap-label">Sanctions Grid</span>
+      
       <span class="cap-path">/admin/sanctions/grid</span>
     </figcaption>
+    <p class="cap-desc">The sanctions matrix — the reference grid mapping offence types and severities to the applicable disciplinary outcome, keeping decisions consistent and defensible.</p>
     <div class="shot-img"><img src="./30-sanctions-grid.png" alt="Sanctions Grid"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Reporting</h2>
+    <p>3 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">31</span>
       <span class="cap-label">Reports</span>
+      
       <span class="cap-path">/reports</span>
     </figcaption>
+    <p class="cap-desc">The reporting hub — generated audit and thematic reports across engagements, ready to open, export or circulate.</p>
     <div class="shot-img"><img src="./31-reports.png" alt="Reports"></div>
   </figure>
 
@@ -327,8 +418,10 @@
     <figcaption>
       <span class="num">32</span>
       <span class="cap-label">Report Templates</span>
+      
       <span class="cap-path">/admin/report-templates</span>
     </figcaption>
+    <p class="cap-desc">The templates that define report structure and branding, so every report the bank issues has a consistent, professional format.</p>
     <div class="shot-img"><img src="./32-report-templates.png" alt="Report Templates"></div>
   </figure>
 
@@ -336,17 +429,21 @@
     <figcaption>
       <span class="num">33</span>
       <span class="cap-label">Report Schedules</span>
+      
       <span class="cap-path">/admin/report-schedules</span>
     </figcaption>
+    <p class="cap-desc">Scheduled, recurring report generation and delivery — set a report to run and be distributed automatically on a cadence.</p>
     <div class="shot-img"><img src="./33-report-schedules.png" alt="Report Schedules"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Analytics</h2>
+    <p>12 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">34</span>
       <span class="cap-label">Analytics — KPIs</span>
+      
       <span class="cap-path">/analytics</span>
     </figcaption>
+    <p class="cap-desc">The analytics home — headline KPIs for the audit function (cycle time, on-time closure, coverage, open findings) each drillable into the detail behind the number.</p>
     <div class="shot-img"><img src="./34-analytics-kpis.png" alt="Analytics — KPIs"></div>
   </figure>
 
@@ -354,8 +451,10 @@
     <figcaption>
       <span class="num">35</span>
       <span class="cap-label">Custom Dashboard</span>
+      
       <span class="cap-path">/analytics/dashboards/audit_committee</span>
     </figcaption>
+    <p class="cap-desc">A user-built dashboard — assemble the charts and metrics that matter to a given audience from the available analytics tiles.</p>
     <div class="shot-img"><img src="./35-custom-dashboard.png" alt="Custom Dashboard"></div>
   </figure>
 
@@ -363,8 +462,10 @@
     <figcaption>
       <span class="num">36</span>
       <span class="cap-label">Performance Scorecards</span>
+      
       <span class="cap-path">/analytics/scorecards</span>
     </figcaption>
+    <p class="cap-desc">Scorecards rating auditor and team performance across delivery, quality and timeliness measures.</p>
     <div class="shot-img"><img src="./36-performance-scorecards.png" alt="Performance Scorecards"></div>
   </figure>
 
@@ -372,8 +473,10 @@
     <figcaption>
       <span class="num">37</span>
       <span class="cap-label">Auditor Throughput</span>
+      
       <span class="cap-path">/analytics/auditor-throughput</span>
     </figcaption>
+    <p class="cap-desc">How much work each auditor is completing over time — engagements and findings closed — to spot capacity and bottlenecks.</p>
     <div class="shot-img"><img src="./37-auditor-throughput.png" alt="Auditor Throughput"></div>
   </figure>
 
@@ -381,8 +484,10 @@
     <figcaption>
       <span class="num">38</span>
       <span class="cap-label">Org-unit Scorecards</span>
+      
       <span class="cap-path">/analytics/org-units</span>
     </figcaption>
+    <p class="cap-desc">Assurance and findings rolled up by organisational unit, showing which parts of the bank carry the most open risk.</p>
     <div class="shot-img"><img src="./38-org-unit-scorecards.png" alt="Org-unit Scorecards"></div>
   </figure>
 
@@ -390,8 +495,10 @@
     <figcaption>
       <span class="num">39</span>
       <span class="cap-label">Budget vs Actual</span>
+      
       <span class="cap-path">/analytics/time-budget</span>
     </figcaption>
+    <p class="cap-desc">Planned audit hours/cost against actuals per engagement, so overruns and under-utilisation surface early.</p>
     <div class="shot-img"><img src="./39-budget-vs-actual.png" alt="Budget vs Actual"></div>
   </figure>
 
@@ -399,8 +506,10 @@
     <figcaption>
       <span class="num">40</span>
       <span class="cap-label">Auditor Workload</span>
+      
       <span class="cap-path">/analytics/auditor-workload</span>
     </figcaption>
+    <p class="cap-desc">Current assignment load per auditor — who is over- or under-allocated right now — to support resourcing decisions.</p>
     <div class="shot-img"><img src="./40-auditor-workload.png" alt="Auditor Workload"></div>
   </figure>
 
@@ -408,8 +517,10 @@
     <figcaption>
       <span class="num">41</span>
       <span class="cap-label">KPI Trends</span>
+      
       <span class="cap-path">/analytics/trends</span>
     </figcaption>
+    <p class="cap-desc">The key metrics tracked over time so improvement or drift in the audit function is visible, not just this month’s snapshot.</p>
     <div class="shot-img"><img src="./41-kpi-trends.png" alt="KPI Trends"></div>
   </figure>
 
@@ -417,8 +528,10 @@
     <figcaption>
       <span class="num">42</span>
       <span class="cap-label">Risk Heatmap</span>
+      
       <span class="cap-path">/analytics/risk-heatmap</span>
     </figcaption>
+    <p class="cap-desc">A likelihood-vs-impact heatmap of the risk landscape, concentrating attention on the top-right (high/high) cells.</p>
     <div class="shot-img"><img src="./42-risk-heatmap.png" alt="Risk Heatmap"></div>
   </figure>
 
@@ -426,8 +539,10 @@
     <figcaption>
       <span class="num">43</span>
       <span class="cap-label">Controls Compliance</span>
+      
       <span class="cap-path">/analytics/controls-compliance</span>
     </figcaption>
+    <p class="cap-desc">How controls are performing across the estate — pass/fail rates from testing — to evidence the control environment’s health.</p>
     <div class="shot-img"><img src="./43-controls-compliance.png" alt="Controls Compliance"></div>
   </figure>
 
@@ -435,8 +550,10 @@
     <figcaption>
       <span class="num">44</span>
       <span class="cap-label">Recurrence Clusters</span>
+      
       <span class="cap-path">/analytics/recurrence-clusters</span>
     </figcaption>
+    <p class="cap-desc">Detects findings that keep recurring and groups them into clusters, so repeat issues get systemic treatment rather than being closed over and over.</p>
     <div class="shot-img"><img src="./44-recurrence-clusters.png" alt="Recurrence Clusters"></div>
   </figure>
 
@@ -444,26 +561,32 @@
     <figcaption>
       <span class="num">45</span>
       <span class="cap-label">Recurrence Cluster — detail</span>
+      
       <span class="cap-path">/analytics/recurrence-clusters/019ff490-4199-7944-a88c-abf45ff7218e</span>
     </figcaption>
+    <p class="cap-desc">One recurrence cluster expanded — the member findings, where and when they recur, and the shared root cause to address.</p>
     <div class="shot-img"><img src="./45-recurrence-cluster-detail.png" alt="Recurrence Cluster — detail"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Audit committee</h2>
+    <p>1 screen</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">46</span>
       <span class="cap-label">Audit Committee — workspace</span>
+      
       <span class="cap-path">/ac</span>
     </figcaption>
+    <p class="cap-desc">The board-level workspace — curated packs, summaries and metrics prepared for the audit committee, giving non-executives assurance without operational noise.</p>
     <div class="shot-img"><img src="./46-audit-committee-workspace.png" alt="Audit Committee — workspace"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Identity &amp; access</h2>
+    <p>5 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">47</span>
       <span class="cap-label">Users</span>
+      
       <span class="cap-path">/admin/users</span>
     </figcaption>
+    <p class="cap-desc">User administration — accounts, their status and assigned roles. Where access is granted and revoked.</p>
     <div class="shot-img"><img src="./47-users.png" alt="Users"></div>
   </figure>
 
@@ -471,8 +594,10 @@
     <figcaption>
       <span class="num">48</span>
       <span class="cap-label">User — detail</span>
+      
       <span class="cap-path">/admin/users/019ff490-1471-72ec-8e36-0c2e40b59417</span>
     </figcaption>
+    <p class="cap-desc">A single user — profile, assigned roles and the effective permissions those roles grant, plus account status controls.</p>
     <div class="shot-img"><img src="./48-user-detail.png" alt="User — detail"></div>
   </figure>
 
@@ -480,8 +605,10 @@
     <figcaption>
       <span class="num">49</span>
       <span class="cap-label">Roles</span>
+      
       <span class="cap-path">/admin/roles</span>
     </figcaption>
+    <p class="cap-desc">The roles that bundle permissions (e.g. Lead Auditor, Auditee, AC Member). Assigning a role is how access is granted at scale.</p>
     <div class="shot-img"><img src="./49-roles.png" alt="Roles"></div>
   </figure>
 
@@ -489,8 +616,10 @@
     <figcaption>
       <span class="num">50</span>
       <span class="cap-label">Role Editor</span>
+      
       <span class="cap-path">/admin/roles/019ff490-0d9a-7ace-a420-db5751978c63</span>
     </figcaption>
+    <p class="cap-desc">Compose a role by ticking the exact permissions it grants; changes cascade to everyone holding the role.</p>
     <div class="shot-img"><img src="./50-role-editor.png" alt="Role Editor"></div>
   </figure>
 
@@ -498,17 +627,21 @@
     <figcaption>
       <span class="num">51</span>
       <span class="cap-label">Maker-checker Queue</span>
+      
       <span class="cap-path">/admin/maker-checker</span>
     </figcaption>
+    <p class="cap-desc">Sensitive changes are made by one person and approved by another. This queue holds pending changes awaiting a second-person check before they take effect.</p>
     <div class="shot-img"><img src="./51-maker-checker-queue.png" alt="Maker-checker Queue"></div>
-  </figure>
-
+  </figure><section class="divider"><span class="divider-eyebrow">Section</span><h2>Platform administration</h2>
+    <p>10 screens</p></section>
   <figure class="shot">
     <figcaption>
       <span class="num">52</span>
       <span class="cap-label">Bank Settings / Administration</span>
+      
       <span class="cap-path">/admin/administration</span>
     </figcaption>
+    <p class="cap-desc">Organisation-level settings — the bank’s identity, defaults and platform-wide options that shape how AuditX behaves for everyone.</p>
     <div class="shot-img"><img src="./52-bank-settings-administration.png" alt="Bank Settings / Administration"></div>
   </figure>
 
@@ -516,8 +649,10 @@
     <figcaption>
       <span class="num">53</span>
       <span class="cap-label">Audit Trail</span>
+      
       <span class="cap-path">/admin/audit-trail</span>
     </figcaption>
+    <p class="cap-desc">The append-only system audit trail — every meaningful change, who made it and when. Read-only and tamper-evident, for forensic and compliance review.</p>
     <div class="shot-img"><img src="./53-audit-trail.png" alt="Audit Trail"></div>
   </figure>
 
@@ -525,8 +660,10 @@
     <figcaption>
       <span class="num">54</span>
       <span class="cap-label">Configuration Store</span>
+      
       <span class="cap-path">/admin/configuration</span>
     </figcaption>
+    <p class="cap-desc">The catalogue of configurable settings grouped by domain, each editable through maker-checker so platform behaviour changes are controlled and traceable.</p>
     <div class="shot-img"><img src="./54-configuration-store.png" alt="Configuration Store"></div>
   </figure>
 
@@ -534,8 +671,10 @@
     <figcaption>
       <span class="num">55</span>
       <span class="cap-label">Configuration — exception defaults</span>
+      
       <span class="cap-path">/admin/configuration/exception_defaults</span>
     </figcaption>
+    <p class="cap-desc">One configuration domain opened — the default values (here, for exceptions) that new records inherit, edited in a controlled form.</p>
     <div class="shot-img"><img src="./55-configuration-exception-defaults.png" alt="Configuration — exception defaults"></div>
   </figure>
 
@@ -543,8 +682,10 @@
     <figcaption>
       <span class="num">56</span>
       <span class="cap-label">Reference Data</span>
+      
       <span class="cap-path">/admin/reference-data</span>
     </figcaption>
+    <p class="cap-desc">The managed lists behind dropdowns across the app (categories, types, statuses), curated in one place so terminology stays consistent.</p>
     <div class="shot-img"><img src="./56-reference-data.png" alt="Reference Data"></div>
   </figure>
 
@@ -552,8 +693,10 @@
     <figcaption>
       <span class="num">57</span>
       <span class="cap-label">Integrations</span>
+      
       <span class="cap-path">/admin/integrations</span>
     </figcaption>
+    <p class="cap-desc">Connections to outside systems — email, Teams, SMS and others — configured and health-checked here so notifications and hand-offs actually land.</p>
     <div class="shot-img"><img src="./57-integrations.png" alt="Integrations"></div>
   </figure>
 
@@ -561,26 +704,32 @@
     <figcaption>
       <span class="num">58</span>
       <span class="cap-label">Webhooks</span>
+      
       <span class="cap-path">/admin/webhooks</span>
     </figcaption>
+    <p class="cap-desc">Outbound webhooks that push AuditX events to other systems in real time, with delivery status so failures are visible.</p>
     <div class="shot-img"><img src="./58-webhooks.png" alt="Webhooks"></div>
   </figure>
 
   <figure class="shot">
     <figcaption>
       <span class="num">59</span>
-      <span class="cap-label">Notifications (rules / templates / dispatches)</span>
+      <span class="cap-label">Notifications</span>
+      
       <span class="cap-path">/admin/notifications</span>
     </figcaption>
+    <p class="cap-desc">The notification engine — rules (when to notify), templates (what to say), and the dispatch log (what was sent). Drives the emails/SMS/Teams messages the platform sends.</p>
     <div class="shot-img"><img src="./59-notifications-rules-templates-dispatches.png" alt="Notifications (rules / templates / dispatches)"></div>
   </figure>
 
   <figure class="shot">
     <figcaption>
       <span class="num">60</span>
-      <span class="cap-label">Evidence Integrity (flagged files)</span>
+      <span class="cap-label">Evidence Integrity</span>
+      
       <span class="cap-path">/admin/evidence-integrity</span>
     </figcaption>
+    <p class="cap-desc">Watches uploaded evidence for integrity problems — checksum mismatches or tampering — and flags anything suspect for review, protecting the evidentiary chain.</p>
     <div class="shot-img"><img src="./60-evidence-integrity-flagged-files.png" alt="Evidence Integrity (flagged files)"></div>
   </figure>
 
@@ -588,9 +737,72 @@
     <figcaption>
       <span class="num">61</span>
       <span class="cap-label">My Notification Preferences</span>
+      
       <span class="cap-path">/account/notification-preferences</span>
     </figcaption>
+    <p class="cap-desc">Each user’s own control over which notifications they receive and on which channel — a per-person settings page.</p>
     <div class="shot-img"><img src="./61-my-notification-preferences.png" alt="My Notification Preferences"></div>
+  </figure>
+
+  <section class="divider divider-aud">
+    <span class="divider-eyebrow">Perspective</span>
+    <h2>Signed in as the auditee</h2>
+    <p>The same platform seen through an auditee’s account. The left rail is filtered to just the modules their role grants, and each screen is centred on the auditee’s own work — the documents auditors have asked them for, the findings assigned to them, and their self-assessment.</p>
+  </section>
+  
+  <figure class="shot">
+    <figcaption>
+      <span class="num">A1</span>
+      <span class="cap-label">Dashboard</span>
+      <span class="persona">Signed in as Auditee</span>
+      <span class="cap-path">/dashboard</span>
+    </figcaption>
+    <p class="cap-desc">The landing workspace after sign-in. It summarises the work that matters to the signed-in user — open audits, findings awaiting action, evidence requests and upcoming deadlines — with quick links into each.</p>
+    <div class="shot-img"><img src="./aud-1-dashboard.png" alt="Dashboard"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">A2</span>
+      <span class="cap-label">My Evidence Requests</span>
+      <span class="persona">Signed in as Auditee</span>
+      <span class="cap-path">/my/evidence-requests</span>
+    </figcaption>
+    <p class="cap-desc">The auditee worklist. When an auditor requests a document, it lands here; the auditee uploads the requested files straight against each request, and the status flips to Received on the auditor’s side.</p>
+    <div class="shot-img"><img src="./aud-2-my-evidence-requests-auditee-upload-worklist.png" alt="My Evidence Requests (auditee upload worklist)"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">A3</span>
+      <span class="cap-label">Findings / Exceptions register</span>
+      <span class="persona">Signed in as Auditee</span>
+      <span class="cap-path">/exceptions</span>
+    </figcaption>
+    <p class="cap-desc">The central register of exceptions (findings) raised across all audits — severity, owner, due date and remediation status — filterable and the source of most reporting.</p>
+    <div class="shot-img"><img src="./aud-3-findings-exceptions-register.png" alt="Findings / Exceptions register"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">A4</span>
+      <span class="cap-label">Finding — detail</span>
+      <span class="persona">Signed in as Auditee</span>
+      <span class="cap-path">/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be</span>
+    </figcaption>
+    <p class="cap-desc">One finding in full — the issue, root cause, agreed management action plan (MAP), owner and evidence. Auditees submit their MAP and upload remediation evidence here; it can also be flagged as a recurrence.</p>
+    <div class="shot-img"><img src="./aud-4-finding-detail.png" alt="Finding — detail"></div>
+  </figure>
+
+  <figure class="shot">
+    <figcaption>
+      <span class="num">A5</span>
+      <span class="cap-label">Engagement Lifecycle — portfolio board</span>
+      <span class="persona">Signed in as Auditee</span>
+      <span class="cap-path">/engagement-lifecycle</span>
+    </figcaption>
+    <p class="cap-desc">A portfolio board of every live engagement grouped by lifecycle stage (planning → fieldwork → reporting → closed), giving audit management a single view of where everything sits.</p>
+    <div class="shot-img"><img src="./aud-5-engagement-lifecycle-portfolio-board.png" alt="Engagement Lifecycle — portfolio board"></div>
   </figure>
 
 </body></html>

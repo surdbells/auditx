@@ -1,429 +1,662 @@
 [
   {
     "n": 1,
+    "group": "admin",
+    "persona": null,
     "label": "Login",
     "path": "/login",
     "file": "01-login.png",
-    "ok": true
+    "ok": true,
+    "callouts": 3
   },
   {
     "n": 2,
+    "group": "admin",
+    "persona": null,
     "label": "Dashboard",
     "path": "/dashboard",
     "file": "02-dashboard.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 3,
+    "group": "admin",
+    "persona": null,
     "label": "My Evidence Requests (auditee upload worklist)",
     "path": "/my/evidence-requests",
     "file": "03-my-evidence-requests-auditee-upload-worklist.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 4,
+    "group": "admin",
+    "persona": null,
     "label": "Audit Universe — Entities",
     "path": "/audit-universe",
     "file": "04-audit-universe-entities.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 5,
+    "group": "admin",
+    "persona": null,
     "label": "Risk Scoring Dimensions",
     "path": "/audit-universe/risk-dimensions",
     "file": "05-risk-scoring-dimensions.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 6,
+    "group": "admin",
+    "persona": null,
     "label": "Organisational Units",
     "path": "/audit-universe/org-units",
     "file": "06-organisational-units.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 7,
+    "group": "admin",
+    "persona": null,
     "label": "Annual Plans",
     "path": "/planning",
     "file": "07-annual-plans.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 8,
+    "group": "admin",
+    "persona": null,
     "label": "Annual Plan — detail",
     "path": "/planning/019ff571-b0cd-7594-b68a-4888a59ac879",
     "file": "08-annual-plan-detail.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 9,
+    "group": "admin",
+    "persona": null,
     "label": "Coverage Analytics",
     "path": "/coverage",
     "file": "09-coverage-analytics.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 10,
+    "group": "admin",
+    "persona": null,
     "label": "Checklist Templates",
     "path": "/admin/templates",
     "file": "10-checklist-templates.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 11,
+    "group": "admin",
+    "persona": null,
     "label": "Template Editor",
     "path": "/admin/templates/019ff590-8cde-7145-8f5d-1e4cf5108f73",
     "file": "11-template-editor.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 12,
+    "group": "admin",
+    "persona": null,
     "label": "Rating Scales",
     "path": "/admin/templates/rating-scales",
     "file": "12-rating-scales.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 13,
+    "group": "admin",
+    "persona": null,
     "label": "Response Labels (custom option sets)",
     "path": "/admin/response-labels",
     "file": "13-response-labels-custom-option-sets.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 14,
+    "group": "admin",
+    "persona": null,
     "label": "Audits",
     "path": "/audits",
     "file": "14-audits.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 15,
+    "group": "admin",
+    "persona": null,
     "label": "Audit — detail",
     "path": "/audits/019ff490-2094-7a14-afc7-0e90674a0133",
     "file": "15-audit-detail.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 16,
+    "group": "admin",
+    "persona": null,
     "label": "Audit Execution / Fieldwork",
     "path": "/audits/019ff490-2094-7a14-afc7-0e90674a0133/execute",
     "file": "16-audit-execution-fieldwork.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 17,
+    "group": "admin",
+    "persona": null,
     "label": "Audit Reports",
     "path": "/audits/019ff490-2094-7a14-afc7-0e90674a0133/reports",
     "file": "17-audit-reports.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 18,
+    "group": "admin",
+    "persona": null,
     "label": "Engagement Lifecycle — portfolio board",
     "path": "/engagement-lifecycle",
     "file": "18-engagement-lifecycle-portfolio-board.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 19,
+    "group": "admin",
+    "persona": null,
     "label": "Engagement Journey / next-best-action",
     "path": "/engagement-lifecycle/019ff490-2094-7a14-afc7-0e90674a0133",
     "file": "19-engagement-journey-next-best-action.png",
-    "ok": true
+    "ok": true,
+    "callouts": 4
   },
   {
     "n": 20,
+    "group": "admin",
+    "persona": null,
     "label": "Findings / Exceptions register",
     "path": "/exceptions",
     "file": "20-findings-exceptions-register.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 21,
+    "group": "admin",
+    "persona": null,
     "label": "Finding — detail",
     "path": "/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be",
     "file": "21-finding-detail.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 22,
+    "group": "admin",
+    "persona": null,
     "label": "Root-cause Gaps",
     "path": "/root-cause-gaps",
     "file": "22-root-cause-gaps.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 23,
+    "group": "admin",
+    "persona": null,
     "label": "Control Register",
     "path": "/controls",
     "file": "23-control-register.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 24,
+    "group": "admin",
+    "persona": null,
     "label": "Regulations Register",
     "path": "/compliance",
     "file": "24-regulations-register.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 25,
+    "group": "admin",
+    "persona": null,
     "label": "Enterprise Risk Register",
     "path": "/risks",
     "file": "25-enterprise-risk-register.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 26,
+    "group": "admin",
+    "persona": null,
     "label": "Exception-raising Rules",
     "path": "/admin/exception-raising-rules",
     "file": "26-exception-raising-rules.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 27,
+    "group": "admin",
+    "persona": null,
     "label": "Sanctions Cases",
     "path": "/admin/sanctions",
     "file": "27-sanctions-cases.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 28,
+    "group": "admin",
+    "persona": null,
     "label": "Sanctions Case — detail",
     "path": "/admin/sanctions/019ff490-378e-7018-9baa-59ca1c41f7fc",
     "file": "28-sanctions-case-detail.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 29,
+    "group": "admin",
+    "persona": null,
     "label": "Disciplinary Committee Queue",
     "path": "/admin/sanctions/dc-queue",
     "file": "29-disciplinary-committee-queue.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 30,
+    "group": "admin",
+    "persona": null,
     "label": "Sanctions Grid",
     "path": "/admin/sanctions/grid",
     "file": "30-sanctions-grid.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 31,
+    "group": "admin",
+    "persona": null,
     "label": "Reports",
     "path": "/reports",
     "file": "31-reports.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 32,
+    "group": "admin",
+    "persona": null,
     "label": "Report Templates",
     "path": "/admin/report-templates",
     "file": "32-report-templates.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 33,
+    "group": "admin",
+    "persona": null,
     "label": "Report Schedules",
     "path": "/admin/report-schedules",
     "file": "33-report-schedules.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 34,
+    "group": "admin",
+    "persona": null,
     "label": "Analytics — KPIs",
     "path": "/analytics",
     "file": "34-analytics-kpis.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 35,
+    "group": "admin",
+    "persona": null,
     "label": "Custom Dashboard",
     "path": "/analytics/dashboards/audit_committee",
     "file": "35-custom-dashboard.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 36,
+    "group": "admin",
+    "persona": null,
     "label": "Performance Scorecards",
     "path": "/analytics/scorecards",
     "file": "36-performance-scorecards.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 37,
+    "group": "admin",
+    "persona": null,
     "label": "Auditor Throughput",
     "path": "/analytics/auditor-throughput",
     "file": "37-auditor-throughput.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 38,
+    "group": "admin",
+    "persona": null,
     "label": "Org-unit Scorecards",
     "path": "/analytics/org-units",
     "file": "38-org-unit-scorecards.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 39,
+    "group": "admin",
+    "persona": null,
     "label": "Budget vs Actual",
     "path": "/analytics/time-budget",
     "file": "39-budget-vs-actual.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 40,
+    "group": "admin",
+    "persona": null,
     "label": "Auditor Workload",
     "path": "/analytics/auditor-workload",
     "file": "40-auditor-workload.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 41,
+    "group": "admin",
+    "persona": null,
     "label": "KPI Trends",
     "path": "/analytics/trends",
     "file": "41-kpi-trends.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 42,
+    "group": "admin",
+    "persona": null,
     "label": "Risk Heatmap",
     "path": "/analytics/risk-heatmap",
     "file": "42-risk-heatmap.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 43,
+    "group": "admin",
+    "persona": null,
     "label": "Controls Compliance",
     "path": "/analytics/controls-compliance",
     "file": "43-controls-compliance.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 44,
+    "group": "admin",
+    "persona": null,
     "label": "Recurrence Clusters",
     "path": "/analytics/recurrence-clusters",
     "file": "44-recurrence-clusters.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 45,
+    "group": "admin",
+    "persona": null,
     "label": "Recurrence Cluster — detail",
     "path": "/analytics/recurrence-clusters/019ff490-4199-7944-a88c-abf45ff7218e",
     "file": "45-recurrence-cluster-detail.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 46,
+    "group": "admin",
+    "persona": null,
     "label": "Audit Committee — workspace",
     "path": "/ac",
     "file": "46-audit-committee-workspace.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 47,
+    "group": "admin",
+    "persona": null,
     "label": "Users",
     "path": "/admin/users",
     "file": "47-users.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 48,
+    "group": "admin",
+    "persona": null,
     "label": "User — detail",
     "path": "/admin/users/019ff490-1471-72ec-8e36-0c2e40b59417",
     "file": "48-user-detail.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 49,
+    "group": "admin",
+    "persona": null,
     "label": "Roles",
     "path": "/admin/roles",
     "file": "49-roles.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 50,
+    "group": "admin",
+    "persona": null,
     "label": "Role Editor",
     "path": "/admin/roles/019ff490-0d9a-7ace-a420-db5751978c63",
     "file": "50-role-editor.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 51,
+    "group": "admin",
+    "persona": null,
     "label": "Maker-checker Queue",
     "path": "/admin/maker-checker",
     "file": "51-maker-checker-queue.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 52,
+    "group": "admin",
+    "persona": null,
     "label": "Bank Settings / Administration",
     "path": "/admin/administration",
     "file": "52-bank-settings-administration.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 53,
+    "group": "admin",
+    "persona": null,
     "label": "Audit Trail",
     "path": "/admin/audit-trail",
     "file": "53-audit-trail.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 54,
+    "group": "admin",
+    "persona": null,
     "label": "Configuration Store",
     "path": "/admin/configuration",
     "file": "54-configuration-store.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 55,
+    "group": "admin",
+    "persona": null,
     "label": "Configuration — exception defaults",
     "path": "/admin/configuration/exception_defaults",
     "file": "55-configuration-exception-defaults.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 56,
+    "group": "admin",
+    "persona": null,
     "label": "Reference Data",
     "path": "/admin/reference-data",
     "file": "56-reference-data.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 57,
+    "group": "admin",
+    "persona": null,
     "label": "Integrations",
     "path": "/admin/integrations",
     "file": "57-integrations.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 58,
+    "group": "admin",
+    "persona": null,
     "label": "Webhooks",
     "path": "/admin/webhooks",
     "file": "58-webhooks.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 59,
+    "group": "admin",
+    "persona": null,
     "label": "Notifications (rules / templates / dispatches)",
     "path": "/admin/notifications",
     "file": "59-notifications-rules-templates-dispatches.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 60,
+    "group": "admin",
+    "persona": null,
     "label": "Evidence Integrity (flagged files)",
     "path": "/admin/evidence-integrity",
     "file": "60-evidence-integrity-flagged-files.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
   },
   {
     "n": 61,
+    "group": "admin",
+    "persona": null,
     "label": "My Notification Preferences",
     "path": "/account/notification-preferences",
     "file": "61-my-notification-preferences.png",
-    "ok": true
+    "ok": true,
+    "callouts": 5
+  },
+  {
+    "n": 1001,
+    "group": "auditee",
+    "persona": "Auditee",
+    "label": "Dashboard",
+    "path": "/dashboard",
+    "file": "aud-1-dashboard.png",
+    "ok": true,
+    "callouts": 5
+  },
+  {
+    "n": 1002,
+    "group": "auditee",
+    "persona": "Auditee",
+    "label": "My Evidence Requests (auditee upload worklist)",
+    "path": "/my/evidence-requests",
+    "file": "aud-2-my-evidence-requests-auditee-upload-worklist.png",
+    "ok": true,
+    "callouts": 5
+  },
+  {
+    "n": 1003,
+    "group": "auditee",
+    "persona": "Auditee",
+    "label": "Findings / Exceptions register",
+    "path": "/exceptions",
+    "file": "aud-3-findings-exceptions-register.png",
+    "ok": true,
+    "callouts": 5
+  },
+  {
+    "n": 1004,
+    "group": "auditee",
+    "persona": "Auditee",
+    "label": "Finding — detail",
+    "path": "/exceptions/019ff490-3418-7c8a-84d9-1b20b2f460be",
+    "file": "aud-4-finding-detail.png",
+    "ok": true,
+    "callouts": 4
+  },
+  {
+    "n": 1005,
+    "group": "auditee",
+    "persona": "Auditee",
+    "label": "Engagement Lifecycle — portfolio board",
+    "path": "/engagement-lifecycle",
+    "file": "aud-5-engagement-lifecycle-portfolio-board.png",
+    "ok": true,
+    "callouts": 5
   }
 ]
