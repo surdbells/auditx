@@ -1,6 +1,8 @@
 import { chromium } from 'playwright-core';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { META } from './screens.mjs';
+
+const AUDITEE_ONLY = !!process.env.AUDITEE_ONLY;
 
 const BASE = 'http://localhost:4288';
 const API = 'http://localhost:8085/api/v1';
@@ -149,11 +151,17 @@ async function first(ctx, path, pick = (d) => (d?.items ? d.items[0] : Array.isA
   } catch { return null; }
 }
 
-const manifest = [];
+let manifest = [];
 const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50);
 
 // ---------- ADMIN PASS (all screens) ----------
-const adminCtx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 1.5 });
+if (AUDITEE_ONLY) {
+  // keep the already-captured admin screens; only the auditee pass re-runs
+  manifest = JSON.parse(readFileSync(`${OUT}/manifest.json`, 'utf8')).filter((m) => m.group === 'admin');
+  console.log(`AUDITEE_ONLY: preserving ${manifest.length} admin screens from manifest`);
+}
+const adminCtx = AUDITEE_ONLY ? null : await browser.newContext({ viewport: VIEW, deviceScaleFactor: 1.5 });
+if (!AUDITEE_ONLY) {
 const adminPage = await login(adminCtx, 'admin');
 console.log('admin logged in:', adminPage.url());
 
@@ -287,6 +295,7 @@ if (auditId) {
   } catch (e) { console.log('seed failed:', String(e).slice(0, 160)); }
 }
 await adminPage.close();
+} // end !AUDITEE_ONLY
 
 // ---------- AUDITEE PASS (auditee-specific screens, signed in as auditee) ----------
 const audCtx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 1.5 });
