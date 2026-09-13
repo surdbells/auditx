@@ -46,6 +46,9 @@ cd auditx
 
 (No repo remote? Zip the project, upload via aaPanel **Files**, and unzip into `/opt/auditx`.)
 
+> **Prefer to stay in the aaPanel UI?** Steps 1–3 use the terminal because it's the most reliable, but you can do the
+> whole thing without it — see [**Alternative: deploy entirely in the aaPanel UI**](#alternative-deploy-entirely-in-the-aapanel-ui-no-terminal) below, then rejoin at §4.
+
 ---
 
 ## 2. Configure secrets
@@ -75,7 +78,7 @@ Set at least:
 | `WEB_PORT` | host loopback port for the web container (default `8090`) |
 
 `PUBLIC_ORIGIN` must match what the browser actually shows (scheme, host, and port). It drives CORS and the links in
-notification emails. If you go the direct route (§5B) it would be `http://<server-ip>:8090`.
+notification emails. If you go the direct route (§4B) it would be `http://<server-ip>:8090`.
 
 ---
 
@@ -104,6 +107,50 @@ Quick local check on the server (before wiring the proxy):
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8090/          # 200 — SPA served
 curl -s http://127.0.0.1:8090/api/v1/../../swagger/v1/swagger.json | head -c 40   # OpenAPI via the web proxy
 ```
+
+---
+
+## Alternative: deploy entirely in the aaPanel UI (no terminal)
+
+This replaces **§§1–3** with point-and-click steps in aaPanel. When you're done here, continue at **§4**. (§4 onward
+is already a UI flow.)
+
+### A1. Get the code up with **Files**
+1. On your PC, **zip the project folder** (the repo). You can safely leave out `node_modules`, `bin`, `obj`, `dist`,
+   `.angular`, and `.git` — the Docker build regenerates what it needs (they're in `.dockerignore`), and the zip stays
+   small.
+2. aaPanel → **Files**. Go to `/opt` (use **Create → Directory** if it doesn't exist).
+3. **Upload** the zip into `/opt`, then select it → **Unzip**. You should end up with `/opt/auditx` containing
+   `docker-compose.aapanel.yml`.
+
+### A2. Create `.env` with the Files editor
+1. In `/opt/auditx`, select **`.env.aapanel.example`** → **Copy**, then rename the copy to **`.env`** (or **Create → File**
+   named `.env` and paste the template's contents).
+2. Generate two secrets — no terminal needed: use aaPanel's built-in **random-password generator** (the dice/refresh
+   icon on any password field, e.g. in **Databases → Add**), or a password manager. Any 16+ character strong string
+   works for `SA_PASSWORD`; any 32+ character random string for `JWT_SIGNING_KEY`.
+3. Double-click **`.env`** to edit it and set `SA_PASSWORD`, `JWT_SIGNING_KEY`, `PUBLIC_ORIGIN`
+   (your `https://<server-ip>`), and `WEB_PORT` (default `8090`). Save.
+
+### A3. Run it with **Docker Manager → Compose**
+1. aaPanel → **Docker** → **Compose** (labelled *Compose* / *Orchestration* / *Project* depending on your version) →
+   **Add / Create**.
+2. Choose **use an existing compose file** and point it at `/opt/auditx/docker-compose.aapanel.yml`; name the project
+   `auditx-demo`. If the UI has an **Environment file** field, set it to `/opt/auditx/.env` (otherwise it picks up the
+   `.env` sitting next to the compose file automatically).
+3. **Deploy / Up.** The first run builds the API and web images — allow a few minutes.
+4. Watch progress: Docker Manager lists the five containers; open the **auditx-api** container → **Logs** and wait for
+   `Application started` (migrations + demo seed run first).
+
+> **If your Docker Manager's Compose UI can't build images** (older builds only *run* prebuilt images): either run the
+> one command `docker compose -f docker-compose.aapanel.yml up -d --build` once from **Files → Terminal**, or ask for
+> the **prebuilt-image** compose variant — then the server only ever pulls ready-made images and never builds.
+
+**Day-2 in the UI:** Docker Manager gives you **Start / Stop / Restart** per container or for the whole `auditx-demo`
+project, and **Logs** per container. To update after code changes, re-upload the zip (or `git pull`) and hit
+**Rebuild / Up** on the project. The reset-to-fresh-DB action is **Down** with "remove volumes" ticked.
+
+Now continue at **§4** to put aaPanel's reverse proxy, TLS, and the access gate in front.
 
 ---
 
