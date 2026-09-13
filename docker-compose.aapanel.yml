@@ -1,0 +1,120 @@
+name: auditx-demo
+
+# ---------------------------------------------------------------------------------------------------------------------
+# AuditX — aaPanel / Linux VPS DEMO-UAT stack.
+#
+# This runs the seeded **Development** identity provider (users: admin / manager / auditor / auditee, password
+# Passw0rd!) so you can sign in without an Active Directory. Because of that it MUST run in the Development ASP.NET
+# environment (the production safety guard blocks the seeded provider anywhere else).
+#
+#   ⚠ This is a DEMO / UAT deployment — NOT production. Do not put real or confidential data in it. Anyone who reaches
+#     it can sign in as the seeded administrator, so it MUST sit behind the aaPanel reverse proxy with an access gate
+#     (Basic Auth or an IP allow-list) and TLS. See docs/AAPANEL_DEPLOYMENT.md.
+#
+# For a real deployment (LDAP/AD authentication, Production hardening), use docker-compose.yml's production guidance and
+# docs/DEPLOYMENT_RUNBOOK.md instead.
+#
+# Values written as ${...} are read from a local `.env` file placed next to this file. Copy .env.aapanel.example to
+# `.env`, fill in real secrets, and never commit `.env`.
+#
+# Bring up:   docker compose -f docker-compose.aapanel.yml up -d --build
+# Logs:       docker compose -f docker-compose.aapanel.yml logs -f api
+# Tear down:  docker compose -f docker-compose.aapanel.yml down          (add -v to also drop the data volumes)
+# ---------------------------------------------------------------------------------------------------------------------
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: auditx-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:?set SA_PASSWORD in .env}"
+      MSSQL_PID: "Developer"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    # No published ports on purpose: only the api container reaches SQL Server, over the internal compose network.
+
+  redis:
+    image: redis:7-alpine
+    container_name: auditx-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: auditx-rabbitmq
+    restart: unless-stopped
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    # Optional: the API does not depend on RabbitMQ to boot. Remove this service to save ~150 MB RAM on a small VPS.
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Api.Dockerfile
+    container_name: auditx-api
+    restart: unless-stopped
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # DEMO/UAT: Development environment so the seeded identity provider is permitted by the startup safety guard.
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_HTTP_PORTS: "8080"
+      # Apply EF migrations + seed the rich demo dataset on first boot (idempotent). Fine for a demo; in a real
+      # deployment you would run migrations as a controlled step and never seed demo data.
+      Database__MigrateOnStartup: "true"
+      Database__SeedDemoData: "true"
+      Identity__Provider: "Development"
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=auditx;User Id=sa;Password=${SA_PASSWORD:?set SA_PASSWORD in .env};TrustServerCertificate=True;Encrypt=False"
+      Redis__ConnectionString: "redis:6379"
+      # Still supply a real signing key (≥32 bytes). Generate with: openssl rand -base64 48
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in .env}"
+      # The exact public origin users hit through the aaPanel proxy (e.g. https://203.0.113.10). Drives CORS and the
+      # deep links embedded in notification emails (e.g. the evidence-request upload link).
+      Cors__Origins__0: "${PUBLIC_ORIGIN:?set PUBLIC_ORIGIN in .env}"
+      Notifications__WebBaseUrl: "${PUBLIC_ORIGIN}"
+    volumes:
+      - evidence-data:/app/evidence-store
+    # No published port: only the web container proxies to the API (same-origin), over the internal network.
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Web.Dockerfile
+    container_name: auditx-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      # Bind to the host loopback only. aaPanel's Nginx (running on the host) reverse-proxies to this port and adds
+      # TLS + the access gate; the container itself is never exposed to the internet. If you deliberately skip the
+      # proxy and want to hit the app directly at http://<server-ip>:<WEB_PORT>, change this to "${WEB_PORT}:80".
+      - "127.0.0.1:${WEB_PORT:-8090}:80"
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  rabbitmq-data:
+  evidence-data:
