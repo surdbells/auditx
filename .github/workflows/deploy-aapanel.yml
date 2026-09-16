@@ -1,0 +1,78 @@
+name: Deploy (aaPanel)
+
+# Continuous deployment of the demo/UAT stack to the aaPanel Linux server.
+#
+# The server holds a git clone of this repo (e.g. /opt/auditx) with a local .env; this workflow SSHes in,
+# fast-forwards that checkout to the deployed commit, and runs `docker compose -f docker-compose.aapanel.yml
+# up -d --build`. Full setup (server prep + the GitHub secrets below) is in docs/AAPANEL_DEPLOYMENT.md (§ CI/CD).
+#
+# Triggers:
+#   • automatically after the CI workflow succeeds on `main`
+#   • manually from the Actions tab (optionally choosing a ref)
+#
+# Required on the `aapanel-demo` GitHub Environment:
+#   secrets:  AAPANEL_SSH_HOST, AAPANEL_SSH_USER, AAPANEL_SSH_KEY   (AAPANEL_SSH_PORT optional, default 22)
+#   vars:     AAPANEL_DEPLOY_PATH  (optional, default /opt/auditx)
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref (branch/tag/SHA) to deploy on the server"
+        required: false
+        default: main
+        type: string
+
+# Never let two deploys race on the same server; queue them instead.
+concurrency:
+  group: deploy-aapanel
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to aaPanel server
+    runs-on: ubuntu-latest
+    environment: aapanel-demo
+    # On the automatic trigger, only deploy when CI actually passed. Manual runs are always allowed.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve deploy ref
+        id: ref
+        run: echo "value=${{ github.event.inputs.ref || 'main' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy over SSH
+        env:
+          SSH_HOST: ${{ secrets.AAPANEL_SSH_HOST }}
+          SSH_USER: ${{ secrets.AAPANEL_SSH_USER }}
+          SSH_PORT: ${{ secrets.AAPANEL_SSH_PORT || '22' }}
+          SSH_KEY: ${{ secrets.AAPANEL_SSH_KEY }}
+          DEPLOY_PATH: ${{ vars.AAPANEL_DEPLOY_PATH || '/opt/auditx' }}
+          DEPLOY_REF: ${{ steps.ref.outputs.value }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SSH_HOST}" ] || [ -z "${SSH_USER}" ] || [ -z "${SSH_KEY}" ]; then
+            echo "::error::Missing SSH secrets. Set AAPANEL_SSH_HOST / AAPANEL_SSH_USER / AAPANEL_SSH_KEY on the aapanel-demo environment."
+            exit 1
+          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "${SSH_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${SSH_PORT}" -H "${SSH_HOST}" >> ~/.ssh/known_hosts 2>/dev/null
+          echo "Deploying ref '${DEPLOY_REF}' to ${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}"
+          ssh -i ~/.ssh/deploy_key -p "${SSH_PORT}" -o IdentitiesOnly=yes -o BatchMode=yes \
+            "${SSH_USER}@${SSH_HOST}" "bash -s -- '${DEPLOY_PATH}' '${DEPLOY_REF}'" < deploy/aapanel-deploy.sh
+
+      - name: Scrub key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

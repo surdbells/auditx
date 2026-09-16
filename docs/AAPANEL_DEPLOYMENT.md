@@ -232,7 +232,72 @@ compose to save ~150 MB RAM.
 
 ---
 
-## 7. Troubleshooting
+## 7. CI/CD — automatic deploys from GitHub
+
+Once the stack has been deployed once by hand (§§1–4), every push to `main` can redeploy it automatically. The
+pipeline is [`.github/workflows/deploy-aapanel.yml`](../.github/workflows/deploy-aapanel.yml): after the **CI**
+workflow passes on `main`, GitHub Actions SSHes into the server, fast-forwards the `/opt/auditx` checkout, and runs
+`docker compose … up -d --build` (remote steps: [`deploy/aapanel-deploy.sh`](../deploy/aapanel-deploy.sh)). You can
+also run it by hand from the **Actions** tab.
+
+### 7.1 One-time server setup
+1. The stack must already be up from §§1–4, so `/opt/auditx` is a git checkout with a working `.env`.
+2. **Let the server pull from GitHub.** For a private repo, add a read-only **deploy key**:
+   ```bash
+   ssh-keygen -t ed25519 -f ~/.ssh/auditx_repo -N ""      # on the server
+   cat ~/.ssh/auditx_repo.pub                              # add in GitHub → repo → Settings → Deploy keys (read-only)
+   cd /opt/auditx
+   git config core.sshCommand "ssh -i ~/.ssh/auditx_repo -o IdentitiesOnly=yes"
+   git remote set-url origin git@github.com:<owner>/<repo>.git
+   git fetch                                               # confirm it works
+   ```
+   (Public repo? Skip this — just make sure `origin` is set.)
+3. **Create a non-root deploy user** for Actions to SSH in as, with Docker access:
+   ```bash
+   useradd -m -s /bin/bash deploy && usermod -aG docker deploy
+   chown -R deploy:deploy /opt/auditx        # so it can update the checkout and read .env
+   ```
+4. **Authorise the CI key.** Generate a dedicated keypair for the GitHub → server hop:
+   ```bash
+   ssh-keygen -t ed25519 -f auditx_ci -N ""
+   mkdir -p /home/deploy/.ssh && cat auditx_ci.pub >> /home/deploy/.ssh/authorized_keys
+   chown -R deploy:deploy /home/deploy/.ssh && chmod 700 /home/deploy/.ssh && chmod 600 /home/deploy/.ssh/authorized_keys
+   ```
+   Keep the **private** key `auditx_ci` for the next step; never commit it.
+5. Open the SSH port (22 or your custom port) in aaPanel **Security** and the cloud firewall. Optional hardening:
+   restrict the source to GitHub Actions' IP ranges (from `https://api.github.com/meta`) and keep SSH key-only
+   (`PasswordAuthentication no`).
+
+### 7.2 GitHub setup
+1. Repo → **Settings → Environments → New environment** → **`aapanel-demo`**. (Optionally add a required reviewer so
+   deploys wait for approval.)
+2. On that environment add **secrets**:
+
+   | Secret | Value |
+   |---|---|
+   | `AAPANEL_SSH_HOST` | server IP |
+   | `AAPANEL_SSH_USER` | `deploy` |
+   | `AAPANEL_SSH_KEY` | contents of the **private** key `auditx_ci` |
+   | `AAPANEL_SSH_PORT` | *(optional)* SSH port if not 22 |
+
+   If your checkout isn't at `/opt/auditx`, also add a **variable** `AAPANEL_DEPLOY_PATH`.
+
+### 7.3 How it runs
+- **Automatic:** push to `main` → CI runs → on success, **Deploy (aaPanel)** updates the server.
+- **Manual:** Actions tab → **Deploy (aaPanel)** → **Run workflow** (optionally choose a ref).
+- The remote script does: fetch → hard-checkout the target commit → `up -d --build` → image prune → health probe. Your
+  `.env` and Docker volumes are never touched (they're untracked/managed).
+- **Don't want auto-deploy on every push?** Remove the `workflow_run:` trigger from the workflow to make it
+  manual-only (like the Azure pipeline).
+
+> **Build-on-server note.** This rebuilds the images on the VPS, which is CPU/RAM-hungry (Angular + .NET). On a small
+> box (~2 GB) it can be slow or run out of memory. If that bites, switch to **prebuilt images**: CI builds and pushes
+> the API/web images to a registry (e.g. GHCR) and the server only runs `docker compose pull && up -d`. This repo can
+> ship that variant on request.
+
+---
+
+## 8. Troubleshooting
 
 | Symptom | Cause / fix |
 |---|---|
@@ -245,7 +310,7 @@ compose to save ~150 MB RAM.
 
 ---
 
-## 8. Going to production later
+## 9. Going to production later
 
 This demo intentionally trades security for convenience (seeded accounts, Development mode). For a real deployment:
 
