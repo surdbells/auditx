@@ -1,0 +1,101 @@
+name: auditx-demo
+
+# ---------------------------------------------------------------------------------------------------------------------
+# AuditX — aaPanel / Linux VPS demo stack, PREBUILT-IMAGE variant.
+#
+# Identical to docker-compose.aapanel.yml except the API and web services **pull** their images from GHCR instead of
+# building them on the server. The CD pipeline (.github/workflows/deploy-aapanel.yml) builds + pushes those images,
+# copies this file to the server, and runs `docker compose -f docker-compose.images.yml pull && up -d`.
+#   → No source tree or Docker build is needed on the server; it only needs this file + a local .env.
+#
+# Uses the same compose project name (auditx-demo) as docker-compose.aapanel.yml, so you can switch between
+# build-on-server and prebuilt-image modes in place. Keep the infra services / API env below in sync with that file.
+#
+# Extra .env values this variant needs (beyond SA_PASSWORD / JWT_SIGNING_KEY / PUBLIC_ORIGIN / WEB_PORT):
+#   GHCR_OWNER = your GitHub owner/org, lowercase (e.g. surdbells)
+#   IMAGE_TAG  = image tag to run (default 'latest'; the pipeline pins the built commit's 'sha-<short>')
+#
+# If the GHCR packages are private, log in once on the server:
+#   docker login ghcr.io -u <github-user>   (paste a PAT with read:packages as the password)
+# ---------------------------------------------------------------------------------------------------------------------
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: auditx-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:?set SA_PASSWORD in .env}"
+      MSSQL_PID: "Developer"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: auditx-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: auditx-rabbitmq
+    restart: unless-stopped
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  api:
+    image: "ghcr.io/${GHCR_OWNER:?set GHCR_OWNER in .env}/auditx-api:${IMAGE_TAG:-latest}"
+    container_name: auditx-api
+    restart: unless-stopped
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_HTTP_PORTS: "8080"
+      Database__MigrateOnStartup: "true"
+      Database__SeedDemoData: "true"
+      Identity__Provider: "Development"
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=auditx;User Id=sa;Password=${SA_PASSWORD:?set SA_PASSWORD in .env};TrustServerCertificate=True;Encrypt=False"
+      Redis__ConnectionString: "redis:6379"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:?set JWT_SIGNING_KEY in .env}"
+      Cors__Origins__0: "${PUBLIC_ORIGIN:?set PUBLIC_ORIGIN in .env}"
+      Notifications__WebBaseUrl: "${PUBLIC_ORIGIN}"
+    volumes:
+      - evidence-data:/app/evidence-store
+
+  web:
+    image: "ghcr.io/${GHCR_OWNER:?set GHCR_OWNER in .env}/auditx-web:${IMAGE_TAG:-latest}"
+    container_name: auditx-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8090}:80"
+
+volumes:
+  sqlserver-data:
+  redis-data:
+  rabbitmq-data:
+  evidence-data:

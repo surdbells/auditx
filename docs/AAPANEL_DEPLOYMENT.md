@@ -232,38 +232,49 @@ compose to save ~150 MB RAM.
 
 ---
 
-## 7. CI/CD — automatic deploys from GitHub
+## 7. CI/CD — automatic deploys from GitHub (prebuilt images via GHCR)
 
-Once the stack has been deployed once by hand (§§1–4), every push to `main` can redeploy it automatically. The
-pipeline is [`.github/workflows/deploy-aapanel.yml`](../.github/workflows/deploy-aapanel.yml): after the **CI**
-workflow passes on `main`, GitHub Actions SSHes into the server, fast-forwards the `/opt/auditx` checkout, and runs
-`docker compose … up -d --build` (remote steps: [`deploy/aapanel-deploy.sh`](../deploy/aapanel-deploy.sh)). You can
-also run it by hand from the **Actions** tab.
+The pipeline [`.github/workflows/deploy-aapanel.yml`](../.github/workflows/deploy-aapanel.yml) runs after **CI** passes
+on `main` (or manually from the Actions tab) and has two jobs:
+
+1. **build** — builds the API + web images and pushes them to **GHCR** (`ghcr.io/<owner>/auditx-api` and
+   `…/auditx-web`), tagged `latest` and `sha-<short>`.
+2. **deploy** — copies [`docker-compose.images.yml`](../docker-compose.images.yml) to the server and runs
+   `docker compose pull && up -d` (remote steps: [`deploy/aapanel-deploy-images.sh`](../deploy/aapanel-deploy-images.sh)).
+
+Because the server only **pulls** images, it needs **no source tree and no Docker build** — just a directory with a
+`.env`. This is the recommended path for regular releases.
 
 ### 7.1 One-time server setup
-1. The stack must already be up from §§1–4, so `/opt/auditx` is a git checkout with a working `.env`.
-2. **Let the server pull from GitHub.** For a private repo, add a read-only **deploy key**:
+1. **A deploy directory with a `.env`.** Reuse `/opt/auditx` from §§1–4, or make a fresh source-free dir:
    ```bash
-   ssh-keygen -t ed25519 -f ~/.ssh/auditx_repo -N ""      # on the server
-   cat ~/.ssh/auditx_repo.pub                              # add in GitHub → repo → Settings → Deploy keys (read-only)
-   cd /opt/auditx
-   git config core.sshCommand "ssh -i ~/.ssh/auditx_repo -o IdentitiesOnly=yes"
-   git remote set-url origin git@github.com:<owner>/<repo>.git
-   git fetch                                               # confirm it works
+   mkdir -p /opt/auditx && cd /opt/auditx
+   # create .env here (see §2 for SA_PASSWORD / JWT_SIGNING_KEY / PUBLIC_ORIGIN / WEB_PORT)
    ```
-   (Public repo? Skip this — just make sure `origin` is set.)
-3. **Create a non-root deploy user** for Actions to SSH in as, with Docker access:
+   Add two lines to that `.env` telling it where to pull images from:
+   ```ini
+   GHCR_OWNER=<your-github-owner-lowercase>
+   IMAGE_TAG=latest
+   ```
+   (The pipeline overrides `IMAGE_TAG` per deploy to pin the exact commit; the `.env` value is just the manual default.)
+2. **Create a non-root deploy user** for Actions to SSH in as, with Docker access:
    ```bash
    useradd -m -s /bin/bash deploy && usermod -aG docker deploy
-   chown -R deploy:deploy /opt/auditx        # so it can update the checkout and read .env
+   chown -R deploy:deploy /opt/auditx
    ```
-4. **Authorise the CI key.** Generate a dedicated keypair for the GitHub → server hop:
+3. **Authorise the CI key.** Generate a dedicated keypair for the GitHub → server hop:
    ```bash
    ssh-keygen -t ed25519 -f auditx_ci -N ""
    mkdir -p /home/deploy/.ssh && cat auditx_ci.pub >> /home/deploy/.ssh/authorized_keys
    chown -R deploy:deploy /home/deploy/.ssh && chmod 700 /home/deploy/.ssh && chmod 600 /home/deploy/.ssh/authorized_keys
    ```
-   Keep the **private** key `auditx_ci` for the next step; never commit it.
+   Keep the **private** key `auditx_ci` for §7.2; never commit it.
+4. **Let the server pull from GHCR.** After the first build, either make the two packages **public** (GitHub → your
+   profile → **Packages** → each package → **Package settings → Change visibility → Public** — simplest for a demo), or
+   keep them private and log in once as the deploy user:
+   ```bash
+   sudo -u deploy docker login ghcr.io -u <github-user>   # paste a PAT with read:packages as the password
+   ```
 5. Open the SSH port (22 or your custom port) in aaPanel **Security** and the cloud firewall. Optional hardening:
    restrict the source to GitHub Actions' IP ranges (from `https://api.github.com/meta`) and keep SSH key-only
    (`PasswordAuthentication no`).
@@ -280,20 +291,24 @@ also run it by hand from the **Actions** tab.
    | `AAPANEL_SSH_KEY` | contents of the **private** key `auditx_ci` |
    | `AAPANEL_SSH_PORT` | *(optional)* SSH port if not 22 |
 
-   If your checkout isn't at `/opt/auditx`, also add a **variable** `AAPANEL_DEPLOY_PATH`.
+   If your deploy dir isn't `/opt/auditx`, also add a **variable** `AAPANEL_DEPLOY_PATH`.
+3. Nothing else is needed for GHCR itself: the **build** job pushes with the built-in `GITHUB_TOKEN` (the workflow
+   requests `packages: write`), so no registry PAT is stored in the repo.
 
 ### 7.3 How it runs
-- **Automatic:** push to `main` → CI runs → on success, **Deploy (aaPanel)** updates the server.
-- **Manual:** Actions tab → **Deploy (aaPanel)** → **Run workflow** (optionally choose a ref).
-- The remote script does: fetch → hard-checkout the target commit → `up -d --build` → image prune → health probe. Your
-  `.env` and Docker volumes are never touched (they're untracked/managed).
+- **Automatic:** push to `main` → CI runs → on success, **Deploy (aaPanel)** builds+pushes the images to GHCR and the
+  server pulls them.
+- **Manual:** Actions tab → **Deploy (aaPanel)** → **Run workflow** (optionally pin an `imageTag`).
+- The deploy step copies `docker-compose.images.yml` to the server and runs `pull → up -d → prune → health probe`. Your
+  `.env` and Docker volumes are never touched. Switching between this and the build-on-server compose is seamless — both
+  use the same compose project name (`auditx-demo`).
 - **Don't want auto-deploy on every push?** Remove the `workflow_run:` trigger from the workflow to make it
   manual-only (like the Azure pipeline).
 
-> **Build-on-server note.** This rebuilds the images on the VPS, which is CPU/RAM-hungry (Angular + .NET). On a small
-> box (~2 GB) it can be slow or run out of memory. If that bites, switch to **prebuilt images**: CI builds and pushes
-> the API/web images to a registry (e.g. GHCR) and the server only runs `docker compose pull && up -d`. This repo can
-> ship that variant on request.
+> **Alternative — build on the server (no registry).** If you'd rather not use GHCR, keep the source on the server (§1)
+> and run `docker compose -f docker-compose.aapanel.yml up -d --build`. The repo also ships a git-pull-and-build remote
+> script, [`deploy/aapanel-deploy.sh`](../deploy/aapanel-deploy.sh), you can wire to the workflow instead. Building on a
+> small VPS (~2 GB) is CPU/RAM-heavy and can be slow or OOM — which is why the image pipeline above is the default.
 
 ---
 

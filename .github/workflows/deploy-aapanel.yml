@@ -1,14 +1,14 @@
 name: Deploy (aaPanel)
 
-# Continuous deployment of the demo/UAT stack to the aaPanel Linux server.
+# Continuous deployment of the demo/UAT stack to the aaPanel Linux server, via PREBUILT IMAGES.
 #
-# The server holds a git clone of this repo (e.g. /opt/auditx) with a local .env; this workflow SSHes in,
-# fast-forwards that checkout to the deployed commit, and runs `docker compose -f docker-compose.aapanel.yml
-# up -d --build`. Full setup (server prep + the GitHub secrets below) is in docs/AAPANEL_DEPLOYMENT.md (§ CI/CD).
+# 1. build : build the API + web images and push them to GHCR (ghcr.io/<owner>/auditx-api|auditx-web).
+# 2. deploy: copy docker-compose.images.yml to the server and run `docker compose pull && up -d` — no build on the box.
 #
-# Triggers:
-#   • automatically after the CI workflow succeeds on `main`
-#   • manually from the Actions tab (optionally choosing a ref)
+# The server needs no source tree — only a directory with a local .env (and docker login to GHCR if the packages are
+# private). Full setup (server prep + the GitHub secrets below) is in docs/AAPANEL_DEPLOYMENT.md (§7).
+#
+# Triggers: automatically after the CI workflow succeeds on `main`, or manually from the Actions tab.
 #
 # Required on the `aapanel-demo` GitHub Environment:
 #   secrets:  AAPANEL_SSH_HOST, AAPANEL_SSH_USER, AAPANEL_SSH_KEY   (AAPANEL_SSH_PORT optional, default 22)
@@ -21,44 +21,94 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      ref:
-        description: "Git ref (branch/tag/SHA) to deploy on the server"
+      imageTag:
+        description: "Image tag to deploy (blank = the sha built by this run)"
         required: false
-        default: main
-        type: string
+        default: ""
 
-# Never let two deploys race on the same server; queue them instead.
 concurrency:
   group: deploy-aapanel
   cancel-in-progress: false
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
-  deploy:
-    name: Deploy to aaPanel server
+  build:
+    name: Build & push images to GHCR
     runs-on: ubuntu-latest
-    environment: aapanel-demo
-    # On the automatic trigger, only deploy when CI actually passed. Manual runs are always allowed.
+    # On the automatic trigger, only proceed when CI actually passed. Manual runs are always allowed.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
+    outputs:
+      owner: ${{ steps.meta.outputs.owner }}
+      tag: ${{ steps.meta.outputs.tag }}
+    strategy:
+      matrix:
+        include:
+          - image: auditx-api
+            dockerfile: docker/Api.Dockerfile
+          - image: auditx-web
+            dockerfile: docker/Web.Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Build the exact commit CI validated (workflow_run) or the current ref (dispatch).
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Compute owner + tag
+        id: meta
+        run: |
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+          echo "tag=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push ${{ matrix.image }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/${{ matrix.image }}:latest
+            ghcr.io/${{ steps.meta.outputs.owner }}/${{ matrix.image }}:${{ steps.meta.outputs.tag }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy:
+    name: Deploy to aaPanel server
+    needs: build
+    runs-on: ubuntu-latest
+    environment: aapanel-demo
     steps:
       - uses: actions/checkout@v4
 
-      - name: Resolve deploy ref
-        id: ref
-        run: echo "value=${{ github.event.inputs.ref || 'main' }}" >> "$GITHUB_OUTPUT"
+      - name: Resolve image tag
+        id: tag
+        run: |
+          t="${{ github.event.inputs.imageTag }}"
+          [ -n "$t" ] || t="${{ needs.build.outputs.tag }}"
+          echo "value=${t}" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy over SSH
+      - name: Deploy over SSH (pull prebuilt images)
         env:
           SSH_HOST: ${{ secrets.AAPANEL_SSH_HOST }}
           SSH_USER: ${{ secrets.AAPANEL_SSH_USER }}
           SSH_PORT: ${{ secrets.AAPANEL_SSH_PORT || '22' }}
           SSH_KEY: ${{ secrets.AAPANEL_SSH_KEY }}
           DEPLOY_PATH: ${{ vars.AAPANEL_DEPLOY_PATH || '/opt/auditx' }}
-          DEPLOY_REF: ${{ steps.ref.outputs.value }}
+          GHCR_OWNER: ${{ needs.build.outputs.owner }}
+          IMAGE_TAG: ${{ steps.tag.outputs.value }}
         run: |
           set -euo pipefail
           if [ -z "${SSH_HOST}" ] || [ -z "${SSH_USER}" ] || [ -z "${SSH_KEY}" ]; then
@@ -69,9 +119,13 @@ jobs:
           printf '%s\n' "${SSH_KEY}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p "${SSH_PORT}" -H "${SSH_HOST}" >> ~/.ssh/known_hosts 2>/dev/null
-          echo "Deploying ref '${DEPLOY_REF}' to ${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}"
-          ssh -i ~/.ssh/deploy_key -p "${SSH_PORT}" -o IdentitiesOnly=yes -o BatchMode=yes \
-            "${SSH_USER}@${SSH_HOST}" "bash -s -- '${DEPLOY_PATH}' '${DEPLOY_REF}'" < deploy/aapanel-deploy.sh
+          # ssh takes -p for the port, scp takes -P — keep the shared options separate from the port flag.
+          OPTS=(-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o BatchMode=yes)
+          echo "Deploying ghcr.io/${GHCR_OWNER}/auditx-{api,web}:${IMAGE_TAG} to ${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}"
+          ssh "${OPTS[@]}" -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" "mkdir -p '${DEPLOY_PATH}'"
+          scp "${OPTS[@]}" -P "${SSH_PORT}" docker-compose.images.yml "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/docker-compose.images.yml"
+          ssh "${OPTS[@]}" -p "${SSH_PORT}" "${SSH_USER}@${SSH_HOST}" \
+            "bash -s -- '${DEPLOY_PATH}' '${GHCR_OWNER}' '${IMAGE_TAG}'" < deploy/aapanel-deploy-images.sh
 
       - name: Scrub key
         if: always()
