@@ -77,6 +77,19 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
     }
 
     [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpPatch("{id:guid}/manager")]
+    public async Task<IActionResult> SetManager(Guid id, [FromBody] SetUserManagerRequest request, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new SetUserManagerCommand(id, request.ManagerId), cancellationToken);
+        return NoContent();
+    }
+
+    [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpGet("{id:guid}/reporting-line")]
+    public async Task<IActionResult> ReportingLine(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetUserReportingLineQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpPost("{userId:guid}/roles")]
     public async Task<IActionResult> GrantRole(Guid userId, [FromBody] GrantRoleRequest request, CancellationToken cancellationToken)
         => Created(await dispatcher.Send(new GrantRoleCommand(userId, request.RoleId, request.ScopeValue), cancellationToken));

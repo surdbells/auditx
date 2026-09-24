@@ -4,6 +4,7 @@ using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Identity.Dtos;
+using AuditX.Application.Organization;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Identity;
 using FluentValidation;
@@ -68,6 +69,80 @@ public sealed class SetUserCapacityCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Unit.Value;
+    }
+}
+
+/// <summary>Set (or clear) a user's explicit line manager, for reporting-line workflows.</summary>
+public sealed record SetUserManagerCommand(Guid UserId, Guid? ManagerId) : ICommand<Unit>;
+
+public sealed class SetUserManagerCommandValidator : AbstractValidator<SetUserManagerCommand>
+{
+    public SetUserManagerCommandValidator()
+    {
+        RuleFor(x => x.UserId).NotEmpty();
+        RuleFor(x => x).Must(x => x.ManagerId != x.UserId).WithMessage("A user cannot be their own line manager.");
+    }
+}
+
+public sealed class SetUserManagerCommandHandler(
+    IUserRepository users,
+    IReportingLineResolver reportingLine,
+    IAuditRecorder audit,
+    IUnitOfWork unitOfWork)
+    : ICommandHandler<SetUserManagerCommand, Unit>
+{
+    public async Task<Unit> Handle(SetUserManagerCommand command, CancellationToken cancellationToken)
+    {
+        var user = await users.GetByIdAsync(command.UserId, cancellationToken)
+            ?? throw new NotFoundException("User", command.UserId);
+
+        if (command.ManagerId is { } managerId)
+        {
+            _ = await users.GetByIdAsync(managerId, cancellationToken)
+                ?? throw new NotFoundException("User", managerId);
+
+            // Reject cycles: the proposed manager must not already report to this user (directly, or via org-unit heads).
+            var managerChain = await reportingLine.GetReportingChainAsync(managerId, cancellationToken);
+            if (managerChain.Contains(command.UserId))
+            {
+                throw new ConflictException("user.manager_cycle", "That would create a cycle in the reporting line.");
+            }
+        }
+
+        var before = new { managerId = user.ManagerId };
+        user.SetManager(command.ManagerId);
+        audit.Record(AuditEventTypes.UserManagerUpdated, AuditTargetTypes.User, user.Id,
+            before: before, after: new { managerId = user.ManagerId });
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Unit.Value;
+    }
+}
+
+/// <summary>A resolved reporting line: the effective line manager plus the ordered chain upward (with names).</summary>
+public sealed record ReportingLineDto(Guid UserId, Guid? LineManagerId, IReadOnlyList<ReportingLineNodeDto> Chain);
+
+public sealed record ReportingLineNodeDto(Guid UserId, string DisplayName);
+
+/// <summary>Resolve a user's effective reporting line (explicit manager, else org-unit head walking up the tree).</summary>
+public sealed record GetUserReportingLineQuery(Guid UserId) : IQuery<ReportingLineDto>;
+
+public sealed class GetUserReportingLineQueryHandler(IUserRepository users, IReportingLineResolver reportingLine)
+    : IQueryHandler<GetUserReportingLineQuery, ReportingLineDto>
+{
+    public async Task<ReportingLineDto> Handle(GetUserReportingLineQuery query, CancellationToken cancellationToken)
+    {
+        _ = await users.GetByIdAsync(query.UserId, cancellationToken) ?? throw new NotFoundException("User", query.UserId);
+
+        var chainIds = await reportingLine.GetReportingChainAsync(query.UserId, cancellationToken);
+        var entities = chainIds.Count == 0 ? [] : await users.GetByIdsAsync(chainIds, cancellationToken);
+        var nameById = entities.ToDictionary(u => u.Id, u => u.DisplayName);
+
+        var chain = chainIds
+            .Select(id => new ReportingLineNodeDto(id, nameById.TryGetValue(id, out var n) ? n : "(unknown)"))
+            .ToArray();
+
+        return new ReportingLineDto(query.UserId, chainIds.Count > 0 ? chainIds[0] : null, chain);
     }
 }
 

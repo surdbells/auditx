@@ -10,6 +10,7 @@ namespace AuditX.Api.Controllers;
 public sealed record CreateOrgUnitRequest(string Name, string Code, Guid? ParentOrgUnitId);
 public sealed record RenameOrgUnitRequest(string Name);
 public sealed record ReparentOrgUnitRequest(Guid? ParentOrgUnitId);
+public sealed record SetOrgUnitHeadRequest(Guid? HeadUserId);
 
 /// <summary>The organisational hierarchy (org units) — the roll-up dimension for org-based reporting.</summary>
 [Authorize]
@@ -35,6 +36,11 @@ public sealed class OrgUnitsController(IDispatcher dispatcher) : ApiControllerBa
     [HttpPatch("{id:guid}/parent")]
     public async Task<IActionResult> Reparent(Guid id, [FromBody] ReparentOrgUnitRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new ReparentOrgUnitCommand(id, request.ParentOrgUnitId), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageUniverse)]
+    [HttpPatch("{id:guid}/head")]
+    public async Task<IActionResult> SetHead(Guid id, [FromBody] SetOrgUnitHeadRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SetOrgUnitHeadCommand(id, request.HeadUserId), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUniverse)]
     [HttpPost("{id:guid}/archive")]

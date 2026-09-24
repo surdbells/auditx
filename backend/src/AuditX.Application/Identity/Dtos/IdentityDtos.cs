@@ -43,6 +43,8 @@ public sealed record UserDetailDto(
     string Status,
     DateTimeOffset? LastLoginAt,
     decimal? CapacityDays,
+    Guid? ManagerId,
+    string? ManagerName,
     IReadOnlyList<UserRoleDto> Roles,
     IReadOnlyList<DelegationDto> Delegations);
 

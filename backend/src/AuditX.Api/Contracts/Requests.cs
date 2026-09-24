@@ -10,6 +10,8 @@ public sealed record UpdateUserRequest(string Status);
 
 public sealed record SetUserCapacityRequest(decimal? CapacityDays);
 
+public sealed record SetUserManagerRequest(Guid? ManagerId);
+
 public sealed record GrantRoleRequest(Guid RoleId, string? ScopeValue);
 
 public sealed record CreateDelegationRequest(Guid ToUserId, Guid RoleId, DateTimeOffset StartDate, DateTimeOffset EndDate);

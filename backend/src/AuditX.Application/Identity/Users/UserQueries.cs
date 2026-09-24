@@ -123,8 +123,10 @@ public sealed class GetUserQueryHandler(
             .Select(a => new DelegationDto(a.Id, a.UserId, a.RoleId, NameOf(a.RoleId), a.DelegatedFromUserId, a.DelegationStart, a.DelegationEnd, a.IsActive))
             .ToArray();
 
+        var manager = user.ManagerId is { } mid ? await users.GetByIdAsync(mid, cancellationToken) : null;
+
         return new UserDetailDto(
             user.Id, user.Email, user.FirstName, user.LastName, user.DisplayName, Common.Enums.EnumExtensions.ToSnake(user.Status),
-            user.LastLoginAt, user.CapacityDays, roleDtos, delegationDtos);
+            user.LastLoginAt, user.CapacityDays, user.ManagerId, manager?.DisplayName, roleDtos, delegationDtos);
     }
 }

@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<Integrations.Webhooks.WebhookDispatchService>();
         services.AddScoped<Audits.Services.AuditCreationService>();
         services.AddScoped<Notifications.Services.NotificationIngestService>();
+        services.AddScoped<Organization.IReportingLineResolver, Organization.ReportingLineResolver>();
 
         // Maker-checker action replay executors.
         services.AddScoped<IPendingActionExecutor, RolePermissionChangeExecutor>();

@@ -43,7 +43,7 @@ public sealed class CreateOrgUnitCommandHandler(IOrgUnitRepository orgUnits, IAu
             after: new { orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new OrgUnitDto(orgUnit.Id, orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId, orgUnit.IsArchived);
+        return new OrgUnitDto(orgUnit.Id, orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId, orgUnit.HeadUserId, orgUnit.IsArchived);
     }
 }
 
@@ -65,7 +65,7 @@ public sealed class RenameOrgUnitCommandHandler(IOrgUnitRepository orgUnits, IAu
         orgUnit.Rename(command.Name);
         audit.Record(AuditEventTypes.OrgUnitUpdated, AuditTargetTypes.OrgUnit, orgUnit.Id, after: new { orgUnit.Name });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return new OrgUnitDto(orgUnit.Id, orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId, orgUnit.IsArchived);
+        return new OrgUnitDto(orgUnit.Id, orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId, orgUnit.HeadUserId, orgUnit.IsArchived);
     }
 }
 
@@ -98,7 +98,7 @@ public sealed class ReparentOrgUnitCommandHandler(IOrgUnitRepository orgUnits, I
         orgUnit.SetParent(command.ParentOrgUnitId);
         audit.Record(AuditEventTypes.OrgUnitUpdated, AuditTargetTypes.OrgUnit, orgUnit.Id, after: new { orgUnit.ParentOrgUnitId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return new OrgUnitDto(orgUnit.Id, orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId, orgUnit.IsArchived);
+        return new OrgUnitDto(orgUnit.Id, orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId, orgUnit.HeadUserId, orgUnit.IsArchived);
     }
 }
 
@@ -123,6 +123,34 @@ public sealed class SetOrgUnitArchivedCommandHandler(IOrgUnitRepository orgUnits
 
         audit.Record(AuditEventTypes.OrgUnitArchived, AuditTargetTypes.OrgUnit, orgUnit.Id, after: new { orgUnit.IsArchived });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return new OrgUnitDto(orgUnit.Id, orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId, orgUnit.IsArchived);
+        return new OrgUnitDto(orgUnit.Id, orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId, orgUnit.HeadUserId, orgUnit.IsArchived);
+    }
+}
+
+// ---- Set head (reporting-line fallback) ----
+
+/// <summary>Designate (or clear) the user who heads an org unit — the reporting-line fallback for its members.</summary>
+public sealed record SetOrgUnitHeadCommand(Guid Id, Guid? HeadUserId) : ICommand<OrgUnitDto>;
+
+public sealed class SetOrgUnitHeadCommandHandler(
+    IOrgUnitRepository orgUnits,
+    IUserRepository users,
+    IAuditRecorder audit,
+    IUnitOfWork unitOfWork)
+    : ICommandHandler<SetOrgUnitHeadCommand, OrgUnitDto>
+{
+    public async Task<OrgUnitDto> Handle(SetOrgUnitHeadCommand command, CancellationToken cancellationToken)
+    {
+        var orgUnit = await orgUnits.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("OrgUnit", command.Id);
+
+        if (command.HeadUserId is { } headId && await users.GetByIdAsync(headId, cancellationToken) is null)
+        {
+            throw new NotFoundException("User", headId);
+        }
+
+        orgUnit.SetHead(command.HeadUserId);
+        audit.Record(AuditEventTypes.OrgUnitUpdated, AuditTargetTypes.OrgUnit, orgUnit.Id, after: new { orgUnit.HeadUserId });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return new OrgUnitDto(orgUnit.Id, orgUnit.Name, orgUnit.Code, orgUnit.ParentOrgUnitId, orgUnit.HeadUserId, orgUnit.IsArchived);
     }
 }
