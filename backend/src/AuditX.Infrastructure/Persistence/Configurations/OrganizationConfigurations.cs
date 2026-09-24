@@ -18,5 +18,6 @@ public sealed class OrgUnitConfiguration : IEntityTypeConfiguration<OrgUnit>
 
         builder.HasIndex(o => o.Code).IsUnique();
         builder.HasIndex(o => o.ParentOrgUnitId);
+        builder.HasIndex(o => o.HeadUserId); // reporting-line fallback lookups; soft ref, no FK
     }
 }

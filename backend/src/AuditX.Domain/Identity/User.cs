@@ -45,6 +45,13 @@ public sealed class User : AggregateRoot, ISoftDeletable
     public Guid? OrgUnitId { get; private set; }
 
     /// <summary>
+    /// The user's line manager, when set explicitly. The effective reporting line resolves this first and falls
+    /// back to the head of the user's org unit; the resolution (and cycle-safety) lives in the application layer,
+    /// which holds the user/org-unit graph — this is a soft reference (indexed, no FK), mirroring <see cref="OrgUnitId"/>.
+    /// </summary>
+    public Guid? ManagerId { get; private set; }
+
+    /// <summary>
     /// Annual audit capacity in person-days — the substrate for planned-load-vs-capacity workload reporting.
     /// Null when the user is not an auditor or has no declared capacity.
     /// </summary>
@@ -137,6 +144,16 @@ public sealed class User : AggregateRoot, ISoftDeletable
 
     /// <summary>Assigns (or clears) the organisational unit the user belongs to.</summary>
     public void SetOrgUnit(Guid? orgUnitId) => OrgUnitId = orgUnitId;
+
+    /// <summary>
+    /// Sets (or clears) the user's explicit line manager. Rejects self-management; longer cycles (A → B → A) are
+    /// rejected by the application layer, which can see the whole reporting graph.
+    /// </summary>
+    public void SetManager(Guid? managerId)
+    {
+        Guard.Against(managerId == Id, "user.self_manager", "A user cannot be their own line manager.");
+        ManagerId = managerId;
+    }
 
     /// <summary>Set (or clear) the user's annual audit capacity in person-days. Bounded to a single year.</summary>
     public void SetCapacityDays(decimal? days)

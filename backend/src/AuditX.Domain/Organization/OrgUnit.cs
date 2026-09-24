@@ -20,6 +20,13 @@ public sealed class OrgUnit : Entity
 
     public Guid? ParentOrgUnitId { get; private set; }
 
+    /// <summary>
+    /// The user who heads this org unit, when designated. Used by the reporting-line resolver as the fallback line
+    /// manager for members of the unit that have no explicit manager. Soft reference (no FK), mirroring the codebase's
+    /// user/org-unit references.
+    /// </summary>
+    public Guid? HeadUserId { get; private set; }
+
     public bool IsArchived { get; private set; }
 
     /// <summary>Optimistic-concurrency token (rowversion).</summary>
@@ -41,6 +48,9 @@ public sealed class OrgUnit : Entity
         Guard.Against(parentOrgUnitId == Id, "org_unit.self_parent", "An org unit cannot be its own parent.");
         ParentOrgUnitId = parentOrgUnitId;
     }
+
+    /// <summary>Designates (or clears) the user who heads this org unit.</summary>
+    public void SetHead(Guid? headUserId) => HeadUserId = headUserId;
 
     public void Archive() => IsArchived = true;
 
