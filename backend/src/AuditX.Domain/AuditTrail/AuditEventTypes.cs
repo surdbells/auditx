@@ -190,6 +190,7 @@ public static class AuditEventTypes
     public const string ExceptionRecurrenceMarked = "exception_recurrence_marked";
     public const string ExceptionOwnerReassigned = "exception_owner_reassigned";
     public const string MapSubmitted = "map_submitted";
+    public const string MapOverdueEscalated = "map_overdue_escalated";
     public const string MapApproved = "map_approved";
     public const string MapRejected = "map_rejected";
     public const string MapReturnedForEvidence = "map_returned_for_evidence";

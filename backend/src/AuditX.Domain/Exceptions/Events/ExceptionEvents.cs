@@ -16,6 +16,9 @@ public sealed record ExceptionOwnerReassignedEvent(Guid ExceptionId, Guid OldOwn
 
 public sealed record MapSubmittedEvent(Guid ExceptionId, Guid SubmittedBy) : ExceptionEvent;
 
+/// <summary>An overdue MAP was escalated up the reporting line. Notifies the owner's line manager (payload OwnerUserId).</summary>
+public sealed record MapOverdueEscalatedEvent(Guid ExceptionId, Guid OwnerUserId, ExceptionSeverity Severity, DateOnly TargetDate, int DaysOverdue) : ExceptionEvent;
+
 public sealed record MapApprovedEvent(Guid ExceptionId, Guid ApprovedBy) : ExceptionEvent;
 
 public sealed record MapRejectedEvent(Guid ExceptionId, Guid RejectedBy, string Reason) : ExceptionEvent;

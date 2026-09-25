@@ -108,6 +108,7 @@ builder.Services.AddScoped<AuditAutoStartJob>();
 builder.Services.AddScoped<NotificationRetryJob>();
 builder.Services.AddScoped<ReportGenerationJob>();
 builder.Services.AddScoped<RecurrenceClusterScanJob>();
+builder.Services.AddScoped<MapOverdueEscalationJob>();
 builder.Services.AddScoped<AnalyticsSnapshotJob>();
 builder.Services.AddScoped<AcPackGenerationJob>();
 builder.Services.AddScoped<AcPackRecurringGenerationJob>();
@@ -188,6 +189,12 @@ recurringJobs.AddOrUpdate<NotificationRetryJob>(
 // Daily exception-recurrence detection scan (US-M9 G6).
 recurringJobs.AddOrUpdate<RecurrenceClusterScanJob>(
     RecurrenceClusterScanJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Daily);
+
+// Daily escalation of overdue MAPs up the reporting line (P2): notifies each finding owner's line manager.
+recurringJobs.AddOrUpdate<MapOverdueEscalationJob>(
+    MapOverdueEscalationJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Daily);
 

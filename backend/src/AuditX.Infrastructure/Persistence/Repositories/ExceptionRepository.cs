@@ -164,6 +164,15 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
         return await query.OrderByDescending(e => e.ClosedAt).FirstOrDefaultAsync(cancellationToken);
     }
 
+    // Tracked (not AsNoTracking): the escalation job mutates each result and saves.
+    public async Task<IReadOnlyList<AuditException>> ListOverdueForEscalationAsync(DateOnly today, CancellationToken cancellationToken = default)
+        => await db.Exceptions
+            .Where(e => e.Status == ExceptionStatus.Open
+                && e.MapOverdueEscalatedAt == null
+                && ((e.ManagementResponseDueDate != null && e.ManagementResponseDueDate < today)
+                    || (e.ManagementResponseDueDate == null && e.TargetDate < today)))
+            .ToListAsync(cancellationToken);
+
     public void Add(AuditException exception) => db.Exceptions.Add(exception);
 }
 

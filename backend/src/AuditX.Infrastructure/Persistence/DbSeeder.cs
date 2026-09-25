@@ -84,6 +84,11 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
                 "An exception was reassigned to you", "Exception {{ ExceptionId }} has been reassigned to you."),
             ("map_submitted", "map_submitted", "role", BuiltInRoles.AuditManagerName, "[\"email\"]",
                 "A management action plan was submitted", "A MAP was submitted for exception {{ ExceptionId }} and awaits your review."),
+            // P2 reporting-line escalation: an overdue MAP escalates to the owner's line manager (line_manager off the
+            // OwnerUserId payload field). Raised by the daily MapOverdueEscalationJob.
+            ("map_overdue_escalated", "map_overdue_escalated", "line_manager", "OwnerUserId", "[\"email\"]",
+                "An overdue action plan needs your attention",
+                "The management action plan for exception {{ ExceptionId }} ({{ Severity }}, target {{ TargetDate }}) is {{ DaysOverdue }} day(s) overdue and has been escalated to you as the owner's line manager. Please follow up: {{ AppBaseUrl }}/exceptions/{{ ExceptionId }}."),
 
             // M7 sanctions (pinned event-key/recipient-field names). Multi-party events resolve a single ROLE recipient
             // set (payload_derived resolves only ONE user, so it is reserved for the appeal-routing event).

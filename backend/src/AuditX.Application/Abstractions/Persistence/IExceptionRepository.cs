@@ -36,6 +36,10 @@ public interface IExceptionRepository
     /// <summary>Most recent closed exception for the same entity + category within the recurrence window (US-M6-017).</summary>
     Task<AuditException?> FindClosedForRecurrenceAsync(Guid auditableEntityId, string? category, DateTimeOffset sinceUtc, CancellationToken cancellationToken = default);
 
+    /// <summary>Open findings whose MAP response is overdue (past its due/target date) and not yet escalated — for the
+    /// daily reporting-line escalation job.</summary>
+    Task<IReadOnlyList<AuditException>> ListOverdueForEscalationAsync(DateOnly today, CancellationToken cancellationToken = default);
+
     void Add(AuditException exception);
 }
 

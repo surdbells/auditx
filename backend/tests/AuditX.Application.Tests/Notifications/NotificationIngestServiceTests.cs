@@ -5,6 +5,7 @@ using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Notifications;
 using AuditX.Application.Notifications.Commands;
 using AuditX.Application.Notifications.Services;
+using AuditX.Application.Organization;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Identity;
 using AuditX.Domain.Notifications;
@@ -47,7 +48,8 @@ public sealed class NotificationIngestServiceTests
             .Returns(ChannelSendResult.Sent("teams-1"));
         var appUrls = Substitute.For<IAppUrlProvider>();
         appUrls.WebBaseUrl.Returns(string.Empty);
-        return new NotificationIngestService(_rules, _templates, _dispatches, _users, _renderer, _email, _sms, _teams, appUrls, _audit, _clock, _uow,
+        return new NotificationIngestService(_rules, _templates, _dispatches, _users, Substitute.For<IReportingLineResolver>(),
+            _renderer, _email, _sms, _teams, appUrls, _audit, _clock, _uow,
             Substitute.For<ILogger<NotificationIngestService>>());
     }
 

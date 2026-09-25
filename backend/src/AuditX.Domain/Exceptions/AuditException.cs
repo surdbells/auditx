@@ -84,6 +84,9 @@ public sealed class AuditException : AggregateRoot
 
     public Guid? MapApprovedBy { get; private set; }
 
+    /// <summary>When this finding's overdue MAP was escalated up the reporting line (set once, by the daily job). Null until escalated.</summary>
+    public DateTimeOffset? MapOverdueEscalatedAt { get; private set; }
+
     public string? CancellationReason { get; private set; }
 
     public Guid? CancelledBy { get; private set; }
@@ -247,6 +250,23 @@ public sealed class AuditException : AggregateRoot
     {
         EnsureStatus("exception.map_locked", ExceptionStatus.Open, ExceptionStatus.MapRejected);
         _mapActions.Clear();
+    }
+
+    /// <summary>
+    /// Escalate an overdue MAP up the reporting line (the daily job decides overdue-ness and calls this). Idempotent:
+    /// once escalated it will not fire again. Raises <see cref="MapOverdueEscalatedEvent"/> so the M10 pipeline notifies
+    /// the owner's line manager.
+    /// </summary>
+    public bool EscalateMapOverdue(DateTimeOffset nowUtc, int daysOverdue)
+    {
+        if (MapOverdueEscalatedAt is not null)
+        {
+            return false;
+        }
+
+        MapOverdueEscalatedAt = nowUtc;
+        RaiseDomainEvent(new MapOverdueEscalatedEvent(Id, OwnerUserId, Severity, TargetDate, daysOverdue));
+        return true;
     }
 
     public void SubmitMap(Guid actorUserId, DateTimeOffset nowUtc)
