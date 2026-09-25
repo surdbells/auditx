@@ -33,6 +33,12 @@ public enum RecipientResolutionType
 
     /// <summary>A user-id field read from the event payload (value = field name, e.g. "OwnerUserId").</summary>
     PayloadDerived,
+
+    /// <summary>The line manager of a payload user (value = the payload field holding the subject's user id).</summary>
+    LineManager,
+
+    /// <summary>Every manager up the reporting chain above a payload user (value = that payload field).</summary>
+    ReportingChain,
 }
 
 /// <summary>A template is either a built-in system default or a bank-specific override.</summary>

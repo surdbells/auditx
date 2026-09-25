@@ -2,6 +2,7 @@ using System.Text.Json;
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Notifications;
 using AuditX.Application.Abstractions.Persistence;
+using AuditX.Application.Organization;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Common;
 using AuditX.Domain.Enums;
@@ -20,6 +21,7 @@ public sealed class NotificationIngestService(
     INotificationTemplateRepository templates,
     INotificationDispatchRepository dispatches,
     IUserRepository users,
+    IReportingLineResolver reportingLine,
     ITemplateRenderer renderer,
     IEmailSender emailSender,
     ISmsSender smsSender,
@@ -267,19 +269,60 @@ public sealed class NotificationIngestService(
 
             case "payload_derived" when !string.IsNullOrWhiteSpace(value):
             {
-                if (payload.ValueKind == JsonValueKind.Object && payload.TryGetProperty(value, out var field)
-                    && field.ValueKind == JsonValueKind.String && Guid.TryParse(field.GetString(), out var userId))
+                if (TryGetPayloadUserId(payload, value, out var userId)
+                    && await users.GetByIdAsync(userId, cancellationToken) is { } user)
                 {
-                    var user = await users.GetByIdAsync(userId, cancellationToken);
-                    return user is null ? [] : [new Recipient(user.Id, user.Email)];
+                    return [new Recipient(user.Id, user.Email)];
                 }
 
                 return [];
             }
 
+            // The line manager of a payload user (value = the payload field holding the subject's user id).
+            // Resolves the effective manager (explicit User.ManagerId, else the head of their org unit).
+            case "line_manager" when !string.IsNullOrWhiteSpace(value):
+            {
+                if (TryGetPayloadUserId(payload, value, out var subjectId)
+                    && await reportingLine.GetLineManagerAsync(subjectId, cancellationToken) is { } managerId
+                    && await users.GetByIdAsync(managerId, cancellationToken) is { } manager)
+                {
+                    return [new Recipient(manager.Id, manager.Email)];
+                }
+
+                return [];
+            }
+
+            // Every manager up the reporting chain above a payload user (value = the payload field with the subject id).
+            case "reporting_chain" when !string.IsNullOrWhiteSpace(value):
+            {
+                if (!TryGetPayloadUserId(payload, value, out var subjectId))
+                {
+                    return [];
+                }
+
+                var chain = await reportingLine.GetReportingChainAsync(subjectId, cancellationToken);
+                if (chain.Count == 0)
+                {
+                    return [];
+                }
+
+                var managers = await users.GetByIdsAsync(chain, cancellationToken);
+                return managers.Select(u => new Recipient(u.Id, u.Email)).ToArray();
+            }
+
             default:
                 return [];
         }
+    }
+
+    /// <summary>Reads a Guid user id from a string field of the event payload (as payload_derived recipients do).</summary>
+    private static bool TryGetPayloadUserId(JsonElement payload, string field, out Guid userId)
+    {
+        userId = Guid.Empty;
+        return payload.ValueKind == JsonValueKind.Object
+            && payload.TryGetProperty(field, out var el)
+            && el.ValueKind == JsonValueKind.String
+            && Guid.TryParse(el.GetString(), out userId);
     }
 
     private async Task<bool> AllowsNonCriticalSmsAsync(Guid userId, string? severity, CancellationToken cancellationToken)
