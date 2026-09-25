@@ -371,3 +371,24 @@
     display: none;
   }
 }
+
+.layout__tz {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+  padding: 0 0.35rem;
+  white-space: nowrap;
+
+  app-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 720px) {
+  .layout__tz-label {
+    display: none;
+  }
+}

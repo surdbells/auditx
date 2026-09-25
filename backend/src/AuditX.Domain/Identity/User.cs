@@ -142,6 +142,13 @@ public sealed class User : AggregateRoot, ISoftDeletable
 
     public void UpdateNotificationPreferences(string? preferencesJson) => NotificationPreferencesJson = preferencesJson;
 
+    /// <summary>Sets the user's display timezone (IANA name, e.g. <c>Africa/Lagos</c>) and locale (BCP-47, e.g. <c>en-GB</c>).</summary>
+    public void SetPreferences(string timezone, string locale)
+    {
+        Timezone = Guard.NotNullOrWhiteSpace(timezone, "user.timezone_required", "A timezone is required.").Trim();
+        Locale = Guard.NotNullOrWhiteSpace(locale, "user.locale_required", "A locale is required.").Trim();
+    }
+
     /// <summary>Assigns (or clears) the organisational unit the user belongs to.</summary>
     public void SetOrgUnit(Guid? orgUnitId) => OrgUnitId = orgUnitId;
 

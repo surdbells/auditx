@@ -112,6 +112,10 @@
             <span class="profile-menu__email">{{ session()?.email }}</span>
           </span>
         </div>
+        <a mat-menu-item routerLink="/account/preferences" (click)="onNavigate()">
+          <app-icon name="schedule" />
+          <span>{{ 'layout.preferences' | t }}</span>
+        </a>
         <a mat-menu-item [routerLink]="settingsRoute" (click)="onNavigate()">
           <app-icon name="settings" />
           <span>{{ 'layout.settings' | t }}</span>
@@ -139,6 +143,14 @@
       <span class="layout__toolbar-title">{{ 'layout.platformSubtitle' | t }}</span>
       <app-global-search />
       <span class="layout__spacer"></span>
+      <span
+        class="layout__tz"
+        [attr.title]="'layout.timezone.tooltip' | t: { zone: tz.zone() }"
+        [attr.aria-label]="'layout.timezone.tooltip' | t: { zone: tz.zone() }"
+      >
+        <app-icon name="schedule" />
+        <span class="layout__tz-label">{{ tz.zone() }}</span>
+      </span>
       <app-theme-toggle />
       <app-text-size />
       <app-language-switcher />

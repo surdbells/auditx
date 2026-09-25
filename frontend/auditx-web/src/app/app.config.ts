@@ -15,6 +15,7 @@ import {
   withInterceptors,
   withFetch,
 } from '@angular/common/http';
+import { DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideServiceWorker } from '@angular/service-worker';
 import { firstValueFrom } from 'rxjs';
@@ -26,6 +27,7 @@ import { AuthService } from './core/services/auth.service';
 import { BrandingService } from './core/services/branding.service';
 import { TextSizeService } from './core/theme/text-size.service';
 import { ThemeService } from './core/theme/theme.service';
+import { TimezoneService } from './core/services/timezone.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -44,6 +46,17 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([credentialsInterceptor, errorInterceptor]),
     ),
     provideAnimationsAsync(),
+    // Render every `| date` in the signed-in user's timezone: the DatePipe default `timezone` reads the live offset
+    // from TimezoneService (browser-detected by default, overridable in the profile). See P3/P4 timezone feature.
+    {
+      provide: DATE_PIPE_DEFAULT_OPTIONS,
+      deps: [TimezoneService],
+      useFactory: (tz: TimezoneService) => ({
+        get timezone() {
+          return tz.offset();
+        },
+      }),
+    },
     // Apply the persisted appearance preferences (theme + text size) before first paint to avoid a flash.
     provideAppInitializer(() => {
       inject(ThemeService);

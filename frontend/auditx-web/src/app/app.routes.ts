@@ -224,6 +224,14 @@ export const routes: Routes = [
           ).then((m) => m.NotificationPreferencesComponent),
       },
       {
+        path: 'account/preferences',
+        title: 'Preferences · AuditX',
+        loadComponent: () =>
+          import('./features/account/preferences/preferences.component').then(
+            (m) => m.PreferencesComponent,
+          ),
+      },
+      {
         path: 'admin/administration',
         title: 'Administration · AuditX',
         canActivate: [

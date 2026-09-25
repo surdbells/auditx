@@ -6,6 +6,7 @@ import {
   CreateDelegationRequest,
   DelegationDto,
   GrantRoleRequest,
+  MyPreferences,
   NotificationPreferencesRequest,
   PagedResult,
   ReportingLineDto,
@@ -29,6 +30,15 @@ export class UsersService {
     body: NotificationPreferencesRequest,
   ): Observable<void> {
     return this.api.patchVoid('/users/me/notification-preferences', body);
+  }
+
+  /** The current user's timezone/locale display preferences. */
+  myPreferences(): Observable<MyPreferences> {
+    return this.api.get<MyPreferences>('/users/me/preferences');
+  }
+
+  updateMyPreferences(body: MyPreferences): Observable<void> {
+    return this.api.patchVoid('/users/me/preferences', body);
   }
 
   list(query: UserQuery): Observable<PagedResult<UserDto>> {

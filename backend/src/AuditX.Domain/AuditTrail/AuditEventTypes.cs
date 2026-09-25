@@ -16,6 +16,7 @@ public static class AuditEventTypes
     public const string UserCapacityUpdated = "user_capacity_updated";
     public const string UserManagerUpdated = "user_manager_updated";
     public const string NotificationPreferencesUpdated = "notification_preferences_updated";
+    public const string UserPreferencesUpdated = "user_preferences_updated";
 
     // Roles & permissions
     public const string RoleCreated = "role_created";

@@ -23,6 +23,18 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> GetMyNotificationPreferences(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetMyNotificationPreferencesQuery(), cancellationToken));
 
+    [HttpGet("me/preferences")]
+    public async Task<IActionResult> GetMyPreferences(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetMyPreferencesQuery(), cancellationToken));
+
+    [HttpPatch("me/preferences")]
+    public async Task<IActionResult> UpdateMyPreferences(
+        [FromBody] UpdateMyPreferencesRequest request, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new UpdateMyPreferencesCommand(request.Timezone, request.Locale), cancellationToken);
+        return NoContent();
+    }
+
     [HttpPatch("me/notification-preferences")]
     public async Task<IActionResult> UpdateMyNotificationPreferences(
         [FromBody] UpdateNotificationPreferencesRequest request, CancellationToken cancellationToken)

@@ -21,6 +21,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { BrandingService } from '../../core/services/branding.service';
 import { IdleTimeoutService } from '../../core/services/idle-timeout.service';
+import { UsersService } from '../../core/services/users.service';
+import { TimezoneService } from '../../core/services/timezone.service';
 import { Permissions } from '../../core/permissions';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../../core/i18n/language-switcher.component';
@@ -249,9 +251,26 @@ export class MainLayoutComponent {
     return (first + last).toUpperCase();
   });
 
+  readonly tz = inject(TimezoneService);
+  private readonly users = inject(UsersService);
+
   constructor() {
     // Arm the session-inactivity watchdog for the authenticated shell (config-driven; 0 minutes = off).
     inject(IdleTimeoutService).start();
+
+    // Apply the user's display timezone: use their stored override, or detect the browser zone and persist it once.
+    this.users.myPreferences().subscribe((prefs) => {
+      if (!prefs.timezone || prefs.timezone === 'UTC') {
+        const detected = this.tz.browserZone;
+        this.tz.setZone(detected);
+        this.users
+          .updateMyPreferences({ timezone: detected, locale: prefs.locale || navigator.language })
+          .subscribe({ error: () => undefined });
+      } else {
+        this.tz.setZone(prefs.timezone);
+      }
+      this.tz.setLocale(prefs.locale);
+    });
 
     // Keep the accordion aligned with the active route so the current screen's group is open.
     this.openSection.set(this.sectionForUrl(this.router.url));

@@ -146,6 +146,60 @@ public sealed class GetUserReportingLineQueryHandler(IUserRepository users, IRep
     }
 }
 
+/// <summary>The current user's display preferences: IANA timezone + BCP-47 locale.</summary>
+public sealed record MyPreferencesDto(string Timezone, string Locale);
+
+/// <summary>Read the current user's timezone/locale preferences (used by the SPA to render times in the user's zone).</summary>
+public sealed record GetMyPreferencesQuery : IQuery<MyPreferencesDto>;
+
+public sealed class GetMyPreferencesQueryHandler(ICurrentUser currentUser, IUserRepository users)
+    : IQueryHandler<GetMyPreferencesQuery, MyPreferencesDto>
+{
+    public async Task<MyPreferencesDto> Handle(GetMyPreferencesQuery query, CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } id)
+        {
+            throw new UnauthorizedException();
+        }
+
+        var user = await users.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("User", id);
+        return new MyPreferencesDto(user.Timezone, user.Locale);
+    }
+}
+
+/// <summary>Update the current user's timezone + locale (detected on sign-in, or set from the profile).</summary>
+public sealed record UpdateMyPreferencesCommand(string Timezone, string Locale) : ICommand<Unit>;
+
+public sealed class UpdateMyPreferencesCommandValidator : AbstractValidator<UpdateMyPreferencesCommand>
+{
+    public UpdateMyPreferencesCommandValidator()
+    {
+        RuleFor(x => x.Timezone).NotEmpty().MaximumLength(64);
+        RuleFor(x => x.Locale).NotEmpty().MaximumLength(16);
+    }
+}
+
+public sealed class UpdateMyPreferencesCommandHandler(
+    ICurrentUser currentUser, IUserRepository users, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<UpdateMyPreferencesCommand, Unit>
+{
+    public async Task<Unit> Handle(UpdateMyPreferencesCommand command, CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } id)
+        {
+            throw new UnauthorizedException();
+        }
+
+        var user = await users.GetByIdAsync(id, cancellationToken) ?? throw new NotFoundException("User", id);
+        var before = new { user.Timezone, user.Locale };
+        user.SetPreferences(command.Timezone, command.Locale);
+        audit.Record(AuditEventTypes.UserPreferencesUpdated, AuditTargetTypes.User, user.Id,
+            before: before, after: new { user.Timezone, user.Locale });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Unit.Value;
+    }
+}
+
 /// <summary>Update the current user's notification preferences (US-M15-006).</summary>
 public sealed record UpdateNotificationPreferencesCommand(string? PreferencesJson) : ICommand<Unit>;
 

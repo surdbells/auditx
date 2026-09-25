@@ -80,6 +80,12 @@ export interface UserDirectoryEntry {
   displayName: string;
 }
 
+/** The current user's display preferences: IANA timezone + BCP-47 locale. */
+export interface MyPreferences {
+  timezone: string;
+  locale: string;
+}
+
 export interface UserRoleDto {
   id: string;
   roleId: string;
