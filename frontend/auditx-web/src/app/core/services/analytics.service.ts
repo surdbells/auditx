@@ -24,6 +24,7 @@ import {
   MetricComparison,
   MetricTrend,
   ComparisonPeriodType,
+  ManagementLineScorecard,
   OrgUnitScorecard,
   PerformanceScorecard,
   PlanStatusKpi,
@@ -157,6 +158,11 @@ export class AnalyticsService {
    */
   orgUnitScorecards(): Observable<OrgUnitScorecard[]> {
     return this.api.get<OrgUnitScorecard[]>('/analytics/org-units');
+  }
+
+  /** Management-line scorecards — per-manager team finding roll-ups (ViewAnalytics). */
+  managementLineScorecards(): Observable<ManagementLineScorecard[]> {
+    return this.api.get<ManagementLineScorecard[]>('/analytics/management-line');
   }
 
   /** Budget-vs-actual per audit — budgeted hours vs logged time (P0-B, ViewAnalytics). */

@@ -1,0 +1,76 @@
+<app-page-header
+  [title]="'analytics.managementLine.title' | t"
+  [subtitle]="'analytics.managementLine.subtitle' | t"
+/>
+
+<app-page-guide [guide]="guide" />
+
+@switch (state()) {
+  @case ('loading') {
+    <app-loading [message]="'analytics.managementLine.loading' | t" />
+  }
+  @case ('error') {
+    <app-error-state
+      [title]="'analytics.managementLine.error.title' | t"
+      [message]="'analytics.managementLine.error.message' | t"
+      (retry)="fetch()"
+    />
+  }
+  @case ('ready') {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="account_tree"
+        [title]="'analytics.managementLine.empty.title' | t"
+        [message]="'analytics.managementLine.empty.message' | t"
+      />
+    } @else {
+      <mat-card appearance="outlined" class="mline__summary">
+        <mat-card-content class="mline__summary-row">
+          <div class="mline__stat">
+            <span class="mline__stat-value">{{ totals().managers }}</span>
+            <span class="mline__stat-label">{{ 'analytics.managementLine.summary.managers' | t }}</span>
+          </div>
+          <div class="mline__stat" [class.mline__stat--alert]="totals().withOverdue > 0">
+            <span class="mline__stat-value">{{ totals().withOverdue }}</span>
+            <span class="mline__stat-label">{{ 'analytics.managementLine.summary.withOverdue' | t }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined" class="mline__table">
+        <mat-card-content>
+          <div class="table-scroll">
+            <table mat-table [dataSource]="scorecards()">
+              <ng-container matColumnDef="manager">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.managementLine.col.manager' | t }}</th>
+                <td mat-cell *matCellDef="let s">
+                  <a [routerLink]="['/admin/users', s.managerId]">{{ s.managerName }}</a>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="directReports">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.managementLine.col.directReports' | t }}</th>
+                <td mat-cell *matCellDef="let s">{{ s.directReports }}</td>
+              </ng-container>
+              <ng-container matColumnDef="totalReports">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.managementLine.col.totalReports' | t }}</th>
+                <td mat-cell *matCellDef="let s">{{ s.totalReports }}</td>
+              </ng-container>
+              <ng-container matColumnDef="open">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.managementLine.col.open' | t }}</th>
+                <td mat-cell *matCellDef="let s">{{ s.openFindings }}</td>
+              </ng-container>
+              <ng-container matColumnDef="overdue">
+                <th mat-header-cell *matHeaderCellDef>{{ 'analytics.managementLine.col.overdue' | t }}</th>
+                <td mat-cell *matCellDef="let s">
+                  <span [class.mline__overdue]="s.overdueFindings > 0">{{ s.overdueFindings }}</span>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            </table>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+}

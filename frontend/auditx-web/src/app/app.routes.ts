@@ -525,6 +525,15 @@ export const routes: Routes = [
           ).then((m) => m.OrgUnitScorecardsComponent),
       },
       {
+        path: 'analytics/management-line',
+        title: 'Management-line Scorecards · AuditX',
+        canActivate: [permissionGuard(Permissions.ViewAnalytics)],
+        loadComponent: () =>
+          import(
+            './features/analytics/management-line-scorecards/management-line-scorecards.component'
+          ).then((m) => m.ManagementLineScorecardsComponent),
+      },
+      {
         path: 'analytics/time-budget',
         title: 'Time & Budget · AuditX',
         canActivate: [permissionGuard(Permissions.ViewAnalytics)],

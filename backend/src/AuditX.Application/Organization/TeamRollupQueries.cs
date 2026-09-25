@@ -56,3 +56,57 @@ public sealed class GetTeamExceptionRollupQueryHandler(
         return new TeamExceptionRollupDto(query.ManagerId, subtree.Count, totalOpen, totalOverdue, directReports);
     }
 }
+
+/// <summary>One row of the management-line analytics dimension: a manager and their whole team's finding load.</summary>
+public sealed record ManagementLineScorecardDto(
+    Guid ManagerId, string ManagerName, int DirectReports, int TotalReports, int OpenFindings, int OverdueFindings);
+
+/// <summary>Management-line scorecards: every manager with their team's open/overdue finding totals (analytics dimension).</summary>
+public sealed record ManagementLineScorecardsQuery : IQuery<IReadOnlyList<ManagementLineScorecardDto>>;
+
+public sealed class ManagementLineScorecardsQueryHandler(
+    IUserRepository users,
+    IReportingLineResolver reportingLine,
+    IExceptionRepository exceptions,
+    IClock clock)
+    : IQueryHandler<ManagementLineScorecardsQuery, IReadOnlyList<ManagementLineScorecardDto>>
+{
+    public async Task<IReadOnlyList<ManagementLineScorecardDto>> Handle(ManagementLineScorecardsQuery query, CancellationToken cancellationToken)
+    {
+        var managerTeams = await reportingLine.GetManagerSubtreesAsync(cancellationToken);
+        if (managerTeams.Count == 0)
+        {
+            return [];
+        }
+
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        var allMemberIds = managerTeams.SelectMany(m => m.SubtreeMemberIds).Distinct().ToArray();
+        var counts = await exceptions.CountOpenAndOverdueByOwnersAsync(allMemberIds, today, cancellationToken);
+
+        var managers = await users.GetByIdsAsync(managerTeams.Select(m => m.ManagerId).ToArray(), cancellationToken);
+        var nameById = managers.ToDictionary(u => u.Id, u => u.DisplayName);
+
+        return managerTeams
+            .Select(team =>
+            {
+                var open = 0;
+                var overdue = 0;
+                foreach (var memberId in team.SubtreeMemberIds)
+                {
+                    if (counts.TryGetValue(memberId, out var c))
+                    {
+                        open += c.Open;
+                        overdue += c.Overdue;
+                    }
+                }
+
+                return new ManagementLineScorecardDto(
+                    team.ManagerId, nameById.TryGetValue(team.ManagerId, out var n) ? n : "(unknown)",
+                    team.DirectReportCount, team.SubtreeMemberIds.Count, open, overdue);
+            })
+            .OrderByDescending(s => s.OverdueFindings)
+            .ThenByDescending(s => s.OpenFindings)
+            .ThenBy(s => s.ManagerName)
+            .ToArray();
+    }
+}

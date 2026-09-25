@@ -2,6 +2,7 @@ using AuditX.Api.Authorization;
 using AuditX.Application.Analytics.Commands;
 using AuditX.Application.Analytics.Queries;
 using AuditX.Application.Common.Messaging;
+using AuditX.Application.Organization;
 using AuditX.Domain.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -64,6 +65,11 @@ public sealed class AnalyticsController(IDispatcher dispatcher) : ApiControllerB
     [HttpGet("org-units")]
     public async Task<IActionResult> OrgUnitScorecards(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new OrgUnitScorecardsQuery(), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAnalytics)]
+    [HttpGet("management-line")]
+    public async Task<IActionResult> ManagementLineScorecards(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ManagementLineScorecardsQuery(), cancellationToken));
 
     /// <summary>Budget-vs-actual per audit — budgeted hours vs logged time (P0-B).</summary>
     [RequirePermission(PermissionKeys.ViewAnalytics)]

@@ -196,6 +196,16 @@ export interface OrgUnitScorecard {
   averageClosureDays: number | null;
 }
 
+/** One row of the management-line scorecards: a manager and their team's finding load. */
+export interface ManagementLineScorecard {
+  managerId: string;
+  managerName: string;
+  directReports: number;
+  totalReports: number;
+  openFindings: number;
+  overdueFindings: number;
+}
+
 /** Budget-vs-actual for one audit (P0-B): budgeted hours vs the sum of logged time. */
 export interface BudgetVsActualRow {
   auditId: string;

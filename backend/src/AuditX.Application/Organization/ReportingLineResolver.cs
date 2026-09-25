@@ -23,7 +23,14 @@ public interface IReportingLineResolver
 
     /// <summary>Every user below <paramref name="managerId"/> in the reporting tree (transitive reports, excluding the manager).</summary>
     Task<IReadOnlyList<Guid>> GetReportSubtreeAsync(Guid managerId, CancellationToken cancellationToken = default);
+
+    /// <summary>Every manager (anyone with at least one report) and their team, computed in a single pass — for the
+    /// management-line analytics dimension.</summary>
+    Task<IReadOnlyList<ManagerSubtree>> GetManagerSubtreesAsync(CancellationToken cancellationToken = default);
 }
+
+/// <summary>A manager and their team: the count of direct reports plus every transitive report's user id.</summary>
+public sealed record ManagerSubtree(Guid ManagerId, int DirectReportCount, IReadOnlyList<Guid> SubtreeMemberIds);
 
 public sealed class ReportingLineResolver(IUserRepository users, IOrgUnitRepository orgUnits) : IReportingLineResolver
 {
@@ -132,6 +139,39 @@ public sealed class ReportingLineResolver(IUserRepository users, IOrgUnitReposit
         }
 
         return subtree;
+    }
+
+    public async Task<IReadOnlyList<ManagerSubtree>> GetManagerSubtreesAsync(CancellationToken cancellationToken = default)
+    {
+        var effectiveManager = await BuildEffectiveManagerMapAsync(cancellationToken);
+
+        var directReportCount = new Dictionary<Guid, int>();
+        var subtreeMembers = new Dictionary<Guid, HashSet<Guid>>();
+
+        foreach (var (userId, manager) in effectiveManager)
+        {
+            if (manager is { } direct)
+            {
+                directReportCount[direct] = directReportCount.GetValueOrDefault(direct) + 1;
+            }
+
+            // Add this user to every ancestor's subtree (walk up the effective-manager chain, cycle/depth-safe).
+            var visited = new HashSet<Guid> { userId };
+            var ancestor = manager;
+            var depth = 0;
+            while (ancestor is { } a && visited.Add(a) && depth++ < MaxDepth)
+            {
+                (subtreeMembers.TryGetValue(a, out var set) ? set : subtreeMembers[a] = []).Add(userId);
+                ancestor = effectiveManager.GetValueOrDefault(a);
+            }
+        }
+
+        return directReportCount.Keys.Union(subtreeMembers.Keys)
+            .Select(m => new ManagerSubtree(
+                m,
+                directReportCount.GetValueOrDefault(m),
+                subtreeMembers.TryGetValue(m, out var members) ? members.ToArray() : []))
+            .ToArray();
     }
 
     /// <summary>Loads the whole user/org-unit graph once and computes each live user's effective manager in memory.</summary>

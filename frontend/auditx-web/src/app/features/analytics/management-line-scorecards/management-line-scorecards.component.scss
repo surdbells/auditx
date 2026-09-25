@@ -1,0 +1,38 @@
+.mline__summary {
+  margin-bottom: 1rem;
+}
+
+.mline__summary-row {
+  display: flex;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.mline__stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.mline__stat-value {
+  font: var(--mat-sys-headline-medium);
+  line-height: 1.1;
+}
+
+.mline__stat-label {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.mline__stat--alert .mline__stat-value,
+.mline__overdue {
+  color: var(--mat-sys-error);
+  font-weight: 600;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
