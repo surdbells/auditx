@@ -34,6 +34,10 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
+import {
+  CreateUserDialogComponent,
+  CreateUserDialogData,
+} from '../dialogs/create-user-dialog.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
@@ -282,6 +286,26 @@ export class UsersListComponent {
 
   openUser(user: UserDto): void {
     void this.router.navigate(['/admin/users', user.id]);
+  }
+
+  openCreateUser(): void {
+    const data: CreateUserDialogData = { roles: this.roles() };
+    this.dialog
+      .open(CreateUserDialogComponent, { data })
+      .afterClosed()
+      .subscribe((request) => {
+        if (!request) {
+          return;
+        }
+        this.usersService.create(request).subscribe({
+          next: (created) => {
+            this.notify.success(
+              this.i18n.translate('identity.createUser.created', { name: created.displayName }),
+            );
+            this.fetchPage(1);
+          },
+        });
+      });
   }
 
   deactivate(user: UserDto, event: Event): void {

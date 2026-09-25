@@ -89,6 +89,18 @@ public sealed class User : AggregateRoot, ISoftDeletable
         return user;
     }
 
+    /// <summary>
+    /// Manually update the user's editable profile fields (admin user-management). For AD-sourced accounts, Active
+    /// Directory remains the source of truth and may overwrite these on the user's next sign-in.
+    /// </summary>
+    public void UpdateProfile(string email, string firstName, string lastName, string? displayName)
+    {
+        Email = Guard.NotNullOrWhiteSpace(email, "user.email_required", "Email is required.");
+        FirstName = firstName?.Trim() ?? string.Empty;
+        LastName = lastName?.Trim() ?? string.Empty;
+        DisplayName = string.IsNullOrWhiteSpace(displayName) ? $"{FirstName} {LastName}".Trim() : displayName.Trim();
+    }
+
     /// <summary>Refresh AD-sourced profile attributes on a subsequent authentication.</summary>
     public void RefreshDirectoryAttributes(string email, string firstName, string lastName, string? displayName)
     {

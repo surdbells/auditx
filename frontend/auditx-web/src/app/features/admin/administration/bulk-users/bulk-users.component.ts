@@ -106,6 +106,20 @@ export class BulkUsersComponent {
     csvContent: ['', Validators.required],
   });
 
+  /** Download a ready-to-fill CSV template with the exact columns the importer expects. */
+  downloadTemplate(): void {
+    const csv =
+      'email,first_name,last_name,roles\n' +
+      'jane.doe@bank.local,Jane,Doe,\n' +
+      'john.smith@bank.local,John,Smith,AuditX Administrator\n';
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'auditx-users-template.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];

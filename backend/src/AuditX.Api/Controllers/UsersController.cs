@@ -69,6 +69,23 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
         => Envelope(await dispatcher.Query(new GetUserQuery(id), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(
+            new CreateUserCommand(request.Email, request.FirstName, request.LastName, request.ExternalId, request.RoleNames),
+            cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpPatch("{id:guid}/profile")]
+    public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UpdateUserProfileRequest request, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(
+            new UpdateUserProfileCommand(id, request.Email, request.FirstName, request.LastName, request.DisplayName),
+            cancellationToken);
+        return NoContent();
+    }
+
+    [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
     {

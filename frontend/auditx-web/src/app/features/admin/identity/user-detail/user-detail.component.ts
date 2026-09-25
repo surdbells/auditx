@@ -57,6 +57,10 @@ import {
   SetManagerDialogComponent,
   SetManagerDialogData,
 } from '../dialogs/set-manager-dialog.component';
+import {
+  EditUserDialogComponent,
+  EditUserDialogData,
+} from '../dialogs/edit-user-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -243,6 +247,33 @@ export class UserDetailComponent {
         this.usersService.setCapacity(current.id, result.capacityDays).subscribe({
           next: () => {
             this.notify.success(this.i18n.translate('identity.capacity.saved'));
+            this.fetch();
+          },
+        });
+      });
+  }
+
+  openEditUser(): void {
+    const current = this.user();
+    if (!current) {
+      return;
+    }
+    const data: EditUserDialogData = {
+      email: current.email,
+      firstName: current.firstName,
+      lastName: current.lastName,
+      displayName: current.displayName,
+    };
+    this.dialog
+      .open(EditUserDialogComponent, { data })
+      .afterClosed()
+      .subscribe((request) => {
+        if (!request) {
+          return;
+        }
+        this.usersService.updateProfile(current.id, request).subscribe({
+          next: () => {
+            this.notify.success(this.i18n.translate('identity.editUser.saved'));
             this.fetch();
           },
         });

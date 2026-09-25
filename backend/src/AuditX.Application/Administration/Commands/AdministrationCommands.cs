@@ -212,34 +212,77 @@ public sealed class BulkImportUsersCommandHandler(
     {
         var rows = CsvReader.Parse(command.CsvContent);
         var errors = new List<BulkOperationErrorDto>();
-        var staged = new List<(User User, IReadOnlyList<string> Roles)>();
+        var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var imported = 0;
 
+        // Partial-success: each row is validated and imported independently, so one bad row never blocks the rest.
         for (var i = 0; i < rows.Count; i++)
         {
             var row = rows[i];
             var identifier = $"row {i + 2}";
-            var email = Get(row, "email");
-            var firstName = Get(row, "first_name");
-            var lastName = Get(row, "last_name");
-            var externalId = Get(row, "external_subject_id");
+            var email = Get(row, "email", "e-mail");
+            var firstName = Get(row, "first_name", "firstname", "first name", "given_name");
+            var lastName = Get(row, "last_name", "lastname", "last name", "surname");
+            var externalId = Get(row, "external_subject_id", "external_id", "externalid", "external subject id", "id");
 
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(externalId))
+            if (string.IsNullOrWhiteSpace(email))
             {
-                errors.Add(new BulkOperationErrorDto(identifier, "email and external_subject_id are required."));
+                errors.Add(new BulkOperationErrorDto(identifier, "email is required."));
+                continue;
+            }
+
+            // external_subject_id is optional — when absent, derive a stable synthetic id from the email so simple
+            // "email, name, roles" CSVs work. (For AD deployments, supply the real objectSid to link the account.)
+            if (string.IsNullOrWhiteSpace(externalId))
+            {
+                externalId = $"import:{email.Trim().ToLowerInvariant()}";
+            }
+
+            if (!seenIds.Add(externalId))
+            {
+                errors.Add(new BulkOperationErrorDto(identifier, $"Duplicate user '{email}' in the file."));
                 continue;
             }
 
             if (await users.ExistsByObjectSidAsync(externalId, cancellationToken))
             {
-                errors.Add(new BulkOperationErrorDto(identifier, $"A user with external id '{externalId}' already exists."));
+                errors.Add(new BulkOperationErrorDto(identifier, $"A user for '{email}' already exists."));
                 continue;
             }
 
-            var roleNames = Get(row, "roles").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            // Resolve roles first so an unknown role name fails only this row (not the whole import).
+            var roleNames = Get(row, "roles", "role").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var resolvedRoles = new List<Role>();
+            string? unknownRole = null;
+            foreach (var roleName in roleNames)
+            {
+                var role = await roles.GetByNameAsync(roleName, cancellationToken);
+                if (role is null)
+                {
+                    unknownRole = roleName;
+                    break;
+                }
+
+                resolvedRoles.Add(role);
+            }
+
+            if (unknownRole is not null)
+            {
+                errors.Add(new BulkOperationErrorDto(identifier, $"Role '{unknownRole}' does not exist."));
+                continue;
+            }
+
             try
             {
                 var user = User.ProvisionFromDirectory(email, email, externalId, email, firstName, lastName);
-                staged.Add((user, roleNames));
+                users.Add(user);
+                foreach (var role in resolvedRoles)
+                {
+                    userRoles.Add(UserRole.Grant(user.Id, role.Id));
+                    user.MarkActiveOnFirstRole();
+                }
+
+                imported++;
             }
             catch (Domain.Common.DomainException ex)
             {
@@ -247,29 +290,28 @@ public sealed class BulkImportUsersCommandHandler(
             }
         }
 
-        if (errors.Count > 0)
+        if (imported > 0)
         {
-            return new BulkOperationResultDto(0, errors);
+            audit.Record(AuditEventTypes.UsersBulkImported, AuditTargetTypes.User, null, payload: new { count = imported });
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        foreach (var (user, roleNames) in staged)
+        return new BulkOperationResultDto(imported, errors);
+    }
+
+    /// <summary>First non-empty value among the given (lower-cased) column aliases.</summary>
+    private static string Get(IReadOnlyDictionary<string, string> row, params string[] keys)
+    {
+        foreach (var key in keys)
         {
-            users.Add(user);
-            foreach (var roleName in roleNames)
+            if (row.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v))
             {
-                var role = await roles.GetByNameAsync(roleName, cancellationToken)
-                    ?? throw new ConflictException("unknown_role", $"Role '{roleName}' does not exist.");
-                userRoles.Add(UserRole.Grant(user.Id, role.Id));
-                user.MarkActiveOnFirstRole();
+                return v;
             }
         }
 
-        audit.Record(AuditEventTypes.UsersBulkImported, AuditTargetTypes.User, null, payload: new { count = staged.Count });
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return new BulkOperationResultDto(staged.Count, []);
+        return string.Empty;
     }
-
-    private static string Get(IReadOnlyDictionary<string, string> row, string key) => row.TryGetValue(key, out var v) ? v : string.Empty;
 }
 
 // ---- ITANDT support channel ----

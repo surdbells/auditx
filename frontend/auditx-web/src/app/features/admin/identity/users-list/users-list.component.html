@@ -1,7 +1,12 @@
 <app-page-header
   [title]="'identity.users.title' | t"
   [subtitle]="'identity.users.subtitle' | t"
-/>
+>
+  <button actions matButton="filled" type="button" (click)="openCreateUser()">
+    <app-icon name="add" />
+    {{ 'identity.createUser.title' | t }}
+  </button>
+</app-page-header>
 
 <app-page-guide [guide]="guide" />
 

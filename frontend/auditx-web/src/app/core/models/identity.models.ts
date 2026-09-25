@@ -86,6 +86,24 @@ export interface MyPreferences {
   locale: string;
 }
 
+/** Create a user manually (admin user-management). */
+export interface CreateUserRequest {
+  email: string;
+  firstName: string;
+  lastName: string;
+  /** Optional AD objectSid to link the directory account; omitted for demo/manual users. */
+  externalId?: string | null;
+  roleNames?: string[];
+}
+
+/** Edit a user's profile fields. */
+export interface UpdateUserProfileRequest {
+  email: string;
+  firstName: string;
+  lastName: string;
+  displayName?: string | null;
+}
+
 export interface UserRoleDto {
   id: string;
   roleId: string;

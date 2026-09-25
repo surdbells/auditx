@@ -12,6 +12,10 @@
   @case ('ready') {
     @if (user(); as u) {
       <app-page-header [title]="u.displayName" [subtitle]="u.email">
+        <button actions matButton="filled" type="button" (click)="openEditUser()">
+          <app-icon name="edit" />
+          {{ 'identity.editUser.title' | t }}
+        </button>
         <button actions matButton="outlined" type="button" (click)="goBack()">
           <app-icon name="arrow_back" />
           {{ 'identity.userDetail.backToUsers' | t }}

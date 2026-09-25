@@ -4,11 +4,20 @@
   <mat-card appearance="outlined" class="bulk__card" data-guide="import">
     <h2 class="bulk__title">{{ 'administration.bulkUsers.import.title' | t }}</h2>
     <p class="muted">{{ 'administration.bulkUsers.import.hint' | t }}</p>
+    <p class="muted bulk__format">
+      {{ 'administration.bulkUsers.import.formatBefore' | t }}
+      <code>email,first_name,last_name,roles</code>
+      {{ 'administration.bulkUsers.import.formatAfter' | t }}
+    </p>
     <form [formGroup]="importForm" class="bulk__form">
       <div class="bulk__upload">
         <button matButton type="button" (click)="fileInput.click()">
           <app-icon name="upload_file" />
           {{ 'administration.bulkUsers.import.chooseFile' | t }}
+        </button>
+        <button matButton type="button" (click)="downloadTemplate()">
+          <app-icon name="download" />
+          {{ 'administration.bulkUsers.import.downloadTemplate' | t }}
         </button>
         <input
           #fileInput
@@ -25,7 +34,7 @@
           rows="6"
           formControlName="csvContent"
           spellcheck="false"
-          placeholder="email,firstName,lastName,role"
+          placeholder="email,first_name,last_name,roles&#10;jane.doe@bank.local,Jane,Doe,&#10;john.smith@bank.local,John,Smith,AuditX Administrator"
         ></textarea>
       </mat-form-field>
       <div class="bulk__actions">

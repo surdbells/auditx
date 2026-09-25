@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   CreateDelegationRequest,
+  CreateUserRequest,
   DelegationDto,
   GrantRoleRequest,
   MyPreferences,
@@ -11,6 +12,7 @@ import {
   PagedResult,
   ReportingLineDto,
   TeamExceptionRollupDto,
+  UpdateUserProfileRequest,
   UserDetailDto,
   UserDirectoryEntry,
   UserDto,
@@ -61,6 +63,16 @@ export class UsersService {
 
   getById(id: string): Observable<UserDetailDto> {
     return this.api.get<UserDetailDto>(`/users/${id}`);
+  }
+
+  /** Create a user manually (admin). */
+  create(body: CreateUserRequest): Observable<UserDto> {
+    return this.api.post<UserDto>('/users', body);
+  }
+
+  /** Edit a user's profile (name, email, display name). */
+  updateProfile(id: string, body: UpdateUserProfileRequest): Observable<void> {
+    return this.api.patchVoid(`/users/${id}/profile`, body);
   }
 
   deactivate(id: string): Observable<void> {

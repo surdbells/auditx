@@ -38,6 +38,100 @@ public sealed class DeactivateUserCommandHandler(
     }
 }
 
+/// <summary>Create a user manually (admin user-management). For AD deployments, supply the real objectSid as
+/// ExternalId to link the directory account; otherwise a stable synthetic id is derived from the email.</summary>
+public sealed record CreateUserCommand(
+    string Email, string FirstName, string LastName, string? ExternalId, IReadOnlyList<string>? RoleNames) : ICommand<UserDto>;
+
+public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
+{
+    public CreateUserCommandValidator()
+    {
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(320);
+        RuleFor(x => x.FirstName).MaximumLength(200);
+        RuleFor(x => x.LastName).MaximumLength(200);
+    }
+}
+
+public sealed class CreateUserCommandHandler(
+    IUserRepository users,
+    IRoleRepository roles,
+    IUserRoleRepository userRoles,
+    IPermissionResolver permissions,
+    IAuditRecorder audit,
+    IUnitOfWork unitOfWork)
+    : ICommandHandler<CreateUserCommand, UserDto>
+{
+    public async Task<UserDto> Handle(CreateUserCommand command, CancellationToken cancellationToken)
+    {
+        var email = command.Email.Trim();
+        var externalId = string.IsNullOrWhiteSpace(command.ExternalId)
+            ? $"manual:{email.ToLowerInvariant()}"
+            : command.ExternalId.Trim();
+
+        if (await users.ExistsByObjectSidAsync(externalId, cancellationToken))
+        {
+            throw new ConflictException("user.exists", $"A user for '{email}' already exists.");
+        }
+
+        var resolved = new List<Role>();
+        foreach (var roleName in command.RoleNames ?? [])
+        {
+            resolved.Add(await roles.GetByNameAsync(roleName, cancellationToken) ?? throw new NotFoundException("Role", roleName));
+        }
+
+        var user = User.ProvisionFromDirectory(email, email, externalId, email, command.FirstName, command.LastName);
+        users.Add(user);
+        foreach (var role in resolved)
+        {
+            userRoles.Add(UserRole.Grant(user.Id, role.Id));
+            user.MarkActiveOnFirstRole();
+        }
+
+        audit.Record(AuditEventTypes.UserCreated, AuditTargetTypes.User, user.Id,
+            after: new { user.Email, user.DisplayName, roles = resolved.Select(r => r.Name).ToArray() });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        if (resolved.Count > 0)
+        {
+            await permissions.InvalidateAsync(user.Id, cancellationToken);
+        }
+
+        return new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.DisplayName,
+            Common.Enums.EnumExtensions.ToSnake(user.Status), user.LastLoginAt, resolved.Select(r => r.Name).ToArray());
+    }
+}
+
+/// <summary>Update a user's editable profile fields (name, display name, email) — admin user-management.</summary>
+public sealed record UpdateUserProfileCommand(Guid UserId, string Email, string FirstName, string LastName, string? DisplayName) : ICommand<Unit>;
+
+public sealed class UpdateUserProfileCommandValidator : AbstractValidator<UpdateUserProfileCommand>
+{
+    public UpdateUserProfileCommandValidator()
+    {
+        RuleFor(x => x.UserId).NotEmpty();
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(320);
+        RuleFor(x => x.FirstName).MaximumLength(200);
+        RuleFor(x => x.LastName).MaximumLength(200);
+    }
+}
+
+public sealed class UpdateUserProfileCommandHandler(IUserRepository users, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<UpdateUserProfileCommand, Unit>
+{
+    public async Task<Unit> Handle(UpdateUserProfileCommand command, CancellationToken cancellationToken)
+    {
+        var user = await users.GetByIdAsync(command.UserId, cancellationToken)
+            ?? throw new NotFoundException("User", command.UserId);
+
+        var before = new { user.Email, user.FirstName, user.LastName, user.DisplayName };
+        user.UpdateProfile(command.Email, command.FirstName, command.LastName, command.DisplayName);
+        audit.Record(AuditEventTypes.UserProfileUpdated, AuditTargetTypes.User, user.Id,
+            before: before, after: new { user.Email, user.FirstName, user.LastName, user.DisplayName });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return Unit.Value;
+    }
+}
+
 /// <summary>Set (or clear) a user's annual audit capacity in person-days, for workload-vs-capacity planning.</summary>
 public sealed record SetUserCapacityCommand(Guid UserId, decimal? CapacityDays) : ICommand<Unit>;
 

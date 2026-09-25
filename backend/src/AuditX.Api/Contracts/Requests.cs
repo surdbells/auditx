@@ -8,6 +8,10 @@ public sealed record UpdateNotificationPreferencesRequest(string? PreferencesJso
 
 public sealed record UpdateUserRequest(string Status);
 
+public sealed record CreateUserRequest(string Email, string FirstName, string LastName, string? ExternalId, IReadOnlyList<string>? RoleNames);
+
+public sealed record UpdateUserProfileRequest(string Email, string FirstName, string LastName, string? DisplayName);
+
 public sealed record SetUserCapacityRequest(decimal? CapacityDays);
 
 public sealed record SetUserManagerRequest(Guid? ManagerId);
