@@ -57,6 +57,23 @@ export interface ReportingLineDto {
   chain: ReportingLineNode[];
 }
 
+/** A direct report and their own finding counts, within a manager's team roll-up. */
+export interface TeamRollupMember {
+  userId: string;
+  displayName: string;
+  openFindings: number;
+  overdueFindings: number;
+}
+
+/** Management-line roll-up: totals across a manager's reporting subtree + a per-direct-report breakdown. */
+export interface TeamExceptionRollupDto {
+  managerId: string;
+  reportCount: number;
+  openFindings: number;
+  overdueFindings: number;
+  directReports: TeamRollupMember[];
+}
+
 /** Minimal id→name entry from the authenticated-only user directory (GET /users/directory). */
 export interface UserDirectoryEntry {
   id: string;

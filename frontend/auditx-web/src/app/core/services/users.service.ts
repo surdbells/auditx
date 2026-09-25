@@ -9,6 +9,7 @@ import {
   NotificationPreferencesRequest,
   PagedResult,
   ReportingLineDto,
+  TeamExceptionRollupDto,
   UserDetailDto,
   UserDirectoryEntry,
   UserDto,
@@ -69,6 +70,11 @@ export class UsersService {
   /** The user's resolved reporting line (effective manager + chain upward). */
   reportingLine(id: string): Observable<ReportingLineDto> {
     return this.api.get<ReportingLineDto>(`/users/${id}/reporting-line`);
+  }
+
+  /** Management-line roll-up: findings across everyone who reports to this user. */
+  teamExceptions(id: string): Observable<TeamExceptionRollupDto> {
+    return this.api.get<TeamExceptionRollupDto>(`/users/${id}/team-exceptions`);
   }
 
   grantRole(userId: string, body: GrantRoleRequest): Observable<UserRoleDto> {

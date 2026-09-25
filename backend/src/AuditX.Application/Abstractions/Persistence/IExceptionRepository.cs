@@ -4,6 +4,9 @@ using AuditX.Domain.Exceptions;
 
 namespace AuditX.Application.Abstractions.Persistence;
 
+/// <summary>Open and overdue finding counts for one owner (management-line roll-up).</summary>
+public readonly record struct OwnerFindingCounts(int Open, int Overdue);
+
 /// <summary>Filters for the cross-audit exception tracker (US-M6-019).</summary>
 public sealed record ExceptionSearchFilter(
     ExceptionStatus? Status, ExceptionSeverity? Severity, Guid? OwnerUserId, Guid? AuditableEntityId,
@@ -39,6 +42,10 @@ public interface IExceptionRepository
     /// <summary>Open findings whose MAP response is overdue (past its due/target date) and not yet escalated — for the
     /// daily reporting-line escalation job.</summary>
     Task<IReadOnlyList<AuditException>> ListOverdueForEscalationAsync(DateOnly today, CancellationToken cancellationToken = default);
+
+    /// <summary>Per-owner open + overdue finding counts for a set of owners — the fact behind the management-line roll-up.</summary>
+    Task<IReadOnlyDictionary<Guid, OwnerFindingCounts>> CountOpenAndOverdueByOwnersAsync(
+        IReadOnlyCollection<Guid> ownerIds, DateOnly today, CancellationToken cancellationToken = default);
 
     void Add(AuditException exception);
 }

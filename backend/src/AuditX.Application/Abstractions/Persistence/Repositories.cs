@@ -17,6 +17,9 @@ public interface IUserRepository
 
     Task<IReadOnlyList<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
 
+    /// <summary>All live (non-deleted) users — for building the reporting graph (reverse line-manager resolution).</summary>
+    Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Active (non-deactivated) users holding a role with the given name, for notification recipient resolution (M10).</summary>
     Task<IReadOnlyList<User>> GetActiveByRoleNameAsync(string roleName, CancellationToken cancellationToken = default);
 

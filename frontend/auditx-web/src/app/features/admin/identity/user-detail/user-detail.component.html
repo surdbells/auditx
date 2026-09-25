@@ -188,6 +188,50 @@
             }
           </mat-card-content>
         </mat-card>
+
+        @if (hasTeam()) {
+          <mat-card appearance="outlined" class="detail__team">
+            <mat-card-header>
+              <mat-card-title>{{ 'identity.team.title' | t }}</mat-card-title>
+              <mat-card-subtitle>{{ 'identity.team.reportCount' | t: { count: teamRollup()!.reportCount } }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="team-stats">
+                <div class="team-stat">
+                  <span class="team-stat__value">{{ teamRollup()!.openFindings }}</span>
+                  <span class="team-stat__label">{{ 'identity.team.open' | t }}</span>
+                </div>
+                <div class="team-stat" [class.team-stat--alert]="teamRollup()!.overdueFindings > 0">
+                  <span class="team-stat__value">{{ teamRollup()!.overdueFindings }}</span>
+                  <span class="team-stat__label">{{ 'identity.team.overdue' | t }}</span>
+                </div>
+              </div>
+
+              @if (teamRollup()!.directReports.length) {
+                <div class="table-scroll">
+                  <table mat-table [dataSource]="teamRollup()!.directReports" class="detail__table">
+                    <ng-container matColumnDef="name">
+                      <th mat-header-cell *matHeaderCellDef>{{ 'identity.team.col.report' | t }}</th>
+                      <td mat-cell *matCellDef="let m">{{ m.displayName }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="open">
+                      <th mat-header-cell *matHeaderCellDef>{{ 'identity.team.open' | t }}</th>
+                      <td mat-cell *matCellDef="let m">{{ m.openFindings }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="overdue">
+                      <th mat-header-cell *matHeaderCellDef>{{ 'identity.team.overdue' | t }}</th>
+                      <td mat-cell *matCellDef="let m">
+                        <span [class.team-overdue]="m.overdueFindings > 0">{{ m.overdueFindings }}</span>
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="teamMemberColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: teamMemberColumns"></tr>
+                  </table>
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
+        }
       </div>
     }
   }

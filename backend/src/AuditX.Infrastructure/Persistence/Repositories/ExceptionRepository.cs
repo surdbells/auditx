@@ -173,6 +173,27 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
                     || (e.ManagementResponseDueDate == null && e.TargetDate < today)))
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, OwnerFindingCounts>> CountOpenAndOverdueByOwnersAsync(
+        IReadOnlyCollection<Guid> ownerIds, DateOnly today, CancellationToken cancellationToken = default)
+    {
+        if (ownerIds.Count == 0)
+        {
+            return new Dictionary<Guid, OwnerFindingCounts>();
+        }
+
+        // Open = not closed/cancelled. Overdue computed in memory to avoid translating the due-date fallback.
+        var rows = await db.Exceptions.AsNoTracking()
+            .Where(e => ownerIds.Contains(e.OwnerUserId)
+                && e.Status != ExceptionStatus.Closed && e.Status != ExceptionStatus.Cancelled)
+            .Select(e => new { e.OwnerUserId, e.ManagementResponseDueDate, e.TargetDate })
+            .ToListAsync(cancellationToken);
+
+        return rows.GroupBy(r => r.OwnerUserId)
+            .ToDictionary(
+                g => g.Key,
+                g => new OwnerFindingCounts(g.Count(), g.Count(x => (x.ManagementResponseDueDate ?? x.TargetDate) < today)));
+    }
+
     public void Add(AuditException exception) => db.Exceptions.Add(exception);
 }
 

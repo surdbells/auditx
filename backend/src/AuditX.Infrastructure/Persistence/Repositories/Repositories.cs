@@ -24,6 +24,9 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
     public async Task<IReadOnlyList<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
         => await db.Users.Where(u => ids.Contains(u.Id)).ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await db.Users.AsNoTracking().ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<User>> GetActiveByRoleNameAsync(string roleName, CancellationToken cancellationToken = default)
     {
         var roleIds = db.Roles.Where(r => r.Name == roleName).Select(r => r.Id);

@@ -58,3 +58,30 @@
     grid-template-columns: 1fr;
   }
 }
+
+.team-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.team-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.team-stat__value {
+  font: var(--mat-sys-headline-medium);
+  line-height: 1.1;
+}
+
+.team-stat__label {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.team-stat--alert .team-stat__value,
+.team-overdue {
+  color: var(--mat-sys-error);
+  font-weight: 600;
+}

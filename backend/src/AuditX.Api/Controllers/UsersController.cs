@@ -4,6 +4,7 @@ using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Identity.Delegations;
 using AuditX.Application.Identity.Users;
+using AuditX.Application.Organization;
 using AuditX.Domain.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -88,6 +89,11 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
     [HttpGet("{id:guid}/reporting-line")]
     public async Task<IActionResult> ReportingLine(Guid id, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetUserReportingLineQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpGet("{id:guid}/team-exceptions")]
+    public async Task<IActionResult> TeamExceptions(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetTeamExceptionRollupQuery(id), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpPost("{userId:guid}/roles")]

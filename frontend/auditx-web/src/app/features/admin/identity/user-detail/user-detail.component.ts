@@ -25,6 +25,7 @@ import {
   DelegationDto,
   ReportingLineDto,
   RoleDto,
+  TeamExceptionRollupDto,
   UserDetailDto,
   UserRoleDto,
 } from '../../../../core/models';
@@ -153,6 +154,11 @@ export class UserDetailComponent {
   readonly user = signal<UserDetailDto | null>(null);
   readonly roles = signal<RoleDto[]>([]);
   readonly reportingLine = signal<ReportingLineDto | null>(null);
+  readonly teamRollup = signal<TeamExceptionRollupDto | null>(null);
+
+  /** True when this user has people reporting to them (shows the team-findings card). */
+  readonly hasTeam = computed(() => (this.teamRollup()?.reportCount ?? 0) > 0);
+  readonly teamMemberColumns = ['name', 'open', 'overdue'];
 
   /** The effective line manager's name (explicit manager, else the org-unit head), or null. */
   readonly effectiveManagerName = computed(() => this.reportingLine()?.chain[0]?.displayName ?? null);
@@ -200,6 +206,10 @@ export class UserDetailComponent {
     this.usersService.reportingLine(this.id()).subscribe({
       next: (line) => this.reportingLine.set(line),
       error: () => this.reportingLine.set(null),
+    });
+    this.usersService.teamExceptions(this.id()).subscribe({
+      next: (rollup) => this.teamRollup.set(rollup),
+      error: () => this.teamRollup.set(null),
     });
   }
 
