@@ -8,6 +8,7 @@ import {
   GrantRoleRequest,
   NotificationPreferencesRequest,
   PagedResult,
+  ReportingLineDto,
   UserDetailDto,
   UserDirectoryEntry,
   UserDto,
@@ -58,6 +59,16 @@ export class UsersService {
   /** Set (or clear, with null) a user's annual audit capacity in person-days. */
   setCapacity(id: string, capacityDays: number | null): Observable<void> {
     return this.api.patchVoid(`/users/${id}/capacity`, { capacityDays });
+  }
+
+  /** Set (or clear, with null) a user's explicit line manager. */
+  setManager(id: string, managerId: string | null): Observable<void> {
+    return this.api.patchVoid(`/users/${id}/manager`, { managerId });
+  }
+
+  /** The user's resolved reporting line (effective manager + chain upward). */
+  reportingLine(id: string): Observable<ReportingLineDto> {
+    return this.api.get<ReportingLineDto>(`/users/${id}/reporting-line`);
   }
 
   grantRole(userId: string, body: GrantRoleRequest): Observable<UserRoleDto> {

@@ -23,6 +23,7 @@ import { RolesService } from '../../../../core/services/roles.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import {
   DelegationDto,
+  ReportingLineDto,
   RoleDto,
   UserDetailDto,
   UserRoleDto,
@@ -51,6 +52,10 @@ import {
   SetCapacityDialogComponent,
   SetCapacityDialogData,
 } from '../dialogs/set-capacity-dialog.component';
+import {
+  SetManagerDialogComponent,
+  SetManagerDialogData,
+} from '../dialogs/set-manager-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -147,6 +152,20 @@ export class UserDetailComponent {
   readonly state = signal<ViewState>('loading');
   readonly user = signal<UserDetailDto | null>(null);
   readonly roles = signal<RoleDto[]>([]);
+  readonly reportingLine = signal<ReportingLineDto | null>(null);
+
+  /** The effective line manager's name (explicit manager, else the org-unit head), or null. */
+  readonly effectiveManagerName = computed(() => this.reportingLine()?.chain[0]?.displayName ?? null);
+
+  /** The resolved reporting chain as "A → B → C" (empty string when there is none). */
+  readonly reportingChainLabel = computed(() =>
+    (this.reportingLine()?.chain ?? []).map((n) => n.displayName).join(' → '),
+  );
+
+  /** True when the effective manager comes from the org-unit head, not an explicit assignment. */
+  readonly managerViaOrgUnit = computed(
+    () => !this.user()?.managerId && !!this.effectiveManagerName(),
+  );
 
   readonly directRoles = computed(() =>
     (this.user()?.roles ?? []).filter((r) => !r.isDelegation),
@@ -173,6 +192,14 @@ export class UserDetailComponent {
         this.state.set('ready');
       },
       error: () => this.state.set('error'),
+    });
+    this.loadReportingLine();
+  }
+
+  private loadReportingLine(): void {
+    this.usersService.reportingLine(this.id()).subscribe({
+      next: (line) => this.reportingLine.set(line),
+      error: () => this.reportingLine.set(null),
     });
   }
 
@@ -206,6 +233,32 @@ export class UserDetailComponent {
         this.usersService.setCapacity(current.id, result.capacityDays).subscribe({
           next: () => {
             this.notify.success(this.i18n.translate('identity.capacity.saved'));
+            this.fetch();
+          },
+        });
+      });
+  }
+
+  openSetManager(): void {
+    const current = this.user();
+    if (!current) {
+      return;
+    }
+    const data: SetManagerDialogData = {
+      userDisplayName: current.displayName,
+      userId: current.id,
+      currentManagerId: current.managerId,
+    };
+    this.dialog
+      .open(SetManagerDialogComponent, { data })
+      .afterClosed()
+      .subscribe((result) => {
+        if (!result) {
+          return;
+        }
+        this.usersService.setManager(current.id, result.managerId).subscribe({
+          next: () => {
+            this.notify.success(this.i18n.translate('identity.manager.saved'));
             this.fetch();
           },
         });

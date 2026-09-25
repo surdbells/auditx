@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,6 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 
 import { CreateOrgUnitRequest, OrgUnit } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { UserLookupService } from '../../../core/services/user-lookup.service';
 import {
   SearchableSelectComponent,
   SelectOption,
@@ -34,7 +36,8 @@ export type OrgUnitDialogResult =
       id: string;
       name: string;
       parentOrgUnitId: string | null;
-      original: { name: string; parentOrgUnitId: string | null };
+      headUserId: string | null;
+      original: { name: string; parentOrgUnitId: string | null; headUserId: string | null };
     };
 
 /**
@@ -87,6 +90,17 @@ export type OrgUnitDialogResult =
           [clearable]="true"
           [clearLabel]="'orgUnit.value.topLevel' | t"
         />
+
+        @if (isEdit) {
+          <app-searchable-select
+            class="full"
+            formControlName="headUserId"
+            [label]="'orgUnit.field.head' | t"
+            [options]="headOptions()"
+            [clearable]="true"
+            [clearLabel]="'orgUnit.value.noHead' | t"
+          />
+        }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -123,8 +137,14 @@ export class OrgUnitDialogComponent {
   private readonly dialogRef =
     inject<MatDialogRef<OrgUnitDialogComponent, OrgUnitDialogResult>>(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly userLookup = inject(UserLookupService);
 
   readonly isEdit = !!this.data.unit;
+
+  /** Directory users as head options (id → display name). */
+  readonly headOptions = computed<SelectOption[]>(() =>
+    this.userLookup.options().map((u) => ({ value: u.id, label: u.displayName })),
+  );
 
   readonly form = this.fb.nonNullable.group({
     name: [
@@ -136,7 +156,14 @@ export class OrgUnitDialogComponent {
       [Validators.required, Validators.maxLength(50)],
     ],
     parentOrgUnitId: [this.data.unit?.parentOrgUnitId ?? null as string | null],
+    headUserId: [this.data.unit?.headUserId ?? null as string | null],
   });
+
+  constructor() {
+    if (this.isEdit) {
+      this.userLookup.ensureLoaded();
+    }
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -152,9 +179,11 @@ export class OrgUnitDialogComponent {
         id: this.data.unit.id,
         name: v.name.trim(),
         parentOrgUnitId,
+        headUserId: v.headUserId || null,
         original: {
           name: this.data.unit.name,
           parentOrgUnitId: this.data.unit.parentOrgUnitId,
+          headUserId: this.data.unit.headUserId,
         },
       });
     } else {

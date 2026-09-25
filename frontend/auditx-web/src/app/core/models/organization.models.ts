@@ -12,6 +12,8 @@ export interface OrgUnit {
   name: string;
   code: string;
   parentOrgUnitId: string | null;
+  /** The user who heads this unit — the reporting-line fallback for members without an explicit manager. */
+  headUserId: string | null;
   isArchived: boolean;
 }
 

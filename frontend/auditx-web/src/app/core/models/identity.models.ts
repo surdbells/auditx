@@ -37,8 +37,24 @@ export interface UserDto {
 export interface UserDetailDto extends UserDto {
   /** Annual audit capacity in person-days (for workload-vs-capacity planning); null when unset. */
   capacityDays: number | null;
+  /** Explicit line manager (reporting line); null when none is set (may still resolve via the org-unit head). */
+  managerId: string | null;
+  managerName: string | null;
   roles: UserRoleDto[];
   delegations: DelegationDto[];
+}
+
+/** A user's resolved reporting line: the effective manager plus the ordered chain upward. */
+export interface ReportingLineNode {
+  userId: string;
+  displayName: string;
+}
+
+export interface ReportingLineDto {
+  userId: string;
+  /** The effective line manager (explicit manager, else the org-unit head walking up the tree); null if none. */
+  lineManagerId: string | null;
+  chain: ReportingLineNode[];
 }
 
 /** Minimal id→name entry from the authenticated-only user directory (GET /users/directory). */

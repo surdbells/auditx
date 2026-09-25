@@ -182,6 +182,9 @@ export class OrgUnitsComponent {
             }),
           );
         }
+        if (result.headUserId !== result.original.headUserId) {
+          ops.push(this.service.setHead(result.id, result.headUserId));
+        }
         if (ops.length === 0) {
           return;
         }

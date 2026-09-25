@@ -59,6 +59,28 @@
                   {{ 'identity.capacity.edit' | t }}
                 </button>
               </dd>
+              <dt>{{ 'identity.field.manager' | t }}</dt>
+              <dd class="profile__capacity">
+                @if (u.managerName) {
+                  <span>{{ u.managerName }}</span>
+                } @else if (effectiveManagerName(); as em) {
+                  <span>{{ em }} <span class="muted">{{ 'identity.manager.viaOrgUnit' | t }}</span></span>
+                } @else {
+                  <span class="muted">{{ 'identity.manager.unset' | t }}</span>
+                }
+                <button matButton type="button" class="profile__capacity-edit" (click)="openSetManager()">
+                  <app-icon name="edit" />
+                  {{ 'identity.manager.edit' | t }}
+                </button>
+              </dd>
+              <dt>{{ 'identity.field.reportingLine' | t }}</dt>
+              <dd>
+                @if (reportingChainLabel()) {
+                  <span>{{ reportingChainLabel() }}</span>
+                } @else {
+                  <span class="muted">{{ 'identity.manager.noChain' | t }}</span>
+                }
+              </dd>
               <dt>{{ 'identity.field.userId' | t }}</dt>
               <dd class="mono">{{ u.id }}</dd>
             </dl>
