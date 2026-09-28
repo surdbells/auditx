@@ -18,9 +18,9 @@ export const Permissions = {
   AdminOps: 'AdminOps',
 
   // M15 — Administration
-  ViewBankSettings: 'ViewBankSettings',
+  ViewInstitutionSettings: 'ViewInstitutionSettings',
   ViewSystemHealth: 'ViewSystemHealth',
-  ManageBankSettings: 'ManageBankSettings',
+  ManageInstitutionSettings: 'ManageInstitutionSettings',
   ConfigureLimits: 'ConfigureLimits',
   ManageSupportChannel: 'ManageSupportChannel',
   InstallReleases: 'InstallReleases',

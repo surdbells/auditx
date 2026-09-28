@@ -22,7 +22,7 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
 {
     public async Task SeedAsync(bool seedDevelopmentUsers, CancellationToken cancellationToken = default)
     {
-        await SeedBankSettingsAsync(cancellationToken);
+        await SeedInstitutionSettingsAsync(cancellationToken);
         var rolesByName = await SeedBuiltInRolesAsync(cancellationToken);
         await SeedMakerCheckerGatesAsync(cancellationToken);
         await SeedRiskDimensionsAsync(cancellationToken);
@@ -484,18 +484,18 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
     /// </summary>
     private async Task SeedExceptionDefaultsConfigurationAsync(CancellationToken cancellationToken)
     {
-        if (await db.BankConfigurations.AnyAsync(c => c.Domain == ConfigurationDomains.ExceptionDefaults, cancellationToken))
+        if (await db.InstitutionConfigurations.AnyAsync(c => c.Domain == ConfigurationDomains.ExceptionDefaults, cancellationToken))
         {
             return;
         }
 
         var definitionJson = ConfigurationDefinitions.SerializeExceptionDefaults(ExceptionDefaultsDefinition.HardcodedFallback);
-        var config = BankConfiguration.CreateDraft(
+        var config = InstitutionConfiguration.CreateDraft(
             ConfigurationDomains.ExceptionDefaults, versionNumber: 1, definitionJson,
             changeReason: "Initial exception defaults seeded on deployment (reproduces pre-M12 hardcoded values).",
             createdBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
         config.Activate(activatedBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
-        db.BankConfigurations.Add(config);
+        db.InstitutionConfigurations.Add(config);
     }
 
     /// <summary>Seed one active default sanctions grid (version 1) with a few representative cells per the E3 schema.</summary>
@@ -548,11 +548,11 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         db.ReportTemplates.Add(template);
     }
 
-    private async Task SeedBankSettingsAsync(CancellationToken cancellationToken)
+    private async Task SeedInstitutionSettingsAsync(CancellationToken cancellationToken)
     {
-        if (!await db.BankSettings.AnyAsync(cancellationToken))
+        if (!await db.InstitutionSettings.AnyAsync(cancellationToken))
         {
-            db.BankSettings.Add(BankSettings.CreateDefault("AuditX"));
+            db.InstitutionSettings.Add(InstitutionSettings.CreateDefault("AuditX"));
         }
     }
 

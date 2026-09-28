@@ -11,9 +11,9 @@ namespace AuditX.Domain.Configuration;
 /// inactive draft; activation is the policy change worth dual-controlling (maker-checker on activate). Every version
 /// is retained (soft-delete) so the timeline and rollbacks stay intact.
 /// </summary>
-public sealed class BankConfiguration : AggregateRoot, ISoftDeletable
+public sealed class InstitutionConfiguration : AggregateRoot, ISoftDeletable
 {
-    private BankConfiguration()
+    private InstitutionConfiguration()
     {
     }
 
@@ -48,10 +48,10 @@ public sealed class BankConfiguration : AggregateRoot, ISoftDeletable
     public byte[] Version { get; private set; } = [];
 
     /// <summary>Draft a new (inactive) version for a domain. A change reason of ≥20 chars is required (G1).</summary>
-    public static BankConfiguration CreateDraft(
+    public static InstitutionConfiguration CreateDraft(
         string domain, int versionNumber, string definitionJson, string changeReason, Guid createdBy, DateTimeOffset nowUtc)
     {
-        var config = new BankConfiguration
+        var config = new InstitutionConfiguration
         {
             Domain = Guard.NotNullOrWhiteSpace(domain, "configuration.domain_required", "A configuration domain is required."),
             VersionNumber = versionNumber,

@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ApiService } from './api.service';
 import {
-  BankSettings,
+  InstitutionSettings,
   BulkOperationResult,
   CreateObjectRestoreRequest,
   CreateRestoreDrillRequest,
@@ -16,7 +16,7 @@ import {
   RestoreDrill,
   SupportChannelStatus,
   SystemHealth,
-  UpdateBankSettingsRequest,
+  UpdateInstitutionSettingsRequest,
 } from '../models';
 
 /** Typed client for the M15 Administration console endpoints. */
@@ -24,16 +24,16 @@ import {
 export class AdministrationService {
   private readonly api = inject(ApiService);
 
-  /* ---- Bank settings & resource limits ---- */
+  /* ---- Institution settings & resource limits ---- */
 
-  getBankSettings(): Observable<BankSettings> {
-    return this.api.get<BankSettings>('/admin/bank-settings');
+  getInstitutionSettings(): Observable<InstitutionSettings> {
+    return this.api.get<InstitutionSettings>('/admin/institution-settings');
   }
 
-  updateBankSettings(
-    body: UpdateBankSettingsRequest,
-  ): Observable<BankSettings> {
-    return this.api.patch<BankSettings>('/admin/bank-settings', body);
+  updateInstitutionSettings(
+    body: UpdateInstitutionSettingsRequest,
+  ): Observable<InstitutionSettings> {
+    return this.api.patch<InstitutionSettings>('/admin/institution-settings', body);
   }
 
   updateResourceLimits(body: ResourceLimits): Observable<ResourceLimits> {

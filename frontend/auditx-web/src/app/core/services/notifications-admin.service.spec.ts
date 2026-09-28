@@ -166,7 +166,7 @@ describe('NotificationAdminService', () => {
     expect(result?.[0].scope).toBe('system');
   });
 
-  it('posts a bank-scope template override', () => {
+  it('posts an institution-scope template override', () => {
     service
       .overrideTemplate({
         templateKey: 'audit.created.email',
@@ -178,7 +178,7 @@ describe('NotificationAdminService', () => {
     const req = http.expectOne(`${BASE}/notification-templates`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body.templateKey).toBe('audit.created.email');
-    req.flush({ data: template({ scope: 'bank' }) });
+    req.flush({ data: template({ scope: 'institution' }) });
   });
 
   it('lists dispatches with status and event-type filters and unwraps the page', () => {

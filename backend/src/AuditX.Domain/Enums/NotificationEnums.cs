@@ -41,9 +41,9 @@ public enum RecipientResolutionType
     ReportingChain,
 }
 
-/// <summary>A template is either a built-in system default or a bank-specific override.</summary>
+/// <summary>A template is either a built-in system default or an institution-specific override.</summary>
 public enum TemplateScope
 {
     System,
-    Bank,
+    Institution,
 }

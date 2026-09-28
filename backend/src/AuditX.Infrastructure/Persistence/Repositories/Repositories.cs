@@ -180,9 +180,9 @@ public sealed class MakerCheckerGateRepository(AppDbContext db) : IMakerCheckerG
     public void Add(MakerCheckerGate gate) => db.MakerCheckerGates.Add(gate);
 }
 
-public sealed class BankSettingsRepository(AppDbContext db) : IBankSettingsRepository
+public sealed class InstitutionSettingsRepository(AppDbContext db) : IInstitutionSettingsRepository
 {
-    public async Task<BankSettings> GetAsync(CancellationToken cancellationToken = default)
-        => await db.BankSettings.FirstOrDefaultAsync(cancellationToken)
-           ?? throw new InvalidOperationException("Bank settings have not been seeded.");
+    public async Task<InstitutionSettings> GetAsync(CancellationToken cancellationToken = default)
+        => await db.InstitutionSettings.FirstOrDefaultAsync(cancellationToken)
+           ?? throw new InvalidOperationException("Institution settings have not been seeded.");
 }

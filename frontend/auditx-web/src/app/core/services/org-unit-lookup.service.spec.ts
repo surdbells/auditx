@@ -8,7 +8,7 @@ import { OrgUnit } from '../models';
 const BASE = '/api/v1';
 
 function unit(id: string, name: string, parentOrgUnitId: string | null): OrgUnit {
-  return { id, name, code: id.toUpperCase(), parentOrgUnitId, isArchived: false };
+  return { id, name, code: id.toUpperCase(), parentOrgUnitId, headUserId: null, isArchived: false };
 }
 
 describe('OrgUnitLookupService', () => {

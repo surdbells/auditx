@@ -83,7 +83,7 @@ public interface IMakerCheckerRepository
 }
 
 /// <summary>Access to the single-row deployment settings.</summary>
-public interface IBankSettingsRepository
+public interface IInstitutionSettingsRepository
 {
-    Task<BankSettings> GetAsync(CancellationToken cancellationToken = default);
+    Task<InstitutionSettings> GetAsync(CancellationToken cancellationToken = default);
 }

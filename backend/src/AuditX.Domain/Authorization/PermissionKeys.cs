@@ -114,8 +114,8 @@ public static class PermissionKeys
     public const string ConfigureWebhooks = "ConfigureWebhooks";
 
     // M15 — Administration
-    public const string ViewBankSettings = "ViewBankSettings";
-    public const string ManageBankSettings = "ManageBankSettings";
+    public const string ViewInstitutionSettings = "ViewInstitutionSettings";
+    public const string ManageInstitutionSettings = "ManageInstitutionSettings";
     public const string ViewSystemHealth = "ViewSystemHealth";
     public const string ManageSupportChannel = "ManageSupportChannel";
     public const string ManageRetention = "ManageRetention";

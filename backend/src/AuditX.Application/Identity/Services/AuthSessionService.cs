@@ -20,7 +20,7 @@ public sealed class AuthSessionService(
     IUserRepository users,
     IUserRoleRepository userRoles,
     IRoleRepository roles,
-    IBankSettingsRepository bankSettings,
+    IInstitutionSettingsRepository institutionSettings,
     IIdentityProvider identityProvider,
     ISessionTokenService tokenService,
     IPermissionResolver permissions,
@@ -34,7 +34,7 @@ public sealed class AuthSessionService(
 
         if (user is null)
         {
-            var settings = await bankSettings.GetAsync(cancellationToken);
+            var settings = await institutionSettings.GetAsync(cancellationToken);
             var permitted = await identityProvider.IsPermittedToProvisionAsync(
                 directoryUser, settings.AdProvisioningFilterOuDn, settings.AdProvisioningFilterGroupSid, cancellationToken);
             if (!permitted)

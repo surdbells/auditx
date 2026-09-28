@@ -15,24 +15,24 @@ using FluentValidation;
 
 namespace AuditX.Application.Administration.Commands;
 
-// ---- Bank settings & limits ----
+// ---- Institution settings & limits ----
 
-public sealed record UpdateBankSettingsCommand(
-    string BankDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
+public sealed record UpdateInstitutionSettingsCommand(
+    string InstitutionDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
     bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval, bool AllowMinorPlanRevisionAfterApproval,
     string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri,
     bool ShowOverview, bool ShowWalkthrough, int ReportRetentionMonths, bool AutoStartWalkthrough,
     int IdleTimeoutMinutes, int IdleWarningSeconds)
-    : ICommand<BankSettingsDto>;
+    : ICommand<InstitutionSettingsDto>;
 
-public sealed class UpdateBankSettingsCommandValidator : AbstractValidator<UpdateBankSettingsCommand>
+public sealed class UpdateInstitutionSettingsCommandValidator : AbstractValidator<UpdateInstitutionSettingsCommand>
 {
     // ~512 KB decoded ⇒ base64 is ~4/3 of that; a generous cap keeps a logo/icon inline without bloating the row.
     private const int MaxBrandingAssetChars = 700_000;
 
-    public UpdateBankSettingsCommandValidator()
+    public UpdateInstitutionSettingsCommandValidator()
     {
-        RuleFor(x => x.BankDisplayName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.InstitutionDisplayName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Timezone).NotEmpty();
         RuleFor(x => x.LocaleDefault).NotEmpty();
         RuleFor(x => x.PrimaryColor).NotEmpty().Matches("^#[0-9a-fA-F]{6}$")
@@ -59,13 +59,13 @@ public sealed class UpdateBankSettingsCommandValidator : AbstractValidator<Updat
            || (value.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase) && value.Length <= MaxBrandingAssetChars);
 }
 
-public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
-    : ICommandHandler<UpdateBankSettingsCommand, BankSettingsDto>
+public sealed class UpdateInstitutionSettingsCommandHandler(IInstitutionSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<UpdateInstitutionSettingsCommand, InstitutionSettingsDto>
 {
-    public async Task<BankSettingsDto> Handle(UpdateBankSettingsCommand command, CancellationToken cancellationToken)
+    public async Task<InstitutionSettingsDto> Handle(UpdateInstitutionSettingsCommand command, CancellationToken cancellationToken)
     {
         var bank = await settings.GetAsync(cancellationToken);
-        bank.Update(command.BankDisplayName, command.Timezone, command.LocaleDefault);
+        bank.Update(command.InstitutionDisplayName, command.Timezone, command.LocaleDefault);
         bank.SetAdProvisioningFilter(command.AdProvisioningFilterOuDn, command.AdProvisioningFilterGroupSid);
         bank.SetAllowOverlappingPlanPeriods(command.AllowOverlappingPlanPeriods);
         bank.SetAllowAuditLaunchBeforeApproval(command.AllowAuditLaunchBeforeApproval);
@@ -76,9 +76,9 @@ public sealed class UpdateBankSettingsCommandHandler(IBankSettingsRepository set
         bank.SetBranding(command.PrimaryColor, command.AccentColor, command.LogoDataUri, command.IconDataUri);
         // Keep the audit payload metadata-only — the logo/icon data URIs are deliberately excluded. Every policy
         // field IS recorded so security-relevant changes (e.g. disabling the idle logout) stay attributable.
-        audit.Record(AuditEventTypes.BankSettingsUpdated, AuditTargetTypes.BankSettings, bank.Id, after: new
+        audit.Record(AuditEventTypes.InstitutionSettingsUpdated, AuditTargetTypes.InstitutionSettings, bank.Id, after: new
         {
-            bank.BankDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval, bank.AllowMinorPlanRevisionAfterApproval,
+            bank.InstitutionDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval, bank.AllowMinorPlanRevisionAfterApproval,
             bank.ShowOverview, bank.ShowWalkthrough, bank.AutoStartWalkthrough,
             bank.ReportRetentionMonths, bank.IdleTimeoutMinutes, bank.IdleWarningSeconds,
             bank.PrimaryColor, bank.AccentColor, hasLogo = bank.LogoDataUri is not null, hasIcon = bank.IconDataUri is not null,
@@ -92,7 +92,7 @@ public sealed record UpdateResourceLimitsCommand(int MaxEvidenceFileMb, int MaxA
 
 public sealed class UpdateResourceLimitsCommandValidator : AbstractValidator<UpdateResourceLimitsCommand>
 {
-    // Mirror the domain's accepted range (BankSettings.SetResourceLimits keeps 1..1024) so out-of-range caps
+    // Mirror the domain's accepted range (InstitutionSettings.SetResourceLimits keeps 1..1024) so out-of-range caps
     // fail fast with a 422 instead of being silently ignored.
     public UpdateResourceLimitsCommandValidator()
     {
@@ -101,14 +101,14 @@ public sealed class UpdateResourceLimitsCommandValidator : AbstractValidator<Upd
     }
 }
 
-public sealed class UpdateResourceLimitsCommandHandler(IBankSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class UpdateResourceLimitsCommandHandler(IInstitutionSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateResourceLimitsCommand, ResourceLimitsDto>
 {
     public async Task<ResourceLimitsDto> Handle(UpdateResourceLimitsCommand command, CancellationToken cancellationToken)
     {
         var bank = await settings.GetAsync(cancellationToken);
         bank.SetResourceLimits(command.MaxEvidenceFileMb, command.MaxAuditEvidenceGb);
-        audit.Record(AuditEventTypes.ResourceLimitsUpdated, AuditTargetTypes.BankSettings, bank.Id,
+        audit.Record(AuditEventTypes.ResourceLimitsUpdated, AuditTargetTypes.InstitutionSettings, bank.Id,
             after: new { bank.MaxEvidenceFileMb, bank.MaxAuditEvidenceGb });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return new ResourceLimitsDto(bank.MaxEvidenceFileMb, bank.MaxAuditEvidenceGb);

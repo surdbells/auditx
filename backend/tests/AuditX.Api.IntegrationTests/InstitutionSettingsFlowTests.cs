@@ -8,7 +8,7 @@ namespace AuditX.Api.IntegrationTests;
 /// Bank settings: the page-guide visibility toggles (Overview / Walkthrough) round-trip through the admin
 /// settings surface and are reflected on the anonymous /branding surface the SPA page-guide reads.
 /// </summary>
-public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<ApiFactory>
+public sealed class InstitutionSettingsFlowTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     private HttpClient NewClient() => factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { HandleCookies = true });
 
@@ -43,7 +43,7 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
         // Hide Overview, keep Walkthrough, disable the auto-start tour (full-replace PATCH).
         var updated = await DataAsync(await admin.PatchAsJsonAsync("/api/v1/admin/bank-settings", new
         {
-            bankDisplayName = current.GetProperty("bankDisplayName").GetString(),
+            institutionDisplayName = current.GetProperty("institutionDisplayName").GetString(),
             timezone = current.GetProperty("timezone").GetString(),
             localeDefault = current.GetProperty("localeDefault").GetString(),
             adProvisioningFilterOuDn = (string?)null,
@@ -85,9 +85,9 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Reading_bank_settings_requires_the_view_permission()
+    public async Task Reading_institution_settings_requires_the_view_permission()
     {
-        var auditee = await LoginAsync("auditee"); // no ViewBankSettings
+        var auditee = await LoginAsync("auditee"); // no ViewInstitutionSettings
         Assert.Equal(HttpStatusCode.Forbidden, (await auditee.GetAsync("/api/v1/admin/bank-settings")).StatusCode);
     }
 }

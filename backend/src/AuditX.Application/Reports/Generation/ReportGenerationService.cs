@@ -22,7 +22,7 @@ namespace AuditX.Application.Reports.Generation;
 public sealed class ReportGenerationService(
     IReportRepository reports,
     IAuditRepository audits,
-    IBankSettingsRepository settings,
+    IInstitutionSettingsRepository settings,
     ReportContentAssembler assembler,
     StandaloneReportAssembler standaloneAssembler,
     IReportRenderer renderer,

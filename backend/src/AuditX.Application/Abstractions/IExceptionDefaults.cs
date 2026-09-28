@@ -3,7 +3,7 @@ using AuditX.Domain.Enums;
 namespace AuditX.Application.Abstractions;
 
 /// <summary>
-/// Bank-configurable defaults for exceptions (M6). v1 ships hardcoded sane values behind this seam; the
+/// Institution-configurable defaults for exceptions (M6). v1 ships hardcoded sane values behind this seam; the
 /// configurable surface (per-bank/type/severity) lands with M12.
 /// </summary>
 public interface IExceptionDefaults

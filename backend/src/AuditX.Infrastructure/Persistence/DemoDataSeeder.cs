@@ -1010,7 +1010,7 @@ public sealed class DemoDataSeeder(
     // ---------------------------------------------------------------------------------------------------------
     private async Task SeedConfigurationDraftAsync(CancellationToken ct)
     {
-        var maxVersion = await db.BankConfigurations
+        var maxVersion = await db.InstitutionConfigurations
             .Where(c => c.Domain == ConfigurationDomains.ExceptionDefaults)
             .Select(c => (int?)c.VersionNumber)
             .MaxAsync(ct) ?? 0;
@@ -1021,11 +1021,11 @@ public sealed class DemoDataSeeder(
             RecurrenceWindowMonths: 18, RecurrenceThreshold: 3);
         var definitionJson = ConfigurationDefinitions.SerializeExceptionDefaults(definition);
 
-        var draft = BankConfiguration.CreateDraft(
+        var draft = InstitutionConfiguration.CreateDraft(
             ConfigurationDomains.ExceptionDefaults, maxVersion + 1, definitionJson,
             changeReason: "Proposed tighter remediation SLAs for FY2026 (pending audit-committee adoption).",
             createdBy: Guid.Empty, _now);
-        db.BankConfigurations.Add(draft);
+        db.InstitutionConfigurations.Add(draft);
         await db.SaveChangesAsync(ct);
     }
 
@@ -1124,7 +1124,7 @@ public sealed class DemoDataSeeder(
     // ---------------------------------------------------------------------------------------------------------
     private async Task SeedAdministrationAsync(CancellationToken ct)
     {
-        var settings = await db.BankSettings.FirstOrDefaultAsync(ct);
+        var settings = await db.InstitutionSettings.FirstOrDefaultAsync(ct);
         if (settings is not null)
         {
             settings.SetResourceLimits(maxEvidenceFileMb: 50, maxAuditEvidenceGb: 10);

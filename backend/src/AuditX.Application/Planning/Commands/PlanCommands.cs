@@ -24,7 +24,7 @@ public sealed class CreatePlanCommandValidator : AbstractValidator<CreatePlanCom
 }
 
 public sealed class CreatePlanCommandHandler(
-    IAnnualPlanRepository plans, IBankSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    IAnnualPlanRepository plans, IInstitutionSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<CreatePlanCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(CreatePlanCommand command, CancellationToken cancellationToken)
@@ -47,7 +47,7 @@ public sealed class CreatePlanCommandHandler(
 public sealed record UpdatePlanCommand(Guid Id, string PeriodLabel, DateOnly PeriodStart, DateOnly PeriodEnd) : ICommand<PlanDto>;
 
 public sealed class UpdatePlanCommandHandler(
-    IAnnualPlanRepository plans, IBankSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    IAnnualPlanRepository plans, IInstitutionSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<UpdatePlanCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(UpdatePlanCommand command, CancellationToken cancellationToken)
@@ -134,7 +134,7 @@ public sealed class ReorderPlanItemsCommandHandler(IAnnualPlanRepository plans, 
 
 public sealed record SubmitPlanCommand(Guid PlanId) : ICommand<PlanDto>;
 
-public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IBankSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IInstitutionSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<SubmitPlanCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(SubmitPlanCommand command, CancellationToken cancellationToken)
@@ -152,7 +152,7 @@ public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IBankS
 public sealed record RecordPlanDecisionCommand(Guid PlanId, string Decision, string? Detail, IReadOnlyList<string>? Comments) : ICommand<PlanDto>;
 
 public sealed class RecordPlanDecisionCommandHandler(
-    IAnnualPlanRepository plans, IBankSettingsRepository settings, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    IAnnualPlanRepository plans, IInstitutionSettingsRepository settings, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<RecordPlanDecisionCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(RecordPlanDecisionCommand command, CancellationToken cancellationToken)
@@ -174,7 +174,7 @@ public sealed class RecordPlanDecisionCommandHandler(
 
 public sealed record SubmitPlanRevisionCommand(Guid PlanId, string Kind, Guid? ItemId, DateOnly? NewStartDate, DateOnly? NewEndDate, string? Reason) : ICommand<PlanDto>;
 
-public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans, IBankSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans, IInstitutionSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<SubmitPlanRevisionCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(SubmitPlanRevisionCommand command, CancellationToken cancellationToken)

@@ -13,18 +13,18 @@ namespace AuditX.Api.Controllers;
 [Route("api/v1/admin")]
 public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
 {
-    // ---- Bank settings & limits ----
+    // ---- Institution settings & limits ----
 
-    [RequirePermission(PermissionKeys.ViewBankSettings)]
+    [RequirePermission(PermissionKeys.ViewInstitutionSettings)]
     [HttpGet("bank-settings")]
-    public async Task<IActionResult> GetBankSettings(CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new GetBankSettingsQuery(), cancellationToken));
+    public async Task<IActionResult> GetInstitutionSettings(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetInstitutionSettingsQuery(), cancellationToken));
 
-    [RequirePermission(PermissionKeys.ManageBankSettings)]
+    [RequirePermission(PermissionKeys.ManageInstitutionSettings)]
     [HttpPatch("bank-settings")]
-    public async Task<IActionResult> UpdateBankSettings([FromBody] UpdateBankSettingsRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new UpdateBankSettingsCommand(
-            request.BankDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid,
+    public async Task<IActionResult> UpdateInstitutionSettings([FromBody] UpdateInstitutionSettingsRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new UpdateInstitutionSettingsCommand(
+            request.InstitutionDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid,
             request.AllowOverlappingPlanPeriods, request.AllowAuditLaunchBeforeApproval, request.AllowMinorPlanRevisionAfterApproval,
             request.PrimaryColor, request.AccentColor, request.LogoDataUri, request.IconDataUri,
             request.ShowOverview, request.ShowWalkthrough, request.ReportRetentionMonths, request.AutoStartWalkthrough,

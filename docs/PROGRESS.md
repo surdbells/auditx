@@ -1,6 +1,6 @@
 # AuditX Enterprise — On-Premises Edition v2.0 · Progress Report
 
-_Single-tenant internal-audit platform for a bank. ASP.NET Core 10 / EF Core 10 (SQL Server) ·
+_Single-tenant internal-audit platform for an institution. ASP.NET Core 10 / EF Core 10 (SQL Server) ·
 Angular 21 + Material · Clean Architecture monorepo · 15 modules (M1–M15), ~262 user stories._
 
 **Report date:** 2026-06-27 · **Branch:** `main` · **Latest commit:** M11 Audit Trail (Phase 2 complete)
@@ -59,7 +59,7 @@ trail), Docker stack, CI.
 - **M2 Template Library** — authoring, versioning, publication (maker-checker gated), lifecycle. `bc0a1db`, `499f301`
 - **M14 Integrations & Webhooks** — encrypted credentials, HMAC-signed webhooks with backoff/dead-letter,
   SIEM export seam. `dbf68c1`, `828e10a`
-- **M15 Administration** — bank settings & limits, bulk users/CSV, support channel, signed releases,
+- **M15 Administration** — institution settings & limits, bulk users/CSV, support channel, signed releases,
   restore drills, system health. `dbf68c1`, `828e10a`
 
 ### Phase 2 — Core audit lifecycle _(in progress — 5 of 6 done)_
@@ -94,10 +94,10 @@ trail), Docker stack, CI.
   daily recurrence-cluster detection job that notifies via M10. Sanctions-subject identity is physically omitted from
   every analytics projection. _(Ad-hoc query engine, AC-pack export artefact, predictive indicators and Redis caching
   deferred — see `m9_blueprint.md`.)_
-- **M12 Template & Workflow Configuration** — a generic **versioned bank-config store** (draft → activate → rollback,
+- **M12 Template & Workflow Configuration** — a generic **versioned institution-config store** (draft → activate → rollback,
   one-active-per-domain, change-reason-gated, **maker-checker on activation**, audited with before/after) that turns the
   previously-hardcoded exception SLAs (remediation target-days per severity) and recurrence window/threshold into
-  bank-editable config, **snapshotting** the active version that produced each exception's target. Seeds today's
+  institution-editable config, **snapshotting** the active version that produced each exception's target. Seeds today's
   hardcoded values as v1 so upgrade behaviour is unchanged. _(Escalation rules + hourly evaluator, the visual
   state-machine editor / configurable workflow graphs, preview, bulk import/export, drift detection and taxonomy
   versioning deferred — see `m12_blueprint.md`.)_

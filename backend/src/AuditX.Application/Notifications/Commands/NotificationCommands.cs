@@ -109,7 +109,7 @@ public sealed class CreateOrOverrideTemplateCommandHandler(INotificationTemplate
     public async Task<NotificationTemplateDto> Handle(CreateOrOverrideTemplateCommand command, CancellationToken cancellationToken)
     {
         var channel = NotificationParsing.ParseChannel(command.Channel);
-        var existing = await templates.GetByKeyChannelScopeAsync(command.TemplateKey, channel, TemplateScope.Bank, cancellationToken);
+        var existing = await templates.GetByKeyChannelScopeAsync(command.TemplateKey, channel, TemplateScope.Institution, cancellationToken);
         if (existing is not null)
         {
             existing.UpdateContent(command.SubjectTemplate, command.BodyTemplate);
@@ -118,7 +118,7 @@ public sealed class CreateOrOverrideTemplateCommandHandler(INotificationTemplate
             return existing.ToDto();
         }
 
-        var template = NotificationTemplate.Create(command.TemplateKey, channel, TemplateScope.Bank, command.SubjectTemplate, command.BodyTemplate);
+        var template = NotificationTemplate.Create(command.TemplateKey, channel, TemplateScope.Institution, command.SubjectTemplate, command.BodyTemplate);
         templates.Add(template);
         audit.Record(AuditEventTypes.NotificationTemplateOverridden, AuditTargetTypes.NotificationTemplate, template.Id, after: new { template.TemplateKey });
         await unitOfWork.SaveChangesAsync(cancellationToken);

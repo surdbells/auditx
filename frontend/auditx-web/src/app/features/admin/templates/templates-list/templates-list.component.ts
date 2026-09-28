@@ -77,7 +77,7 @@ const TEMPLATES_GUIDE: PageGuide = {
   dependsOnKeys: [
     'templatesAdmin.guide.dep.auditType',
     'templatesAdmin.guide.dep.permissions',
-    'templatesAdmin.guide.dep.bank',
+    'templatesAdmin.guide.dep.institution',
   ],
   usedByKeys: [
     'templatesAdmin.guide.use.audits',

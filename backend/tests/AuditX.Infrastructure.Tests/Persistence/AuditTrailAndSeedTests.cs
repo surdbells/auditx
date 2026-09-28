@@ -37,7 +37,7 @@ public sealed class AuditTrailAndSeedTests : IAsyncLifetime
 
         Assert.Equal(4, await db.Roles.CountAsync(r => r.IsBuiltIn));
         Assert.True(await db.MakerCheckerGates.AnyAsync(g => g.ActionType == "role_permission_change" && g.IsEnabled));
-        Assert.True(await db.BankSettings.AnyAsync());
+        Assert.True(await db.InstitutionSettings.AnyAsync());
     }
 
     [Fact]

@@ -1,7 +1,7 @@
 namespace AuditX.Application.Administration.Dtos;
 
-public sealed record BankSettingsDto(
-    string BankDisplayName,
+public sealed record InstitutionSettingsDto(
+    string InstitutionDisplayName,
     string Timezone,
     string LocaleDefault,
     string? AdProvisioningFilterOuDn,

@@ -33,7 +33,7 @@ public sealed class SubmitResponseCommandValidator : AbstractValidator<SubmitRes
 public sealed class SubmitResponseCommandHandler(
     IAuditRepository audits,
     IPermissionResolver permissions,
-    IBankSettingsRepository bankSettings,
+    IInstitutionSettingsRepository institutionSettings,
     IResponseScoringService scoring,
     IResponseOptionSetRepository optionSets,
     ICurrentUser currentUser,
@@ -64,7 +64,7 @@ public sealed class SubmitResponseCommandHandler(
         }
 
         var verdict = option?.CanonicalVerdict ?? RespondAuthorization.ParseVerdict(command.Verdict, command.IsDraft);
-        var settings = await bankSettings.GetAsync(cancellationToken);
+        var settings = await institutionSettings.GetAsync(cancellationToken);
         var requireCommentOnPass = settings.RequireCommentOnPass || (option?.RequiresComment ?? false);
 
         var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, requireCommentOnPass, clock.UtcNow, command.ValueJson, command.Observation, command.Recommendation, option?.Code, option?.Label);

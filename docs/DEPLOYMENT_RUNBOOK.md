@@ -1,6 +1,6 @@
 # AuditX Enterprise — Deployment Runbook
 
-_On-premises internal-audit platform for banks. ASP.NET Core 10 API + Angular 21 SPA + SQL Server + Redis._
+_On-premises internal-audit platform for institutions. ASP.NET Core 10 API + Angular 21 SPA + SQL Server + Redis._
 
 This runbook covers three target environments:
 

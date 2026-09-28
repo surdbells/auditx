@@ -2,7 +2,7 @@
 
 ## 1. System overview
 
-AuditX is a three-tier web application deployed single-tenant inside a bank's network:
+AuditX is a three-tier web application deployed single-tenant inside an institution's network:
 
 - **Presentation** — Angular 21 SPA (standalone components, signals, Angular Material), served by Nginx.
 - **Application/API** — ASP.NET Core 10 (controllers) exposing a REST API under `/api/v1`, a Hangfire
@@ -55,7 +55,7 @@ backend/tests/            Domain (unit), Application (handler/unit), Infrastruct
 
 GUID (UUIDv7) primary keys, `DATETIMEOFFSET` (UTC) timestamps, snake_case table/column names, JSON
 columns for flexible payloads. Tables: `users`, `roles`, `role_permissions`, `user_roles` (also models
-delegations), `maker_checker_actions`, `maker_checker_gates`, `bank_settings`, `audit_trail`.
+delegations), `maker_checker_actions`, `maker_checker_gates`, `institution_settings`, `audit_trail`.
 
 State machines and richer schemas for M2–M15 are introduced with their modules. Migrations are
 code-first and live in `AuditX.Infrastructure/Persistence/Migrations`.

@@ -17,7 +17,7 @@ namespace AuditX.Application.Configuration.MakerChecker;
 /// The active-config cache is invalidated post-commit by the generic approval handler, not here.
 /// </summary>
 public sealed class ConfigActivationExecutor(
-    IBankConfigurationRepository configurations, IAuditRecorder audit, IClock clock)
+    IInstitutionConfigurationRepository configurations, IAuditRecorder audit, IClock clock)
     : IPendingActionExecutor
 {
     public string ActionType => MakerCheckerActionTypes.ConfigActivation;
@@ -35,7 +35,7 @@ public sealed class ConfigActivationExecutor(
         if (payload.RolledBackFromVersion is { } fromVersion)
         {
             audit.RecordAs(ActorType.User, actorSystemLabel: null, actorUserId: makerUserId,
-                AuditEventTypes.ConfigurationRolledBack, AuditTargetTypes.BankConfiguration, target.Id,
+                AuditEventTypes.ConfigurationRolledBack, AuditTargetTypes.InstitutionConfiguration, target.Id,
                 payload: new { target.Domain, fromVersion, newVersion = target.VersionNumber });
         }
     }

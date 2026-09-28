@@ -67,7 +67,7 @@ public static class AuditEventTypes
     public const string WebhookRetried = "webhook_retried";
 
     // M15 administration
-    public const string BankSettingsUpdated = "bank_settings_updated";
+    public const string InstitutionSettingsUpdated = "institution_settings_updated";
     public const string ResourceLimitsUpdated = "resource_limits_updated";
     public const string UsersBulkDeactivated = "users_bulk_deactivated";
     public const string UsersBulkReactivated = "users_bulk_reactivated";
@@ -289,7 +289,7 @@ public static class AuditTargetTypes
     public const string UserRole = "user_role";
     public const string MakerCheckerAction = "maker_checker_action";
     public const string Session = "session";
-    public const string BankSettings = "bank_settings";
+    public const string InstitutionSettings = "institution_settings";
     public const string Template = "template";
     public const string Integration = "integration";
     public const string WebhookSubscription = "webhook_subscription";
@@ -337,7 +337,7 @@ public static class AuditTargetTypes
     public const string ReportSchedule = "report_schedule";
     public const string Dashboard = "dashboard";
     public const string RecurrenceCluster = "recurrence_cluster";
-    public const string BankConfiguration = "bank_configuration";
+    public const string InstitutionConfiguration = "institution_configuration";
     public const string ReferenceDataItem = "reference_data_item";
     public const string AcPack = "ac_pack";
     public const string AcActionItem = "ac_action_item";

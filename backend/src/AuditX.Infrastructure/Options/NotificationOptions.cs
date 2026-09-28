@@ -46,6 +46,6 @@ public sealed class SmtpOptions
 
 public sealed class SmsOptions
 {
-    /// <summary>Bank SMS gateway endpoint; when empty, SMS sends fail permanently (no external SaaS on-prem).</summary>
+    /// <summary>Institution SMS gateway endpoint; when empty, SMS sends fail permanently (no external SaaS on-prem).</summary>
     public string? GatewayUrl { get; set; }
 }

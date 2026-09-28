@@ -180,7 +180,7 @@ public sealed class AnnualPlan : AggregateRoot
     /// <summary>
     /// Link a freshly-created audit to one entity of a plan item. By default audits may only be launched from an
     /// <see cref="PlanStatus.Approved"/> plan (the Audit-Committee governance gate). When the deployment
-    /// opts in via <c>BankSettings.AllowAuditLaunchBeforeApproval</c>, the caller passes
+    /// opts in via <c>InstitutionSettings.AllowAuditLaunchBeforeApproval</c>, the caller passes
     /// <paramref name="allowBeforeApproval"/> = true and audits may be launched from any non-closed plan.
     /// </summary>
     public void LinkAuditToItem(Guid itemId, Guid entityId, Guid auditId, bool allowBeforeApproval = false)

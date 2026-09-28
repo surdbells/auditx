@@ -345,7 +345,7 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
         var s = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
         (await admin.PatchAsJsonAsync("/api/v1/admin/bank-settings", new
         {
-            bankDisplayName = s.GetProperty("bankDisplayName").GetString(),
+            institutionDisplayName = s.GetProperty("institutionDisplayName").GetString(),
             timezone = s.GetProperty("timezone").GetString(),
             localeDefault = s.GetProperty("localeDefault").GetString(),
             adProvisioningFilterOuDn = (string?)null,

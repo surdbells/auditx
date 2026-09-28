@@ -2,8 +2,8 @@
  * M15 — Administration console models (camelCase, mirroring the backend contract).
  */
 
-export interface BankSettings {
-  bankDisplayName: string;
+export interface InstitutionSettings {
+  institutionDisplayName: string;
   timezone: string;
   localeDefault: string;
   adProvisioningFilterOuDn: string | null;
@@ -30,8 +30,8 @@ export interface BankSettings {
   idleWarningSeconds: number;
 }
 
-export interface UpdateBankSettingsRequest {
-  bankDisplayName: string;
+export interface UpdateInstitutionSettingsRequest {
+  institutionDisplayName: string;
   timezone: string;
   localeDefault: string;
   adProvisioningFilterOuDn: string | null;

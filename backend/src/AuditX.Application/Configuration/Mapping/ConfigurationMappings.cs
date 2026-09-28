@@ -5,7 +5,7 @@ namespace AuditX.Application.Configuration.Mapping;
 
 public static class ConfigurationMappings
 {
-    public static ConfigurationVersionDto ToDto(this BankConfiguration c) => new(
+    public static ConfigurationVersionDto ToDto(this InstitutionConfiguration c) => new(
         c.Id,
         c.Domain,
         c.VersionNumber,

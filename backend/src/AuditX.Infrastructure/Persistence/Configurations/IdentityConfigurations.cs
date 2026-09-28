@@ -141,15 +141,15 @@ public sealed class MakerCheckerGateConfiguration : IEntityTypeConfiguration<Mak
     }
 }
 
-public sealed class BankSettingsConfiguration : IEntityTypeConfiguration<BankSettings>
+public sealed class InstitutionSettingsConfiguration : IEntityTypeConfiguration<InstitutionSettings>
 {
-    public void Configure(EntityTypeBuilder<BankSettings> builder)
+    public void Configure(EntityTypeBuilder<InstitutionSettings> builder)
     {
-        builder.ToTable("bank_settings");
+        builder.ToTable("institution_settings");
         builder.HasKey(b => b.Id);
         builder.Property(b => b.Id).ValueGeneratedNever();
 
-        builder.Property(b => b.BankDisplayName).HasMaxLength(200).IsRequired();
+        builder.Property(b => b.InstitutionDisplayName).HasMaxLength(200).IsRequired();
         builder.Property(b => b.Timezone).HasMaxLength(64).IsRequired();
         builder.Property(b => b.LocaleDefault).HasMaxLength(16).IsRequired();
         builder.Property(b => b.AdProvisioningFilterOuDn).HasMaxLength(512);

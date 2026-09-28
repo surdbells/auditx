@@ -36,7 +36,7 @@ export class PageGuideComponent {
   protected readonly tour = inject(TourManagerService);
   private readonly branding = inject(BrandingService);
 
-  /** Admin-configured visibility of the two page-guide buttons (bank settings). */
+  /** Admin-configured visibility of the two page-guide buttons (institution settings). */
   protected readonly showOverview = this.branding.showOverview;
   protected readonly showWalkthrough = this.branding.showWalkthrough;
 

@@ -1,7 +1,7 @@
 # AuditX Enterprise — On-Premises Edition v2.0
 
-Enterprise internal-audit platform for a bank's Internal Audit function, deployed single-tenant inside
-the bank's network. Built to the AuditX BRD/PRD/User-Story Catalogue v2.0 and the Claude Code Project
+Enterprise internal-audit platform for an institution's Internal Audit function, deployed single-tenant inside
+the institution's network. Built to the AuditX BRD/PRD/User-Story Catalogue v2.0 and the Claude Code Project
 Standards (ASP.NET Core 10 + Angular, Clean Architecture).
 
 > **Status:** Full platform delivered end-to-end across all modules — identity, universe & planning,
@@ -113,7 +113,7 @@ cd frontend/auditx-web && npm test -- --watch=false --browsers=ChromeHeadless
 
 ## Deployment
 
-Production deploys behind the bank's reverse proxy. Build the container images
+Production deploys behind the institution's reverse proxy. Build the container images
 (`docker/Api.Dockerfile`, `docker/Web.Dockerfile`), set `Identity:Provider=ActiveDirectory`, supply the
 AD/SMTP/SIEM configuration, and apply migrations through the controlled release process. See
 [architecture.md](architecture.md) for topology and security design.

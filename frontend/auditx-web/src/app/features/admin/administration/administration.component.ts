@@ -10,7 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { BankSettingsComponent } from './bank-settings/bank-settings.component';
+import { InstitutionSettingsComponent } from './institution-settings/institution-settings.component';
 import { BulkUsersComponent } from './bulk-users/bulk-users.component';
 import { MakerCheckerGatesComponent } from './maker-checker-gates/maker-checker-gates.component';
 import { SupportChannelComponent } from './support-channel/support-channel.component';
@@ -25,7 +25,7 @@ import { SystemHealthComponent } from './system-health/system-health.component';
     MatTabsModule,
     PageHeaderComponent,
     TranslatePipe,
-    BankSettingsComponent,
+    InstitutionSettingsComponent,
     BulkUsersComponent,
     MakerCheckerGatesComponent,
     SupportChannelComponent,
@@ -45,8 +45,8 @@ export class AdministrationComponent {
 
   readonly canViewSettings = computed(() =>
     this.auth.hasAnyPermission(
-      Permissions.ViewBankSettings,
-      Permissions.ManageBankSettings,
+      Permissions.ViewInstitutionSettings,
+      Permissions.ManageInstitutionSettings,
       Permissions.ConfigureLimits,
     ),
   );
@@ -54,7 +54,7 @@ export class AdministrationComponent {
     this.auth.hasPermission(Permissions.ManageUsers),
   );
   readonly canManageDualControl = computed(() =>
-    this.auth.hasPermission(Permissions.ManageBankSettings),
+    this.auth.hasPermission(Permissions.ManageInstitutionSettings),
   );
   readonly canManageSupport = computed(() =>
     this.auth.hasPermission(Permissions.ManageSupportChannel),

@@ -116,8 +116,8 @@ public static class PermissionCatalogue
         new(PermissionKeys.ConfigureWebhooks, "Configure webhooks", "Manage outbound webhook subscriptions.", "M14", PermissionScopeType.Global),
 
         // M15 — Administration
-        new(PermissionKeys.ViewBankSettings, "View bank settings", "Read deployment-wide settings.", "M15", PermissionScopeType.Global),
-        new(PermissionKeys.ManageBankSettings, "Manage bank settings", "Edit deployment-wide settings.", "M15", PermissionScopeType.Global),
+        new(PermissionKeys.ViewInstitutionSettings, "View bank settings", "Read deployment-wide settings.", "M15", PermissionScopeType.Global),
+        new(PermissionKeys.ManageInstitutionSettings, "Manage bank settings", "Edit deployment-wide settings.", "M15", PermissionScopeType.Global),
         new(PermissionKeys.ViewSystemHealth, "View system health", "View platform health and capacity surfaces.", "M15", PermissionScopeType.Global),
         new(PermissionKeys.ManageSupportChannel, "Manage support channel", "Enable/revoke the ITANDT support channel.", "M15", PermissionScopeType.Global),
         new(PermissionKeys.ManageRetention, "Manage retention", "Configure retention policies and extensions.", "M15", PermissionScopeType.Global),

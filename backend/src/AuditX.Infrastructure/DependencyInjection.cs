@@ -54,7 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRoleRepository, UserRoleRepository>();
         services.AddScoped<IMakerCheckerRepository, MakerCheckerRepository>();
         services.AddScoped<IMakerCheckerGateRepository, MakerCheckerGateRepository>();
-        services.AddScoped<IBankSettingsRepository, BankSettingsRepository>();
+        services.AddScoped<IInstitutionSettingsRepository, InstitutionSettingsRepository>();
         services.AddScoped<ITemplateRepository, TemplateRepository>();
         services.AddScoped<IRatingScaleRepository, RatingScaleRepository>();
         services.AddScoped<IResponseOptionSetRepository, ResponseOptionSetRepository>();
@@ -91,7 +91,7 @@ public static class DependencyInjection
         services.AddScoped<IReportTemplateRepository, ReportTemplateRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IRecurrenceClusterRepository, RecurrenceClusterRepository>();
-        services.AddScoped<IBankConfigurationRepository, BankConfigurationRepository>();
+        services.AddScoped<IInstitutionConfigurationRepository, InstitutionConfigurationRepository>();
         services.AddScoped<IReferenceDataRepository, ReferenceDataRepository>();
         services.AddScoped<IAcPackRepository, AcPackRepository>();
         services.AddScoped<IAcActionItemRepository, AcActionItemRepository>();

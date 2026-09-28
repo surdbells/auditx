@@ -13,6 +13,7 @@ function unit(overrides: Partial<OrgUnit> = {}): OrgUnit {
     name: 'HQ',
     code: 'HQ',
     parentOrgUnitId: null,
+    headUserId: null,
     isArchived: false,
     ...overrides,
   };

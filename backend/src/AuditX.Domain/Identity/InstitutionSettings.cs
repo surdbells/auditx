@@ -7,13 +7,13 @@ namespace AuditX.Domain.Identity;
 /// presentation defaults and the optional coarse-grained AD provisioning filter (US-M1-006) that
 /// gates which directory users may reach the awaiting-role state.
 /// </summary>
-public sealed class BankSettings : Entity
+public sealed class InstitutionSettings : Entity
 {
-    private BankSettings()
+    private InstitutionSettings()
     {
     }
 
-    public string BankDisplayName { get; private set; } = "AuditX";
+    public string InstitutionDisplayName { get; private set; } = "AuditX";
 
     public string Timezone { get; private set; } = "UTC";
 
@@ -97,18 +97,18 @@ public sealed class BankSettings : Entity
     /// </summary>
     public int IdleWarningSeconds { get; private set; } = 60;
 
-    public static BankSettings CreateDefault(string bankDisplayName) => new()
+    public static InstitutionSettings CreateDefault(string institutionDisplayName) => new()
     {
-        BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
+        InstitutionDisplayName = Guard.NotNullOrWhiteSpace(institutionDisplayName, "institution.name_required", "Institution display name is required."),
         Timezone = "UTC",
         LocaleDefault = "en-GB",
     };
 
-    public void Update(string bankDisplayName, string timezone, string localeDefault)
+    public void Update(string institutionDisplayName, string timezone, string localeDefault)
     {
-        BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required.");
-        Timezone = Guard.NotNullOrWhiteSpace(timezone, "bank.timezone_required", "Timezone is required.");
-        LocaleDefault = Guard.NotNullOrWhiteSpace(localeDefault, "bank.locale_required", "Locale is required.");
+        InstitutionDisplayName = Guard.NotNullOrWhiteSpace(institutionDisplayName, "institution.name_required", "Institution display name is required.");
+        Timezone = Guard.NotNullOrWhiteSpace(timezone, "institution.timezone_required", "Timezone is required.");
+        LocaleDefault = Guard.NotNullOrWhiteSpace(localeDefault, "institution.locale_required", "Locale is required.");
     }
 
     public void SetAdProvisioningFilter(string? ouDn, string? groupSid)
@@ -159,8 +159,8 @@ public sealed class BankSettings : Entity
     /// <summary>Sets the branding: primary/accent colours are required; logo/icon are optional data URIs.</summary>
     public void SetBranding(string primaryColor, string accentColor, string? logoDataUri, string? iconDataUri)
     {
-        PrimaryColor = Guard.NotNullOrWhiteSpace(primaryColor, "bank.primary_color_required", "Primary colour is required.");
-        AccentColor = Guard.NotNullOrWhiteSpace(accentColor, "bank.accent_color_required", "Accent colour is required.");
+        PrimaryColor = Guard.NotNullOrWhiteSpace(primaryColor, "institution.primary_color_required", "Primary colour is required.");
+        AccentColor = Guard.NotNullOrWhiteSpace(accentColor, "institution.accent_color_required", "Accent colour is required.");
         LogoDataUri = string.IsNullOrWhiteSpace(logoDataUri) ? null : logoDataUri;
         IconDataUri = string.IsNullOrWhiteSpace(iconDataUri) ? null : iconDataUri;
     }

@@ -3,7 +3,7 @@ using AuditX.Domain.Common;
 namespace AuditX.Domain.Administration;
 
 /// <summary>
-/// A time-bounded ITANDT support-channel session (US-M15-031). Disabled by default; enabled by Bank IT
+/// A time-bounded ITANDT support-channel session (US-M15-031). Disabled by default; enabled by Institution IT
 /// for named engineers and a capped duration. All actions performed through it are audited with
 /// actor_type = itandt_support. The bank may revoke an active session at any time.
 /// </summary>

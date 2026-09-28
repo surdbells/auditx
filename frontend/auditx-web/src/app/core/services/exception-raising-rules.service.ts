@@ -8,7 +8,7 @@ import {
   UpdateExceptionRaisingRuleRequest,
 } from '../models';
 
-/** Typed client for the bank-configurable exception-raising-rule endpoints. */
+/** Typed client for the institution-configurable exception-raising-rule endpoints. */
 @Injectable({ providedIn: 'root' })
 export class ExceptionRaisingRulesService {
   private readonly api = inject(ApiService);

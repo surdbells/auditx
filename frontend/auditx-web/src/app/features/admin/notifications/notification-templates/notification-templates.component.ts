@@ -107,7 +107,7 @@ export class NotificationTemplatesComponent {
       });
   }
 
-  createBankTemplate(): void {
+  createInstitutionTemplate(): void {
     this.dialog
       .open(NotificationTemplateDialogComponent, {
         width: '560px',

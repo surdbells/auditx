@@ -1,6 +1,6 @@
 # Reporting & Analytics Implementation Review — AuditX
 
-*Single-tenant bank internal-audit platform · ASP.NET Core 10 + Angular 21 · EF Core · Modules M1–M15*
+*Single-tenant institution internal-audit platform · ASP.NET Core 10 + Angular 21 · EF Core · Modules M1–M15*
 *Scope: grounded against the actual domain model (Universe/Planning, Execution/Evidence, Findings/MAP/Compliance, Analytics/Reports infra). Every report is validated against captured fields; needs without backing data are flagged as gaps with a capture location.*
 
 ---

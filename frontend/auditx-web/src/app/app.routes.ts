@@ -236,9 +236,9 @@ export const routes: Routes = [
         title: 'Administration · AuditX',
         canActivate: [
           permissionGuard(
-            Permissions.ViewBankSettings,
+            Permissions.ViewInstitutionSettings,
             Permissions.ViewSystemHealth,
-            Permissions.ManageBankSettings,
+            Permissions.ManageInstitutionSettings,
             Permissions.ConfigureLimits,
             Permissions.ManageUsers,
             Permissions.ManageSupportChannel,

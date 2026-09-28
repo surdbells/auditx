@@ -6,8 +6,8 @@ namespace AuditX.Application.Administration.Mapping;
 
 public static class AdministrationMappings
 {
-    public static BankSettingsDto ToDto(this BankSettings bank) => new(
-        bank.BankDisplayName, bank.Timezone, bank.LocaleDefault,
+    public static InstitutionSettingsDto ToDto(this InstitutionSettings bank) => new(
+        bank.InstitutionDisplayName, bank.Timezone, bank.LocaleDefault,
         bank.AdProvisioningFilterOuDn, bank.AdProvisioningFilterGroupSid,
         bank.MaxEvidenceFileMb, bank.MaxAuditEvidenceGb, bank.AllowOverlappingPlanPeriods,
         bank.AllowAuditLaunchBeforeApproval, bank.AllowMinorPlanRevisionAfterApproval,
