@@ -2,7 +2,13 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
 import { ApiService } from './api.service';
-import { LoginRequest, SessionDto } from '../models';
+import {
+  ChangePasswordRequest,
+  ForgotPasswordRequest,
+  LoginRequest,
+  ResetPasswordRequest,
+  SessionDto,
+} from '../models';
 
 /**
  * Holds the authenticated session as signals and exposes auth operations.
@@ -32,6 +38,11 @@ export class AuthService {
   /** True when the account exists but has no roles assigned yet. */
   readonly awaitingRole = computed(
     () => this._session()?.status === 'awaiting_role_assignment',
+  );
+
+  /** True when the signed-in local user must change their password before continuing. */
+  readonly mustChangePassword = computed(
+    () => this._session()?.mustChangePassword ?? false,
   );
 
   /** Case-sensitive permission-key check against the session's permission list. */
@@ -66,6 +77,23 @@ export class AuthService {
     return this.api
       .postVoid('/auth/logout')
       .pipe(tap(() => this.clearSession()));
+  }
+
+  /** Change the signed-in local user's password; the server re-issues the session cookie. */
+  changePassword(request: ChangePasswordRequest): Observable<SessionDto> {
+    return this.api
+      .post<SessionDto>('/auth/change-password', request)
+      .pipe(tap((session) => this.setSession(session)));
+  }
+
+  /** Request a password-reset link. Always resolves (no account-existence disclosure). */
+  forgotPassword(request: ForgotPasswordRequest): Observable<void> {
+    return this.api.postVoid('/auth/forgot-password', request);
+  }
+
+  /** Set a new password from a valid reset/invite link. */
+  resetPassword(request: ResetPasswordRequest): Observable<void> {
+    return this.api.postVoid('/auth/reset-password', request);
   }
 
   /** Loads (or refreshes) the session; marks the session as probed regardless of outcome. */

@@ -16,6 +16,16 @@
           <app-icon name="edit" />
           {{ 'identity.editUser.title' | t }}
         </button>
+        <button actions matButton="outlined" type="button" (click)="openResetPassword()">
+          <app-icon name="lock_reset" />
+          {{ (u.authenticationSource === 'local' ? 'identity.resetPassword.action' : 'identity.resetPassword.enableAction') | t }}
+        </button>
+        @if (u.authenticationSource === 'local') {
+          <button actions matButton="outlined" type="button" (click)="unlock()">
+            <app-icon name="lock_open" />
+            {{ 'identity.unlock.action' | t }}
+          </button>
+        }
         <button actions matButton="outlined" type="button" (click)="goBack()">
           <app-icon name="arrow_back" />
           {{ 'identity.userDetail.backToUsers' | t }}

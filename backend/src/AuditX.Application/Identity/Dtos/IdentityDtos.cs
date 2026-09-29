@@ -47,7 +47,9 @@ public sealed record UserDetailDto(
     Guid? ManagerId,
     string? ManagerName,
     IReadOnlyList<UserRoleDto> Roles,
-    IReadOnlyList<DelegationDto> Delegations);
+    IReadOnlyList<DelegationDto> Delegations,
+    string AuthenticationSource,
+    string? Username);
 
 public sealed record UserRoleDto(
     Guid Id,

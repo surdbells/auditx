@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
   InstitutionSettings,
+  PasswordPolicy,
   BulkOperationResult,
   CreateObjectRestoreRequest,
   CreateRestoreDrillRequest,
@@ -38,6 +39,11 @@ export class AdministrationService {
 
   updateResourceLimits(body: ResourceLimits): Observable<ResourceLimits> {
     return this.api.patch<ResourceLimits>('/admin/resource-limits', body);
+  }
+
+  /** Update the local-password policy (M1 local authentication). */
+  updatePasswordPolicy(body: PasswordPolicy): Observable<PasswordPolicy> {
+    return this.api.patch<PasswordPolicy>('/admin/institution-settings/password-policy', body);
   }
 
   /* ---- Bulk users ---- */

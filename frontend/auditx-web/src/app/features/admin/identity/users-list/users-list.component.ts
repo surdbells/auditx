@@ -37,6 +37,7 @@ import {
 import {
   CreateUserDialogComponent,
   CreateUserDialogData,
+  CreateUserDialogResult,
 } from '../dialogs/create-user-dialog.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
@@ -289,15 +290,39 @@ export class UsersListComponent {
   }
 
   openCreateUser(): void {
-    const data: CreateUserDialogData = { roles: this.roles() };
+    const data: CreateUserDialogData = { roles: this.roles(), localPasswordsEnabled: true };
     this.dialog
       .open(CreateUserDialogComponent, { data })
       .afterClosed()
-      .subscribe((request) => {
-        if (!request) {
+      .subscribe((result: CreateUserDialogResult | undefined) => {
+        if (!result) {
           return;
         }
-        this.usersService.create(request).subscribe({
+        if (result.kind === 'local') {
+          this.usersService.createLocal(result.request).subscribe({
+            next: (created) => {
+              if (created.generatedPassword) {
+                this.dialog.open(ConfirmDialogComponent, {
+                  data: {
+                    title: this.i18n.translate('identity.createUser.tempTitle'),
+                    message: this.i18n.translate('identity.createUser.tempMessage', {
+                      username: created.username,
+                      password: created.generatedPassword,
+                    }),
+                    confirmLabel: this.i18n.translate('common.ok'),
+                  } as ConfirmDialogData,
+                });
+              } else {
+                this.notify.success(
+                  this.i18n.translate('identity.createUser.createdLocal', { username: created.username }),
+                );
+              }
+              this.fetchPage(1);
+            },
+          });
+          return;
+        }
+        this.usersService.create(result.request).subscribe({
           next: (created) => {
             this.notify.success(
               this.i18n.translate('identity.createUser.created', { name: created.displayName }),

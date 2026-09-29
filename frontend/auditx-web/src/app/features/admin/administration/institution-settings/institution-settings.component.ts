@@ -40,6 +40,7 @@ type SaveGroup =
   | 'session'
   | 'guide'
   | 'reports'
+  | 'password'
   | 'limits';
 
 /** Contextual page guide for the organization/bank settings page. */
@@ -209,6 +210,19 @@ export class InstitutionSettingsComponent {
     maxAuditEvidenceGb: [0, [Validators.required, Validators.min(1)]],
   });
 
+  readonly passwordForm = this.fb.nonNullable.group({
+    enableLocalPasswords: [false],
+    minLength: [12, [Validators.required, Validators.min(8), Validators.max(128)]],
+    requireUppercase: [true],
+    requireLowercase: [true],
+    requireDigit: [true],
+    requireSymbol: [true],
+    historyDepth: [5, [Validators.required, Validators.min(0), Validators.max(24)]],
+    expiryDays: [90, [Validators.required, Validators.min(0), Validators.max(3650)]],
+    maxFailedAttempts: [5, [Validators.required, Validators.min(0), Validators.max(20)]],
+    lockoutMinutes: [15, [Validators.required, Validators.min(1), Validators.max(1440)]],
+  });
+
   /** All page-guide-permission-gated forms (everything except resource limits, which has its own permission). */
   private readonly manageForms = [
     this.orgForm,
@@ -217,6 +231,7 @@ export class InstitutionSettingsComponent {
     this.sessionForm,
     this.guideForm,
     this.reportsForm,
+    this.passwordForm,
   ];
 
   constructor() {
@@ -262,6 +277,18 @@ export class InstitutionSettingsComponent {
       autoStartWalkthrough: s.autoStartWalkthrough,
     });
     this.reportsForm.reset({ reportRetentionMonths: s.reportRetentionMonths });
+    this.passwordForm.reset({
+      enableLocalPasswords: s.passwordPolicy.enableLocalPasswords,
+      minLength: s.passwordPolicy.minLength,
+      requireUppercase: s.passwordPolicy.requireUppercase,
+      requireLowercase: s.passwordPolicy.requireLowercase,
+      requireDigit: s.passwordPolicy.requireDigit,
+      requireSymbol: s.passwordPolicy.requireSymbol,
+      historyDepth: s.passwordPolicy.historyDepth,
+      expiryDays: s.passwordPolicy.expiryDays,
+      maxFailedAttempts: s.passwordPolicy.maxFailedAttempts,
+      lockoutMinutes: s.passwordPolicy.lockoutMinutes,
+    });
     this.limitsForm.reset({
       maxEvidenceFileMb: s.maxEvidenceFileMb,
       maxAuditEvidenceGb: s.maxAuditEvidenceGb,
@@ -399,6 +426,30 @@ export class InstitutionSettingsComponent {
     const v = this.reportsForm.getRawValue();
     this.saveGroup('reports', this.reportsForm, {
       reportRetentionMonths: v.reportRetentionMonths,
+    });
+  }
+
+  savePassword(): void {
+    if (this.passwordForm.invalid) {
+      this.passwordForm.markAllAsTouched();
+      return;
+    }
+    if (this.isSaving('password')) {
+      return;
+    }
+    this.setSaving('password', true);
+    const policy = this.passwordForm.getRawValue();
+    this.admin.updatePasswordPolicy(policy).subscribe({
+      next: (saved) => {
+        if (this.loaded) {
+          this.loaded = { ...this.loaded, passwordPolicy: saved };
+        }
+        this.notify.success(
+          this.i18n.translate('administration.institutionSettings.passwordSavedToast'),
+        );
+        this.setSaving('password', false);
+      },
+      error: () => this.setSaving('password', false),
     });
   }
 

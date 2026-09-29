@@ -30,6 +30,18 @@ function settings(overrides: Partial<InstitutionSettings> = {}): InstitutionSett
     reportRetentionMonths: 0,
     idleTimeoutMinutes: 15,
     idleWarningSeconds: 60,
+    passwordPolicy: {
+      enableLocalPasswords: false,
+      minLength: 12,
+      requireUppercase: true,
+      requireLowercase: true,
+      requireDigit: true,
+      requireSymbol: true,
+      historyDepth: 5,
+      expiryDays: 90,
+      maxFailedAttempts: 5,
+      lockoutMinutes: 15,
+    },
     ...overrides,
   };
 }
