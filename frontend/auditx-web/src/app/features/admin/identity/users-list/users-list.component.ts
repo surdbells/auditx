@@ -39,6 +39,10 @@ import {
   CreateUserDialogData,
   CreateUserDialogResult,
 } from '../dialogs/create-user-dialog.component';
+import {
+  CredentialResultDialogComponent,
+  CredentialResultDialogData,
+} from '../dialogs/credential-result-dialog.component';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
@@ -302,15 +306,8 @@ export class UsersListComponent {
           this.usersService.createLocal(result.request).subscribe({
             next: (created) => {
               if (created.generatedPassword) {
-                this.dialog.open(ConfirmDialogComponent, {
-                  data: {
-                    title: this.i18n.translate('identity.createUser.tempTitle'),
-                    message: this.i18n.translate('identity.createUser.tempMessage', {
-                      username: created.username,
-                      password: created.generatedPassword,
-                    }),
-                    confirmLabel: this.i18n.translate('common.ok'),
-                  } as ConfirmDialogData,
+                this.dialog.open(CredentialResultDialogComponent, {
+                  data: { username: created.username, password: created.generatedPassword } as CredentialResultDialogData,
                 });
               } else {
                 this.notify.success(
