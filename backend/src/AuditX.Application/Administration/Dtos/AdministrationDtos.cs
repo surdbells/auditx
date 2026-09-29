@@ -20,7 +20,21 @@ public sealed record InstitutionSettingsDto(
     int ReportRetentionMonths,
     bool AutoStartWalkthrough,
     int IdleTimeoutMinutes,
-    int IdleWarningSeconds);
+    int IdleWarningSeconds,
+    PasswordPolicyDto PasswordPolicy);
+
+/// <summary>The institution's local-password policy (M1 local authentication).</summary>
+public sealed record PasswordPolicyDto(
+    bool EnableLocalPasswords,
+    int MinLength,
+    bool RequireUppercase,
+    bool RequireLowercase,
+    bool RequireDigit,
+    bool RequireSymbol,
+    int HistoryDepth,
+    int ExpiryDays,
+    int MaxFailedAttempts,
+    int LockoutMinutes);
 
 public sealed record ResourceLimitsDto(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
 

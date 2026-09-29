@@ -69,6 +69,7 @@ public static class AuditEventTypes
     // M15 administration
     public const string InstitutionSettingsUpdated = "institution_settings_updated";
     public const string ResourceLimitsUpdated = "resource_limits_updated";
+    public const string PasswordPolicyUpdated = "password_policy_updated";
     public const string UsersBulkDeactivated = "users_bulk_deactivated";
     public const string UsersBulkReactivated = "users_bulk_reactivated";
     public const string UsersBulkImported = "users_bulk_imported";

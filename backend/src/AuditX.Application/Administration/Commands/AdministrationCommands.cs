@@ -115,6 +115,56 @@ public sealed class UpdateResourceLimitsCommandHandler(IInstitutionSettingsRepos
     }
 }
 
+// ---- Local-password policy ----
+
+public sealed record UpdatePasswordPolicyCommand(
+    bool EnableLocalPasswords, int MinLength,
+    bool RequireUppercase, bool RequireLowercase, bool RequireDigit, bool RequireSymbol,
+    int HistoryDepth, int ExpiryDays, int MaxFailedAttempts, int LockoutMinutes)
+    : ICommand<PasswordPolicyDto>;
+
+public sealed class UpdatePasswordPolicyCommandValidator : AbstractValidator<UpdatePasswordPolicyCommand>
+{
+    // Mirror the domain guards (InstitutionSettings.SetPasswordPolicy) so out-of-range values fail fast with a 422.
+    public UpdatePasswordPolicyCommandValidator()
+    {
+        RuleFor(x => x.MinLength).InclusiveBetween(8, 128)
+            .WithMessage("Minimum password length must be between 8 and 128.");
+        RuleFor(x => x.HistoryDepth).InclusiveBetween(0, 24)
+            .WithMessage("Password history depth must be between 0 and 24.");
+        RuleFor(x => x.ExpiryDays).InclusiveBetween(0, 3650)
+            .WithMessage("Password expiry must be between 0 (never) and 3650 days.");
+        RuleFor(x => x.MaxFailedAttempts).InclusiveBetween(0, 20)
+            .WithMessage("Max failed attempts must be between 0 (disabled) and 20.");
+        RuleFor(x => x.LockoutMinutes).InclusiveBetween(1, 1440)
+            .WithMessage("Lockout duration must be between 1 and 1440 minutes.");
+    }
+}
+
+public sealed class UpdatePasswordPolicyCommandHandler(IInstitutionSettingsRepository settings, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<UpdatePasswordPolicyCommand, PasswordPolicyDto>
+{
+    public async Task<PasswordPolicyDto> Handle(UpdatePasswordPolicyCommand command, CancellationToken cancellationToken)
+    {
+        var institution = await settings.GetAsync(cancellationToken);
+        institution.SetPasswordPolicy(
+            command.EnableLocalPasswords, command.MinLength,
+            command.RequireUppercase, command.RequireLowercase, command.RequireDigit, command.RequireSymbol,
+            command.HistoryDepth, command.ExpiryDays, command.MaxFailedAttempts, command.LockoutMinutes);
+
+        audit.Record(AuditEventTypes.PasswordPolicyUpdated, AuditTargetTypes.InstitutionSettings, institution.Id, after: new
+        {
+            institution.EnableLocalPasswords, institution.PasswordMinLength,
+            institution.PasswordRequireUppercase, institution.PasswordRequireLowercase,
+            institution.PasswordRequireDigit, institution.PasswordRequireSymbol,
+            institution.PasswordHistoryDepth, institution.PasswordExpiryDays,
+            institution.PasswordMaxFailedAttempts, institution.PasswordLockoutMinutes,
+        });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return institution.ToPasswordPolicyDto();
+    }
+}
+
 // ---- Bulk user operations ----
 
 public sealed record BulkDeactivateUsersCommand(IReadOnlyList<Guid> UserIds) : ICommand<BulkOperationResultDto>;

@@ -97,6 +97,42 @@ public sealed class InstitutionSettings : Entity
     /// </summary>
     public int IdleWarningSeconds { get; private set; } = 60;
 
+    // ---- Local-password policy (M1 local authentication) ----
+
+    /// <summary>
+    /// Master switch: when true, users may hold a local (institution-managed) password credential and
+    /// authenticate without Active Directory. Default false — AuditX authenticates against AD only and
+    /// stores no passwords unless this is explicitly turned on.
+    /// </summary>
+    public bool EnableLocalPasswords { get; private set; }
+
+    /// <summary>Minimum local-password length. Bounded 8–128. Default 12.</summary>
+    public int PasswordMinLength { get; private set; } = 12;
+
+    /// <summary>Require at least one uppercase letter in a local password. Default true.</summary>
+    public bool PasswordRequireUppercase { get; private set; } = true;
+
+    /// <summary>Require at least one lowercase letter in a local password. Default true.</summary>
+    public bool PasswordRequireLowercase { get; private set; } = true;
+
+    /// <summary>Require at least one digit in a local password. Default true.</summary>
+    public bool PasswordRequireDigit { get; private set; } = true;
+
+    /// <summary>Require at least one non-alphanumeric symbol in a local password. Default true.</summary>
+    public bool PasswordRequireSymbol { get; private set; } = true;
+
+    /// <summary>Number of previous passwords a new password may not reuse. 0 = no history. Bounded 0–24. Default 5.</summary>
+    public int PasswordHistoryDepth { get; private set; } = 5;
+
+    /// <summary>Days before a local password expires and must be changed. 0 = never expires. Bounded 0–3650. Default 90.</summary>
+    public int PasswordExpiryDays { get; private set; } = 90;
+
+    /// <summary>Consecutive failed local sign-ins before the account is locked. 0 = lockout disabled. Bounded 0–20. Default 5.</summary>
+    public int PasswordMaxFailedAttempts { get; private set; } = 5;
+
+    /// <summary>Minutes an account stays locked after too many failed attempts. Bounded 1–1440. Default 15.</summary>
+    public int PasswordLockoutMinutes { get; private set; } = 15;
+
     public static InstitutionSettings CreateDefault(string institutionDisplayName) => new()
     {
         InstitutionDisplayName = Guard.NotNullOrWhiteSpace(institutionDisplayName, "institution.name_required", "Institution display name is required."),
@@ -169,5 +205,40 @@ public sealed class InstitutionSettings : Entity
     {
         MaxEvidenceFileMb = maxEvidenceFileMb is <= 0 or > 1024 ? MaxEvidenceFileMb : maxEvidenceFileMb;
         MaxAuditEvidenceGb = maxAuditEvidenceGb is <= 0 or > 1024 ? MaxAuditEvidenceGb : maxAuditEvidenceGb;
+    }
+
+    /// <summary>
+    /// Sets the local-password policy. Bounds are enforced here as defence-in-depth (the application-layer
+    /// validator surfaces friendly errors); out-of-range values are rejected rather than silently clamped
+    /// because this is a security control.
+    /// </summary>
+    public void SetPasswordPolicy(
+        bool enableLocalPasswords,
+        int minLength,
+        bool requireUppercase,
+        bool requireLowercase,
+        bool requireDigit,
+        bool requireSymbol,
+        int historyDepth,
+        int expiryDays,
+        int maxFailedAttempts,
+        int lockoutMinutes)
+    {
+        Guard.Against(minLength is < 8 or > 128, "institution.password_min_length_invalid", "Minimum password length must be between 8 and 128.");
+        Guard.Against(historyDepth is < 0 or > 24, "institution.password_history_invalid", "Password history depth must be between 0 and 24.");
+        Guard.Against(expiryDays is < 0 or > 3650, "institution.password_expiry_invalid", "Password expiry days must be between 0 and 3650.");
+        Guard.Against(maxFailedAttempts is < 0 or > 20, "institution.password_lockout_attempts_invalid", "Max failed attempts must be between 0 and 20.");
+        Guard.Against(lockoutMinutes is < 1 or > 1440, "institution.password_lockout_minutes_invalid", "Lockout duration must be between 1 and 1440 minutes.");
+
+        EnableLocalPasswords = enableLocalPasswords;
+        PasswordMinLength = minLength;
+        PasswordRequireUppercase = requireUppercase;
+        PasswordRequireLowercase = requireLowercase;
+        PasswordRequireDigit = requireDigit;
+        PasswordRequireSymbol = requireSymbol;
+        PasswordHistoryDepth = historyDepth;
+        PasswordExpiryDays = expiryDays;
+        PasswordMaxFailedAttempts = maxFailedAttempts;
+        PasswordLockoutMinutes = lockoutMinutes;
     }
 }

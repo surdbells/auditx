@@ -13,7 +13,12 @@ public static class AdministrationMappings
         bank.AllowAuditLaunchBeforeApproval, bank.AllowMinorPlanRevisionAfterApproval,
         bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri,
         bank.ShowOverview, bank.ShowWalkthrough, bank.ReportRetentionMonths, bank.AutoStartWalkthrough,
-        bank.IdleTimeoutMinutes, bank.IdleWarningSeconds);
+        bank.IdleTimeoutMinutes, bank.IdleWarningSeconds, bank.ToPasswordPolicyDto());
+
+    public static PasswordPolicyDto ToPasswordPolicyDto(this InstitutionSettings s) => new(
+        s.EnableLocalPasswords, s.PasswordMinLength,
+        s.PasswordRequireUppercase, s.PasswordRequireLowercase, s.PasswordRequireDigit, s.PasswordRequireSymbol,
+        s.PasswordHistoryDepth, s.PasswordExpiryDays, s.PasswordMaxFailedAttempts, s.PasswordLockoutMinutes);
 
     public static SupportChannelStatusDto ToStatusDto(this SupportChannelSession? session, DateTimeOffset nowUtc)
         => session is null

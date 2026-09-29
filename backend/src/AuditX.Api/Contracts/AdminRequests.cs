@@ -9,6 +9,11 @@ public sealed record UpdateInstitutionSettingsRequest(
 
 public sealed record UpdateResourceLimitsRequest(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
 
+public sealed record UpdatePasswordPolicyRequest(
+    bool EnableLocalPasswords, int MinLength,
+    bool RequireUppercase, bool RequireLowercase, bool RequireDigit, bool RequireSymbol,
+    int HistoryDepth, int ExpiryDays, int MaxFailedAttempts, int LockoutMinutes);
+
 public sealed record BulkUserIdsRequest(IReadOnlyList<Guid> UserIds);
 
 public sealed record BulkImportRequest(string CsvContent);

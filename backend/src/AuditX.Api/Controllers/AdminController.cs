@@ -35,6 +35,14 @@ public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> UpdateResourceLimits([FromBody] UpdateResourceLimitsRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new UpdateResourceLimitsCommand(request.MaxEvidenceFileMb, request.MaxAuditEvidenceGb), cancellationToken));
 
+    [RequirePermission(PermissionKeys.ManageInstitutionSettings)]
+    [HttpPatch("institution-settings/password-policy")]
+    public async Task<IActionResult> UpdatePasswordPolicy([FromBody] UpdatePasswordPolicyRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new UpdatePasswordPolicyCommand(
+            request.EnableLocalPasswords, request.MinLength,
+            request.RequireUppercase, request.RequireLowercase, request.RequireDigit, request.RequireSymbol,
+            request.HistoryDepth, request.ExpiryDays, request.MaxFailedAttempts, request.LockoutMinutes), cancellationToken));
+
     // ---- Bulk user operations ----
 
     [RequirePermission(PermissionKeys.ManageUsers)]

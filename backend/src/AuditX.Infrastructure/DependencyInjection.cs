@@ -205,6 +205,9 @@ public static class DependencyInjection
             services.AddScoped<Application.Abstractions.Notifications.ITeamsSender, Notifications.TeamsWebhookSender>();
         }
 
+        // Local-password hashing (PBKDF2). Stateless, so registered as a singleton.
+        services.AddSingleton<IPasswordHasher, Identity.Pbkdf2PasswordHasher>();
+
         // Identity provider: seeded Development users locally, Active Directory over LDAPS, or the bank's
         // AD-over-REST gateway — selected by Identity:Provider.
         switch (identityOptions.Kind)
