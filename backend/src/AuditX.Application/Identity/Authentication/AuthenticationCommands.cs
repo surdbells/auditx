@@ -1,5 +1,6 @@
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Identity;
+using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Identity.Dtos;
@@ -24,6 +25,8 @@ public sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
 
 public sealed class LoginCommandHandler(
     IIdentityProvider identityProvider,
+    IUserRepository users,
+    LocalAuthenticator localAuthenticator,
     AuthSessionService sessionService,
     IAuditRecorder audit,
     IUnitOfWork unitOfWork)
@@ -31,6 +34,14 @@ public sealed class LoginCommandHandler(
 {
     public async Task<AuthResultDto> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
+        // Local-first: if the username matches a local-password user, authenticate against the stored hash.
+        // This gives per-user hybrid auth (some local, some directory) regardless of the configured provider.
+        var localUser = await users.GetByUsernameAsync(command.Username, cancellationToken);
+        if (localUser is { AuthenticationSource: AuthenticationSource.Local })
+        {
+            return await localAuthenticator.AuthenticateAsync(localUser, command.Password, cancellationToken);
+        }
+
         var directoryUser = await identityProvider.AuthenticateAsync(command.Username, command.Password, cancellationToken);
         if (directoryUser is null)
         {

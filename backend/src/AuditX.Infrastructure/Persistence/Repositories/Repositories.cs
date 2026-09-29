@@ -24,6 +24,9 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
     public Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
         => db.Users.AnyAsync(u => u.Username == username, cancellationToken);
 
+    public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+        => db.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+
     public Task<bool> HasAnyRoleAsync(Guid userId, CancellationToken cancellationToken = default)
         => db.UserRoles.AnyAsync(ur => ur.UserId == userId, cancellationToken);
 

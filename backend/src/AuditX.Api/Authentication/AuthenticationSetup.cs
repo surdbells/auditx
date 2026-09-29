@@ -1,5 +1,7 @@
 using System.Text;
 using AuditX.Application.Abstractions.Identity;
+using AuditX.Application.Abstractions.Persistence;
+using AuditX.Infrastructure.Identity;
 using AuditX.Infrastructure.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -48,7 +50,9 @@ public static class AuthenticationSetup
                         return Task.CompletedTask;
                     },
 
-                    // Enforce the server-side denylist (logout / force-logout / AD-disablement).
+                    // Enforce the server-side denylist (logout / force-logout / AD-disablement) and, for local
+                    // sessions, the credential security stamp (a password change/reset rotates it, invalidating
+                    // every outstanding session immediately).
                     OnTokenValidated = async ctx =>
                     {
                         var jti = ctx.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
@@ -58,6 +62,19 @@ public static class AuthenticationSetup
                             if (await denylist.IsRevokedAsync(jti, ctx.HttpContext.RequestAborted))
                             {
                                 ctx.Fail("Token has been revoked.");
+                                return;
+                            }
+                        }
+
+                        var stampClaim = ctx.Principal?.FindFirst(SessionTokenService.CredentialStampClaim)?.Value;
+                        var subClaim = ctx.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                        if (!string.IsNullOrEmpty(stampClaim) && Guid.TryParse(subClaim, out var userId))
+                        {
+                            var credentials = ctx.HttpContext.RequestServices.GetRequiredService<IUserCredentialRepository>();
+                            var credential = await credentials.GetByUserIdAsync(userId, ctx.HttpContext.RequestAborted);
+                            if (credential is null || credential.SecurityStamp.ToString("N") != stampClaim)
+                            {
+                                ctx.Fail("Credential has changed.");
                             }
                         }
                     },

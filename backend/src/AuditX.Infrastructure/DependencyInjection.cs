@@ -233,6 +233,10 @@ public static class DependencyInjection
                 services.AddScoped<IIdentityProvider>(sp => sp.GetRequiredService<ActiveDirectoryApiIdentityProvider>());
                 break;
 
+            case IdentityProviderKind.Local:
+                services.AddScoped<IIdentityProvider, NullDirectoryIdentityProvider>();
+                break;
+
             default:
                 services.AddScoped<IIdentityProvider, DevIdentityProvider>();
                 break;

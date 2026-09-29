@@ -4,6 +4,12 @@ namespace AuditX.Api.Contracts;
 
 public sealed record LoginRequest(string Username, string Password);
 
+public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
+
+public sealed record ForgotPasswordRequest(string UsernameOrEmail);
+
+public sealed record ResetPasswordRequest(string Token, string NewPassword);
+
 public sealed record UpdateNotificationPreferencesRequest(string? PreferencesJson);
 
 public sealed record UpdateUserRequest(string Status);

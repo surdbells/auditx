@@ -8,6 +8,11 @@ public static class AuditEventTypes
     public const string LoginSucceeded = "login_success";
     public const string LoginFailed = "login_failure";
     public const string LoggedOut = "logout";
+    public const string PasswordChanged = "password_changed";
+    public const string PasswordResetRequested = "password_reset_requested";
+    public const string PasswordReset = "password_reset";
+    public const string LocalCredentialSet = "local_credential_set";
+    public const string AccountUnlocked = "account_unlocked";
     public const string SessionTerminated = "session_terminated";
 
     // User lifecycle

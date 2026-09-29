@@ -18,10 +18,12 @@ public sealed class LoginCommandHandlerTests
     {
         var identity = Substitute.For<IIdentityProvider>();
         identity.AuthenticateAsync("jdoe", "wrong", Arg.Any<CancellationToken>()).Returns((DirectoryUser?)null);
+        var users = Substitute.For<IUserRepository>();
+        users.GetByUsernameAsync("jdoe", Arg.Any<CancellationToken>()).Returns((User?)null); // no local user → directory path
         var audit = Substitute.For<IAuditRecorder>();
         var uow = Substitute.For<IUnitOfWork>();
 
-        var handler = new LoginCommandHandler(identity, sessionService: null!, audit, uow);
+        var handler = new LoginCommandHandler(identity, users, localAuthenticator: null!, sessionService: null!, audit, uow);
 
         var ex = await Assert.ThrowsAsync<UnauthorizedException>(() =>
             handler.Handle(new LoginCommand("jdoe", "wrong"), CancellationToken.None));

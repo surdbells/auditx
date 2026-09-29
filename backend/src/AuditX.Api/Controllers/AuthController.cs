@@ -4,6 +4,7 @@ using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Identity.Authentication;
 using AuditX.Application.Identity.Dtos;
+using AuditX.Application.Identity.Passwords;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -52,6 +53,36 @@ public sealed class AuthController(IDispatcher dispatcher) : ApiControllerBase
     [HttpGet("session")]
     public async Task<IActionResult> Session(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetSessionQuery(), cancellationToken));
+
+    /// <summary>Change the signed-in local user's password; re-issues the session cookie with a fresh stamp.</summary>
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        var result = await dispatcher.Send(new ChangePasswordCommand(request.CurrentPassword, request.NewPassword), cancellationToken);
+        WriteSession(result);
+        return Envelope(result.Session);
+    }
+
+    /// <summary>Request a password-reset link. Always succeeds (no account-existence disclosure).</summary>
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new ForgotPasswordCommand(request.UsernameOrEmail), cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Set a new password from a valid reset/invite link.</summary>
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new ResetPasswordCommand(request.Token, request.NewPassword), cancellationToken);
+        return NoContent();
+    }
 
     private void WriteSession(AuthResultDto result)
         => SessionCookie.Write(HttpContext, result.Token, result.AbsoluteExpiresAt);

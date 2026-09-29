@@ -30,6 +30,9 @@ public enum IdentityProviderKind
 
     /// <summary>Active Directory fronted by the bank's REST gateway (base URL + credential-validation endpoint).</summary>
     ActiveDirectoryApi,
+
+    /// <summary>No directory at all — every user authenticates with a local, AuditX-managed password.</summary>
+    Local,
 }
 
 /// <summary>Selects and configures the identity provider (bound from <c>Identity</c>).</summary>
