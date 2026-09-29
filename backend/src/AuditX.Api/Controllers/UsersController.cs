@@ -3,6 +3,7 @@ using AuditX.Api.Contracts;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Identity.Delegations;
+using AuditX.Application.Identity.Passwords;
 using AuditX.Application.Identity.Users;
 using AuditX.Application.Organization;
 using AuditX.Domain.Authorization;
@@ -74,6 +75,43 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
         => Created(await dispatcher.Send(
             new CreateUserCommand(request.Email, request.FirstName, request.LastName, request.ExternalId, request.RoleNames),
             cancellationToken));
+
+    /// <summary>Create a user that signs in with a local password (admin-set, generated, or emailed invite).</summary>
+    [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpPost("local")]
+    public async Task<IActionResult> CreateLocal([FromBody] CreateLocalUserRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(
+            new CreateLocalUserCommand(request.Email, request.FirstName, request.LastName, request.Username, request.RoleNames, ParseMethod(request.Method), request.Password),
+            cancellationToken));
+
+    /// <summary>Enable a local password on an existing user.</summary>
+    [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpPost("{id:guid}/local-credential")]
+    public async Task<IActionResult> EnableLocalCredential(Guid id, [FromBody] EnableLocalCredentialRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(
+            new EnableLocalCredentialCommand(id, request.Username, ParseMethod(request.Method), request.Password), cancellationToken));
+
+    /// <summary>Reset a local user's password (admin-set, generated, or emailed invite); forces a change at next sign-in.</summary>
+    [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpPost("{id:guid}/reset-password")]
+    public async Task<IActionResult> ResetPassword(Guid id, [FromBody] AdminResetPasswordRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(
+            new AdminResetLocalPasswordCommand(id, ParseMethod(request.Method), request.Password), cancellationToken));
+
+    private static InitialPasswordMethod ParseMethod(string? method)
+        => Enum.TryParse<InitialPasswordMethod>((method ?? string.Empty).Replace("_", string.Empty), ignoreCase: true, out var parsed)
+            ? parsed
+            : throw new FluentValidation.ValidationException(
+                new[] { new FluentValidation.Results.ValidationFailure("method", "Method must be one of: set_password, generate_temp, invite.") });
+
+    /// <summary>Clear a lockout on a local account.</summary>
+    [RequirePermission(PermissionKeys.ManageUsers)]
+    [HttpPost("{id:guid}/unlock")]
+    public async Task<IActionResult> Unlock(Guid id, CancellationToken cancellationToken)
+    {
+        await dispatcher.Send(new UnlockUserCommand(id), cancellationToken);
+        return NoContent();
+    }
 
     [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpPatch("{id:guid}/profile")]

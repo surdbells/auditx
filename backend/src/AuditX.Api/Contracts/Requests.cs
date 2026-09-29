@@ -1,3 +1,4 @@
+using AuditX.Application.Identity.Passwords;
 using AuditX.Application.Identity.Roles;
 
 namespace AuditX.Api.Contracts;
@@ -15,6 +16,16 @@ public sealed record UpdateNotificationPreferencesRequest(string? PreferencesJso
 public sealed record UpdateUserRequest(string Status);
 
 public sealed record CreateUserRequest(string Email, string FirstName, string LastName, string? ExternalId, IReadOnlyList<string>? RoleNames);
+
+// Method is a string ("set_password" | "generate_temp" | "invite", case-insensitive) parsed by the controller,
+// since the API does not globally bind enums from strings.
+public sealed record CreateLocalUserRequest(
+    string Email, string FirstName, string LastName, string Username,
+    IReadOnlyList<string>? RoleNames, string Method, string? Password);
+
+public sealed record EnableLocalCredentialRequest(string Username, string Method, string? Password);
+
+public sealed record AdminResetPasswordRequest(string Method, string? Password);
 
 public sealed record UpdateUserProfileRequest(string Email, string FirstName, string LastName, string? DisplayName);
 
