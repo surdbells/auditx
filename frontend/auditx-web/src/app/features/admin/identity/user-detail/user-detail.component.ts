@@ -66,6 +66,10 @@ import {
   ResetPasswordDialogData,
   ResetPasswordDialogResult,
 } from '../dialogs/reset-password-dialog.component';
+import {
+  CredentialResultDialogComponent,
+  CredentialResultDialogData,
+} from '../dialogs/credential-result-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -259,15 +263,8 @@ export class UserDetailComponent {
         request$.subscribe({
           next: (res) => {
             if (res.generatedPassword) {
-              this.dialog.open(ConfirmDialogComponent, {
-                data: {
-                  title: this.i18n.translate('identity.createUser.tempTitle'),
-                  message: this.i18n.translate('identity.createUser.tempMessage', {
-                    username: res.username,
-                    password: res.generatedPassword,
-                  }),
-                  confirmLabel: this.i18n.translate('common.ok'),
-                } as ConfirmDialogData,
+              this.dialog.open(CredentialResultDialogComponent, {
+                data: { username: res.username, password: res.generatedPassword } as CredentialResultDialogData,
               });
             } else {
               this.notify.success(this.i18n.translate('identity.resetPassword.done'));
