@@ -3,10 +3,14 @@ import { Observable } from 'rxjs';
 
 import { ApiService } from './api.service';
 import {
+  AdminResetPasswordRequest,
   CreateDelegationRequest,
+  CreateLocalUserRequest,
   CreateUserRequest,
   DelegationDto,
+  EnableLocalCredentialRequest,
   GrantRoleRequest,
+  LocalCredentialResult,
   MyPreferences,
   NotificationPreferencesRequest,
   PagedResult,
@@ -68,6 +72,26 @@ export class UsersService {
   /** Create a user manually (admin). */
   create(body: CreateUserRequest): Observable<UserDto> {
     return this.api.post<UserDto>('/users', body);
+  }
+
+  /** Create a user that signs in with a local password (admin-set, generated, or emailed invite). */
+  createLocal(body: CreateLocalUserRequest): Observable<LocalCredentialResult> {
+    return this.api.post<LocalCredentialResult>('/users/local', body);
+  }
+
+  /** Enable a local password on an existing user. */
+  enableLocalCredential(id: string, body: EnableLocalCredentialRequest): Observable<LocalCredentialResult> {
+    return this.api.post<LocalCredentialResult>(`/users/${id}/local-credential`, body);
+  }
+
+  /** Reset a local user's password (forces a change at next sign-in). */
+  adminResetPassword(id: string, body: AdminResetPasswordRequest): Observable<LocalCredentialResult> {
+    return this.api.post<LocalCredentialResult>(`/users/${id}/reset-password`, body);
+  }
+
+  /** Clear a lockout on a local account. */
+  unlockUser(id: string): Observable<void> {
+    return this.api.postVoid(`/users/${id}/unlock`);
   }
 
   /** Edit a user's profile (name, email, display name). */

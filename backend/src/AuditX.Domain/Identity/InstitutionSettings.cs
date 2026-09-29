@@ -7,13 +7,13 @@ namespace AuditX.Domain.Identity;
 /// presentation defaults and the optional coarse-grained AD provisioning filter (US-M1-006) that
 /// gates which directory users may reach the awaiting-role state.
 /// </summary>
-public sealed class BankSettings : Entity
+public sealed class InstitutionSettings : Entity
 {
-    private BankSettings()
+    private InstitutionSettings()
     {
     }
 
-    public string BankDisplayName { get; private set; } = "AuditX";
+    public string InstitutionDisplayName { get; private set; } = "AuditX";
 
     public string Timezone { get; private set; } = "UTC";
 
@@ -97,18 +97,54 @@ public sealed class BankSettings : Entity
     /// </summary>
     public int IdleWarningSeconds { get; private set; } = 60;
 
-    public static BankSettings CreateDefault(string bankDisplayName) => new()
+    // ---- Local-password policy (M1 local authentication) ----
+
+    /// <summary>
+    /// Master switch: when true, users may hold a local (institution-managed) password credential and
+    /// authenticate without Active Directory. Default false — AuditX authenticates against AD only and
+    /// stores no passwords unless this is explicitly turned on.
+    /// </summary>
+    public bool EnableLocalPasswords { get; private set; }
+
+    /// <summary>Minimum local-password length. Bounded 8–128. Default 12.</summary>
+    public int PasswordMinLength { get; private set; } = 12;
+
+    /// <summary>Require at least one uppercase letter in a local password. Default true.</summary>
+    public bool PasswordRequireUppercase { get; private set; } = true;
+
+    /// <summary>Require at least one lowercase letter in a local password. Default true.</summary>
+    public bool PasswordRequireLowercase { get; private set; } = true;
+
+    /// <summary>Require at least one digit in a local password. Default true.</summary>
+    public bool PasswordRequireDigit { get; private set; } = true;
+
+    /// <summary>Require at least one non-alphanumeric symbol in a local password. Default true.</summary>
+    public bool PasswordRequireSymbol { get; private set; } = true;
+
+    /// <summary>Number of previous passwords a new password may not reuse. 0 = no history. Bounded 0–24. Default 5.</summary>
+    public int PasswordHistoryDepth { get; private set; } = 5;
+
+    /// <summary>Days before a local password expires and must be changed. 0 = never expires. Bounded 0–3650. Default 90.</summary>
+    public int PasswordExpiryDays { get; private set; } = 90;
+
+    /// <summary>Consecutive failed local sign-ins before the account is locked. 0 = lockout disabled. Bounded 0–20. Default 5.</summary>
+    public int PasswordMaxFailedAttempts { get; private set; } = 5;
+
+    /// <summary>Minutes an account stays locked after too many failed attempts. Bounded 1–1440. Default 15.</summary>
+    public int PasswordLockoutMinutes { get; private set; } = 15;
+
+    public static InstitutionSettings CreateDefault(string institutionDisplayName) => new()
     {
-        BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required."),
+        InstitutionDisplayName = Guard.NotNullOrWhiteSpace(institutionDisplayName, "institution.name_required", "Institution display name is required."),
         Timezone = "UTC",
         LocaleDefault = "en-GB",
     };
 
-    public void Update(string bankDisplayName, string timezone, string localeDefault)
+    public void Update(string institutionDisplayName, string timezone, string localeDefault)
     {
-        BankDisplayName = Guard.NotNullOrWhiteSpace(bankDisplayName, "bank.name_required", "Bank display name is required.");
-        Timezone = Guard.NotNullOrWhiteSpace(timezone, "bank.timezone_required", "Timezone is required.");
-        LocaleDefault = Guard.NotNullOrWhiteSpace(localeDefault, "bank.locale_required", "Locale is required.");
+        InstitutionDisplayName = Guard.NotNullOrWhiteSpace(institutionDisplayName, "institution.name_required", "Institution display name is required.");
+        Timezone = Guard.NotNullOrWhiteSpace(timezone, "institution.timezone_required", "Timezone is required.");
+        LocaleDefault = Guard.NotNullOrWhiteSpace(localeDefault, "institution.locale_required", "Locale is required.");
     }
 
     public void SetAdProvisioningFilter(string? ouDn, string? groupSid)
@@ -159,15 +195,53 @@ public sealed class BankSettings : Entity
     /// <summary>Sets the branding: primary/accent colours are required; logo/icon are optional data URIs.</summary>
     public void SetBranding(string primaryColor, string accentColor, string? logoDataUri, string? iconDataUri)
     {
-        PrimaryColor = Guard.NotNullOrWhiteSpace(primaryColor, "bank.primary_color_required", "Primary colour is required.");
-        AccentColor = Guard.NotNullOrWhiteSpace(accentColor, "bank.accent_color_required", "Accent colour is required.");
+        PrimaryColor = Guard.NotNullOrWhiteSpace(primaryColor, "institution.primary_color_required", "Primary colour is required.");
+        AccentColor = Guard.NotNullOrWhiteSpace(accentColor, "institution.accent_color_required", "Accent colour is required.");
         LogoDataUri = string.IsNullOrWhiteSpace(logoDataUri) ? null : logoDataUri;
         IconDataUri = string.IsNullOrWhiteSpace(iconDataUri) ? null : iconDataUri;
     }
+
+    /// <summary>Toggle only the local-password master switch, leaving the rest of the policy intact.</summary>
+    public void SetEnableLocalPasswords(bool value) => EnableLocalPasswords = value;
 
     public void SetResourceLimits(int maxEvidenceFileMb, int maxAuditEvidenceGb)
     {
         MaxEvidenceFileMb = maxEvidenceFileMb is <= 0 or > 1024 ? MaxEvidenceFileMb : maxEvidenceFileMb;
         MaxAuditEvidenceGb = maxAuditEvidenceGb is <= 0 or > 1024 ? MaxAuditEvidenceGb : maxAuditEvidenceGb;
+    }
+
+    /// <summary>
+    /// Sets the local-password policy. Bounds are enforced here as defence-in-depth (the application-layer
+    /// validator surfaces friendly errors); out-of-range values are rejected rather than silently clamped
+    /// because this is a security control.
+    /// </summary>
+    public void SetPasswordPolicy(
+        bool enableLocalPasswords,
+        int minLength,
+        bool requireUppercase,
+        bool requireLowercase,
+        bool requireDigit,
+        bool requireSymbol,
+        int historyDepth,
+        int expiryDays,
+        int maxFailedAttempts,
+        int lockoutMinutes)
+    {
+        Guard.Against(minLength is < 8 or > 128, "institution.password_min_length_invalid", "Minimum password length must be between 8 and 128.");
+        Guard.Against(historyDepth is < 0 or > 24, "institution.password_history_invalid", "Password history depth must be between 0 and 24.");
+        Guard.Against(expiryDays is < 0 or > 3650, "institution.password_expiry_invalid", "Password expiry days must be between 0 and 3650.");
+        Guard.Against(maxFailedAttempts is < 0 or > 20, "institution.password_lockout_attempts_invalid", "Max failed attempts must be between 0 and 20.");
+        Guard.Against(lockoutMinutes is < 1 or > 1440, "institution.password_lockout_minutes_invalid", "Lockout duration must be between 1 and 1440 minutes.");
+
+        EnableLocalPasswords = enableLocalPasswords;
+        PasswordMinLength = minLength;
+        PasswordRequireUppercase = requireUppercase;
+        PasswordRequireLowercase = requireLowercase;
+        PasswordRequireDigit = requireDigit;
+        PasswordRequireSymbol = requireSymbol;
+        PasswordHistoryDepth = historyDepth;
+        PasswordExpiryDays = expiryDays;
+        PasswordMaxFailedAttempts = maxFailedAttempts;
+        PasswordLockoutMinutes = lockoutMinutes;
     }
 }

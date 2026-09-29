@@ -7,26 +7,26 @@ using AuditX.Application.Common.Messaging;
 
 namespace AuditX.Application.Administration.Queries;
 
-public sealed record GetBankSettingsQuery : IQuery<BankSettingsDto>;
+public sealed record GetInstitutionSettingsQuery : IQuery<InstitutionSettingsDto>;
 
-public sealed class GetBankSettingsQueryHandler(IBankSettingsRepository settings)
-    : IQueryHandler<GetBankSettingsQuery, BankSettingsDto>
+public sealed class GetInstitutionSettingsQueryHandler(IInstitutionSettingsRepository settings)
+    : IQueryHandler<GetInstitutionSettingsQuery, InstitutionSettingsDto>
 {
-    public async Task<BankSettingsDto> Handle(GetBankSettingsQuery query, CancellationToken cancellationToken)
+    public async Task<InstitutionSettingsDto> Handle(GetInstitutionSettingsQuery query, CancellationToken cancellationToken)
         => (await settings.GetAsync(cancellationToken)).ToDto();
 }
 
 /// <summary>Public branding (name, colours, logo/icon) — served anonymously so the shell can theme pre-auth.</summary>
 public sealed record GetBrandingQuery : IQuery<BrandingDto>;
 
-public sealed class GetBrandingQueryHandler(IBankSettingsRepository settings)
+public sealed class GetBrandingQueryHandler(IInstitutionSettingsRepository settings)
     : IQueryHandler<GetBrandingQuery, BrandingDto>
 {
     public async Task<BrandingDto> Handle(GetBrandingQuery query, CancellationToken cancellationToken)
     {
         var bank = await settings.GetAsync(cancellationToken);
         return new BrandingDto(
-            bank.BankDisplayName, bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri,
+            bank.InstitutionDisplayName, bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri,
             bank.ShowOverview, bank.ShowWalkthrough, bank.AutoStartWalkthrough,
             bank.IdleTimeoutMinutes, bank.IdleWarningSeconds);
     }

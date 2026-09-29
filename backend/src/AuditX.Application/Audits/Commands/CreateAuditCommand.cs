@@ -45,7 +45,7 @@ public sealed class CreateAuditCommandHandler(
     IAuditRepository audits,
     IAnnualPlanRepository plans,
     IUserRepository users,
-    IBankSettingsRepository settings,
+    IInstitutionSettingsRepository settings,
     AuditCreationService creationService,
     ICurrentUser currentUser,
     IAuditRecorder audit,

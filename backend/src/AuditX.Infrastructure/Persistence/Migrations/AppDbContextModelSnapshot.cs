@@ -1624,7 +1624,7 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.ToTable("regulations", (string)null);
                 });
 
-            modelBuilder.Entity("AuditX.Domain.Configuration.BankConfiguration", b =>
+            modelBuilder.Entity("AuditX.Domain.Configuration.InstitutionConfiguration", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier")
@@ -1714,7 +1714,7 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.HasIndex("Domain", "VersionNumber")
                         .IsUnique();
 
-                    b.ToTable("bank_configurations", (string)null);
+                    b.ToTable("institution_configurations", (string)null);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Controls.Control", b =>
@@ -2880,7 +2880,7 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.ToTable("audit_procedures", (string)null);
                 });
 
-            modelBuilder.Entity("AuditX.Domain.Identity.BankSettings", b =>
+            modelBuilder.Entity("AuditX.Domain.Identity.InstitutionSettings", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier")
@@ -2918,12 +2918,6 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("auto_start_walkthrough");
 
-                    b.Property<string>("BankDisplayName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("bank_display_name");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("created_at");
@@ -2931,6 +2925,10 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
+
+                    b.Property<bool>("EnableLocalPasswords")
+                        .HasColumnType("bit")
+                        .HasColumnName("enable_local_passwords");
 
                     b.Property<string>("IconDataUri")
                         .HasColumnType("nvarchar(max)")
@@ -2943,6 +2941,12 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.Property<int>("IdleWarningSeconds")
                         .HasColumnType("int")
                         .HasColumnName("idle_warning_seconds");
+
+                    b.Property<string>("InstitutionDisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("institution_display_name");
 
                     b.Property<string>("LocaleDefault")
                         .IsRequired()
@@ -2961,6 +2965,42 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.Property<int>("MaxEvidenceFileMb")
                         .HasColumnType("int")
                         .HasColumnName("max_evidence_file_mb");
+
+                    b.Property<int>("PasswordExpiryDays")
+                        .HasColumnType("int")
+                        .HasColumnName("password_expiry_days");
+
+                    b.Property<int>("PasswordHistoryDepth")
+                        .HasColumnType("int")
+                        .HasColumnName("password_history_depth");
+
+                    b.Property<int>("PasswordLockoutMinutes")
+                        .HasColumnType("int")
+                        .HasColumnName("password_lockout_minutes");
+
+                    b.Property<int>("PasswordMaxFailedAttempts")
+                        .HasColumnType("int")
+                        .HasColumnName("password_max_failed_attempts");
+
+                    b.Property<int>("PasswordMinLength")
+                        .HasColumnType("int")
+                        .HasColumnName("password_min_length");
+
+                    b.Property<bool>("PasswordRequireDigit")
+                        .HasColumnType("bit")
+                        .HasColumnName("password_require_digit");
+
+                    b.Property<bool>("PasswordRequireLowercase")
+                        .HasColumnType("bit")
+                        .HasColumnName("password_require_lowercase");
+
+                    b.Property<bool>("PasswordRequireSymbol")
+                        .HasColumnType("bit")
+                        .HasColumnName("password_require_symbol");
+
+                    b.Property<bool>("PasswordRequireUppercase")
+                        .HasColumnType("bit")
+                        .HasColumnName("password_require_uppercase");
 
                     b.Property<string>("PrimaryColor")
                         .IsRequired()
@@ -3000,7 +3040,7 @@ namespace AuditX.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("bank_settings", (string)null);
+                    b.ToTable("institution_settings", (string)null);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Identity.MakerCheckerAction", b =>
@@ -3125,6 +3165,62 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("maker_checker_gates", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Identity.PasswordResetToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("purpose");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("password_reset_tokens", (string)null);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Identity.Role", b =>
@@ -3257,6 +3353,12 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(320)")
                         .HasColumnName("ad_user_principal_name");
 
+                    b.Property<string>("AuthenticationSource")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("authentication_source");
+
                     b.Property<decimal?>("CapacityDays")
                         .HasPrecision(6, 1)
                         .HasColumnType("decimal(6,1)")
@@ -3348,6 +3450,11 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by");
 
+                    b.Property<string>("Username")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("username");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AdObjectSid")
@@ -3368,7 +3475,118 @@ namespace AuditX.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Status");
 
+                    b.HasIndex("Username")
+                        .IsUnique()
+                        .HasFilter("[username] IS NOT NULL AND [is_deleted] = 0");
+
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Identity.UserCredential", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CredentialsChangedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("credentials_changed_at");
+
+                    b.Property<int>("FailedAccessCount")
+                        .HasColumnType("int")
+                        .HasColumnName("failed_access_count");
+
+                    b.Property<DateTimeOffset?>("LockoutEndAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("lockout_end_at");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("bit")
+                        .HasColumnName("must_change_password");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)")
+                        .HasColumnName("password_hash");
+
+                    b.Property<DateTimeOffset>("PasswordSetAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("password_set_at");
+
+                    b.Property<Guid>("SecurityStamp")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("security_stamp");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("user_credentials", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Identity.UserPasswordHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("nvarchar(400)")
+                        .HasColumnName("password_hash");
+
+                    b.Property<DateTimeOffset>("SetAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("set_at");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "SetAt");
+
+                    b.ToTable("user_password_history", (string)null);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Identity.UserRole", b =>
@@ -3943,8 +4161,8 @@ namespace AuditX.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Scope")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
                         .HasColumnName("scope");
 
                     b.Property<string>("SubjectTemplate")

@@ -5,7 +5,7 @@ using AuditX.Domain.Enums;
 
 namespace AuditX.Domain.Tests.Configuration;
 
-public sealed class BankConfigurationTests
+public sealed class InstitutionConfigurationTests
 {
     private static readonly DateTimeOffset Now = new(2027, 1, 1, 0, 0, 0, TimeSpan.Zero);
     private const string Json = "{\"criticalTargetDays\":14}";
@@ -14,7 +14,7 @@ public sealed class BankConfigurationTests
     [Fact]
     public void CreateDraft_is_inactive_and_raises_the_created_event()
     {
-        var c = BankConfiguration.CreateDraft(ConfigurationDomains.ExceptionDefaults, 1, Json, Reason, Guid.NewGuid(), Now);
+        var c = InstitutionConfiguration.CreateDraft(ConfigurationDomains.ExceptionDefaults, 1, Json, Reason, Guid.NewGuid(), Now);
 
         Assert.False(c.IsActive);
         Assert.Equal(1, c.VersionNumber);
@@ -24,12 +24,12 @@ public sealed class BankConfigurationTests
     [Fact]
     public void CreateDraft_rejects_a_short_change_reason()
         => Assert.Throws<DomainException>(() =>
-            BankConfiguration.CreateDraft(ConfigurationDomains.ExceptionDefaults, 1, Json, "too short", Guid.NewGuid(), Now));
+            InstitutionConfiguration.CreateDraft(ConfigurationDomains.ExceptionDefaults, 1, Json, "too short", Guid.NewGuid(), Now));
 
     [Fact]
     public void Activate_sets_active_and_raises_the_activated_event()
     {
-        var c = BankConfiguration.CreateDraft(ConfigurationDomains.ExceptionDefaults, 1, Json, Reason, Guid.NewGuid(), Now);
+        var c = InstitutionConfiguration.CreateDraft(ConfigurationDomains.ExceptionDefaults, 1, Json, Reason, Guid.NewGuid(), Now);
         c.ClearDomainEvents();
 
         c.Activate(Guid.NewGuid(), Now);
@@ -42,7 +42,7 @@ public sealed class BankConfigurationTests
     [Fact]
     public void Deactivate_clears_the_active_flag()
     {
-        var c = BankConfiguration.CreateDraft(ConfigurationDomains.ExceptionDefaults, 1, Json, Reason, Guid.NewGuid(), Now);
+        var c = InstitutionConfiguration.CreateDraft(ConfigurationDomains.ExceptionDefaults, 1, Json, Reason, Guid.NewGuid(), Now);
         c.Activate(Guid.NewGuid(), Now);
 
         c.Deactivate();

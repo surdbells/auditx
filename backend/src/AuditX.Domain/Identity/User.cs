@@ -32,6 +32,12 @@ public sealed class User : AggregateRoot, ISoftDeletable
 
     public UserStatus Status { get; private set; }
 
+    /// <summary>Where this user's credentials live — the directory (default) or a local AuditX-managed password.</summary>
+    public AuthenticationSource AuthenticationSource { get; private set; } = AuthenticationSource.Directory;
+
+    /// <summary>The local sign-in identifier for a <see cref="AuthenticationSource.Local"/> user; null for directory users.</summary>
+    public string? Username { get; private set; }
+
     public string Timezone { get; private set; } = "UTC";
 
     public string Locale { get; private set; } = "en-GB";
@@ -87,6 +93,43 @@ public sealed class User : AggregateRoot, ISoftDeletable
 
         user.RaiseDomainEvent(new UserProvisionedEvent(user.Id, user.AdSamAccountName, user.Email));
         return user;
+    }
+
+    /// <summary>
+    /// Create a user that authenticates with a local (institution-managed) password rather than the directory.
+    /// Used by the Local identity provider and by admin-created local accounts. The AD natural-key columns are
+    /// populated with a synthetic <c>local:</c> object SID so the existing uniqueness/lookup infrastructure keeps
+    /// working; the login identifier is <see cref="Username"/>.
+    /// </summary>
+    public static User CreateLocal(string username, string email, string firstName, string lastName, string? displayName = null)
+    {
+        var login = Guard.NotNullOrWhiteSpace(username, "user.username_required", "A username is required.").Trim();
+        var user = new User
+        {
+            AdSamAccountName = login,
+            AdUserPrincipalName = Guard.NotNullOrWhiteSpace(email, "user.email_required", "Email is required.").Trim(),
+            AdObjectSid = $"local:{Guid.CreateVersion7()}",
+            Email = email.Trim(),
+            FirstName = firstName?.Trim() ?? string.Empty,
+            LastName = lastName?.Trim() ?? string.Empty,
+            DisplayName = string.IsNullOrWhiteSpace(displayName) ? $"{firstName} {lastName}".Trim() : displayName.Trim(),
+            Status = UserStatus.AwaitingRoleAssignment,
+            AuthenticationSource = AuthenticationSource.Local,
+            Username = login,
+        };
+
+        user.RaiseDomainEvent(new UserProvisionedEvent(user.Id, user.AdSamAccountName, user.Email));
+        return user;
+    }
+
+    /// <summary>
+    /// Switch an existing (directory-provisioned) user to local authentication under the given username, so an
+    /// administrator can grant a local password to a user who was first created for AD. Idempotent on the source.
+    /// </summary>
+    public void EnableLocalAuthentication(string username)
+    {
+        Username = Guard.NotNullOrWhiteSpace(username, "user.username_required", "A username is required.").Trim();
+        AuthenticationSource = AuthenticationSource.Local;
     }
 
     /// <summary>

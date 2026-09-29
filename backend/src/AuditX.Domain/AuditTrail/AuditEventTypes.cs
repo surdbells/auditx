@@ -8,6 +8,11 @@ public static class AuditEventTypes
     public const string LoginSucceeded = "login_success";
     public const string LoginFailed = "login_failure";
     public const string LoggedOut = "logout";
+    public const string PasswordChanged = "password_changed";
+    public const string PasswordResetRequested = "password_reset_requested";
+    public const string PasswordReset = "password_reset";
+    public const string LocalCredentialSet = "local_credential_set";
+    public const string AccountUnlocked = "account_unlocked";
     public const string SessionTerminated = "session_terminated";
 
     // User lifecycle
@@ -67,8 +72,9 @@ public static class AuditEventTypes
     public const string WebhookRetried = "webhook_retried";
 
     // M15 administration
-    public const string BankSettingsUpdated = "bank_settings_updated";
+    public const string InstitutionSettingsUpdated = "institution_settings_updated";
     public const string ResourceLimitsUpdated = "resource_limits_updated";
+    public const string PasswordPolicyUpdated = "password_policy_updated";
     public const string UsersBulkDeactivated = "users_bulk_deactivated";
     public const string UsersBulkReactivated = "users_bulk_reactivated";
     public const string UsersBulkImported = "users_bulk_imported";
@@ -289,7 +295,7 @@ public static class AuditTargetTypes
     public const string UserRole = "user_role";
     public const string MakerCheckerAction = "maker_checker_action";
     public const string Session = "session";
-    public const string BankSettings = "bank_settings";
+    public const string InstitutionSettings = "institution_settings";
     public const string Template = "template";
     public const string Integration = "integration";
     public const string WebhookSubscription = "webhook_subscription";
@@ -337,7 +343,7 @@ public static class AuditTargetTypes
     public const string ReportSchedule = "report_schedule";
     public const string Dashboard = "dashboard";
     public const string RecurrenceCluster = "recurrence_cluster";
-    public const string BankConfiguration = "bank_configuration";
+    public const string InstitutionConfiguration = "institution_configuration";
     public const string ReferenceDataItem = "reference_data_item";
     public const string AcPack = "ac_pack";
     public const string AcActionItem = "ac_action_item";

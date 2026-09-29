@@ -8,7 +8,7 @@ namespace AuditX.Api.IntegrationTests;
 /// Bank settings: the page-guide visibility toggles (Overview / Walkthrough) round-trip through the admin
 /// settings surface and are reflected on the anonymous /branding surface the SPA page-guide reads.
 /// </summary>
-public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<ApiFactory>
+public sealed class InstitutionSettingsFlowTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
     private HttpClient NewClient() => factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { HandleCookies = true });
 
@@ -31,7 +31,7 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
         var admin = await LoginAsync("admin");
 
         // Both buttons + the auto-start tour default to on.
-        var current = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
+        var current = await DataAsync(await admin.GetAsync("/api/v1/admin/institution-settings"));
         Assert.True(current.GetProperty("showOverview").GetBoolean());
         Assert.True(current.GetProperty("showWalkthrough").GetBoolean());
         Assert.True(current.GetProperty("autoStartWalkthrough").GetBoolean());
@@ -41,9 +41,9 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
         Assert.Equal(60, current.GetProperty("idleWarningSeconds").GetInt32());
 
         // Hide Overview, keep Walkthrough, disable the auto-start tour (full-replace PATCH).
-        var updated = await DataAsync(await admin.PatchAsJsonAsync("/api/v1/admin/bank-settings", new
+        var updated = await DataAsync(await admin.PatchAsJsonAsync("/api/v1/admin/institution-settings", new
         {
-            bankDisplayName = current.GetProperty("bankDisplayName").GetString(),
+            institutionDisplayName = current.GetProperty("institutionDisplayName").GetString(),
             timezone = current.GetProperty("timezone").GetString(),
             localeDefault = current.GetProperty("localeDefault").GetString(),
             adProvisioningFilterOuDn = (string?)null,
@@ -67,7 +67,7 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
         Assert.Equal(90, updated.GetProperty("idleWarningSeconds").GetInt32());
 
         // Persisted on re-read.
-        var reread = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
+        var reread = await DataAsync(await admin.GetAsync("/api/v1/admin/institution-settings"));
         Assert.False(reread.GetProperty("showOverview").GetBoolean());
         Assert.True(reread.GetProperty("showWalkthrough").GetBoolean());
         Assert.False(reread.GetProperty("autoStartWalkthrough").GetBoolean());
@@ -85,9 +85,9 @@ public sealed class BankSettingsFlowTests(ApiFactory factory) : IClassFixture<Ap
     }
 
     [Fact]
-    public async Task Reading_bank_settings_requires_the_view_permission()
+    public async Task Reading_institution_settings_requires_the_view_permission()
     {
-        var auditee = await LoginAsync("auditee"); // no ViewBankSettings
-        Assert.Equal(HttpStatusCode.Forbidden, (await auditee.GetAsync("/api/v1/admin/bank-settings")).StatusCode);
+        var auditee = await LoginAsync("auditee"); // no ViewInstitutionSettings
+        Assert.Equal(HttpStatusCode.Forbidden, (await auditee.GetAsync("/api/v1/admin/institution-settings")).StatusCode);
     }
 }

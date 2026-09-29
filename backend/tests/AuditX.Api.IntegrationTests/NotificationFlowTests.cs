@@ -70,7 +70,7 @@ public sealed class NotificationFlowTests(ApiFactory factory) : IClassFixture<Ap
             subjectTemplate = "Hi {{ Name }}",
             bodyTemplate = "Audit {{ AuditId }} was published.",
         }));
-        Assert.Equal("bank", template.GetProperty("scope").GetString());
+        Assert.Equal("institution", template.GetProperty("scope").GetString());
 
         var preview = await DataAsync(await admin.PostAsJsonAsync("/api/v1/notification-rules/preview", new
         {

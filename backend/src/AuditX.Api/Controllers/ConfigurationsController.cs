@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AuditX.Api.Controllers;
 
 /// <summary>
-/// Bank template &amp; workflow configuration (M12). A generic versioned config store: draft → activate → rollback,
+/// Institution template &amp; workflow configuration (M12). A generic versioned config store: draft → activate → rollback,
 /// one active version per domain, maker-checker-gated activation. Reads require ViewConfig; mutations require
 /// ManageConfiguration. The one fully-wired domain in this slice is <c>exception_defaults</c>.
 /// </summary>

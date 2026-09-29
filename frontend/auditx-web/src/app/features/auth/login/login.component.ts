@@ -9,7 +9,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -33,6 +33,7 @@ import { LanguageSwitcherComponent } from '../../../core/i18n/language-switcher.
     MatButtonModule,
     IconComponent,
     MatProgressBarModule,
+    RouterLink,
     TranslatePipe,
     LanguageSwitcherComponent,
   ],
@@ -72,10 +73,13 @@ export class LoginComponent {
         this.submitting.set(false);
         this.routeAfterLogin(session);
       },
-      error: () => {
+      error: (err: unknown) => {
         this.submitting.set(false);
-        // Opaque message per security requirements. Stores a translation key, rendered via `| t`.
-        this.errorMessage.set('auth.login.invalidCredentials');
+        // Opaque message per security requirements, except the actionable "account locked".
+        const code = (err as { error?: { error_code?: string } })?.error?.error_code;
+        this.errorMessage.set(
+          code === 'account_locked' ? 'auth.login.accountLocked' : 'auth.login.invalidCredentials',
+        );
       },
     });
   }
@@ -100,6 +104,10 @@ export class LoginComponent {
   }
 
   private routeAfterLogin(session: SessionDto): void {
+    if (session.mustChangePassword) {
+      void this.router.navigate(['/change-password']);
+      return;
+    }
     if (session.status === 'awaiting_role_assignment') {
       void this.router.navigate(['/awaiting-role']);
       return;

@@ -31,7 +31,7 @@ public sealed class CreateConfigurationDraftCommandValidator : AbstractValidator
 }
 
 public sealed class CreateConfigurationDraftCommandHandler(
-    IBankConfigurationRepository configurations, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    IInstitutionConfigurationRepository configurations, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<CreateConfigurationDraftCommand, ConfigurationActionResult>
 {
     public async Task<ConfigurationActionResult> Handle(CreateConfigurationDraftCommand command, CancellationToken cancellationToken)
@@ -46,9 +46,9 @@ public sealed class CreateConfigurationDraftCommandHandler(
         ConfigurationDefinitions.Validate(command.Domain, command.DefinitionJson);
 
         var next = await configurations.GetMaxVersionNumberAsync(command.Domain, cancellationToken) + 1;
-        var draft = BankConfiguration.CreateDraft(command.Domain, next, command.DefinitionJson, command.ChangeReason, actorId, clock.UtcNow);
+        var draft = InstitutionConfiguration.CreateDraft(command.Domain, next, command.DefinitionJson, command.ChangeReason, actorId, clock.UtcNow);
         configurations.Add(draft);
-        audit.Record(AuditEventTypes.ConfigurationVersionCreated, AuditTargetTypes.BankConfiguration, draft.Id,
+        audit.Record(AuditEventTypes.ConfigurationVersionCreated, AuditTargetTypes.InstitutionConfiguration, draft.Id,
             before: null, after: new { draft.Domain, draft.VersionNumber, draft.DefinitionJson, draft.ChangeReason });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return new ConfigurationActionResult(draft.ToDto(), null);
@@ -77,7 +77,7 @@ public sealed class ActivateConfigurationVersionCommandValidator : AbstractValid
 }
 
 public sealed class ActivateConfigurationVersionCommandHandler(
-    IBankConfigurationRepository configurations, MakerCheckerGateService gateService, IActiveConfigurationProvider activeProvider,
+    IInstitutionConfigurationRepository configurations, MakerCheckerGateService gateService, IActiveConfigurationProvider activeProvider,
     ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<ActivateConfigurationVersionCommand, ConfigurationActionResult>
 {
@@ -102,7 +102,7 @@ public sealed class ActivateConfigurationVersionCommandHandler(
 
         // Activation is the gated policy change (maker-checker on activate only). The executor performs the switch.
         var payload = AppJson.Serialize(new ConfigActivationPayload(target.Id, command.ChangeReason));
-        var pendingId = await gateService.TryCaptureAsync(MakerCheckerActionTypes.ConfigActivation, AuditTargetTypes.BankConfiguration, target.Id, payload, cancellationToken);
+        var pendingId = await gateService.TryCaptureAsync(MakerCheckerActionTypes.ConfigActivation, AuditTargetTypes.InstitutionConfiguration, target.Id, payload, cancellationToken);
         if (pendingId is { } id)
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -137,7 +137,7 @@ public sealed class RollbackConfigurationCommandValidator : AbstractValidator<Ro
 }
 
 public sealed class RollbackConfigurationCommandHandler(
-    IBankConfigurationRepository configurations, MakerCheckerGateService gateService, IActiveConfigurationProvider activeProvider,
+    IInstitutionConfigurationRepository configurations, MakerCheckerGateService gateService, IActiveConfigurationProvider activeProvider,
     ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<RollbackConfigurationCommand, ConfigurationActionResult>
 {
@@ -165,15 +165,15 @@ public sealed class RollbackConfigurationCommandHandler(
         // Rollback copies the chosen version's definition into a NEW forward version (the original is untouched), then
         // activates that new version via the same gated path. The change reason is retained on the new version.
         var next = await configurations.GetMaxVersionNumberAsync(command.Domain, cancellationToken) + 1;
-        var newVersion = BankConfiguration.CreateDraft(command.Domain, next, source.DefinitionJson, command.ChangeReason, actorId, clock.UtcNow);
+        var newVersion = InstitutionConfiguration.CreateDraft(command.Domain, next, source.DefinitionJson, command.ChangeReason, actorId, clock.UtcNow);
         configurations.Add(newVersion);
-        audit.Record(AuditEventTypes.ConfigurationVersionCreated, AuditTargetTypes.BankConfiguration, newVersion.Id,
+        audit.Record(AuditEventTypes.ConfigurationVersionCreated, AuditTargetTypes.InstitutionConfiguration, newVersion.Id,
             before: null, after: new { newVersion.Domain, newVersion.VersionNumber, newVersion.DefinitionJson, newVersion.ChangeReason, rolledBackFrom = source.VersionNumber });
 
         // Carry the rollback provenance through the payload so the executor emits configuration_rolled_back on the
         // gated path too (otherwise the rollback trail is lost whenever activation is maker-checker-gated).
         var payload = AppJson.Serialize(new ConfigActivationPayload(newVersion.Id, command.ChangeReason, source.VersionNumber));
-        var pendingId = await gateService.TryCaptureAsync(MakerCheckerActionTypes.ConfigActivation, AuditTargetTypes.BankConfiguration, newVersion.Id, payload, cancellationToken);
+        var pendingId = await gateService.TryCaptureAsync(MakerCheckerActionTypes.ConfigActivation, AuditTargetTypes.InstitutionConfiguration, newVersion.Id, payload, cancellationToken);
         if (pendingId is { } id)
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -183,7 +183,7 @@ public sealed class RollbackConfigurationCommandHandler(
         await unitOfWork.ExecuteInTransactionAsync(async ct =>
         {
             await ConfigurationActivation.SwitchAsync(configurations, newVersion, actorId, audit, clock, ct);
-            audit.Record(AuditEventTypes.ConfigurationRolledBack, AuditTargetTypes.BankConfiguration, newVersion.Id,
+            audit.Record(AuditEventTypes.ConfigurationRolledBack, AuditTargetTypes.InstitutionConfiguration, newVersion.Id,
                 payload: new { newVersion.Domain, fromVersion = source.VersionNumber, newVersion = newVersion.VersionNumber });
             await unitOfWork.SaveChangesAsync(ct);
             return Unit.Value;
@@ -203,7 +203,7 @@ internal static class ConfigurationActivation
     /// surrounding transaction commits (invalidating inline lets a concurrent reader re-seed the stale version).
     /// </summary>
     public static async Task SwitchAsync(
-        IBankConfigurationRepository configurations, BankConfiguration target,
+        IInstitutionConfigurationRepository configurations, InstitutionConfiguration target,
         Guid actorId, IAuditRecorder audit, IClock clock, CancellationToken cancellationToken)
     {
         // Capture the prior-active definition for the before/after trail before we clear its flag.
@@ -217,7 +217,7 @@ internal static class ConfigurationActivation
         await configurations.DeactivateActiveAsync(target.Domain, cancellationToken);
         target.Activate(actorId, clock.UtcNow);
         audit.RecordAs(ActorType.User, actorSystemLabel: null, actorUserId: actorId,
-            AuditEventTypes.ConfigurationVersionActivated, AuditTargetTypes.BankConfiguration, target.Id,
+            AuditEventTypes.ConfigurationVersionActivated, AuditTargetTypes.InstitutionConfiguration, target.Id,
             before: before, after: new { target.Domain, target.VersionNumber, target.DefinitionJson });
     }
 }

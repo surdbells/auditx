@@ -91,6 +91,8 @@
         >
           {{ (submitting() ? 'auth.login.signingIn' : 'auth.login.signIn') | t }}
         </button>
+
+        <a routerLink="/forgot-password" class="login__forgot">{{ 'auth.login.forgotPassword' | t }}</a>
       </form>
 
       <div class="login__divider"><span>{{ 'auth.login.or' | t }}</span></div>

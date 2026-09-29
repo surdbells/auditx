@@ -74,7 +74,7 @@ public sealed class CachedActiveConfigurationProvider(
         {
             entry.AbsoluteExpirationRelativeToNow = CacheTtl;
             Keys.TryAdd(key, 0);
-            return db.BankConfigurations.AsNoTracking()
+            return db.InstitutionConfigurations.AsNoTracking()
                 .Where(c => c.Domain == domain && c.IsActive)
                 .Select(c => new CacheEntry(c.VersionNumber, c.DefinitionJson))
                 .FirstOrDefault();

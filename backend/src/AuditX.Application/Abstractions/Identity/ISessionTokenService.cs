@@ -13,8 +13,13 @@ public sealed record IssuedToken(
 /// </summary>
 public interface ISessionTokenService
 {
-    IssuedToken Issue(Guid userId, IReadOnlyCollection<string> roleNames);
+    /// <summary>
+    /// Issue a session token. For a local-password user, <paramref name="securityStamp"/> is the credential's
+    /// current stamp and is embedded so a later password change invalidates every outstanding session; pass
+    /// <c>null</c> for directory users.
+    /// </summary>
+    IssuedToken Issue(Guid userId, IReadOnlyCollection<string> roleNames, Guid? securityStamp = null);
 
     /// <summary>Re-issue (slide) a token for an active session without extending the absolute lifetime.</summary>
-    IssuedToken Refresh(Guid userId, IReadOnlyCollection<string> roleNames, DateTimeOffset absoluteExpiresAt);
+    IssuedToken Refresh(Guid userId, IReadOnlyCollection<string> roleNames, DateTimeOffset absoluteExpiresAt, Guid? securityStamp = null);
 }

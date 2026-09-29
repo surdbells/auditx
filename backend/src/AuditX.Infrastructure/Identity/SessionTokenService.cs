@@ -18,6 +18,9 @@ public sealed class SessionTokenService : ISessionTokenService
 {
     public const string AbsoluteExpiryClaim = "abs_exp";
 
+    /// <summary>Claim carrying the local credential's security stamp; present only for local-password sessions.</summary>
+    public const string CredentialStampClaim = "cred_stamp";
+
     private readonly JwtOptions _options;
     private readonly IClock _clock;
     private readonly SigningCredentials _signingCredentials;
@@ -36,16 +39,16 @@ public sealed class SessionTokenService : ISessionTokenService
         _signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
     }
 
-    public IssuedToken Issue(Guid userId, IReadOnlyCollection<string> roleNames)
+    public IssuedToken Issue(Guid userId, IReadOnlyCollection<string> roleNames, Guid? securityStamp = null)
     {
         var absolute = _clock.UtcNow.AddMinutes(_options.AbsoluteMinutes);
-        return Create(userId, roleNames, absolute);
+        return Create(userId, roleNames, absolute, securityStamp);
     }
 
-    public IssuedToken Refresh(Guid userId, IReadOnlyCollection<string> roleNames, DateTimeOffset absoluteExpiresAt)
-        => Create(userId, roleNames, absoluteExpiresAt);
+    public IssuedToken Refresh(Guid userId, IReadOnlyCollection<string> roleNames, DateTimeOffset absoluteExpiresAt, Guid? securityStamp = null)
+        => Create(userId, roleNames, absoluteExpiresAt, securityStamp);
 
-    private IssuedToken Create(Guid userId, IReadOnlyCollection<string> roleNames, DateTimeOffset absoluteExpiresAt)
+    private IssuedToken Create(Guid userId, IReadOnlyCollection<string> roleNames, DateTimeOffset absoluteExpiresAt, Guid? securityStamp)
     {
         var now = _clock.UtcNow;
         var sliding = now.AddMinutes(_options.SlidingMinutes);
@@ -58,6 +61,11 @@ public sealed class SessionTokenService : ISessionTokenService
             new(JwtRegisteredClaimNames.Jti, tokenId),
             new(AbsoluteExpiryClaim, absoluteExpiresAt.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
         };
+        if (securityStamp is { } stamp)
+        {
+            claims.Add(new Claim(CredentialStampClaim, stamp.ToString("N")));
+        }
+
         claims.AddRange(roleNames.Select(role => new Claim(ClaimTypes.Role, role)));
 
         var descriptor = new SecurityTokenDescriptor

@@ -13,6 +13,15 @@ public interface IUserRepository
 
     Task<User?> GetBySamAccountNameAsync(string samAccountName, CancellationToken cancellationToken = default);
 
+    /// <summary>Look up a live user by their local sign-in username (for local-password authentication).</summary>
+    Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default);
+
+    /// <summary>True when a live user already holds the given local username (case-insensitive).</summary>
+    Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default);
+
+    /// <summary>Look up a live user by email (case-insensitive); the first match, or null.</summary>
+    Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+
     Task<bool> HasAnyRoleAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<User>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
@@ -83,7 +92,7 @@ public interface IMakerCheckerRepository
 }
 
 /// <summary>Access to the single-row deployment settings.</summary>
-public interface IBankSettingsRepository
+public interface IInstitutionSettingsRepository
 {
-    Task<BankSettings> GetAsync(CancellationToken cancellationToken = default);
+    Task<InstitutionSettings> GetAsync(CancellationToken cancellationToken = default);
 }

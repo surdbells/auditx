@@ -1,3 +1,4 @@
+using AuditX.Application.Abstractions.Identity;
 using AuditX.Application.Ac;
 using AuditX.Application.Configuration;
 using AuditX.Application.Sanctions;
@@ -18,11 +19,14 @@ namespace AuditX.Infrastructure.Persistence;
 /// the default maker-checker gates, and — only when the development identity provider is active — the
 /// seeded development users (with the admin bootstrapped into the Administrator role).
 /// </summary>
-public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
+public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, ILogger<DbSeeder> logger)
 {
-    public async Task SeedAsync(bool seedDevelopmentUsers, CancellationToken cancellationToken = default)
+    /// <summary>A first local administrator to bootstrap (Identity:Provider=Local), so the platform is reachable.</summary>
+    public sealed record BootstrapLocalAdmin(string Username, string Email, string Password);
+
+    public async Task SeedAsync(bool seedDevelopmentUsers, BootstrapLocalAdmin? bootstrapLocalAdmin = null, CancellationToken cancellationToken = default)
     {
-        await SeedBankSettingsAsync(cancellationToken);
+        await SeedInstitutionSettingsAsync(cancellationToken);
         var rolesByName = await SeedBuiltInRolesAsync(cancellationToken);
         await SeedMakerCheckerGatesAsync(cancellationToken);
         await SeedRiskDimensionsAsync(cancellationToken);
@@ -40,6 +44,11 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         if (seedDevelopmentUsers)
         {
             await SeedDevelopmentUsersAsync(rolesByName, cancellationToken);
+        }
+
+        if (bootstrapLocalAdmin is not null)
+        {
+            await SeedBootstrapLocalAdminAsync(bootstrapLocalAdmin, rolesByName, cancellationToken);
         }
 
         await db.SaveChangesAsync(cancellationToken);
@@ -484,18 +493,18 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
     /// </summary>
     private async Task SeedExceptionDefaultsConfigurationAsync(CancellationToken cancellationToken)
     {
-        if (await db.BankConfigurations.AnyAsync(c => c.Domain == ConfigurationDomains.ExceptionDefaults, cancellationToken))
+        if (await db.InstitutionConfigurations.AnyAsync(c => c.Domain == ConfigurationDomains.ExceptionDefaults, cancellationToken))
         {
             return;
         }
 
         var definitionJson = ConfigurationDefinitions.SerializeExceptionDefaults(ExceptionDefaultsDefinition.HardcodedFallback);
-        var config = BankConfiguration.CreateDraft(
+        var config = InstitutionConfiguration.CreateDraft(
             ConfigurationDomains.ExceptionDefaults, versionNumber: 1, definitionJson,
             changeReason: "Initial exception defaults seeded on deployment (reproduces pre-M12 hardcoded values).",
             createdBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
         config.Activate(activatedBy: Guid.Empty, nowUtc: DateTimeOffset.UtcNow);
-        db.BankConfigurations.Add(config);
+        db.InstitutionConfigurations.Add(config);
     }
 
     /// <summary>Seed one active default sanctions grid (version 1) with a few representative cells per the E3 schema.</summary>
@@ -548,11 +557,11 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
         db.ReportTemplates.Add(template);
     }
 
-    private async Task SeedBankSettingsAsync(CancellationToken cancellationToken)
+    private async Task SeedInstitutionSettingsAsync(CancellationToken cancellationToken)
     {
-        if (!await db.BankSettings.AnyAsync(cancellationToken))
+        if (!await db.InstitutionSettings.AnyAsync(cancellationToken))
         {
-            db.BankSettings.Add(BankSettings.CreateDefault("AuditX"));
+            db.InstitutionSettings.Add(InstitutionSettings.CreateDefault("AuditX"));
         }
     }
 
@@ -616,5 +625,40 @@ public sealed class DbSeeder(AppDbContext db, ILogger<DbSeeder> logger)
                 user.MarkActiveOnFirstRole();
             }
         }
+    }
+
+    /// <summary>
+    /// Bootstrap a first local administrator when running with <c>Identity:Provider=Local</c> so the platform is
+    /// reachable without a directory. Idempotent: skipped once any Administrator exists or the username is taken.
+    /// The password is stored only as a PBKDF2 hash, and the admin must change it at first sign-in.
+    /// </summary>
+    private async Task SeedBootstrapLocalAdminAsync(BootstrapLocalAdmin admin, IReadOnlyDictionary<string, Role> rolesByName, CancellationToken cancellationToken)
+    {
+        if (!rolesByName.TryGetValue(BuiltInRoles.AdministratorName, out var adminRole))
+        {
+            logger.LogWarning("Cannot bootstrap a local admin: the Administrator role is not seeded.");
+            return;
+        }
+
+        // Skip if any administrator already exists (fresh deployments only) or the username is taken.
+        var hasAdministrator = await db.UserRoles.AnyAsync(ur => ur.RoleId == adminRole.Id, cancellationToken);
+        if (hasAdministrator || await db.Users.IgnoreQueryFilters().AnyAsync(u => u.Username == admin.Username, cancellationToken))
+        {
+            return;
+        }
+
+        // Local auth must be on for the bootstrap admin to sign in; enable it if the deployment left it off.
+        var settings = await db.InstitutionSettings.FirstAsync(cancellationToken);
+        if (!settings.EnableLocalPasswords)
+        {
+            settings.SetEnableLocalPasswords(true);
+        }
+
+        var user = User.CreateLocal(admin.Username, admin.Email, "AuditX", "Administrator");
+        db.Users.Add(user);
+        db.UserRoles.Add(UserRole.Grant(user.Id, adminRole.Id));
+        user.MarkActiveOnFirstRole();
+        db.UserCredentials.Add(UserCredential.Create(user.Id, passwordHasher.Hash(admin.Password), mustChangePassword: true, DateTimeOffset.UtcNow));
+        logger.LogInformation("Bootstrapped local administrator '{Username}' (must change password at first sign-in).", admin.Username);
     }
 }

@@ -28,7 +28,7 @@ public sealed class NotificationTemplateRepository(AppDbContext db) : INotificat
         var candidates = await db.NotificationTemplates.AsNoTracking()
             .Where(t => t.TemplateKey == templateKey && t.Channel == channel)
             .ToListAsync(cancellationToken);
-        return candidates.FirstOrDefault(t => t.Scope == TemplateScope.Bank) ?? candidates.FirstOrDefault(t => t.Scope == TemplateScope.System);
+        return candidates.FirstOrDefault(t => t.Scope == TemplateScope.Institution) ?? candidates.FirstOrDefault(t => t.Scope == TemplateScope.System);
     }
 
     public Task<NotificationTemplate?> GetByKeyChannelScopeAsync(string templateKey, NotificationChannel channel, TemplateScope scope, CancellationToken cancellationToken = default)

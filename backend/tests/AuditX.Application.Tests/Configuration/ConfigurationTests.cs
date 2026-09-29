@@ -63,10 +63,10 @@ public sealed class CreateConfigurationDraftCommandHandlerTests
     public async Task Create_mints_the_next_version_number_as_an_inactive_draft()
     {
         var json = ConfigurationDefinitions.SerializeExceptionDefaults(ExceptionDefaultsDefinition.HardcodedFallback);
-        var repo = Substitute.For<IBankConfigurationRepository>();
+        var repo = Substitute.For<IInstitutionConfigurationRepository>();
         repo.GetMaxVersionNumberAsync(ConfigurationDomains.ExceptionDefaults, Arg.Any<CancellationToken>()).Returns(2);
-        BankConfiguration? added = null;
-        repo.When(r => r.Add(Arg.Any<BankConfiguration>())).Do(ci => added = ci.Arg<BankConfiguration>());
+        InstitutionConfiguration? added = null;
+        repo.When(r => r.Add(Arg.Any<InstitutionConfiguration>())).Do(ci => added = ci.Arg<InstitutionConfiguration>());
 
         var currentUser = Substitute.For<ICurrentUser>();
         currentUser.UserId.Returns(Guid.NewGuid());
@@ -84,14 +84,14 @@ public sealed class CreateConfigurationDraftCommandHandlerTests
         Assert.False(added.IsActive);
         Assert.NotNull(result.Version);
         Assert.Null(result.PendingActionId);
-        repo.Received(1).Add(Arg.Any<BankConfiguration>());
+        repo.Received(1).Add(Arg.Any<InstitutionConfiguration>());
     }
 
     [Fact]
     public async Task Create_rejects_an_unknown_domain()
     {
         var handler = new CreateConfigurationDraftCommandHandler(
-            Substitute.For<IBankConfigurationRepository>(), AuthedUser(), Substitute.For<IAuditRecorder>(),
+            Substitute.For<IInstitutionConfigurationRepository>(), AuthedUser(), Substitute.For<IAuditRecorder>(),
             Substitute.For<IClock>(), Substitute.For<IUnitOfWork>());
 
         await Assert.ThrowsAsync<DomainException>(() =>

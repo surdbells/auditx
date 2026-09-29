@@ -27,7 +27,7 @@ const BEACON_MS = 5_000;
 
 /**
  * Session-inactivity (idle timeout) watchdog. After the admin-configured minutes of inactivity
- * (`BankSettings.IdleTimeoutMinutes`, 0 = disabled) it opens a modal warning that counts down
+ * (`InstitutionSettings.IdleTimeoutMinutes`, 0 = disabled) it opens a modal warning that counts down
  * `IdleWarningSeconds`; unless the user chooses to stay signed in, they are signed out automatically.
  *
  * Started once from the authenticated shell. Config is read live from {@link BrandingService} signals,

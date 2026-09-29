@@ -33,11 +33,11 @@ public sealed class AuditTrailAndSeedTests : IAsyncLifetime
         await using var db = CreateContext();
         await db.Database.MigrateAsync();
 
-        await new DbSeeder(db, NullLogger<DbSeeder>.Instance).SeedAsync(seedDevelopmentUsers: false);
+        await new DbSeeder(db, new AuditX.Infrastructure.Identity.Pbkdf2PasswordHasher(), NullLogger<DbSeeder>.Instance).SeedAsync(seedDevelopmentUsers: false);
 
         Assert.Equal(4, await db.Roles.CountAsync(r => r.IsBuiltIn));
         Assert.True(await db.MakerCheckerGates.AnyAsync(g => g.ActionType == "role_permission_change" && g.IsEnabled));
-        Assert.True(await db.BankSettings.AnyAsync());
+        Assert.True(await db.InstitutionSettings.AnyAsync());
     }
 
     [Fact]

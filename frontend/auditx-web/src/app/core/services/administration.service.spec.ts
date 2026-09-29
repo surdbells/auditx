@@ -18,12 +18,12 @@ describe('AdministrationService', () => {
 
   afterEach(() => http.verify());
 
-  it('gets bank settings', () => {
+  it('gets institution settings', () => {
     let name: string | undefined;
-    service.getBankSettings().subscribe((s) => (name = s.bankDisplayName));
-    http.expectOne(`${BASE}/admin/bank-settings`).flush({
+    service.getInstitutionSettings().subscribe((s) => (name = s.institutionDisplayName));
+    http.expectOne(`${BASE}/admin/institution-settings`).flush({
       data: {
-        bankDisplayName: 'ACME Bank',
+        institutionDisplayName: 'ACME Bank',
         timezone: 'UTC',
         localeDefault: 'en',
         adProvisioningFilterOuDn: null,
@@ -37,8 +37,8 @@ describe('AdministrationService', () => {
 
   it('patches bank settings', () => {
     service
-      .updateBankSettings({
-        bankDisplayName: 'New',
+      .updateInstitutionSettings({
+        institutionDisplayName: 'New',
         timezone: 'UTC',
         localeDefault: 'en',
         adProvisioningFilterOuDn: null,
@@ -58,10 +58,10 @@ describe('AdministrationService', () => {
         idleWarningSeconds: 60,
       })
       .subscribe();
-    const req = http.expectOne(`${BASE}/admin/bank-settings`);
+    const req = http.expectOne(`${BASE}/admin/institution-settings`);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body.bankDisplayName).toBe('New');
-    req.flush({ data: { bankDisplayName: 'New' } });
+    expect(req.request.body.institutionDisplayName).toBe('New');
+    req.flush({ data: { institutionDisplayName: 'New' } });
   });
 
   it('patches resource limits', () => {

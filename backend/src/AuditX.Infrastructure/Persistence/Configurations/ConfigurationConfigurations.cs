@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AuditX.Infrastructure.Persistence.Configurations;
 
-public sealed class BankConfigurationConfiguration : IEntityTypeConfiguration<BankConfiguration>
+public sealed class InstitutionConfigurationConfiguration : IEntityTypeConfiguration<InstitutionConfiguration>
 {
-    public void Configure(EntityTypeBuilder<BankConfiguration> builder)
+    public void Configure(EntityTypeBuilder<InstitutionConfiguration> builder)
     {
-        builder.ToTable("bank_configurations");
+        builder.ToTable("institution_configurations");
         builder.HasKey(c => c.Id);
         builder.Property(c => c.Id).ValueGeneratedNever();
 

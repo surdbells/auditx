@@ -1,7 +1,7 @@
 # AuditX — Project Documentation
 
-AuditX is an enterprise **internal-audit platform** for a bank's Internal Audit function, deployed
-single-tenant inside the bank's network. It covers the full audit value chain — the audit universe and
+AuditX is an enterprise **internal-audit platform** for an institution's Internal Audit function, deployed
+single-tenant inside the institution's network. It covers the full audit value chain — the audit universe and
 risk-based annual plan, checklist templates, audit engagements and fieldwork, findings and remediation,
 controls and compliance, sanctions, reporting, analytics, and audit-committee governance — on a hardened,
 on-premises stack.

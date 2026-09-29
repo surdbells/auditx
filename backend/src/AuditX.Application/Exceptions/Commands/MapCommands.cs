@@ -242,7 +242,7 @@ public sealed record UploadMapActionEvidenceCommand(Guid ExceptionId, Guid Actio
 
 public sealed class UploadMapActionEvidenceCommandHandler(
     IExceptionRepository exceptions, IAuditRepository audits, IEvidenceRepository evidence, IFileStorage storage, IFileSignatureInspector inspector,
-    IBankSettingsRepository bankSettings, IPermissionResolver permissions, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    IInstitutionSettingsRepository institutionSettings, IPermissionResolver permissions, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<UploadMapActionEvidenceCommand, EvidenceFileDto>
 {
     public async Task<EvidenceFileDto> Handle(UploadMapActionEvidenceCommand command, CancellationToken cancellationToken)
@@ -259,7 +259,7 @@ public sealed class UploadMapActionEvidenceCommandHandler(
             throw new DomainException("evidence.empty_file", "The uploaded file is empty.");
         }
 
-        var settings = await bankSettings.GetAsync(cancellationToken);
+        var settings = await institutionSettings.GetAsync(cancellationToken);
         if (command.Content.LongLength > settings.MaxEvidenceFileMb * 1024L * 1024L)
         {
             throw new PayloadTooLargeException("evidence.file_too_large", $"The file exceeds the {settings.MaxEvidenceFileMb} MB per-file limit.");

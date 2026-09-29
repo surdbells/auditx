@@ -5,9 +5,9 @@
 
 <mat-tab-group class="ax-tabs">
   @if (canViewSettings()) {
-    <mat-tab [label]="'administration.tabs.bankSettings' | t">
+    <mat-tab [label]="'administration.tabs.institutionSettings' | t">
       <div class="tab-body">
-        <app-bank-settings />
+        <app-institution-settings />
       </div>
     </mat-tab>
   }

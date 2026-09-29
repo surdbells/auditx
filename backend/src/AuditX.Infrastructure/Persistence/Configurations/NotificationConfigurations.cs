@@ -35,7 +35,7 @@ public sealed class NotificationTemplateConfiguration : IEntityTypeConfiguration
 
         builder.Property(t => t.TemplateKey).HasMaxLength(100).IsRequired();
         builder.Property(t => t.Channel).HasConversion(new SnakeCaseEnumConverter<NotificationChannel>()).HasMaxLength(10).IsRequired();
-        builder.Property(t => t.Scope).HasConversion(new SnakeCaseEnumConverter<TemplateScope>()).HasMaxLength(10).IsRequired();
+        builder.Property(t => t.Scope).HasConversion(new SnakeCaseEnumConverter<TemplateScope>()).HasMaxLength(20).IsRequired();
         builder.Property(t => t.SubjectTemplate);
         builder.Property(t => t.BodyTemplate).IsRequired();
         builder.Property(t => t.RowVersion).IsRowVersion();

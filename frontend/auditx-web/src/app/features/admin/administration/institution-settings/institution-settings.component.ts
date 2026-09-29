@@ -22,7 +22,7 @@ import { NotificationService } from '../../../../core/services/notification.serv
 import { AuthService } from '../../../../core/services/auth.service';
 import { BrandingService } from '../../../../core/services/branding.service';
 import { Permissions } from '../../../../core/permissions';
-import { BankSettings, UpdateBankSettingsRequest } from '../../../../core/models';
+import { InstitutionSettings, UpdateInstitutionSettingsRequest } from '../../../../core/models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
@@ -40,62 +40,63 @@ type SaveGroup =
   | 'session'
   | 'guide'
   | 'reports'
+  | 'password'
   | 'limits';
 
 /** Contextual page guide for the organization/bank settings page. */
 const BANK_SETTINGS_GUIDE: PageGuide = {
-  id: 'administration-bank-settings',
-  titleKey: 'administration.bankSettings.title',
-  purposeKey: 'administration.bankSettings.guide.purpose',
-  descriptionKey: 'administration.bankSettings.guide.description',
+  id: 'administration-institution-settings',
+  titleKey: 'administration.institutionSettings.title',
+  purposeKey: 'administration.institutionSettings.guide.purpose',
+  descriptionKey: 'administration.institutionSettings.guide.description',
   actionKeys: [
-    'administration.bankSettings.guide.action.identity',
-    'administration.bankSettings.guide.action.branding',
-    'administration.bankSettings.guide.action.rules',
-    'administration.bankSettings.guide.action.limits',
+    'administration.institutionSettings.guide.action.identity',
+    'administration.institutionSettings.guide.action.branding',
+    'administration.institutionSettings.guide.action.rules',
+    'administration.institutionSettings.guide.action.limits',
   ],
   sections: [
-    { selector: '[data-guide="general"]', titleKey: 'administration.bankSettings.guide.section.general.title', bodyKey: 'administration.bankSettings.guide.section.general.body' },
-    { selector: '.settings__branding', titleKey: 'administration.bankSettings.guide.section.branding.title', bodyKey: 'administration.bankSettings.guide.section.branding.body' },
-    { selector: '[data-guide="limits"]', titleKey: 'administration.bankSettings.guide.section.limits.title', bodyKey: 'administration.bankSettings.guide.section.limits.body' },
+    { selector: '[data-guide="general"]', titleKey: 'administration.institutionSettings.guide.section.general.title', bodyKey: 'administration.institutionSettings.guide.section.general.body' },
+    { selector: '.settings__branding', titleKey: 'administration.institutionSettings.guide.section.branding.title', bodyKey: 'administration.institutionSettings.guide.section.branding.body' },
+    { selector: '[data-guide="limits"]', titleKey: 'administration.institutionSettings.guide.section.limits.title', bodyKey: 'administration.institutionSettings.guide.section.limits.body' },
   ],
   workflowKeys: [
-    'administration.bankSettings.guide.flow.identity',
-    'administration.bankSettings.guide.flow.brand',
-    'administration.bankSettings.guide.flow.rules',
-    'administration.bankSettings.guide.flow.save',
+    'administration.institutionSettings.guide.flow.identity',
+    'administration.institutionSettings.guide.flow.brand',
+    'administration.institutionSettings.guide.flow.rules',
+    'administration.institutionSettings.guide.flow.save',
   ],
   dependsOnKeys: [
-    'administration.bankSettings.guide.dep.permissions',
-    'administration.bankSettings.guide.dep.directory',
+    'administration.institutionSettings.guide.dep.permissions',
+    'administration.institutionSettings.guide.dep.directory',
   ],
   usedByKeys: [
-    'administration.bankSettings.guide.use.branding',
-    'administration.bankSettings.guide.use.planning',
-    'administration.bankSettings.guide.use.evidence',
+    'administration.institutionSettings.guide.use.branding',
+    'administration.institutionSettings.guide.use.planning',
+    'administration.institutionSettings.guide.use.evidence',
   ],
   businessRuleKeys: [
-    'administration.bankSettings.guide.rule.color',
-    'administration.bankSettings.guide.rule.asset',
-    'administration.bankSettings.guide.rule.overlap',
-    'administration.bankSettings.guide.rule.limits',
+    'administration.institutionSettings.guide.rule.color',
+    'administration.institutionSettings.guide.rule.asset',
+    'administration.institutionSettings.guide.rule.overlap',
+    'administration.institutionSettings.guide.rule.limits',
   ],
   tipKeys: [
-    'administration.bankSettings.guide.tip.preview',
-    'administration.bankSettings.guide.tip.locale',
+    'administration.institutionSettings.guide.tip.preview',
+    'administration.institutionSettings.guide.tip.locale',
   ],
   permissionKeys: [
-    'administration.bankSettings.guide.perm.manage',
-    'administration.bankSettings.guide.perm.limits',
+    'administration.institutionSettings.guide.perm.manage',
+    'administration.institutionSettings.guide.perm.limits',
   ],
   faq: [
-    { questionKey: 'administration.bankSettings.guide.faq.apply.q', answerKey: 'administration.bankSettings.guide.faq.apply.a' },
-    { questionKey: 'administration.bankSettings.guide.faq.limits.q', answerKey: 'administration.bankSettings.guide.faq.limits.a' },
+    { questionKey: 'administration.institutionSettings.guide.faq.apply.q', answerKey: 'administration.institutionSettings.guide.faq.apply.a' },
+    { questionKey: 'administration.institutionSettings.guide.faq.limits.q', answerKey: 'administration.institutionSettings.guide.faq.limits.a' },
   ],
 };
 
 @Component({
-  selector: 'app-bank-settings',
+  selector: 'app-institution-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
@@ -109,10 +110,10 @@ const BANK_SETTINGS_GUIDE: PageGuide = {
     ErrorStateComponent,
     PageGuideComponent,
   ],
-  templateUrl: './bank-settings.component.html',
-  styleUrl: './bank-settings.component.scss',
+  templateUrl: './institution-settings.component.html',
+  styleUrl: './institution-settings.component.scss',
 })
-export class BankSettingsComponent {
+export class InstitutionSettingsComponent {
   private readonly admin = inject(AdministrationService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -149,22 +150,22 @@ export class BankSettingsComponent {
   readonly iconPreview = signal<string | null>(null);
 
   /**
-   * Last-persisted settings. Every bank-settings PATCH is a full replace, so each section save merges
+   * Last-persisted settings. Every institution-settings PATCH is a full replace, so each section save merges
    * ITS values onto this baseline — that keeps saves independent (one section's unsaved edits are never
    * dragged along by another section's save) and preserves fields with no UI control (the AD provisioning
    * filters, which login provisioning still enforces).
    */
-  private loaded: BankSettings | null = null;
+  private loaded: InstitutionSettings | null = null;
 
   readonly canManageSettings = computed(() =>
-    this.auth.hasPermission(Permissions.ManageBankSettings),
+    this.auth.hasPermission(Permissions.ManageInstitutionSettings),
   );
   readonly canConfigureLimits = computed(() =>
     this.auth.hasPermission(Permissions.ConfigureLimits),
   );
 
   readonly orgForm = this.fb.nonNullable.group({
-    bankDisplayName: ['', [Validators.required, Validators.maxLength(200)]],
+    institutionDisplayName: ['', [Validators.required, Validators.maxLength(200)]],
     timezone: ['', Validators.required],
     localeDefault: ['', Validators.required],
   });
@@ -209,6 +210,19 @@ export class BankSettingsComponent {
     maxAuditEvidenceGb: [0, [Validators.required, Validators.min(1)]],
   });
 
+  readonly passwordForm = this.fb.nonNullable.group({
+    enableLocalPasswords: [false],
+    minLength: [12, [Validators.required, Validators.min(8), Validators.max(128)]],
+    requireUppercase: [true],
+    requireLowercase: [true],
+    requireDigit: [true],
+    requireSymbol: [true],
+    historyDepth: [5, [Validators.required, Validators.min(0), Validators.max(24)]],
+    expiryDays: [90, [Validators.required, Validators.min(0), Validators.max(3650)]],
+    maxFailedAttempts: [5, [Validators.required, Validators.min(0), Validators.max(20)]],
+    lockoutMinutes: [15, [Validators.required, Validators.min(1), Validators.max(1440)]],
+  });
+
   /** All page-guide-permission-gated forms (everything except resource limits, which has its own permission). */
   private readonly manageForms = [
     this.orgForm,
@@ -217,6 +231,7 @@ export class BankSettingsComponent {
     this.sessionForm,
     this.guideForm,
     this.reportsForm,
+    this.passwordForm,
   ];
 
   constructor() {
@@ -225,7 +240,7 @@ export class BankSettingsComponent {
 
   fetch(): void {
     this.state.set('loading');
-    this.admin.getBankSettings().subscribe({
+    this.admin.getInstitutionSettings().subscribe({
       next: (s) => {
         this.patch(s);
         this.state.set('ready');
@@ -234,10 +249,10 @@ export class BankSettingsComponent {
     });
   }
 
-  private patch(s: BankSettings): void {
+  private patch(s: InstitutionSettings): void {
     this.loaded = s;
     this.orgForm.reset({
-      bankDisplayName: s.bankDisplayName,
+      institutionDisplayName: s.institutionDisplayName,
       timezone: s.timezone,
       localeDefault: s.localeDefault,
     });
@@ -262,6 +277,18 @@ export class BankSettingsComponent {
       autoStartWalkthrough: s.autoStartWalkthrough,
     });
     this.reportsForm.reset({ reportRetentionMonths: s.reportRetentionMonths });
+    this.passwordForm.reset({
+      enableLocalPasswords: s.passwordPolicy.enableLocalPasswords,
+      minLength: s.passwordPolicy.minLength,
+      requireUppercase: s.passwordPolicy.requireUppercase,
+      requireLowercase: s.passwordPolicy.requireLowercase,
+      requireDigit: s.passwordPolicy.requireDigit,
+      requireSymbol: s.passwordPolicy.requireSymbol,
+      historyDepth: s.passwordPolicy.historyDepth,
+      expiryDays: s.passwordPolicy.expiryDays,
+      maxFailedAttempts: s.passwordPolicy.maxFailedAttempts,
+      lockoutMinutes: s.passwordPolicy.lockoutMinutes,
+    });
     this.limitsForm.reset({
       maxEvidenceFileMb: s.maxEvidenceFileMb,
       maxAuditEvidenceGb: s.maxAuditEvidenceGb,
@@ -277,10 +304,10 @@ export class BankSettingsComponent {
   }
 
   /** The last-persisted settings as a full update request — the baseline each section save overrides. */
-  private baseRequest(): UpdateBankSettingsRequest {
+  private baseRequest(): UpdateInstitutionSettingsRequest {
     const b = this.loaded!;
     return {
-      bankDisplayName: b.bankDisplayName,
+      institutionDisplayName: b.institutionDisplayName,
       timezone: b.timezone,
       localeDefault: b.localeDefault,
       // No UI control — preserved verbatim so a settings save never wipes the login-provisioning filters.
@@ -306,7 +333,7 @@ export class BankSettingsComponent {
   private saveGroup(
     group: SaveGroup,
     form: AbstractControl,
-    overrides: Partial<UpdateBankSettingsRequest>,
+    overrides: Partial<UpdateInstitutionSettingsRequest>,
   ): void {
     if (form.invalid) {
       form.markAllAsTouched();
@@ -318,15 +345,15 @@ export class BankSettingsComponent {
     this.setSaving(group, true);
     // Apply this section's values to the baseline before sending, so a concurrent save of a
     // different card merges onto them (each save is a full replace) and can't clobber this change.
-    this.loaded = { ...this.loaded, ...overrides } as BankSettings;
+    this.loaded = { ...this.loaded, ...overrides } as InstitutionSettings;
     this.admin
-      .updateBankSettings({ ...this.baseRequest(), ...overrides })
+      .updateInstitutionSettings({ ...this.baseRequest(), ...overrides })
       .subscribe({
         next: (saved) => {
           this.loaded = saved;
           // Re-theme the running app in place (branding + page-guide visibility + idle policy) without a reload.
           this.branding.apply({
-            organizationName: saved.bankDisplayName,
+            organizationName: saved.institutionDisplayName,
             primaryColor: saved.primaryColor,
             accentColor: saved.accentColor,
             logoDataUri: saved.logoDataUri,
@@ -338,7 +365,7 @@ export class BankSettingsComponent {
             idleWarningSeconds: saved.idleWarningSeconds,
           });
           this.notify.success(
-            this.i18n.translate('administration.bankSettings.savedToast'),
+            this.i18n.translate('administration.institutionSettings.savedToast'),
           );
           this.setSaving(group, false);
         },
@@ -353,7 +380,7 @@ export class BankSettingsComponent {
   saveOrg(): void {
     const v = this.orgForm.getRawValue();
     this.saveGroup('org', this.orgForm, {
-      bankDisplayName: v.bankDisplayName.trim(),
+      institutionDisplayName: v.institutionDisplayName.trim(),
       timezone: v.timezone.trim(),
       localeDefault: v.localeDefault.trim(),
     });
@@ -399,6 +426,30 @@ export class BankSettingsComponent {
     const v = this.reportsForm.getRawValue();
     this.saveGroup('reports', this.reportsForm, {
       reportRetentionMonths: v.reportRetentionMonths,
+    });
+  }
+
+  savePassword(): void {
+    if (this.passwordForm.invalid) {
+      this.passwordForm.markAllAsTouched();
+      return;
+    }
+    if (this.isSaving('password')) {
+      return;
+    }
+    this.setSaving('password', true);
+    const policy = this.passwordForm.getRawValue();
+    this.admin.updatePasswordPolicy(policy).subscribe({
+      next: (saved) => {
+        if (this.loaded) {
+          this.loaded = { ...this.loaded, passwordPolicy: saved };
+        }
+        this.notify.success(
+          this.i18n.translate('administration.institutionSettings.passwordSavedToast'),
+        );
+        this.setSaving('password', false);
+      },
+      error: () => this.setSaving('password', false),
     });
   }
 
@@ -478,7 +529,7 @@ export class BankSettingsComponent {
             };
           }
           this.notify.success(
-            this.i18n.translate('administration.bankSettings.limitsSavedToast'),
+            this.i18n.translate('administration.institutionSettings.limitsSavedToast'),
           );
           this.setSaving('limits', false);
         },

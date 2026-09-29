@@ -8,7 +8,10 @@ delivered codebase (backend domain areas + API controllers + Angular feature are
 
 ### 1. Identity & Access — *M1*
 - **Authentication** — Active Directory (LDAPS lookup + Kerberos/IWA SSO), forms fallback, and a Development
-  provider for local use. No stored passwords; JWT session cookies (8h sliding / 24h absolute, Redis denylist).
+  provider for local use. No stored AD passwords; JWT session cookies (8h sliding / 24h absolute, Redis denylist).
+- **Local passwords** *(optional, off by default)* — institution-managed PBKDF2 credentials with a configurable
+  policy (length/complexity/history/expiry), lockout, must-change/expiry, self-service change/forgot/reset, and
+  admin provisioning (set / generate / email-invite); a `Local` provider serves directory-less deployments.
 - **Users** — just-in-time provisioning, activation/deactivation, awaiting-role state, notification preferences.
 - **Roles & Permissions** — AuditX-owned roles independent of AD groups; scoped permissions with role
   inheritance (cycle-prevented); built-in role catalogue.
@@ -25,7 +28,7 @@ delivered codebase (backend domain areas + API controllers + Angular feature are
 - **Annual plans** — period-scoped audit plans; draft → submitted → decided → closed.
 - **Plan items** — multi-entity items (one audit launched per entity); effort estimates; assigned lead.
 - **Audit-committee routing** — submit / submit-revision / decision; approval by the committee.
-- **Post-approval governance** — approved plans lock; material revision re-opens for re-approval; a bank
+- **Post-approval governance** — approved plans lock; material revision re-opens for re-approval; an institution
   setting permits lightweight minor revisions.
 - **Coverage views** — not-audited-since, high-risk gaps, coverage matrix.
 
@@ -80,7 +83,7 @@ delivered codebase (backend domain areas + API controllers + Angular feature are
 - **Distribution** — recipient distribution with delivery confirmation; **shared links** for external access.
 
 ### 12. Analytics — *M9*
-- **KPI dashboards** — bank-wide default dashboards; KPI drilldown.
+- **KPI dashboards** — institution-wide default dashboards; KPI drilldown.
 - **Performance scorecards** — auditor and department/business-unit scorecards (OrgUnit roll-up).
 - **Coverage & workload** — coverage heatmap, auditor workload/capacity, plan Gantt.
 - **Recurrence detection** — daily scan flagging recurring control weaknesses.
@@ -93,17 +96,17 @@ delivered codebase (backend domain areas + API controllers + Angular feature are
 
 ### 14. Notifications — *M10*
 - **Rules** — event → recipient-resolution → channel routing per domain event.
-- **Templates** — per-channel message templates (system + bank overrides).
+- **Templates** — per-channel message templates (system + institution overrides).
 - **Dispatch & retry** — durable delivery with backoff, dead-lettering, and manual retry.
 - **Channels** — Email (SMTP), SMS (gateway), and **Microsoft Teams** (incoming-webhook broadcast).
 
 ### 15. Platform & Administration
 - **Audit trail** — append-only, DB-trigger-enforced activity log with before/after snapshots. *(M11)*
-- **Configuration** — bank settings, maker-checker gates, reference-data lists.
+- **Configuration** — institution settings, maker-checker gates, reference-data lists.
 - **Integrations** — outbound webhooks (subscribe by event catalogue) and the AD-over-REST identity gateway.
 - **Saved views & search** — reusable filtered views and global search across entities.
 - **Engagement lifecycle** — next-best-action engine and a portfolio board across engagements.
-- **Branding, theming & i18n** — bank branding, dark/light theme + text-size, English/French localisation.
+- **Branding, theming & i18n** — institution branding, dark/light theme + text-size, English/French localisation.
 - **Health & ops** — dependency probes, runtime metrics, background jobs (Hangfire).
 
 ---

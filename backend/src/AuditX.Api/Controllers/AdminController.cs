@@ -13,18 +13,18 @@ namespace AuditX.Api.Controllers;
 [Route("api/v1/admin")]
 public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
 {
-    // ---- Bank settings & limits ----
+    // ---- Institution settings & limits ----
 
-    [RequirePermission(PermissionKeys.ViewBankSettings)]
-    [HttpGet("bank-settings")]
-    public async Task<IActionResult> GetBankSettings(CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new GetBankSettingsQuery(), cancellationToken));
+    [RequirePermission(PermissionKeys.ViewInstitutionSettings)]
+    [HttpGet("institution-settings")]
+    public async Task<IActionResult> GetInstitutionSettings(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetInstitutionSettingsQuery(), cancellationToken));
 
-    [RequirePermission(PermissionKeys.ManageBankSettings)]
-    [HttpPatch("bank-settings")]
-    public async Task<IActionResult> UpdateBankSettings([FromBody] UpdateBankSettingsRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new UpdateBankSettingsCommand(
-            request.BankDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid,
+    [RequirePermission(PermissionKeys.ManageInstitutionSettings)]
+    [HttpPatch("institution-settings")]
+    public async Task<IActionResult> UpdateInstitutionSettings([FromBody] UpdateInstitutionSettingsRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new UpdateInstitutionSettingsCommand(
+            request.InstitutionDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid,
             request.AllowOverlappingPlanPeriods, request.AllowAuditLaunchBeforeApproval, request.AllowMinorPlanRevisionAfterApproval,
             request.PrimaryColor, request.AccentColor, request.LogoDataUri, request.IconDataUri,
             request.ShowOverview, request.ShowWalkthrough, request.ReportRetentionMonths, request.AutoStartWalkthrough,
@@ -34,6 +34,14 @@ public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
     [HttpPatch("resource-limits")]
     public async Task<IActionResult> UpdateResourceLimits([FromBody] UpdateResourceLimitsRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new UpdateResourceLimitsCommand(request.MaxEvidenceFileMb, request.MaxAuditEvidenceGb), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageInstitutionSettings)]
+    [HttpPatch("institution-settings/password-policy")]
+    public async Task<IActionResult> UpdatePasswordPolicy([FromBody] UpdatePasswordPolicyRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new UpdatePasswordPolicyCommand(
+            request.EnableLocalPasswords, request.MinLength,
+            request.RequireUppercase, request.RequireLowercase, request.RequireDigit, request.RequireSymbol,
+            request.HistoryDepth, request.ExpiryDays, request.MaxFailedAttempts, request.LockoutMinutes), cancellationToken));
 
     // ---- Bulk user operations ----
 

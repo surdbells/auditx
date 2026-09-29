@@ -24,7 +24,7 @@ public sealed class ListPlansQueryHandler(IAnnualPlanRepository plans)
 
 public sealed record GetPlanQuery(Guid Id) : IQuery<PlanDto>;
 
-public sealed class GetPlanQueryHandler(IAnnualPlanRepository plans, IBankSettingsRepository settings)
+public sealed class GetPlanQueryHandler(IAnnualPlanRepository plans, IInstitutionSettingsRepository settings)
     : IQueryHandler<GetPlanQuery, PlanDto>
 {
     public async Task<PlanDto> Handle(GetPlanQuery query, CancellationToken cancellationToken)

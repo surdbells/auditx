@@ -9,7 +9,7 @@
 
 export type NotificationChannel = 'email' | 'sms';
 
-export type TemplateScope = 'system' | 'bank';
+export type TemplateScope = 'system' | 'institution';
 
 export type DispatchStatus =
   | 'pending'

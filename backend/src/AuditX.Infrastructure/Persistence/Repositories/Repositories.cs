@@ -18,6 +18,15 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
     public Task<User?> GetBySamAccountNameAsync(string samAccountName, CancellationToken cancellationToken = default)
         => db.Users.FirstOrDefaultAsync(u => u.AdSamAccountName == samAccountName, cancellationToken);
 
+    public Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
+        => db.Users.FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
+
+    public Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
+        => db.Users.AnyAsync(u => u.Username == username, cancellationToken);
+
+    public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+        => db.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+
     public Task<bool> HasAnyRoleAsync(Guid userId, CancellationToken cancellationToken = default)
         => db.UserRoles.AnyAsync(ur => ur.UserId == userId, cancellationToken);
 
@@ -180,9 +189,9 @@ public sealed class MakerCheckerGateRepository(AppDbContext db) : IMakerCheckerG
     public void Add(MakerCheckerGate gate) => db.MakerCheckerGates.Add(gate);
 }
 
-public sealed class BankSettingsRepository(AppDbContext db) : IBankSettingsRepository
+public sealed class InstitutionSettingsRepository(AppDbContext db) : IInstitutionSettingsRepository
 {
-    public async Task<BankSettings> GetAsync(CancellationToken cancellationToken = default)
-        => await db.BankSettings.FirstOrDefaultAsync(cancellationToken)
-           ?? throw new InvalidOperationException("Bank settings have not been seeded.");
+    public async Task<InstitutionSettings> GetAsync(CancellationToken cancellationToken = default)
+        => await db.InstitutionSettings.FirstOrDefaultAsync(cancellationToken)
+           ?? throw new InvalidOperationException("Institution settings have not been seeded.");
 }

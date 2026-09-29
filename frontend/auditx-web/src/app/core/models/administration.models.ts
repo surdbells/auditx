@@ -2,8 +2,8 @@
  * M15 — Administration console models (camelCase, mirroring the backend contract).
  */
 
-export interface BankSettings {
-  bankDisplayName: string;
+export interface InstitutionSettings {
+  institutionDisplayName: string;
   timezone: string;
   localeDefault: string;
   adProvisioningFilterOuDn: string | null;
@@ -28,10 +28,31 @@ export interface BankSettings {
   idleTimeoutMinutes: number;
   /** Seconds the idle warning counts down before automatic sign-out. */
   idleWarningSeconds: number;
+  /** Local-password policy (M1 local authentication). */
+  passwordPolicy: PasswordPolicy;
 }
 
-export interface UpdateBankSettingsRequest {
-  bankDisplayName: string;
+/** The institution's local-password policy. */
+export interface PasswordPolicy {
+  /** Master switch: when off, AuditX authenticates only against the directory and stores no passwords. */
+  enableLocalPasswords: boolean;
+  minLength: number;
+  requireUppercase: boolean;
+  requireLowercase: boolean;
+  requireDigit: boolean;
+  requireSymbol: boolean;
+  /** Number of previous passwords that may not be reused; 0 = no history. */
+  historyDepth: number;
+  /** Days before a password expires and must be changed; 0 = never. */
+  expiryDays: number;
+  /** Consecutive failed sign-ins before lockout; 0 = disabled. */
+  maxFailedAttempts: number;
+  /** Minutes an account stays locked after too many failures. */
+  lockoutMinutes: number;
+}
+
+export interface UpdateInstitutionSettingsRequest {
+  institutionDisplayName: string;
   timezone: string;
   localeDefault: string;
   adProvisioningFilterOuDn: string | null;

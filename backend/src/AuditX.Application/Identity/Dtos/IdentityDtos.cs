@@ -11,7 +11,8 @@ public sealed record SessionDto(
     IReadOnlyList<string> Roles,
     IReadOnlyList<string> Permissions,
     DateTimeOffset ExpiresAt,
-    DateTimeOffset AbsoluteExpiresAt);
+    DateTimeOffset AbsoluteExpiresAt,
+    bool MustChangePassword = false);
 
 /// <summary>Result of a successful authentication: the issued token plus the session it represents.</summary>
 public sealed record AuthResultDto(
@@ -46,7 +47,9 @@ public sealed record UserDetailDto(
     Guid? ManagerId,
     string? ManagerName,
     IReadOnlyList<UserRoleDto> Roles,
-    IReadOnlyList<DelegationDto> Delegations);
+    IReadOnlyList<DelegationDto> Delegations,
+    string AuthenticationSource,
+    string? Username);
 
 public sealed record UserRoleDto(
     Guid Id,

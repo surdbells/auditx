@@ -263,7 +263,28 @@ static async Task InitialiseDatabaseAsync(WebApplication app)
     var identityOptions = scope.ServiceProvider
         .GetRequiredService<Microsoft.Extensions.Options.IOptions<IdentityOptions>>().Value;
     var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
-    await seeder.SeedAsync(seedDevelopmentUsers: identityOptions.UseDevelopmentProvider);
+
+    // When running without a directory (Identity:Provider=Local), bootstrap a first local administrator from
+    // configuration so the platform is reachable. The password is stored only as a hash and must be changed
+    // at first sign-in. It is applied once — skipped when any administrator already exists.
+    AuditX.Infrastructure.Persistence.DbSeeder.BootstrapLocalAdmin? bootstrapAdmin = null;
+    if (identityOptions.Kind == IdentityProviderKind.Local)
+    {
+        var username = app.Configuration["Identity:BootstrapAdmin:Username"] ?? "admin";
+        var password = app.Configuration["Identity:BootstrapAdmin:Password"];
+        var email = app.Configuration["Identity:BootstrapAdmin:Email"] ?? $"{username}@local";
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            app.Logger.LogWarning(
+                "Identity:Provider=Local but Identity:BootstrapAdmin:Password is not set — no local administrator will be bootstrapped.");
+        }
+        else
+        {
+            bootstrapAdmin = new AuditX.Infrastructure.Persistence.DbSeeder.BootstrapLocalAdmin(username, email, password);
+        }
+    }
+
+    await seeder.SeedAsync(seedDevelopmentUsers: identityOptions.UseDevelopmentProvider, bootstrapLocalAdmin: bootstrapAdmin);
 
     // Rich, interconnected DEMO dataset (every module populated) — gated behind Database:SeedDemoData and idempotent.
     // Never enabled in production by default. Runs AFTER the deployment seed so its roles/dimensions/templates exist.

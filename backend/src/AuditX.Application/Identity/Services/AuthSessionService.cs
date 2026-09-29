@@ -20,10 +20,11 @@ public sealed class AuthSessionService(
     IUserRepository users,
     IUserRoleRepository userRoles,
     IRoleRepository roles,
-    IBankSettingsRepository bankSettings,
+    IInstitutionSettingsRepository institutionSettings,
     IIdentityProvider identityProvider,
     ISessionTokenService tokenService,
     IPermissionResolver permissions,
+    IUserCredentialRepository credentials,
     IAuditRecorder audit,
     IClock clock,
     IUnitOfWork unitOfWork)
@@ -34,7 +35,7 @@ public sealed class AuthSessionService(
 
         if (user is null)
         {
-            var settings = await bankSettings.GetAsync(cancellationToken);
+            var settings = await institutionSettings.GetAsync(cancellationToken);
             var permitted = await identityProvider.IsPermittedToProvisionAsync(
                 directoryUser, settings.AdProvisioningFilterOuDn, settings.AdProvisioningFilterGroupSid, cancellationToken);
             if (!permitted)
@@ -88,9 +89,16 @@ public sealed class AuthSessionService(
         var effective = await permissions.GetEffectivePermissionsAsync(user.Id, cancellationToken);
         var permissionKeys = effective.Select(p => p.Key).Distinct().OrderBy(k => k).ToArray();
 
+        var mustChangePassword = false;
+        if (user.AuthenticationSource == AuthenticationSource.Local)
+        {
+            var credential = await credentials.GetByUserIdAsync(user.Id, cancellationToken);
+            mustChangePassword = credential?.MustChangePassword ?? false;
+        }
+
         return new SessionDto(
             user.Id, user.Email, user.FirstName, user.LastName, user.DisplayName,
-            Common.Enums.EnumExtensions.ToSnake(user.Status), roleNames, permissionKeys, expiresAt, absoluteExpiresAt);
+            Common.Enums.EnumExtensions.ToSnake(user.Status), roleNames, permissionKeys, expiresAt, absoluteExpiresAt, mustChangePassword);
     }
 
     public async Task<IReadOnlyList<string>> GetActiveRoleNamesAsync(Guid userId, CancellationToken cancellationToken)

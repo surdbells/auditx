@@ -2,7 +2,7 @@
 
 ## 1. System overview
 
-AuditX is a three-tier web application deployed single-tenant inside a bank's network:
+AuditX is a three-tier web application deployed single-tenant inside an institution's network:
 
 - **Presentation** — Angular 21 SPA (standalone components, signals, Angular Material), served by Nginx.
 - **Application/API** — ASP.NET Core 10 (controllers) exposing a REST API under `/api/v1`, a Hangfire
@@ -55,18 +55,26 @@ backend/tests/            Domain (unit), Application (handler/unit), Infrastruct
 
 GUID (UUIDv7) primary keys, `DATETIMEOFFSET` (UTC) timestamps, snake_case table/column names, JSON
 columns for flexible payloads. Tables: `users`, `roles`, `role_permissions`, `user_roles` (also models
-delegations), `maker_checker_actions`, `maker_checker_gates`, `bank_settings`, `audit_trail`.
+delegations), `maker_checker_actions`, `maker_checker_gates`, `institution_settings`, `audit_trail`.
 
 State machines and richer schemas for M2–M15 are introduced with their modules. Migrations are
 code-first and live in `AuditX.Infrastructure/Persistence/Migrations`.
 
 ## 5. Authentication & authorization
 
-- **Authentication** delegates to Active Directory: LDAPS for directory lookup, Kerberos/IWA for SSO,
-  and a forms fallback that validates credentials with an LDAP bind. AuditX **stores no passwords**. A
-  `Development` provider with seeded users allows the platform to run without a domain.
+- **Authentication** delegates to Active Directory by default: LDAPS for directory lookup, Kerberos/IWA for
+  SSO, and a forms fallback that validates credentials with an LDAP bind — AuditX **stores no AD passwords**.
+  A `Development` provider with seeded users allows the platform to run without a domain.
+- **Local passwords (optional)** — enabled per institution (off by default). Selected users, or every user in
+  a directory-less `Identity:Provider=Local` deployment, authenticate against a **PBKDF2-hashed** local
+  credential (never the plaintext). Login is local-first (a matching local user is verified locally, else the
+  directory provider runs), with a configurable policy (length/complexity/history/expiry), lockout after N
+  failures, must-change/expiry flows, no-enumeration forgot/reset (single-use hashed tokens), and admin
+  provisioning (set / generate / email-invite). The credential carries a security stamp embedded in the
+  session token; any password change rotates it and invalidates every outstanding session on its next request.
 - **Session** — a signed (HMAC-SHA-256) JWT in an HttpOnly cookie, 8h sliding / 24h absolute lifetime,
-  with a Redis denylist for logout/force-logout and AD-disablement detection on refresh.
+  with a Redis denylist for logout/force-logout, AD-disablement detection on refresh, and per-request
+  credential-stamp validation for local sessions.
 - **Authorization** — AuditX-maintained roles and fine-grained, scopeable permissions, **independent of
   AD groups**. Effective permissions are the transitive union of role assignments, role inheritance
   (acyclic), and active delegations, cached in Redis. Enforced per request by `[RequirePermission]`.

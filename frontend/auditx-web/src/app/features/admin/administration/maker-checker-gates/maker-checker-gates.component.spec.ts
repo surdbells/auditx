@@ -46,7 +46,7 @@ describe('MakerCheckerGatesComponent', () => {
   let http: HttpTestingController;
   let notify: jasmine.SpyObj<NotificationService>;
 
-  async function setup(perms: string[] = ['ManageBankSettings']): Promise<void> {
+  async function setup(perms: string[] = ['ManageInstitutionSettings']): Promise<void> {
     notify = jasmine.createSpyObj<NotificationService>('NotificationService', [
       'success',
       'error',

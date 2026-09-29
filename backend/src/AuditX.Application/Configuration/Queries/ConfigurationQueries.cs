@@ -13,7 +13,7 @@ namespace AuditX.Application.Configuration.Queries;
 
 public sealed record GetActiveConfigurationQuery(string Domain) : IQuery<ConfigurationVersionDto?>;
 
-public sealed class GetActiveConfigurationQueryHandler(IBankConfigurationRepository configurations)
+public sealed class GetActiveConfigurationQueryHandler(IInstitutionConfigurationRepository configurations)
     : IQueryHandler<GetActiveConfigurationQuery, ConfigurationVersionDto?>
 {
     public async Task<ConfigurationVersionDto?> Handle(GetActiveConfigurationQuery query, CancellationToken cancellationToken)
@@ -32,7 +32,7 @@ public sealed class GetActiveConfigurationQueryHandler(IBankConfigurationReposit
 
 public sealed record GetConfigurationVersionsQuery(string Domain, int? Page, int? PageSize) : IQuery<PagedResult<ConfigurationVersionDto>>;
 
-public sealed class GetConfigurationVersionsQueryHandler(IBankConfigurationRepository configurations)
+public sealed class GetConfigurationVersionsQueryHandler(IInstitutionConfigurationRepository configurations)
     : IQueryHandler<GetConfigurationVersionsQuery, PagedResult<ConfigurationVersionDto>>
 {
     public async Task<PagedResult<ConfigurationVersionDto>> Handle(GetConfigurationVersionsQuery query, CancellationToken cancellationToken)

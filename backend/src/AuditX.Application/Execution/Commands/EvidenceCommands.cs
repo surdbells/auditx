@@ -21,7 +21,7 @@ public sealed class UploadEvidenceCommandHandler(
     IEvidenceRepository evidence,
     IFileStorage storage,
     IFileSignatureInspector inspector,
-    IBankSettingsRepository bankSettings,
+    IInstitutionSettingsRepository institutionSettings,
     IPermissionResolver permissions,
     ICurrentUser currentUser,
     IAuditRecorder audit,
@@ -47,7 +47,7 @@ public sealed class UploadEvidenceCommandHandler(
             throw new DomainException("evidence.empty_file", "The uploaded file is empty.");
         }
 
-        var settings = await bankSettings.GetAsync(cancellationToken);
+        var settings = await institutionSettings.GetAsync(cancellationToken);
         var maxFileBytes = settings.MaxEvidenceFileMb * 1024L * 1024L;
         if (command.Content.LongLength > maxFileBytes)
         {

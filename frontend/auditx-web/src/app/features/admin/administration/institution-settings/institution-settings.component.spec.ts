@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 
-import { BankSettingsComponent } from './bank-settings.component';
+import { InstitutionSettingsComponent } from './institution-settings.component';
 import { provideTestEnv } from '../../../../../testing/test-providers';
 import { AuthService } from '../../../../core/services/auth.service';
-import { BankSettings, SessionDto } from '../../../../core/models';
+import { InstitutionSettings, SessionDto } from '../../../../core/models';
 
 const BASE = '/api/v1';
 
-function settings(overrides: Partial<BankSettings> = {}): BankSettings {
+function settings(overrides: Partial<InstitutionSettings> = {}): InstitutionSettings {
   return {
-    bankDisplayName: 'ACME Bank',
+    institutionDisplayName: 'ACME Bank',
     timezone: 'UTC',
     localeDefault: 'en-GB',
     adProvisioningFilterOuDn: null,
@@ -30,6 +30,18 @@ function settings(overrides: Partial<BankSettings> = {}): BankSettings {
     reportRetentionMonths: 0,
     idleTimeoutMinutes: 15,
     idleWarningSeconds: 60,
+    passwordPolicy: {
+      enableLocalPasswords: false,
+      minLength: 12,
+      requireUppercase: true,
+      requireLowercase: true,
+      requireDigit: true,
+      requireSymbol: true,
+      historyDepth: 5,
+      expiryDays: 90,
+      maxFailedAttempts: 5,
+      lockoutMinutes: 15,
+    },
     ...overrides,
   };
 }
@@ -49,26 +61,26 @@ function session(permissions: string[]): SessionDto {
   };
 }
 
-describe('BankSettingsComponent', () => {
-  let fixture: ComponentFixture<BankSettingsComponent>;
-  let component: BankSettingsComponent;
+describe('InstitutionSettingsComponent', () => {
+  let fixture: ComponentFixture<InstitutionSettingsComponent>;
+  let component: InstitutionSettingsComponent;
   let http: HttpTestingController;
 
   function setup(
     permissions: string[] = [
-      'ViewBankSettings',
-      'ManageBankSettings',
+      'ViewInstitutionSettings',
+      'ManageInstitutionSettings',
       'ConfigureLimits',
     ],
   ): void {
     TestBed.configureTestingModule({
-      imports: [BankSettingsComponent],
+      imports: [InstitutionSettingsComponent],
       providers: [provideTestEnv()],
     });
     const auth = TestBed.inject(AuthService);
     auth.setSession(session(permissions));
 
-    fixture = TestBed.createComponent(BankSettingsComponent);
+    fixture = TestBed.createComponent(InstitutionSettingsComponent);
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
@@ -78,12 +90,12 @@ describe('BankSettingsComponent', () => {
 
   it('loads settings and populates the section forms', async () => {
     setup();
-    http.expectOne(`${BASE}/admin/bank-settings`).flush({ data: settings() });
+    http.expectOne(`${BASE}/admin/institution-settings`).flush({ data: settings() });
     await fixture.whenStable();
     fixture.detectChanges();
 
     expect(component.state()).toBe('ready');
-    expect(component.orgForm.controls.bankDisplayName.value).toBe('ACME Bank');
+    expect(component.orgForm.controls.institutionDisplayName.value).toBe('ACME Bank');
     expect(component.limitsForm.controls.maxEvidenceFileMb.value).toBe(25);
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Resource limits');
@@ -94,7 +106,7 @@ describe('BankSettingsComponent', () => {
   it('saves the organization section as a full merge and preserves the AD filters it does not surface', async () => {
     setup();
     http
-      .expectOne(`${BASE}/admin/bank-settings`)
+      .expectOne(`${BASE}/admin/institution-settings`)
       .flush({
         data: settings({
           adProvisioningFilterOuDn: 'OU=Audit,DC=corp',
@@ -103,30 +115,30 @@ describe('BankSettingsComponent', () => {
       });
     await fixture.whenStable();
 
-    component.orgForm.controls.bankDisplayName.setValue('Renamed Bank');
+    component.orgForm.controls.institutionDisplayName.setValue('Renamed Institution');
     component.saveOrg();
-    const req = http.expectOne(`${BASE}/admin/bank-settings`);
+    const req = http.expectOne(`${BASE}/admin/institution-settings`);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body.bankDisplayName).toBe('Renamed Bank');
+    expect(req.request.body.institutionDisplayName).toBe('Renamed Institution');
     // The AD provisioning filters have no UI control but must ride along untouched (login enforces them).
     expect(req.request.body.adProvisioningFilterOuDn).toBe('OU=Audit,DC=corp');
     expect(req.request.body.adProvisioningFilterGroupSid).toBe('S-1-5-21-99');
-    req.flush({ data: settings({ bankDisplayName: 'Renamed Bank' }) });
+    req.flush({ data: settings({ institutionDisplayName: 'Renamed Institution' }) });
     expect(component.isSaving('org')).toBe(false);
   });
 
   it('saves only the branding section and does not drag along another section\'s unsaved edits', async () => {
     setup();
-    http.expectOne(`${BASE}/admin/bank-settings`).flush({ data: settings() });
+    http.expectOne(`${BASE}/admin/institution-settings`).flush({ data: settings() });
     await fixture.whenStable();
 
     // Unsaved edit in a DIFFERENT section — must not be persisted by a branding save.
-    component.orgForm.controls.bankDisplayName.setValue('Unsaved Name');
+    component.orgForm.controls.institutionDisplayName.setValue('Unsaved Name');
     component.brandingForm.controls.primaryColor.setValue('#112233');
     component.saveBranding();
-    const req = http.expectOne(`${BASE}/admin/bank-settings`);
+    const req = http.expectOne(`${BASE}/admin/institution-settings`);
     expect(req.request.body.primaryColor).toBe('#112233');
-    expect(req.request.body.bankDisplayName).toBe('ACME Bank'); // baseline, not the dirty org edit
+    expect(req.request.body.institutionDisplayName).toBe('ACME Bank'); // baseline, not the dirty org edit
     req.flush({ data: settings({ primaryColor: '#112233' }) });
     expect(component.isSaving('branding')).toBe(false);
   });
@@ -134,7 +146,7 @@ describe('BankSettingsComponent', () => {
   it('loads branding into the colour controls and logo preview', async () => {
     setup();
     http
-      .expectOne(`${BASE}/admin/bank-settings`)
+      .expectOne(`${BASE}/admin/institution-settings`)
       .flush({
         data: settings({
           primaryColor: '#abcdef',
@@ -150,7 +162,7 @@ describe('BankSettingsComponent', () => {
   it('clears the logo preview and control', async () => {
     setup();
     http
-      .expectOne(`${BASE}/admin/bank-settings`)
+      .expectOne(`${BASE}/admin/institution-settings`)
       .flush({ data: settings({ logoDataUri: 'data:image/png;base64,AAA' }) });
     await fixture.whenStable();
 
@@ -160,8 +172,8 @@ describe('BankSettingsComponent', () => {
   });
 
   it('disables the section forms without write permissions', async () => {
-    setup(['ViewBankSettings']);
-    http.expectOne(`${BASE}/admin/bank-settings`).flush({ data: settings() });
+    setup(['ViewInstitutionSettings']);
+    http.expectOne(`${BASE}/admin/institution-settings`).flush({ data: settings() });
     await fixture.whenStable();
     fixture.detectChanges();
 

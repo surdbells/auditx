@@ -1,13 +1,18 @@
 namespace AuditX.Api.Contracts;
 
-public sealed record UpdateBankSettingsRequest(
-    string BankDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
+public sealed record UpdateInstitutionSettingsRequest(
+    string InstitutionDisplayName, string Timezone, string LocaleDefault, string? AdProvisioningFilterOuDn, string? AdProvisioningFilterGroupSid,
     bool AllowOverlappingPlanPeriods = false, bool AllowAuditLaunchBeforeApproval = false, bool AllowMinorPlanRevisionAfterApproval = false,
     string PrimaryColor = "#4f46e5", string AccentColor = "#7c3aed", string? LogoDataUri = null, string? IconDataUri = null,
     bool ShowOverview = true, bool ShowWalkthrough = true, int ReportRetentionMonths = 0, bool AutoStartWalkthrough = true,
     int IdleTimeoutMinutes = 15, int IdleWarningSeconds = 60);
 
 public sealed record UpdateResourceLimitsRequest(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
+
+public sealed record UpdatePasswordPolicyRequest(
+    bool EnableLocalPasswords, int MinLength,
+    bool RequireUppercase, bool RequireLowercase, bool RequireDigit, bool RequireSymbol,
+    int HistoryDepth, int ExpiryDays, int MaxFailedAttempts, int LockoutMinutes);
 
 public sealed record BulkUserIdsRequest(IReadOnlyList<Guid> UserIds);
 

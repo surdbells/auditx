@@ -31,12 +31,12 @@ public sealed class MakerCheckerController(IDispatcher dispatcher) : ApiControll
         return NoContent();
     }
 
-    [RequirePermission(PermissionKeys.ManageBankSettings)]
+    [RequirePermission(PermissionKeys.ManageInstitutionSettings)]
     [HttpGet("gates")]
     public async Task<IActionResult> Gates(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ListMakerCheckerGatesQuery(), cancellationToken));
 
-    [RequirePermission(PermissionKeys.ManageBankSettings)]
+    [RequirePermission(PermissionKeys.ManageInstitutionSettings)]
     [HttpPut("gates")]
     public async Task<IActionResult> ConfigureGate([FromBody] ConfigureGateRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(

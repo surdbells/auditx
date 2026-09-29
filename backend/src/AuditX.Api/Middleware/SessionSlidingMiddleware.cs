@@ -2,6 +2,7 @@ using System.Security.Claims;
 using AuditX.Api.Authentication;
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Identity;
+using AuditX.Infrastructure.Identity;
 
 namespace AuditX.Api.Middleware;
 
@@ -25,7 +26,9 @@ public sealed class SessionSlidingMiddleware(RequestDelegate next)
             if (now < absoluteExpiresAt && expiresAt - now < RefreshThreshold)
             {
                 var roles = context.User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
-                var refreshed = tokenService.Refresh(userId, roles, absoluteExpiresAt);
+                // Preserve the local-credential stamp across the slide so invalidation still works after a refresh.
+                Guid? stamp = Guid.TryParse(context.User.FindFirst(SessionTokenService.CredentialStampClaim)?.Value, out var s) ? s : null;
+                var refreshed = tokenService.Refresh(userId, roles, absoluteExpiresAt, stamp);
                 SessionCookie.Write(context, refreshed.Token, refreshed.AbsoluteExpiresAt);
             }
         }

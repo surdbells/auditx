@@ -17,6 +17,9 @@ public static class DependencyInjection
 
         // Application services (shared orchestration used by multiple handlers).
         services.AddScoped<AuthSessionService>();
+        services.AddScoped<LocalAuthenticator>();
+        services.AddScoped<Identity.Services.PasswordService>();
+        services.AddScoped<Identity.Services.LocalCredentialAdminService>();
         services.AddScoped<RoleWriteService>();
         services.AddScoped<MakerCheckerGateService>();
         services.AddScoped<Integrations.Webhooks.WebhookDispatchService>();

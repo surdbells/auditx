@@ -11,4 +11,7 @@ public enum AuthenticationMethod
 
     /// <summary>Local development provider (seeded users). Never enabled in production.</summary>
     Development,
+
+    /// <summary>A local (institution-managed) password validated against a stored PBKDF2 hash.</summary>
+    LocalPassword,
 }

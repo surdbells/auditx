@@ -1,7 +1,7 @@
 namespace AuditX.Application.Administration.Dtos;
 
-public sealed record BankSettingsDto(
-    string BankDisplayName,
+public sealed record InstitutionSettingsDto(
+    string InstitutionDisplayName,
     string Timezone,
     string LocaleDefault,
     string? AdProvisioningFilterOuDn,
@@ -20,7 +20,21 @@ public sealed record BankSettingsDto(
     int ReportRetentionMonths,
     bool AutoStartWalkthrough,
     int IdleTimeoutMinutes,
-    int IdleWarningSeconds);
+    int IdleWarningSeconds,
+    PasswordPolicyDto PasswordPolicy);
+
+/// <summary>The institution's local-password policy (M1 local authentication).</summary>
+public sealed record PasswordPolicyDto(
+    bool EnableLocalPasswords,
+    int MinLength,
+    bool RequireUppercase,
+    bool RequireLowercase,
+    bool RequireDigit,
+    bool RequireSymbol,
+    int HistoryDepth,
+    int ExpiryDays,
+    int MaxFailedAttempts,
+    int LockoutMinutes);
 
 public sealed record ResourceLimitsDto(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
 

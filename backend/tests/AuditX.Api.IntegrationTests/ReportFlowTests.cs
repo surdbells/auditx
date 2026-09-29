@@ -341,11 +341,11 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
     {
         var admin = await LoginAsync("admin");
 
-        // Configure a 12-month retention policy via the admin bank-settings PATCH (full replace of current values).
-        var s = await DataAsync(await admin.GetAsync("/api/v1/admin/bank-settings"));
-        (await admin.PatchAsJsonAsync("/api/v1/admin/bank-settings", new
+        // Configure a 12-month retention policy via the admin institution-settings PATCH (full replace of current values).
+        var s = await DataAsync(await admin.GetAsync("/api/v1/admin/institution-settings"));
+        (await admin.PatchAsJsonAsync("/api/v1/admin/institution-settings", new
         {
-            bankDisplayName = s.GetProperty("bankDisplayName").GetString(),
+            institutionDisplayName = s.GetProperty("institutionDisplayName").GetString(),
             timezone = s.GetProperty("timezone").GetString(),
             localeDefault = s.GetProperty("localeDefault").GetString(),
             adProvisioningFilterOuDn = (string?)null,

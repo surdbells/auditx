@@ -1,6 +1,6 @@
 # AuditX Enterprise — Deployment Runbook
 
-_On-premises internal-audit platform for banks. ASP.NET Core 10 API + Angular 21 SPA + SQL Server + Redis._
+_On-premises internal-audit platform for institutions. ASP.NET Core 10 API + Angular 21 SPA + SQL Server + Redis._
 
 This runbook covers three target environments:
 
@@ -35,7 +35,8 @@ Environment-variable form uses `__` for nested keys (e.g. `ConnectionStrings__De
 | Key | Required | Notes |
 |---|---|---|
 | `ConnectionStrings__Default` | ✅ | SQL Server connection string. Use `Encrypt=True` + a trusted cert in production. |
-| `Identity__Provider` | ✅ | `ActiveDirectory` (LDAPS) or `ActiveDirectoryApi` (the bank's AD REST gateway — see [identity-ad-rest-contract.md](identity-ad-rest-contract.md)) in production. `Development` is **rejected outside the Development environment** by the startup guard. |
+| `Identity__Provider` | ✅ | `ActiveDirectory` (LDAPS), `ActiveDirectoryApi` (the institution's AD REST gateway — see [identity-ad-rest-contract.md](identity-ad-rest-contract.md)), or `Local` (no directory — institution-managed local passwords only) in production. `Development` is **rejected outside the Development environment** by the startup guard. |
+| `Identity__BootstrapAdmin__Username` / `__Password` / `__Email` | ⛳ (Local) | With `Provider=Local`, seeds a first local administrator on an empty deployment; the password is stored only as a PBKDF2 hash and must be changed at first sign-in. Set the password via a secret. |
 | `Jwt__SigningKey` | ✅ | ≥ 32 bytes, high-entropy, from a secret store. The startup guard rejects empty / `CHANGE-ME…` / < 32 bytes outside Development. |
 | `Jwt__Issuer`, `Jwt__Audience` | ⬜ | Default `auditx`. |
 | `Redis__ConnectionString` | ✅ | e.g. `redis-host:6379`. |

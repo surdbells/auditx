@@ -52,9 +52,12 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+        services.AddScoped<IUserCredentialRepository, UserCredentialRepository>();
+        services.AddScoped<IPasswordHistoryRepository, PasswordHistoryRepository>();
+        services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         services.AddScoped<IMakerCheckerRepository, MakerCheckerRepository>();
         services.AddScoped<IMakerCheckerGateRepository, MakerCheckerGateRepository>();
-        services.AddScoped<IBankSettingsRepository, BankSettingsRepository>();
+        services.AddScoped<IInstitutionSettingsRepository, InstitutionSettingsRepository>();
         services.AddScoped<ITemplateRepository, TemplateRepository>();
         services.AddScoped<IRatingScaleRepository, RatingScaleRepository>();
         services.AddScoped<IResponseOptionSetRepository, ResponseOptionSetRepository>();
@@ -91,7 +94,7 @@ public static class DependencyInjection
         services.AddScoped<IReportTemplateRepository, ReportTemplateRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IRecurrenceClusterRepository, RecurrenceClusterRepository>();
-        services.AddScoped<IBankConfigurationRepository, BankConfigurationRepository>();
+        services.AddScoped<IInstitutionConfigurationRepository, InstitutionConfigurationRepository>();
         services.AddScoped<IReferenceDataRepository, ReferenceDataRepository>();
         services.AddScoped<IAcPackRepository, AcPackRepository>();
         services.AddScoped<IAcActionItemRepository, AcActionItemRepository>();
@@ -205,6 +208,9 @@ public static class DependencyInjection
             services.AddScoped<Application.Abstractions.Notifications.ITeamsSender, Notifications.TeamsWebhookSender>();
         }
 
+        // Local-password hashing (PBKDF2). Stateless, so registered as a singleton.
+        services.AddSingleton<IPasswordHasher, Identity.Pbkdf2PasswordHasher>();
+
         // Identity provider: seeded Development users locally, Active Directory over LDAPS, or the bank's
         // AD-over-REST gateway — selected by Identity:Provider.
         switch (identityOptions.Kind)
@@ -225,6 +231,10 @@ public static class DependencyInjection
                     }
                 });
                 services.AddScoped<IIdentityProvider>(sp => sp.GetRequiredService<ActiveDirectoryApiIdentityProvider>());
+                break;
+
+            case IdentityProviderKind.Local:
+                services.AddScoped<IIdentityProvider, NullDirectoryIdentityProvider>();
                 break;
 
             default:

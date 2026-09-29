@@ -5,7 +5,7 @@ namespace AuditX.Infrastructure.Configuration;
 
 /// <summary>
 /// Captures the active configuration versions for the given domains as a small JSON map, e.g.
-/// <c>{"exception_defaults":3}</c> (M12, S5). SINGLE-STORE only (bank_configurations via the active-config
+/// <c>{"exception_defaults":3}</c> (M12, S5). SINGLE-STORE only (institution_configurations via the active-config
 /// provider). A domain with no active version is omitted. Used at exception raise to stamp honest config provenance.
 /// </summary>
 public sealed class ConfigurationSnapshotter(IActiveConfigurationProvider activeProvider) : IConfigurationSnapshotter

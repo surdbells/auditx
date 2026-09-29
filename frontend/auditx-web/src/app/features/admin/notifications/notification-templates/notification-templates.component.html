@@ -1,6 +1,6 @@
 @if (canManage()) {
   <div class="templates__toolbar">
-    <button matButton="filled" type="button" (click)="createBankTemplate()">
+    <button matButton="filled" type="button" (click)="createInstitutionTemplate()">
       <app-icon name="add" />
       {{ 'notifications.templates.new' | t }}
     </button>
@@ -55,7 +55,7 @@
               <th mat-header-cell *matHeaderCellDef>{{ 'notifications.templates.column.scope' | t }}</th>
               <td mat-cell *matCellDef="let t">
                 <span class="status-badge" [attr.data-status]="t.scope">
-                  {{ t.scope === 'bank' ? ('notifications.scope.bank' | t) : ('notifications.scope.system' | t) }}
+                  {{ t.scope === 'institution' ? ('notifications.scope.institution' | t) : ('notifications.scope.system' | t) }}
                 </span>
               </td>
             </ng-container>

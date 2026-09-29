@@ -110,8 +110,8 @@ export class BulkUsersComponent {
   downloadTemplate(): void {
     const csv =
       'email,first_name,last_name,roles\n' +
-      'jane.doe@bank.local,Jane,Doe,\n' +
-      'john.smith@bank.local,John,Smith,AuditX Administrator\n';
+      'jane.doe@example.com,Jane,Doe,\n' +
+      'john.smith@example.com,John,Smith,AuditX Administrator\n';
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;

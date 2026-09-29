@@ -1,10 +1,10 @@
 @switch (state()) {
   @case ('loading') {
-    <app-loading [message]="'administration.bankSettings.loading' | t" />
+    <app-loading [message]="'administration.institutionSettings.loading' | t" />
   }
   @case ('error') {
     <app-error-state
-      [message]="'administration.bankSettings.loadError' | t"
+      [message]="'administration.institutionSettings.loadError' | t"
       (retry)="fetch()"
     />
   }
@@ -17,17 +17,17 @@
         <p class="settings__card-hint">{{ 'administration.settings.org.hint' | t }}</p>
         <form [formGroup]="orgForm" class="settings__form">
           <mat-form-field appearance="outline" class="full">
-            <mat-label>{{ 'administration.bankSettings.displayName' | t }}</mat-label>
-            <input matInput formControlName="bankDisplayName" autocomplete="off" />
+            <mat-label>{{ 'administration.institutionSettings.displayName' | t }}</mat-label>
+            <input matInput formControlName="institutionDisplayName" autocomplete="off" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'administration.bankSettings.timezone' | t }}</mat-label>
+            <mat-label>{{ 'administration.institutionSettings.timezone' | t }}</mat-label>
             <input matInput formControlName="timezone" placeholder="UTC" autocomplete="off" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'administration.bankSettings.defaultLocale' | t }}</mat-label>
+            <mat-label>{{ 'administration.institutionSettings.defaultLocale' | t }}</mat-label>
             <input matInput formControlName="localeDefault" placeholder="en-GB" autocomplete="off" />
           </mat-form-field>
 
@@ -39,7 +39,7 @@
                 (click)="saveOrg()"
                 [disabled]="orgForm.invalid || isSaving('org')"
               >
-                {{ isSaving('org') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('org') ? ('administration.institutionSettings.saving' | t) : ('administration.institutionSettings.save' | t) }}
               </button>
             </div>
           }
@@ -155,7 +155,7 @@
                 (click)="saveBranding()"
                 [disabled]="brandingForm.invalid || isSaving('branding')"
               >
-                {{ isSaving('branding') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('branding') ? ('administration.institutionSettings.saving' | t) : ('administration.institutionSettings.save' | t) }}
               </button>
             </div>
           }
@@ -169,23 +169,23 @@
         <form [formGroup]="governanceForm" class="settings__form">
           <div class="settings__toggle">
             <mat-slide-toggle formControlName="allowOverlappingPlanPeriods">
-              {{ 'administration.bankSettings.allowPlanOverlap' | t }}
+              {{ 'administration.institutionSettings.allowPlanOverlap' | t }}
             </mat-slide-toggle>
-            <p class="settings__toggle-hint">{{ 'administration.bankSettings.allowPlanOverlapHint' | t }}</p>
+            <p class="settings__toggle-hint">{{ 'administration.institutionSettings.allowPlanOverlapHint' | t }}</p>
           </div>
 
           <div class="settings__toggle">
             <mat-slide-toggle formControlName="allowAuditLaunchBeforeApproval">
-              {{ 'administration.bankSettings.allowLaunchBeforeApproval' | t }}
+              {{ 'administration.institutionSettings.allowLaunchBeforeApproval' | t }}
             </mat-slide-toggle>
-            <p class="settings__toggle-hint">{{ 'administration.bankSettings.allowLaunchBeforeApprovalHint' | t }}</p>
+            <p class="settings__toggle-hint">{{ 'administration.institutionSettings.allowLaunchBeforeApprovalHint' | t }}</p>
           </div>
 
           <div class="settings__toggle">
             <mat-slide-toggle formControlName="allowMinorPlanRevisionAfterApproval">
-              {{ 'administration.bankSettings.allowMinorRevision' | t }}
+              {{ 'administration.institutionSettings.allowMinorRevision' | t }}
             </mat-slide-toggle>
-            <p class="settings__toggle-hint">{{ 'administration.bankSettings.allowMinorRevisionHint' | t }}</p>
+            <p class="settings__toggle-hint">{{ 'administration.institutionSettings.allowMinorRevisionHint' | t }}</p>
           </div>
 
           @if (canManageSettings()) {
@@ -196,7 +196,7 @@
                 (click)="saveGovernance()"
                 [disabled]="governanceForm.invalid || isSaving('governance')"
               >
-                {{ isSaving('governance') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('governance') ? ('administration.institutionSettings.saving' | t) : ('administration.institutionSettings.save' | t) }}
               </button>
             </div>
           }
@@ -209,16 +209,16 @@
         <p class="settings__card-hint">{{ 'administration.settings.session.hint' | t }}</p>
         <form [formGroup]="sessionForm" class="settings__form">
           <mat-form-field appearance="outline" class="full">
-            <mat-label>{{ 'administration.bankSettings.idleTimeoutMinutes' | t }}</mat-label>
+            <mat-label>{{ 'administration.institutionSettings.idleTimeoutMinutes' | t }}</mat-label>
             <input matInput type="number" formControlName="idleTimeoutMinutes" min="0" max="480" />
           </mat-form-field>
-          <p class="settings__field-hint">{{ 'administration.bankSettings.idleTimeoutMinutesHint' | t }}</p>
+          <p class="settings__field-hint">{{ 'administration.institutionSettings.idleTimeoutMinutesHint' | t }}</p>
 
           <mat-form-field appearance="outline" class="full">
-            <mat-label>{{ 'administration.bankSettings.idleWarningSeconds' | t }}</mat-label>
+            <mat-label>{{ 'administration.institutionSettings.idleWarningSeconds' | t }}</mat-label>
             <input matInput type="number" formControlName="idleWarningSeconds" min="20" max="600" />
           </mat-form-field>
-          <p class="settings__field-hint">{{ 'administration.bankSettings.idleWarningSecondsHint' | t }}</p>
+          <p class="settings__field-hint">{{ 'administration.institutionSettings.idleWarningSecondsHint' | t }}</p>
 
           @if (canManageSettings()) {
             <div class="settings__actions">
@@ -228,7 +228,7 @@
                 (click)="saveSession()"
                 [disabled]="sessionForm.invalid || isSaving('session')"
               >
-                {{ isSaving('session') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('session') ? ('administration.institutionSettings.saving' | t) : ('administration.institutionSettings.save' | t) }}
               </button>
             </div>
           }
@@ -242,23 +242,23 @@
         <form [formGroup]="guideForm" class="settings__form">
           <div class="settings__toggle">
             <mat-slide-toggle formControlName="showOverview">
-              {{ 'administration.bankSettings.showOverview' | t }}
+              {{ 'administration.institutionSettings.showOverview' | t }}
             </mat-slide-toggle>
-            <p class="settings__toggle-hint">{{ 'administration.bankSettings.showOverviewHint' | t }}</p>
+            <p class="settings__toggle-hint">{{ 'administration.institutionSettings.showOverviewHint' | t }}</p>
           </div>
 
           <div class="settings__toggle">
             <mat-slide-toggle formControlName="showWalkthrough">
-              {{ 'administration.bankSettings.showWalkthrough' | t }}
+              {{ 'administration.institutionSettings.showWalkthrough' | t }}
             </mat-slide-toggle>
-            <p class="settings__toggle-hint">{{ 'administration.bankSettings.showWalkthroughHint' | t }}</p>
+            <p class="settings__toggle-hint">{{ 'administration.institutionSettings.showWalkthroughHint' | t }}</p>
           </div>
 
           <div class="settings__toggle">
             <mat-slide-toggle formControlName="autoStartWalkthrough">
-              {{ 'administration.bankSettings.autoStartWalkthrough' | t }}
+              {{ 'administration.institutionSettings.autoStartWalkthrough' | t }}
             </mat-slide-toggle>
-            <p class="settings__toggle-hint">{{ 'administration.bankSettings.autoStartWalkthroughHint' | t }}</p>
+            <p class="settings__toggle-hint">{{ 'administration.institutionSettings.autoStartWalkthroughHint' | t }}</p>
           </div>
 
           @if (canManageSettings()) {
@@ -269,7 +269,7 @@
                 (click)="saveGuide()"
                 [disabled]="guideForm.invalid || isSaving('guide')"
               >
-                {{ isSaving('guide') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('guide') ? ('administration.institutionSettings.saving' | t) : ('administration.institutionSettings.save' | t) }}
               </button>
             </div>
           }
@@ -282,10 +282,10 @@
         <p class="settings__card-hint">{{ 'administration.settings.reports.hint' | t }}</p>
         <form [formGroup]="reportsForm" class="settings__form">
           <mat-form-field appearance="outline" class="full">
-            <mat-label>{{ 'administration.bankSettings.reportRetentionMonths' | t }}</mat-label>
+            <mat-label>{{ 'administration.institutionSettings.reportRetentionMonths' | t }}</mat-label>
             <input matInput type="number" formControlName="reportRetentionMonths" min="0" max="600" />
           </mat-form-field>
-          <p class="settings__field-hint">{{ 'administration.bankSettings.reportRetentionHint' | t }}</p>
+          <p class="settings__field-hint">{{ 'administration.institutionSettings.reportRetentionHint' | t }}</p>
 
           @if (canManageSettings()) {
             <div class="settings__actions">
@@ -295,7 +295,7 @@
                 (click)="saveReports()"
                 [disabled]="reportsForm.invalid || isSaving('reports')"
               >
-                {{ isSaving('reports') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.save' | t) }}
+                {{ isSaving('reports') ? ('administration.institutionSettings.saving' | t) : ('administration.institutionSettings.save' | t) }}
               </button>
             </div>
           }
@@ -304,16 +304,16 @@
 
       <!-- Resource limits -->
       <mat-card appearance="outlined" class="settings__card" data-guide="limits">
-        <h2 class="settings__title">{{ 'administration.bankSettings.limitsTitle' | t }}</h2>
+        <h2 class="settings__title">{{ 'administration.institutionSettings.limitsTitle' | t }}</h2>
         <p class="settings__card-hint">{{ 'administration.settings.limits.hint' | t }}</p>
         <form [formGroup]="limitsForm" class="settings__form">
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'administration.bankSettings.maxEvidenceFile' | t }}</mat-label>
+            <mat-label>{{ 'administration.institutionSettings.maxEvidenceFile' | t }}</mat-label>
             <input matInput type="number" formControlName="maxEvidenceFileMb" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'administration.bankSettings.maxAuditEvidence' | t }}</mat-label>
+            <mat-label>{{ 'administration.institutionSettings.maxAuditEvidence' | t }}</mat-label>
             <input matInput type="number" formControlName="maxAuditEvidenceGb" />
           </mat-form-field>
 
@@ -325,7 +325,70 @@
                 (click)="saveLimits()"
                 [disabled]="limitsForm.invalid || isSaving('limits')"
               >
-                {{ isSaving('limits') ? ('administration.bankSettings.saving' | t) : ('administration.bankSettings.saveLimits' | t) }}
+                {{ isSaving('limits') ? ('administration.institutionSettings.saving' | t) : ('administration.institutionSettings.saveLimits' | t) }}
+              </button>
+            </div>
+          }
+        </form>
+      </mat-card>
+
+      <!-- Local-password policy -->
+      <mat-card appearance="outlined" class="settings__card" data-guide="password">
+        <h2 class="settings__title">{{ 'administration.password.title' | t }}</h2>
+        <p class="settings__card-hint">{{ 'administration.password.hint' | t }}</p>
+        <form [formGroup]="passwordForm" class="settings__form">
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="enableLocalPasswords">{{ 'administration.password.enable' | t }}</mat-slide-toggle>
+            <p class="settings__toggle-hint">{{ 'administration.password.enableHint' | t }}</p>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'administration.password.minLength' | t }}</mat-label>
+            <input matInput type="number" formControlName="minLength" />
+          </mat-form-field>
+
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="requireUppercase">{{ 'administration.password.requireUppercase' | t }}</mat-slide-toggle>
+          </div>
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="requireLowercase">{{ 'administration.password.requireLowercase' | t }}</mat-slide-toggle>
+          </div>
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="requireDigit">{{ 'administration.password.requireDigit' | t }}</mat-slide-toggle>
+          </div>
+          <div class="settings__toggle">
+            <mat-slide-toggle formControlName="requireSymbol">{{ 'administration.password.requireSymbol' | t }}</mat-slide-toggle>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'administration.password.historyDepth' | t }}</mat-label>
+            <input matInput type="number" formControlName="historyDepth" />
+            <mat-hint>{{ 'administration.password.historyHint' | t }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'administration.password.expiryDays' | t }}</mat-label>
+            <input matInput type="number" formControlName="expiryDays" />
+            <mat-hint>{{ 'administration.password.expiryHint' | t }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'administration.password.maxFailedAttempts' | t }}</mat-label>
+            <input matInput type="number" formControlName="maxFailedAttempts" />
+            <mat-hint>{{ 'administration.password.lockoutHint' | t }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'administration.password.lockoutMinutes' | t }}</mat-label>
+            <input matInput type="number" formControlName="lockoutMinutes" />
+          </mat-form-field>
+
+          @if (canManageSettings()) {
+            <div class="settings__actions">
+              <button
+                matButton="filled"
+                type="button"
+                (click)="savePassword()"
+                [disabled]="passwordForm.invalid || isSaving('password')"
+              >
+                {{ isSaving('password') ? ('administration.institutionSettings.saving' | t) : ('administration.institutionSettings.save' | t) }}
               </button>
             </div>
           }

@@ -29,6 +29,13 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion(new SnakeCaseEnumConverter<UserStatus>())
             .HasMaxLength(40)
             .IsRequired();
+        builder.Property(u => u.AuthenticationSource)
+            .HasConversion(new SnakeCaseEnumConverter<AuthenticationSource>())
+            .HasMaxLength(20)
+            .IsRequired();
+        builder.Property(u => u.Username).HasMaxLength(256);
+        // The local sign-in name is unique among live users that have one (directory users leave it null).
+        builder.HasIndex(u => u.Username).IsUnique().HasFilter("[username] IS NOT NULL AND [is_deleted] = 0");
 
         // AD natural keys are unique among LIVE users only, so off-boarding (soft-delete) frees the keys for
         // a returning principal to be re-provisioned with the same objectSID / sAMAccountName / UPN.
@@ -141,15 +148,15 @@ public sealed class MakerCheckerGateConfiguration : IEntityTypeConfiguration<Mak
     }
 }
 
-public sealed class BankSettingsConfiguration : IEntityTypeConfiguration<BankSettings>
+public sealed class InstitutionSettingsConfiguration : IEntityTypeConfiguration<InstitutionSettings>
 {
-    public void Configure(EntityTypeBuilder<BankSettings> builder)
+    public void Configure(EntityTypeBuilder<InstitutionSettings> builder)
     {
-        builder.ToTable("bank_settings");
+        builder.ToTable("institution_settings");
         builder.HasKey(b => b.Id);
         builder.Property(b => b.Id).ValueGeneratedNever();
 
-        builder.Property(b => b.BankDisplayName).HasMaxLength(200).IsRequired();
+        builder.Property(b => b.InstitutionDisplayName).HasMaxLength(200).IsRequired();
         builder.Property(b => b.Timezone).HasMaxLength(64).IsRequired();
         builder.Property(b => b.LocaleDefault).HasMaxLength(16).IsRequired();
         builder.Property(b => b.AdProvisioningFilterOuDn).HasMaxLength(512);

@@ -61,6 +61,11 @@ import {
   EditUserDialogComponent,
   EditUserDialogData,
 } from '../dialogs/edit-user-dialog.component';
+import {
+  ResetPasswordDialogComponent,
+  ResetPasswordDialogData,
+  ResetPasswordDialogResult,
+} from '../dialogs/reset-password-dialog.component';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -226,6 +231,65 @@ export class UserDetailComponent {
 
   goBack(): void {
     void this.router.navigate(['/admin/users']);
+  }
+
+  /** Reset a local user's password, or enable local login on a directory user (username required). */
+  openResetPassword(): void {
+    const current = this.user();
+    if (!current) {
+      return;
+    }
+    const requireUsername = current.authenticationSource !== 'local';
+    const data: ResetPasswordDialogData = { displayName: current.displayName, requireUsername };
+    this.dialog
+      .open(ResetPasswordDialogComponent, { data })
+      .afterClosed()
+      .subscribe((result: ResetPasswordDialogResult | undefined) => {
+        if (!result) {
+          return;
+        }
+        const request$ = requireUsername
+          ? this.usersService.enableLocalCredential(current.id, {
+              username: result.username!,
+              method: result.method,
+              password: result.password,
+            })
+          : this.usersService.adminResetPassword(current.id, { method: result.method, password: result.password });
+
+        request$.subscribe({
+          next: (res) => {
+            if (res.generatedPassword) {
+              this.dialog.open(ConfirmDialogComponent, {
+                data: {
+                  title: this.i18n.translate('identity.createUser.tempTitle'),
+                  message: this.i18n.translate('identity.createUser.tempMessage', {
+                    username: res.username,
+                    password: res.generatedPassword,
+                  }),
+                  confirmLabel: this.i18n.translate('common.ok'),
+                } as ConfirmDialogData,
+              });
+            } else {
+              this.notify.success(this.i18n.translate('identity.resetPassword.done'));
+            }
+            this.fetch();
+          },
+        });
+      });
+  }
+
+  /** Clear a lockout on a local account. */
+  unlock(): void {
+    const current = this.user();
+    if (!current) {
+      return;
+    }
+    this.usersService.unlockUser(current.id).subscribe({
+      next: () => {
+        this.notify.success(this.i18n.translate('identity.unlock.done'));
+        this.fetch();
+      },
+    });
   }
 
   openSetCapacity(): void {

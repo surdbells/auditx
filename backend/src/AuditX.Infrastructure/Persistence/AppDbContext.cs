@@ -42,11 +42,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<UserRole> UserRoles => Set<UserRole>();
 
+    public DbSet<UserCredential> UserCredentials => Set<UserCredential>();
+
+    public DbSet<UserPasswordHistory> UserPasswordHistory => Set<UserPasswordHistory>();
+
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+
     public DbSet<MakerCheckerAction> MakerCheckerActions => Set<MakerCheckerAction>();
 
     public DbSet<MakerCheckerGate> MakerCheckerGates => Set<MakerCheckerGate>();
 
-    public DbSet<BankSettings> BankSettings => Set<BankSettings>();
+    public DbSet<InstitutionSettings> InstitutionSettings => Set<InstitutionSettings>();
 
     public DbSet<AuditTrailEntry> AuditTrail => Set<AuditTrailEntry>();
 
@@ -166,7 +172,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<AuditX.Domain.Organization.OrgUnit> OrgUnits => Set<AuditX.Domain.Organization.OrgUnit>();
 
-    public DbSet<BankConfiguration> BankConfigurations => Set<BankConfiguration>();
+    public DbSet<InstitutionConfiguration> InstitutionConfigurations => Set<InstitutionConfiguration>();
 
     public DbSet<ReferenceDataItem> ReferenceDataItems => Set<ReferenceDataItem>();
 

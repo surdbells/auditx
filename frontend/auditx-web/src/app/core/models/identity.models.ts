@@ -20,6 +20,53 @@ export interface SessionDto {
   permissions: string[];
   expiresAt: string;
   absoluteExpiresAt: string;
+  /** True when a local-password user must change their password before doing anything else. */
+  mustChangePassword?: boolean;
+}
+
+/** How an administrator establishes a user's initial (or reset) local password. */
+export type InitialPasswordMethod = 'set_password' | 'generate_temp' | 'invite';
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  usernameOrEmail: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface CreateLocalUserRequest {
+  email: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  roleNames: string[];
+  method: InitialPasswordMethod;
+  password: string | null;
+}
+
+export interface EnableLocalCredentialRequest {
+  username: string;
+  method: InitialPasswordMethod;
+  password: string | null;
+}
+
+export interface AdminResetPasswordRequest {
+  method: InitialPasswordMethod;
+  password: string | null;
+}
+
+/** Result of an admin credential action; generatedPassword is set only for the generate-temp method. */
+export interface LocalCredentialResult {
+  userId: string;
+  username: string;
+  generatedPassword: string | null;
 }
 
 export interface UserDto {
@@ -42,6 +89,10 @@ export interface UserDetailDto extends UserDto {
   managerName: string | null;
   roles: UserRoleDto[];
   delegations: DelegationDto[];
+  /** Where this user's credentials live. */
+  authenticationSource?: 'directory' | 'local';
+  /** Local sign-in username (present for local users). */
+  username?: string | null;
 }
 
 /** A user's resolved reporting line: the effective manager plus the ordered chain upward. */

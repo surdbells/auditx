@@ -23,6 +23,31 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'forgot-password',
+    title: 'Reset password · AuditX',
+    loadComponent: () =>
+      import('./features/auth/forgot-password/forgot-password.component').then(
+        (m) => m.ForgotPasswordComponent,
+      ),
+  },
+  {
+    path: 'reset-password',
+    title: 'Set password · AuditX',
+    loadComponent: () =>
+      import('./features/auth/reset-password/reset-password.component').then(
+        (m) => m.ResetPasswordComponent,
+      ),
+  },
+  {
+    path: 'change-password',
+    title: 'Change password · AuditX',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/auth/change-password/change-password.component').then(
+        (m) => m.ChangePasswordComponent,
+      ),
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -236,9 +261,9 @@ export const routes: Routes = [
         title: 'Administration · AuditX',
         canActivate: [
           permissionGuard(
-            Permissions.ViewBankSettings,
+            Permissions.ViewInstitutionSettings,
             Permissions.ViewSystemHealth,
-            Permissions.ManageBankSettings,
+            Permissions.ManageInstitutionSettings,
             Permissions.ConfigureLimits,
             Permissions.ManageUsers,
             Permissions.ManageSupportChannel,
