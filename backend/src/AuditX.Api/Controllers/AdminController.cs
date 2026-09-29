@@ -16,12 +16,12 @@ public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
     // ---- Institution settings & limits ----
 
     [RequirePermission(PermissionKeys.ViewInstitutionSettings)]
-    [HttpGet("bank-settings")]
+    [HttpGet("institution-settings")]
     public async Task<IActionResult> GetInstitutionSettings(CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetInstitutionSettingsQuery(), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageInstitutionSettings)]
-    [HttpPatch("bank-settings")]
+    [HttpPatch("institution-settings")]
     public async Task<IActionResult> UpdateInstitutionSettings([FromBody] UpdateInstitutionSettingsRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new UpdateInstitutionSettingsCommand(
             request.InstitutionDisplayName, request.Timezone, request.LocaleDefault, request.AdProvisioningFilterOuDn, request.AdProvisioningFilterGroupSid,
