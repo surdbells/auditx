@@ -8,7 +8,10 @@ delivered codebase (backend domain areas + API controllers + Angular feature are
 
 ### 1. Identity & Access — *M1*
 - **Authentication** — Active Directory (LDAPS lookup + Kerberos/IWA SSO), forms fallback, and a Development
-  provider for local use. No stored passwords; JWT session cookies (8h sliding / 24h absolute, Redis denylist).
+  provider for local use. No stored AD passwords; JWT session cookies (8h sliding / 24h absolute, Redis denylist).
+- **Local passwords** *(optional, off by default)* — institution-managed PBKDF2 credentials with a configurable
+  policy (length/complexity/history/expiry), lockout, must-change/expiry, self-service change/forgot/reset, and
+  admin provisioning (set / generate / email-invite); a `Local` provider serves directory-less deployments.
 - **Users** — just-in-time provisioning, activation/deactivation, awaiting-role state, notification preferences.
 - **Roles & Permissions** — AuditX-owned roles independent of AD groups; scoped permissions with role
   inheritance (cycle-prevented); built-in role catalogue.

@@ -16,10 +16,13 @@ Standards (ASP.NET Core 10 + Angular, Clean Architecture).
 - **Clean Architecture .NET 10 solution** — Domain / Application / Infrastructure / API, with a
   hand-rolled CQRS dispatcher, FluentValidation, Serilog, EF Core (code-first, GUID keys), Redis,
   Hangfire, and an append-only audit trail enforced by a database trigger.
-- **M1 Identity**: Active Directory authentication (LDAPS lookup + Kerberos/IWA SSO + forms fallback),
-  no stored passwords, JWT session cookies (8h sliding / 24h absolute, Redis denylist), just-in-time
-  provisioning, AuditX-maintained roles/permissions independent of AD groups, scoped permissions with
-  role inheritance (cycle-prevented), configurable maker-checker dual control, and time-bounded
+- **M1 Identity**: Active Directory authentication (LDAPS lookup + Kerberos/IWA SSO + forms fallback) with
+  no stored AD passwords, plus **optional local (institution-managed) passwords** — off by default, hashed
+  with PBKDF2, with a configurable policy (length/complexity/history/expiry), lockout, must-change/expiry
+  flows, self-service change/forgot/reset, and admin provisioning (set / generate / email-invite). JWT
+  session cookies (8h sliding / 24h absolute, Redis denylist; a password change invalidates every session),
+  just-in-time provisioning, AuditX-maintained roles/permissions independent of AD groups, scoped permissions
+  with role inheritance (cycle-prevented), configurable maker-checker dual control, and time-bounded
   delegation with an hourly expiry job.
 - **Angular 21 SPA** (standalone, signals, Angular Material) — login/SSO, awaiting-role, and the admin
   identity screens (users, roles, maker-checker queue, delegations).
@@ -95,7 +98,8 @@ form, e.g. `ConnectionStrings__Default`):
 |-----|---------|
 | `ConnectionStrings:Default` | SQL Server connection string |
 | `Redis:ConnectionString` | Redis endpoint |
-| `Identity:Provider` | `ActiveDirectory` (production) or `Development` |
+| `Identity:Provider` | `ActiveDirectory` (production), `ActiveDirectoryApi`, `Local` (no directory — local passwords only), or `Development` |
+| `Identity:BootstrapAdmin:Username` / `Password` / `Email` | With `Provider=Local`, seeds a first local administrator on an empty deployment (must change password at first sign-in) |
 | `ActiveDirectory:*` | LDAPS host/port, base DN, service account |
 | `Jwt:SigningKey` | HMAC-SHA-256 signing key (**override in every deployment**, ≥ 32 bytes) |
 | `Cors:Origins` | Allowed SPA origins |

@@ -201,6 +201,9 @@ public sealed class InstitutionSettings : Entity
         IconDataUri = string.IsNullOrWhiteSpace(iconDataUri) ? null : iconDataUri;
     }
 
+    /// <summary>Toggle only the local-password master switch, leaving the rest of the policy intact.</summary>
+    public void SetEnableLocalPasswords(bool value) => EnableLocalPasswords = value;
+
     public void SetResourceLimits(int maxEvidenceFileMb, int maxAuditEvidenceGb)
     {
         MaxEvidenceFileMb = maxEvidenceFileMb is <= 0 or > 1024 ? MaxEvidenceFileMb : maxEvidenceFileMb;
