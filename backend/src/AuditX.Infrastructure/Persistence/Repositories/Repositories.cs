@@ -18,6 +18,12 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
     public Task<User?> GetBySamAccountNameAsync(string samAccountName, CancellationToken cancellationToken = default)
         => db.Users.FirstOrDefaultAsync(u => u.AdSamAccountName == samAccountName, cancellationToken);
 
+    public Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
+        => db.Users.FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
+
+    public Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
+        => db.Users.AnyAsync(u => u.Username == username, cancellationToken);
+
     public Task<bool> HasAnyRoleAsync(Guid userId, CancellationToken cancellationToken = default)
         => db.UserRoles.AnyAsync(ur => ur.UserId == userId, cancellationToken);
 

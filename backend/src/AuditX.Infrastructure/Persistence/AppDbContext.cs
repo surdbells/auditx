@@ -42,6 +42,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<UserRole> UserRoles => Set<UserRole>();
 
+    public DbSet<UserCredential> UserCredentials => Set<UserCredential>();
+
+    public DbSet<UserPasswordHistory> UserPasswordHistory => Set<UserPasswordHistory>();
+
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+
     public DbSet<MakerCheckerAction> MakerCheckerActions => Set<MakerCheckerAction>();
 
     public DbSet<MakerCheckerGate> MakerCheckerGates => Set<MakerCheckerGate>();

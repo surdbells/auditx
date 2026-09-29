@@ -52,6 +52,9 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+        services.AddScoped<IUserCredentialRepository, UserCredentialRepository>();
+        services.AddScoped<IPasswordHistoryRepository, PasswordHistoryRepository>();
+        services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         services.AddScoped<IMakerCheckerRepository, MakerCheckerRepository>();
         services.AddScoped<IMakerCheckerGateRepository, MakerCheckerGateRepository>();
         services.AddScoped<IInstitutionSettingsRepository, InstitutionSettingsRepository>();

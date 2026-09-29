@@ -29,6 +29,13 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion(new SnakeCaseEnumConverter<UserStatus>())
             .HasMaxLength(40)
             .IsRequired();
+        builder.Property(u => u.AuthenticationSource)
+            .HasConversion(new SnakeCaseEnumConverter<AuthenticationSource>())
+            .HasMaxLength(20)
+            .IsRequired();
+        builder.Property(u => u.Username).HasMaxLength(256);
+        // The local sign-in name is unique among live users that have one (directory users leave it null).
+        builder.HasIndex(u => u.Username).IsUnique().HasFilter("[username] IS NOT NULL AND [is_deleted] = 0");
 
         // AD natural keys are unique among LIVE users only, so off-boarding (soft-delete) frees the keys for
         // a returning principal to be re-provisioned with the same objectSID / sAMAccountName / UPN.
