@@ -7,16 +7,14 @@
     [mode]="isHandset() ? 'over' : 'side'"
     [opened]="isHandset() ? sidenavOpened() : true"
     [fixedInViewport]="isHandset()"
-    (closedStart)="sidenavOpened.set(false)"
-  >
+    (closedStart)="sidenavOpened.set(false)">
     <div class="nav">
       <!-- Brand -->
       <div class="nav__brand">
         <span
           class="nav__logo"
           [class.nav__logo--image]="logoDataUri()"
-          aria-hidden="true"
-        >
+          aria-hidden="true">
           @if (logoDataUri(); as logo) {
             <img class="nav__logo-img" [src]="logo" alt="" />
           } @else {
