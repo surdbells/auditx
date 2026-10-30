@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import {
+  AbstractControl,
   FormBuilder,
   ReactiveFormsModule,
   ValidationErrors,
@@ -26,7 +27,6 @@ import { ResponseOptionSetsService } from '../../../core/services/response-optio
 import {
   ChecklistResponse,
   RatingScalePoint,
-  ResponseOption,
   ResponseOptionSet,
   ResponseType,
   ResponseVerdict,
@@ -249,7 +249,7 @@ export class RespondItemDialogComponent {
   /** A comment is mandatory for a Fail/N-A verdict, or for a chosen option that is a finding / N/A / requires-comment. */
   private readonly commentValidator: ValidatorFn = (group): ValidationErrors | null => {
     const comment = ((group.get('comment')?.value as string) ?? '').trim();
-    return this.commentRequired() && !comment ? { commentRequired: true } : null;
+    return this.commentRequired(group) && !comment ? { commentRequired: true } : null;
   };
 
   readonly form = this.fb.nonNullable.group(
@@ -288,12 +288,6 @@ export class RespondItemDialogComponent {
     }
   }
 
-  /** The option the auditor has currently selected, when an option set is in use. */
-  private selectedOption(): ResponseOption | null {
-    const code = this.form.controls.selectedOptionCode.value;
-    return this.optionSet()?.options.find((o) => o.code === code) ?? null;
-  }
-
   choices(): string[] {
     return this.config.options ?? [];
   }
@@ -312,13 +306,18 @@ export class RespondItemDialogComponent {
     return this.config.unit ?? '';
   }
 
-  /** True when the chosen conclusion makes a comment mandatory. */
-  commentRequired(): boolean {
+  /**
+   * True when the chosen conclusion makes a comment mandatory. Reads from the passed `group` (defaulting to the
+   * form) so it is safe to call from the group-level validator, which Angular runs while `fb.group()` is still
+   * executing — at which point `this.form` is not yet assigned.
+   */
+  commentRequired(group: AbstractControl = this.form): boolean {
     if (this.usesOptionSet()) {
-      const o = this.selectedOption();
+      const code = group.get('selectedOptionCode')?.value as string | undefined;
+      const o = this.optionSet()?.options.find((opt) => opt.code === code) ?? null;
       return !!o && (o.requiresComment || o.isDeficiency || o.isNotApplicable);
     }
-    const v = this.form.controls.verdict.value;
+    const v = group.get('verdict')?.value as ResponseVerdict | null;
     return v === 'fail' || v === 'na';
   }
 
