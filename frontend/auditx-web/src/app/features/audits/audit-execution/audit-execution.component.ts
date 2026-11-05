@@ -27,6 +27,7 @@ import { ControlsService } from '../../../core/services/controls.service';
 import { UsersService } from '../../../core/services/users.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { BrandingService } from '../../../core/services/branding.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
 import {
@@ -133,6 +134,7 @@ export class AuditExecutionComponent {
   /** Directory-backed user-name resolver for display (all users, no admin permission). */
   private readonly userLookup = inject(UserLookupService);
   private readonly notify = inject(NotificationService);
+  private readonly branding = inject(BrandingService);
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
@@ -690,6 +692,19 @@ export class AuditExecutionComponent {
   uploadEvidence(responseId: string, input: HTMLInputElement): void {
     const file = input.files?.[0];
     if (!file) {
+      return;
+    }
+    // Validate the size client-side first, so an over-limit file is rejected immediately rather than
+    // after the whole upload reaches the server (the server still enforces the same cap).
+    const maxMb = this.branding.maxEvidenceFileMb();
+    if (file.size > maxMb * 1024 * 1024) {
+      this.notify.error(
+        this.i18n.translate('execution.evidence.tooLarge', {
+          max: maxMb,
+          size: (file.size / (1024 * 1024)).toFixed(1),
+        }),
+      );
+      input.value = '';
       return;
     }
     this.service.uploadEvidence(this.audit().id, responseId, file).subscribe({

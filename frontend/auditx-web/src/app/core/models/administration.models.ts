@@ -87,6 +87,8 @@ export interface Branding {
   /** Idle-logout policy: minutes of inactivity before the warning (0 = disabled) + countdown seconds. */
   idleTimeoutMinutes: number;
   idleWarningSeconds: number;
+  /** Max size of a single evidence file (MB); lets uploaders validate before sending (may be absent on older payloads). */
+  maxEvidenceFileMb?: number;
 }
 
 export interface ResourceLimits {

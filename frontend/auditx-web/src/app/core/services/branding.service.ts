@@ -33,6 +33,8 @@ export class BrandingService {
   /** Idle-logout policy (minutes to the warning, 0 = disabled; countdown seconds), read by IdleTimeoutService. */
   readonly idleTimeoutMinutes = signal(15);
   readonly idleWarningSeconds = signal(60);
+  /** Max size of a single evidence file (MB), so uploaders can validate a file before sending it. */
+  readonly maxEvidenceFileMb = signal(50);
 
   /** Fetches `/branding` and applies it. Never throws for callers that ignore the result. */
   load(): Observable<Branding> {
@@ -49,6 +51,9 @@ export class BrandingService {
     this.autoStartWalkthrough.set(branding.autoStartWalkthrough ?? true);
     this.idleTimeoutMinutes.set(branding.idleTimeoutMinutes ?? 15);
     this.idleWarningSeconds.set(branding.idleWarningSeconds ?? 60);
+    if (branding.maxEvidenceFileMb && branding.maxEvidenceFileMb > 0) {
+      this.maxEvidenceFileMb.set(branding.maxEvidenceFileMb);
+    }
 
     const root = this.document.documentElement;
     this.applyColor(root, branding.primaryColor || DEFAULT_PRIMARY, 'primary', 'brand');

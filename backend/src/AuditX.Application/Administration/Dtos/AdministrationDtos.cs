@@ -42,7 +42,9 @@ public sealed record ResourceLimitsDto(int MaxEvidenceFileMb, int MaxAuditEviden
 public sealed record BrandingDto(
     string OrganizationName, string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri,
     bool ShowOverview, bool ShowWalkthrough, bool AutoStartWalkthrough,
-    int IdleTimeoutMinutes, int IdleWarningSeconds);
+    int IdleTimeoutMinutes, int IdleWarningSeconds,
+    // Non-sensitive upload cap, surfaced here so any authenticated uploader can validate a file before sending it.
+    int MaxEvidenceFileMb);
 
 public sealed record BulkOperationErrorDto(string Identifier, string Message);
 

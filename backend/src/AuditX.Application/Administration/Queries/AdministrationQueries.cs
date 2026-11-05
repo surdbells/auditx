@@ -28,7 +28,8 @@ public sealed class GetBrandingQueryHandler(IInstitutionSettingsRepository setti
         return new BrandingDto(
             bank.InstitutionDisplayName, bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri,
             bank.ShowOverview, bank.ShowWalkthrough, bank.AutoStartWalkthrough,
-            bank.IdleTimeoutMinutes, bank.IdleWarningSeconds);
+            bank.IdleTimeoutMinutes, bank.IdleWarningSeconds,
+            bank.MaxEvidenceFileMb);
     }
 }
 
