@@ -3,6 +3,8 @@
   [subtitle]="'administration.page.subtitle' | t"
 />
 
+<app-page-guide [guide]="guide" />
+
 <mat-tab-group class="ax-tabs">
   @if (canViewSettings()) {
     <mat-tab [label]="'administration.tabs.institutionSettings' | t">

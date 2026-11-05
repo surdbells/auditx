@@ -13,8 +13,27 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { Permissions } from '../../../../core/permissions';
 import { ResponseOption, ResponseOptionSet } from '../../../../core/models';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
+import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import { PageGuide } from '../../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
+
+/** Contextual page guide for the response-labels (conclusion options) admin page. */
+const RESPONSE_LABELS_GUIDE: PageGuide = {
+  id: 'admin-response-labels',
+  titleKey: 'responseLabels.title',
+  purposeKey: 'responseLabels.guide.purpose',
+  descriptionKey: 'responseLabels.guide.description',
+  actionKeys: [
+    'responseLabels.guide.action.relabel',
+    'responseLabels.guide.action.score',
+    'responseLabels.guide.action.reset',
+  ],
+  tipKeys: [
+    'responseLabels.guide.tip.verdict',
+    'responseLabels.guide.tip.reports',
+  ],
+};
 
 interface EditableSet {
   responseType: string;
@@ -40,10 +59,13 @@ interface EditableSet {
     MatButtonModule,
     IconComponent,
     PageHeaderComponent,
+    PageGuideComponent,
     TranslatePipe,
   ],
   template: `
     <app-page-header [title]="'responseLabels.title' | t" [subtitle]="'responseLabels.subtitle' | t" />
+
+    <app-page-guide [guide]="guide" />
 
     @for (set of sets(); track set.responseType) {
       <mat-card appearance="outlined" class="set">
@@ -181,6 +203,8 @@ export class ResponseLabelsComponent {
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   private readonly i18n = inject(TranslationService);
+
+  readonly guide = RESPONSE_LABELS_GUIDE;
 
   readonly sets = signal<EditableSet[]>([]);
   readonly saving = signal(false);
