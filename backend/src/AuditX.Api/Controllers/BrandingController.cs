@@ -15,5 +15,12 @@ public sealed class BrandingController(IDispatcher dispatcher) : ApiControllerBa
 {
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Query(new GetBrandingQuery(), cancellationToken));
+    {
+        // Never cache: branding + page-guide visibility + resource limits are admin-editable and must take
+        // effect on the next load. Without this, a browser's heuristic caching can serve stale values for a
+        // while, so a settings change (e.g. toggling the Overview/Walkthrough buttons) only "sticks" after
+        // several reloads.
+        Response.Headers.CacheControl = "no-store";
+        return Envelope(await dispatcher.Query(new GetBrandingQuery(), cancellationToken));
+    }
 }
