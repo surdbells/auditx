@@ -77,6 +77,10 @@
   font-weight: 750;
   letter-spacing: -0.02em;
   color: var(--mat-sys-on-surface);
+  // A long institution name must truncate, not wrap or shove the collapse toggle off its row.
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .nav__brand-sub {
   font-size: 0.58rem;
@@ -84,10 +88,19 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--mat-sys-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .nav__collapse {
   flex: 0 0 auto;
   color: var(--mat-sys-on-surface-variant);
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+.nav__collapse:hover {
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface);
 }
 
 // ---- Dividers ----------------------------------------------------------

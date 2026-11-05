@@ -433,6 +433,9 @@ html[data-theme='dark'] *::-webkit-scrollbar-thumb {
 .auditx-snack-info {
   --mdc-snackbar-container-color: var(--mat-sys-inverse-surface);
   --mdc-snackbar-supporting-text-color: var(--mat-sys-inverse-on-surface);
+  // Pin the Dismiss action to the same readable colour as the text: the theme default (a tint of the brand
+  // primary) can be too low-contrast on the inverse surface in dark mode.
+  --mat-snack-bar-button-color: var(--mat-sys-inverse-on-surface);
 }
 
 // ---- Generic helpers reused by feature pages ---------------------------
