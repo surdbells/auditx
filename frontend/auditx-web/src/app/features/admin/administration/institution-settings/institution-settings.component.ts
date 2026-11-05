@@ -28,9 +28,48 @@ import { TranslationService } from '../../../../core/i18n/translation.service';
 import { LoadingComponent } from '../../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../../shared/components/error-state/error-state.component';
 import { PageGuideComponent } from '../../../../shared/components/page-guide/page-guide.component';
+import {
+  SearchableSelectComponent,
+  SelectOption,
+} from '../../../../shared/components/searchable-select/searchable-select.component';
 import { PageGuide } from '../../../../core/models/page-guide.models';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** A small, sensible set of BCP-47 locales offered in the default-locale picker (admins can still see the loaded value). */
+const LOCALE_CODES = [
+  'en-GB', 'en-US', 'en-NG', 'en-CA', 'en-AU', 'en-ZA', 'en-KE', 'en-GH',
+  'fr-FR', 'fr-CA', 'de-DE', 'es-ES', 'es-MX', 'pt-PT', 'pt-BR', 'it-IT',
+  'nl-NL', 'ar-SA', 'ar-EG', 'sw-KE', 'zh-CN', 'zh-TW', 'ja-JP', 'ko-KR',
+  'ru-RU', 'hi-IN', 'tr-TR', 'pl-PL', 'sv-SE', 'da-DK', 'nb-NO', 'fi-FI',
+];
+
+/** IANA time-zone ids, from the engine when available, with a compact fallback for older runtimes. */
+function timezoneIds(): string[] {
+  const supported = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf;
+  if (typeof supported === 'function') {
+    try {
+      return supported('timeZone');
+    } catch {
+      /* fall through to the static list */
+    }
+  }
+  return [
+    'UTC', 'Africa/Lagos', 'Africa/Cairo', 'Africa/Johannesburg', 'Africa/Nairobi',
+    'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Moscow',
+    'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Sao_Paulo',
+    'Asia/Dubai', 'Asia/Kolkata', 'Asia/Shanghai', 'Asia/Tokyo', 'Asia/Singapore',
+    'Australia/Sydney',
+  ];
+}
+
+/** Builds a {value,label} option list, guaranteeing `current` is present so a previously-saved value still shows. */
+function withCurrent(options: SelectOption[], current: string | null | undefined): SelectOption[] {
+  if (!current || options.some((o) => o.value === current)) {
+    return options;
+  }
+  return [{ value: current, label: current }, ...options];
+}
 
 /** The independently-savable settings sections on this page. */
 type SaveGroup =
@@ -109,6 +148,7 @@ const BANK_SETTINGS_GUIDE: PageGuide = {
     LoadingComponent,
     ErrorStateComponent,
     PageGuideComponent,
+    SearchableSelectComponent,
   ],
   templateUrl: './institution-settings.component.html',
   styleUrl: './institution-settings.component.scss',
@@ -127,6 +167,27 @@ export class InstitutionSettingsComponent {
   private readonly maxAssetBytes = 512 * 1024;
 
   readonly state = signal<ViewState>('loading');
+
+  /** Dropdown options for the identity card. Seeded now, then widened in patch() to include the saved value. */
+  private static readonly localeDisplay = (() => {
+    try {
+      return new Intl.DisplayNames(['en'], { type: 'language' });
+    } catch {
+      return null;
+    }
+  })();
+  readonly timezoneOptions = signal<SelectOption[]>(
+    timezoneIds().map((z) => ({ value: z, label: z.replace(/_/g, ' ') })),
+  );
+  readonly localeOptions = signal<SelectOption[]>(
+    LOCALE_CODES.map((code) => ({ value: code, label: InstitutionSettingsComponent.localeLabel(code) })),
+  );
+
+  private static localeLabel(code: string): string {
+    const name = InstitutionSettingsComponent.localeDisplay?.of(code);
+    return name && name !== code ? `${name} (${code})` : code;
+  }
+
   /** Sections whose save is in flight — each card shows its own spinner and disables only its own button. */
   private readonly savingGroups = signal<ReadonlySet<SaveGroup>>(new Set());
 
@@ -251,6 +312,9 @@ export class InstitutionSettingsComponent {
 
   private patch(s: InstitutionSettings): void {
     this.loaded = s;
+    // Keep a previously-saved (possibly free-typed) timezone/locale selectable so the picker shows it.
+    this.timezoneOptions.update((opts) => withCurrent(opts, s.timezone));
+    this.localeOptions.update((opts) => withCurrent(opts, s.localeDefault));
     this.orgForm.reset({
       institutionDisplayName: s.institutionDisplayName,
       timezone: s.timezone,

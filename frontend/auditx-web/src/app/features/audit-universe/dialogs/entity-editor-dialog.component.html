@@ -37,15 +37,14 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field appearance="outline" class="full">
-      <mat-label>{{ 'universe.field.owner' | t }}</mat-label>
-      <mat-select formControlName="ownerUserId">
-        <mat-option [value]="''">{{ 'universe.value.noneDash' | t }}</mat-option>
-        @for (u of userLookup.options(); track u.id) {
-          <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+    <app-searchable-select
+      class="full"
+      formControlName="ownerUserId"
+      [label]="'universe.field.owner' | t"
+      [options]="ownerOptions()"
+      [clearable]="true"
+      [clearLabel]="'universe.value.noneDash' | t"
+    />
 
     <app-searchable-select
       class="full"

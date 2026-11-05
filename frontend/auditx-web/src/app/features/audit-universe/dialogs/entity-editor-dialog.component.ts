@@ -36,7 +36,10 @@ import {
 } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
-import { SearchableSelectComponent } from '../../../shared/components/searchable-select/searchable-select.component';
+import {
+  SearchableSelectComponent,
+  SelectOption,
+} from '../../../shared/components/searchable-select/searchable-select.component';
 
 export interface EntityEditorDialogData {
   /** Present when editing; absent for create. */
@@ -90,6 +93,10 @@ export class EntityEditorDialogComponent {
   readonly entityTypeOptions = this.refLookup.options('entity_type');
   /** Populates the owner select (lazy directory load). */
   readonly userLookup = inject(UserLookupService);
+  /** Owner directory mapped to searchable-select options (so the owner picker is type-to-filter). */
+  readonly ownerOptions = computed<SelectOption[]>(() =>
+    this.userLookup.options().map((u) => ({ value: u.id, label: u.displayName })),
+  );
   /** Populates the org-unit picker (lazy tree load). */
   readonly orgUnitLookup = inject(OrgUnitLookupService);
   private readonly riskDimensions = inject(RiskDimensionsService);
@@ -228,7 +235,7 @@ export class EntityEditorDialogComponent {
           name: v.name.trim(),
           entityType: v.entityType,
           description: v.description.trim() || null,
-          ownerUserId: v.ownerUserId.trim() || null,
+          ownerUserId: (v.ownerUserId ?? '').trim() || null,
           parentEntityId: v.parentEntityId || null,
           orgUnitId: v.orgUnitId || null,
           expectedAuditsPerYear: v.expectedAuditsPerYear,
@@ -253,7 +260,7 @@ export class EntityEditorDialogComponent {
           entityType: v.entityType,
           description: v.description.trim() || null,
           parentEntityId: v.parentEntityId || null,
-          ownerUserId: v.ownerUserId.trim() || null,
+          ownerUserId: (v.ownerUserId ?? '').trim() || null,
           orgUnitId: v.orgUnitId || null,
           expectedAuditsPerYear: v.expectedAuditsPerYear,
         })
