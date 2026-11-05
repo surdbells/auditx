@@ -293,6 +293,21 @@ static async Task InitialiseDatabaseAsync(WebApplication app)
         var demoSeeder = scope.ServiceProvider.GetRequiredService<DemoDataSeeder>();
         await demoSeeder.SeedAsync();
     }
+
+    // A new build may change role→permission mappings (the catalogue grows, or a built-in role gains a
+    // permission). Effective permissions are cached with a 5-minute TTL, so without this a just-deployed build
+    // can serve STALE permissions — users hit transient 403s / "something went wrong" that only clear after the
+    // TTL or a re-login. Bump the cache version once on startup so every check recomputes against the fresh roles.
+    try
+    {
+        await scope.ServiceProvider
+            .GetRequiredService<AuditX.Application.Abstractions.Authorization.IPermissionResolver>()
+            .InvalidateAllAsync();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Could not invalidate the permission cache on startup; it will self-heal within the cache TTL.");
+    }
 }
 
 // Create the target database if it does not exist, from a master connection, retrying while SQL Server warms up.
