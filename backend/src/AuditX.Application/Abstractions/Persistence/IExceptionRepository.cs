@@ -8,12 +8,17 @@ namespace AuditX.Application.Abstractions.Persistence;
 public readonly record struct OwnerFindingCounts(int Open, int Overdue);
 
 /// <summary>Filters for the cross-audit exception tracker (US-M6-019).</summary>
+/// <remarks>
+/// <paramref name="ParticipantUserId"/> is the resource-scope guard, not a user-facing filter: when set, results
+/// are limited to findings the user may see — ones they own, or whose audit they are an active team member of.
+/// It is left null only for callers with portfolio visibility (ViewAudits). See <c>ExceptionAccess</c>.
+/// </remarks>
 public sealed record ExceptionSearchFilter(
     ExceptionStatus? Status, ExceptionSeverity? Severity, Guid? OwnerUserId, Guid? AuditableEntityId,
     Guid? AuditId, string? Category, bool? IsRecurrence, bool? IsOverdue, DateOnly AsOfDate, string? Search = null,
     Guid? AnnualPlanId = null, DateTimeOffset? RaisedFrom = null, DateTimeOffset? RaisedTo = null,
     string? RootCauseCategory = null, string? NonConformanceCategory = null,
-    bool? IsOpen = null);
+    bool? IsOpen = null, Guid? ParticipantUserId = null);
 
 /// <summary>Flat, join-resolved export row for the cross-audit finding-register CSV.</summary>
 public sealed record ExceptionExportRow(

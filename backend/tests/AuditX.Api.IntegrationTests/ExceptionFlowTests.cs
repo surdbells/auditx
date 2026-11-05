@@ -1,6 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using AuditX.Application.Abstractions.Authorization;
+using AuditX.Domain.Authorization;
+using AuditX.Domain.Identity;
+using AuditX.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AuditX.Api.IntegrationTests;
 
@@ -11,11 +17,33 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         HandleCookies = true,
     });
 
-    private async Task<HttpClient> AdminAsync()
+    private async Task<HttpClient> AdminAsync() => await LoginAsync("admin");
+
+    /// <summary>Signs in as a dev user (admin/manager/auditor/auditee), all sharing the dev password.</summary>
+    private async Task<HttpClient> LoginAsync(string username)
     {
         var client = NewClient();
-        (await client.PostAsJsonAsync("/api/v1/auth/login", new { username = "admin", password = "Passw0rd!" })).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync("/api/v1/auth/login", new { username, password = "Passw0rd!" })).EnsureSuccessStatusCode();
         return client;
+    }
+
+    /// <summary>
+    /// Grants a built-in role to a user directly (test setup) — the dev users other than admin are provisioned
+    /// role-less (awaiting-role, like a real AD user), and granting a role through the API is maker-checker gated.
+    /// </summary>
+    private async Task GrantBuiltInRoleAsync(Guid userId, string roleName)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var role = await db.Roles.FirstAsync(r => r.Name == roleName);
+        if (!await db.UserRoles.AnyAsync(ur => ur.UserId == userId && ur.RoleId == role.Id))
+        {
+            var user = await db.Users.FirstAsync(u => u.Id == userId);
+            db.UserRoles.Add(UserRole.Grant(userId, role.Id));
+            user.MarkActiveOnFirstRole();
+            await db.SaveChangesAsync();
+            await scope.ServiceProvider.GetRequiredService<IPermissionResolver>().InvalidateAsync(userId);
+        }
     }
 
     private static async Task<JsonElement> DataAsync(HttpResponseMessage response)
@@ -37,7 +65,8 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     }
 
     /// <summary>Build an in-progress audit with two responded items: item0 = Fail, item1 = Pass.</summary>
-    private async Task<(Guid AuditId, Guid FailItem, Guid PassItem, Guid Owner)> SeedAuditWithResponsesAsync(HttpClient admin)
+    private async Task<(Guid AuditId, Guid FailItem, Guid PassItem, Guid Owner)> SeedAuditWithResponsesAsync(
+        HttpClient admin, string auditeeEmail = "auditee@auditx.local")
     {
         var users = await UsersByEmailAsync(admin);
         var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
@@ -47,7 +76,7 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
             startDate = "2027-01-10",
             targetEndDate = "2027-02-10",
             leadUserId = users["manager@auditx.local"],
-            auditeeUserId = users["auditee@auditx.local"],
+            auditeeUserId = users[auditeeEmail],
         }));
         var auditId = created.GetProperty("id").GetGuid();
         var version = Version(created);
@@ -71,7 +100,7 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{passItem}/responses",
             new { verdict = "pass", comment = (string?)null, isDraft = false, version = await AuditVersionAsync(admin, auditId) }));
 
-        return (auditId, failItem, passItem, users["auditee@auditx.local"]);
+        return (auditId, failItem, passItem, users[auditeeEmail]);
     }
 
     [Fact]
@@ -134,6 +163,50 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         // It appears in the per-audit list and the cross-audit tracker.
         var list = await DataAsync(await admin.GetAsync($"/api/v1/audits/{auditId}/exceptions"));
         Assert.Equal(1, list.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Cross_audit_tracker_hides_findings_an_auditee_is_not_a_party_to()
+    {
+        var admin = await AdminAsync();
+
+        // Audit the auditee is on → finding they own (double-qualifies: team member AND owner).
+        var (mineAudit, mineFail, _, auditeeId) = await SeedAuditWithResponsesAsync(admin);
+        var mine = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{mineAudit}/exceptions", new
+        {
+            checklistItemId = mineFail, title = "Mine to see", severity = "medium",
+            rootCause = "x", recommendation = "y", ownerUserId = auditeeId,
+        }));
+        var mineId = mine.GetProperty("id").GetGuid();
+
+        // A different audit the auditee is NOT a member of, with a finding owned by someone else.
+        var (otherAudit, otherFail, _, otherOwner) = await SeedAuditWithResponsesAsync(admin, "admin@auditx.local");
+        var theirs = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{otherAudit}/exceptions", new
+        {
+            checklistItemId = otherFail, title = "Not for the auditee", severity = "high",
+            rootCause = "x", recommendation = "y", ownerUserId = otherOwner,
+        }));
+        var theirsId = theirs.GetProperty("id").GetGuid();
+
+        static IReadOnlyList<Guid> Ids(JsonElement paged) =>
+            paged.GetProperty("items").EnumerateArray().Select(e => e.GetProperty("id").GetGuid()).ToArray();
+
+        // The auditee (ViewExceptions, no ViewAudits) sees only findings they own or whose audit they are on.
+        await GrantBuiltInRoleAsync(auditeeId, BuiltInRoles.AuditeeName);
+        var auditee = await LoginAsync("auditee");
+        var auditeeView = Ids(await DataAsync(await auditee.GetAsync("/api/v1/exceptions?pageSize=500")));
+        Assert.Contains(mineId, auditeeView);
+        Assert.DoesNotContain(theirsId, auditeeView);
+
+        // An administrator (portfolio visibility via ViewAudits) sees the whole register.
+        var adminView = Ids(await DataAsync(await admin.GetAsync("/api/v1/exceptions?pageSize=500")));
+        Assert.Contains(mineId, adminView);
+        Assert.Contains(theirsId, adminView);
+
+        // The CSV export is scoped identically — an auditee cannot export a finding they cannot read.
+        var auditeeCsv = await (await auditee.GetAsync("/api/v1/exceptions/export")).Content.ReadAsStringAsync();
+        Assert.Contains(mineId.ToString(), auditeeCsv);
+        Assert.DoesNotContain(theirsId.ToString(), auditeeCsv);
     }
 
     [Fact]

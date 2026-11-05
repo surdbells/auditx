@@ -69,6 +69,16 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
             query = query.Where(e => e.AuditId == auditId);
         }
 
+        // Resource-scope guard (not a user filter): a caller without portfolio visibility sees only findings
+        // they own, or whose audit they are an active team member of. EXISTS over audit → team_member, mirroring
+        // the per-audit ExceptionAccess check. Uses RemovedAt (IsActive is a computed, untranslatable property).
+        if (filter.ParticipantUserId is { } participant)
+        {
+            query = query.Where(e =>
+                e.OwnerUserId == participant ||
+                db.Audits.Any(a => a.Id == e.AuditId && a.TeamMembers.Any(m => m.RemovedAt == null && m.UserId == participant)));
+        }
+
         // Plan filter: no navigation properties link these aggregates, so correlate through
         // exception → audit (PlanItemId) → plan_item (AnnualPlanId) with an EXISTS subquery.
         if (filter.AnnualPlanId is { } planId)

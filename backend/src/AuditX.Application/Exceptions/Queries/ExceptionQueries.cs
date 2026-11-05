@@ -74,7 +74,8 @@ public sealed record SearchExceptionsQuery(
     string? RootCauseCategory = null, string? NonConformanceCategory = null)
     : IQuery<PagedResult<ExceptionListItemDto>>;
 
-public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions, IClock clock)
+public sealed class SearchExceptionsQueryHandler(
+    IExceptionRepository exceptions, IPermissionResolver permissions, ICurrentUser currentUser, IClock clock)
     : IQueryHandler<SearchExceptionsQuery, PagedResult<ExceptionListItemDto>>
 {
     public async Task<PagedResult<ExceptionListItemDto>> Handle(SearchExceptionsQuery query, CancellationToken cancellationToken)
@@ -86,6 +87,10 @@ public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions
                 ? sv
                 : throw new ConflictException("exception.invalid_severity", $"Unknown severity '{query.Severity}'.");
 
+        // Resource-scope guard: ViewExceptions gates the endpoint globally; without portfolio visibility the
+        // register is narrowed to findings the caller owns or whose audit they are a team member of.
+        var participant = await ExceptionAccess.ResolveParticipantScopeAsync(currentUser.UserId, permissions, cancellationToken);
+
         // "open_any" is the KPI-drilldown umbrella: any non-terminal status (matches the analytics portfolio).
         var openAny = string.Equals(query.Status, "open_any", StringComparison.OrdinalIgnoreCase);
         var filter = new ExceptionSearchFilter(
@@ -93,7 +98,7 @@ public sealed class SearchExceptionsQueryHandler(IExceptionRepository exceptions
             query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search,
             query.AnnualPlanId, query.RaisedFrom, query.RaisedTo,
             query.RootCauseCategory, query.NonConformanceCategory,
-            IsOpen: openAny ? true : null);
+            IsOpen: openAny ? true : null, ParticipantUserId: participant);
 
         var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await exceptions.SearchAsync(filter, page, cancellationToken);
@@ -109,7 +114,9 @@ public sealed record ExportFindingRegisterQuery(
     Guid? AnnualPlanId, DateTimeOffset? RaisedFrom, DateTimeOffset? RaisedTo,
     string? RootCauseCategory = null, string? NonConformanceCategory = null) : IQuery<CsvExportResult>;
 
-public sealed class ExportFindingRegisterQueryHandler(IExceptionRepository exceptions, IClock clock, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class ExportFindingRegisterQueryHandler(
+    IExceptionRepository exceptions, IPermissionResolver permissions, ICurrentUser currentUser,
+    IClock clock, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : IQueryHandler<ExportFindingRegisterQuery, CsvExportResult>
 {
     private static readonly string[] Header =
@@ -128,13 +135,16 @@ public sealed class ExportFindingRegisterQueryHandler(IExceptionRepository excep
                 ? sv
                 : throw new ConflictException("exception.invalid_severity", $"Unknown severity '{query.Severity}'.");
 
+        // Same resource-scope guard as the tracker — an export must never widen what the user can read.
+        var participant = await ExceptionAccess.ResolveParticipantScopeAsync(currentUser.UserId, permissions, cancellationToken);
+
         var openAny = string.Equals(query.Status, "open_any", StringComparison.OrdinalIgnoreCase);
         var filter = new ExceptionSearchFilter(
             openAny ? null : ListExceptionsForAuditQueryHandler.ParseStatus(query.Status), severity, query.OwnerUserId,
             query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search,
             query.AnnualPlanId, query.RaisedFrom, query.RaisedTo,
             query.RootCauseCategory, query.NonConformanceCategory,
-            IsOpen: openAny ? true : null);
+            IsOpen: openAny ? true : null, ParticipantUserId: participant);
 
         var csv = new CsvWriter(Header);
         await foreach (var r in exceptions.StreamForExportAsync(filter, cancellationToken))
