@@ -43,9 +43,17 @@ describe('UsersListComponent', () => {
   let component: UsersListComponent;
   let http: HttpTestingController;
 
+  // Best-effort password-policy fetch (for the create-user dialog); flushed so http.verify() stays clean.
+  function flushPolicy(): void {
+    http
+      .expectOne((r) => r.url === `${BASE}/admin/institution-settings`)
+      .flush({ data: { passwordPolicy: { enableLocalPasswords: true, minLength: 12 } } });
+  }
+
   function flushInitial(users: UserDto[], roles: RoleDto[] = [], total = users.length): void {
     // roles request (filter dropdown)
     http.expectOne((r) => r.url === `${BASE}/roles`).flush({ data: roles });
+    flushPolicy();
     // first page of users
     http.expectOne((r) => r.url === `${BASE}/users`).flush({ data: page(users, total) });
   }
@@ -105,6 +113,7 @@ describe('UsersListComponent', () => {
 
   it('enters the error state when the first page fails', async () => {
     http.expectOne((r) => r.url === `${BASE}/roles`).flush({ data: [] });
+    flushPolicy();
     http
       .expectOne((r) => r.url === `${BASE}/users`)
       .flush({ title: 'Boom' }, { status: 500, statusText: 'Server Error' });
