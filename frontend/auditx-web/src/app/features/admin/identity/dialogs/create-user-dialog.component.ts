@@ -12,10 +12,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
+import { PasswordFieldComponent } from '../../../../shared/components/password-field/password-field.component';
 import {
   CreateLocalUserRequest,
   CreateUserRequest,
   InitialPasswordMethod,
+  PasswordPolicy,
   RoleDto,
 } from '../../../../core/models';
 
@@ -23,6 +25,8 @@ export interface CreateUserDialogData {
   roles: RoleDto[];
   /** Whether local passwords are enabled for the institution (offers the local option when true). */
   localPasswordsEnabled: boolean;
+  /** Institution password policy, so the set-password field can validate inline (falls back to defaults). */
+  passwordPolicy?: PasswordPolicy | null;
 }
 
 /** Discriminated result: a directory user, or a local-password user. */
@@ -43,6 +47,7 @@ export type CreateUserDialogResult =
     MatButtonModule,
     MatButtonToggleModule,
     TranslatePipe,
+    PasswordFieldComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ 'identity.createUser.title' | t }}</h2>
@@ -93,13 +98,11 @@ export type CreateUserDialogResult =
             </mat-select>
           </mat-form-field>
           @if (form.controls.method.value === 'set_password') {
-            <mat-form-field appearance="outline" class="full">
-              <mat-label>{{ 'identity.createUser.password' | t }}</mat-label>
-              <input matInput type="password" formControlName="password" autocomplete="new-password" />
-              @if (form.controls.password.hasError('required') && form.controls.password.touched) {
-                <mat-error>{{ 'identity.createUser.passwordRequired' | t }}</mat-error>
-              }
-            </mat-form-field>
+            <app-password-field
+              class="full"
+              formControlName="password"
+              [policy]="data.passwordPolicy ?? null"
+            />
           }
         }
 
@@ -150,19 +153,13 @@ export class CreateUserDialogComponent {
   readonly isLocal = signal(false);
 
   constructor() {
-    // Toggle validators on the local-only controls as the auth type / method changes.
+    // Username is required only for a local account. The set-password field validates itself inline
+    // (app-password-field is a Validator), and only participates in form validity while it is shown.
     this.form.controls.authType.valueChanges.subscribe((type) => {
       const local = type === 'local';
       this.isLocal.set(local);
       this.setRequired(this.form.controls.username, local);
-      this.applyPasswordValidator();
     });
-    this.form.controls.method.valueChanges.subscribe(() => this.applyPasswordValidator());
-  }
-
-  private applyPasswordValidator(): void {
-    const need = this.isLocal() && this.form.controls.method.value === 'set_password';
-    this.setRequired(this.form.controls.password, need);
   }
 
   private setRequired(control: AbstractControl, required: boolean): void {

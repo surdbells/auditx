@@ -11,12 +11,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
-import { AdminResetPasswordRequest, InitialPasswordMethod } from '../../../../core/models';
+import { PasswordFieldComponent } from '../../../../shared/components/password-field/password-field.component';
+import { AdminResetPasswordRequest, InitialPasswordMethod, PasswordPolicy } from '../../../../core/models';
 
 export interface ResetPasswordDialogData {
   displayName: string;
   /** When true the user is not yet local, so a username is also required (enable-local flow). */
   requireUsername: boolean;
+  /** Institution password policy, so the set-password field can validate inline (falls back to defaults). */
+  passwordPolicy?: PasswordPolicy | null;
 }
 
 export type ResetPasswordDialogResult = AdminResetPasswordRequest & { username?: string };
@@ -33,6 +36,7 @@ export type ResetPasswordDialogResult = AdminResetPasswordRequest & { username?:
     MatSelectModule,
     MatButtonModule,
     TranslatePipe,
+    PasswordFieldComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ 'identity.resetPassword.title' | t }}</h2>
@@ -54,10 +58,11 @@ export type ResetPasswordDialogResult = AdminResetPasswordRequest & { username?:
           </mat-select>
         </mat-form-field>
         @if (form.controls.method.value === 'set_password') {
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>{{ 'identity.createUser.password' | t }}</mat-label>
-            <input matInput type="password" formControlName="password" autocomplete="new-password" />
-          </mat-form-field>
+          <app-password-field
+            class="full"
+            formControlName="password"
+            [policy]="data.passwordPolicy ?? null"
+          />
         }
       </form>
     </mat-dialog-content>
@@ -87,10 +92,8 @@ export class ResetPasswordDialogComponent {
       this.form.controls.username.updateValueAndValidity();
       return;
     }
-    if (v.method === 'set_password' && !v.password) {
-      this.form.controls.password.setValidators([Validators.required]);
+    if (v.method === 'set_password' && this.form.controls.password.invalid) {
       this.form.controls.password.markAsTouched();
-      this.form.controls.password.updateValueAndValidity();
       return;
     }
     this.dialogRef.close({

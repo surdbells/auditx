@@ -20,9 +20,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { UsersService } from '../../../../core/services/users.service';
 import { RolesService } from '../../../../core/services/roles.service';
+import { AdministrationService } from '../../../../core/services/administration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import {
   DelegationDto,
+  PasswordPolicy,
   ReportingLineDto,
   RoleDto,
   TeamExceptionRollupDto,
@@ -156,6 +158,7 @@ export class UserDetailComponent {
 
   private readonly usersService = inject(UsersService);
   private readonly rolesService = inject(RolesService);
+  private readonly admin = inject(AdministrationService);
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
@@ -167,6 +170,8 @@ export class UserDetailComponent {
   readonly user = signal<UserDetailDto | null>(null);
   readonly roles = signal<RoleDto[]>([]);
   readonly reportingLine = signal<ReportingLineDto | null>(null);
+  /** Institution password policy for inline validation in the reset-password dialog (best-effort). */
+  readonly passwordPolicy = signal<PasswordPolicy | null>(null);
   readonly teamRollup = signal<TeamExceptionRollupDto | null>(null);
 
   /** True when this user has people reporting to them (shows the team-findings card). */
@@ -200,6 +205,11 @@ export class UserDetailComponent {
     queueMicrotask(() => {
       this.loadRoles();
       this.fetch();
+      // Best-effort: the reset-password dialog validates against this inline (falls back to defaults).
+      this.admin.getInstitutionSettings().subscribe({
+        next: (s) => this.passwordPolicy.set(s.passwordPolicy),
+        error: () => {},
+      });
     });
   }
 
@@ -244,7 +254,11 @@ export class UserDetailComponent {
       return;
     }
     const requireUsername = current.authenticationSource !== 'local';
-    const data: ResetPasswordDialogData = { displayName: current.displayName, requireUsername };
+    const data: ResetPasswordDialogData = {
+      displayName: current.displayName,
+      requireUsername,
+      passwordPolicy: this.passwordPolicy(),
+    };
     this.dialog
       .open(ResetPasswordDialogComponent, { data })
       .afterClosed()

@@ -29,7 +29,7 @@ import { UsersService } from '../../../../core/services/users.service';
 import { RolesService } from '../../../../core/services/roles.service';
 import { AdministrationService } from '../../../../core/services/administration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { RoleDto, UserDto, UserStatus } from '../../../../core/models';
+import { PasswordPolicy, RoleDto, UserDto, UserStatus } from '../../../../core/models';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -159,6 +159,9 @@ export class UsersListComponent {
   /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
   readonly loading = signal(false);
   readonly roles = signal<RoleDto[]>([]);
+  /** Institution password policy + local-auth flag for the create-user dialog (fetched best-effort). */
+  readonly passwordPolicy = signal<PasswordPolicy | null>(null);
+  readonly localPasswordsEnabled = signal(true);
 
   /* ---- Multi-select (bulk activate / deactivate) ---- */
   readonly selectedIds = signal<ReadonlySet<string>>(new Set());
@@ -235,6 +238,7 @@ export class UsersListComponent {
 
   constructor() {
     this.loadRoles();
+    this.loadPasswordPolicy();
     this.fetchPage(1);
 
     // React to debounced filter changes after the initial load.
@@ -249,6 +253,19 @@ export class UsersListComponent {
     this.rolesService.list(false).subscribe({
       next: (roles) => this.roles.set(roles),
       error: () => this.roles.set([]),
+    });
+  }
+
+  /** Best-effort fetch of the password policy so the create-user set-password field validates inline. */
+  private loadPasswordPolicy(): void {
+    this.admin.getInstitutionSettings().subscribe({
+      next: (s) => {
+        this.passwordPolicy.set(s.passwordPolicy);
+        this.localPasswordsEnabled.set(s.passwordPolicy.enableLocalPasswords);
+      },
+      error: () => {
+        // Admin may lack ViewInstitutionSettings — the dialog falls back to the default policy.
+      },
     });
   }
 
@@ -294,7 +311,11 @@ export class UsersListComponent {
   }
 
   openCreateUser(): void {
-    const data: CreateUserDialogData = { roles: this.roles(), localPasswordsEnabled: true };
+    const data: CreateUserDialogData = {
+      roles: this.roles(),
+      localPasswordsEnabled: this.localPasswordsEnabled(),
+      passwordPolicy: this.passwordPolicy(),
+    };
     this.dialog
       .open(CreateUserDialogComponent, { data })
       .afterClosed()
