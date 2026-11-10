@@ -137,18 +137,30 @@ export class SupportChannelComponent {
   }
 
   addEngineer(event: MatChipInputEvent): void {
-    const value = (event.value ?? '').trim();
-    if (value && !this.engineers().includes(value)) {
-      this.engineers.update((list) => [...list, value]);
-    }
+    this.commitEngineer(event.value);
     event.chipInput?.clear();
+  }
+
+  /** Adds a trimmed, de-duplicated engineer identifier; returns true if it was added. */
+  private commitEngineer(value: string | null | undefined): boolean {
+    const trimmed = (value ?? '').trim();
+    if (trimmed && !this.engineers().includes(trimmed)) {
+      this.engineers.update((list) => [...list, trimmed]);
+      return true;
+    }
+    return false;
   }
 
   removeEngineer(id: string): void {
     this.engineers.update((list) => list.filter((e) => e !== id));
   }
 
-  enable(): void {
+  enable(pendingInput?: HTMLInputElement): void {
+    // Forgiving: commit an email typed into the chip box but not yet turned into a chip (no Enter pressed),
+    // so clicking "Enable access" works even when the user hasn't committed the identifier first.
+    if (pendingInput && this.commitEngineer(pendingInput.value)) {
+      pendingInput.value = '';
+    }
     if (this.form.invalid || this.engineers().length === 0) {
       this.form.markAllAsTouched();
       return;

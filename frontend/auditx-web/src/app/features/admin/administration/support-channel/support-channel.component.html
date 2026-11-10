@@ -34,8 +34,11 @@
                 {{ 'administration.support.revokeAccess' | t }}
               </button>
             </div>
-          } @else if (s.revokedAt) {
-            <p class="muted">{{ 'administration.support.lastRevoked' | t: { date: (s.revokedAt | date: 'medium') } }}</p>
+          } @else {
+            <p class="muted support__hint-inactive">{{ 'administration.support.inactiveHint' | t }}</p>
+            @if (s.revokedAt) {
+              <p class="muted">{{ 'administration.support.lastRevoked' | t: { date: (s.revokedAt | date: 'medium') } }}</p>
+            }
           }
         }
       </mat-card>
@@ -55,8 +58,10 @@
                 </mat-chip-row>
               }
               <input
+                #engineerInput
                 placeholder="engineer@vendor.com"
                 [matChipInputFor]="chipGrid"
+                [matChipInputAddOnBlur]="true"
                 (matChipInputTokenEnd)="addEngineer($event)"
               />
             </mat-chip-grid>
@@ -72,8 +77,8 @@
             <button
               matButton="filled"
               type="button"
-              (click)="enable()"
-              [disabled]="form.invalid || engineers().length === 0 || submitting()"
+              (click)="enable(engineerInput)"
+              [disabled]="form.invalid || submitting()"
             >
               {{ submitting() ? ('administration.support.enabling' | t) : ('administration.support.enableAccess' | t) }}
             </button>
