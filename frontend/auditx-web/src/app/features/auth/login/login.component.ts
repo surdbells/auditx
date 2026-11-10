@@ -75,10 +75,15 @@ export class LoginComponent {
       },
       error: (err: unknown) => {
         this.submitting.set(false);
-        // Opaque message per security requirements, except the actionable "account locked".
+        // Opaque message per security requirements, except the actionable states the admin controls:
+        // a locked account (temporary) or a deactivated one (needs an administrator).
         const code = (err as { error?: { error_code?: string } })?.error?.error_code;
         this.errorMessage.set(
-          code === 'account_locked' ? 'auth.login.accountLocked' : 'auth.login.invalidCredentials',
+          code === 'account_locked'
+            ? 'auth.login.accountLocked'
+            : code === 'account_deactivated'
+              ? 'auth.login.accountDeactivated'
+              : 'auth.login.invalidCredentials',
         );
       },
     });

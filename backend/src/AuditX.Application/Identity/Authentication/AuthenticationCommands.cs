@@ -34,12 +34,23 @@ public sealed class LoginCommandHandler(
 {
     public async Task<AuthResultDto> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
+        // Resolve the AuditX account up front (by local username or AD account name) so a DEACTIVATED user gets an
+        // accurate message whatever their auth source — and even when the directory can no longer authenticate them
+        // (AD unreachable, account removed there), where credential verification would otherwise fail first and
+        // surface the misleading "Invalid username or password."
+        var account = await users.GetByUsernameAsync(command.Username, cancellationToken)
+            ?? await users.GetBySamAccountNameAsync(command.Username, cancellationToken);
+
+        if (account is { Status: UserStatus.Deactivated })
+        {
+            throw new UnauthorizedException("account_deactivated", "Your account has been deactivated. Please contact your administrator.");
+        }
+
         // Local-first: if the username matches a local-password user, authenticate against the stored hash.
         // This gives per-user hybrid auth (some local, some directory) regardless of the configured provider.
-        var localUser = await users.GetByUsernameAsync(command.Username, cancellationToken);
-        if (localUser is { AuthenticationSource: AuthenticationSource.Local })
+        if (account is { AuthenticationSource: AuthenticationSource.Local })
         {
-            return await localAuthenticator.AuthenticateAsync(localUser, command.Password, cancellationToken);
+            return await localAuthenticator.AuthenticateAsync(account, command.Password, cancellationToken);
         }
 
         var directoryUser = await identityProvider.AuthenticateAsync(command.Username, command.Password, cancellationToken);
