@@ -166,15 +166,17 @@
                     <app-icon name="visibility" />
                     <span>{{ 'identity.users.viewDetails' | t }}</span>
                   </a>
-                  <button
-                    mat-menu-item
-                    type="button"
-                    [disabled]="user.status === 'deactivated'"
-                    (click)="deactivate(user, $event)"
-                  >
-                    <app-icon name="block" />
-                    <span>{{ 'identity.actions.deactivate' | t }}</span>
-                  </button>
+                  @if (user.status === 'deactivated') {
+                    <button mat-menu-item type="button" (click)="reactivate(user, $event)">
+                      <app-icon name="how_to_reg" />
+                      <span>{{ 'identity.actions.reactivate' | t }}</span>
+                    </button>
+                  } @else {
+                    <button mat-menu-item type="button" (click)="deactivate(user, $event)">
+                      <app-icon name="block" />
+                      <span>{{ 'identity.actions.deactivate' | t }}</span>
+                    </button>
+                  }
                 </mat-menu>
               </td>
             </ng-container>
