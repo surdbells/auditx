@@ -5306,6 +5306,7 @@
   "auth.login.forgotPassword": "Mot de passe oublié ?",
   "auth.login.accountLocked": "Votre compte est temporairement verrouillé. Veuillez réessayer plus tard.",
   "auth.login.accountDeactivated": "Votre compte a été désactivé. Veuillez contacter votre administrateur.",
+  "auth.login.supportAccessExpired": "Votre fenêtre d'accès support est terminée. Demandez à l'administrateur de la réactiver avant de vous reconnecter.",
   "auth.changePassword.title": "Changer votre mot de passe",
   "auth.changePassword.mustChange": "Vous devez définir un nouveau mot de passe avant de continuer.",
   "auth.changePassword.current": "Mot de passe actuel",

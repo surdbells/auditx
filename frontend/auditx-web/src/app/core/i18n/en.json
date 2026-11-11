@@ -5306,6 +5306,7 @@
   "auth.login.forgotPassword": "Forgot password?",
   "auth.login.accountLocked": "Your account is temporarily locked. Please try again later.",
   "auth.login.accountDeactivated": "Your account has been deactivated. Please contact your administrator.",
+  "auth.login.supportAccessExpired": "Your support-access window has ended. Ask the administrator to re-enable it before signing in again.",
   "auth.changePassword.title": "Change your password",
   "auth.changePassword.mustChange": "You must set a new password before continuing.",
   "auth.changePassword.current": "Current password",

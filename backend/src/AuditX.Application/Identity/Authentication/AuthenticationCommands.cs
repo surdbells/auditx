@@ -43,6 +43,14 @@ public sealed class LoginCommandHandler(
 
         if (account is { Status: UserStatus.Deactivated })
         {
+            // A support login that the expiry sweep (or a revoke) has already deactivated gets the actionable
+            // support message, not the generic one — it matches what it sees before the sweep runs and tells the
+            // engineer exactly what to do (ask the admin to re-enable the window), rather than "contact your administrator".
+            if (account.IsSupportAccount)
+            {
+                throw new UnauthorizedException("support_access_expired", "Your support-access window has ended. Ask the administrator to re-enable it.");
+            }
+
             throw new UnauthorizedException("account_deactivated", "Your account has been deactivated. Please contact your administrator.");
         }
 

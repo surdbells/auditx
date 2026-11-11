@@ -35,6 +35,46 @@ public sealed class LoginCommandHandlerTests
             Arg.Any<object?>(), Arg.Any<object?>(), Arg.Any<object?>());
         await uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task Deactivated_support_login_throws_support_access_expired_not_generic()
+    {
+        // The expiry sweep (or a revoke) has already flipped this support account to Deactivated. The engineer
+        // should still get the actionable "window has ended — ask the admin to re-enable it" message, not the
+        // generic "account deactivated — contact your administrator".
+        var users = Substitute.For<IUserRepository>();
+        var support = User.CreateLocal("eng@itandt", "eng@itandt", "eng", "(ITANDT support)", displayName: "eng@itandt");
+        support.ArmSupportAccess(System.Guid.NewGuid(), System.DateTimeOffset.UtcNow.AddHours(-1)); // window already in the past
+        support.Deactivate(null);
+        users.GetByUsernameAsync("eng@itandt", Arg.Any<CancellationToken>()).Returns(support);
+
+        var handler = new LoginCommandHandler(
+            Substitute.For<IIdentityProvider>(), users, localAuthenticator: null!, sessionService: null!,
+            Substitute.For<IAuditRecorder>(), Substitute.For<IUnitOfWork>());
+
+        var ex = await Assert.ThrowsAsync<UnauthorizedException>(() =>
+            handler.Handle(new LoginCommand("eng@itandt", "whatever"), CancellationToken.None));
+
+        Assert.Equal("support_access_expired", ex.ErrorCode);
+    }
+
+    [Fact]
+    public async Task Deactivated_regular_user_still_throws_account_deactivated()
+    {
+        var users = Substitute.For<IUserRepository>();
+        var user = User.CreateLocal("jdoe", "jdoe@bank", "John", "Doe");
+        user.Deactivate(null);
+        users.GetByUsernameAsync("jdoe", Arg.Any<CancellationToken>()).Returns(user);
+
+        var handler = new LoginCommandHandler(
+            Substitute.For<IIdentityProvider>(), users, localAuthenticator: null!, sessionService: null!,
+            Substitute.For<IAuditRecorder>(), Substitute.For<IUnitOfWork>());
+
+        var ex = await Assert.ThrowsAsync<UnauthorizedException>(() =>
+            handler.Handle(new LoginCommand("jdoe", "whatever"), CancellationToken.None));
+
+        Assert.Equal("account_deactivated", ex.ErrorCode);
+    }
 }
 
 public sealed class ApproveActionCommandHandlerTests
