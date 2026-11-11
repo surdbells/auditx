@@ -63,6 +63,19 @@ public sealed class User : AggregateRoot, ISoftDeletable
     /// </summary>
     public decimal? CapacityDays { get; private set; }
 
+    /// <summary>
+    /// For a time-boxed ITANDT support-channel login: the support session it was provisioned for. Null for every
+    /// normal user. Such accounts are read-only (ITANDT Support role), audited as <c>itandt_support</c>, and cannot
+    /// sign in past <see cref="SupportAccessExpiresAt"/>.
+    /// </summary>
+    public Guid? SupportChannelSessionId { get; private set; }
+
+    /// <summary>When a support-channel login's access window ends (matches the granting session's expiry). Null otherwise.</summary>
+    public DateTimeOffset? SupportAccessExpiresAt { get; private set; }
+
+    /// <summary>True when this user is a provisioned ITANDT support-channel login rather than a normal account.</summary>
+    public bool IsSupportAccount => SupportChannelSessionId is not null;
+
     public bool IsDeleted { get; private set; }
 
     public DateTimeOffset? DeletedAt { get; private set; }
@@ -194,6 +207,23 @@ public sealed class User : AggregateRoot, ISoftDeletable
             Status = UserStatus.AwaitingRoleAssignment;
         }
     }
+
+    /// <summary>
+    /// (Re)arms a local account as a time-boxed ITANDT support login for the given session + expiry. Reactivates a
+    /// previously expired/revoked support account (it already carries the support role), so re-granting works.
+    /// </summary>
+    public void ArmSupportAccess(Guid sessionId, DateTimeOffset expiresAt)
+    {
+        SupportChannelSessionId = sessionId;
+        SupportAccessExpiresAt = expiresAt;
+        if (Status == UserStatus.Deactivated)
+        {
+            Status = UserStatus.Active;
+        }
+    }
+
+    /// <summary>True for a support login whose access window has ended (sign-in is then refused).</summary>
+    public bool IsSupportAccessExpiredAt(DateTimeOffset nowUtc) => SupportAccessExpiresAt is { } exp && nowUtc >= exp;
 
     public void UpdateNotificationPreferences(string? preferencesJson) => NotificationPreferencesJson = preferencesJson;
 

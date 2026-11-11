@@ -12,6 +12,9 @@ public sealed class SupportChannelSession : AggregateRoot
     public const int MaxDurationMinutes = 480;
     public const int DefaultDurationMinutes = 240;
 
+    /// <summary>The seeded, read-only role every provisioned support login holds for the duration of a session.</summary>
+    public const string SupportRoleName = "ITANDT Support";
+
     private readonly List<string> _engineerIdentifiers = [];
 
     private SupportChannelSession()

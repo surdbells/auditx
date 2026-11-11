@@ -16,7 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 
 import { AdministrationService } from '../../../../core/services/administration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { SupportChannelStatus } from '../../../../core/models';
+import { SupportChannelStatus, SupportCredential } from '../../../../core/models';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../../core/i18n/translation.service';
 import {
@@ -113,6 +113,9 @@ export class SupportChannelComponent {
   readonly status = signal<SupportChannelStatus | null>(null);
   readonly engineers = signal<string[]>([]);
   readonly submitting = signal(false);
+  /** Credentials just provisioned for the engineers — shown once so the admin can relay them. */
+  readonly credentials = signal<SupportCredential[]>([]);
+  readonly copied = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     durationMinutes: [
@@ -127,6 +130,7 @@ export class SupportChannelComponent {
 
   fetch(): void {
     this.state.set('loading');
+    this.credentials.set([]);
     this.admin.getSupportChannel().subscribe({
       next: (s) => {
         this.status.set(s);
@@ -172,8 +176,10 @@ export class SupportChannelComponent {
         durationMinutes: this.form.controls.durationMinutes.value,
       })
       .subscribe({
-        next: (s) => {
-          this.status.set(s);
+        next: (result) => {
+          this.status.set(result.status);
+          this.credentials.set(result.credentials);
+          this.copied.set(null);
           this.engineers.set([]);
           this.notify.success(
             this.i18n.translate('administration.support.enabledToast'),
@@ -182,6 +188,18 @@ export class SupportChannelComponent {
         },
         error: () => this.submitting.set(false),
       });
+  }
+
+  /** Copies a provisioned value and flags which one, so the row shows a tick. */
+  copy(text: string, key: string): void {
+    void navigator.clipboard?.writeText(text);
+    this.copied.set(key);
+  }
+
+  /** Dismisses the one-time credentials panel once the admin has copied them. */
+  dismissCredentials(): void {
+    this.credentials.set([]);
+    this.copied.set(null);
   }
 
   revoke(): void {

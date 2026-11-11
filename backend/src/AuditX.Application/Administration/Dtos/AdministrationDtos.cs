@@ -57,6 +57,12 @@ public sealed record SupportChannelStatusDto(
     DateTimeOffset? ExpiresAt,
     DateTimeOffset? RevokedAt);
 
+/// <summary>A sign-in credential provisioned for one support engineer; the password is surfaced ONCE on enable.</summary>
+public sealed record SupportCredentialDto(string Engineer, string Username, string? TemporaryPassword, bool Reused);
+
+/// <summary>The enable result: the new status plus the per-engineer sign-in credentials to hand over (shown once).</summary>
+public sealed record EnableSupportChannelResultDto(SupportChannelStatusDto Status, IReadOnlyList<SupportCredentialDto> Credentials);
+
 public sealed record ReleaseInstallDto(
     Guid Id,
     string Version,

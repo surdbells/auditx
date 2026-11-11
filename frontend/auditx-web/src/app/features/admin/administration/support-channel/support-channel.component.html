@@ -10,6 +10,45 @@
   }
   @case ('ready') {
     <app-page-guide [guide]="guide" />
+
+    @if (credentials().length) {
+      <mat-card appearance="outlined" class="support__card support__creds">
+        <h2 class="support__title">{{ 'administration.support.credsTitle' | t }}</h2>
+        <p class="support__creds-warn">{{ 'administration.support.credsWarning' | t }}</p>
+        @for (c of credentials(); track c.username) {
+          <div class="support__cred">
+            <div class="support__cred-head">
+              <span class="support__cred-engineer">{{ c.engineer }}</span>
+              @if (c.reused) {
+                <span class="muted">{{ 'administration.support.credsReused' | t }}</span>
+              }
+            </div>
+            <div class="support__cred-row">
+              <span class="support__cred-label">{{ 'identity.credentialResult.username' | t }}</span>
+              <code>{{ c.username }}</code>
+              <button matIconButton type="button" (click)="copy(c.username, c.username + ':u')"
+                [attr.aria-label]="'identity.credentialResult.copy' | t">
+                <app-icon [name]="copied() === c.username + ':u' ? 'check' : 'content_copy'" />
+              </button>
+            </div>
+            @if (c.temporaryPassword; as pwd) {
+              <div class="support__cred-row">
+                <span class="support__cred-label">{{ 'identity.credentialResult.password' | t }}</span>
+                <code>{{ pwd }}</code>
+                <button matIconButton type="button" (click)="copy(pwd, c.username + ':p')"
+                  [attr.aria-label]="'identity.credentialResult.copy' | t">
+                  <app-icon [name]="copied() === c.username + ':p' ? 'check' : 'content_copy'" />
+                </button>
+              </div>
+            }
+          </div>
+        }
+        <div class="support__actions">
+          <button matButton="filled" type="button" (click)="dismissCredentials()">{{ 'common.ok' | t }}</button>
+        </div>
+      </mat-card>
+    }
+
     <div class="support__grid">
       <mat-card appearance="outlined" class="support__card" data-guide="status">
         <h2 class="support__title">{{ 'administration.support.statusTitle' | t }}</h2>

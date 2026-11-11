@@ -114,6 +114,7 @@ builder.Services.AddScoped<AcPackGenerationJob>();
 builder.Services.AddScoped<AcPackRecurringGenerationJob>();
 builder.Services.AddScoped<ReportScheduleRunnerJob>();
 builder.Services.AddScoped<ReportRetentionJob>();
+builder.Services.AddScoped<SupportAccessExpiryJob>();
 builder.Services.AddScoped<AuditX.Application.Abstractions.Reports.IReportGenerationQueue, HangfireReportGenerationQueue>();
 builder.Services.AddScoped<AuditX.Application.Abstractions.Ac.IAcPackGenerationQueue, HangfireAcPackGenerationQueue>();
 
@@ -167,6 +168,12 @@ recurringJobs.AddOrUpdate<DelegationExpiryJob>(
     DelegationExpiryJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Hourly);
+
+// Deactivate expired ITANDT support logins every 10 minutes (sign-in is already refused past the window).
+recurringJobs.AddOrUpdate<SupportAccessExpiryJob>(
+    SupportAccessExpiryJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    "*/10 * * * *");
 
 // Webhook retry sweep every 5 minutes (US-M14-010).
 recurringJobs.AddOrUpdate<WebhookRetryJob>(

@@ -10,6 +10,7 @@ import {
   CreateRestoreDrillRequest,
   DecideObjectRestoreRequest,
   EnableSupportChannelRequest,
+  EnableSupportChannelResult,
   InstallReleaseRequest,
   ObjectRestoreRequest,
   ReleaseInstall,
@@ -74,8 +75,8 @@ export class AdministrationService {
 
   enableSupportChannel(
     body: EnableSupportChannelRequest,
-  ): Observable<SupportChannelStatus> {
-    return this.api.post<SupportChannelStatus>(
+  ): Observable<EnableSupportChannelResult> {
+    return this.api.post<EnableSupportChannelResult>(
       '/admin/support-channel/enable',
       body,
     );

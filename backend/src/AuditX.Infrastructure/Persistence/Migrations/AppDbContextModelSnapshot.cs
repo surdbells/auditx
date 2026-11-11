@@ -17,7 +17,7 @@ namespace AuditX.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -3436,6 +3436,14 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(40)")
                         .HasColumnName("status");
 
+                    b.Property<DateTimeOffset?>("SupportAccessExpiresAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("support_access_expires_at");
+
+                    b.Property<Guid?>("SupportChannelSessionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("support_channel_session_id");
+
                     b.Property<string>("Timezone")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -3474,6 +3482,10 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.HasIndex("OrgUnitId");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("SupportAccessExpiresAt");
+
+                    b.HasIndex("SupportChannelSessionId");
 
                     b.HasIndex("Username")
                         .IsUnique()

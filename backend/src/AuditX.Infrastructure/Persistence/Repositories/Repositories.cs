@@ -45,6 +45,14 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<User>> GetBySupportChannelSessionAsync(Guid sessionId, CancellationToken cancellationToken = default)
+        => await db.Users.Where(u => u.SupportChannelSessionId == sessionId).ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<User>> GetExpiredSupportAccountsAsync(DateTimeOffset asOfUtc, CancellationToken cancellationToken = default)
+        => await db.Users
+            .Where(u => u.SupportAccessExpiresAt != null && u.SupportAccessExpiresAt <= asOfUtc && u.Status != UserStatus.Deactivated)
+            .ToListAsync(cancellationToken);
+
     public Task<bool> ExistsByObjectSidAsync(string objectSid, CancellationToken cancellationToken = default)
         => db.Users.IgnoreQueryFilters().AnyAsync(u => u.AdObjectSid == objectSid, cancellationToken);
 

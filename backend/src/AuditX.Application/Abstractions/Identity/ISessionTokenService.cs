@@ -16,9 +16,10 @@ public interface ISessionTokenService
     /// <summary>
     /// Issue a session token. For a local-password user, <paramref name="securityStamp"/> is the credential's
     /// current stamp and is embedded so a later password change invalidates every outstanding session; pass
-    /// <c>null</c> for directory users.
+    /// <c>null</c> for directory users. <paramref name="maxAbsoluteExpiry"/>, when supplied, caps the token's
+    /// absolute lifetime (used for time-boxed support logins so the token dies with the access window).
     /// </summary>
-    IssuedToken Issue(Guid userId, IReadOnlyCollection<string> roleNames, Guid? securityStamp = null);
+    IssuedToken Issue(Guid userId, IReadOnlyCollection<string> roleNames, Guid? securityStamp = null, DateTimeOffset? maxAbsoluteExpiry = null);
 
     /// <summary>Re-issue (slide) a token for an active session without extending the absolute lifetime.</summary>
     IssuedToken Refresh(Guid userId, IReadOnlyCollection<string> roleNames, DateTimeOffset absoluteExpiresAt, Guid? securityStamp = null);

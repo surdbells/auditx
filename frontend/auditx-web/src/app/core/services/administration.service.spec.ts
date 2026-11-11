@@ -101,11 +101,16 @@ describe('AdministrationService', () => {
     expect(req.request.body.durationMinutes).toBe(60);
     req.flush({
       data: {
-        active: true,
-        engineerIdentifiers: ['eng@x'],
-        enabledAt: null,
-        expiresAt: null,
-        revokedAt: null,
+        status: {
+          active: true,
+          engineerIdentifiers: ['eng@x'],
+          enabledAt: null,
+          expiresAt: null,
+          revokedAt: null,
+        },
+        credentials: [
+          { engineer: 'eng@x', username: 'eng@x', temporaryPassword: 'Temp-1234!', reused: false },
+        ],
       },
     });
   });

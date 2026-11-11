@@ -119,6 +119,20 @@ export interface EnableSupportChannelRequest {
   durationMinutes: number;
 }
 
+/** A sign-in credential provisioned for one support engineer; the password is returned only once, on enable. */
+export interface SupportCredential {
+  engineer: string;
+  username: string;
+  temporaryPassword: string | null;
+  reused: boolean;
+}
+
+/** The enable response: the new status plus the per-engineer credentials to hand over (shown once). */
+export interface EnableSupportChannelResult {
+  status: SupportChannelStatus;
+  credentials: SupportCredential[];
+}
+
 export type ReleaseInstallStatus = 'Verified' | 'Installed' | 'Rejected';
 
 export interface ReleaseInstall {

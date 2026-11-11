@@ -7,6 +7,8 @@ using AuditX.Application.Administration.Mapping;
 using AuditX.Application.Common.Csv;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
+using AuditX.Application.Identity.Passwords;
+using AuditX.Application.Identity.Services;
 using AuditX.Domain.Administration;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Enums;
@@ -366,7 +368,7 @@ public sealed class BulkImportUsersCommandHandler(
 
 // ---- ITANDT support channel ----
 
-public sealed record EnableSupportChannelCommand(IReadOnlyList<string> EngineerIdentifiers, int DurationMinutes) : ICommand<SupportChannelStatusDto>;
+public sealed record EnableSupportChannelCommand(IReadOnlyList<string> EngineerIdentifiers, int DurationMinutes) : ICommand<EnableSupportChannelResultDto>;
 
 public sealed class EnableSupportChannelCommandValidator : AbstractValidator<EnableSupportChannelCommand>
 {
@@ -380,33 +382,113 @@ public sealed class EnableSupportChannelCommandValidator : AbstractValidator<Ena
     }
 }
 
+/// <summary>
+/// Opens a support-channel session AND provisions a time-boxed, read-only local login for each named engineer:
+/// a temporary password (returned once), the "ITANDT Support" role, and an access window that ends with the
+/// session. Sign-in is refused past the window and the account's audit actions are tagged <c>itandt_support</c>.
+/// </summary>
 public sealed class EnableSupportChannelCommandHandler(
-    IAdministrationRepository admin, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
-    : ICommandHandler<EnableSupportChannelCommand, SupportChannelStatusDto>
+    IAdministrationRepository admin,
+    IUserRepository users,
+    IRoleRepository roles,
+    IUserRoleRepository userRoles,
+    IInstitutionSettingsRepository institutionSettings,
+    LocalCredentialAdminService credentialAdmin,
+    IPermissionResolver permissions,
+    ICurrentUser currentUser,
+    IAuditRecorder audit,
+    IClock clock,
+    IUnitOfWork unitOfWork)
+    : ICommandHandler<EnableSupportChannelCommand, EnableSupportChannelResultDto>
 {
-    public async Task<SupportChannelStatusDto> Handle(EnableSupportChannelCommand command, CancellationToken cancellationToken)
+    public async Task<EnableSupportChannelResultDto> Handle(EnableSupportChannelCommand command, CancellationToken cancellationToken)
     {
         var enabledBy = currentUser.UserId ?? throw new UnauthorizedException();
-        var session = SupportChannelSession.Enable(command.EngineerIdentifiers, enabledBy, clock.UtcNow, command.DurationMinutes);
+        var now = clock.UtcNow;
+
+        var supportRole = await roles.GetByNameAsync(SupportChannelSession.SupportRoleName, cancellationToken)
+            ?? throw new ConflictException("support.role_missing", "The ITANDT Support role is not configured.");
+
+        var engineers = command.EngineerIdentifiers
+            .Select(e => e.Trim())
+            .Where(e => e.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // Never re-point a real user's login: a collision with a non-support account is rejected up front.
+        foreach (var engineer in engineers)
+        {
+            var clash = await users.GetByUsernameAsync(engineer, cancellationToken);
+            if (clash is not null && !clash.IsSupportAccount)
+            {
+                throw new ConflictException("support.identifier_conflicts_user",
+                    $"'{engineer}' is already an AuditX user. Use a support address that is not an existing account.");
+            }
+        }
+
+        var session = SupportChannelSession.Enable(engineers, enabledBy, now, command.DurationMinutes);
         admin.AddSupportSession(session);
+
+        var settings = await institutionSettings.GetAsync(cancellationToken);
+        var credentials = new List<SupportCredentialDto>();
+        var provisionedIds = new List<Guid>();
+        foreach (var engineer in engineers)
+        {
+            var user = await users.GetByUsernameAsync(engineer, cancellationToken);
+            var reused = user is not null;
+            if (user is null)
+            {
+                user = User.CreateLocal(engineer, EmailFor(engineer), "ITANDT", "Support");
+                users.Add(user);
+                userRoles.Add(UserRole.Grant(user.Id, supportRole.Id));
+                user.MarkActiveOnFirstRole();
+            }
+            else if (!await userRoles.ExistsAsync(user.Id, supportRole.Id, null, cancellationToken))
+            {
+                userRoles.Add(UserRole.Grant(user.Id, supportRole.Id));
+            }
+
+            user.ArmSupportAccess(session.Id, session.ExpiresAt);
+            var temp = await credentialAdmin.ApplyInitialAsync(user, InitialPasswordMethod.GenerateTemp, null, settings, cancellationToken);
+            credentials.Add(new SupportCredentialDto(engineer, user.Username!, temp, reused));
+            provisionedIds.Add(user.Id);
+        }
+
         audit.Record(AuditEventTypes.SupportChannelEnabled, AuditTargetTypes.SupportChannel, session.Id,
-            after: new { engineers = session.EngineerIdentifiers, session.ExpiresAt });
+            after: new { engineers = session.EngineerIdentifiers, session.ExpiresAt, provisioned = provisionedIds });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return session.ToStatusDto(clock.UtcNow);
+        foreach (var id in provisionedIds)
+        {
+            await permissions.InvalidateAsync(id, cancellationToken);
+        }
+
+        return new EnableSupportChannelResultDto(session.ToStatusDto(now), credentials);
     }
+
+    // The identifier is normally an email; fall back to a synthetic support address when it is not, so the account's
+    // required email field is populated (login is by username, which is the identifier itself).
+    private static string EmailFor(string engineer) => engineer.Contains('@', StringComparison.Ordinal) ? engineer : $"{engineer}@itandt.support";
 }
 
 public sealed record RevokeSupportChannelCommand : ICommand<Unit>;
 
 public sealed class RevokeSupportChannelCommandHandler(
-    IAdministrationRepository admin, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    IAdministrationRepository admin, IUserRepository users, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<RevokeSupportChannelCommand, Unit>
 {
     public async Task<Unit> Handle(RevokeSupportChannelCommand command, CancellationToken cancellationToken)
     {
+        var revokedBy = currentUser.UserId ?? throw new UnauthorizedException();
         var session = await admin.GetActiveSupportSessionAsync(clock.UtcNow, cancellationToken)
             ?? throw new NotFoundException("Active support session", "none");
-        session.Revoke(currentUser.UserId ?? throw new UnauthorizedException(), clock.UtcNow);
+        session.Revoke(revokedBy, clock.UtcNow);
+
+        // Immediately deactivate the logins this session provisioned, so revoke means access ends now.
+        foreach (var engineer in await users.GetBySupportChannelSessionAsync(session.Id, cancellationToken))
+        {
+            engineer.Deactivate(revokedBy);
+        }
+
         audit.Record(AuditEventTypes.SupportChannelRevoked, AuditTargetTypes.SupportChannel, session.Id);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return Unit.Value;

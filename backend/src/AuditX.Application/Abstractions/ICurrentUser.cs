@@ -16,4 +16,7 @@ public interface ICurrentUser
 
     /// <summary>Absolute (non-extendable) expiry of the current session token, from its claims.</summary>
     DateTimeOffset? SessionAbsoluteExpiresAt { get; }
+
+    /// <summary>True when the caller is signed in through a time-boxed ITANDT support login (actions are audited as support).</summary>
+    bool IsSupportEngineer { get; }
 }

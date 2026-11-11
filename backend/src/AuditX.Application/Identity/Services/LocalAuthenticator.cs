@@ -30,8 +30,9 @@ public sealed class LocalAuthenticator(
         var settings = await institutionSettings.GetAsync(cancellationToken);
         var now = clock.UtcNow;
 
-        // The master toggle governs whether local passwords may be used at all.
-        if (!settings.EnableLocalPasswords)
+        // The master toggle governs whether local passwords may be used at all — but a provisioned ITANDT support
+        // login is break-glass and authenticates independently of the bank's local-password preference.
+        if (!settings.EnableLocalPasswords && !user.IsSupportAccount)
         {
             await RecordFailureAsync(user.Id, "local_disabled", cancellationToken);
             throw new UnauthorizedException("invalid_credentials", "Invalid username or password.");
@@ -40,6 +41,12 @@ public sealed class LocalAuthenticator(
         if (user.Status == UserStatus.Deactivated)
         {
             throw new UnauthorizedException("account_deactivated", "Your account is deactivated.");
+        }
+
+        // A support login only works inside its granted window; past the expiry, refuse even with the right password.
+        if (user.IsSupportAccount && user.IsSupportAccessExpiredAt(now))
+        {
+            throw new UnauthorizedException("support_access_expired", "Your support-access window has ended. Ask the administrator to re-enable it.");
         }
 
         var credential = await credentials.GetByUserIdAsync(user.Id, cancellationToken);
@@ -87,7 +94,8 @@ public sealed class LocalAuthenticator(
         user.RecordLogin(now, AuthenticationMethod.LocalPassword);
 
         var roleNames = await sessionService.GetActiveRoleNamesAsync(user.Id, cancellationToken);
-        var token = tokenService.Issue(user.Id, roleNames, credential.SecurityStamp);
+        // A support login's token must not outlive its access window — cap the absolute expiry to it.
+        var token = tokenService.Issue(user.Id, roleNames, credential.SecurityStamp, maxAbsoluteExpiry: user.SupportAccessExpiresAt);
 
         audit.Record(AuditEventTypes.LoginSucceeded, AuditTargetTypes.Session, user.Id,
             payload: new { method = AuthenticationMethod.LocalPassword.ToString() });

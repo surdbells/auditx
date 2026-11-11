@@ -39,9 +39,14 @@ public sealed class SessionTokenService : ISessionTokenService
         _signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
     }
 
-    public IssuedToken Issue(Guid userId, IReadOnlyCollection<string> roleNames, Guid? securityStamp = null)
+    public IssuedToken Issue(Guid userId, IReadOnlyCollection<string> roleNames, Guid? securityStamp = null, DateTimeOffset? maxAbsoluteExpiry = null)
     {
         var absolute = _clock.UtcNow.AddMinutes(_options.AbsoluteMinutes);
+        if (maxAbsoluteExpiry is { } cap && cap < absolute)
+        {
+            absolute = cap;
+        }
+
         return Create(userId, roleNames, absolute, securityStamp);
     }
 

@@ -32,6 +32,12 @@ public interface IUserRepository
     /// <summary>Active (non-deactivated) users holding a role with the given name, for notification recipient resolution (M10).</summary>
     Task<IReadOnlyList<User>> GetActiveByRoleNameAsync(string roleName, CancellationToken cancellationToken = default);
 
+    /// <summary>The time-boxed support logins provisioned for a given support-channel session (to deactivate on revoke).</summary>
+    Task<IReadOnlyList<User>> GetBySupportChannelSessionAsync(Guid sessionId, CancellationToken cancellationToken = default);
+
+    /// <summary>Support logins whose access window has passed and are not yet deactivated (for the expiry sweep).</summary>
+    Task<IReadOnlyList<User>> GetExpiredSupportAccountsAsync(DateTimeOffset asOfUtc, CancellationToken cancellationToken = default);
+
     Task<bool> ExistsByObjectSidAsync(string objectSid, CancellationToken cancellationToken = default);
 
     /// <summary>Resolve email addresses to user ids (case-insensitive) for bulk import (US-M3-006).</summary>

@@ -45,6 +45,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(u => u.Status);
         builder.HasIndex(u => u.OrgUnitId); // per-department user rollups (analytics / utilisation)
         builder.HasIndex(u => u.ManagerId); // reporting-chain walks (line manager → manager → …); soft ref, no FK
+        builder.HasIndex(u => u.SupportChannelSessionId); // deactivate a session's support logins on revoke
+        builder.HasIndex(u => u.SupportAccessExpiresAt); // expiry sweep of time-boxed support logins
 
         builder.HasQueryFilter(u => !u.IsDeleted);
     }

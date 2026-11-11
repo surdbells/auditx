@@ -34,6 +34,7 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
         await SeedResponseOptionSetsAsync(cancellationToken);
         await SeedReferenceDataAsync(cancellationToken);
         await SeedSanctionsRolesAsync(cancellationToken);
+        await SeedSupportRoleAsync(cancellationToken);
         await SeedAcRolesAsync(cancellationToken);
         await SeedSanctionsGridAsync(cancellationToken);
         await SeedReportTemplateAsync(cancellationToken);
@@ -450,6 +451,33 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
             role.SetPermissions(permissions.Select(key => (key, PermissionScopeType.Global, (string?)null)));
             db.Roles.Add(role);
         }
+    }
+
+    /// <summary>
+    /// Seeds the read-only "ITANDT Support" role that every time-boxed support-channel login holds. Strictly
+    /// read/diagnostic (no create/manage/approve/delete) so vendor break-glass access can see the platform to
+    /// troubleshoot without ever changing bank data; the time-box, audit tagging and admin control are the guard rails.
+    /// </summary>
+    private async Task SeedSupportRoleAsync(CancellationToken cancellationToken)
+    {
+        if (await db.Roles.AnyAsync(r => r.Name == Domain.Administration.SupportChannelSession.SupportRoleName, cancellationToken))
+        {
+            return;
+        }
+
+        var role = Role.CreateCustom(Domain.Administration.SupportChannelSession.SupportRoleName,
+            "Read-only break-glass access for ITANDT support engineers, granted for a capped window via the support channel.");
+        string[] permissions =
+        [
+            PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.ViewEngagementLifecycle, PermissionKeys.ViewTemplates,
+            PermissionKeys.ViewUniverse, PermissionKeys.ViewPlan, PermissionKeys.ViewCoverage, PermissionKeys.ViewEvidence,
+            PermissionKeys.ViewExceptions, PermissionKeys.ViewReport, PermissionKeys.ViewAnalytics, PermissionKeys.ViewRisk,
+            PermissionKeys.ViewControls, PermissionKeys.ViewSanctions, PermissionKeys.ViewGrid, PermissionKeys.ViewTimeEntries,
+            PermissionKeys.ViewConfig, PermissionKeys.ViewInstitutionSettings, PermissionKeys.ViewSystemHealth,
+            PermissionKeys.ViewIntegrations, PermissionKeys.ViewIntegrationHealth, PermissionKeys.ViewAuditTrail, PermissionKeys.ViewAcPacks,
+        ];
+        role.SetPermissions(permissions.Select(key => (key, PermissionScopeType.Global, (string?)null)));
+        db.Roles.Add(role);
     }
 
     /// <summary>

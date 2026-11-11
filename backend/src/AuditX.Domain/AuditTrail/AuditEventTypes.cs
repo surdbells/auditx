@@ -80,6 +80,7 @@ public static class AuditEventTypes
     public const string UsersBulkImported = "users_bulk_imported";
     public const string SupportChannelEnabled = "support_channel_enabled";
     public const string SupportChannelRevoked = "support_channel_revoked";
+    public const string SupportChannelExpired = "support_channel_expired";
     public const string ReleaseInstalled = "release_installed";
     public const string ReleaseRejected = "release_rejected";
     public const string RestoreDrillRecorded = "restore_drill_recorded";

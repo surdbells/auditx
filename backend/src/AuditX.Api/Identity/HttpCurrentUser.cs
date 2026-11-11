@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using AuditX.Application.Abstractions;
+using AuditX.Domain.Administration;
 using AuditX.Infrastructure.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
 
@@ -22,6 +23,9 @@ public sealed class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUse
     public DateTimeOffset? SessionExpiresAt => ReadUnix(JwtRegisteredClaimNames.Exp);
 
     public DateTimeOffset? SessionAbsoluteExpiresAt => ReadUnix(SessionTokenService.AbsoluteExpiryClaim);
+
+    // The support role travels in the token's role claims; a support login holds it and nothing else.
+    public bool IsSupportEngineer => Principal?.IsInRole(SupportChannelSession.SupportRoleName) ?? false;
 
     private DateTimeOffset? ReadUnix(string claimType)
         => long.TryParse(Principal?.FindFirstValue(claimType), out var seconds)

@@ -24,7 +24,10 @@ public sealed class AuditRecorder(
         object? before = null,
         object? after = null,
         object? payload = null)
-        => RecordAs(ActorType.User, null, currentUser.UserId, eventType, targetObjectType, targetObjectId, before, after, payload);
+        // A time-boxed ITANDT support login's actions are stamped itandt_support, so the trail shows vendor break-glass work distinctly.
+        => RecordAs(
+            currentUser.IsSupportEngineer ? ActorType.ItandtSupport : ActorType.User,
+            null, currentUser.UserId, eventType, targetObjectType, targetObjectId, before, after, payload);
 
     public void RecordAs(
         ActorType actorType,
