@@ -415,14 +415,26 @@ public sealed class EnableSupportChannelCommandHandler(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        // Never re-point a real user's login: a collision with a non-support account is rejected up front.
+        // Guard each engineer up front: never re-point a real user's login, and never open a second window while
+        // one is still active for the same person — the current grant must expire or be revoked first.
         foreach (var engineer in engineers)
         {
             var clash = await users.GetByUsernameAsync(engineer, cancellationToken);
-            if (clash is not null && !clash.IsSupportAccount)
+            if (clash is null)
+            {
+                continue;
+            }
+
+            if (!clash.IsSupportAccount)
             {
                 throw new ConflictException("support.identifier_conflicts_user",
                     $"'{engineer}' is already an AuditX user. Use a support address that is not an existing account.");
+            }
+
+            if (!clash.IsSupportAccessExpiredAt(now) && clash.Status != UserStatus.Deactivated)
+            {
+                throw new ConflictException("support.window_still_active",
+                    $"'{engineer}' already has an active support window. Revoke it or let it expire before granting another.");
             }
         }
 
@@ -434,18 +446,28 @@ public sealed class EnableSupportChannelCommandHandler(
         var provisionedIds = new List<Guid>();
         foreach (var engineer in engineers)
         {
+            // Name the account after the engineer (their identifier), not a generic label, so the audit trail and
+            // user lists show WHO had access: the email local part is the given name, the full identifier the display name.
+            var at = engineer.IndexOf('@', StringComparison.Ordinal);
+            var givenName = at > 0 ? engineer[..at] : engineer;
+
             var user = await users.GetByUsernameAsync(engineer, cancellationToken);
             var reused = user is not null;
             if (user is null)
             {
-                user = User.CreateLocal(engineer, EmailFor(engineer), "ITANDT", "Support");
+                user = User.CreateLocal(engineer, EmailFor(engineer), givenName, "(ITANDT support)", displayName: engineer);
                 users.Add(user);
                 userRoles.Add(UserRole.Grant(user.Id, supportRole.Id));
                 user.MarkActiveOnFirstRole();
             }
-            else if (!await userRoles.ExistsAsync(user.Id, supportRole.Id, null, cancellationToken))
+            else
             {
-                userRoles.Add(UserRole.Grant(user.Id, supportRole.Id));
+                // Refresh the name so a reused support login is identified by the engineer, not a stale/generic label.
+                user.UpdateProfile(EmailFor(engineer), givenName, "(ITANDT support)", engineer);
+                if (!await userRoles.ExistsAsync(user.Id, supportRole.Id, null, cancellationToken))
+                {
+                    userRoles.Add(UserRole.Grant(user.Id, supportRole.Id));
+                }
             }
 
             user.ArmSupportAccess(session.Id, session.ExpiresAt);
