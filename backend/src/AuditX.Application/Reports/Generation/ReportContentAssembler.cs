@@ -1,6 +1,9 @@
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Persistence;
+using System.Globalization;
+using System.Text.Json;
 using AuditX.Application.Common.Enums;
+using AuditX.Application.Templates;
 using AuditX.Domain.Audits;
 using AuditX.Domain.Enums;
 
@@ -32,6 +35,7 @@ public sealed class ReportContentAssembler(
         var pass = 0;
         var fail = 0;
         var na = 0;
+        var recorded = 0;
         var unanswered = 0;
         foreach (var item in audit.ChecklistItems.OrderBy(i => i.OrderIndex))
         {
@@ -49,12 +53,21 @@ public sealed class ReportContentAssembler(
                     na++;
                     break;
                 default:
-                    unanswered++;
+                    // No conclusion: either nothing was answered, or a value was captured without one.
+                    if (response is null)
+                    {
+                        unanswered++;
+                    }
+                    else
+                    {
+                        recorded++;
+                    }
+
                     break;
             }
 
             checklistLines.Add(new ReportChecklistLine(
-                item.Id, item.Prompt, item.SectionName, verdict?.ToSnake(), response?.Comment));
+                item.Id, item.Prompt, item.SectionName, verdict?.ToSnake(), response?.Comment, FormatAnswer(item, response)));
         }
 
         // M6: exceptions with their MAP actions.
@@ -109,8 +122,90 @@ public sealed class ReportContentAssembler(
             clock.UtcNow)
         {
             SeveritySummary = severitySummary,
+            RecordedCount = recorded,
         };
     }
+
+    /// <summary>
+    /// What the responder answered, as they saw it. Verdict items read with the conclusion label that was chosen
+    /// (the organisation's own wording, snapshotted on the response); value items read with the captured value —
+    /// a number with its unit, a rating with the label of the point picked.
+    /// </summary>
+    public static string? FormatAnswer(AuditChecklistItem item, ChecklistResponse? response)
+    {
+        if (response is null)
+        {
+            return null;
+        }
+
+        if (!item.ResponseType.IsValueType())
+        {
+            if (!string.IsNullOrWhiteSpace(response.SelectedOptionLabel))
+            {
+                return response.SelectedOptionLabel;
+            }
+
+            return (item.ResponseType, response.Verdict) switch
+            {
+                (ResponseType.YesNo, ResponseVerdict.Pass) => "Yes",
+                (ResponseType.YesNo, ResponseVerdict.Fail) => "No",
+                (_, ResponseVerdict.Pass) => "Pass",
+                (_, ResponseVerdict.Fail) => "Fail",
+                (_, ResponseVerdict.Na) => "N/A",
+                _ => null,
+            };
+        }
+
+        if (string.IsNullOrWhiteSpace(response.ValueJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(response.ValueJson);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            switch (item.ResponseType)
+            {
+                case ResponseType.Text:
+                    return ReadString(root, "text");
+                case ResponseType.Date:
+                    return ReadString(root, "date");
+                case ResponseType.MultipleChoice:
+                    return ReadString(root, "choice");
+                case ResponseType.Numeric when root.TryGetProperty("number", out var number) && number.ValueKind == JsonValueKind.Number:
+                {
+                    var text = number.TryGetDecimal(out var value) ? value.ToString(CultureInfo.InvariantCulture) : number.GetRawText();
+                    var unit = ResponseItemConfig.Parse(item.ResponseConfigJson).Unit?.Trim();
+                    return string.IsNullOrEmpty(unit) ? text : $"{text} {unit}";
+                }
+
+                case ResponseType.Rating when root.TryGetProperty("rating", out var rating) && rating.ValueKind == JsonValueKind.Number:
+                {
+                    var label = ReadString(root, "label");
+                    return label is null ? rating.GetRawText() : $"{rating.GetRawText()} – {label}";
+                }
+
+                default:
+                    return null;
+            }
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string? ReadString(JsonElement root, string property)
+        => root.TryGetProperty(property, out var element) && element.ValueKind == JsonValueKind.String
+            && !string.IsNullOrWhiteSpace(element.GetString())
+            ? element.GetString()!.Trim()
+            : null;
 
     private static string BuildSeveritySummary(IReadOnlyDictionary<ExceptionSeverity, int> counts)
     {

@@ -19,6 +19,8 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
         builder.Property(r => r.Kind).HasConversion(new SnakeCaseEnumConverter<ReportKind>()).HasMaxLength(30).IsRequired();
         builder.Property(r => r.Sha256Hash).HasMaxLength(64);
         builder.Property(r => r.TemplateDefinitionSnapshotJson).IsRequired();
+        // Compact: name, colours and the logo's hash only — the logo bytes live in the stored artefacts.
+        builder.Property(r => r.BrandingSnapshotJson).HasMaxLength(1000);
         builder.Property(r => r.RequestedFormatsJson).IsRequired();
         builder.Property(r => r.ProducedArtefactsJson).IsRequired();
         builder.Property(r => r.FailureReason).HasMaxLength(1000);

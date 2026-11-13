@@ -38,6 +38,18 @@ export interface ReportArtefact {
 }
 
 /** Full report aggregate (metadata / status surface — polled while running). */
+/**
+ * The branding a report was issued under, frozen when it was generated: the institution name, its colours and the
+ * SHA-256 of the logo embedded in the artefacts (null when it was issued without a logo). A later rebrand never
+ * changes it.
+ */
+export interface ReportBranding {
+  institutionName: string;
+  primaryColor: string;
+  accentColor: string;
+  logoSha256: string | null;
+}
+
 export interface Report {
   id: string;
   /** Null for standalone (cross-audit) reports. */
@@ -55,6 +67,8 @@ export interface Report {
   requestedAt: string;
   completedAt: string | null;
   version: string;
+  /** Null until generation starts, and for reports issued before branding was recorded. */
+  branding?: ReportBranding | null;
 }
 
 /** Lightweight row for the per-audit / per-kind report version list. */

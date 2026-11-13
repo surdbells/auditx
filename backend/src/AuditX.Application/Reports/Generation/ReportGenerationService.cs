@@ -56,6 +56,14 @@ public sealed class ReportGenerationService(
             report.MarkRunning();
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
+            // Freeze the branding the report is issued under: read it ONCE here, render every format with it, and
+            // record it on the report. From this point the institution's logo / colours can change freely without
+            // touching this report — its artefacts are stored and hash-verified exactly as rendered now.
+            var institution = await settings.GetAsync(cancellationToken);
+            var branding = ReportBranding.Create(
+                institution.InstitutionDisplayName, institution.PrimaryColor, institution.AccentColor, institution.LogoDataUri);
+            report.SnapshotBranding(branding);
+
             ReportRenderContext context;
             if (report.Kind == ReportKind.AuditEngagement)
             {
@@ -64,12 +72,12 @@ public sealed class ReportGenerationService(
                 var audit = await audits.GetByIdAsync(auditId, cancellationToken)
                     ?? throw new InvalidOperationException($"Audit {auditId} for report {reportId} no longer exists.");
                 var composition = await assembler.AssembleAsync(audit, report.VersionNumber, cancellationToken);
-                context = ReportRenderContext.ForEngagement(composition, report.TemplateDefinitionSnapshotJson, report.TemplateVersionSnapshot);
+                context = ReportRenderContext.ForEngagement(composition, report.TemplateDefinitionSnapshotJson, report.TemplateVersionSnapshot, branding);
             }
             else
             {
                 var model = await standaloneAssembler.AssembleAsync(report.Kind, report.VersionNumber, cancellationToken);
-                context = ReportRenderContext.ForStandalone(model, report.TemplateDefinitionSnapshotJson, report.TemplateVersionSnapshot);
+                context = ReportRenderContext.ForStandalone(model, report.TemplateDefinitionSnapshotJson, report.TemplateVersionSnapshot, branding);
             }
 
             var requestedFormats = ReportMappings.ParseFormats(report.RequestedFormatsJson);
@@ -104,15 +112,19 @@ public sealed class ReportGenerationService(
 
             // Stamp the retention date when a retention policy is configured (0 = retain indefinitely). Past this date
             // the ReportRetentionJob expires the report so its artefacts are no longer served.
-            var bank = await settings.GetAsync(cancellationToken);
-            if (bank.ReportRetentionMonths > 0)
+            if (institution.ReportRetentionMonths > 0)
             {
-                report.SetRetentionUntil(clock.UtcNow.AddMonths(bank.ReportRetentionMonths));
+                report.SetRetentionUntil(clock.UtcNow.AddMonths(institution.ReportRetentionMonths));
             }
 
             auditRecorder.RecordAs(Domain.Enums.ActorType.System, "reports", report.GeneratedBy,
                 AuditEventTypes.ReportGenerated, AuditTargetTypes.Report, report.Id,
-                after: new { report.AuditId, report.VersionNumber, sha256 = canonicalHash, formats = produced.Count });
+                after: new
+                {
+                    report.AuditId, report.VersionNumber, sha256 = canonicalHash, formats = produced.Count,
+                    // What it was issued under, for the trail (the logo is recorded by hash, never by content).
+                    branding = ReportBranding.ReadSnapshot(report.BrandingSnapshotJson),
+                });
             await unitOfWork.SaveChangesAsync(cancellationToken);
             logger.LogInformation("Report {ReportId} (audit {AuditId} v{Version}) generated with {Count} artefact(s).",
                 reportId, report.AuditId, report.VersionNumber, produced.Count);

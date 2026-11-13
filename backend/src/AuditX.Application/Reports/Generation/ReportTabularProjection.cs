@@ -20,17 +20,19 @@ public static class ReportTabularProjection
 {
     public static IReadOnlyList<ReportSheet> From(ReportRenderContext context)
         => context.Kind == ReportKind.AuditEngagement && context.Composition is { } composition
-            ? FromEngagement(composition)
+            ? FromEngagement(composition, context.Branding.InstitutionName)
             : context.Standalone is { } standalone
-                ? FromStandalone(standalone)
+                ? FromStandalone(standalone, context.Branding.InstitutionName)
                 : [];
 
-    private static IReadOnlyList<ReportSheet> FromEngagement(ReportComposition c)
+    // The data exports (CSV / Excel) carry no imagery, so they name the issuing institution in the summary instead.
+    private static IReadOnlyList<ReportSheet> FromEngagement(ReportComposition c, string institutionName)
     {
         var sheets = new List<ReportSheet>
         {
             new("Summary", ["Metric", "Value"],
             [
+                Kv("Institution", institutionName),
                 Kv("Audit", c.AuditName),
                 Kv("Audit type", c.AuditType),
                 Kv("Status", c.AuditStatus),
@@ -41,6 +43,7 @@ public static class ReportTabularProjection
                 Kv("Pass", c.PassCount.ToString()),
                 Kv("Fail", c.FailCount.ToString()),
                 Kv("N/A", c.NaCount.ToString()),
+                Kv("Answered without a conclusion", c.RecordedCount.ToString()),
                 Kv("Unanswered", c.UnansweredCount.ToString()),
                 Kv("Exceptions raised", c.ExceptionCount.ToString()),
                 Kv("Critical exceptions", c.CriticalExceptionCount.ToString()),
@@ -61,11 +64,13 @@ public static class ReportTabularProjection
 
         if (c.ChecklistLines.Count > 0)
         {
+            // "Answer" is what was actually given (a conclusion label, or the number / date / rating / choice / text
+            // captured); "Verdict" stays the canonical pass / fail / na conclusion.
             sheets.Add(new ReportSheet("Checklist",
-                ["Section", "Prompt", "Verdict", "Comment"],
+                ["Section", "Prompt", "Answer", "Verdict", "Comment"],
                 c.ChecklistLines.Select(l => (IReadOnlyList<string>)
                 [
-                    l.SectionName ?? "", l.Prompt, l.Verdict ?? "", l.Comment ?? "",
+                    l.SectionName ?? "", l.Prompt, l.Answer ?? "", l.Verdict ?? "", l.Comment ?? "",
                 ]).ToArray()));
         }
 
@@ -82,13 +87,14 @@ public static class ReportTabularProjection
         return sheets;
     }
 
-    private static IReadOnlyList<ReportSheet> FromStandalone(StandaloneReportModel model)
+    private static IReadOnlyList<ReportSheet> FromStandalone(StandaloneReportModel model, string institutionName)
     {
         var sheets = new List<ReportSheet>();
 
         // A single overview sheet gathers every section's key/value metrics + notes.
         var overview = new List<IReadOnlyList<string>>
         {
+            Row3(model.Title, "Institution", institutionName),
             Row3(model.Title, "Report version", model.VersionNumber.ToString()),
             Row3(model.Title, "Generated (UTC)", model.GeneratedAtUtc.ToString("u")),
         };

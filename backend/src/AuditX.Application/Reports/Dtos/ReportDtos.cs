@@ -6,8 +6,15 @@ public sealed record ReportGenerationAcceptedDto(Guid ReportId, string Status);
 /// <summary>One produced artefact descriptor surfaced on the report metadata.</summary>
 public sealed record ProducedArtefactDto(string Format, string ContentType, long SizeBytes, string Sha256);
 
+/// <summary>
+/// The branding a report was issued under (frozen at generation): the institution name, its colours, and the
+/// SHA-256 of the logo embedded in the artefacts (null when it was issued without a logo).
+/// </summary>
+public sealed record ReportBrandingDto(string InstitutionName, string PrimaryColor, string AccentColor, string? LogoSha256);
+
 /// <summary>Report metadata / status surface (version, hash, template version, produced formats, timestamps).
-/// <c>AuditId</c> is null for standalone (cross-audit) reports; <c>Kind</c> discriminates the shape.</summary>
+/// <c>AuditId</c> is null for standalone (cross-audit) reports; <c>Kind</c> discriminates the shape.
+/// <c>Branding</c> is null until generation starts, and for reports issued before branding snapshots existed.</summary>
 public sealed record ReportDto(
     Guid Id,
     Guid? AuditId,
@@ -23,7 +30,8 @@ public sealed record ReportDto(
     Guid GeneratedBy,
     DateTimeOffset RequestedAt,
     DateTimeOffset? CompletedAt,
-    string Version);
+    string Version,
+    ReportBrandingDto? Branding = null);
 
 /// <summary>Compact list item for the per-audit / per-kind version list. <c>AuditId</c> is null for standalone reports.</summary>
 public sealed record ReportListItemDto(

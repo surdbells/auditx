@@ -38,6 +38,22 @@
   margin: 0;
 }
 
+// The branding the report was issued under: two colour chips, then the institution's name.
+.viewer__branding dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.viewer__swatch {
+  flex: 0 0 auto;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 4px;
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
 .viewer__hash {
   font-family: var(--mat-sys-body-medium-font, monospace);
   color: var(--mat-sys-on-surface-variant);

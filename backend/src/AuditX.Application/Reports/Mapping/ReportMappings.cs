@@ -24,7 +24,10 @@ public static class ReportMappings
         r.GeneratedBy,
         r.RequestedAt,
         r.CompletedAt,
-        RowVersionToken.Encode(r.Version));
+        RowVersionToken.Encode(r.Version),
+        ReportBranding.ReadSnapshot(r.BrandingSnapshotJson) is { } b
+            ? new ReportBrandingDto(b.InstitutionName, b.PrimaryColor, b.AccentColor, b.LogoSha256)
+            : null);
 
     public static ReportListItemDto ToListDto(this Report r) => new(
         r.Id,

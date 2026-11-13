@@ -44,6 +44,12 @@ public sealed class Report : AggregateRoot, ISoftDeletable
     /// <summary>The template definition JSON snapshotted at Start so historical reports render as issued (B2/B3).</summary>
     public string TemplateDefinitionSnapshotJson { get; private set; } = null!;
 
+    /// <summary>
+    /// The branding the report was issued under — institution name, colours and the logo's SHA-256 — frozen at
+    /// generation (see <see cref="SnapshotBranding"/>). Null only for reports issued before snapshots existed.
+    /// </summary>
+    public string? BrandingSnapshotJson { get; private set; }
+
     /// <summary>JSON array of requested formats, e.g. <c>["html","docx"]</c>. HTML is always present.</summary>
     public string RequestedFormatsJson { get; private set; } = "[\"html\"]";
 
@@ -132,6 +138,27 @@ public sealed class Report : AggregateRoot, ISoftDeletable
 
     /// <summary>Move pending → running as the generation worker begins (idempotent guard lives in the service).</summary>
     public void MarkRunning() => Transition(ReportStatus.Running, ReportStatus.Pending);
+
+    /// <summary>
+    /// Freeze the branding this report is issued under. Set ONCE, while the report is still being generated: the
+    /// artefacts are rendered with it and it is never rewritten, so a later change to the institution's logo or
+    /// colours cannot alter an issued report (FR-M8-009 immutability extends to how the report looks).
+    /// </summary>
+    public void SnapshotBranding(ReportBranding branding)
+    {
+        ArgumentNullException.ThrowIfNull(branding);
+        if (Status is not (ReportStatus.Pending or ReportStatus.Running))
+        {
+            throw new InvalidStateTransitionException("report.branding_locked", $"Branding cannot be set on a {Status} report.");
+        }
+
+        if (BrandingSnapshotJson is not null)
+        {
+            throw new InvalidStateTransitionException("report.branding_already_set", "This report's branding has already been captured.");
+        }
+
+        BrandingSnapshotJson = branding.ToSnapshotJson();
+    }
 
     /// <summary>
     /// Complete generation: record the canonical hash + produced artefacts (running → completed). After this the

@@ -78,6 +78,19 @@
             <dt>{{ 'reports.viewer.field.templateVersion' | t }}</dt>
             <dd>v{{ r.templateVersionSnapshot }}</dd>
           </div>
+          @if (r.branding; as b) {
+            <div class="viewer__branding">
+              <dt>{{ 'reports.viewer.field.branding' | t }}</dt>
+              <dd [matTooltip]="'reports.viewer.brandingHint' | t">
+                <span class="viewer__swatch" [style.background]="b.primaryColor" aria-hidden="true"></span>
+                <span class="viewer__swatch" [style.background]="b.accentColor" aria-hidden="true"></span>
+                <span>{{ b.institutionName }}</span>
+                <span class="muted">
+                  · {{ (b.logoSha256 ? 'reports.viewer.brandingWithLogo' : 'reports.viewer.brandingNoLogo') | t }}
+                </span>
+              </dd>
+            </div>
+          }
         </dl>
 
         @if (r.status === 'failed' && r.failureReason) {

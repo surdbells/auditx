@@ -1,5 +1,6 @@
 using AuditX.Application.Reports.Generation;
 using AuditX.Domain.Enums;
+using AuditX.Domain.Reports;
 
 namespace AuditX.Application.Abstractions.Reports;
 
@@ -7,21 +8,24 @@ namespace AuditX.Application.Abstractions.Reports;
 /// The full context a renderer needs to produce one artefact (M8). Discriminated by <see cref="Kind"/>: an
 /// engagement report carries a <see cref="Composition"/> (per-audit); a standalone report carries a
 /// <see cref="Standalone"/> model (cross-audit analytics). Exactly one payload is non-null.
+/// <see cref="Branding"/> is the institution branding the report is issued under — every renderer applies the SAME
+/// one, so the HTML, PDF, DOCX and workbook of a report always agree.
 /// </summary>
 public sealed record ReportRenderContext(
     ReportKind Kind,
     ReportComposition? Composition,
     StandaloneReportModel? Standalone,
     string TemplateDefinitionJson,
-    int TemplateVersion)
+    int TemplateVersion,
+    ReportBranding Branding)
 {
     /// <summary>Context for a per-audit engagement report.</summary>
-    public static ReportRenderContext ForEngagement(ReportComposition composition, string templateDefinitionJson, int templateVersion)
-        => new(ReportKind.AuditEngagement, composition, null, templateDefinitionJson, templateVersion);
+    public static ReportRenderContext ForEngagement(ReportComposition composition, string templateDefinitionJson, int templateVersion, ReportBranding? branding = null)
+        => new(ReportKind.AuditEngagement, composition, null, templateDefinitionJson, templateVersion, branding ?? ReportBranding.Default);
 
     /// <summary>Context for a standalone (cross-audit) report.</summary>
-    public static ReportRenderContext ForStandalone(StandaloneReportModel model, string templateDefinitionJson, int templateVersion)
-        => new(model.Kind, null, model, templateDefinitionJson, templateVersion);
+    public static ReportRenderContext ForStandalone(StandaloneReportModel model, string templateDefinitionJson, int templateVersion, ReportBranding? branding = null)
+        => new(model.Kind, null, model, templateDefinitionJson, templateVersion, branding ?? ReportBranding.Default);
 }
 
 /// <summary>A produced report artefact: its bytes, MIME type, suggested filename, format, and the artefact's own SHA-256.</summary>

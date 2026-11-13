@@ -398,4 +398,121 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
         var response = await auditee.GetAsync($"/api/v1/audits/{Guid.NewGuid()}/reports");
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
+
+    private const string PngLogo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+    /// <summary>Full-replace PATCH of the institution settings that changes ONLY the branding (name, colours, logo).</summary>
+    private static async Task SetBrandingAsync(HttpClient admin, JsonElement current, string name, string primary, string accent, string? logo)
+    {
+        (await admin.PatchAsJsonAsync("/api/v1/admin/institution-settings", new
+        {
+            institutionDisplayName = name,
+            timezone = current.GetProperty("timezone").GetString(),
+            localeDefault = current.GetProperty("localeDefault").GetString(),
+            adProvisioningFilterOuDn = current.GetProperty("adProvisioningFilterOuDn").GetString(),
+            adProvisioningFilterGroupSid = current.GetProperty("adProvisioningFilterGroupSid").GetString(),
+            allowOverlappingPlanPeriods = current.GetProperty("allowOverlappingPlanPeriods").GetBoolean(),
+            allowAuditLaunchBeforeApproval = current.GetProperty("allowAuditLaunchBeforeApproval").GetBoolean(),
+            allowMinorPlanRevisionAfterApproval = current.GetProperty("allowMinorPlanRevisionAfterApproval").GetBoolean(),
+            primaryColor = primary,
+            accentColor = accent,
+            logoDataUri = logo,
+            iconDataUri = current.GetProperty("iconDataUri").GetString(),
+            showOverview = current.GetProperty("showOverview").GetBoolean(),
+            showWalkthrough = current.GetProperty("showWalkthrough").GetBoolean(),
+            reportRetentionMonths = current.GetProperty("reportRetentionMonths").GetInt32(),
+            autoStartWalkthrough = current.GetProperty("autoStartWalkthrough").GetBoolean(),
+            idleTimeoutMinutes = current.GetProperty("idleTimeoutMinutes").GetInt32(),
+            idleWarningSeconds = current.GetProperty("idleWarningSeconds").GetInt32(),
+        })).EnsureSuccessStatusCode();
+    }
+
+    /// <summary>
+    /// Reports carry the institution's branding, and an ISSUED report keeps the branding it was issued with: a later
+    /// rebrand must not change its recorded branding, its stored artefacts, or its hash — only reports generated
+    /// afterwards pick the new branding up.
+    /// </summary>
+    [Fact]
+    public async Task An_issued_report_keeps_the_branding_it_was_issued_with()
+    {
+        var admin = await LoginAsync("admin");
+        var auditId = await BuildReportableAuditAsync(admin);
+        var manager = await ReporterAsync(admin);
+        var original = await DataAsync(await admin.GetAsync("/api/v1/admin/institution-settings"));
+
+        async Task<Guid> GenerateAsync()
+        {
+            var accepted = await manager.PostAsJsonAsync($"/api/v1/audits/{auditId}/reports", new { docx = true });
+            var id = JsonDocument.Parse(await accepted.Content.ReadAsStringAsync())
+                .RootElement.GetProperty("data").GetProperty("reportId").GetGuid();
+            await NudgeGenerationAsync(id);
+            Assert.Equal("completed", (await PollUntilSettledAsync(manager, id)).GetProperty("status").GetString());
+            return id;
+        }
+
+        async Task<byte[]> DownloadAsync(Guid id, string format)
+        {
+            var response = await manager.GetAsync($"/api/v1/reports/{id}/download?format={format}");
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+
+        try
+        {
+            // ---- Issue a report under "Alpha Bank" branding (green, with a logo).
+            await SetBrandingAsync(admin, original, "Alpha Bank", "#0a5c36", "#c9a227", PngLogo);
+            var first = await GenerateAsync();
+
+            var issued = await DataAsync(await manager.GetAsync($"/api/v1/reports/{first}"));
+            var issuedBranding = issued.GetProperty("branding");
+            Assert.Equal("Alpha Bank", issuedBranding.GetProperty("institutionName").GetString());
+            Assert.Equal("#0a5c36", issuedBranding.GetProperty("primaryColor").GetString());
+            Assert.Equal(64, issuedBranding.GetProperty("logoSha256").GetString()!.Length);
+
+            var htmlBefore = await DownloadAsync(first, "html");
+            var html = System.Text.Encoding.UTF8.GetString(htmlBefore);
+            Assert.Contains("Alpha Bank", html);
+            Assert.Contains(PngLogo, html);      // the logo is embedded in the report itself
+            Assert.Contains("#0a5c36", html);
+            var pdfBefore = await DownloadAsync(first, "pdf");
+            var docxBefore = await DownloadAsync(first, "docx");
+            var csv = System.Text.Encoding.UTF8.GetString(await DownloadAsync(first, "csv"));
+            Assert.Contains("Institution,Alpha Bank", csv);
+            Assert.Contains("Section,Prompt,Answer,Verdict,Comment", csv);
+
+            // ---- The institution rebrands (new name, red, no logo).
+            await SetBrandingAsync(admin, original, "Beta Bank", "#b00020", "#333333", null);
+
+            // The issued report is untouched: same recorded branding, byte-identical artefacts, hash still verifies.
+            var after = await DataAsync(await manager.GetAsync($"/api/v1/reports/{first}"));
+            Assert.Equal("Alpha Bank", after.GetProperty("branding").GetProperty("institutionName").GetString());
+            Assert.Equal("#0a5c36", after.GetProperty("branding").GetProperty("primaryColor").GetString());
+            Assert.Equal(issued.GetProperty("sha256Hash").GetString(), after.GetProperty("sha256Hash").GetString());
+            Assert.Equal(htmlBefore, await DownloadAsync(first, "html"));
+            Assert.Equal(pdfBefore, await DownloadAsync(first, "pdf"));
+            Assert.Equal(docxBefore, await DownloadAsync(first, "docx"));
+            var verify = await DataAsync(await manager.GetAsync($"/api/v1/reports/{first}/verify-hash"));
+            Assert.True(verify.GetProperty("match").GetBoolean());
+
+            // ---- A report generated AFTER the rebrand carries the new branding.
+            var second = await GenerateAsync();
+            var reissued = await DataAsync(await manager.GetAsync($"/api/v1/reports/{second}"));
+            Assert.Equal("Beta Bank", reissued.GetProperty("branding").GetProperty("institutionName").GetString());
+            Assert.Equal(JsonValueKind.Null, reissued.GetProperty("branding").GetProperty("logoSha256").ValueKind);
+            var newHtml = System.Text.Encoding.UTF8.GetString(await DownloadAsync(second, "html"));
+            Assert.Contains("Beta Bank", newHtml);
+            Assert.Contains("#b00020", newHtml);
+            Assert.DoesNotContain("Alpha Bank", newHtml);
+            Assert.DoesNotContain("<img", newHtml);
+        }
+        finally
+        {
+            // The database is shared across the class — put the institution's branding back as it was.
+            await SetBrandingAsync(admin, original,
+                original.GetProperty("institutionDisplayName").GetString()!,
+                original.GetProperty("primaryColor").GetString()!,
+                original.GetProperty("accentColor").GetString()!,
+                original.GetProperty("logoDataUri").GetString());
+        }
+    }
 }

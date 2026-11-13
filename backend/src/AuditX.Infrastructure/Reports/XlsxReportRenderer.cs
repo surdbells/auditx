@@ -12,11 +12,15 @@ namespace AuditX.Infrastructure.Reports;
 /// DOCX renderer uses) (M8). Snapshot-faithful: it projects the SAME assembled composition / standalone model the
 /// HTML renderer uses (via <see cref="ReportTabularProjection"/>), one worksheet per section table. All cells are
 /// inline strings (values are already formatted for the report), so the file is locale-independent. Carries its own
-/// SHA-256; the canonical/verifiable hash remains the HTML's.
+/// SHA-256; the canonical/verifiable hash remains the HTML's. A workbook holds no imagery, so it is branded by the
+/// institution's name on the Summary sheet and its colours on every header row.
 /// </summary>
 public sealed class XlsxReportRenderer : IReportRenderer
 {
     private const string XlsxContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    /// <summary>Index into the stylesheet's cell formats of the brand-coloured header style (0 is the default).</summary>
+    private const uint HeaderStyleIndex = 1;
 
     public IReadOnlyCollection<string> SupportedFormats { get; } = ["xlsx"];
 
@@ -31,6 +35,7 @@ public sealed class XlsxReportRenderer : IReportRenderer
         {
             var workbookPart = document.AddWorkbookPart();
             workbookPart.Workbook = new Workbook();
+            AddBrandStyles(workbookPart, new BrandPalette(context.Branding));
             var sheetsElement = workbookPart.Workbook.AppendChild(new Sheets());
 
             var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -41,7 +46,7 @@ public sealed class XlsxReportRenderer : IReportRenderer
                 var sheetData = new SheetData();
                 worksheetPart.Worksheet = new Worksheet(sheetData);
 
-                sheetData.Append(BuildRow(sheet.Columns));
+                sheetData.Append(BuildRow(sheet.Columns, HeaderStyleIndex));
                 foreach (var row in sheet.Rows)
                 {
                     sheetData.Append(BuildRow(row));
@@ -71,19 +76,54 @@ public sealed class XlsxReportRenderer : IReportRenderer
         return new RenderedArtefact(bytes, XlsxContentType, $"{ReportArtefactNaming.Stem(context)}.xlsx", "xlsx", sha256);
     }
 
-    private static Row BuildRow(IReadOnlyList<string> fields)
+    private static Row BuildRow(IReadOnlyList<string> fields, uint? styleIndex = null)
     {
         var row = new Row();
         foreach (var field in fields)
         {
-            row.Append(new Cell
+            var cell = new Cell
             {
                 DataType = CellValues.InlineString,
                 InlineString = new InlineString(new Text(field ?? string.Empty) { Space = SpaceProcessingModeValues.Preserve }),
-            });
+            };
+            if (styleIndex is { } index)
+            {
+                cell.StyleIndex = index;
+            }
+
+            row.Append(cell);
         }
 
         return row;
+    }
+
+    /// <summary>
+    /// A minimal stylesheet: the default cell format plus one header format — bold text in a dark shade of the brand
+    /// colour on a pale tint of it. (Excel requires the two built-in fills at indexes 0 and 1.)
+    /// </summary>
+    private static void AddBrandStyles(WorkbookPart workbookPart, BrandPalette palette)
+    {
+        var stylesPart = workbookPart.AddNewPart<WorkbookStylesPart>();
+        stylesPart.Stylesheet = new Stylesheet(
+            new Fonts(
+                new Font(),
+                new Font(new Bold(), new Color { Rgb = HexBinaryValue.FromString("FF" + palette.TableHeaderText.HexNoHash) }))
+            { Count = 2U },
+            new Fills(
+                new Fill(new PatternFill { PatternType = PatternValues.None }),
+                new Fill(new PatternFill { PatternType = PatternValues.Gray125 }),
+                new Fill(new PatternFill(new ForegroundColor { Rgb = HexBinaryValue.FromString("FF" + palette.TableHeaderFill.HexNoHash) })
+                {
+                    PatternType = PatternValues.Solid,
+                }))
+            { Count = 3U },
+            new Borders(new Border()) { Count = 1U },
+            new CellStyleFormats(new CellFormat()) { Count = 1U },
+            new CellFormats(
+                new CellFormat(),
+                new CellFormat { FontId = 1U, FillId = 2U, ApplyFont = true, ApplyFill = true })
+            { Count = 2U });
+        stylesPart.Stylesheet.Save();
     }
 
     /// <summary>Excel sheet names: ≤31 chars, none of <c>[ ] : * ? / \</c>, non-empty, unique within the workbook.</summary>

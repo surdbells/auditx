@@ -4545,6 +4545,11 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("audit_id");
 
+                    b.Property<string>("BrandingSnapshotJson")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("branding_snapshot_json");
+
                     b.Property<DateTimeOffset?>("CompletedAt")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("completed_at");
