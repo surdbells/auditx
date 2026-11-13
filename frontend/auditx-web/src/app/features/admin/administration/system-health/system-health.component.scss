@@ -15,9 +15,15 @@
 
 .health__check {
   display: flex;
+  // mat-card is a flex COLUMN by default; without this the dot, text and badge stack and centre.
+  flex-direction: row;
   align-items: center;
   gap: 0.85rem;
   padding: 1rem 1.25rem;
+}
+
+.health__check .status-badge {
+  flex: 0 0 auto;
 }
 
 .health__dot {
@@ -46,6 +52,7 @@
 }
 .health__check-detail {
   font-size: 0.8rem;
+  overflow-wrap: anywhere; // a long failure detail wraps instead of pushing the badge out
 }
 
 .health__grid {
