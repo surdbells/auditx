@@ -1,5 +1,8 @@
 .dispatches__filters-card {
   display: flex;
+  // mat-card is a flex COLUMN by default: without this the fields stack and each `flex-basis`
+  // below is read as a HEIGHT (200px / 240px tall boxes) instead of a width.
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
@@ -7,11 +10,12 @@
 }
 
 .dispatches__status {
-  flex: 0 1 200px;
+  flex: 0 1 220px;
 }
 
 .dispatches__event {
-  flex: 1 1 240px;
+  flex: 1 1 260px;
+  max-width: 420px;
 }
 
 .dispatches__table-card {

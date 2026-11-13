@@ -1,5 +1,6 @@
 .mt__controls {
   display: flex;
+  flex-direction: row; // mat-card defaults to a column — keep the metric picker beside the period toggle
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 1.5rem;

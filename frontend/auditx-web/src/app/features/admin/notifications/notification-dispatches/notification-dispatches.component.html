@@ -1,5 +1,6 @@
 <mat-card appearance="outlined" class="dispatches__filters-card">
-  <mat-form-field appearance="outline" class="dispatches__status">
+  <!-- subscriptSizing="dynamic": no reserved hint row, so the fields and the Apply button share one centre line. -->
+  <mat-form-field appearance="outline" class="dispatches__status" subscriptSizing="dynamic">
     <mat-label>{{ 'notifications.column.status' | t }}</mat-label>
     <mat-select [formControl]="statusFilter">
       @for (s of statuses; track s.value) {
@@ -8,7 +9,7 @@
     </mat-select>
   </mat-form-field>
 
-  <mat-form-field appearance="outline" class="dispatches__event">
+  <mat-form-field appearance="outline" class="dispatches__event" subscriptSizing="dynamic">
     <mat-label>{{ 'notifications.field.eventType' | t }}</mat-label>
     <input
       matInput

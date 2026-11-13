@@ -1,5 +1,5 @@
 <mat-card appearance="outlined" class="deliveries__filters-card">
-  <mat-form-field appearance="outline" class="deliveries__status">
+  <mat-form-field appearance="outline" class="deliveries__status" subscriptSizing="dynamic">
     <mat-label>{{ 'integrations.field.status' | t }}</mat-label>
     <mat-select [formControl]="statusFilter">
       @for (s of statuses; track s.value) {

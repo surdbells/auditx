@@ -1,5 +1,6 @@
 .deliveries__filters-card {
   display: flex;
+  flex-direction: row; // mat-card defaults to a column, which turns the field's flex-basis into a height
   flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
