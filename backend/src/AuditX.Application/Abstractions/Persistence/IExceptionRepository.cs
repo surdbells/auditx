@@ -75,10 +75,20 @@ public interface IRootCauseGapRepository
 {
     Task<RootCauseGap?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<PagedResult<RootCauseGap>> SearchAsync(RootCauseGapStatus? status, string? search, PageSpec page, CancellationToken cancellationToken = default);
+    /// <param name="participantUserId">
+    /// Resource-scope guard (not a user-facing filter): when set, only gaps this user answers for — as the gap's owner
+    /// or the owner of one of its remediation actions. Null only for callers with portfolio visibility (ViewAudits).
+    /// </param>
+    Task<PagedResult<RootCauseGap>> SearchAsync(
+        RootCauseGapStatus? status, string? search, PageSpec page, Guid? participantUserId = null, CancellationToken cancellationToken = default);
 
     /// <summary>The findings linked to a gap, joined to the exception for title/severity/status display.</summary>
-    Task<IReadOnlyList<RootCauseGapLinkedExceptionRow>> ListLinkedExceptionsAsync(Guid gapId, CancellationToken cancellationToken = default);
+    /// <param name="participantUserId">
+    /// Resource-scope guard: when set, only the linked findings this user may see — ones they own, or whose audit they
+    /// are an active team member of (the same rule as the Exceptions tracker). Null for portfolio visibility.
+    /// </param>
+    Task<IReadOnlyList<RootCauseGapLinkedExceptionRow>> ListLinkedExceptionsAsync(
+        Guid gapId, Guid? participantUserId = null, CancellationToken cancellationToken = default);
 
     void Add(RootCauseGap gap);
 }

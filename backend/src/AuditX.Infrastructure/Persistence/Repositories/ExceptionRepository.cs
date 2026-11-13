@@ -226,9 +226,17 @@ public sealed class RootCauseGapRepository(AppDbContext db) : IRootCauseGapRepos
     public Task<RootCauseGap?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.RootCauseGaps.Include(g => g.Links).Include(g => g.Remediations).FirstOrDefaultAsync(g => g.Id == id, cancellationToken);
 
-    public async Task<PagedResult<RootCauseGap>> SearchAsync(RootCauseGapStatus? status, string? search, PageSpec page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<RootCauseGap>> SearchAsync(
+        RootCauseGapStatus? status, string? search, PageSpec page, Guid? participantUserId = null, CancellationToken cancellationToken = default)
     {
         var query = db.RootCauseGaps.AsNoTracking().Include(g => g.Links).AsQueryable();
+
+        // Resource-scope guard: without portfolio visibility a caller sees only the gaps they answer for.
+        if (participantUserId is { } participant)
+        {
+            query = query.Where(g => g.OwnerUserId == participant || g.Remediations.Any(r => r.OwnerUserId == participant));
+        }
+
         if (status is { } s)
         {
             query = query.Where(g => g.Status == s);
@@ -243,13 +251,27 @@ public sealed class RootCauseGapRepository(AppDbContext db) : IRootCauseGapRepos
         return await query.OrderByDescending(g => g.IdentifiedAt).ThenBy(g => g.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<RootCauseGapLinkedExceptionRow>> ListLinkedExceptionsAsync(Guid gapId, CancellationToken cancellationToken = default)
-        => await db.RootCauseGapExceptionLinks.AsNoTracking()
+    public async Task<IReadOnlyList<RootCauseGapLinkedExceptionRow>> ListLinkedExceptionsAsync(
+        Guid gapId, Guid? participantUserId = null, CancellationToken cancellationToken = default)
+    {
+        var linked = db.RootCauseGapExceptionLinks.AsNoTracking()
             .Where(l => l.RootCauseGapId == gapId)
-            .Join(db.Exceptions, l => l.ExceptionId, e => e.Id, (l, e) => new { l, e })
+            .Join(db.Exceptions, l => l.ExceptionId, e => e.Id, (l, e) => new { l, e });
+
+        // Resource-scope guard, identical to the Exceptions tracker: findings the caller owns, or whose audit they
+        // are an active team member of (RemovedAt, because IsActive is a computed, untranslatable property).
+        if (participantUserId is { } participant)
+        {
+            linked = linked.Where(x =>
+                x.e.OwnerUserId == participant ||
+                db.Audits.Any(a => a.Id == x.e.AuditId && a.TeamMembers.Any(m => m.RemovedAt == null && m.UserId == participant)));
+        }
+
+        return await linked
             .OrderBy(x => x.e.Title)
             .Select(x => new RootCauseGapLinkedExceptionRow(x.l.Id, x.e.Id, x.e.Title, x.e.Severity, x.e.Status))
             .ToListAsync(cancellationToken);
+    }
 
     public void Add(RootCauseGap gap) => db.RootCauseGaps.Add(gap);
 }

@@ -1,4 +1,5 @@
 using AuditX.Application.Abstractions;
+using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Enums;
 using AuditX.Application.Common.Exceptions;
@@ -14,12 +15,13 @@ namespace AuditX.Application.Execution.Queries;
 
 public sealed record GetChecklistResponseQuery(Guid AuditId, Guid ItemId) : IQuery<ChecklistResponseDto?>;
 
-public sealed class GetChecklistResponseQueryHandler(IAuditRepository audits, ICurrentUser currentUser)
+public sealed class GetChecklistResponseQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<GetChecklistResponseQuery, ChecklistResponseDto?>
 {
     public async Task<ChecklistResponseDto?> Handle(GetChecklistResponseQuery query, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
         var response = entity.Responses.FirstOrDefault(r => r.ChecklistItemId == query.ItemId);
         if (response is null)
         {
@@ -39,12 +41,14 @@ public sealed class GetChecklistResponseQueryHandler(IAuditRepository audits, IC
 /// <summary>The resolved input definition (options / rating points / choices / unit) for one checklist item.</summary>
 public sealed record GetResponseInputQuery(Guid AuditId, Guid ItemId) : IQuery<ResponseInputDto>;
 
-public sealed class GetResponseInputQueryHandler(IAuditRepository audits, IResponseInputResolver inputs)
+public sealed class GetResponseInputQueryHandler(
+    IAuditRepository audits, IResponseInputResolver inputs, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<GetResponseInputQuery, ResponseInputDto>
 {
     public async Task<ResponseInputDto> Handle(GetResponseInputQuery query, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
         var item = entity.ChecklistItems.FirstOrDefault(i => i.Id == query.ItemId) ?? throw new NotFoundException("Checklist item", query.ItemId);
         return await inputs.ResolveAsync(item.ResponseType, item.ResponseConfigJson, cancellationToken);
     }
@@ -52,12 +56,14 @@ public sealed class GetResponseInputQueryHandler(IAuditRepository audits, IRespo
 
 public sealed record GetResponseHistoryQuery(Guid AuditId, Guid ItemId) : IQuery<IReadOnlyList<ResponseHistoryEntryDto>>;
 
-public sealed class GetResponseHistoryQueryHandler(IAuditRepository audits, IAuditTrailReader trail, ICurrentUser currentUser)
+public sealed class GetResponseHistoryQueryHandler(
+    IAuditRepository audits, IAuditTrailReader trail, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<GetResponseHistoryQuery, IReadOnlyList<ResponseHistoryEntryDto>>
 {
     public async Task<IReadOnlyList<ResponseHistoryEntryDto>> Handle(GetResponseHistoryQuery query, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
         var response = entity.Responses.FirstOrDefault(r => r.ChecklistItemId == query.ItemId);
         if (response is null)
         {
@@ -80,12 +86,13 @@ public sealed class GetResponseHistoryQueryHandler(IAuditRepository audits, IAud
 
 public sealed record GetChecklistProgressQuery(Guid AuditId) : IQuery<ChecklistProgressDto>;
 
-public sealed class GetChecklistProgressQueryHandler(IAuditRepository audits)
+public sealed class GetChecklistProgressQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<GetChecklistProgressQuery, ChecklistProgressDto>
 {
     public async Task<ChecklistProgressDto> Handle(GetChecklistProgressQuery query, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
 
         var items = entity.ChecklistItems
             .OrderBy(i => i.OrderIndex)
@@ -110,12 +117,13 @@ public sealed class GetChecklistProgressQueryHandler(IAuditRepository audits)
 
 public sealed record ListFailWithoutExceptionQuery(Guid AuditId) : IQuery<FailWithoutExceptionDto>;
 
-public sealed class ListFailWithoutExceptionQueryHandler(IAuditRepository audits)
+public sealed class ListFailWithoutExceptionQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<ListFailWithoutExceptionQuery, FailWithoutExceptionDto>
 {
     public async Task<FailWithoutExceptionDto> Handle(ListFailWithoutExceptionQuery query, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
 
         var items = entity.ChecklistItems
             .Where(i => !i.HasException && i.FailJustification is null
@@ -131,12 +139,13 @@ public sealed class ListFailWithoutExceptionQueryHandler(IAuditRepository audits
 
 public sealed record GetReviewSummaryQuery(Guid AuditId) : IQuery<ReviewSummaryDto>;
 
-public sealed class GetReviewSummaryQueryHandler(IAuditRepository audits)
+public sealed class GetReviewSummaryQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<GetReviewSummaryQuery, ReviewSummaryDto>
 {
     public async Task<ReviewSummaryDto> Handle(GetReviewSummaryQuery query, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
         var finalised = entity.Responses.Where(r => !r.IsDraft).ToArray();
         return new ReviewSummaryDto(
             entity.ChecklistItems.Count,

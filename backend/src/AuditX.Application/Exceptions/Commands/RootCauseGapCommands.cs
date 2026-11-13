@@ -1,4 +1,5 @@
 using AuditX.Application.Abstractions;
+using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Concurrency;
 using AuditX.Application.Common.Enums;
@@ -79,7 +80,7 @@ public sealed class UpdateRootCauseGapCommandHandler(IRootCauseGapRepository gap
         gap.UpdateDetails(command.Title, command.Description, command.Category, command.OwnerUserId, command.TargetDate);
         audit.Record(AuditEventTypes.RootCauseGapUpdated, AuditTargetTypes.RootCauseGap, gap.Id, after: new { gap.Title });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
@@ -95,7 +96,7 @@ public sealed class CloseRootCauseGapCommandHandler(IRootCauseGapRepository gaps
         gap.Close(command.Rationale, currentUser.UserId ?? Guid.Empty, clock.UtcNow);
         audit.Record(AuditEventTypes.RootCauseGapClosed, AuditTargetTypes.RootCauseGap, gap.Id, after: new { command.Rationale });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
@@ -111,7 +112,7 @@ public sealed class ReopenRootCauseGapCommandHandler(IRootCauseGapRepository gap
         gap.Reopen();
         audit.Record(AuditEventTypes.RootCauseGapReopened, AuditTargetTypes.RootCauseGap, gap.Id);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
@@ -130,7 +131,7 @@ public sealed class LinkExceptionToGapCommandHandler(
         gap.LinkException(command.ExceptionId, currentUser.UserId ?? Guid.Empty);
         audit.Record(AuditEventTypes.RootCauseGapExceptionLinked, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.ExceptionId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
@@ -146,7 +147,7 @@ public sealed class UnlinkExceptionFromGapCommandHandler(IRootCauseGapRepository
         gap.UnlinkException(command.ExceptionId);
         audit.Record(AuditEventTypes.RootCauseGapExceptionUnlinked, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.ExceptionId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
@@ -175,7 +176,7 @@ public sealed class AddGapRemediationCommandHandler(IRootCauseGapRepository gaps
         var item = gap.AddRemediation(command.Description, command.OwnerUserId, command.DueDate, currentUser.UserId ?? Guid.Empty, clock.UtcNow);
         audit.Record(AuditEventTypes.RootCauseGapRemediationAdded, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { item.Id, command.OwnerUserId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
@@ -202,7 +203,7 @@ public sealed class UpdateGapRemediationCommandHandler(IRootCauseGapRepository g
         gap.UpdateRemediation(command.RemediationId, command.Description, command.OwnerUserId, command.DueDate);
         audit.Record(AuditEventTypes.RootCauseGapRemediationUpdated, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.RemediationId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
@@ -218,7 +219,7 @@ public sealed class CompleteGapRemediationCommandHandler(IRootCauseGapRepository
         gap.CompleteRemediation(command.RemediationId, command.Note, currentUser.UserId ?? Guid.Empty, clock.UtcNow);
         audit.Record(AuditEventTypes.RootCauseGapRemediationCompleted, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.RemediationId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
@@ -234,7 +235,7 @@ public sealed class ReopenGapRemediationCommandHandler(IRootCauseGapRepository g
         gap.ReopenRemediation(command.RemediationId);
         audit.Record(AuditEventTypes.RootCauseGapRemediationReopened, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.RemediationId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
@@ -250,16 +251,23 @@ public sealed class RemoveGapRemediationCommandHandler(IRootCauseGapRepository g
         gap.RemoveRemediation(command.RemediationId);
         audit.Record(AuditEventTypes.RootCauseGapRemediationRemoved, AuditTargetTypes.RootCauseGap, gap.Id, payload: new { command.RemediationId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken: cancellationToken));
     }
 }
 
 public sealed record ListRootCauseGapsQuery(string? Status, string? Search, int? Page, int? PageSize) : IQuery<PagedResult<RootCauseGapListItemDto>>;
 
-public sealed class ListRootCauseGapsQueryHandler(IRootCauseGapRepository gaps) : IQueryHandler<ListRootCauseGapsQuery, PagedResult<RootCauseGapListItemDto>>
+/// <summary>
+/// The root-cause gap register is a portfolio view of systemic weaknesses across audits. A caller with portfolio
+/// visibility (ViewAudits — Auditor / Audit Manager / Administrator) sees all of it. Anyone else holding ViewExceptions
+/// (an auditee) sees only the gaps they answer for — as the gap's owner or the owner of one of its remediation actions.
+/// </summary>
+public sealed class ListRootCauseGapsQueryHandler(IRootCauseGapRepository gaps, ICurrentUser currentUser, IPermissionResolver permissions)
+    : IQueryHandler<ListRootCauseGapsQuery, PagedResult<RootCauseGapListItemDto>>
 {
     public async Task<PagedResult<RootCauseGapListItemDto>> Handle(ListRootCauseGapsQuery query, CancellationToken cancellationToken)
     {
+        var participant = await ExceptionAccess.ResolveParticipantScopeAsync(currentUser.UserId, permissions, cancellationToken);
         RootCauseGapStatus? status = query.Status?.ToLowerInvariant() switch
         {
             null or "" or "all" => null,
@@ -267,18 +275,28 @@ public sealed class ListRootCauseGapsQueryHandler(IRootCauseGapRepository gaps) 
             "closed" => RootCauseGapStatus.Closed,
             _ => throw new ConflictException("root_cause_gap.invalid_status", $"Unknown status filter '{query.Status}'."),
         };
-        var result = await gaps.SearchAsync(status, query.Search, PageSpec.Of(query.Page, query.PageSize), cancellationToken);
+        var result = await gaps.SearchAsync(status, query.Search, PageSpec.Of(query.Page, query.PageSize), participant, cancellationToken);
         return result.Map(g => g.ToListItemDto());
     }
 }
 
 public sealed record GetRootCauseGapQuery(Guid Id) : IQuery<RootCauseGapDto>;
 
-public sealed class GetRootCauseGapQueryHandler(IRootCauseGapRepository gaps) : IQueryHandler<GetRootCauseGapQuery, RootCauseGapDto>
+public sealed class GetRootCauseGapQueryHandler(IRootCauseGapRepository gaps, ICurrentUser currentUser, IPermissionResolver permissions)
+    : IQueryHandler<GetRootCauseGapQuery, RootCauseGapDto>
 {
     public async Task<RootCauseGapDto> Handle(GetRootCauseGapQuery query, CancellationToken cancellationToken)
     {
         var gap = await gaps.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Root-cause gap", query.Id);
-        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, cancellationToken));
+
+        // Same scope as the register: without portfolio visibility, only a gap the caller answers for — and within
+        // it, only the linked findings they could open themselves (never other areas' finding titles).
+        var participant = await ExceptionAccess.ResolveParticipantScopeAsync(currentUser.UserId, permissions, cancellationToken);
+        if (participant is { } uid && gap.OwnerUserId != uid && !gap.Remediations.Any(r => r.OwnerUserId == uid))
+        {
+            throw new ForbiddenAccessException("You can only open a root-cause gap you own or hold a remediation action on.");
+        }
+
+        return gap.ToDto(await gaps.ListLinkedExceptionsAsync(gap.Id, participant, cancellationToken));
     }
 }

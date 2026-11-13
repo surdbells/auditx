@@ -1,9 +1,12 @@
+using AuditX.Application.Abstractions;
+using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Audits.Dtos;
 using AuditX.Application.Audits.Mapping;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Common.Models;
+using AuditX.Application.Execution;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Enums;
 
@@ -33,12 +36,13 @@ public sealed class ListAuditsQueryHandler(IAuditRepository audits)
 
 public sealed record GetAuditQuery(Guid Id) : IQuery<AuditDto>;
 
-public sealed class GetAuditQueryHandler(IAuditRepository audits)
+public sealed class GetAuditQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<GetAuditQuery, AuditDto>
 {
     public async Task<AuditDto> Handle(GetAuditQuery query, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Audit", query.Id);
+        await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
         return entity.ToDto();
     }
 }
@@ -50,7 +54,8 @@ public sealed class GetAuditQueryHandler(IAuditRepository audits)
 /// </summary>
 public sealed record GetAuditHistoryQuery(Guid AuditId) : IQuery<IReadOnlyList<AuditHistoryEntryDto>>;
 
-public sealed class GetAuditHistoryQueryHandler(IAuditRepository audits, IAuditTrailReader trail)
+public sealed class GetAuditHistoryQueryHandler(
+    IAuditRepository audits, IAuditTrailReader trail, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<GetAuditHistoryQuery, IReadOnlyList<AuditHistoryEntryDto>>
 {
     // The audit-family trail entries that all carry the audit id as their target id.
@@ -64,7 +69,8 @@ public sealed class GetAuditHistoryQueryHandler(IAuditRepository audits, IAuditT
 
     public async Task<IReadOnlyList<AuditHistoryEntryDto>> Handle(GetAuditHistoryQuery query, CancellationToken cancellationToken)
     {
-        _ = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        var audit = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        await AuditAccess.EnsureCanViewAsync(audit, currentUser.UserId, permissions, cancellationToken);
 
         var entries = new List<AuditTrailEntryView>();
         foreach (var target in AuditFamilyTargets)

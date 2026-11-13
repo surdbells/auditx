@@ -59,9 +59,12 @@ public sealed class SearchQueryHandler(
 
         if (granted.Contains(PermissionKeys.ViewExceptions))
         {
+            // Same resource scope as the Exceptions tracker: without portfolio visibility (ViewAudits) a caller
+            // finds only the findings they own or whose audit they are on — never other areas' finding titles.
             var filter = new ExceptionSearchFilter(
                 null, null, null, null, null, null, null, null,
-                DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), term);
+                DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), term,
+                ParticipantUserId: granted.Contains(PermissionKeys.ViewAudits) ? null : userId);
             var result = await exceptions.SearchAsync(filter, pageSpec, cancellationToken);
             hits.AddRange(result.Items.Select(e => new SearchHitDto("exception", e.Id.ToString(), e.Title, e.Severity.ToString())));
         }
