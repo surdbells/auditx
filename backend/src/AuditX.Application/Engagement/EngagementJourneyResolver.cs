@@ -103,7 +103,8 @@ public static class EngagementJourneyResolver
         var executeRoute = $"/audits/{audit.Id}/execute";
 
         var hasChecklist = audit.ChecklistItems.Count > 0;
-        var hasAuditor = audit.TeamMembers.Any(m => m.IsActive && m.UserId != audit.AuditeeUserId);
+        // The working team only: an audit can have several auditees and none of them is its auditor.
+        var hasAuditor = audit.TeamMembers.Any(m => m.IsActive && !audit.IsAuditee(m.UserId));
         var allResponded = audit.ChecklistItems.Count > 0
             && audit.ChecklistItems.All(i => i.ItemState == ChecklistItemState.Responded);
         var myPending = audit.ChecklistItems.Count(i =>

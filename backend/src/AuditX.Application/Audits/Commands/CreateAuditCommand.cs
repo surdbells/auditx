@@ -28,7 +28,9 @@ public sealed record CreateAuditCommand(
     Guid AuditeeUserId,
     IReadOnlyList<Guid>? TeamMemberUserIds,
     bool BackdatingOverride,
-    string? BackdatingReason) : ICommand<AuditDto>;
+    string? BackdatingReason,
+    // Further auditees beyond the primary one. Nobody may be both an auditee and on the audit team.
+    IReadOnlyList<Guid>? AdditionalAuditeeUserIds = null) : ICommand<AuditDto>;
 
 public sealed class CreateAuditCommandValidator : AbstractValidator<CreateAuditCommand>
 {
@@ -106,7 +108,7 @@ public sealed class CreateAuditCommandHandler(
         var data = new CreateAuditData(
             command.Name, command.AuditType, command.StartDate, targetEnd, command.ScopeDescription,
             command.TemplateId, null, command.PlanItemId, auditableEntityId, command.LeadUserId, command.AuditeeUserId,
-            command.TeamMemberUserIds ?? []);
+            command.TeamMemberUserIds ?? [], AdditionalAuditeeUserIds: command.AdditionalAuditeeUserIds);
 
         var auditEntity = await creationService.BuildAsync(data, currentUser.UserId, clock.UtcNow, cancellationToken);
 
@@ -143,6 +145,7 @@ public sealed class CreateAuditCommandHandler(
     {
         var ids = new List<Guid> { command.LeadUserId, command.AuditeeUserId };
         ids.AddRange(command.TeamMemberUserIds ?? []);
+        ids.AddRange(command.AdditionalAuditeeUserIds ?? []);
         var distinct = ids.Distinct().ToArray();
 
         var found = await users.GetByIdsAsync(distinct, cancellationToken);

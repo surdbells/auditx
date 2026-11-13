@@ -198,6 +198,17 @@ public sealed class Audit : AggregateRoot
 
     // ---- Team management ----
 
+    /// <summary>
+    /// True when the user is an AUDITEE of this audit: its primary auditee, or anyone listed on it in the auditee
+    /// role. An audit can have several auditees — everyone answerable for the area being examined — and every one of
+    /// them is on the audited side: they follow the audit and answer for their area, and none of them can work on it
+    /// as an auditor, whatever roles they hold elsewhere. Never true on a self-assessment, where the area owner is
+    /// the assessor by design.
+    /// </summary>
+    public bool IsAuditee(Guid userId)
+        => !IsSelfAssessment
+            && (userId == AuditeeUserId || ActiveTeam.Any(m => m.UserId == userId && m.TeamRole == TeamRole.Auditee));
+
     public AuditTeamMember AddTeamMember(Guid userId, TeamRole role, Guid? addedBy, DateTimeOffset nowUtc)
     {
         EnsureStatus("audit.team_locked", AuditStatus.Draft, AuditStatus.Planned);
@@ -205,7 +216,22 @@ public sealed class Audit : AggregateRoot
         var existing = ActiveTeam.FirstOrDefault(m => m.UserId == userId);
         if (existing is not null)
         {
-            return existing; // idempotent
+            // Independence: a person is on ONE side of an audit. An auditee can never be put on the audit team, and
+            // someone on the audit team can never be named an auditee — refused outright, not silently ignored, so
+            // nobody is left believing the assignment was made.
+            if (existing.TeamRole == TeamRole.Auditee && role != TeamRole.Auditee)
+            {
+                throw new DomainException("audit.member_is_auditee",
+                    "This person is an auditee of this audit and cannot also be on its audit team — an audit must be independent of the area it examines.");
+            }
+
+            if (existing.TeamRole != TeamRole.Auditee && role == TeamRole.Auditee)
+            {
+                throw new DomainException("audit.member_on_audit_team",
+                    "This person is on this audit's team and cannot also be one of its auditees. Remove them from the team first.");
+            }
+
+            return existing; // idempotent: already on the audit on this side
         }
 
         if (role == TeamRole.Lead && ActiveTeam.Any(m => m.TeamRole == TeamRole.Lead))
@@ -213,9 +239,10 @@ public sealed class Audit : AggregateRoot
             throw new DomainException("audit.lead_exists", "The audit already has a lead; use transfer-lead.");
         }
 
-        if (role == TeamRole.Auditee && ActiveTeam.Any(m => m.TeamRole == TeamRole.Auditee))
+        // Several auditees are allowed (the primary one is set when the audit is created). A self-assessment has none.
+        if (role == TeamRole.Auditee && IsSelfAssessment)
         {
-            throw new DomainException("audit.auditee_exists", "The audit already has an auditee.");
+            throw new DomainException("audit.self_assessment_no_auditee", "A self-assessment has no auditees — the area owner assesses their own area.");
         }
 
         var member = new AuditTeamMember(Id, userId, role, addedBy, nowUtc);
@@ -235,9 +262,10 @@ public sealed class Audit : AggregateRoot
             throw new DomainException("audit.cannot_remove_sole_lead", "Transfer the lead before removing them.");
         }
 
-        if (member.TeamRole == TeamRole.Auditee)
+        // Additional auditees can be taken off the audit; its primary auditee cannot — an audit always has one.
+        if (member.TeamRole == TeamRole.Auditee && member.UserId == AuditeeUserId)
         {
-            throw new DomainException("audit.cannot_remove_sole_auditee", "The audit must always have an auditee.");
+            throw new DomainException("audit.cannot_remove_sole_auditee", "The audit's primary auditee cannot be removed — an audit must always have an auditee.");
         }
 
         if (_checklistItems.Any(i => i.AssignedUserId == member.UserId))
@@ -564,9 +592,9 @@ public sealed class Audit : AggregateRoot
             throw new DomainException("audit.assignee_not_team_member", "An item can only be assigned to an active team member.");
         }
 
-        if (!IsSelfAssessment && (userId == AuditeeUserId || ActiveTeam.Any(m => m.UserId == userId && m.TeamRole == TeamRole.Auditee)))
+        if (IsAuditee(userId))
         {
-            throw new DomainException("audit.assignee_is_auditee", "A checklist item cannot be assigned to the audit's auditee — the audit must be independent of the area it examines.");
+            throw new DomainException("audit.assignee_is_auditee", "A checklist item cannot be assigned to an auditee of the audit — the audit must be independent of the area it examines.");
         }
     }
 

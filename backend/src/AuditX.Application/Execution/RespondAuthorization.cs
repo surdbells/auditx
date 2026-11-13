@@ -73,11 +73,8 @@ internal static class RespondAuthorization
         => !IsAuditee(audit, userId)
             && audit.TeamMembers.Any(m => m.IsActive && m.UserId == userId && m.TeamRole != TeamRole.Auditee);
 
-    /// <summary>True when the user is the auditee of this (non-self-assessment) audit.</summary>
-    public static bool IsAuditee(Audit audit, Guid userId)
-        => !audit.IsSelfAssessment
-            && (audit.AuditeeUserId == userId
-                || audit.TeamMembers.Any(m => m.IsActive && m.UserId == userId && m.TeamRole == TeamRole.Auditee));
+    /// <summary>True when the user is an auditee of this (non-self-assessment) audit — its primary auditee or any other.</summary>
+    public static bool IsAuditee(Audit audit, Guid userId) => audit.IsAuditee(userId);
 
     public static ResponseVerdict? ParseVerdict(string? value, bool isDraft)
     {

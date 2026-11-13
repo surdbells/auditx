@@ -298,3 +298,159 @@ public sealed class FindingOwnerAccessFlowTests(ApiFactory factory) : AccessMode
             new { version = Version(submitted) })).StatusCode);
     }
 }
+
+/// <summary>
+/// The scenario the product owner posed, end to end through the API: several people who are AUDITORS on the platform
+/// are named as the AUDITEES of one audit, alongside colleagues who are its auditors. On that audit the auditees
+/// follow along and answer for their area — and not one auditor action is open to them.
+///
+/// (The seeded environment has four accounts, so here the audit has a lead, one auditor and TWO auditees who are
+/// auditors by role; <c>AuditIndependenceTests</c> pins the same rules on the aggregate for the full two-auditors /
+/// three-auditees arrangement.)
+/// </summary>
+public sealed class AuditorsNamedAsAuditeesFlowTests(ApiFactory factory) : AccessModelTestBase(factory), IClassFixture<ApiFactory>
+{
+    [Fact]
+    public async Task Auditors_named_as_auditees_of_an_audit_cannot_act_as_auditors_on_it()
+    {
+        var admin = await LoginAsync("admin");
+        var users = await UsersByEmailAsync(admin);
+        var teamAuditor = users["auditor@auditx.local"];
+        var auditeeOne = users["manager@auditx.local"];
+        var auditeeTwo = users["auditee@auditx.local"];
+
+        // All three hold the Auditor role: they are auditors on the platform.
+        foreach (var auditor in new[] { teamAuditor, auditeeOne, auditeeTwo })
+        {
+            await GrantBuiltInRoleAsync(auditor, BuiltInRoles.AuditorName);
+        }
+
+        object NewAudit(Guid[] team, Guid[] otherAuditees) => new
+        {
+            name = $"Audit A {Guid.NewGuid():N}", auditType = "branch", startDate = "2027-01-10", targetEndDate = "2027-02-10",
+            leadUserId = users["admin@auditx.local"], auditeeUserId = auditeeOne,
+            additionalAuditeeUserIds = otherAuditees, teamMemberUserIds = team,
+        };
+
+        // Naming someone as BOTH an auditee and a team member is refused outright.
+        var both = await admin.PostAsJsonAsync("/api/v1/audits", NewAudit(team: [teamAuditor, auditeeTwo], otherAuditees: [auditeeTwo]));
+        Assert.Equal(HttpStatusCode.UnprocessableContent, both.StatusCode);
+        Assert.Contains("auditee of this audit", await both.Content.ReadAsStringAsync());
+
+        // Audit A: one auditor on the team, two auditees.
+        var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", NewAudit(team: [teamAuditor], otherAuditees: [auditeeTwo])));
+        var auditId = created.GetProperty("id").GetGuid();
+        var roles = created.GetProperty("teamMembers").EnumerateArray()
+            .ToDictionary(m => m.GetProperty("userId").GetGuid(), m => m.GetProperty("teamRole").GetString());
+        Assert.Equal("auditee", roles[auditeeOne]);
+        Assert.Equal("auditee", roles[auditeeTwo]);
+        Assert.Equal("auditor", roles[teamAuditor]);
+
+        // An auditee cannot be moved onto the audit team, nor a team member named an auditee — while it is still a draft…
+        foreach (var auditee in new[] { auditeeOne, auditeeTwo })
+        {
+            foreach (var workingRole in new[] { "auditor", "reviewer" })
+            {
+                var cross = await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+                    new { userId = auditee, teamRole = workingRole, version = await AuditVersionAsync(admin, auditId) });
+                Assert.Equal(HttpStatusCode.UnprocessableContent, cross.StatusCode);
+                Assert.Contains("auditee of this audit", await cross.Content.ReadAsStringAsync());
+            }
+        }
+
+        var reverse = await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = teamAuditor, teamRole = "auditee", version = await AuditVersionAsync(admin, auditId) });
+        Assert.Equal(HttpStatusCode.UnprocessableContent, reverse.StatusCode);
+
+        // …and once it has started nobody changes sides at all: the team is locked.
+        var withItem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Is dual control enforced?", responseType = "pass_fail_na", isRequired = true, version = await AuditVersionAsync(admin, auditId) }));
+        var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition",
+            new { targetState = "planned", reason = (string?)null, version = Version(withItem) }));
+        var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition",
+            new { targetState = "in_progress", reason = (string?)null, version = Version(planned) }));
+        var itemId = started.GetProperty("checklistItems")[0].GetProperty("id").GetGuid();
+
+        var afterStart = await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = auditeeTwo, teamRole = "auditor", version = Version(started) });
+        Assert.Equal(HttpStatusCode.Conflict, afterStart.StatusCode);
+
+        // An item cannot be assigned to an auditee either.
+        foreach (var auditee in new[] { auditeeOne, auditeeTwo })
+        {
+            var assign = await admin.PatchAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/assignment",
+                new { assigneeUserId = auditee, version = await AuditVersionAsync(admin, auditId) });
+            Assert.Equal(HttpStatusCode.UnprocessableContent, assign.StatusCode);
+        }
+
+        // Each auditee signs in — an auditor by role — and tries the auditor's work on Audit A.
+        foreach (var username in new[] { "manager", "auditee" })
+        {
+            var auditee = await LoginAsync(username);
+            Assert.Contains("RespondItem", Permissions(await SessionAsync(auditee))); // they ARE auditors by role
+
+            // They can follow the audit of their own area…
+            var view = await DataAsync(await auditee.GetAsync($"/api/v1/audits/{auditId}"));
+            var version = Version(view);
+
+            // …and every auditor action on it is refused, with the reason.
+            var attempts = new (string What, Func<Task<HttpResponseMessage>> Send)[]
+            {
+                ("answer an item", () => auditee.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses",
+                    new { verdict = "pass", comment = (string?)null, isDraft = false, version })),
+                ("save a draft answer", () => auditee.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses",
+                    new { verdict = "pass", comment = "draft", isDraft = true, version })),
+                ("raise a finding", () => auditee.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+                {
+                    checklistItemId = itemId, title = "Finding", severity = "low", rootCause = "x", recommendation = "y", ownerUserId = auditeeOne,
+                })),
+                ("record a procedure", () => auditee.PostAsJsonAsync($"/api/v1/audits/{auditId}/procedures", new
+                {
+                    type = "sampling", checklistItemId = itemId, performedOn = "2027-01-20", summary = "Tested 25 of 300 payment vouchers.",
+                    population = 300, sampleSize = 25, itemsTested = 25, exceptionsFound = 0, method = "random",
+                })),
+                ("log audit time", () => auditee.PostAsJsonAsync($"/api/v1/audits/{auditId}/time-entries",
+                    new { workDate = "2027-01-15", hours = 2m, category = "fieldwork", checklistItemId = (Guid?)null, notes = (string?)null })),
+                ("request a document", () => auditee.PostAsJsonAsync($"/api/v1/audits/{auditId}/evidence-requests",
+                    new { requestedFromUserId = teamAuditor, title = "Something", documentType = "approval_signoff", dueDate = "2027-01-25" })),
+            };
+
+            foreach (var (what, send) in attempts)
+            {
+                var response = await send();
+                var body = await response.Content.ReadAsStringAsync();
+                Assert.True(response.StatusCode == HttpStatusCode.Forbidden, $"{username} could {what}: {(int)response.StatusCode} {body}");
+                Assert.Contains("auditee of this audit", body);
+            }
+        }
+
+        // Nothing they tried left a trace on the checklist…
+        var summary = await DataAsync(await admin.GetAsync($"/api/v1/audits/{auditId}/review/summary"));
+        Assert.Equal(0, summary.GetProperty("responded").GetInt32());
+
+        // …and the audit's actual auditor does the work.
+        var auditorClient = await LoginAsync("auditor");
+        var answered = await auditorClient.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses",
+            new { verdict = "pass", comment = (string?)null, isDraft = false, version = await AuditVersionAsync(auditorClient, auditId) });
+        Assert.Equal(HttpStatusCode.OK, answered.StatusCode);
+
+        // On an audit where they are NOT auditees, the same two people work as the auditors they are.
+        var other = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
+        {
+            name = $"Audit B {Guid.NewGuid():N}", auditType = "branch", startDate = "2027-01-10", targetEndDate = "2027-02-10",
+            leadUserId = users["admin@auditx.local"], auditeeUserId = teamAuditor, teamMemberUserIds = new[] { auditeeOne, auditeeTwo },
+        }));
+        var otherId = other.GetProperty("id").GetGuid();
+        var otherItem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{otherId}/checklist/items",
+            new { prompt = "Are limits monitored?", responseType = "pass_fail_na", isRequired = true, version = Version(other) }));
+        var otherPlanned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{otherId}/transition",
+            new { targetState = "planned", reason = (string?)null, version = Version(otherItem) }));
+        var otherStarted = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{otherId}/transition",
+            new { targetState = "in_progress", reason = (string?)null, version = Version(otherPlanned) }));
+        var manager = await LoginAsync("manager");
+        var worked = await manager.PostAsJsonAsync(
+            $"/api/v1/audits/{otherId}/items/{otherStarted.GetProperty("checklistItems")[0].GetProperty("id").GetGuid()}/responses",
+            new { verdict = "pass", comment = (string?)null, isDraft = false, version = Version(otherStarted) });
+        Assert.Equal(HttpStatusCode.OK, worked.StatusCode);
+    }
+}

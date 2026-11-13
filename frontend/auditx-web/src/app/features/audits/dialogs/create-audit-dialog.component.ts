@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
@@ -206,6 +207,19 @@ function fromDateOnly(value: string | undefined): Date | null {
           </mat-form-field>
         </div>
 
+        <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
+          <mat-label>Other auditees</mat-label>
+          <mat-select formControlName="additionalAuditeeUserIds" multiple>
+            @for (u of otherAuditeeCandidates(); track u.id) {
+              <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <p class="field-note">
+          Optional. Everyone else answerable for the area being audited. Auditees follow the audit and answer for
+          their area — they can never work on it as auditors, even if they are auditors elsewhere.
+        </p>
+
         <mat-form-field appearance="outline" class="full">
           <mat-label>Team members</mat-label>
           <mat-select formControlName="teamMemberUserIds" multiple>
@@ -213,7 +227,7 @@ function fromDateOnly(value: string | undefined): Date | null {
               <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
             }
           </mat-select>
-          <mat-hint>Optional auditors added to the team.</mat-hint>
+          <mat-hint>Optional auditors added to the team. Auditees are not offered here.</mat-hint>
         </mat-form-field>
       </form>
     </mat-dialog-content>
@@ -305,10 +319,26 @@ export class CreateAuditDialogComponent {
     leadUserId: ['', [Validators.required]],
     auditeeUserId: ['', [Validators.required]],
     teamMemberUserIds: [[] as string[]],
+    additionalAuditeeUserIds: [[] as string[]],
   });
 
-  /** Exclude the chosen lead / auditee from the team-member list. */
-  readonly teamCandidates = computed(() => this.data.users);
+  private readonly formValue = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+
+  /**
+   * A person is on ONE side of an audit: its audit team, or its auditees. Each list therefore leaves out whoever is
+   * already on the other side (and the lead / primary auditee), so the conflict cannot be chosen in the first place.
+   */
+  readonly teamCandidates = computed(() => {
+    const v = this.formValue();
+    const auditees = new Set([v.auditeeUserId, ...(v.additionalAuditeeUserIds ?? [])]);
+    return this.data.users.filter((u) => u.id !== v.leadUserId && !auditees.has(u.id));
+  });
+
+  readonly otherAuditeeCandidates = computed(() => {
+    const v = this.formValue();
+    const team = new Set([v.leadUserId, ...(v.teamMemberUserIds ?? [])]);
+    return this.data.users.filter((u) => u.id !== v.auditeeUserId && !team.has(u.id));
+  });
 
   constructor() {
     if (!this.data.planItem && this.canPickEntity()) {
@@ -342,8 +372,13 @@ export class CreateAuditDialogComponent {
       return;
     }
     const v = this.form.getRawValue();
-    const team = v.teamMemberUserIds.filter(
+    // Belt and braces for a selection made before the lead / auditee was changed: an auditee is never also sent as
+    // a team member (the server would refuse the whole audit), and the lead / primary auditee are not repeated.
+    const otherAuditees = v.additionalAuditeeUserIds.filter(
       (id) => id !== v.leadUserId && id !== v.auditeeUserId,
+    );
+    const team = v.teamMemberUserIds.filter(
+      (id) => id !== v.leadUserId && id !== v.auditeeUserId && !otherAuditees.includes(id),
     );
     this.dialogRef.close({
       name: v.name.trim(),
@@ -357,6 +392,7 @@ export class CreateAuditDialogComponent {
       leadUserId: v.leadUserId,
       auditeeUserId: v.auditeeUserId,
       teamMemberUserIds: team.length ? team : undefined,
+      additionalAuditeeUserIds: otherAuditees.length ? otherAuditees : undefined,
       backdatingOverride: false,
     });
   }

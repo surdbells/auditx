@@ -85,13 +85,15 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         version = Version(a1);
         var a2 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items", new { prompt = "Q1", responseType = "pass_fail_na", isRequired = true, version }));
         version = Version(a2);
-        var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
-        // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
-        // When the auditor is the AUDITEE of this audit (they stay its auditee — the add above is then a no-op), admin
-        // is the audit's auditor instead, since an audit cannot be planned without one.
-        var adminTeamRole = auditeeEmail == "auditor@auditx.local" ? "auditor" : "reviewer";
+        // The auditor joins the team — unless they are this audit's AUDITEE: a person is on one side of an audit only
+        // (adding an auditee to the team is refused), so admin is then the audit's auditor, since an audit cannot be
+        // planned without one. Either way admin, who answers the items in this test, is on the team.
+        var auditorIsAuditee = auditeeEmail == "auditor@auditx.local";
+        var withTeam = auditorIsAuditee
+            ? a2
+            : await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
         withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
-            new { userId = users["admin@auditx.local"], teamRole = adminTeamRole, version = Version(withTeam) }));
+            new { userId = users["admin@auditx.local"], teamRole = auditorIsAuditee ? "auditor" : "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);

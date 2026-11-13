@@ -467,8 +467,13 @@ export class AuditDetailComponent {
   );
 
   /** Team may be changed while the audit is not read-only. */
+  /**
+   * The team — and with it who is on which side of the audit — can only be changed before fieldwork starts (draft or
+   * planned). The server locks it from then on, so the add / remove / transfer controls are not offered either:
+   * nobody is moved onto, off, or across an audit that is under way.
+   */
   readonly canManageTeam = computed(
-    () => this.canManage() && !this.isReadOnly(),
+    () => this.canManage() && (this.status() === 'draft' || this.status() === 'planned'),
   );
 
   constructor() {
@@ -890,7 +895,9 @@ export class AuditDetailComponent {
   /* ---- Team ---- */
 
   addMember(): void {
-    const data: AddTeamMemberDialogData = { users: this.usersCache };
+    // Only people not already on the audit: nobody is added twice, and nobody ends up on both sides of it.
+    const onAudit = new Set(this.activeMembers().map((m) => m.userId));
+    const data: AddTeamMemberDialogData = { users: this.usersCache.filter((u) => !onAudit.has(u.id)) };
     this.dialog
       .open(AddTeamMemberDialogComponent, { data, width: '440px' })
       .afterClosed()

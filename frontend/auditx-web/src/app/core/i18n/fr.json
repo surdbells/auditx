@@ -1081,6 +1081,7 @@
   "audits.field.teamMembers": "Membres de l'équipe",
   "audits.team.title": "Équipe",
   "audits.team.empty": "Aucun membre d'équipe pour le moment.",
+  "audits.team.primaryAuditee": "contact principal",
   "audits.team.removeAria": "Retirer {{name}}",
   "audits.checklist.title": "Liste de contrôle ({{count}})",
   "audits.checklist.empty": "Aucun point de contrôle pour le moment.",

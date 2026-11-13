@@ -44,7 +44,7 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
         => Created(await dispatcher.Send(new CreateAuditCommand(
             request.Name, request.AuditType, request.StartDate, request.TargetEndDate, request.ScopeDescription,
             request.TemplateId, request.PlanItemId, request.EntityId, request.LeadUserId, request.AuditeeUserId, request.TeamMemberUserIds,
-            request.BackdatingOverride, request.BackdatingReason), cancellationToken));
+            request.BackdatingOverride, request.BackdatingReason, request.AdditionalAuditeeUserIds), cancellationToken));
 
     /// <summary>Start a self-assessment of one's own area (the caller is both assessor and auditee).</summary>
     [RequirePermission(PermissionKeys.RunSelfAssessment)]

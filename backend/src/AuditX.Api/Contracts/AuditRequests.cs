@@ -13,7 +13,8 @@ public sealed record CreateAuditRequest(
     Guid AuditeeUserId,
     IReadOnlyList<Guid>? TeamMemberUserIds,
     bool BackdatingOverride,
-    string? BackdatingReason);
+    string? BackdatingReason,
+    IReadOnlyList<Guid>? AdditionalAuditeeUserIds = null);
 
 public sealed record CreateSelfAssessmentRequest(
     string Name,

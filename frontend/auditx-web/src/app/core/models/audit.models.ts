@@ -156,6 +156,11 @@ export interface CreateAuditRequest {
   leadUserId: string;
   auditeeUserId: string;
   teamMemberUserIds?: string[];
+  /**
+   * Further auditees beyond the primary one — everyone else answerable for the area being audited. Nobody can be both
+   * an auditee and a team member: the server refuses it.
+   */
+  additionalAuditeeUserIds?: string[];
   backdatingOverride: boolean;
   backdatingReason?: string | null;
 }

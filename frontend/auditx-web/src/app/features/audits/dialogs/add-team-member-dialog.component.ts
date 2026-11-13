@@ -12,7 +12,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { TeamRole, UserDto } from '../../../core/models';
 
 export interface AddTeamMemberDialogData {
-  /** Users selectable as the new member. */
+  /**
+   * Users selectable as the new member — people not already on the audit. Someone already on it (on its team or as
+   * an auditee) cannot be added again in another capacity: a person is on one side of an audit only.
+   */
   users: UserDto[];
 }
 
@@ -47,7 +50,7 @@ export interface AddTeamMemberDialogResult {
           }
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full">
+        <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
           <mat-label>Role</mat-label>
           <mat-select formControlName="teamRole">
             <mat-option value="auditor">Auditor</mat-option>
@@ -56,6 +59,11 @@ export interface AddTeamMemberDialogResult {
             <mat-option value="lead">Lead</mat-option>
           </mat-select>
         </mat-form-field>
+        <p class="note">
+          Auditors, reviewers and the lead carry out the audit. An <strong>auditee</strong> is someone answerable for
+          the area being audited: they follow the audit and respond to requests, but can never work on it as an
+          auditor — even if they are an auditor elsewhere. An audit can have several auditees.
+        </p>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -73,6 +81,11 @@ export interface AddTeamMemberDialogResult {
     }
     .full {
       width: 100%;
+    }
+    .note {
+      margin: 0.5rem 0 0;
+      font: var(--mat-sys-body-small);
+      color: var(--mat-sys-on-surface-variant);
     }
     @media (max-width: 520px) {
       .form {

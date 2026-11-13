@@ -225,8 +225,12 @@
                 <div class="detail__member-info">
                   <span class="detail__member-name">{{ nameOf(m.userId) }}</span>
                   <span class="status-badge detail__role">{{ m.teamRole }}</span>
+                  @if (m.teamRole === 'auditee' && m.userId === audit()?.auditeeUserId) {
+                    <span class="muted detail__primary">{{ 'audits.team.primaryAuditee' | t }}</span>
+                  }
                 </div>
-                @if (canManageTeam() && m.teamRole !== 'lead') {
+                <!-- The lead is changed by transfer, and an audit always keeps its primary auditee. -->
+                @if (canManageTeam() && m.teamRole !== 'lead' && !(m.teamRole === 'auditee' && m.userId === audit()?.auditeeUserId)) {
                   <button
                     matIconButton
                     type="button"

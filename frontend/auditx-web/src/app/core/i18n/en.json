@@ -1081,6 +1081,7 @@
   "audits.field.teamMembers": "Team members",
   "audits.team.title": "Team",
   "audits.team.empty": "No team members yet.",
+  "audits.team.primaryAuditee": "primary contact",
   "audits.team.removeAria": "Remove {{name}}",
   "audits.checklist.title": "Checklist ({{count}})",
   "audits.checklist.empty": "No checklist items yet.",

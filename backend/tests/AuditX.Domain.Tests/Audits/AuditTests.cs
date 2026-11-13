@@ -175,11 +175,15 @@ public sealed class AuditTests
     }
 
     [Fact]
-    public void Second_lead_or_auditee_rejected_and_dup_is_idempotent()
+    public void Second_lead_rejected_further_auditees_allowed_and_dup_is_idempotent()
     {
         var a = New();
         Assert.Throws<DomainException>(() => a.AddTeamMember(Guid.NewGuid(), TeamRole.Lead, Lead, Now));
-        Assert.Throws<DomainException>(() => a.AddTeamMember(Guid.NewGuid(), TeamRole.Auditee, Lead, Now));
+
+        // An audit has ONE lead but can have several auditees (see AuditIndependenceTests for what that entails).
+        var secondAuditee = Guid.NewGuid();
+        a.AddTeamMember(secondAuditee, TeamRole.Auditee, Lead, Now);
+        Assert.True(a.IsAuditee(secondAuditee));
 
         var auditor = Guid.NewGuid();
         a.AddTeamMember(auditor, TeamRole.Auditor, Lead, Now);
