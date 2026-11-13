@@ -35,6 +35,10 @@ import {
 } from '../dialogs/entity-editor-dialog.component';
 import { BulkImportDialogComponent } from '../dialogs/bulk-import-dialog.component';
 import {
+  EntityAuditHistoryDialogComponent,
+  EntityAuditHistoryDialogData,
+} from '../dialogs/entity-audit-history-dialog.component';
+import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -274,6 +278,12 @@ export class EntitiesListComponent {
           this.fetchPage(this.page());
         }
       });
+  }
+
+  /** Every audit ever linked to this entity — planned, ad hoc and self-assessments — with what each found. */
+  auditHistory(entity: EntityListItem): void {
+    const data: EntityAuditHistoryDialogData = { entityId: entity.id, entityName: entity.name };
+    this.dialog.open(EntityAuditHistoryDialogComponent, { data, width: '920px', maxWidth: '96vw' });
   }
 
   bulkImport(): void {

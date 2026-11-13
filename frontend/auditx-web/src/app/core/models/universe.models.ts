@@ -131,3 +131,58 @@ export interface EntityQuery {
 
 /** Filter for the risk-dimensions list. */
 export type RiskDimensionFilter = 'true' | 'false' | 'all';
+
+/* ---- Entity audit history ---- */
+
+/** Where an audit of an entity came from. */
+export type EntityAuditOrigin = 'plan' | 'ad_hoc' | 'self_assessment';
+
+/** One audit in an entity's history, with its checklist outcome and findings. */
+export interface EntityAuditHistoryItem {
+  auditId: string;
+  name: string;
+  auditType: string;
+  /** Audit status as the API sends it: draft | planned | in_progress | under_review | completed | cancelled. */
+  status: string;
+  isSelfAssessment: boolean;
+  startDate: string;
+  targetEndDate: string;
+  actualEndDate: string | null;
+  leadUserId: string;
+  leadName: string | null;
+  auditeeUserId: string;
+  auditeeName: string | null;
+  origin: EntityAuditOrigin;
+  /** The annual plan's period label when the audit was launched from a plan item. */
+  planPeriodLabel: string | null;
+  checklistItems: number;
+  respondedItems: number;
+  passed: number;
+  failed: number;
+  notApplicable: number;
+  findings: number;
+  openFindings: number;
+  criticalFindings: number;
+  highFindings: number;
+  mediumFindings: number;
+  lowFindings: number;
+  reportsIssued: number;
+}
+
+/** Every audit ever linked to one entity, newest first, with headline figures. */
+export interface EntityAuditHistory {
+  entityId: string;
+  entityName: string;
+  entityType: string;
+  isArchived: boolean;
+  lastAuditedAt: string | null;
+  expectedAuditsPerYear: number | null;
+  /** Independent audits (self-assessments are counted separately). */
+  totalAudits: number;
+  completedAudits: number;
+  inFlightAudits: number;
+  selfAssessments: number;
+  totalFindings: number;
+  openFindings: number;
+  audits: EntityAuditHistoryItem[];
+}

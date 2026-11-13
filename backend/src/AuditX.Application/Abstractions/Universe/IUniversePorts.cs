@@ -19,7 +19,26 @@ public interface ICoverageQueryService
     Task<IReadOnlyList<HighRiskGapRow>> HighRiskGapsAsync(int months, string? entityType, CancellationToken cancellationToken = default);
 
     Task<CoverageMatrix> CoverageMatrixAsync(int windowMonths, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Every audit ever linked to one entity — planned, ad hoc and self-assessments, in any status — newest first,
+    /// each with its checklist outcome and findings. Null when the entity does not exist (archived entities resolve).
+    /// </summary>
+    Task<EntityAuditHistory?> EntityAuditHistoryAsync(Guid entityId, CancellationToken cancellationToken = default);
 }
+
+public sealed record EntityAuditHistory(
+    Guid EntityId, string EntityName, string EntityType, bool IsArchived, DateTimeOffset? LastAuditedAt, int? ExpectedAuditsPerYear,
+    IReadOnlyList<EntityAuditHistoryRow> Audits);
+
+public sealed record EntityAuditHistoryRow(
+    Guid AuditId, string Name, string AuditType, Domain.Enums.AuditStatus Status, bool IsSelfAssessment,
+    DateOnly StartDate, DateOnly TargetEndDate, DateOnly? ActualEndDate,
+    Guid LeadUserId, string? LeadName, Guid AuditeeUserId, string? AuditeeName,
+    Guid? PlanItemId, string? PlanPeriodLabel,
+    int ChecklistItems, int RespondedItems, int Passed, int Failed, int NotApplicable,
+    int Findings, int OpenFindings, int CriticalFindings, int HighFindings, int MediumFindings, int LowFindings,
+    int ReportsIssued);
 
 public sealed record NotAuditedRow(Guid Id, string EntityType, string Name, DateTimeOffset? LastAuditedAt);
 

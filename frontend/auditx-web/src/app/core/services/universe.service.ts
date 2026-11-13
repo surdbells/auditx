@@ -9,6 +9,7 @@ import {
   CreateEntityRequest,
   PagedResult,
   Entity,
+  EntityAuditHistory,
   EntityListItem,
   EntityQuery,
   SaveRiskScoresRequest,
@@ -67,6 +68,11 @@ export class UniverseService {
     return this.api.get<AuditTrailEntryView[]>(
       `/audit-universe/entities/${id}/risk-scores/history`,
     );
+  }
+
+  /** Every audit ever linked to this entity (works for archived entities too). */
+  auditHistory(id: string): Observable<EntityAuditHistory> {
+    return this.api.get<EntityAuditHistory>(`/audit-universe/entities/${id}/audit-history`);
   }
 
   bulkImport(body: BulkImportRequest): Observable<BulkImportResult> {

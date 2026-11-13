@@ -3,9 +3,23 @@ namespace AuditX.Application.Common.Csv;
 /// <summary>Minimal RFC-4180-style CSV reader (handles quoted fields and escaped quotes; no embedded newlines).</summary>
 public static class CsvReader
 {
+    /// <summary>The header names of a CSV document, trimmed and lower-cased (empty when there is no header row).</summary>
+    public static IReadOnlyList<string> Headers(string content)
+    {
+        var firstLine = Normalise(content).Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+        return firstLine is null ? [] : SplitLine(firstLine).Select(h => h.Trim().ToLowerInvariant()).ToArray();
+    }
+
+    /// <summary>
+    /// Line endings to LF, and the UTF-8 byte-order mark dropped: Excel writes one at the start of a "CSV UTF-8" file,
+    /// which would otherwise become part of the first header name and make that column unrecognisable.
+    /// </summary>
+    private static string Normalise(string content)
+        => (content ?? string.Empty).TrimStart('\uFEFF').Replace("\r\n", "\n").Replace('\r', '\n');
+
     public static IReadOnlyList<IReadOnlyDictionary<string, string>> Parse(string content)
     {
-        var lines = content.Replace("\r\n", "\n").Replace('\r', '\n')
+        var lines = Normalise(content)
             .Split('\n', StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length == 0)
         {

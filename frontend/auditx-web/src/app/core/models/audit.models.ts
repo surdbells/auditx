@@ -84,6 +84,10 @@ export interface Audit {
   templateId: string | null;
   templateVersion: number | null;
   planItemId: string | null;
+  /** The audit-universe entity this audit examines (what attributes it to coverage), or null when not linked. */
+  auditableEntityId?: string | null;
+  /** That entity's name, resolved by the server on read — the auditee cannot browse the universe themselves. */
+  auditableEntityName?: string | null;
   leadUserId: string;
   auditeeUserId: string;
   cancellationReason: string | null;
@@ -143,7 +147,11 @@ export interface CreateAuditRequest {
   scopeDescription?: string | null;
   templateId?: string | null;
   planItemId?: string | null;
-  /** Required when planItemId is set — which of the item's (possibly several) entities this audit is for. */
+  /**
+   * The audit-universe entity the audit examines. Required when planItemId is set (which of the item's possibly
+   * several entities this audit is for); optional for an ad-hoc audit, where it is what makes the audit count
+   * toward that entity's coverage.
+   */
   entityId?: string | null;
   leadUserId: string;
   auditeeUserId: string;
@@ -421,5 +429,11 @@ export interface BulkReassignRequest {
 
 export interface FailJudgementRequest {
   justification: string;
+  version: string;
+}
+
+/** Links an ad-hoc audit to an audit-universe entity; a null entityId clears the link. */
+export interface SetAuditEntityRequest {
+  entityId: string | null;
   version: string;
 }

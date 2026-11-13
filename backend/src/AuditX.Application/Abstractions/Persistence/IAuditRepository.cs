@@ -26,5 +26,11 @@ public interface IAuditRepository
     Task<IReadOnlyList<PlanItemAuditProgress>> GetChecklistProgressByPlanItemIdsAsync(
         IReadOnlyCollection<Guid> planItemIds, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// The latest completion date among the COMPLETED, independent (non-self-assessment) audits of an entity,
+    /// optionally ignoring one audit. Null when there is none — the entity has not been audited.
+    /// </summary>
+    Task<DateOnly?> GetLatestCompletionDateForEntityAsync(Guid auditableEntityId, Guid? excludingAuditId, CancellationToken cancellationToken = default);
+
     void Add(Audit audit);
 }

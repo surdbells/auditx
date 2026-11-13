@@ -135,8 +135,19 @@
 
             <ng-container matColumnDef="lastAudited">
               <th mat-header-cell *matHeaderCellDef>{{ 'universe.field.lastAudited' | t }}</th>
-              <td mat-cell *matCellDef="let e">
-                {{ e.lastAuditedAt ? (e.lastAuditedAt | date: 'mediumDate') : ('universe.value.never' | t) }}
+              <td mat-cell *matCellDef="let e" (click)="$event.stopPropagation()">
+                <!-- The date is the headline; the audits behind it are one click away. -->
+                <button
+                  type="button"
+                  class="entities__history-link"
+                  [class.entities__history-link--never]="!e.lastAuditedAt"
+                  (click)="auditHistory(e)"
+                  [matTooltip]="'universe.history.open' | t"
+                  [attr.aria-label]="'universe.history.openAria' | t: { name: e.name }"
+                >
+                  {{ e.lastAuditedAt ? (e.lastAuditedAt | date: 'mediumDate') : ('universe.value.never' | t) }}
+                  <app-icon name="history" aria-hidden="true" />
+                </button>
               </td>
             </ng-container>
 
@@ -159,6 +170,11 @@
                   <app-icon name="more_vert" />
                 </button>
                 <mat-menu #rowMenu="matMenu">
+                  <!-- History stays readable for an archived entity: the audits happened. -->
+                  <button mat-menu-item type="button" (click)="auditHistory(e)">
+                    <app-icon name="history" />
+                    <span>{{ 'universe.actions.auditHistory' | t }}</span>
+                  </button>
                   @if (e.isArchived) {
                     <!-- An archived entity is read-only until it is restored — restoring is its one action. -->
                     @if (canManage()) {

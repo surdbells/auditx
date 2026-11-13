@@ -139,6 +139,12 @@ public sealed class AuditableEntity : AggregateRoot, ISoftDeletable
     /// <summary>Record that an audit of this entity completed (drives coverage analytics). Cancellation must not call this.</summary>
     public void MarkAudited(DateTimeOffset auditCompletedAtUtc) => LastAuditedAt = auditCompletedAtUtc;
 
+    /// <summary>
+    /// Restates the last-audited stamp from the entity's remaining completed audits — used when a completed audit is
+    /// unlinked from this entity after the fact. Null means no completed audit is left: never audited.
+    /// </summary>
+    public void RestateLastAudited(DateTimeOffset? latestCompletedAuditAtUtc) => LastAuditedAt = latestCompletedAuditAtUtc;
+
     public void SoftDelete(Guid? deletedBy, DateTimeOffset deletedAtUtc)
     {
         IsDeleted = true;

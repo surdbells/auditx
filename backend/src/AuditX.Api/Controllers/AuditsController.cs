@@ -64,6 +64,12 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> SetBudget(Guid id, [FromBody] SetAuditBudgetRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new SetAuditBudgetCommand(id, request.BudgetedHours, request.Version), cancellationToken));
 
+    /// <summary>Link an ad-hoc audit to the audit-universe entity it examines (drives coverage); null clears it.</summary>
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPut("{id:guid}/entity")]
+    public async Task<IActionResult> SetEntity(Guid id, [FromBody] SetAuditEntityRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SetAuditEntityCommand(id, request.EntityId, request.Version), cancellationToken));
+
     // Lifecycle authorisation is resource-scoped (ManageAudit on a normal audit, or the self-assessor with
     // RunSelfAssessment) and enforced in the handler, so a self-assessor can drive their own assessment.
     [HttpPost("{id:guid}/transition")]

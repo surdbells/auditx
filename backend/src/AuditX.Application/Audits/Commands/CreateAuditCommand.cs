@@ -20,7 +20,9 @@ public sealed record CreateAuditCommand(
     string? ScopeDescription,
     Guid? TemplateId,
     Guid? PlanItemId,
-    // Required when PlanItemId is set — which of the item's (possibly several) entities this audit is for.
+    // The audit-universe entity this audit examines. Required when PlanItemId is set (which of the item's
+    // possibly several entities this audit is for); optional — but what makes the audit count toward coverage —
+    // for an ad-hoc audit.
     Guid? EntityId,
     Guid LeadUserId,
     Guid AuditeeUserId,
@@ -44,6 +46,7 @@ public sealed class CreateAuditCommandValidator : AbstractValidator<CreateAuditC
 public sealed class CreateAuditCommandHandler(
     IAuditRepository audits,
     IAnnualPlanRepository plans,
+    IAuditUniverseRepository universe,
     IUserRepository users,
     IInstitutionSettingsRepository settings,
     AuditCreationService creationService,
@@ -87,10 +90,19 @@ public sealed class CreateAuditCommandHandler(
             }
         }
 
+        // An ad-hoc audit may name the entity it examines; it must be a live (not archived) universe entity.
+        if (command.PlanItemId is null && command.EntityId is { } adHocEntityId
+            && await universe.GetByIdAsync(adHocEntityId, cancellationToken) is null)
+        {
+            throw new NotFoundException("Auditable entity", adHocEntityId);
+        }
+
         var targetEnd = command.TargetEndDate ?? ComputeDefaultTargetEnd(command, plan);
-        // Link the audit directly to the entity it covers — the caller's choice when plan-launched (a plan
-        // item may cover several entities, each getting its own audit), or unset for an ad-hoc audit.
-        var auditableEntityId = command.PlanItemId is not null ? command.EntityId : null;
+        // Link the audit directly to the entity it covers — the caller's choice among the plan item's entities when
+        // plan-launched (a plan item may cover several, each getting its own audit), or the entity picked for an
+        // ad-hoc audit. This link is what attributes the audit to an entity in coverage reporting, so an ad-hoc
+        // audit of a universe entity counts exactly like a planned one.
+        var auditableEntityId = command.EntityId;
         var data = new CreateAuditData(
             command.Name, command.AuditType, command.StartDate, targetEnd, command.ScopeDescription,
             command.TemplateId, null, command.PlanItemId, auditableEntityId, command.LeadUserId, command.AuditeeUserId,

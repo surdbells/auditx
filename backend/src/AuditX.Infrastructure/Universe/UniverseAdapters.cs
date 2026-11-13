@@ -29,7 +29,11 @@ public sealed class TaxonomyProvider(AppDbContext db) : ITaxonomyProvider
     {
         var fromTemplates = await db.Templates.Select(t => t.AuditType).Distinct().ToListAsync(cancellationToken);
         var fromPlanItems = await db.Set<Domain.Planning.PlanItem>().Select(i => i.AuditType).Distinct().ToListAsync(cancellationToken);
-        return fromTemplates.Concat(fromPlanItems).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToArray();
+        // Audits themselves: an ad-hoc audit can use an audit type no template or plan item carries, and its completed
+        // audit must still land on the coverage matrix rather than fall off the grid.
+        var fromAudits = await db.Audits.Select(a => a.AuditType).Distinct().ToListAsync(cancellationToken);
+        return fromTemplates.Concat(fromPlanItems).Concat(fromAudits)
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(t => t).ToArray();
     }
 }
 
@@ -96,9 +100,9 @@ public sealed class CoverageQueryService(AppDbContext db, IClock clock, ITaxonom
         }
 
         // Cells = COMPLETED audits per (audited entity's entity_type, audit's audit_type) within the window.
-        // An audit carries its audited entity directly (audit.auditable_entity_id → auditable_entity.entity_type,
-        // set at creation time from the plan item's chosen entity for a plan-launched audit); an ad-hoc audit
-        // carries none and is therefore not attributable to an entity_type row. The window is keyed on
+        // An audit carries its audited entity directly (audit.auditable_entity_id → auditable_entity.entity_type):
+        // the plan item's chosen entity for a plan-launched audit, or the entity picked for an ad-hoc one. Only an
+        // ad-hoc audit left unlinked is not attributable to an entity_type row. The window is keyed on
         // actual_end_date (set on completion), expressed as a DateOnly cutoff to match the column type.
         var cutoff = DateOnly.FromDateTime(clock.UtcNow.AddMonths(-windowMonths).UtcDateTime);
         var counts = await (
@@ -106,6 +110,7 @@ public sealed class CoverageQueryService(AppDbContext db, IClock clock, ITaxonom
             where audit.Status == Domain.Enums.AuditStatus.Completed
                 && audit.ActualEndDate != null && audit.ActualEndDate >= cutoff
                 && audit.AuditableEntityId != null
+                && !audit.IsSelfAssessment // a self-assessment is not independent audit coverage
             join entity in db.AuditUniverseEntities.AsNoTracking() on audit.AuditableEntityId equals entity.Id
             group audit by new { entity.EntityType, audit.AuditType } into g
             select new { g.Key.EntityType, g.Key.AuditType, Count = g.Count() })
@@ -129,6 +134,86 @@ public sealed class CoverageQueryService(AppDbContext db, IClock clock, ITaxonom
         }
 
         return new CoverageMatrix(rows, columns, cells);
+    }
+
+    public async Task<EntityAuditHistory?> EntityAuditHistoryAsync(Guid entityId, CancellationToken cancellationToken = default)
+    {
+        // Archived entities keep their history, so the soft-delete filter is lifted for the header lookup.
+        var entity = await db.AuditUniverseEntities.IgnoreQueryFilters().AsNoTracking()
+            .Where(e => e.Id == entityId)
+            .Select(e => new { e.Id, e.Name, e.EntityType, e.IsDeleted, e.LastAuditedAt, e.ExpectedAuditsPerYear })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (entity is null)
+        {
+            return null;
+        }
+
+        var audits = await db.Audits.AsNoTracking()
+            .Where(a => a.AuditableEntityId == entityId)
+            .OrderByDescending(a => a.StartDate).ThenByDescending(a => a.Id)
+            .Select(a => new
+            {
+                a.Id, a.Name, a.AuditType, a.Status, a.IsSelfAssessment, a.StartDate, a.TargetEndDate, a.ActualEndDate,
+                a.LeadUserId, a.AuditeeUserId, a.PlanItemId,
+                ChecklistItems = a.ChecklistItems.Count(),
+                Responded = a.ChecklistItems.Count(i => i.ItemState == Domain.Enums.ChecklistItemState.Responded),
+                Passed = a.Responses.Count(r => !r.IsDraft && r.Verdict == Domain.Enums.ResponseVerdict.Pass),
+                Failed = a.Responses.Count(r => !r.IsDraft && r.Verdict == Domain.Enums.ResponseVerdict.Fail),
+                NotApplicable = a.Responses.Count(r => !r.IsDraft && r.Verdict == Domain.Enums.ResponseVerdict.Na),
+            })
+            .ToListAsync(cancellationToken);
+
+        var auditIds = audits.Select(a => a.Id).ToArray();
+
+        // Findings and issued reports per audit. One entity's history is small, so these are folded in memory.
+        var findings = await db.Exceptions.AsNoTracking()
+            .Where(e => auditIds.Contains(e.AuditId))
+            .Select(e => new { e.AuditId, e.Severity, e.Status })
+            .ToListAsync(cancellationToken);
+        var findingsByAudit = findings.ToLookup(f => f.AuditId);
+
+        var reportsByAudit = (await db.Reports.AsNoTracking()
+                .Where(r => r.AuditId != null && auditIds.Contains(r.AuditId.Value) && r.Status == Domain.Enums.ReportStatus.Completed)
+                .GroupBy(r => r.AuditId!.Value)
+                .Select(g => new { AuditId = g.Key, Count = g.Count() })
+                .ToListAsync(cancellationToken))
+            .ToDictionary(x => x.AuditId, x => x.Count);
+
+        var userIds = audits.SelectMany(a => new[] { a.LeadUserId, a.AuditeeUserId }).Distinct().ToArray();
+        var userNames = await db.Users.IgnoreQueryFilters().AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.DisplayName, cancellationToken);
+
+        var planItemIds = audits.Where(a => a.PlanItemId != null).Select(a => a.PlanItemId!.Value).Distinct().ToArray();
+        var planLabels = planItemIds.Length == 0
+            ? []
+            : await db.AnnualPlans.AsNoTracking()
+                .SelectMany(p => p.Items.Select(i => new { ItemId = i.Id, p.PeriodLabel }))
+                .Where(x => planItemIds.Contains(x.ItemId))
+                .ToDictionaryAsync(x => x.ItemId, x => x.PeriodLabel, cancellationToken);
+
+        static bool IsOpen(Domain.Enums.ExceptionStatus status)
+            => status != Domain.Enums.ExceptionStatus.Closed && status != Domain.Enums.ExceptionStatus.Cancelled;
+
+        var rows = audits.Select(a =>
+        {
+            // Cancelled findings were withdrawn — they are not part of the audit's outcome.
+            var raised = findingsByAudit[a.Id].Where(f => f.Status != Domain.Enums.ExceptionStatus.Cancelled).ToArray();
+            return new EntityAuditHistoryRow(
+                a.Id, a.Name, a.AuditType, a.Status, a.IsSelfAssessment, a.StartDate, a.TargetEndDate, a.ActualEndDate,
+                a.LeadUserId, userNames.GetValueOrDefault(a.LeadUserId), a.AuditeeUserId, userNames.GetValueOrDefault(a.AuditeeUserId),
+                a.PlanItemId, a.PlanItemId is { } itemId ? planLabels.GetValueOrDefault(itemId) : null,
+                a.ChecklistItems, a.Responded, a.Passed, a.Failed, a.NotApplicable,
+                raised.Length, raised.Count(f => IsOpen(f.Status)),
+                raised.Count(f => f.Severity == Domain.Enums.ExceptionSeverity.Critical),
+                raised.Count(f => f.Severity == Domain.Enums.ExceptionSeverity.High),
+                raised.Count(f => f.Severity == Domain.Enums.ExceptionSeverity.Medium),
+                raised.Count(f => f.Severity == Domain.Enums.ExceptionSeverity.Low),
+                reportsByAudit.GetValueOrDefault(a.Id));
+        }).ToArray();
+
+        return new EntityAuditHistory(
+            entity.Id, entity.Name, entity.EntityType, entity.IsDeleted, entity.LastAuditedAt, entity.ExpectedAuditsPerYear, rows);
     }
 }
 

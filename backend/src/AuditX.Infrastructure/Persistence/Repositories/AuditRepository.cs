@@ -17,6 +17,13 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
             .Include(a => a.Responses)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
+    public async Task<DateOnly?> GetLatestCompletionDateForEntityAsync(Guid auditableEntityId, Guid? excludingAuditId, CancellationToken cancellationToken = default)
+        => await db.Audits.AsNoTracking()
+            .Where(a => a.AuditableEntityId == auditableEntityId
+                && a.Status == AuditStatus.Completed && !a.IsSelfAssessment && a.ActualEndDate != null
+                && (excludingAuditId == null || a.Id != excludingAuditId))
+            .MaxAsync(a => a.ActualEndDate, cancellationToken);
+
     public async Task<PagedResult<Audit>> SearchAsync(
         AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageSpec page, CancellationToken cancellationToken = default)
     {

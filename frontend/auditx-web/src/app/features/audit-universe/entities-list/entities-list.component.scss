@@ -36,6 +36,40 @@
   background: var(--mat-sys-surface-container-high);
 }
 
+/* "Last audited" doubles as the way into the entity's audit history. */
+.entities__history-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.4rem;
+  margin-inline-start: -0.4rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mat-sys-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.entities__history-link app-icon {
+  --ax-icon-size: 16px;
+  opacity: 0.7;
+}
+
+.entities__history-link:hover,
+.entities__history-link:focus-visible {
+  background: var(--mat-sys-surface-container-high);
+  outline: none;
+}
+
+.entities__history-link:focus-visible {
+  box-shadow: 0 0 0 2px var(--mat-sys-primary);
+}
+
+.entities__history-link--never {
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .entities__name {
   font-weight: 500;
 }

@@ -136,6 +136,21 @@
               }
             </dd>
           </div>
+          <div>
+            <dt>{{ 'audits.field.entity' | t }}</dt>
+            <dd class="detail__entity">
+              @if (a.auditableEntityId) {
+                <span>{{ entityName() ?? '…' }}</span>
+              } @else {
+                <span class="muted" [title]="'audits.entity.notLinkedHint' | t">{{ 'audits.entity.notLinked' | t }}</span>
+              }
+              @if (canLinkEntity()) {
+                <button matButton type="button" class="detail__entity-action" (click)="linkEntity()">
+                  {{ (a.auditableEntityId ? 'audits.entity.change' : 'audits.entity.link') | t }}
+                </button>
+              }
+            </dd>
+          </div>
         </dl>
         @if (a.scopeDescription) {
           <div class="detail__scope">

@@ -28,6 +28,9 @@ public sealed record UpdateAuditRequest(string Name, string? ScopeDescription, D
 
 public sealed record SetAuditBudgetRequest(decimal? BudgetedHours, string Version);
 
+/// <summary>Links an ad-hoc audit to an audit-universe entity; a null EntityId clears the link.</summary>
+public sealed record SetAuditEntityRequest(Guid? EntityId, string Version);
+
 public sealed record TransitionAuditRequest(string TargetState, string? Reason, string Version);
 
 public sealed record ScheduleKickoffRequest(DateTimeOffset ScheduledAtUtc, string? Location, string? Agenda, string Version);

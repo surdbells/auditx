@@ -59,6 +59,12 @@ public sealed class AuditUniverseController(IDispatcher dispatcher) : ApiControl
     public async Task<IActionResult> RiskScoreHistory(Guid id, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new RiskScoreHistoryQuery(id), cancellationToken));
 
+    /// <summary>Every audit ever linked to this entity, with outcomes and findings (works for archived entities too).</summary>
+    [RequirePermission(PermissionKeys.ViewUniverse)]
+    [HttpGet("entities/{id:guid}/audit-history")]
+    public async Task<IActionResult> AuditHistory(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new AuditX.Application.Coverage.Queries.EntityAuditHistoryQuery(id), cancellationToken));
+
     [RequirePermission(PermissionKeys.ManageUniverse)]
     [HttpPost("entities/bulk-import")]
     public async Task<IActionResult> BulkImport([FromBody] BulkImportEntitiesRequest request, CancellationToken cancellationToken)

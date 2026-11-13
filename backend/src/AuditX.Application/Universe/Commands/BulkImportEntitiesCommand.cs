@@ -12,8 +12,10 @@ namespace AuditX.Application.Universe.Commands;
 
 /// <summary>
 /// Atomic CSV bulk import of universe entities (US-M3-006). Columns: name, entity_type, parent_name,
-/// owner_email, description. All-or-none: if any row has an error, nothing is persisted and the full
-/// error list is returned. Parent resolution prefers names within the batch, then existing entities;
+/// owner_email, description — <c>name</c> and <c>entity_type</c> are required, the rest optional. Header names are
+/// matched leniently (case, and "entityType" / "entity type" / "type" for entity_type, and likewise for the others),
+/// because the same sheet gets retyped by hand. All-or-none: if any row has an error, nothing is persisted and the
+/// full error list is returned. Parent resolution prefers names within the batch, then existing entities;
 /// acyclicity is validated in-memory over the combined candidate graph.
 /// </summary>
 public sealed record BulkImportEntitiesCommand(string CsvContent) : ICommand<BulkImportResultDto>;
@@ -28,8 +30,31 @@ public sealed class BulkImportEntitiesCommandHandler(
 {
     public async Task<BulkImportResultDto> Handle(BulkImportEntitiesCommand command, CancellationToken cancellationToken)
     {
-        var rows = CsvReader.Parse(command.CsvContent);
         var errors = new List<BulkImportErrorDto>();
+
+        // Fail fast, once, on a sheet that cannot work — instead of one confusing error per row.
+        var headers = CsvReader.Headers(command.CsvContent).Select(Canonical).ToHashSet(StringComparer.Ordinal);
+        foreach (var required in new[] { "name", "entity_type" })
+        {
+            if (!headers.Contains(required))
+            {
+                errors.Add(new BulkImportErrorDto(1, required,
+                    $"The header row has no '{required}' column. The first line must be: name,entity_type,parent_name,owner_email,description"));
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            return new BulkImportResultDto(0, errors);
+        }
+
+        var rows = CsvReader.Parse(command.CsvContent)
+            .Select(r => (IReadOnlyDictionary<string, string>)r.GroupBy(kv => Canonical(kv.Key)).ToDictionary(g => g.Key, g => g.First().Value))
+            .ToArray();
+        if (rows.Length == 0)
+        {
+            return new BulkImportResultDto(0, [new BulkImportErrorDto(1, "name", "The sheet has a header row but no entities below it.")]);
+        }
 
         var activeTypes = (await taxonomy.GetActiveEntityTypesAsync(cancellationToken)).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var emails = rows.Select(r => Get(r, "owner_email")).Where(e => e.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
@@ -43,7 +68,7 @@ public sealed class BulkImportEntitiesCommandHandler(
         var staged = new List<(int Row, string Name, string? ParentName, AuditableEntity Entity)>();
         var batchByName = new Dictionary<string, List<AuditableEntity>>(StringComparer.OrdinalIgnoreCase);
 
-        for (var i = 0; i < rows.Count; i++)
+        for (var i = 0; i < rows.Length; i++)
         {
             var rowNo = i + 2; // header is row 1
             var row = rows[i];
@@ -61,7 +86,9 @@ public sealed class BulkImportEntitiesCommandHandler(
 
             if (!activeTypes.Contains(entityType))
             {
-                errors.Add(new BulkImportErrorDto(rowNo, "entity_type", $"Unknown entity type '{entityType}'."));
+                errors.Add(new BulkImportErrorDto(rowNo, "entity_type", entityType.Length == 0
+                    ? "Entity type is required."
+                    : $"Unknown entity type '{entityType}'. Use one of: {string.Join(", ", activeTypes.OrderBy(t => t, StringComparer.OrdinalIgnoreCase))}."));
                 continue;
             }
 
@@ -141,4 +168,19 @@ public sealed class BulkImportEntitiesCommandHandler(
     }
 
     private static string Get(IReadOnlyDictionary<string, string> row, string key) => row.TryGetValue(key, out var v) ? v.Trim() : string.Empty;
+
+    /// <summary>
+    /// Maps a header as typed to the column it means: case, spaces, dashes and underscores are ignored, and the
+    /// obvious short forms are accepted ("entityType", "Entity Type", "type" → entity_type).
+    /// </summary>
+    private static string Canonical(string header)
+        => new string(header.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant() switch
+        {
+            "name" or "entityname" => "name",
+            "entitytype" or "type" => "entity_type",
+            "parentname" or "parent" or "parententity" => "parent_name",
+            "owneremail" or "owner" or "email" => "owner_email",
+            "description" or "desc" => "description",
+            var other => other,
+        };
 }

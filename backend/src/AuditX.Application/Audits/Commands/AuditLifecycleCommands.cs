@@ -81,6 +81,75 @@ public sealed class ScheduleAuditKickoffCommandHandler(
 }
 
 /// <summary>Transition an audit through its lifecycle (US-M4-010/011/012/013/016/017).</summary>
+/// <summary>
+/// Links an AD-HOC audit to the audit-universe entity it examines, or clears the link (null EntityId). Audits created
+/// before the entity could be chosen — or created without one — would otherwise never count toward coverage. Allowed
+/// at any stage except cancelled; when the audit is already completed the affected entities' "last audited" stamps
+/// are brought back in line with their completed audits.
+/// </summary>
+public sealed record SetAuditEntityCommand(Guid Id, Guid? EntityId, string Version) : ICommand<AuditDto>;
+
+public sealed class SetAuditEntityCommandHandler(
+    IAuditRepository audits, IAuditUniverseRepository universe, IPermissionResolver permissions, ICurrentUser currentUser,
+    IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<SetAuditEntityCommand, AuditDto>
+{
+    public async Task<AuditDto> Handle(SetAuditEntityCommand command, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Audit", command.Id);
+
+        // Resource-scope check: the controller's ManageAudit gate is global; re-check it for THIS audit.
+        var uid = currentUser.UserId ?? throw new ForbiddenAccessException();
+        if (!await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, entity.Id.ToString(), cancellationToken))
+        {
+            throw new ForbiddenAccessException("You do not manage this audit.");
+        }
+
+        entity.EnsureVersion(command.Version);
+        var previousEntityId = entity.AuditableEntityId;
+        if (previousEntityId == command.EntityId)
+        {
+            return entity.ToDto();
+        }
+
+        // The new entity must be a live (not archived) universe entity.
+        Domain.Universe.AuditableEntity? target = null;
+        if (command.EntityId is { } newEntityId)
+        {
+            target = await universe.GetByIdAsync(newEntityId, cancellationToken) ?? throw new NotFoundException("Auditable entity", newEntityId);
+        }
+
+        entity.SetAuditableEntity(command.EntityId);
+
+        // A COMPLETED audit already counts toward coverage, so moving it moves the credit: the entity it now points
+        // at is audited as of its completion date (never moving that entity's stamp backwards), and the entity it
+        // left is restated from whatever completed audits it still has (possibly none — "never audited").
+        if (entity.Status == AuditStatus.Completed && entity.ActualEndDate is { } completedOn)
+        {
+            var completedAt = AtStartOfDayUtc(completedOn);
+            if (target is not null && (target.LastAuditedAt is null || target.LastAuditedAt < completedAt))
+            {
+                target.MarkAudited(completedAt);
+            }
+
+            if (previousEntityId is { } previousId
+                && await universe.GetByIdIncludingArchivedAsync(previousId, cancellationToken) is { } previous)
+            {
+                var latest = await audits.GetLatestCompletionDateForEntityAsync(previousId, entity.Id, cancellationToken);
+                previous.RestateLastAudited(latest is { } date ? AtStartOfDayUtc(date) : null);
+            }
+        }
+
+        audit.Record(AuditEventTypes.AuditEntityLinked, AuditTargetTypes.Audit, entity.Id,
+            before: new { auditableEntityId = previousEntityId },
+            after: new { auditableEntityId = command.EntityId, entityName = target?.Name });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto() with { AuditableEntityName = target?.Name };
+    }
+
+    private static DateTimeOffset AtStartOfDayUtc(DateOnly date) => new(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+}
+
 public sealed record TransitionAuditCommand(Guid Id, string TargetState, string? Reason, string Version) : ICommand<AuditDto>;
 
 public sealed class TransitionAuditCommandHandler(
@@ -143,18 +212,19 @@ public sealed class TransitionAuditCommandHandler(
         var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
         entity.Complete(today);
 
-        // Cross-module on completion (US-M3-011 / US-M3-019): update the linked plan item's entity + its last-audited stamp.
-        if (entity.PlanItemId is { } planItemId && entity.AuditableEntityId is { } completedEntityId)
+        // Cross-module on completion (US-M3-011): mark the linked plan item's entity as completed on the plan.
+        if (entity.PlanItemId is { } planItemId && entity.AuditableEntityId is { } completedEntityId
+            && await plans.GetByPlanItemIdAsync(planItemId, cancellationToken) is { } plan)
         {
-            var plan = await plans.GetByPlanItemIdAsync(planItemId, cancellationToken);
-            if (plan is not null)
-            {
-                plan.MarkPlanItemCompleted(planItemId, completedEntityId);
-                if (await universe.GetByIdAsync(completedEntityId, cancellationToken) is { } auditedEntity)
-                {
-                    auditedEntity.MarkAudited(clock.UtcNow);
-                }
-            }
+            plan.MarkPlanItemCompleted(planItemId, completedEntityId);
+        }
+
+        // Coverage (US-M3-019): ANY completed independent audit of an entity — plan-launched or ad hoc — stamps it as
+        // audited. A self-assessment is the area assessing itself, not an independent audit, so it does not count.
+        if (!entity.IsSelfAssessment && entity.AuditableEntityId is { } auditedEntityId
+            && await universe.GetByIdAsync(auditedEntityId, cancellationToken) is { } auditedEntity)
+        {
+            auditedEntity.MarkAudited(clock.UtcNow);
         }
 
         audit.Record(AuditEventTypes.AuditCompleted, AuditTargetTypes.Audit, entity.Id, after: new { actualEndDate = today });

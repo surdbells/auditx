@@ -70,6 +70,18 @@
   margin: 0.75rem 0 0;
 }
 
+.detail__entity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+
+.detail__entity-action {
+  --mat-button-text-container-height: 28px;
+  margin-inline-start: -0.5rem;
+}
+
 .detail__grid dt,
 .detail__scope dt {
   margin: 0;

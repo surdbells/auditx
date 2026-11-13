@@ -36,14 +36,21 @@ public sealed class ListAuditsQueryHandler(IAuditRepository audits)
 
 public sealed record GetAuditQuery(Guid Id) : IQuery<AuditDto>;
 
-public sealed class GetAuditQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
+public sealed class GetAuditQueryHandler(
+    IAuditRepository audits, IAuditUniverseRepository universe, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<GetAuditQuery, AuditDto>
 {
     public async Task<AuditDto> Handle(GetAuditQuery query, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Audit", query.Id);
         await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
-        return entity.ToDto();
+
+        // Resolve the audited entity's name here: an auditee can open their audit but cannot browse the universe.
+        // An entity archived since the audit still names it.
+        var auditedEntity = entity.AuditableEntityId is { } entityId
+            ? await universe.GetByIdIncludingArchivedAsync(entityId, cancellationToken)
+            : null;
+        return entity.ToDto() with { AuditableEntityName = auditedEntity?.Name };
     }
 }
 

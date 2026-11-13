@@ -151,6 +151,22 @@ public sealed class Audit : AggregateRoot
         TargetEndDate = targetEndDate;
     }
 
+    /// <summary>
+    /// Links this audit to the audit-universe entity it examines, or clears the link (null). The link is what
+    /// attributes the audit to an entity for coverage ("last audited", the coverage matrix, the entity's audit
+    /// history). A plan-launched audit takes its entity from the plan item and a self-assessment from its assessor's
+    /// area, so only an ad-hoc audit can be (re)linked — at any stage except cancelled, because a completed ad-hoc
+    /// audit that was never linked still has to be attributable afterwards.
+    /// </summary>
+    public void SetAuditableEntity(Guid? entityId)
+    {
+        Guard.Against(PlanItemId is not null, "audit.entity_from_plan",
+            "This audit was launched from the annual plan — its entity comes from the plan item and cannot be changed here.");
+        Guard.Against(IsSelfAssessment, "audit.entity_self_assessment", "A self-assessment's area is set when it is started.");
+        Guard.Against(Status == AuditStatus.Cancelled, "audit.entity_locked", "A cancelled audit cannot be linked to an entity.");
+        AuditableEntityId = entityId;
+    }
+
     /// <summary>Sets (or clears, with null) the planned effort budget in hours. Allowed at any status.</summary>
     public void SetBudgetedHours(decimal? hours)
     {

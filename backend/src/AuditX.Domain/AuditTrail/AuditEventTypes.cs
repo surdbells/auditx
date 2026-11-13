@@ -170,6 +170,9 @@ public static class AuditEventTypes
     public const string TimeEntryAmended = "time_entry_amended";
     public const string TimeEntryDeleted = "time_entry_deleted";
     public const string AuditBudgetSet = "audit_budget_set";
+
+    /// <summary>An ad-hoc audit was linked to (or unlinked from) the audit-universe entity it examines.</summary>
+    public const string AuditEntityLinked = "audit_entity_linked";
     public const string AuditKickoffScheduled = "audit_kickoff_scheduled";
 
     // P2-C execution procedures (sampling / interview / walkthrough)

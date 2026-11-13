@@ -19,6 +19,7 @@ import {
   ChecklistProgress,
   ChecklistResponse,
   CreateAuditRequest,
+  SetAuditEntityRequest,
   CreateSelfAssessmentRequest,
   PagedResult,
   ScheduleKickoffRequest,
@@ -77,6 +78,11 @@ export class AuditsService {
 
   update(id: string, body: UpdateAuditRequest): Observable<Audit> {
     return this.api.patch<Audit>(`/audits/${id}`, body);
+  }
+
+  /** Link an ad-hoc audit to the entity it examines (drives coverage); a null entityId clears the link. */
+  setEntity(id: string, body: SetAuditEntityRequest): Observable<Audit> {
+    return this.api.put<Audit>(`/audits/${id}/entity`, body);
   }
 
   /* ---- Lifecycle ---- */

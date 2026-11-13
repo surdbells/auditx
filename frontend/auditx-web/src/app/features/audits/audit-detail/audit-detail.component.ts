@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   signal,
@@ -57,6 +58,11 @@ import {
   AddTeamMemberDialogData,
   AddTeamMemberDialogResult,
 } from '../dialogs/add-team-member-dialog.component';
+import {
+  LinkEntityDialogComponent,
+  LinkEntityDialogData,
+  LinkEntityDialogResult,
+} from '../dialogs/link-entity-dialog.component';
 import {
   TransferLeadDialogComponent,
   TransferLeadDialogData,
@@ -377,6 +383,38 @@ export class AuditDetailComponent {
   );
   readonly isInProgress = computed(() => this.status() === 'in_progress');
   readonly isUnderReview = computed(() => this.status() === 'under_review');
+  /**
+   * Name of the linked audit-universe entity. The server resolves it when the audit is read (and when the link is
+   * changed); other command results omit it, so it is remembered here rather than read off the audit each time.
+   */
+  readonly entityName = signal<string | null>(null);
+
+  private readonly rememberEntityName = effect(() => {
+    const audit = this.audit();
+    if (!audit?.auditableEntityId) {
+      this.entityName.set(null);
+    } else if (audit.auditableEntityName) {
+      this.entityName.set(audit.auditableEntityName);
+    }
+  });
+
+  /**
+   * An AD-HOC audit can be linked to the entity it examines — at any stage but cancelled, so an audit completed
+   * before it was linked can still be credited to its entity. A plan-launched audit takes its entity from the plan
+   * item and a self-assessment from its assessor's area.
+   */
+  readonly canLinkEntity = computed(() => {
+    const audit = this.audit();
+    return (
+      !!audit &&
+      this.canManage() &&
+      this.auth.hasPermission(Permissions.ViewUniverse) &&
+      !audit.planItemId &&
+      !audit.isSelfAssessment &&
+      audit.status !== 'cancelled'
+    );
+  });
+
   readonly isCompleted = computed(() => this.status() === 'completed');
   readonly isCancelled = computed(() => this.status() === 'cancelled');
   readonly isReadOnly = computed(() => this.isCompleted() || this.isCancelled());
@@ -634,6 +672,39 @@ export class AuditDetailComponent {
       },
       error: (err: unknown) => this.handleMutationError(err),
     });
+  }
+
+  /** Link this ad-hoc audit to the audit-universe entity it examines, change the link, or clear it. */
+  linkEntity(): void {
+    const current = this.audit();
+    if (!current || !this.canLinkEntity()) {
+      return;
+    }
+    const data: LinkEntityDialogData = {
+      currentEntityId: current.auditableEntityId ?? null,
+      isCompleted: current.status === 'completed',
+    };
+    this.dialog
+      .open(LinkEntityDialogComponent, { data, width: '520px' })
+      .afterClosed()
+      .subscribe((result?: LinkEntityDialogResult) => {
+        if (!result) {
+          return;
+        }
+        this.service
+          .setEntity(current.id, { entityId: result.entityId, version: current.version })
+          .subscribe({
+            next: (updated) => {
+              this.audit.set(updated);
+              this.notify.success(
+                result.entityId
+                  ? this.i18n.translate('audits.entity.linked', { name: updated.auditableEntityName ?? '' })
+                  : this.i18n.translate('audits.entity.unlinked'),
+              );
+            },
+            error: (err: unknown) => this.handleMutationError(err),
+          });
+      });
   }
 
   private handleMutationError(err: unknown): void {

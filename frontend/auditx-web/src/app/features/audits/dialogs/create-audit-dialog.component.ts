@@ -14,7 +14,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { SelectAllDirective } from '../../../shared/directives/select-all.directive';
 
+import { AuthService } from '../../../core/services/auth.service';
+import { EntityLookupService } from '../../../core/services/entity-lookup.service';
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
+import { Permissions } from '../../../core/permissions';
+import {
+  SearchableSelectComponent,
+  SelectOption,
+} from '../../../shared/components/searchable-select/searchable-select.component';
 import { CreateAuditRequest, TemplateListItem, UserDto } from '../../../core/models';
 
 export interface CreateAuditDialogData {
@@ -84,6 +91,7 @@ function fromDateOnly(value: string | undefined): Date | null {
     MatDatepickerModule,
     MatButtonModule,
     IconComponent,
+    SearchableSelectComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ data.planItem ? 'Launch audit' : 'New audit' }}</h2>
@@ -115,7 +123,7 @@ function fromDateOnly(value: string | undefined): Date | null {
           }
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full">
+        <mat-form-field appearance="outline" class="full" subscriptSizing="dynamic">
           <mat-label>Template</mat-label>
           <mat-select
             formControlName="templateId"
@@ -126,10 +134,29 @@ function fromDateOnly(value: string | undefined): Date | null {
               <mat-option [value]="t.id">{{ t.name }} ({{ t.auditType }})</mat-option>
             }
           </mat-select>
-          <mat-hint>
-            Optional. Preloads the template's checklist items into the audit — you can still add or edit items afterward.
-          </mat-hint>
         </mat-form-field>
+        <!-- A paragraph, not a mat-hint: the text wraps to two lines and a hint would spill onto the next field. -->
+        <p class="field-note">
+          Optional. Preloads the template's checklist items into the audit — you can still add or edit items afterward.
+        </p>
+
+        @if (!data.planItem && canPickEntity()) {
+          <!-- An ad-hoc audit names the entity it examines here; a plan-launched one inherits it from the plan item. -->
+          <app-searchable-select
+            class="full"
+            formControlName="entityId"
+            label="Auditable entity"
+            [options]="entityOptions()"
+            searchPlaceholder="Search the audit universe…"
+            noResults="No matching entity"
+            [clearable]="true"
+            clearLabel="None — not linked to an entity"
+          />
+          <p class="field-note">
+            Choose the entity this audit examines so it counts toward that entity's coverage and audit history.
+            Leave it empty for an audit that is not about one entity — it can be linked later from the audit page.
+          </p>
+        }
 
         <mat-form-field appearance="outline" class="full">
           <mat-label>Scope description</mat-label>
@@ -227,6 +254,11 @@ function fromDateOnly(value: string | undefined): Date | null {
     .full {
       width: 100%;
     }
+    .field-note {
+      margin: 0.25rem 0 1.1rem;
+      font: var(--mat-sys-body-small);
+      color: var(--mat-sys-on-surface-variant);
+    }
     @media (max-width: 560px) {
       .form {
         min-width: auto;
@@ -245,6 +277,19 @@ export class CreateAuditDialogComponent {
     );
   private readonly fb = inject(FormBuilder);
   private readonly refLookup = inject(ReferenceDataLookupService);
+  private readonly auth = inject(AuthService);
+  private readonly entityLookup = inject(EntityLookupService);
+
+  /** The entity list needs universe access; without it the audit is simply created unlinked. */
+  readonly canPickEntity = computed(() => this.auth.hasPermission(Permissions.ViewUniverse));
+
+  /** Live (not archived) entities, by name. */
+  readonly entityOptions = computed<SelectOption[]>(() =>
+    this.entityLookup
+      .options()
+      .filter((e) => !e.isArchived)
+      .map((e) => ({ value: e.id, label: e.name })),
+  );
 
   /** Active audit-type reference-data items (lazy-loaded). */
   readonly auditTypes = this.refLookup.options('audit_type');
@@ -253,6 +298,7 @@ export class CreateAuditDialogComponent {
     name: ['', [Validators.required, Validators.maxLength(200)]],
     auditType: ['', [Validators.required]],
     templateId: [''],
+    entityId: [null as string | null],
     scopeDescription: [''],
     startDate: [null as Date | null, [Validators.required]],
     targetEndDate: [null as Date | null],
@@ -265,6 +311,10 @@ export class CreateAuditDialogComponent {
   readonly teamCandidates = computed(() => this.data.users);
 
   constructor() {
+    if (!this.data.planItem && this.canPickEntity()) {
+      this.entityLookup.ensureLoaded();
+    }
+
     // Launching from an annual-plan item: prefill name, type, lead and the planned window.
     const pi = this.data.planItem;
     if (pi) {
@@ -300,7 +350,7 @@ export class CreateAuditDialogComponent {
       auditType: v.auditType.trim(),
       templateId: v.templateId || null,
       planItemId: this.data.planItem?.planItemId ?? null,
-      entityId: this.data.planItem?.entityId ?? null,
+      entityId: this.data.planItem?.entityId ?? (v.entityId || null),
       scopeDescription: v.scopeDescription.trim() || null,
       startDate: toDateOnly(v.startDate),
       targetEndDate: v.targetEndDate ? toDateOnly(v.targetEndDate) : null,

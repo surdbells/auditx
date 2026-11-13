@@ -54,7 +54,56 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
 
         await db.SaveChangesAsync(cancellationToken);
         await RepairRoleHoldersAwaitingRoleAsync(cancellationToken);
+        await RepairEntityLastAuditedAsync(cancellationToken);
         logger.LogInformation("Database seed completed (development users: {Dev}).", seedDevelopmentUsers);
+    }
+
+    /// <summary>
+    /// Data repair, safe to run on every start. An entity's "last audited" stamp must never be older than its latest
+    /// COMPLETED independent audit — that stamp is what the coverage reports read. Until ad-hoc audits could carry an
+    /// entity only plan-launched audits stamped it, and seeded or migrated history could complete an audit without
+    /// stamping at all, leaving entities reported as "never audited" beside a completed audit. This moves any such
+    /// stamp forward to the audit's completion date; it never moves a stamp backwards.
+    /// </summary>
+    private async Task RepairEntityLastAuditedAsync(CancellationToken cancellationToken)
+    {
+        var latestByEntity = await db.Audits.AsNoTracking()
+            .Where(a => a.AuditableEntityId != null && a.Status == Domain.Enums.AuditStatus.Completed
+                && !a.IsSelfAssessment && a.ActualEndDate != null)
+            .GroupBy(a => a.AuditableEntityId!.Value)
+            .Select(g => new { EntityId = g.Key, Latest = g.Max(a => a.ActualEndDate) })
+            .ToDictionaryAsync(x => x.EntityId, x => x.Latest, cancellationToken);
+        if (latestByEntity.Count == 0)
+        {
+            return;
+        }
+
+        var entityIds = latestByEntity.Keys.ToArray();
+        var entities = await db.AuditUniverseEntities.IgnoreQueryFilters()
+            .Where(e => entityIds.Contains(e.Id))
+            .ToListAsync(cancellationToken);
+
+        var repaired = 0;
+        foreach (var entity in entities)
+        {
+            if (latestByEntity[entity.Id] is not { } completedOn)
+            {
+                continue;
+            }
+
+            var completedAt = new DateTimeOffset(completedOn.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            if (entity.LastAuditedAt is null || entity.LastAuditedAt < completedAt)
+            {
+                entity.MarkAudited(completedAt);
+                repaired++;
+            }
+        }
+
+        if (repaired > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogWarning("Repaired the last-audited stamp of {Count} entity(ies) from their completed audits.", repaired);
+        }
     }
 
     /// <summary>
