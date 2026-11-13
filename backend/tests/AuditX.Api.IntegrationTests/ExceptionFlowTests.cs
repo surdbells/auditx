@@ -86,6 +86,9 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         var a2 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items", new { prompt = "Q1", responseType = "pass_fail_na", isRequired = true, version }));
         version = Version(a2);
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
+        withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);
@@ -238,6 +241,9 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         Assert.Equal(controlId, withItem.GetProperty("checklistItems")[0].GetProperty("controlId").GetGuid());
 
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
+        withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);
@@ -291,6 +297,9 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         var withItem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items", new { prompt = "Q", responseType = "pass_fail_na", isRequired = true, version }));
         version = Version(withItem);
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
+        withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);
@@ -334,6 +343,9 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
             new { prompt = "Q1", responseType = "pass_fail_na", isRequired = true, version, riskRating = "critical" }));
         version = Version(withItem1);
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
+        withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);

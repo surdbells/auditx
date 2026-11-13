@@ -198,10 +198,47 @@ export class AuditExecutionComponent {
       this.auth.hasPermission(Permissions.ViewTimeEntries),
   );
 
-  /** Responding / discarding needs RespondItem AND an in_progress audit. */
-  readonly canRespond = computed(
-    () => this.canRespondPerm() && this.isInProgress(),
-  );
+  /** The signed-in user's id (null until the session has loaded). */
+  private readonly currentUserId = computed(() => this.auth.session()?.userId ?? null);
+
+  /** True when the signed-in user is an active member of this audit's team. */
+  readonly isOnTeam = computed(() => {
+    const me = this.currentUserId();
+    return !!me && (this.audit().teamMembers ?? []).some((m) => m.isActive && m.userId === me);
+  });
+
+  /**
+   * Why the signed-in user cannot work a checklist item, or null when they can. Mirrors the server's rule
+   * (RespondAuthorization) so the screen never offers an action the API would refuse:
+   *  - checklist work belongs to the audit's team — a permission alone (even an administrator's) is not enough;
+   *  - an ASSIGNED item is answered only by its assignee;
+   *  - on a self-assessment, only the self-assessor responds.
+   * Returns an i18n key; `'closed'` when the audit is simply not in progress (nothing to explain).
+   */
+  respondBlock(item: ChecklistProgressItem): 'closed' | string | null {
+    if (!this.isInProgress()) {
+      return 'closed';
+    }
+    const me = this.currentUserId();
+    const audit = this.audit();
+    if (audit.isSelfAssessment) {
+      return audit.leadUserId === me && this.auth.hasPermission(Permissions.RunSelfAssessment)
+        ? null
+        : 'audits.exec.blocked.selfAssessment';
+    }
+    if (!this.isOnTeam()) {
+      return 'audits.exec.blocked.notOnTeam';
+    }
+    if (item.assignedUserId && item.assignedUserId !== me) {
+      return 'audits.exec.blocked.assignedToOther';
+    }
+    return this.canRespondPerm() || this.canManage() ? null : 'audits.exec.blocked.noPermission';
+  }
+
+  /** True when the signed-in user may respond to (and attach evidence to) this item right now. */
+  canRespondTo(item: ChecklistProgressItem): boolean {
+    return this.respondBlock(item) === null;
+  }
 
   /**
    * Worklist of failed items still needing an exception. Anyone with RaiseException sees it while the

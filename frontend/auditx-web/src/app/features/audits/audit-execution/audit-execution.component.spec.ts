@@ -90,9 +90,9 @@ function progress(): ChecklistProgress {
   };
 }
 
-function session(permissions: string[]): SessionDto {
+function session(permissions: string[], userId = 'u1'): SessionDto {
   return {
-    userId: 'u1',
+    userId,
     email: 'a@b.c',
     firstName: 'A',
     lastName: 'B',
@@ -121,6 +121,8 @@ describe('AuditExecutionComponent', () => {
       comment: string | null;
       assignedUserId: string | null;
     }[] = [],
+    /** Who is signed in. 'u1' is NOT on the audit's team; 'u-auditor' is its one active team member. */
+    userId = 'u1',
   ): Promise<void> {
     notify = jasmine.createSpyObj<NotificationService>('NotificationService', [
       'success',
@@ -139,7 +141,7 @@ describe('AuditExecutionComponent', () => {
       ],
     });
     const auth = TestBed.inject(AuthService);
-    auth.setSession(session(perms));
+    auth.setSession(session(perms, userId));
 
     fixture = TestBed.createComponent(AuditExecutionComponent);
     fixture.componentRef.setInput('audit', a);
@@ -227,18 +229,97 @@ describe('AuditExecutionComponent', () => {
     expect(groups[0].items.map((i) => i.itemId)).toEqual(['i-1', 'i-2']);
   });
 
-  it('allows responding only with RespondItem AND an in_progress audit', async () => {
-    await setup(['RespondItem'], audit('in_progress'));
-    expect(component.canRespond()).toBe(true);
+  /* ---- Who may work a checklist item (mirrors the server's RespondAuthorization) ---- */
 
-    fixture.componentRef.setInput('audit', audit('under_review'));
-    fixture.detectChanges();
-    expect(component.canRespond()).toBe(false);
+  const assignedToAuditor = () => component.progress()!.items[0]; // i-1, assigned to u-auditor
+  const unassigned = () => component.progress()!.items[1]; // i-2, assigned to nobody
+
+  it('lets a team member respond to their own item and to an unassigned one', async () => {
+    await setup(['RespondItem'], audit('in_progress'), [], 'u-auditor');
+
+    expect(component.canRespondTo(assignedToAuditor())).toBe(true);
+    expect(component.canRespondTo(unassigned())).toBe(true);
   });
 
-  it('forbids responding without the RespondItem permission', async () => {
-    await setup(['ViewAudit'], audit('in_progress'));
-    expect(component.canRespond()).toBe(false);
+  it('only while the audit is in progress', async () => {
+    await setup(['RespondItem'], audit('under_review'), [], 'u-auditor');
+
+    expect(component.respondBlock(unassigned())).toBe('closed');
+    expect(component.canRespondTo(unassigned())).toBe(false);
+  });
+
+  it('an assigned item can be answered ONLY by its assignee — not by another team member', async () => {
+    const twoOnTeam = audit('in_progress', {
+      teamMembers: [
+        { id: 'm-1', userId: 'u-auditor', teamRole: 'auditor', isActive: true, addedAt: '', removedAt: null },
+        { id: 'm-2', userId: 'u-second', teamRole: 'auditor', isActive: true, addedAt: '', removedAt: null },
+      ],
+    });
+    await setup(['RespondItem'], twoOnTeam, [], 'u-second');
+
+    expect(component.respondBlock(assignedToAuditor())).toBe('audits.exec.blocked.assignedToOther');
+    expect(component.canRespondTo(unassigned())).toBe(true);
+  });
+
+  it('…and not by a manager on the team either (no override of someone else\'s item)', async () => {
+    const managerOnTeam = audit('in_progress', {
+      teamMembers: [
+        { id: 'm-1', userId: 'u-auditor', teamRole: 'auditor', isActive: true, addedAt: '', removedAt: null },
+        { id: 'm-2', userId: 'u-lead', teamRole: 'lead', isActive: true, addedAt: '', removedAt: null },
+      ],
+    });
+    await setup(['ManageAudit', 'RespondItem'], managerOnTeam, [], 'u-lead');
+
+    expect(component.respondBlock(assignedToAuditor())).toBe('audits.exec.blocked.assignedToOther');
+    expect(component.canRespondTo(unassigned())).toBe(true);
+  });
+
+  it('nobody outside the audit\'s team can work its items — whatever permissions they hold', async () => {
+    // 'u1' holds every relevant permission but is not on this audit's team.
+    await setup(['ManageAudit', 'RespondItem', 'UploadEvidence'], audit('in_progress'));
+
+    expect(component.isOnTeam()).toBe(false);
+    expect(component.respondBlock(assignedToAuditor())).toBe('audits.exec.blocked.notOnTeam');
+    expect(component.respondBlock(unassigned())).toBe('audits.exec.blocked.notOnTeam');
+  });
+
+  it('a removed (inactive) team member no longer counts as on the team', async () => {
+    const removed = audit('in_progress', {
+      teamMembers: [
+        { id: 'm-1', userId: 'u-auditor', teamRole: 'auditor', isActive: false, addedAt: '', removedAt: '2026-02-01T00:00:00Z' },
+      ],
+    });
+    await setup(['RespondItem'], removed, [], 'u-auditor');
+
+    expect(component.respondBlock(unassigned())).toBe('audits.exec.blocked.notOnTeam');
+  });
+
+  it('a team member still needs the permission to respond', async () => {
+    await setup(['ViewAudit'], audit('in_progress'), [], 'u-auditor');
+
+    expect(component.respondBlock(unassigned())).toBe('audits.exec.blocked.noPermission');
+  });
+
+  it('on a self-assessment only the self-assessor responds', async () => {
+    const selfAssessment = audit('in_progress', { isSelfAssessment: true, leadUserId: 'u-owner', teamMembers: [] });
+    await setup(['RunSelfAssessment'], selfAssessment, [], 'u-owner');
+    expect(component.canRespondTo(unassigned())).toBe(true);
+  });
+
+  it('…and an auditor cannot answer someone else\'s self-assessment', async () => {
+    const selfAssessment = audit('in_progress', { isSelfAssessment: true, leadUserId: 'u-owner', teamMembers: [] });
+    await setup(['RespondItem', 'ManageAudit'], selfAssessment, [], 'u-auditor');
+    expect(component.respondBlock(unassigned())).toBe('audits.exec.blocked.selfAssessment');
+  });
+
+  it('explains why there is no Respond button instead of just hiding it', async () => {
+    await setup(['ManageAudit', 'RespondItem'], audit('in_progress')); // not on the team
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.exec__blocked')?.textContent).toContain('team');
+    const respond = [...root.querySelectorAll('.exec__item-actions button')].find((b) => /respond/i.test(b.textContent ?? ''));
+    expect(respond).toBeUndefined();
   });
 
   it('submits a response carrying the version, then reloads + emits', async () => {

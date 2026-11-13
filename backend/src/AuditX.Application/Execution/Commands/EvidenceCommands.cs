@@ -32,10 +32,15 @@ public sealed class UploadEvidenceCommandHandler(
     public async Task<EvidenceFileDto> Handle(UploadEvidenceCommand command, CancellationToken cancellationToken)
     {
         var auditEntity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
-        await AuditAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         var uploaderId = currentUser.UserId ?? throw new UnauthorizedException();
         var response = auditEntity.Responses.FirstOrDefault(r => r.Id == command.ResponseId)
             ?? throw new NotFoundException("Response", command.ResponseId);
+
+        // Attaching evidence is part of answering the item, so it follows the same rule as responding: the caller must
+        // be on the audit's team and — when the item is assigned — be its assignee.
+        var item = auditEntity.ChecklistItems.FirstOrDefault(i => i.Id == response.ChecklistItemId)
+            ?? throw new NotFoundException("Checklist item", response.ChecklistItemId);
+        await RespondAuthorization.EnsureCanRespondAsync(auditEntity, item, uploaderId, permissions, cancellationToken);
 
         if (auditEntity.Status != AuditStatus.InProgress)
         {

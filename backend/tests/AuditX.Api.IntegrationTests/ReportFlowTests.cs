@@ -62,6 +62,9 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
         version = Version(a1);
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
             new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
+        withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);

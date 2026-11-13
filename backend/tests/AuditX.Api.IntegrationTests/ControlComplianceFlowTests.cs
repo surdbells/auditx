@@ -81,6 +81,9 @@ public sealed class ControlComplianceFlowTests(ApiFactory factory) : IClassFixtu
         var a1 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items", new { prompt = "Q0", responseType = "pass_fail_na", isRequired = true, version }));
         version = Version(a1);
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
+        withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);
@@ -352,6 +355,9 @@ public sealed class ControlComplianceFlowTests(ApiFactory factory) : IClassFixtu
             new { prompt = "Is the control operating?", responseType = "pass_fail_na", isRequired = true, version, controlId }));
         version = Version(withItem);
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
+        withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);

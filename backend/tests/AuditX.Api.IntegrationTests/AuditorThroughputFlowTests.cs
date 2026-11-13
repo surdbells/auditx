@@ -45,7 +45,11 @@ public sealed class AuditorThroughputFlowTests(ApiFactory factory) : IClassFixtu
     private async Task<string> AuditVersionAsync(HttpClient admin, Guid auditId)
         => Version(await DataAsync(await admin.GetAsync($"/api/v1/audits/{auditId}")));
 
-    /// <summary>Seed an in-progress audit: one item assigned to the manager, responded (Fail) by admin, with a finding raised by admin.</summary>
+    /// <summary>
+    /// Seed an in-progress audit: one item assigned to the manager (so the manager accrues itemsAssigned), and one
+    /// unassigned item that admin — a team member — answers (Fail) and raises a finding on. An assigned item can
+    /// only be answered by its assignee, so admin's hands-on work is on the unassigned one.
+    /// </summary>
     private async Task<(Guid ManagerId, Guid AdminId)> SeedAsync(HttpClient admin)
     {
         var users = await UsersByEmailAsync(admin);
@@ -62,15 +66,23 @@ public sealed class AuditorThroughputFlowTests(ApiFactory factory) : IClassFixtu
         var a1 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
             new { prompt = "Q0", responseType = "pass_fail_na", isRequired = true, assignedUserId = managerId, version }));
         version = Version(a1);
+        // An unassigned item — any team member may answer it.
+        var a2 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Q1", responseType = "pass_fail_na", isRequired = true, version }));
+        version = Version(a2);
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
             new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
+        withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);
         var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
-        var item = started.GetProperty("checklistItems").EnumerateArray().First().GetProperty("id").GetGuid();
+        var item = started.GetProperty("checklistItems").EnumerateArray()
+            .First(i => i.GetProperty("assignedUserId").ValueKind == JsonValueKind.Null).GetProperty("id").GetGuid();
 
-        // admin finalises the response (Fail) and raises a finding → admin accrues itemsResponded + exceptionsRaised.
+        // admin finalises the unassigned item (Fail) and raises a finding → admin accrues itemsResponded + exceptionsRaised.
         await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{item}/responses",
             new { verdict = "fail", comment = "control missing", isDraft = false, version = await AuditVersionAsync(admin, auditId) }));
         await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new

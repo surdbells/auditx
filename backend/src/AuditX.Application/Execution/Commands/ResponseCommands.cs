@@ -50,7 +50,7 @@ public sealed class SubmitResponseCommandHandler(
 
         var userId = currentUser.UserId ?? throw new UnauthorizedException();
         var item = entity.ChecklistItems.FirstOrDefault(i => i.Id == command.ItemId) ?? throw new NotFoundException("Checklist item", command.ItemId);
-        var isOverride = await RespondAuthorization.EnsureCanRespondAsync(entity, item, userId, permissions, cancellationToken);
+        await RespondAuthorization.EnsureCanRespondAsync(entity, item, userId, permissions, cancellationToken);
 
         // Resolve the organisation-defined conclusion option, if one was chosen for a verdict-based item. The
         // option carries its own semantics (score, is-a-finding, N/A, requires-comment); the engine derives a
@@ -82,7 +82,7 @@ public sealed class SubmitResponseCommandHandler(
         entity.SetResponseScore(command.ItemId, score);
 
         audit.Record(
-            isOverride ? AuditEventTypes.ItemResponseOverridden : AuditEventTypes.ItemResponded,
+            AuditEventTypes.ItemResponded,
             AuditTargetTypes.ChecklistResponse, mutation.Response.Id,
             before: Snapshot(mutation.Before), after: Snapshot(mutation.Response.ToState()));
 
@@ -116,8 +116,15 @@ public sealed class DiscardDraftCommandHandler(
         var response = entity.Responses.FirstOrDefault(r => r.ChecklistItemId == command.ItemId)
             ?? throw new NotFoundException("Response", command.ItemId);
 
-        var isManager = await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, entity.Id.ToString(), cancellationToken);
-        if (response.ResponderUserId != userId && !isManager)
+        // A draft is discarded by its author, or — to clear one left behind — by an audit manager. Like all checklist
+        // work, that is the engagement team's to do: on a normal audit the caller must be on the audit's team.
+        var isAuthor = response.ResponderUserId == userId;
+        if (!entity.IsSelfAssessment && !RespondAuthorization.IsActiveTeamMember(entity, userId))
+        {
+            throw new ForbiddenAccessException("Only members of this audit's team can work on its checklist items.");
+        }
+
+        if (!isAuthor && !await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, entity.Id.ToString(), cancellationToken))
         {
             throw new ForbiddenAccessException("Only the draft's author may discard it.");
         }

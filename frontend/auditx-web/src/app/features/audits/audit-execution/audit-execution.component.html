@@ -151,8 +151,17 @@
           }
 
           <!-- Response actions -->
+          @let blocked = respondBlock(item);
+          @if (blocked && blocked !== 'closed') {
+            <!-- Say WHY there is no Respond button, instead of leaving the user to guess. -->
+            <p class="exec__blocked" role="note">
+              <app-icon name="lock" aria-hidden="true" />
+              <span>{{ blocked | t: { name: nameOf(item.assignedUserId) } }}</span>
+            </p>
+          }
+
           <div class="exec__item-actions">
-            @if (canRespond()) {
+            @if (!blocked) {
               <button matButton="filled" type="button" (click)="respond(item)">
                 <app-icon name="edit_note" />
                 {{ 'audits.actions.respond' | t }}
@@ -203,7 +212,7 @@
               <div class="exec__evidence">
                 <div class="exec__evidence-head">
                   <span class="exec__evidence-title">{{ 'audits.exec.evidenceTitle' | t }}</span>
-                  @if (canUploadEvidence() && canRespond()) {
+                  @if (canUploadEvidence() && !blocked) {
                     <button matButton type="button" (click)="fileInput.click()">
                       <app-icon name="upload_file" />
                       {{ 'audits.actions.upload' | t }}
@@ -244,7 +253,8 @@
                   </ul>
                 }
               </div>
-            } @else {
+            } @else if (!blocked) {
+              <!-- Only prompt someone who CAN respond; a blocked viewer already has the reason above. -->
               <p class="muted exec__evidence-empty">{{ 'audits.exec.respondToAttach' | t }}</p>
             }
           }
