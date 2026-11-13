@@ -385,7 +385,10 @@ export class UsersListComponent {
       });
   }
 
-  /** Reactivates a deactivated user (reuses the bulk endpoint); they return to the awaiting-role state. */
+  /**
+   * Reactivates a deactivated user (reuses the bulk endpoint). Someone who still holds a role comes back active;
+   * only a user with no role returns to the awaiting-role state.
+   */
   reactivate(user: UserDto, event: Event): void {
     event.stopPropagation();
     this.admin.bulkActivateUsers([user.id]).subscribe({

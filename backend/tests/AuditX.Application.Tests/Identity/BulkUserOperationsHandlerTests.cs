@@ -26,6 +26,28 @@ public sealed class BulkUserOperationsHandlerTests
         return user;
     }
 
+    private static readonly DateTimeOffset Now = new(2026, 11, 13, 9, 0, 0, TimeSpan.Zero);
+
+    private static IClock ClockAt(DateTimeOffset now)
+    {
+        var clock = Substitute.For<IClock>();
+        clock.UtcNow.Returns(now);
+        return clock;
+    }
+
+    /// <summary>A role repository where each listed user holds the given grants (everyone else holds none).</summary>
+    private static IUserRoleRepository RolesFor(params (User User, UserRole[] Grants)[] holdings)
+    {
+        var userRoles = Substitute.For<IUserRoleRepository>();
+        userRoles.GetForUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns([]);
+        foreach (var (user, grants) in holdings)
+        {
+            userRoles.GetForUserAsync(user.Id, Arg.Any<CancellationToken>()).Returns(grants);
+        }
+
+        return userRoles;
+    }
+
     [Fact]
     public async Task BulkReactivate_reactivates_all_found_users_and_invalidates_permissions()
     {
@@ -39,12 +61,13 @@ public sealed class BulkUserOperationsHandlerTests
         var audit = Substitute.For<IAuditRecorder>();
         var uow = Substitute.For<IUnitOfWork>();
 
-        var handler = new BulkReactivateUsersCommandHandler(users, permissions, audit, uow);
+        var handler = new BulkReactivateUsersCommandHandler(users, RolesFor(), permissions, audit, uow, ClockAt(Now));
 
         var result = await handler.Handle(new BulkReactivateUsersCommand([a.Id, b.Id]), CancellationToken.None);
 
         Assert.Equal(2, result.SuccessCount);
         Assert.Empty(result.Errors);
+        // Neither holds a role → both wait for an administrator to assign one.
         Assert.Equal(UserStatus.AwaitingRoleAssignment, a.Status);
         Assert.Equal(UserStatus.AwaitingRoleAssignment, b.Status);
         audit.Received(1).Record(AuditEventTypes.UsersBulkReactivated, Arg.Any<string>(), null,
@@ -52,6 +75,36 @@ public sealed class BulkUserOperationsHandlerTests
         await uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         await permissions.Received(1).InvalidateAsync(a.Id, Arg.Any<CancellationToken>());
         await permissions.Received(1).InvalidateAsync(b.Id, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task BulkReactivate_returns_a_user_who_still_holds_a_role_to_active_not_awaiting_role()
+    {
+        // Deactivation keeps role grants. Sending a role-holder back to "awaiting role" locked them out of the app,
+        // and the fix an administrator would reach for — granting the role — was refused as "already holds it".
+        var roleHolder = Deactivated("alpha");
+        var noRoles = Deactivated("bravo");
+        var expiredDelegate = Deactivated("charlie");
+        var roleId = Guid.NewGuid();
+
+        var users = Substitute.For<IUserRepository>();
+        users.GetByIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns([roleHolder, noRoles, expiredDelegate]);
+        var userRoles = RolesFor(
+            (roleHolder, [UserRole.Grant(roleHolder.Id, roleId)]),
+            // A delegation whose window has passed confers nothing, so it does not count as holding a role.
+            (expiredDelegate, [UserRole.Delegate(expiredDelegate.Id, roleId, Guid.NewGuid(), Now.AddDays(-10), Now.AddDays(-3))]));
+
+        var handler = new BulkReactivateUsersCommandHandler(
+            users, userRoles, Substitute.For<IPermissionResolver>(), Substitute.For<IAuditRecorder>(), Substitute.For<IUnitOfWork>(), ClockAt(Now));
+
+        var result = await handler.Handle(
+            new BulkReactivateUsersCommand([roleHolder.Id, noRoles.Id, expiredDelegate.Id]), CancellationToken.None);
+
+        Assert.Equal(3, result.SuccessCount);
+        Assert.Equal(UserStatus.Active, roleHolder.Status);
+        Assert.Equal(UserStatus.AwaitingRoleAssignment, noRoles.Status);
+        Assert.Equal(UserStatus.AwaitingRoleAssignment, expiredDelegate.Status);
     }
 
     [Fact]
@@ -66,7 +119,7 @@ public sealed class BulkUserOperationsHandlerTests
         var uow = Substitute.For<IUnitOfWork>();
 
         var handler = new BulkReactivateUsersCommandHandler(
-            users, Substitute.For<IPermissionResolver>(), Substitute.For<IAuditRecorder>(), uow);
+            users, RolesFor(), Substitute.For<IPermissionResolver>(), Substitute.For<IAuditRecorder>(), uow, ClockAt(Now));
 
         var result = await handler.Handle(new BulkReactivateUsersCommand([a.Id, missing]), CancellationToken.None);
 

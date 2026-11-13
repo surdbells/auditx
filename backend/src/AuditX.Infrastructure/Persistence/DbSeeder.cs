@@ -53,7 +53,36 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        await RepairRoleHoldersAwaitingRoleAsync(cancellationToken);
         logger.LogInformation("Database seed completed (development users: {Dev}).", seedDevelopmentUsers);
+    }
+
+    /// <summary>
+    /// Data repair, safe to run on every start. An account that holds an active role but is still marked "awaiting
+    /// role assignment" is locked out behind the "Access pending" screen — and cannot be fixed from the UI, because the
+    /// role it is waiting for is already granted. Reactivating a deactivated user used to leave accounts in that
+    /// state; this promotes any such account to active. Accounts that genuinely hold no role are left waiting.
+    /// </summary>
+    private async Task RepairRoleHoldersAwaitingRoleAsync(CancellationToken cancellationToken)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var stuck = await db.Users
+            .Where(u => u.Status == Domain.Enums.UserStatus.AwaitingRoleAssignment
+                && db.UserRoles.Any(ur => ur.UserId == u.Id && ur.IsActive
+                    && (ur.DelegatedFromUserId == null || (ur.DelegationStart <= now && now < ur.DelegationEnd))))
+            .ToListAsync(cancellationToken);
+        if (stuck.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var user in stuck)
+        {
+            user.MarkActiveOnFirstRole();
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogWarning("Repaired {Count} account(s) that held a role but were still awaiting role assignment.", stuck.Count);
     }
 
     private async Task SeedNotificationDefaultsAsync(CancellationToken cancellationToken)

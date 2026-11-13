@@ -210,7 +210,7 @@ public sealed class BulkDeactivateUsersCommandHandler(
 public sealed record BulkReactivateUsersCommand(IReadOnlyList<Guid> UserIds) : ICommand<BulkOperationResultDto>;
 
 public sealed class BulkReactivateUsersCommandHandler(
-    IUserRepository users, IPermissionResolver permissions, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    IUserRepository users, IUserRoleRepository userRoles, IPermissionResolver permissions, IAuditRecorder audit, IUnitOfWork unitOfWork, IClock clock)
     : ICommandHandler<BulkReactivateUsersCommand, BulkOperationResultDto>
 {
     public async Task<BulkOperationResultDto> Handle(BulkReactivateUsersCommand command, CancellationToken cancellationToken)
@@ -229,9 +229,13 @@ public sealed class BulkReactivateUsersCommandHandler(
             return new BulkOperationResultDto(0, errors);
         }
 
+        // Deactivation keeps a user's role grants, so a user who still holds an effective role comes back ACTIVE.
+        // Only a user with no role returns to "awaiting role assignment".
+        var now = clock.UtcNow;
         foreach (var user in found)
         {
-            user.Reactivate();
+            var grants = await userRoles.GetForUserAsync(user.Id, cancellationToken);
+            user.Reactivate(holdsRole: grants.Any(g => g.IsEffectiveAt(now)));
         }
 
         audit.Record(AuditEventTypes.UsersBulkReactivated, AuditTargetTypes.User, null, payload: new { count = found.Count, ids });

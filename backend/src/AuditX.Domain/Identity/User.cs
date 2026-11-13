@@ -200,11 +200,17 @@ public sealed class User : AggregateRoot, ISoftDeletable
         RaiseDomainEvent(new UserDeactivatedEvent(Id, by));
     }
 
-    public void Reactivate()
+    /// <summary>
+    /// Brings a deactivated account back. Deactivating a user leaves their role grants in place, so someone who still
+    /// holds a role returns straight to <see cref="UserStatus.Active"/>; only an account with no role goes back to
+    /// waiting for an administrator to assign one. (Sending a role-holder back to "awaiting role" locked them out:
+    /// the role they needed was already granted, so it could not be granted again.)
+    /// </summary>
+    public void Reactivate(bool holdsRole)
     {
         if (Status == UserStatus.Deactivated)
         {
-            Status = UserStatus.AwaitingRoleAssignment;
+            Status = holdsRole ? UserStatus.Active : UserStatus.AwaitingRoleAssignment;
         }
     }
 
