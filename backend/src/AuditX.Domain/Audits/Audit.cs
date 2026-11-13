@@ -527,13 +527,31 @@ public sealed class Audit : AggregateRoot
     {
         EnsureStatus("audit.assignment_locked", AuditStatus.InProgress, AuditStatus.UnderReview);
         var item = FindItem(itemId);
-        if (assigneeUserId is { } uid && !ActiveTeam.Any(m => m.UserId == uid))
+        if (assigneeUserId is { } uid)
         {
-            throw new DomainException("audit.assignee_not_team_member", "An item can only be assigned to an active team member.");
+            EnsureCanBeAssignee(uid);
         }
 
         item.Assign(assigneeUserId);
         RaiseDomainEvent(new ItemAssignedEvent(Id, itemId, assigneeUserId));
+    }
+
+    /// <summary>
+    /// A checklist item is assigned to someone who will ANSWER it: an active member of the working team. Never the
+    /// auditee — they are the subject of the audit and cannot answer its checklist, so an item assigned to them
+    /// could not be completed (and independence would be compromised if it could).
+    /// </summary>
+    public void EnsureCanBeAssignee(Guid userId)
+    {
+        if (!ActiveTeam.Any(m => m.UserId == userId))
+        {
+            throw new DomainException("audit.assignee_not_team_member", "An item can only be assigned to an active team member.");
+        }
+
+        if (!IsSelfAssessment && (userId == AuditeeUserId || ActiveTeam.Any(m => m.UserId == userId && m.TeamRole == TeamRole.Auditee)))
+        {
+            throw new DomainException("audit.assignee_is_auditee", "A checklist item cannot be assigned to the audit's auditee — the audit must be independent of the area it examines.");
+        }
     }
 
     /// <summary>Record a manager's judgement that a failed item does not warrant an exception (FR-M5-011).</summary>

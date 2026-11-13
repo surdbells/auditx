@@ -87,8 +87,11 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         version = Version(a2);
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team", new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
         // Checklist work belongs to the engagement team: this test's actor (admin) answers the items, so admin joins it.
+        // When the auditor is the AUDITEE of this audit (they stay its auditee — the add above is then a no-op), admin
+        // is the audit's auditor instead, since an audit cannot be planned without one.
+        var adminTeamRole = auditeeEmail == "auditor@auditx.local" ? "auditor" : "reviewer";
         withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
-            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
+            new { userId = users["admin@auditx.local"], teamRole = adminTeamRole, version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);
@@ -183,7 +186,7 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         var mineId = mine.GetProperty("id").GetGuid();
 
         // A different audit the auditee is NOT a member of, with a finding owned by someone else.
-        var (otherAudit, otherFail, _, otherOwner) = await SeedAuditWithResponsesAsync(admin, "admin@auditx.local");
+        var (otherAudit, otherFail, _, otherOwner) = await SeedAuditWithResponsesAsync(admin, "auditor@auditx.local");
         var theirs = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{otherAudit}/exceptions", new
         {
             checklistItemId = otherFail, title = "Not for the auditee", severity = "high",

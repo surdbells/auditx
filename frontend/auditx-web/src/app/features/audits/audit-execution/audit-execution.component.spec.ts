@@ -283,6 +283,24 @@ describe('AuditExecutionComponent', () => {
     expect(component.respondBlock(unassigned())).toBe('audits.exec.blocked.notOnTeam');
   });
 
+  it('the AUDITEE never works the checklist of the audit of their own area — even holding auditor permissions', async () => {
+    // An auditor elsewhere who is the auditee here: listed on the audit, holding RespondItem — still blocked.
+    const auditeeOnList = audit('in_progress', {
+      auditeeUserId: 'u-auditee',
+      teamMembers: [
+        { id: 'm-1', userId: 'u-auditor', teamRole: 'auditor', isActive: true, addedAt: '', removedAt: null },
+        { id: 'm-2', userId: 'u-auditee', teamRole: 'auditee', isActive: true, addedAt: '', removedAt: null },
+      ],
+    });
+    await setup(['RespondItem', 'ManageAudit'], auditeeOnList, [], 'u-auditee');
+
+    expect(component.isAuditee()).toBe(true);
+    expect(component.isOnTeam()).toBe(false);
+    expect(component.respondBlock(unassigned())).toBe('audits.exec.blocked.auditee');
+    // …and an item can never be assigned to them.
+    expect(component.assignableMembers().map((m) => m.userId)).toEqual(['u-auditor']);
+  });
+
   it('a removed (inactive) team member no longer counts as on the team', async () => {
     const removed = audit('in_progress', {
       teamMembers: [

@@ -16,7 +16,9 @@ internal static class RespondAuthorization
     /// On a normal audit, ALL of these must hold:
     /// <list type="number">
     ///   <item>the caller is an ACTIVE MEMBER OF THE AUDIT'S TEAM — checklist work belongs to the engagement team;
-    ///         holding a permission (even ManageAudit, even the administrator's full set) is not enough on its own;</item>
+    ///         holding a permission (even ManageAudit, even the administrator's full set) is not enough on its own.
+    ///         The AUDITEE is listed on the audit but is its subject, never part of the working team: someone who is
+    ///         an auditor elsewhere gets no say over the checklist of the audit of their own area;</item>
     ///   <item>if the item is ASSIGNED, the caller is the assignee — an assigned item is answered by the person it was
     ///         assigned to and nobody else; to hand it to someone else a manager reassigns it (which is recorded);</item>
     ///   <item>the caller holds RespondItem or ManageAudit for the audit.</item>
@@ -38,6 +40,12 @@ internal static class RespondAuthorization
             return;
         }
 
+        // Independence: the person being audited never answers the audit's own checklist, whatever roles they hold.
+        if (IsAuditee(audit, userId))
+        {
+            throw new ForbiddenAccessException("You are the auditee of this audit, so you cannot work on its checklist — an audit must be independent of the area it examines.");
+        }
+
         if (!IsActiveTeamMember(audit, userId))
         {
             throw new ForbiddenAccessException("Only members of this audit's team can work on its checklist items.");
@@ -56,8 +64,20 @@ internal static class RespondAuthorization
         }
     }
 
+    /// <summary>
+    /// The audit's WORKING team: an active member in an auditing capacity (lead / auditor / reviewer). The auditee is
+    /// recorded on the audit's team list so they can follow it, but they are the subject of the audit, not part of
+    /// the team that performs it.
+    /// </summary>
     public static bool IsActiveTeamMember(Audit audit, Guid userId)
-        => audit.TeamMembers.Any(m => m.IsActive && m.UserId == userId);
+        => !IsAuditee(audit, userId)
+            && audit.TeamMembers.Any(m => m.IsActive && m.UserId == userId && m.TeamRole != TeamRole.Auditee);
+
+    /// <summary>True when the user is the auditee of this (non-self-assessment) audit.</summary>
+    public static bool IsAuditee(Audit audit, Guid userId)
+        => !audit.IsSelfAssessment
+            && (audit.AuditeeUserId == userId
+                || audit.TeamMembers.Any(m => m.IsActive && m.UserId == userId && m.TeamRole == TeamRole.Auditee));
 
     public static ResponseVerdict? ParseVerdict(string? value, bool isDraft)
     {

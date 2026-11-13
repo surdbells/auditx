@@ -243,4 +243,72 @@ public sealed class ChecklistRespondRulesFlowTests(ApiFactory factory) : IClassF
             $"/api/v1/audits/{f.AuditId}/items/{f.OpenItem}/responses/draft?version={Uri.EscapeDataString(await VersionAsync(manager, f.AuditId))}");
         Assert.Equal(HttpStatusCode.NoContent, discard.StatusCode);
     }
+
+    /// <summary>
+    /// Independence. Someone can be an auditor on one audit and the AUDITEE of another. Where they are the auditee
+    /// they are the subject of the audit: listed on it, holding all their auditor permissions — and still unable to
+    /// answer its checklist or have an item assigned to them.
+    /// </summary>
+    [Fact]
+    public async Task The_auditee_of_an_audit_cannot_work_its_checklist_even_if_they_are_an_auditor_elsewhere()
+    {
+        var admin = await LoginAsync("admin");
+        var first = await StartAuditAsync(admin); // grants the built-in roles; here 'auditor' is on the team as an auditor
+        var auditor = await LoginAsync("auditor");
+
+        // On the first audit the auditor does auditor work.
+        await DataAsync(await RespondAsync(auditor, first, first.OpenItem, await VersionAsync(auditor, first.AuditId), isDraft: true));
+
+        // ---- A second audit, of the auditor's OWN area: the same person is now the auditee.
+        var users = (await DataAsync(await admin.GetAsync("/api/v1/users?limit=100"))).GetProperty("items").EnumerateArray()
+            .ToDictionary(u => u.GetProperty("email").GetString()!, u => u.GetProperty("id").GetGuid());
+        var created = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audits", new
+        {
+            name = $"Auditor is the auditee {Guid.NewGuid():N}",
+            auditType = "branch",
+            startDate = "2027-01-10",
+            targetEndDate = "2027-02-10",
+            leadUserId = first.ManagerId,
+            auditeeUserId = first.AuditorId,
+        }));
+        var auditId = created.GetProperty("id").GetGuid();
+        var version = Version(created);
+        Assert.Contains(created.GetProperty("teamMembers").EnumerateArray(),
+            m => m.GetProperty("userId").GetGuid() == first.AuditorId && m.GetProperty("teamRole").GetString() == "auditee");
+
+        // An item cannot be created assigned to the auditee…
+        var assignedAtCreate = await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "Assigned to the auditee", responseType = "pass_fail_na", isRequired = true, assignedUserId = first.AuditorId, version });
+        Assert.Equal(HttpStatusCode.UnprocessableContent, assignedAtCreate.StatusCode);
+        Assert.Contains("auditee", await DetailAsync(assignedAtCreate));
+
+        var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "auditor", version }));
+        version = Version(withTeam);
+        var withItem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
+            new { prompt = "About the auditor's own area", responseType = "pass_fail_na", isRequired = true, version }));
+        version = Version(withItem);
+        var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
+        version = Version(planned);
+        var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
+        var itemId = started.GetProperty("checklistItems")[0].GetProperty("id").GetGuid();
+        var second = first with { AuditId = auditId, OpenItem = itemId };
+
+        // …nor reassigned to them once the audit is running.
+        var manager = await LoginAsync("manager");
+        var reassign = await manager.PatchAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/assignment",
+            new { assigneeUserId = first.AuditorId, version = await VersionAsync(manager, auditId) });
+        Assert.Equal(HttpStatusCode.UnprocessableContent, reassign.StatusCode);
+
+        // The auditee — an auditor by role, holding RespondItem, listed on this audit — cannot answer its checklist.
+        var refused = await RespondAsync(auditor, second, itemId, await VersionAsync(auditor, auditId));
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+        Assert.Contains("auditee of this audit", await DetailAsync(refused));
+        var refusedDraft = await RespondAsync(auditor, second, itemId, await VersionAsync(auditor, auditId), isDraft: true);
+        Assert.Equal(HttpStatusCode.Forbidden, refusedDraft.StatusCode);
+
+        // The audit's own team answers it.
+        var answered = await DataAsync(await RespondAsync(admin, second, itemId, await VersionAsync(admin, auditId)));
+        Assert.Equal(users["admin@auditx.local"], answered.GetProperty("responderUserId").GetGuid());
+    }
 }

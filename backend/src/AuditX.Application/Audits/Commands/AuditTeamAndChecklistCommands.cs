@@ -49,6 +49,9 @@ internal static class AuditParsing
         {
             throw new ConflictException("audit.assignee_not_team_member", "A checklist item can only be assigned to an active team member.");
         }
+
+        // …and never to the auditee (throws audit.assignee_is_auditee): they cannot answer the audit's own checklist.
+        audit.EnsureCanBeAssignee(userId);
     }
 }
 

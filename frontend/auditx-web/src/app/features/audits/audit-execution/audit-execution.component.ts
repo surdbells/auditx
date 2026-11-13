@@ -201,10 +201,29 @@ export class AuditExecutionComponent {
   /** The signed-in user's id (null until the session has loaded). */
   private readonly currentUserId = computed(() => this.auth.session()?.userId ?? null);
 
-  /** True when the signed-in user is an active member of this audit's team. */
+  /**
+   * True when the signed-in user is the AUDITEE of this audit — its subject. They are listed on the audit so they
+   * can follow it, but they never work its checklist, whatever other roles they hold (e.g. an auditor elsewhere).
+   */
+  readonly isAuditee = computed(() => {
+    const me = this.currentUserId();
+    const audit = this.audit();
+    return (
+      !!me &&
+      !audit.isSelfAssessment &&
+      (audit.auditeeUserId === me ||
+        (audit.teamMembers ?? []).some((m) => m.isActive && m.userId === me && m.teamRole === 'auditee'))
+    );
+  });
+
+  /** True when the signed-in user is an active member of this audit's WORKING team (lead / auditor / reviewer). */
   readonly isOnTeam = computed(() => {
     const me = this.currentUserId();
-    return !!me && (this.audit().teamMembers ?? []).some((m) => m.isActive && m.userId === me);
+    return (
+      !!me &&
+      !this.isAuditee() &&
+      (this.audit().teamMembers ?? []).some((m) => m.isActive && m.userId === me && m.teamRole !== 'auditee')
+    );
   });
 
   /**
@@ -225,6 +244,9 @@ export class AuditExecutionComponent {
       return audit.leadUserId === me && this.auth.hasPermission(Permissions.RunSelfAssessment)
         ? null
         : 'audits.exec.blocked.selfAssessment';
+    }
+    if (this.isAuditee()) {
+      return 'audits.exec.blocked.auditee';
     }
     if (!this.isOnTeam()) {
       return 'audits.exec.blocked.notOnTeam';
@@ -265,10 +287,10 @@ export class AuditExecutionComponent {
     return Math.round((p.respondedItems / p.totalItems) * 100);
   });
 
-  /** Active team members eligible to be assigned items. */
+  /** Active members of the working team — who an item can be assigned to. Never the auditee: they cannot answer it. */
   readonly assignableMembers = computed<AssignableMember[]>(() =>
     (this.audit().teamMembers ?? [])
-      .filter((m) => m.isActive)
+      .filter((m) => m.isActive && m.teamRole !== 'auditee' && m.userId !== this.audit().auditeeUserId)
       .map((m) => ({
         userId: m.userId,
         displayName: this.nameOf(m.userId),
