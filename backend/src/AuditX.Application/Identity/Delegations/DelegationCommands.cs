@@ -48,6 +48,8 @@ public sealed class CreateDelegationCommandHandler(
         var toUser = await users.GetByIdAsync(command.ToUserId, cancellationToken) ?? throw new NotFoundException("User", command.ToUserId);
         var role = await roles.GetByIdAsync(command.RoleId, cancellationToken) ?? throw new NotFoundException("Role", command.RoleId);
 
+        role.EnsureAssignable();
+
         var delegation = UserRole.Delegate(toUser.Id, role.Id, command.FromUserId, command.StartDate, command.EndDate);
         userRoles.Add(delegation);
         toUser.MarkActiveOnFirstRole();

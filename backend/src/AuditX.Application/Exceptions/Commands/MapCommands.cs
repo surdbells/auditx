@@ -41,7 +41,7 @@ public sealed class SubmitMapCommandHandler(
 {
     public async Task<ExceptionDto> Handle(SubmitMapCommand command, CancellationToken cancellationToken)
     {
-        var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
+        var (exception, _) = await MapHandlerSupport.LoadForOwnerAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, null, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         // On a resubmission after rejection, replace the prior MAP rather than appending to it.
@@ -73,7 +73,7 @@ public sealed class ApproveMapCommandHandler(
 {
     public async Task<ExceptionActionResult> Handle(ApproveMapCommand command, CancellationToken cancellationToken)
     {
-        var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
+        var (exception, _) = await MapHandlerSupport.LoadForAuditorAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         if (exception.Status != ExceptionStatus.MapSubmitted)
@@ -119,7 +119,7 @@ public sealed class RejectMapCommandHandler(
 {
     public async Task<ExceptionDto> Handle(RejectMapCommand command, CancellationToken cancellationToken)
     {
-        var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
+        var (exception, _) = await MapHandlerSupport.LoadForAuditorAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
         exception.EnsureVersion(command.Version);
         exception.RejectMap(command.Reason, currentUser.UserId ?? Guid.Empty);
         audit.Record(AuditEventTypes.MapRejected, AuditTargetTypes.Exception, exception.Id, payload: new { command.Reason });
@@ -136,7 +136,7 @@ public sealed class MarkMapActionCompleteCommandHandler(
 {
     public async Task<ExceptionDto> Handle(MarkMapActionCompleteCommand command, CancellationToken cancellationToken)
     {
-        var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
+        var (exception, _) = await MapHandlerSupport.LoadForOwnerAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, command.ActionId, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         var files = await evidence.ListForContextAsync(exception.AuditId, EvidenceContextType.MapAction, command.ActionId, cancellationToken);
@@ -155,7 +155,7 @@ public sealed class MarkMapCompleteCommandHandler(
 {
     public async Task<ExceptionDto> Handle(MarkMapCompleteCommand command, CancellationToken cancellationToken)
     {
-        var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
+        var (exception, _) = await MapHandlerSupport.LoadForOwnerAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, null, cancellationToken);
         exception.EnsureVersion(command.Version);
         exception.MarkMapComplete(currentUser.UserId ?? Guid.Empty);
         audit.Record(AuditEventTypes.MapCompleted, AuditTargetTypes.Exception, exception.Id);
@@ -172,7 +172,7 @@ public sealed class ReturnForEvidenceCommandHandler(
 {
     public async Task<ExceptionDto> Handle(ReturnForEvidenceCommand command, CancellationToken cancellationToken)
     {
-        var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
+        var (exception, _) = await MapHandlerSupport.LoadForAuditorAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
         exception.EnsureVersion(command.Version);
         exception.ReturnForEvidence(command.Reason, currentUser.UserId ?? Guid.Empty);
         audit.Record(AuditEventTypes.MapReturnedForEvidence, AuditTargetTypes.Exception, exception.Id, payload: new { command.Reason });
@@ -189,7 +189,7 @@ public sealed class CloseExceptionCommandHandler(
 {
     public async Task<ExceptionDto> Handle(CloseExceptionCommand command, CancellationToken cancellationToken)
     {
-        var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
+        var (exception, _) = await MapHandlerSupport.LoadForAuditorAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
         exception.EnsureVersion(command.Version);
         var userId = currentUser.UserId ?? throw new UnauthorizedException();
 
@@ -220,7 +220,7 @@ public sealed class CiaCountersignCommandHandler(
 {
     public async Task<ExceptionDto> Handle(CiaCountersignCommand command, CancellationToken cancellationToken)
     {
-        var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
+        var (exception, _) = await MapHandlerSupport.LoadForAuditorAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
         exception.EnsureVersion(command.Version);
         var userId = currentUser.UserId ?? throw new UnauthorizedException();
 
@@ -247,7 +247,7 @@ public sealed class UploadMapActionEvidenceCommandHandler(
 {
     public async Task<EvidenceFileDto> Handle(UploadMapActionEvidenceCommand command, CancellationToken cancellationToken)
     {
-        var (exception, _) = await MapHandlerSupport.LoadScopedAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, cancellationToken);
+        var (exception, _) = await MapHandlerSupport.LoadForOwnerAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, command.ActionId, cancellationToken);
         var uploaderId = currentUser.UserId ?? throw new UnauthorizedException();
         if (exception.MapActions.All(a => a.Id != command.ActionId))
         {
@@ -291,6 +291,43 @@ public sealed class UploadMapActionEvidenceCommandHandler(
 
 internal static class MapHandlerSupport
 {
+    /// <summary>
+    /// AUDIT-SIDE MAP actions — approve, reject, return for evidence, close, countersign: a party to the audit, and
+    /// never its own auditee (who would otherwise approve the plan for, or close, a finding against themselves).
+    /// </summary>
+    public static async Task<(Domain.Exceptions.AuditException Exception, Domain.Audits.Audit Audit)> LoadForAuditorAsync(
+        IExceptionRepository exceptions, IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser, Guid exceptionId, CancellationToken cancellationToken)
+    {
+        var (exception, auditEntity) = await LoadScopedAsync(exceptions, audits, permissions, currentUser, exceptionId, cancellationToken);
+        Execution.AuditIndependence.EnsureNotAuditee(auditEntity, currentUser.UserId);
+        return (exception, auditEntity);
+    }
+
+    /// <summary>
+    /// OWNER-SIDE MAP actions — submit the action plan, complete an action, attach its evidence, mark the plan done.
+    /// These belong to the people the finding names: its owner, and for one action that action's owner. Being on the
+    /// audit's team is not enough (an auditor does not write management's action plan); a ManageAudit holder may still
+    /// record it on the business's behalf. The owner need not be on the audit's team.
+    /// </summary>
+    public static async Task<(Domain.Exceptions.AuditException Exception, Domain.Audits.Audit Audit)> LoadForOwnerAsync(
+        IExceptionRepository exceptions, IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser,
+        Guid exceptionId, Guid? actionId, CancellationToken cancellationToken)
+    {
+        var exception = await exceptions.GetByIdAsync(exceptionId, cancellationToken) ?? throw new NotFoundException("Exception", exceptionId);
+        var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
+        var uid = currentUser.UserId ?? throw new ForbiddenAccessException();
+
+        var isOwner = exception.OwnerUserId == uid
+            || (actionId is { } id && exception.MapActions.Any(a => a.Id == id && a.OwnerUserId == uid));
+        if (!isOwner
+            && !await permissions.HasPermissionAsync(uid, Domain.Authorization.PermissionKeys.ManageAudit, auditEntity.Id.ToString(), cancellationToken))
+        {
+            throw new ForbiddenAccessException("Only the finding's owner — or the owner of the action — can update its action plan.");
+        }
+
+        return (exception, auditEntity);
+    }
+
     public static async Task<(Domain.Exceptions.AuditException Exception, Domain.Audits.Audit Audit)> LoadScopedAsync(
         IExceptionRepository exceptions, IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser, Guid exceptionId, CancellationToken cancellationToken)
     {

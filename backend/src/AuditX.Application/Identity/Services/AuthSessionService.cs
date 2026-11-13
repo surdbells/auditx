@@ -96,9 +96,17 @@ public sealed class AuthSessionService(
             mustChangePassword = credential?.MustChangePassword ?? false;
         }
 
+        // What the session reports is whether the person can actually do anything: a deactivated account stays
+        // deactivated; otherwise "active" means they hold at least one permission — from a role, or from being named
+        // on something (BaselineAccess) — and "awaiting role assignment" means they hold none yet. The stored status
+        // alone would keep someone named as an auditee on the "Access pending" screen until an administrator acted.
+        var sessionStatus = user.Status == UserStatus.Deactivated
+            ? UserStatus.Deactivated
+            : permissionKeys.Length > 0 ? UserStatus.Active : UserStatus.AwaitingRoleAssignment;
+
         return new SessionDto(
             user.Id, user.Email, user.FirstName, user.LastName, user.DisplayName,
-            Common.Enums.EnumExtensions.ToSnake(user.Status), roleNames, permissionKeys, expiresAt, absoluteExpiresAt, mustChangePassword);
+            Common.Enums.EnumExtensions.ToSnake(sessionStatus), roleNames, permissionKeys, expiresAt, absoluteExpiresAt, mustChangePassword);
     }
 
     public async Task<IReadOnlyList<string>> GetActiveRoleNamesAsync(Guid userId, CancellationToken cancellationToken)

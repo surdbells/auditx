@@ -334,6 +334,7 @@ public sealed class BulkImportUsersCommandHandler(
                 users.Add(user);
                 foreach (var role in resolvedRoles)
                 {
+                    role.EnsureAssignable();
                     userRoles.Add(UserRole.Grant(user.Id, role.Id));
                     user.MarkActiveOnFirstRole();
                 }

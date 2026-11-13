@@ -117,6 +117,22 @@ public sealed class Role : AggregateRoot
         }
     }
 
+    /// <summary>
+    /// True for every role except the retired built-in Auditee role, whose abilities are now automatic
+    /// (<see cref="Authorization.BaselineAccess"/>). The role row stays so existing assignments keep resolving.
+    /// </summary>
+    public bool IsAssignable => !Authorization.BaselineAccess.IsRetiredRole(Name, IsBuiltIn);
+
+    /// <summary>Refuses to grant or delegate a role that is no longer handed out.</summary>
+    public void EnsureAssignable()
+    {
+        if (!IsAssignable)
+        {
+            throw new DomainException("role.not_assignable",
+                $"The '{Name}' role is no longer assigned: everyone automatically has auditee access to the audits, findings and document requests they are named on.");
+        }
+    }
+
     public void Archive()
     {
         if (IsBuiltIn)

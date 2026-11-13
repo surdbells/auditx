@@ -139,16 +139,34 @@ describe('ExceptionDetailComponent', () => {
     expect(component.raisedByName()).toBe('Ray Raiser');
   });
 
-  it('allows submitting a MAP only when open or rejected with SubmitMap', async () => {
-    await setup(['ViewExceptions', 'SubmitMap'], exception('open'));
+  it('lets the finding owner submit a MAP, only when open or rejected', async () => {
+    // The signed-in user (u1) owns the finding.
+    await setup(['ViewExceptions', 'SubmitMap'], exception('open', { ownerUserId: 'u1' }));
     expect(component.canSubmitMapNow()).toBe(true);
 
     fixture.componentRef.setInput('id', 'x-1');
-    component.exception.set(exception('map_submitted'));
+    component.exception.set(exception('map_submitted', { ownerUserId: 'u1' }));
     expect(component.canSubmitMapNow()).toBe(false);
 
-    component.exception.set(exception('map_rejected'));
+    component.exception.set(exception('map_rejected', { ownerUserId: 'u1' }));
     expect(component.canSubmitMapNow()).toBe(true);
+
+    // Someone else's finding: holding SubmitMap (an auditor on the team) is not enough — the plan is management's.
+    component.exception.set(exception('open'));
+    expect(component.canSubmitMapNow()).toBe(false);
+  });
+
+  it("lets a manager record the action plan on the business's behalf", async () => {
+    await setup(['ViewExceptions', 'SubmitMap', 'ManageAudit'], exception('open'));
+    expect(component.canSubmitMapNow()).toBe(true);
+  });
+
+  it('lets the owner of one action work that action, without owning the finding', async () => {
+    const action = { id: 'act-1', ownerUserId: 'u1', status: 'pending' } as unknown as Parameters<typeof component.canActOn>[0];
+    await setup(['ViewExceptions', 'SubmitMap'], exception('map_approved'));
+    expect(component.canSubmitMap()).toBe(false);
+    expect(component.canActOn(action)).toBe(true);
+    expect(component.canActOn({ ...action, ownerUserId: 'someone-else' })).toBe(false);
   });
 
   it('submits a MAP carrying the version, refreshing local state', async () => {

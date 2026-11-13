@@ -169,6 +169,9 @@ export class UserDetailComponent {
   readonly state = signal<ViewState>('loading');
   readonly user = signal<UserDetailDto | null>(null);
   readonly roles = signal<RoleDto[]>([]);
+
+  /** Roles that can be granted or delegated — the retired Auditee role (automatic for everyone) is left out. */
+  readonly assignableRoles = computed(() => this.roles().filter((r) => r.isAssignable !== false));
   readonly reportingLine = signal<ReportingLineDto | null>(null);
   /** Institution password policy for inline validation in the reset-password dialog (best-effort). */
   readonly passwordPolicy = signal<PasswordPolicy | null>(null);
@@ -388,7 +391,7 @@ export class UserDetailComponent {
     }
     const data: GrantRoleDialogData = {
       userDisplayName: current.displayName,
-      roles: this.roles(),
+      roles: this.assignableRoles(),
     };
     this.dialog
       .open(GrantRoleDialogComponent, { data })
@@ -443,7 +446,7 @@ export class UserDetailComponent {
     }
     const data: CreateDelegationDialogData = {
       fromUserDisplayName: current.displayName,
-      roles: this.roles(),
+      roles: this.assignableRoles(),
     };
     this.dialog
       .open(CreateDelegationDialogComponent, { data })

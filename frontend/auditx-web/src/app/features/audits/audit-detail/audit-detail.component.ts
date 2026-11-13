@@ -228,8 +228,25 @@ export class AuditDetailComponent {
 
   private usersCache: UserDto[] = [];
 
-  readonly canManage = computed(() =>
-    this.auth.hasPermission(Permissions.ManageAudit),
+  /**
+   * True when the signed-in user is the AUDITEE of this audit. They act on it only as its auditee, whatever roles
+   * they hold elsewhere (independence) — the server refuses every audit-side action, so none is offered. A
+   * self-assessment has no independent auditor and is exempt.
+   */
+  readonly isAuditeeHere = computed(() => {
+    const audit = this.audit();
+    const me = this.auth.session()?.userId;
+    return (
+      !!audit &&
+      !!me &&
+      !audit.isSelfAssessment &&
+      (audit.auditeeUserId === me ||
+        (audit.teamMembers ?? []).some((m) => m.isActive && m.userId === me && m.teamRole === 'auditee'))
+    );
+  });
+
+  readonly canManage = computed(
+    () => this.auth.hasPermission(Permissions.ManageAudit) && !this.isAuditeeHere(),
   );
 
   readonly canViewExceptions = computed(() =>

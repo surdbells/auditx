@@ -84,6 +84,7 @@ public sealed class CreateUserCommandHandler(
         users.Add(user);
         foreach (var role in resolved)
         {
+            role.EnsureAssignable();
             userRoles.Add(UserRole.Grant(user.Id, role.Id));
             user.MarkActiveOnFirstRole();
         }
@@ -378,6 +379,8 @@ public sealed class GrantRoleCommandHandler(
         {
             throw new ConflictException("role_already_granted", "The user already holds this role at this scope.");
         }
+
+        role.EnsureAssignable();
 
         var assignment = UserRole.Grant(user.Id, role.Id, command.ScopeValue);
         userRoles.Add(assignment);

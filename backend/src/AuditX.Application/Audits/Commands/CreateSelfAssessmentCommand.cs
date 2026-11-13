@@ -34,6 +34,7 @@ public sealed class CreateSelfAssessmentCommandValidator : AbstractValidator<Cre
 
 public sealed class CreateSelfAssessmentCommandHandler(
     IAuditRepository audits,
+    IAuditUniverseRepository universe,
     IUserRepository users,
     AuditCreationService creationService,
     ICurrentUser currentUser,
@@ -51,6 +52,18 @@ public sealed class CreateSelfAssessmentCommandHandler(
         if (user is null || user.Status == UserStatus.Deactivated)
         {
             throw new ConflictException("audit.user_not_assignable", "Your account cannot run a self-assessment.");
+        }
+
+        // "Your own area": when the assessment names an audit-universe entity, the assessor must be its owner.
+        // Anyone holding RunSelfAssessment — now everyone the platform has named on something — could otherwise file
+        // a self-assessment against any area of the bank.
+        if (command.AuditableEntityId is { } entityId)
+        {
+            var area = await universe.GetByIdAsync(entityId, cancellationToken) ?? throw new NotFoundException("Auditable entity", entityId);
+            if (area.OwnerUserId != userId)
+            {
+                throw new ForbiddenAccessException("You can only run a self-assessment of an area you own.");
+            }
         }
 
         var targetEnd = command.TargetEndDate ?? command.StartDate.AddDays(30);

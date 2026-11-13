@@ -84,7 +84,7 @@ public sealed class SetManagementResponseDueDateCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         var before = new { dueDate = exception.ManagementResponseDueDate };
@@ -120,7 +120,7 @@ public sealed class AddFindingVerificationCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         var result = FollowUpParsing.ParseVerificationResult(command.Result);
@@ -155,7 +155,7 @@ public sealed class ReopenExceptionCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         exception.Reopen(command.Reason, currentUser.UserId ?? Guid.Empty, clock.UtcNow);

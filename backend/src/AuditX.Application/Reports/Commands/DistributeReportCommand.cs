@@ -55,7 +55,7 @@ public sealed class DistributeReportCommandHandler(
         if (report.AuditId is { } auditId)
         {
             auditEntity = await audits.GetByIdAsync(auditId, cancellationToken) ?? throw new NotFoundException("Audit", auditId);
-            await ReportAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+            await ReportAccess.EnsureCanIssueAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         }
         else
         {
@@ -223,7 +223,7 @@ public sealed class RecordDistributionOutcomeCommandHandler(
         if (report.AuditId is { } auditId)
         {
             var auditEntity = await audits.GetByIdAsync(auditId, cancellationToken) ?? throw new NotFoundException("Audit", auditId);
-            await ReportAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+            await ReportAccess.EnsureCanIssueAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         }
         else
         {

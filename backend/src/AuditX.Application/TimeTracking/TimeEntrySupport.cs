@@ -50,6 +50,7 @@ internal static class TimeEntryAccess
     /// </summary>
     public static async Task EnsureCanLogAsync(Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
     {
+        Execution.AuditIndependence.EnsureNotAuditee(audit, userId); // independence: never the audit's own auditee
         await EnsureTeamOrManagerAsync(audit, userId, permissions, cancellationToken);
         if (!Loggable.Contains(audit.Status))
         {
@@ -85,6 +86,7 @@ internal static class TimeEntryAccess
     /// <summary>Amend/delete authorization: only the entry's owner or an audit manager may modify it.</summary>
     public static async Task EnsureCanModifyAsync(TimeEntry entry, Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
     {
+        Execution.AuditIndependence.EnsureNotAuditee(audit, userId); // independence: never the audit's own auditee
         if (userId is not { } uid)
         {
             throw new ForbiddenAccessException();

@@ -71,6 +71,7 @@ public sealed class CreateLocalUserCommandHandler(
         users.Add(user);
         foreach (var role in resolved)
         {
+            role.EnsureAssignable();
             userRoles.Add(UserRole.Grant(user.Id, role.Id));
             user.MarkActiveOnFirstRole();
         }

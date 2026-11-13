@@ -61,9 +61,17 @@ public sealed class DownloadEvidenceQueryHandler(
     public async Task<EvidenceDownloadResult> Handle(DownloadEvidenceQuery query, CancellationToken cancellationToken)
     {
         var auditEntity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
-        await AuditAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
-
         var file = await evidence.GetByIdAsync(query.EvidenceId, cancellationToken);
+
+        // The person who PROVIDED a document may always open it again — to check what they sent, or before recalling
+        // it — even when a document request named them without their being on the audit's team. Everyone else needs
+        // to be a party to the audit.
+        var isProvider = file is not null && file.AuditId == query.AuditId && currentUser.UserId is { } me && file.UploadedBy == me;
+        if (!isProvider)
+        {
+            await AuditAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        }
+
         if (file is null || file.AuditId != query.AuditId)
         {
             throw new NotFoundException("Evidence", query.EvidenceId);

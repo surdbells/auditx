@@ -25,7 +25,7 @@ public sealed class GetExceptionByIdQueryHandler(
     {
         var exception = await exceptions.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Exception", query.Id);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanViewAsync(auditEntity, exception, currentUser.UserId, permissions, cancellationToken);
         return exception.ToDto(DateOnly.FromDateTime(clock.UtcNow.UtcDateTime));
     }
 }
@@ -39,7 +39,7 @@ public sealed class ListExceptionsForAuditQueryHandler(
     public async Task<IReadOnlyList<ExceptionListItemDto>> Handle(ListExceptionsForAuditQuery query, CancellationToken cancellationToken)
     {
         var auditEntity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await Execution.AuditAccess.EnsureCanViewAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
 
         var status = ParseStatus(query.Status);
         var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
@@ -198,7 +198,7 @@ public sealed class GetExceptionHistoryQueryHandler(
     {
         var exception = await exceptions.GetByIdAsync(query.Id, cancellationToken) ?? throw new NotFoundException("Exception", query.Id);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanViewAsync(auditEntity, exception, currentUser.UserId, permissions, cancellationToken);
 
         var entries = await trail.GetForTargetAsync(AuditTargetTypes.Exception, query.Id, eventType: null, limit: 200, cancellationToken);
         return entries

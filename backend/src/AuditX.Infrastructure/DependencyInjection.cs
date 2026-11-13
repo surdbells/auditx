@@ -180,6 +180,8 @@ public static class DependencyInjection
             return ConnectionMultiplexer.Connect(redisConfig);
         });
         services.AddScoped<ITokenDenylist, RedisTokenDenylist>();
+        services.AddSingleton<Authorization.PermissionCache>();
+        services.AddScoped<IAuditIndependenceReader, Authorization.AuditIndependenceReader>();
         services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddSingleton<ISessionTokenService, SessionTokenService>();
 

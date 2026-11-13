@@ -1,5 +1,6 @@
 using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Common.Exceptions;
+using AuditX.Application.Execution;
 using AuditX.Domain.Audits;
 using AuditX.Domain.Authorization;
 
@@ -30,6 +31,44 @@ internal static class ExceptionAccess
         }
 
         throw new ForbiddenAccessException("You are not a member of this audit.");
+    }
+
+    /// <summary>
+    /// AUDIT-SIDE actions on a finding — raise, re-rate, reassign, verify, reopen, cancel, link, escalate. As
+    /// <see cref="EnsureCanAccessAsync"/>, and never by the audit's own auditee (independence).
+    /// </summary>
+    public static async Task EnsureCanActAsAuditorAsync(Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
+    {
+        AuditIndependence.EnsureNotAuditee(audit, userId);
+        await EnsureCanAccessAsync(audit, userId, permissions, cancellationToken);
+    }
+
+    /// <summary>
+    /// Who may READ one finding: anyone on its audit, a holder of ManageAudit for it, a holder of portfolio visibility
+    /// (ViewAudits — they already see it in the tracker), and the finding's OWNER. The owner is named on the finding
+    /// and must act on it, but is often not on the audit's team: without this they saw it in their tracker and got a
+    /// 403 opening it.
+    /// </summary>
+    public static async Task EnsureCanViewAsync(
+        Audit audit, Domain.Exceptions.AuditException exception, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
+    {
+        if (userId is not { } uid)
+        {
+            throw new ForbiddenAccessException();
+        }
+
+        if (exception.OwnerUserId == uid || audit.TeamMembers.Any(m => m.IsActive && m.UserId == uid))
+        {
+            return;
+        }
+
+        if (await permissions.HasPermissionAsync(uid, PermissionKeys.ViewAudits, null, cancellationToken)
+            || await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken))
+        {
+            return;
+        }
+
+        throw new ForbiddenAccessException("You are not a party to this finding.");
     }
 
     /// <summary>

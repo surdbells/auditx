@@ -16,6 +16,16 @@ namespace AuditX.Application.Reports;
 /// </summary>
 public static class ReportAccess
 {
+    /// <summary>
+    /// AUDIT-SIDE report actions — generate, distribute, record a delivery: as <see cref="EnsureCanAccessAsync"/>, and
+    /// never by the audit's own auditee, who must not issue the report on themselves (independence).
+    /// </summary>
+    public static async Task EnsureCanIssueAsync(Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
+    {
+        Execution.AuditIndependence.EnsureNotAuditee(audit, userId);
+        await EnsureCanAccessAsync(audit, userId, permissions, cancellationToken);
+    }
+
     public static async Task EnsureCanAccessAsync(Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
     {
         if (userId is not { } uid)

@@ -25,7 +25,8 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .Enrich.FromLogContext()
     .WriteTo.Console(formatProvider: System.Globalization.CultureInfo.InvariantCulture));
 
-builder.Services.AddControllers();
+// Independence is enforced for every request that changes an audit, ahead of the action (see the filter).
+builder.Services.AddControllers(options => options.Filters.Add<AuditX.Api.Filters.AuditIndependenceFilter>());
 
 // Model-binding / malformed-body failures return the SAME RFC 7807 problem+json shape the exception middleware
 // produces (request_id + error_code + field_errors), so the API's error contract is uniform end-to-end.

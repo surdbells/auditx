@@ -1,5 +1,6 @@
 using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Common.Exceptions;
+using AuditX.Application.Execution;
 using AuditX.Domain.Audits;
 using AuditX.Domain.Authorization;
 
@@ -16,6 +17,10 @@ internal static class AuditManageAuthorization
     public static async Task EnsureCanManageAsync(Audit audit, Guid? callerUserId, IPermissionResolver permissions, CancellationToken cancellationToken)
     {
         var userId = callerUserId ?? throw new ForbiddenAccessException();
+
+        // Independence: the audit's own auditee never drives it, even holding ManageAudit. (Not a self-assessment's
+        // assessor — IsAuditee is false there.)
+        AuditIndependence.EnsureNotAuditee(audit, userId);
 
         if (await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken))
         {

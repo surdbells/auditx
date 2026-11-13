@@ -395,11 +395,17 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     [Fact]
-    public async Task Reports_require_the_view_permission()
+    public async Task Reports_are_never_served_to_someone_who_is_not_a_party_to_the_audit()
     {
-        var auditee = await LoginAsync("auditee"); // dev 'auditee' has no role → no ViewReport
+        // The dev 'auditee' holds no role. Named on nothing, they hold no ViewReport and are refused at the gate
+        // (403). Once another test in this class has named them on an audit they hold the auditee abilities —
+        // ViewReport included — but only for audits they are a party to: an audit they are not on (here, one that
+        // does not exist) is still not served (404). Which of the two applies depends on test order; a report being
+        // served is wrong in both. The gate and the per-audit scope are pinned exactly in BaselineAccessGateTests
+        // and AuditeeDataIsolationFlowTests.
+        var auditee = await LoginAsync("auditee");
         var response = await auditee.GetAsync($"/api/v1/audits/{Guid.NewGuid()}/reports");
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Contains(response.StatusCode, new[] { HttpStatusCode.Forbidden, HttpStatusCode.NotFound });
     }
 
     private const string PngLogo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";

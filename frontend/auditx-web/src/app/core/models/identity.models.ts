@@ -191,6 +191,11 @@ export interface RoleDto {
   isArchived: boolean;
   parentRoleIds: string[];
   permissions: RolePermissionDto[];
+  /**
+   * False for the retired built-in Auditee role: its abilities are automatic (everyone has auditee access to what
+   * they are named on), so it is no longer offered for assignment. Absent/true for every other role.
+   */
+  isAssignable?: boolean;
 }
 
 export interface PermissionDto {

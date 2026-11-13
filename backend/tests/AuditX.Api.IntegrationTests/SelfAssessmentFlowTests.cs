@@ -47,12 +47,42 @@ public sealed class SelfAssessmentFlowTests(ApiFactory factory) : IClassFixture<
         return roles.EnumerateArray().First(r => r.GetProperty("name").GetString() == roleName).GetProperty("id").GetGuid();
     }
 
-    /// <summary>Grant the auditee dev user the Auditee built-in role (idempotent across the class DB).</summary>
-    private async Task GrantAuditeeRoleAsync(HttpClient admin)
+    /// <summary>
+    /// Makes the auditee dev user the OWNER of an area, and returns that area's id. Nobody is handed an "Auditee" role
+    /// any more: being named on something — here, owning an area — is what gives a person their auditee abilities,
+    /// self-assessment included.
+    /// </summary>
+    private async Task<Guid> GrantAuditeeRoleAsync(HttpClient admin)
     {
-        var roleId = await RoleIdAsync(admin, "Auditee");
         var userId = await UserIdAsync(admin, "auditee@auditx.local");
-        await admin.PostAsJsonAsync($"/api/v1/users/{userId}/roles", new { roleId, scopeValue = (string?)null });
+        var area = await DataAsync(await admin.PostAsJsonAsync("/api/v1/audit-universe/entities",
+            new { name = $"Auditee's area {Guid.NewGuid():N}", entityType = "branch", ownerUserId = userId }));
+        return area.GetProperty("id").GetGuid();
+    }
+
+    [Fact]
+    public async Task A_self_assessment_can_only_name_an_area_the_assessor_owns()
+    {
+        var admin = await LoginAsync("admin");
+        var templateId = await PublishTemplateAsync(admin);
+        var ownArea = await GrantAuditeeRoleAsync(admin);
+        var someoneElses = (await DataAsync(await admin.PostAsJsonAsync("/api/v1/audit-universe/entities",
+            new { name = $"Treasury {Guid.NewGuid():N}", entityType = "branch" }))).GetProperty("id").GetGuid();
+        var auditee = await LoginAsync("auditee");
+
+        object Body(Guid entityId) => new
+        {
+            name = $"Self-assessment {Guid.NewGuid():N}", auditType = "branch", startDate = "2027-03-01", targetEndDate = "2027-03-31",
+            templateId, auditableEntityId = entityId,
+        };
+
+        // Another area: refused — "self" assessment means your own.
+        Assert.Equal(HttpStatusCode.Forbidden, (await auditee.PostAsJsonAsync("/api/v1/audits/self-assessment", Body(someoneElses))).StatusCode);
+
+        // Their own area: created, and linked to it.
+        var own = await DataAsync(await auditee.PostAsJsonAsync("/api/v1/audits/self-assessment", Body(ownArea)));
+        Assert.Equal(ownArea, own.GetProperty("auditableEntityId").GetGuid());
+        Assert.True(own.GetProperty("isSelfAssessment").GetBoolean());
     }
 
     /// <summary>Author a template, publish it through maker-checker, and return its id (a checklist to assess against).</summary>

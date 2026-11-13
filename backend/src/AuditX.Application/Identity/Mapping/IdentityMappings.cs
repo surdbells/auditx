@@ -27,7 +27,8 @@ public static class IdentityMappings
         role.ParentRoleIds.ToArray(),
         role.Permissions
             .Select(p => new RolePermissionDto(p.PermissionKey, p.ScopeType.ToString(), p.ScopePredicateJson))
-            .ToArray());
+            .ToArray(),
+        role.IsAssignable);
 
     public static PermissionDto ToDto(this PermissionDefinition definition) => new(
         definition.Key, definition.Label, definition.Description, definition.Module, definition.FinestScope.ToString());

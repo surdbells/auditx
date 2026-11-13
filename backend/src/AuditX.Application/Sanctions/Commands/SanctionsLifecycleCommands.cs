@@ -46,7 +46,7 @@ public sealed class TriggerSanctionsCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         var actorId = currentUser.UserId ?? throw new UnauthorizedException();
 
         // Decoupling (FR-M7-011): copy category/severity/recurrence from the exception — the case never re-reads it.

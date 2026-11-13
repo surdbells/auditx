@@ -61,7 +61,7 @@ public sealed class RaiseExceptionCommandHandler(
     public async Task<ExceptionDto> Handle(RaiseExceptionCommand command, CancellationToken cancellationToken)
     {
         var auditEntity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         var userId = currentUser.UserId ?? throw new UnauthorizedException();
 
         var item = auditEntity.ChecklistItems.FirstOrDefault(i => i.Id == command.ChecklistItemId)
@@ -165,7 +165,7 @@ public sealed class ChangeSeverityCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         var before = exception.Severity;
@@ -187,7 +187,7 @@ public sealed class ReassignExceptionOwnerCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         var owner = await users.GetByIdAsync(command.OwnerUserId, cancellationToken);
@@ -214,7 +214,7 @@ public sealed class SetExceptionRecurrenceCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         // When marking as a recurrence, the referenced prior finding must exist.
@@ -241,7 +241,7 @@ public sealed class CancelExceptionCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         exception.EnsureVersion(command.Version);
 
         exception.Cancel(command.Reason, currentUser.UserId ?? Guid.Empty, clock.UtcNow);

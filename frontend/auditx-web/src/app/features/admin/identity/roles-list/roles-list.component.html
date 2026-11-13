@@ -68,6 +68,9 @@
                   @if (role.isArchived) {
                     <mat-chip class="chip-archived">{{ 'identity.roles.archived' | t }}</mat-chip>
                   }
+                  @if (role.isAssignable === false) {
+                    <mat-chip [matTooltip]="'identity.roles.automaticTooltip' | t">{{ 'identity.roles.automatic' | t }}</mat-chip>
+                  }
                   @if (role.parentRoleIds.length) {
                     <mat-chip [matTooltip]="'identity.roles.inheritsTooltip' | t">
                       {{ 'identity.roles.inheritsCount' | t: { count: role.parentRoleIds.length } }}

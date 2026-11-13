@@ -159,6 +159,9 @@ export class UsersListComponent {
   /** In-flight fetch (page navigation / filter change) — disables the paginator without clearing the table. */
   readonly loading = signal(false);
   readonly roles = signal<RoleDto[]>([]);
+
+  /** Roles that can be given to a new user — the retired Auditee role (automatic for everyone) is left out. */
+  readonly assignableRoles = computed(() => this.roles().filter((r) => r.isAssignable !== false));
   /** Institution password policy + local-auth flag for the create-user dialog (fetched best-effort). */
   readonly passwordPolicy = signal<PasswordPolicy | null>(null);
   readonly localPasswordsEnabled = signal(true);
@@ -312,7 +315,7 @@ export class UsersListComponent {
 
   openCreateUser(): void {
     const data: CreateUserDialogData = {
-      roles: this.roles(),
+      roles: this.assignableRoles(),
       localPasswordsEnabled: this.localPasswordsEnabled(),
       passwordPolicy: this.passwordPolicy(),
     };

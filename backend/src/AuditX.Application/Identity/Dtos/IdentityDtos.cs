@@ -80,7 +80,9 @@ public sealed record RoleDto(
     bool IsBuiltIn,
     bool IsArchived,
     IReadOnlyList<Guid> ParentRoleIds,
-    IReadOnlyList<RolePermissionDto> Permissions);
+    IReadOnlyList<RolePermissionDto> Permissions,
+    // False for the retired built-in Auditee role: its abilities are automatic, so it is not offered for assignment.
+    bool IsAssignable = true);
 
 public sealed record PermissionDto(string Key, string Label, string Description, string Module, string FinestScope);
 

@@ -41,6 +41,7 @@ internal static class EvidenceRequestAccess
     /// <summary>Mutation authorization: an active team member or audit manager, and the audit is in an actionable phase.</summary>
     public static async Task EnsureCanActionAsync(Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
     {
+        Execution.AuditIndependence.EnsureNotAuditee(audit, userId); // independence: never the audit's own auditee
         await EnsureTeamOrManagerAsync(audit, userId, permissions, cancellationToken);
         if (!Actionable.Contains(audit.Status))
         {

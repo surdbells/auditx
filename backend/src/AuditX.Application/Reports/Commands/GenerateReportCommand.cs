@@ -36,7 +36,7 @@ public sealed class GenerateReportCommandHandler(
         var actorId = currentUser.UserId ?? throw new UnauthorizedException();
 
         var auditEntity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
-        await ReportAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ReportAccess.EnsureCanIssueAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
 
         // A report is generated against a frozen/near-frozen audit (US-M8-002).
         if (auditEntity.Status is not (AuditStatus.UnderReview or AuditStatus.Completed))

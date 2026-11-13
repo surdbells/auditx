@@ -226,6 +226,23 @@ describe('AuditDetailComponent', () => {
     expect(component.auditeeName()).toBe('Aiden Auditee');
   });
 
+  it('never offers management actions to the audit of your own area, even holding ManageAudit', async () => {
+    // The signed-in manager (u1) is the AUDITEE of this audit: they read it, they do not run it.
+    await setup(['ManageAudit', 'ViewUniverse'], audit('draft', { auditeeUserId: 'u1' }));
+    expect(component.isAuditeeHere()).toBe(true);
+    expect(component.canManage()).toBe(false);
+    expect(component.canLinkEntity()).toBe(false);
+
+    // Someone else's area: the same permissions manage it as before.
+    component.audit.set(audit('draft'));
+    expect(component.isAuditeeHere()).toBe(false);
+    expect(component.canManage()).toBe(true);
+
+    // A self-assessment has no independent auditor — the assessor (lead and auditee) drives it.
+    component.audit.set(audit('draft', { auditeeUserId: 'u1', leadUserId: 'u1', isSelfAssessment: true }));
+    expect(component.isAuditeeHere()).toBe(false);
+  });
+
   it('disables Plan until there is a checklist item and an auditor', async () => {
     await setup(['ManageAudit'], audit('draft'));
     expect(component.canPlan()).toBe(false);

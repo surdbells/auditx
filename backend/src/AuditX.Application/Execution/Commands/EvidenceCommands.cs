@@ -96,6 +96,7 @@ public sealed class SoftDeleteEvidenceCommandHandler(
     public async Task<Unit> Handle(SoftDeleteEvidenceCommand command, CancellationToken cancellationToken)
     {
         var auditEntity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
+        AuditIndependence.EnsureNotAuditee(auditEntity, currentUser.UserId);
         await AuditAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
 
         var file = await evidence.GetByIdAsync(command.EvidenceId, cancellationToken);
@@ -121,6 +122,7 @@ public sealed class UnflagEvidenceCommandHandler(
     public async Task<Unit> Handle(UnflagEvidenceCommand command, CancellationToken cancellationToken)
     {
         var auditEntity = await audits.GetByIdAsync(command.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", command.AuditId);
+        AuditIndependence.EnsureNotAuditee(auditEntity, currentUser.UserId);
         await AuditAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
 
         var file = await evidence.GetByIdAsync(command.EvidenceId, cancellationToken);

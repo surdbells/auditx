@@ -19,7 +19,7 @@ public sealed class ListMapActionEvidenceQueryHandler(
     {
         var exception = await exceptions.GetByIdAsync(query.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", query.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanViewAsync(auditEntity, exception, currentUser.UserId, permissions, cancellationToken);
 
         var files = await evidence.ListForContextAsync(exception.AuditId, EvidenceContextType.MapAction, query.ActionId, cancellationToken);
         return files.Select(f => f.ToDto()).ToArray();

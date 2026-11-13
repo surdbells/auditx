@@ -1,5 +1,10 @@
 using AuditX.Application.Abstractions;
+using AuditX.Domain.Audits;
 using AuditX.Domain.Common;
+using AuditX.Domain.Evidence;
+using AuditX.Domain.Exceptions;
+using AuditX.Domain.Universe;
+using AuditX.Infrastructure.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -8,11 +13,16 @@ namespace AuditX.Infrastructure.Persistence.Interceptors;
 
 /// <summary>
 /// Stamps the audit columns (created/updated at/by) on every tracked entity before save, and dispatches
-/// the domain events raised by aggregate roots after the transaction commits.
+/// the domain events raised by aggregate roots after the transaction commits. It also drops the cached permissions
+/// of anyone the save NAMES on something, so the access that involvement brings is there on their next request.
 /// </summary>
-public sealed class AuditingSaveChangesInterceptor(IClock clock, ICurrentUser currentUser, IDomainEventDispatcher dispatcher)
+public sealed class AuditingSaveChangesInterceptor(
+    IClock clock, ICurrentUser currentUser, IDomainEventDispatcher dispatcher, PermissionCache permissionCache)
     : SaveChangesInterceptor
 {
+    /// <summary>Users named by the save in flight — collected before it (entry states are still known), used after.</summary>
+    private readonly HashSet<Guid> _namedUsers = [];
+
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
@@ -22,6 +32,7 @@ public sealed class AuditingSaveChangesInterceptor(IClock clock, ICurrentUser cu
         {
             PromoteAggregateRootsOnChildChange(eventData.Context);
             StampAuditColumns(eventData.Context);
+            CollectNamedUsers(eventData.Context);
         }
 
         return base.SavingChangesAsync(eventData, result, cancellationToken);
@@ -34,10 +45,73 @@ public sealed class AuditingSaveChangesInterceptor(IClock clock, ICurrentUser cu
     {
         if (eventData.Context is not null)
         {
+            await InvalidateNamedUsersAsync();
             await DispatchDomainEventsAsync(eventData.Context, cancellationToken);
         }
 
         return await base.SavedChangesAsync(eventData, result, cancellationToken);
+    }
+
+    /// <summary>
+    /// The people an added or changed row names: an audit's auditee and lead, a team member, a finding's or action's
+    /// owner, the person a document is requested from, an area's owner, a root-cause gap's or remediation's owner.
+    /// Being named is what gives someone the baseline abilities (<c>BaselineAccess</c>), so their cached permissions
+    /// must not outlive the save. Over-invalidating is harmless (one cache delete); missing one would leave a newly
+    /// named person locked out for the cache's lifetime.
+    /// </summary>
+    private void CollectNamedUsers(DbContext context)
+    {
+        foreach (var entry in context.ChangeTracker.Entries())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified))
+            {
+                continue;
+            }
+
+            Guid?[] named = entry.Entity switch
+            {
+                Audit audit => [audit.AuditeeUserId, audit.LeadUserId],
+                AuditTeamMember member => [member.UserId],
+                AuditException exception => [exception.OwnerUserId],
+                MapAction action => [action.OwnerUserId],
+                EvidenceRequest request => [request.RequestedFromUserId],
+                AuditableEntity area => [area.OwnerUserId],
+                RootCauseGap gap => [gap.OwnerUserId],
+                RootCauseGapRemediation remediation => [remediation.OwnerUserId],
+                _ => [],
+            };
+
+            foreach (var userId in named)
+            {
+                if (userId is { } id && id != Guid.Empty)
+                {
+                    _namedUsers.Add(id);
+                }
+            }
+        }
+    }
+
+    private async Task InvalidateNamedUsersAsync()
+    {
+        if (_namedUsers.Count == 0)
+        {
+            return;
+        }
+
+        var users = _namedUsers.ToArray();
+        _namedUsers.Clear();
+        foreach (var userId in users)
+        {
+            try
+            {
+                await permissionCache.InvalidateUserAsync(userId);
+            }
+            catch (StackExchange.Redis.RedisException)
+            {
+                // The data is already committed; a cache that cannot be reached must not fail the request. The entry
+                // expires on its own within the cache TTL.
+            }
+        }
     }
 
     private void StampAuditColumns(DbContext context)

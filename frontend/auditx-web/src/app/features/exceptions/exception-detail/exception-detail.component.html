@@ -307,7 +307,7 @@
                 </div>
 
                 <div class="detail__action-actions">
-                  @if (canWorkActions() && action.status !== 'complete') {
+                  @if (status() === 'map_approved' && canActOn(action) && action.status !== 'complete') {
                     <button matButton type="button" (click)="markActionComplete(action)">
                       <app-icon name="done" />
                       {{ 'exceptions.action.markComplete' | t }}
@@ -324,7 +324,7 @@
                         <app-icon name="refresh" />
                         {{ 'exceptions.action.load' | t }}
                       </button>
-                      @if (canUploadEvidence() && !isReadOnly()) {
+                      @if (canUploadEvidence() && !isReadOnly() && canActOn(action)) {
                         <button matButton type="button" (click)="fileInput.click()">
                           <app-icon name="upload_file" />
                           {{ 'exceptions.action.upload' | t }}

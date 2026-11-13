@@ -51,6 +51,7 @@ internal static class ProcedureAccess
     /// <summary>Record authorization: an active team member or an audit manager, and the audit is in a fieldwork phase.</summary>
     public static async Task EnsureCanRecordAsync(Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
     {
+        AuditIndependence.EnsureNotAuditee(audit, userId); // independence: never the audit's own auditee
         await EnsureTeamOrManagerAsync(audit, userId, permissions, cancellationToken);
         if (!Recordable.Contains(audit.Status))
         {
@@ -65,6 +66,7 @@ internal static class ProcedureAccess
     /// <summary>Delete authorization: only the performer or an audit manager may remove a procedure.</summary>
     public static async Task EnsureCanModifyAsync(AuditProcedure procedure, Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
     {
+        AuditIndependence.EnsureNotAuditee(audit, userId); // independence: never the audit's own auditee
         if (userId is not { } uid)
         {
             throw new ForbiddenAccessException();

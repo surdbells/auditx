@@ -201,8 +201,21 @@ export class ExceptionDetailComponent {
   readonly canManage = computed(() =>
     this.auth.hasPermission(Permissions.ManageException),
   );
-  readonly canSubmitMap = computed(() =>
-    this.auth.hasPermission(Permissions.SubmitMap),
+  /** True when the signed-in user is the owner of this finding. */
+  private readonly isOwner = computed(() => {
+    const me = this.auth.session()?.userId;
+    return !!me && this.exception()?.ownerUserId === me;
+  });
+
+  /** A manager may record the action plan on the business's behalf. */
+  private readonly canActForBusiness = computed(() => this.auth.hasPermission(Permissions.ManageAudit));
+
+  /**
+   * The action plan is management's: the finding's OWNER writes it (or a manager on their behalf). Holding SubmitMap
+   * as an auditor on the audit's team is not enough — the server refuses it, so the button is not offered.
+   */
+  readonly canSubmitMap = computed(
+    () => this.auth.hasPermission(Permissions.SubmitMap) && (this.isOwner() || this.canActForBusiness()),
   );
   readonly canApproveMap = computed(() =>
     this.auth.hasPermission(Permissions.ApproveMap),
@@ -266,6 +279,15 @@ export class ExceptionDetailComponent {
   readonly canWorkActions = computed(
     () => this.canSubmitMap() && this.status() === 'map_approved',
   );
+
+  /** One action is worked by the finding's owner, by that action's own owner, or by a manager on their behalf. */
+  canActOn(action: MapAction): boolean {
+    const me = this.auth.session()?.userId;
+    return (
+      this.auth.hasPermission(Permissions.SubmitMap) &&
+      (this.isOwner() || this.canActForBusiness() || (!!me && action.ownerUserId === me))
+    );
+  }
 
   readonly ownerName = computed(() =>
     this.nameOf(this.exception()?.ownerUserId),

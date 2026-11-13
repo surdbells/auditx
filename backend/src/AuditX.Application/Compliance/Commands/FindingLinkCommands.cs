@@ -23,7 +23,7 @@ public sealed class LinkControlToFindingCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
 
         var control = await controls.GetByIdAsync(command.ControlId, cancellationToken) ?? throw new NotFoundException("Control", command.ControlId);
 
@@ -53,7 +53,7 @@ public sealed class UnlinkControlFromFindingCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
 
         var link = await links.GetControlLinkAsync(command.ExceptionId, command.ControlId, cancellationToken);
         if (link is not null)
@@ -81,7 +81,7 @@ public sealed class LinkRegulationToFindingCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
 
         var regulation = await regulations.GetByIdAsync(command.RegulationId, cancellationToken) ?? throw new NotFoundException("Regulation", command.RegulationId);
 
@@ -111,7 +111,7 @@ public sealed class UnlinkRegulationFromFindingCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
 
         var link = await links.GetRegulationLinkAsync(command.ExceptionId, command.RegulationId, cancellationToken);
         if (link is not null)
