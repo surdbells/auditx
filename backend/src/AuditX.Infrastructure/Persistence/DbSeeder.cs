@@ -88,6 +88,10 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
             ("evidence_requested", "evidence_requested", "payload_derived", "RequestedFromUserId", "[\"email\"]",
                 "A document has been requested from you",
                 "You have been asked to provide \"{{ Title }}\" for the audit \"{{ AuditName }}\" (due {{ DueDate }}). Please upload it at {{ AppBaseUrl }}/my/evidence-requests."),
+            // The auditee took back a document they had provided → tell the auditor who asked for it (they may have relied on it).
+            ("evidence_recalled", "evidence_recalled", "payload_derived", "RequestedByUserId", "[\"email\"]",
+                "A requested document was recalled",
+                "\"{{ Filename }}\", provided for \"{{ Title }}\" on the audit \"{{ AuditName }}\", was recalled by the person who uploaded it. Reason: {{ Reason }}. The document is kept on record as recalled; review the request at {{ AppBaseUrl }}/audits/{{ AuditId }}/execute."),
             ("exception_raised", "exception_raised", "payload_derived", "OwnerUserId", "[\"email\"]",
                 "An exception was raised against you", "Exception {{ ExceptionId }} ({{ Severity }}) was raised on audit {{ AuditId }}. Please review."),
             ("exception_owner_reassigned", "exception_owner_reassigned", "payload_derived", "NewOwnerUserId", "[\"email\"]",

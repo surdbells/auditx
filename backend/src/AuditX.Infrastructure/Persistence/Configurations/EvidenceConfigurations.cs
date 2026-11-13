@@ -19,6 +19,8 @@ public sealed class EvidenceFileConfiguration : IEntityTypeConfiguration<Evidenc
         builder.Property(e => e.MimeType).HasMaxLength(255).IsRequired();
         builder.Property(e => e.Sha256Hash).HasMaxLength(64).IsFixedLength().IsRequired();
         builder.Property(e => e.DeletionReason);
+        builder.Property(e => e.RecallReason).HasMaxLength(EvidenceFile.MaxRecallReasonLength);
+        builder.Ignore(e => e.IsRecalled);
         builder.Property(e => e.Version).IsRowVersion();
         builder.Property(e => e.ContextType)
             .HasConversion(new SnakeCaseEnumConverter<EvidenceContextType>())

@@ -20,3 +20,12 @@ public sealed record EvidenceUnflaggedEvent(Guid EvidenceId, Guid AuditId, strin
 /// </summary>
 public sealed record EvidenceRequestedEvent(
     Guid EvidenceRequestId, Guid AuditId, string AuditName, Guid RequestedFromUserId, Guid RequestedByUserId, string Title, string? DueDate) : EvidenceEvent;
+
+/// <summary>
+/// The person who provided a document for an evidence request recalled it. Carries the requesting auditor
+/// (<see cref="RequestedByUserId"/>) so the notification pipeline can tell them — they may have relied on it —
+/// and whether the request went back to outstanding (<see cref="Reopened"/>).
+/// </summary>
+public sealed record EvidenceRecalledEvent(
+    Guid EvidenceRequestId, Guid AuditId, string AuditName, Guid RequestedByUserId, Guid RecalledByUserId,
+    string Title, string Filename, string Reason, bool Reopened) : EvidenceEvent;

@@ -111,6 +111,28 @@ public sealed class EvidenceRequest : AggregateRoot, ISoftDeletable
         }
     }
 
+    /// <summary>
+    /// Records that one of the documents provided for this request was recalled by the person who uploaded it. When
+    /// no document remains (<paramref name="remainingDocuments"/> is 0) a request that had been received goes back to
+    /// outstanding — nothing is on file any more, so the auditor sees it as pending again and a replacement can be
+    /// uploaded. Raises <see cref="EvidenceRecalledEvent"/> so the requesting auditor is told. Returns true when the
+    /// request was reopened.
+    /// </summary>
+    public bool RecordRecall(string auditName, string filename, string reason, Guid recalledByUserId, int remainingDocuments)
+    {
+        var reopened = false;
+        if (remainingDocuments <= 0 && Status == EvidenceRequestStatus.Received)
+        {
+            Status = EvidenceRequestStatus.Requested;
+            ReceivedByUserId = null;
+            ReceivedAt = null;
+            reopened = true;
+        }
+
+        RaiseDomainEvent(new EvidenceRecalledEvent(Id, AuditId, auditName, RequestedByUserId, recalledByUserId, Title, filename, reason, reopened));
+        return reopened;
+    }
+
     /// <summary>Marks the requested evidence as received (only from Requested).</summary>
     public void MarkReceived(Guid userId, DateTimeOffset nowUtc)
     {

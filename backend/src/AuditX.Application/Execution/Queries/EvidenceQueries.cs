@@ -8,6 +8,7 @@ using AuditX.Application.Common.Messaging;
 using AuditX.Application.Execution.Dtos;
 using AuditX.Application.Execution.Mapping;
 using AuditX.Domain.AuditTrail;
+using AuditX.Domain.Authorization;
 using AuditX.Domain.Enums;
 
 namespace AuditX.Application.Execution.Queries;
@@ -66,6 +67,22 @@ public sealed class DownloadEvidenceQueryHandler(
         if (file is null || file.AuditId != query.AuditId)
         {
             throw new NotFoundException("Evidence", query.EvidenceId);
+        }
+
+        // A recalled document was taken back by the person who provided it: it is no longer available to the audit
+        // team. Its content is retained (so a recall can never be used to destroy evidence) and stays reachable only
+        // by an evidence custodian (ManageEvidence) — and every such access is itself written to the trail.
+        if (file.IsRecalled)
+        {
+            var userId = currentUser.UserId ?? throw new UnauthorizedException();
+            if (!await permissions.HasPermissionAsync(userId, PermissionKeys.ManageEvidence, auditEntity.Id.ToString(), cancellationToken))
+            {
+                throw new ConflictException("evidence.recalled", "This document was recalled by the person who provided it and is no longer available.");
+            }
+
+            audit.Record(AuditEventTypes.EvidenceRecalledAccessed, AuditTargetTypes.EvidenceFile, file.Id,
+                payload: new { file.OriginalFilename, file.RecalledAt, file.RecalledBy });
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
         // A previously-flagged file is locked until M11 admin review clears it (US-M5-008).

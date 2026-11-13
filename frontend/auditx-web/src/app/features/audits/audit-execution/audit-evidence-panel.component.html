@@ -134,10 +134,23 @@
           @if (r.files.length) {
             <ul class="evi__files">
               @for (f of r.files; track f.id) {
-                <li class="evi__file">
-                  <app-icon inline name="description" />
-                  <button matButton type="button" (click)="download(r, f)">{{ f.originalFilename }}</button>
-                </li>
+                @if (f.isRecalled) {
+                  <!-- Taken back by the person who provided it: kept on the record, no longer evidence. -->
+                  <li class="evi__file evi__file--recalled">
+                    <app-icon inline name="block" />
+                    <span class="evi__file-name">{{ f.originalFilename }}</span>
+                    <span class="status-badge" data-status="cancelled">{{ 'evidence.recalled.badge' | t }}</span>
+                    <span class="muted evi__recall-note">
+                      {{ 'evidence.recalled.by' | t: { name: nameOf(f.recalledBy), date: (f.recalledAt | date: 'medium') ?? '' } }}
+                      @if (f.recallReason) { — {{ f.recallReason }} }
+                    </span>
+                  </li>
+                } @else {
+                  <li class="evi__file">
+                    <app-icon inline name="description" />
+                    <button matButton type="button" (click)="download(r, f)">{{ f.originalFilename }}</button>
+                  </li>
+                }
               }
             </ul>
           }

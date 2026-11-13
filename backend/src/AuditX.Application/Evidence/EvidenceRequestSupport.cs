@@ -48,6 +48,18 @@ internal static class EvidenceRequestAccess
         }
     }
 
+    /// <summary>
+    /// Independence: the person a document is requested FROM never decides that request's fate — they cannot mark
+    /// it received, waive it or delete it, whatever roles they hold (e.g. an auditor who is the auditee here).
+    /// </summary>
+    public static void EnsureNotRecipient(EvidenceRequest request, Guid? userId)
+    {
+        if (userId is { } uid && request.RequestedFromUserId == uid)
+        {
+            throw new ForbiddenAccessException("This document was requested from you, so you cannot mark it received, waive it or delete it.");
+        }
+    }
+
     /// <summary>View authorization: an active team member or an audit manager.</summary>
     public static Task EnsureCanViewAsync(Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
         => EnsureTeamOrManagerAsync(audit, userId, permissions, cancellationToken);

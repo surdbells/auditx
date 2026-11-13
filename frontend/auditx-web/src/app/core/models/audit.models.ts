@@ -315,6 +315,14 @@ export interface EvidenceFile {
   uploadedBy: string;
   uploadedAt: string;
   isFlagged: boolean;
+  /**
+   * True when the person who provided the document took it back. A recalled document stays listed as history
+   * (with who / when / why) but no longer counts as evidence and can no longer be opened by the audit team.
+   */
+  isRecalled?: boolean;
+  recalledAt?: string | null;
+  recalledBy?: string | null;
+  recallReason?: string | null;
 }
 
 /** Per-item progress row in the checklist-progress aggregate. */

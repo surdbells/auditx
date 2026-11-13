@@ -45,6 +45,14 @@ public sealed class EvidenceRequestsController(IDispatcher dispatcher) : ApiCont
         return Envelope(await dispatcher.Send(new UploadEvidenceRequestFileCommand(id, memory.ToArray(), file.FileName, file.ContentType), cancellationToken));
     }
 
+    /// <summary>
+    /// The uploader recalls (takes back) a document they provided. Uploader-only is enforced in the handler; the
+    /// document is kept as history, marked recalled, and the recall is written to the audit trail.
+    /// </summary>
+    [HttpPost("api/v1/evidence-requests/{id:guid}/files/{fileId:guid}/recall")]
+    public async Task<IActionResult> RecallFile(Guid id, Guid fileId, [FromBody] RecallEvidenceFileRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new RecallEvidenceRequestFileCommand(id, fileId, request.Reason), cancellationToken));
+
     [RequirePermission(PermissionKeys.RespondItem)]
     [HttpPost("api/v1/evidence-requests/{id:guid}/received")]
     public async Task<IActionResult> MarkReceived(Guid id, [FromBody] MarkEvidenceReceivedRequest request, CancellationToken cancellationToken)

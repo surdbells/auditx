@@ -134,6 +134,79 @@ public sealed class UploadEvidenceRequestFileCommandHandler(
     }
 }
 
+// ---- The uploader recalls a document ----
+
+/// <summary>
+/// Recall (take back) a document that was uploaded against an evidence request — e.g. the wrong file was sent. The
+/// document is NOT deleted: it is marked recalled with who / when / why, its record, hash and stored bytes are kept,
+/// and the recall is written to the audit trail on both the document and the request.
+/// </summary>
+public sealed record RecallEvidenceRequestFileCommand(Guid RequestId, Guid FileId, string Reason) : ICommand<EvidenceRequestDto>;
+
+public sealed class RecallEvidenceRequestFileCommandValidator : AbstractValidator<RecallEvidenceRequestFileCommand>
+{
+    public RecallEvidenceRequestFileCommandValidator()
+    {
+        RuleFor(x => x.RequestId).NotEmpty();
+        RuleFor(x => x.FileId).NotEmpty();
+        RuleFor(x => x.Reason).NotEmpty().MaximumLength(EvidenceFile.MaxRecallReasonLength);
+    }
+}
+
+public sealed class RecallEvidenceRequestFileCommandHandler(
+    IEvidenceRequestRepository requests, IEvidenceRepository evidence, IAuditRepository audits,
+    ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+    : ICommandHandler<RecallEvidenceRequestFileCommand, EvidenceRequestDto>
+{
+    /// <summary>Recall is possible while the audit is live; once it is completed or cancelled its evidence is frozen.</summary>
+    private static readonly AuditStatus[] Open = [AuditStatus.Draft, AuditStatus.Planned, AuditStatus.InProgress, AuditStatus.UnderReview];
+
+    public async Task<EvidenceRequestDto> Handle(RecallEvidenceRequestFileCommand command, CancellationToken cancellationToken)
+    {
+        var request = await requests.GetByIdAsync(command.RequestId, cancellationToken) ?? throw new NotFoundException("Evidence request", command.RequestId);
+        var userId = currentUser.UserId ?? throw new UnauthorizedException();
+
+        var file = await evidence.GetByIdAsync(command.FileId, cancellationToken);
+        if (file is null || file.ContextType != EvidenceContextType.EvidenceRequest || file.ContextId != request.Id)
+        {
+            throw new NotFoundException("Evidence", command.FileId);
+        }
+
+        // You can only take back what you yourself provided — not a colleague's upload, and no manager override.
+        if (file.UploadedBy != userId)
+        {
+            throw new ForbiddenAccessException("Only the person who uploaded this document can recall it.");
+        }
+
+        var auditEntity = await audits.GetByIdAsync(request.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", request.AuditId);
+        if (!Open.Contains(auditEntity.Status))
+        {
+            throw new ConflictException("evidence.recall_audit_closed", "This audit is closed, so its documents can no longer be recalled.");
+        }
+
+        var now = clock.UtcNow;
+        file.Recall(command.Reason, userId, now);
+
+        var files = await evidence.ListForContextAsync(request.AuditId, EvidenceContextType.EvidenceRequest, request.Id, cancellationToken);
+        var remaining = files.Count(f => !f.IsRecalled);
+        var statusBefore = request.Status;
+        var reopened = request.RecordRecall(auditEntity.Name, file.OriginalFilename, file.RecallReason!, userId, remaining);
+
+        // Logged against the document (what was withdrawn, with its hash) AND the request (so its history shows it).
+        audit.Record(AuditEventTypes.EvidenceRecalled, AuditTargetTypes.EvidenceFile, file.Id,
+            before: new { recalled = false },
+            after: new { recalled = true, reason = file.RecallReason, recalledAt = now },
+            payload: new { requestId = request.Id, file.OriginalFilename, file.Sha256Hash, file.SizeBytes, file.UploadedAt });
+        audit.Record(AuditEventTypes.EvidenceRecalled, AuditTargetTypes.EvidenceRequest, request.Id,
+            before: new { status = statusBefore.ToString() },
+            after: new { status = request.Status.ToString(), remainingDocuments = remaining },
+            payload: new { fileId = file.Id, file.OriginalFilename, reason = file.RecallReason, reopened });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return request.ToDto(DateOnly.FromDateTime(now.UtcDateTime), files.Select(f => f.ToDto()).ToArray());
+    }
+}
+
 // ---- Mark received ----
 
 public sealed record MarkEvidenceReceivedCommand(Guid Id, string Version) : ICommand<EvidenceRequestDto>;
@@ -148,6 +221,7 @@ public sealed class MarkEvidenceReceivedCommandHandler(
         var request = await requests.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Evidence request", command.Id);
         var auditEntity = await audits.GetByIdAsync(request.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", request.AuditId);
         await EvidenceRequestAccess.EnsureCanActionAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        EvidenceRequestAccess.EnsureNotRecipient(request, currentUser.UserId);
         request.EnsureVersion(command.Version);
 
         request.MarkReceived(currentUser.UserId ?? Guid.Empty, clock.UtcNow);
@@ -181,6 +255,7 @@ public sealed class WaiveEvidenceCommandHandler(
         var request = await requests.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Evidence request", command.Id);
         var auditEntity = await audits.GetByIdAsync(request.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", request.AuditId);
         await EvidenceRequestAccess.EnsureCanActionAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        EvidenceRequestAccess.EnsureNotRecipient(request, currentUser.UserId);
         request.EnsureVersion(command.Version);
 
         request.Waive(command.Reason);
@@ -204,6 +279,7 @@ public sealed class DeleteEvidenceRequestCommandHandler(
         var request = await requests.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Evidence request", command.Id);
         var auditEntity = await audits.GetByIdAsync(request.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", request.AuditId);
         await EvidenceRequestAccess.EnsureCanActionAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        EvidenceRequestAccess.EnsureNotRecipient(request, currentUser.UserId);
         request.EnsureVersion(command.Version);
 
         request.SoftDelete(currentUser.UserId, clock.UtcNow);

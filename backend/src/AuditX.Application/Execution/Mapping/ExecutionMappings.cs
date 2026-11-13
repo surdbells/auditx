@@ -14,5 +14,6 @@ public static class ExecutionMappings
 
     public static EvidenceFileDto ToDto(this EvidenceFile e) => new(
         e.Id, e.AuditId, e.ContextType.ToSnake(), e.ContextId, e.OriginalFilename, e.MimeType,
-        e.SizeBytes, e.Sha256Hash, e.UploadedBy, e.UploadedAt, e.IsFlagged);
+        e.SizeBytes, e.Sha256Hash, e.UploadedBy, e.UploadedAt, e.IsFlagged,
+        e.IsRecalled, e.RecalledAt, e.RecalledBy, e.RecallReason);
 }

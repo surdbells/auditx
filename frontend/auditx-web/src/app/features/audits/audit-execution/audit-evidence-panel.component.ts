@@ -7,6 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -45,6 +46,7 @@ const ACTIONABLE = new Set(['planned', 'in_progress', 'under_review']);
   selector: 'app-audit-evidence-panel',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DatePipe,
     ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,

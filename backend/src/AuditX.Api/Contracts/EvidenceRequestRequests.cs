@@ -8,5 +8,8 @@ public sealed record RequestEvidenceRequest(
 /// <summary>Mark a requested piece of evidence as received (P2-D).</summary>
 public sealed record MarkEvidenceReceivedRequest(string Version);
 
+/// <summary>Recall a document that was uploaded against an evidence request; the reason is mandatory.</summary>
+public sealed record RecallEvidenceFileRequest(string Reason);
+
 /// <summary>Waive a requested piece of evidence with a reason (P2-D).</summary>
 public sealed record WaiveEvidenceRequest(string Reason, string Version);

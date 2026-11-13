@@ -205,4 +205,189 @@ public sealed class EvidenceRequestFlowTests(ApiFactory factory) : IClassFixture
         });
         Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
     }
+
+    private static MultipartFormDataContent Pdf(string filename, string marker)
+    {
+        var form = new MultipartFormDataContent();
+        var content = new ByteArrayContent(Encoding.ASCII.GetBytes($"%PDF-1.4\n%{marker}\n"));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        form.Add(content, "file", filename);
+        return form;
+    }
+
+    /// <summary>
+    /// An auditee can RECALL a document they uploaded (e.g. the wrong file) — but nothing is erased: the document
+    /// stays on the record marked recalled with who / when / why, the recall is in the audit trail, and the audit
+    /// team can no longer open it. With no document left, the request is outstanding again and a replacement can
+    /// be uploaded alongside the recalled one.
+    /// </summary>
+    [Fact]
+    public async Task An_auditee_can_recall_an_uploaded_document_and_the_history_remains()
+    {
+        var admin = await LoginAsync("admin"); // requests the evidence; holds ManageEvidence (evidence custodian)
+        var users = await UsersByEmailAsync(admin);
+        var auditeeId = users["auditee@auditx.local"];
+        var auditId = await SeedInProgressAuditAsync(admin);
+        var analyst = await AnalystAsync(admin); // the audit's lead (manager) — on the team
+
+        var req = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/evidence-requests", new
+        {
+            requestedFromUserId = auditeeId, title = "December reconciliation", documentType = "reconciliation",
+        }));
+        var requestId = req.GetProperty("id").GetGuid();
+
+        var auditee = await LoginAsync("auditee");
+        JsonElement uploaded;
+        using (var form = Pdf("wrong-month.pdf", "November, not December"))
+        {
+            uploaded = await DataAsync(await auditee.PostAsync($"/api/v1/evidence-requests/{requestId}/files", form));
+        }
+
+        Assert.Equal("received", uploaded.GetProperty("status").GetString());
+        var file = uploaded.GetProperty("files")[0];
+        var fileId = file.GetProperty("id").GetGuid();
+        var sha256 = file.GetProperty("sha256Hash").GetString();
+        Assert.False(file.GetProperty("isRecalled").GetBoolean());
+
+        // ---- A reason is mandatory, and only the uploader can recall.
+        var noReason = await auditee.PostAsJsonAsync($"/api/v1/evidence-requests/{requestId}/files/{fileId}/recall", new { reason = "  " });
+        Assert.Equal(HttpStatusCode.UnprocessableContent, noReason.StatusCode);
+
+        var notUploader = await admin.PostAsJsonAsync($"/api/v1/evidence-requests/{requestId}/files/{fileId}/recall", new { reason = "Not mine to recall" });
+        Assert.Equal(HttpStatusCode.Forbidden, notUploader.StatusCode);
+
+        // ---- The auditee recalls it.
+        var recalled = await DataAsync(await auditee.PostAsJsonAsync($"/api/v1/evidence-requests/{requestId}/files/{fileId}/recall",
+            new { reason = "Uploaded the November reconciliation by mistake." }));
+
+        // Nothing is on file any more, so the request is outstanding again…
+        Assert.Equal("requested", recalled.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, recalled.GetProperty("receivedAt").ValueKind);
+
+        // …but the document is STILL listed — marked recalled, with who / when / why, and its hash intact.
+        var kept = Assert.Single(recalled.GetProperty("files").EnumerateArray());
+        Assert.Equal(fileId, kept.GetProperty("id").GetGuid());
+        Assert.True(kept.GetProperty("isRecalled").GetBoolean());
+        Assert.Equal(auditeeId, kept.GetProperty("recalledBy").GetGuid());
+        Assert.NotEqual(JsonValueKind.Null, kept.GetProperty("recalledAt").ValueKind);
+        Assert.Equal("Uploaded the November reconciliation by mistake.", kept.GetProperty("recallReason").GetString());
+        Assert.Equal("wrong-month.pdf", kept.GetProperty("originalFilename").GetString());
+        Assert.Equal(sha256, kept.GetProperty("sha256Hash").GetString());
+
+        // The auditor's list shows the same history.
+        var auditorRow = (await DataAsync(await analyst.GetAsync($"/api/v1/audits/{auditId}/evidence-requests")))
+            .EnumerateArray().First(r => r.GetProperty("id").GetGuid() == requestId);
+        Assert.True(auditorRow.GetProperty("files")[0].GetProperty("isRecalled").GetBoolean());
+
+        // It cannot be recalled twice.
+        var again = await auditee.PostAsJsonAsync($"/api/v1/evidence-requests/{requestId}/files/{fileId}/recall", new { reason = "Again" });
+        Assert.Equal(HttpStatusCode.Conflict, again.StatusCode);
+
+        // ---- An auditor on the team (can view evidence, is not an evidence custodian) can no longer open it…
+        var roles = await DataAsync(await admin.GetAsync("/api/v1/roles"));
+        var auditorRole = roles.EnumerateArray().First(r => r.GetProperty("name").GetString() == "Auditor").GetProperty("id").GetGuid();
+        await admin.PostAsJsonAsync($"/api/v1/users/{users["auditor@auditx.local"]}/roles", new { roleId = auditorRole, scopeValue = (string?)null });
+        var auditor = await LoginAsync("auditor");
+        var teamDownload = await auditor.GetAsync($"/api/v1/audits/{auditId}/evidence/{fileId}");
+        Assert.Equal(HttpStatusCode.Conflict, teamDownload.StatusCode);
+
+        // …but its content was retained (recall can never destroy evidence): an evidence custodian (ManageEvidence —
+        // audit managers and administrators) can still reach it, and that access is logged.
+        var custodianDownload = await admin.GetAsync($"/api/v1/audits/{auditId}/evidence/{fileId}");
+        custodianDownload.EnsureSuccessStatusCode();
+        Assert.Contains("November, not December", Encoding.ASCII.GetString(await custodianDownload.Content.ReadAsByteArrayAsync()));
+
+        // ---- The recall is on the audit trail — against the document and against the request.
+        var fileTrail = await DataAsync(await admin.GetAsync($"/api/v1/audit-trail/object/evidence_file/{fileId}"));
+        var fileEvents = fileTrail.GetProperty("items").EnumerateArray().Select(e => e.GetProperty("eventType").GetString()).ToArray();
+        Assert.Contains("evidence_uploaded", fileEvents);
+        Assert.Contains("evidence_recalled", fileEvents);
+        Assert.Contains("evidence_recalled_accessed", fileEvents); // the custodian's access is itself logged
+        var requestTrail = await DataAsync(await admin.GetAsync($"/api/v1/audit-trail/object/evidence_request/{requestId}"));
+        Assert.Contains(requestTrail.GetProperty("items").EnumerateArray(), e => e.GetProperty("eventType").GetString() == "evidence_recalled");
+
+        // ---- The auditee provides the right document: received again, and BOTH documents are on the record.
+        JsonElement replaced;
+        using (var form = Pdf("december.pdf", "December"))
+        {
+            replaced = await DataAsync(await auditee.PostAsync($"/api/v1/evidence-requests/{requestId}/files", form));
+        }
+
+        Assert.Equal("received", replaced.GetProperty("status").GetString());
+        var files = replaced.GetProperty("files").EnumerateArray().ToArray();
+        Assert.Equal(2, files.Length);
+        Assert.Single(files, f => f.GetProperty("isRecalled").GetBoolean());
+        Assert.Single(files, f => !f.GetProperty("isRecalled").GetBoolean());
+    }
+
+    /// <summary>Recalling one of several documents leaves the request received — evidence is still on file.</summary>
+    [Fact]
+    public async Task Recalling_one_of_several_documents_keeps_the_request_received()
+    {
+        var admin = await LoginAsync("admin");
+        var users = await UsersByEmailAsync(admin);
+        var auditId = await SeedInProgressAuditAsync(admin);
+        var req = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/evidence-requests", new
+        {
+            requestedFromUserId = users["auditee@auditx.local"], title = "Signed approvals",
+        }));
+        var requestId = req.GetProperty("id").GetGuid();
+
+        var auditee = await LoginAsync("auditee");
+        JsonElement after;
+        using (var form = Pdf("approval-1.pdf", "one"))
+        {
+            await DataAsync(await auditee.PostAsync($"/api/v1/evidence-requests/{requestId}/files", form));
+        }
+
+        using (var form = Pdf("approval-2.pdf", "two"))
+        {
+            after = await DataAsync(await auditee.PostAsync($"/api/v1/evidence-requests/{requestId}/files", form));
+        }
+
+        var first = after.GetProperty("files")[0].GetProperty("id").GetGuid();
+        var recalled = await DataAsync(await auditee.PostAsJsonAsync($"/api/v1/evidence-requests/{requestId}/files/{first}/recall",
+            new { reason = "Superseded by the second scan." }));
+
+        Assert.Equal("received", recalled.GetProperty("status").GetString());
+        Assert.Equal(2, recalled.GetProperty("files").GetArrayLength());
+    }
+
+    /// <summary>
+    /// Independence: the person a document is requested FROM cannot decide that request's fate — even when they are
+    /// an auditor on the audit's own team with the permission to manage requests.
+    /// </summary>
+    [Fact]
+    public async Task The_recipient_of_a_request_cannot_mark_it_received_waive_or_delete_it()
+    {
+        var admin = await LoginAsync("admin");
+        var users = await UsersByEmailAsync(admin);
+        var auditId = await SeedInProgressAuditAsync(admin); // 'auditor' is on this audit's team
+
+        // Give the auditor their role (RespondItem → may manage evidence requests on audits they are on).
+        var roles = await DataAsync(await admin.GetAsync("/api/v1/roles"));
+        var auditorRole = roles.EnumerateArray().First(r => r.GetProperty("name").GetString() == "Auditor").GetProperty("id").GetGuid();
+        await admin.PostAsJsonAsync($"/api/v1/users/{users["auditor@auditx.local"]}/roles", new { roleId = auditorRole, scopeValue = (string?)null });
+        var auditor = await LoginAsync("auditor");
+
+        // A document is requested FROM that auditor.
+        var req = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/evidence-requests", new
+        {
+            requestedFromUserId = users["auditor@auditx.local"], title = "Requested from someone on the team",
+        }));
+        var requestId = req.GetProperty("id").GetGuid();
+        var version = Version(req);
+
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await auditor.PostAsJsonAsync($"/api/v1/evidence-requests/{requestId}/received", new { version })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await auditor.PostAsJsonAsync($"/api/v1/evidence-requests/{requestId}/waive", new { reason = "I would rather not provide this.", version })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await auditor.DeleteAsync($"/api/v1/evidence-requests/{requestId}?version={Uri.EscapeDataString(version)}")).StatusCode);
+
+        // They can still do the one thing asked of them — provide the document.
+        using var form = Pdf("requested.pdf", "provided");
+        var uploaded = await DataAsync(await auditor.PostAsync($"/api/v1/evidence-requests/{requestId}/files", form));
+        Assert.Equal("received", uploaded.GetProperty("status").GetString());
+    }
 }

@@ -23,9 +23,14 @@ public sealed record ResponseInputDto(
     IReadOnlyList<string>? Choices = null,
     string? Unit = null);
 
+/// <summary>
+/// An uploaded evidence file. <c>IsRecalled</c> (with who / when / why) marks a document the person who provided it
+/// took back: it stays listed as history but no longer counts as evidence.
+/// </summary>
 public sealed record EvidenceFileDto(
     Guid Id, Guid AuditId, string ContextType, Guid ContextId, string OriginalFilename, string MimeType,
-    long SizeBytes, string Sha256Hash, Guid UploadedBy, DateTimeOffset UploadedAt, bool IsFlagged);
+    long SizeBytes, string Sha256Hash, Guid UploadedBy, DateTimeOffset UploadedAt, bool IsFlagged,
+    bool IsRecalled = false, DateTimeOffset? RecalledAt = null, Guid? RecalledBy = null, string? RecallReason = null);
 
 /// <summary>Returned to the controller for a verified download; streamed as a file, not enveloped.</summary>
 public sealed record EvidenceDownloadResult(string FileName, string MimeType, byte[] Content);

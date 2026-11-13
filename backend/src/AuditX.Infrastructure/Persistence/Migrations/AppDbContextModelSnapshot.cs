@@ -1989,6 +1989,19 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(512)")
                         .HasColumnName("original_filename");
 
+                    b.Property<string>("RecallReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("recall_reason");
+
+                    b.Property<DateTimeOffset?>("RecalledAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("recalled_at");
+
+                    b.Property<Guid?>("RecalledBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("recalled_by");
+
                     b.Property<string>("Sha256Hash")
                         .IsRequired()
                         .HasMaxLength(64)

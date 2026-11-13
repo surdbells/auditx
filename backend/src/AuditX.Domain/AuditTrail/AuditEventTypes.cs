@@ -182,6 +182,12 @@ public static class AuditEventTypes
     public const string EvidenceWaived = "evidence_waived";
     public const string EvidenceRequestDeleted = "evidence_request_deleted";
 
+    /// <summary>A document provided for an evidence request was recalled by the person who uploaded it.</summary>
+    public const string EvidenceRecalled = "evidence_recalled";
+
+    /// <summary>A recalled document's retained content was opened by an evidence custodian.</summary>
+    public const string EvidenceRecalledAccessed = "evidence_recalled_accessed";
+
     // M5 execution / evidence
     public const string ItemResponded = "item_responded";
     /// <summary>

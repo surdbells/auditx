@@ -2,10 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { IconComponent } from '../../core/icons/icon.component';
 import { EvidenceRequestsService } from '../../core/services/evidence-requests.service';
 import { AuditsService } from '../../core/services/audits.service';
+import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { EvidenceFile, EvidenceRequest } from '../../core/models';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
@@ -13,11 +16,17 @@ import { LoadingComponent } from '../../shared/components/loading/loading.compon
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslationService } from '../../core/i18n/translation.service';
+import {
+  TransitionReasonDialogComponent,
+  TransitionReasonDialogData,
+  TransitionReasonResult,
+} from '../audits/dialogs/transition-reason-dialog.component';
 
 /**
  * The auditee's personal document-request worklist (reached from the request email). Lists the documents the
  * auditor has asked for, and lets the auditee upload each one — which marks the request received and surfaces the
- * file on the auditor's screen.
+ * file on the auditor's screen. A document sent by mistake can be RECALLED: it is taken back from the auditors but
+ * stays on the record (marked recalled, with the reason), so the history of what was provided is never lost.
  */
 @Component({
   selector: 'app-my-evidence-requests',
@@ -26,6 +35,7 @@ import { TranslationService } from '../../core/i18n/translation.service';
     DatePipe,
     MatCardModule,
     MatButtonModule,
+    MatTooltipModule,
     IconComponent,
     PageHeaderComponent,
     LoadingComponent,
@@ -61,10 +71,38 @@ import { TranslationService } from '../../core/i18n/translation.service';
           @if (r.files.length) {
             <ul class="req__files">
               @for (f of r.files; track f.id) {
-                <li class="req__file">
-                  <app-icon inline name="description" />
-                  <button matButton type="button" (click)="download(r, f)">{{ f.originalFilename }}</button>
-                </li>
+                @if (f.isRecalled) {
+                  <!-- Taken back: kept on the record as history, no longer a live document. -->
+                  <li class="req__file req__file--recalled">
+                    <app-icon inline name="block" />
+                    <span class="req__file-name">{{ f.originalFilename }}</span>
+                    <span class="status-badge" data-status="cancelled">{{ 'evidence.recalled.badge' | t }}</span>
+                    <span class="muted req__file-note">
+                      {{ 'myEvidence.recalledOn' | t: { date: (f.recalledAt | date: 'medium') ?? '' } }}
+                      @if (f.recallReason) { — {{ f.recallReason }} }
+                    </span>
+                  </li>
+                } @else {
+                  <li class="req__file">
+                    <app-icon inline name="description" />
+                    <button matButton type="button" (click)="download(r, f)">{{ f.originalFilename }}</button>
+                    <span class="muted req__file-note">{{ 'myEvidence.uploadedOn' | t: { date: (f.uploadedAt | date: 'medium') ?? '' } }}</span>
+                    @if (canRecall(f)) {
+                      <button
+                        matButton
+                        type="button"
+                        class="req__recall"
+                        [disabled]="recallingId() === f.id"
+                        [matTooltip]="'myEvidence.recallHint' | t"
+                        [attr.aria-label]="'myEvidence.recallAria' | t: { name: f.originalFilename }"
+                        (click)="recall(r, f)"
+                      >
+                        <app-icon name="undo" />
+                        {{ 'myEvidence.recall' | t }}
+                      </button>
+                    }
+                  </li>
+                }
               }
             </ul>
           }
@@ -74,7 +112,7 @@ import { TranslationService } from '../../core/i18n/translation.service';
               <input #fileInput type="file" hidden (change)="onFile(r, fileInput)" />
               <button matButton="filled" type="button" [disabled]="uploadingId() === r.id" (click)="fileInput.click()">
                 <app-icon name="upload_file" />
-                {{ (r.files.length ? 'myEvidence.uploadAnother' : 'myEvidence.upload') | t }}
+                {{ (hasLiveFile(r) ? 'myEvidence.uploadAnother' : 'myEvidence.upload') | t }}
               </button>
             </div>
           }
@@ -91,19 +129,30 @@ import { TranslationService } from '../../core/i18n/translation.service';
     .muted { color: var(--mat-sys-on-surface-variant); }
     .req__notes { margin: 0.6rem 0 0; }
     .req__files { list-style: none; margin: 0.6rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
-    .req__file { display: flex; align-items: center; gap: 0.3rem; }
+    .req__file { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.5rem; }
+    .req__file-note { font-size: 0.8rem; }
+    .req__recall { margin-left: auto; --mat-text-button-label-text-color: var(--mat-sys-error); }
+    /* A recalled document reads as history: struck through, with why and when beside it. */
+    .req__file--recalled { padding: 0.35rem 0; }
+    .req__file--recalled .req__file-name { text-decoration: line-through; color: var(--mat-sys-on-surface-variant); }
     .req__actions { margin-top: 0.75rem; }
   `,
 })
 export class MyEvidenceRequestsComponent {
   private readonly service = inject(EvidenceRequestsService);
   private readonly audits = inject(AuditsService);
+  private readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
   private readonly i18n = inject(TranslationService);
 
   readonly requests = signal<EvidenceRequest[]>([]);
   readonly loading = signal(true);
   readonly uploadingId = signal<string | null>(null);
+  /** The document whose recall is in flight (disables its button). */
+  readonly recallingId = signal<string | null>(null);
+
+  private readonly currentUserId = computed(() => this.auth.session()?.userId ?? null);
 
   constructor() {
     this.refresh();
@@ -118,6 +167,16 @@ export class MyEvidenceRequestsComponent {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  /** You can take back only what you uploaded yourself, and only while it has not already been recalled. */
+  canRecall(f: EvidenceFile): boolean {
+    return !f.isRecalled && !!this.currentUserId() && f.uploadedBy === this.currentUserId();
+  }
+
+  /** True when at least one document on the request is still live (not recalled). */
+  hasLiveFile(r: EvidenceRequest): boolean {
+    return r.files.some((f) => !f.isRecalled);
   }
 
   onFile(r: EvidenceRequest, input: HTMLInputElement): void {
@@ -135,6 +194,40 @@ export class MyEvidenceRequestsComponent {
       },
       error: () => this.uploadingId.set(null),
     });
+  }
+
+  /**
+   * Recall a document: ask why (mandatory — the reason is recorded and shown to the auditor), then take it back.
+   * The document stays listed as recalled; if it was the only one, the request becomes outstanding again.
+   */
+  recall(r: EvidenceRequest, f: EvidenceFile): void {
+    const data: TransitionReasonDialogData = {
+      title: this.i18n.translate('myEvidence.recallDialog.title'),
+      message: this.i18n.translate('myEvidence.recallDialog.message', { name: f.originalFilename }),
+      confirmLabel: this.i18n.translate('myEvidence.recall'),
+      reasonRequired: true,
+      destructive: true,
+    };
+    this.dialog
+      .open(TransitionReasonDialogComponent, { data, width: '480px' })
+      .afterClosed()
+      .subscribe((result?: TransitionReasonResult) => {
+        const reason = result?.reason?.trim();
+        if (!reason) {
+          return;
+        }
+        this.recallingId.set(f.id);
+        this.service.recallFile(r.id, f.id, reason).subscribe({
+          next: (updated) => {
+            this.recallingId.set(null);
+            this.requests.update((all) => all.map((x) => (x.id === updated.id ? updated : x)));
+            this.notify.success(
+              this.i18n.translate(updated.status === 'requested' ? 'myEvidence.notify.recalledReopened' : 'myEvidence.notify.recalled'),
+            );
+          },
+          error: () => this.recallingId.set(null),
+        });
+      });
   }
 
   download(r: EvidenceRequest, f: EvidenceFile): void {

@@ -39,6 +39,14 @@ export class EvidenceRequestsService {
       .pipe(map((r) => r.data));
   }
 
+  /**
+   * The uploader recalls (takes back) a document they provided. A reason is mandatory; the document is kept as
+   * history, marked recalled. Returns the updated request (reopened if no document remains).
+   */
+  recallFile(id: string, fileId: string, reason: string): Observable<EvidenceRequest> {
+    return this.api.post<EvidenceRequest>(`/evidence-requests/${id}/files/${fileId}/recall`, { reason });
+  }
+
   markReceived(id: string, version: string): Observable<EvidenceRequest> {
     return this.api.post<EvidenceRequest>(`/evidence-requests/${id}/received`, { version });
   }

@@ -91,3 +91,21 @@
   margin: 0 0 0.15rem;
   font: var(--mat-sys-label-medium);
 }
+
+// A document the auditee took back: kept on the record as history, visibly no longer evidence.
+.evi__file--recalled {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.5rem;
+  padding: 0.3rem 0;
+}
+
+.evi__file--recalled .evi__file-name {
+  text-decoration: line-through;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.evi__recall-note {
+  font-size: 0.8rem;
+}
