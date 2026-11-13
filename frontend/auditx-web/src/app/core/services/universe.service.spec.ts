@@ -95,6 +95,15 @@ describe('UniverseService', () => {
     expect(done).toBe(true);
   });
 
+  it('restores an archived entity via POST and returns it live again', () => {
+    let restored: Entity | undefined;
+    service.restore('e-1').subscribe((e) => (restored = e));
+    const req = http.expectOne(`${BASE}/audit-universe/entities/e-1/restore`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ data: entity({ isArchived: false, archivedAt: null }) });
+    expect(restored?.isArchived).toBe(false);
+  });
+
   it('saves risk scores carrying the version', () => {
     let result: Entity | undefined;
     service

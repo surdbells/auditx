@@ -40,6 +40,15 @@
   font-weight: 500;
 }
 
+.entities__archived-badge {
+  margin-left: 0.5rem;
+}
+
+// Archived rows stay readable but step back behind the live universe.
+.entities__row--archived td {
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .entities__load-more {
   display: flex;
   justify-content: center;

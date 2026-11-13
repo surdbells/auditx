@@ -146,6 +146,22 @@ public sealed class AuditableEntity : AggregateRoot, ISoftDeletable
         DeletedAt = deletedAtUtc;
     }
 
+    /// <summary>
+    /// Bring an archived entity back into the audit universe. Archiving only hides the entity — its details, risk
+    /// scores, hierarchy position and audit history are all kept — so restoring is an exact undo.
+    /// </summary>
+    public void Restore()
+    {
+        if (!IsDeleted)
+        {
+            throw new DomainException("universe.not_archived", "This entity is not archived.");
+        }
+
+        IsDeleted = false;
+        DeletedBy = null;
+        DeletedAt = null;
+    }
+
     private static void Validate(IReadOnlyDictionary<string, int> scores, IReadOnlyList<RiskDimensionSpec> activeDimensions)
     {
         var activeNames = activeDimensions.Select(d => d.Name).ToHashSet(StringComparer.Ordinal);

@@ -8,6 +8,9 @@ public interface IAuditUniverseRepository
 {
     Task<AuditableEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <summary>Load an entity even when it is archived (the default lookups hide archived entities) — for restoring one.</summary>
+    Task<AuditableEntity?> GetByIdIncludingArchivedAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<PagedResult<AuditableEntity>> SearchAsync(
         string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageSpec page, CancellationToken cancellationToken = default);
 

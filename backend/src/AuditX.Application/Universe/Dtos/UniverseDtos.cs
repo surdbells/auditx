@@ -14,7 +14,9 @@ public sealed record EntityDto(
     decimal? CompositeResidualScore,
     DateTimeOffset? LastAuditedAt,
     int? ExpectedAuditsPerYear,
-    string Version);
+    string Version,
+    bool IsArchived = false,
+    DateTimeOffset? ArchivedAt = null);
 
 public sealed record RiskDimensionDto(
     Guid Id, string Name, decimal Weight, int ScaleMin, int ScaleMax, bool IsActive, string? ScaleLabelOverridesJson);

@@ -91,6 +91,7 @@ public static class AuditEventTypes
     public const string EntityCreated = "universe_entity_created";
     public const string EntityUpdated = "universe_entity_updated";
     public const string EntityArchived = "universe_entity_archived";
+    public const string EntityRestored = "universe_entity_restored";
     public const string EntityBulkImported = "universe_entities_bulk_imported";
     public const string RiskScoreUpdated = "risk_score_updated";
     public const string EntityLastAuditedUpdated = "entity_last_audited_updated";
@@ -183,6 +184,10 @@ public static class AuditEventTypes
 
     // M5 execution / evidence
     public const string ItemResponded = "item_responded";
+    /// <summary>
+    /// HISTORICAL — no longer written. A manager used to be able to answer an item assigned to someone else; an
+    /// assigned item is now answered only by its assignee. Kept so existing trail entries still resolve to a name.
+    /// </summary>
     public const string ItemResponseOverridden = "item_response_overridden";
     public const string DraftDiscarded = "draft_discarded";
     public const string ItemAssigned = "item_assigned";

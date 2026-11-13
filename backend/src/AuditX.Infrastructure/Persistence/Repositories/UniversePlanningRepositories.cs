@@ -12,6 +12,9 @@ public sealed class AuditUniverseRepository(AppDbContext db) : IAuditUniverseRep
     public Task<AuditableEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.AuditUniverseEntities.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
+    public Task<AuditableEntity?> GetByIdIncludingArchivedAsync(Guid id, CancellationToken cancellationToken = default)
+        => db.AuditUniverseEntities.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+
     public async Task<PagedResult<AuditableEntity>> SearchAsync(
         string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageSpec page, CancellationToken cancellationToken = default)
     {

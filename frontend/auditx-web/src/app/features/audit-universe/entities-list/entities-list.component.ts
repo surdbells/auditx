@@ -17,6 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { debounceTime } from 'rxjs';
@@ -100,6 +101,7 @@ const UNIVERSE_GUIDE: PageGuide = {
     MatButtonModule,
     IconComponent,
     MatMenuModule,
+    MatTooltipModule,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,
@@ -255,12 +257,14 @@ export class EntitiesListComponent {
   }
 
   open(entity: EntityListItem): void {
-    if (!this.canOpenEditor()) {
+    // An archived entity is read-only until restored (the API no longer resolves it for edits).
+    if (!this.canOpenEditor() || entity.isArchived) {
       return;
     }
     const data: EntityEditorDialogData = {
       entity,
-      parentCandidates: this.entities().filter((e) => e.id !== entity.id),
+      // An archived entity cannot be chosen as a parent.
+      parentCandidates: this.entities().filter((e) => e.id !== entity.id && !e.isArchived),
     };
     this.dialog
       .open(EntityEditorDialogComponent, { data, width: '640px' })
@@ -284,6 +288,17 @@ export class EntitiesListComponent {
           this.fetchPage(this.page());
         }
       });
+  }
+
+  /** Bring an archived entity back. Non-destructive (an exact undo of archive), so it needs no confirmation. */
+  restore(entity: EntityListItem, event: Event): void {
+    event.stopPropagation();
+    this.universe.restore(entity.id).subscribe({
+      next: () => {
+        this.notify.success(this.i18n.translate('universe.notify.restored', { name: entity.name }));
+        this.fetchPage(this.page());
+      },
+    });
   }
 
   archive(entity: EntityListItem, event: Event): void {

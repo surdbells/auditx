@@ -48,6 +48,11 @@ export class UniverseService {
     return this.api.deleteVoid(`/audit-universe/entities/${id}`);
   }
 
+  /** Brings an archived entity back into the universe — the undo of {@link archive}. */
+  restore(id: string): Observable<Entity> {
+    return this.api.post<Entity>(`/audit-universe/entities/${id}/restore`, {});
+  }
+
   saveRiskScores(
     id: string,
     body: SaveRiskScoresRequest,

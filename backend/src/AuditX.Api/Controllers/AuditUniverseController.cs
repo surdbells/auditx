@@ -43,6 +43,12 @@ public sealed class AuditUniverseController(IDispatcher dispatcher) : ApiControl
         return NoContent();
     }
 
+    /// <summary>Bring an archived entity back into the universe (the undo of the archive above).</summary>
+    [RequirePermission(PermissionKeys.ManageUniverse)]
+    [HttpPost("entities/{id:guid}/restore")]
+    public async Task<IActionResult> RestoreEntity(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new RestoreEntityCommand(id), cancellationToken));
+
     [RequirePermission(PermissionKeys.ScoreRisk)]
     [HttpPost("entities/{id:guid}/risk-scores")]
     public async Task<IActionResult> ApplyRiskScores(Guid id, [FromBody] RiskScoresRequest request, CancellationToken cancellationToken)

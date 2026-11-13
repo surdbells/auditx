@@ -25,6 +25,10 @@ export interface Entity {
   /** How many times per year this entity is expected to be audited (coverage target); null when unset. */
   expectedAuditsPerYear: number | null;
   version: number;
+  /** True when the entity has been archived (only returned when the list is asked to include archived). */
+  isArchived?: boolean;
+  /** When it was archived; null / absent for a live entity. */
+  archivedAt?: string | null;
 }
 
 /** Lightweight row for the entities list (same shape as Entity from the API). */

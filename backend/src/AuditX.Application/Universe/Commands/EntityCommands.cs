@@ -157,6 +157,31 @@ public sealed class ArchiveEntityCommandHandler(
     }
 }
 
+/// <summary>Bring an archived entity back into the audit universe (the undo of <see cref="ArchiveEntityCommand"/>).</summary>
+public sealed record RestoreEntityCommand(Guid Id) : ICommand<EntityDto>;
+
+public sealed class RestoreEntityCommandHandler(
+    IAuditUniverseRepository entities, IAuditRecorder audit, IUnitOfWork unitOfWork)
+    : ICommandHandler<RestoreEntityCommand, EntityDto>
+{
+    public async Task<EntityDto> Handle(RestoreEntityCommand command, CancellationToken cancellationToken)
+    {
+        // The ordinary lookup hides archived entities — which is exactly the one being asked for here.
+        var entity = await entities.GetByIdIncludingArchivedAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Entity", command.Id);
+        if (!entity.IsDeleted)
+        {
+            throw new ConflictException("universe.not_archived", "This entity is not archived.");
+        }
+
+        var archivedAt = entity.DeletedAt;
+        entity.Restore();
+        audit.Record(AuditEventTypes.EntityRestored, AuditTargetTypes.AuditUniverseEntity, entity.Id,
+            before: new { archived = true, archivedAt }, after: new { archived = false, entity.Name });
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return entity.ToDto();
+    }
+}
+
 public sealed record ApplyRiskScoresCommand(
     Guid Id, IReadOnlyDictionary<string, int>? InherentScores, IReadOnlyDictionary<string, int>? ResidualScores, string Version)
     : ICommand<EntityDto>;
