@@ -1,3 +1,4 @@
+using AuditX.Application.ReferenceData;
 using AuditX.Domain.ReferenceData;
 
 namespace AuditX.Application.Abstractions.Persistence;
@@ -7,6 +8,9 @@ public interface IReferenceDataRepository
 {
     /// <summary>Items in a category ordered by (sort order, label). Active-only unless <paramref name="includeInactive"/>.</summary>
     Task<IReadOnlyList<ReferenceDataItem>> ListByCategoryAsync(string category, bool includeInactive, CancellationToken cancellationToken = default);
+
+    /// <summary>Active / archived item counts keyed by category code. A category with no items is absent from the map.</summary>
+    Task<IReadOnlyDictionary<string, ReferenceDataCategoryCounts>> CountByCategoryAsync(CancellationToken cancellationToken = default);
 
     Task<ReferenceDataItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 

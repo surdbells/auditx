@@ -6,12 +6,15 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { IconComponent } from '../../../core/icons/icon.component';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+import { TranslationService } from '../../../core/i18n/translation.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -57,7 +60,7 @@ const REFERENCE_DATA_GUIDE: PageGuide = {
   ],
   sections: [
     { selector: '[data-guide="create"]', titleKey: 'referenceData.guide.section.create.title', bodyKey: 'referenceData.guide.section.create.body' },
-    { selector: '.ref__filters-card', titleKey: 'referenceData.guide.section.filters.title', bodyKey: 'referenceData.guide.section.filters.body' },
+    { selector: '.ref__rail', titleKey: 'referenceData.guide.section.filters.title', bodyKey: 'referenceData.guide.section.filters.body' },
     { selector: '.ref__table', titleKey: 'referenceData.guide.section.table.title', bodyKey: 'referenceData.guide.section.table.body' },
   ],
   workflowKeys: [
@@ -107,8 +110,10 @@ const REFERENCE_DATA_GUIDE: PageGuide = {
     MatCardModule,
     MatTableModule,
     MatButtonModule,
-    MatButtonToggleModule,
+    MatFormFieldModule,
+    MatInputModule,
     IconComponent,
+    TranslatePipe,
     MatSlideToggleModule,
     MatTooltipModule,
     LoadingComponent,
@@ -127,17 +132,11 @@ export class ReferenceDataComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly i18n = inject(TranslationService);
 
   readonly guide = REFERENCE_DATA_GUIDE;
 
-  readonly displayedColumns = [
-    'code',
-    'label',
-    'description',
-    'sortOrder',
-    'active',
-    'actions',
-  ];
+  readonly displayedColumns = ['item', 'description', 'sortOrder', 'active', 'actions'];
 
   readonly controls = this.fb.nonNullable.group({
     category: '',
@@ -152,17 +151,66 @@ export class ReferenceDataComponent {
   readonly state = signal<ViewState>('loading');
   readonly items = signal<ReferenceDataItem[]>([]);
 
+  /** Free-text filter over the loaded items (label, code, description) — client-side, no refetch. */
+  readonly search = signal('');
+
   readonly canManage = computed(() =>
     this.auth.hasPermission(Permissions.ManageConfiguration),
   );
 
+  /**
+   * The selected category code as a signal. Reading the form control's value inside a `computed` is not
+   * reactive, so the selection is mirrored here — otherwise the heading, the empty state and the dialog
+   * title would keep naming the first list after the user switches.
+   */
+  readonly selectedCode = toSignal(this.controls.controls.category.valueChanges, {
+    initialValue: this.controls.controls.category.value,
+  });
+
   readonly selectedCategory = computed(() =>
-    this.categories().find((c) => c.code === this.controls.controls.category.value),
+    this.categories().find((c) => c.code === this.selectedCode()),
   );
+
+  readonly visibleItems = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    if (!term) {
+      return this.items();
+    }
+    return this.items().filter(
+      (i) =>
+        i.label.toLowerCase().includes(term) ||
+        i.code.toLowerCase().includes(term) ||
+        (i.description ?? '').toLowerCase().includes(term),
+    );
+  });
 
   readonly isEmpty = computed(
     () => this.state() === 'ready' && this.items().length === 0,
   );
+
+  /** The list has items, but none match the search. */
+  readonly noMatches = computed(
+    () => this.state() === 'ready' && this.items().length > 0 && this.visibleItems().length === 0,
+  );
+
+  /** Footer line: how many items are shown, and how many of the list are archived. */
+  readonly summary = computed(() => {
+    const shown = this.visibleItems().length;
+    const total = this.items().length;
+    const archived = this.selectedCategory()?.inactiveCount ?? this.items().filter((i) => !i.isActive).length;
+    const parts = [
+      this.search().trim()
+        ? this.i18n.translate('referenceData.summary.filtered', { shown, total })
+        : this.i18n.translate(total === 1 ? 'referenceData.summary.one' : 'referenceData.summary.many', { total }),
+    ];
+    if (archived > 0) {
+      parts.push(this.i18n.translate('referenceData.summary.archived', { archived }));
+    }
+    return parts.join(' · ');
+  });
+
+  /** Guards against an earlier list request landing after a later one when lists are switched quickly. */
+  private fetchSeq = 0;
 
   constructor() {
     this.loadCategories();
@@ -188,18 +236,35 @@ export class ReferenceDataComponent {
     });
   }
 
+  selectCategory(code: string): void {
+    if (code === this.controls.controls.category.value) {
+      return;
+    }
+    this.search.set('');
+    // Fires valueChanges → fetch().
+    this.controls.controls.category.setValue(code);
+  }
+
   fetch(): void {
     const { category, showInactive } = this.controls.getRawValue();
     if (!category) {
       return;
     }
+    const seq = ++this.fetchSeq;
     this.state.set('loading');
     this.service.list(category, showInactive).subscribe({
       next: (items) => {
+        if (seq !== this.fetchSeq) {
+          return;
+        }
         this.items.set(items);
         this.state.set('ready');
       },
-      error: () => this.state.set('error'),
+      error: () => {
+        if (seq === this.fetchSeq) {
+          this.state.set('error');
+        }
+      },
     });
   }
 
@@ -220,7 +285,7 @@ export class ReferenceDataComponent {
         }
         this.service.create(category, result.body).subscribe({
           next: (created) => {
-            this.notify.success(`"${created.label}" created.`);
+            this.notify.success(this.i18n.translate('referenceData.toast.created', { name: created.label }));
             this.afterMutation();
           },
         });
@@ -245,7 +310,7 @@ export class ReferenceDataComponent {
         }
         this.service.update(category, result.id, result.body).subscribe({
           next: (updated) => {
-            this.notify.success(`"${updated.label}" updated.`);
+            this.notify.success(this.i18n.translate('referenceData.toast.updated', { name: updated.label }));
             this.afterMutation();
           },
         });
@@ -258,9 +323,9 @@ export class ReferenceDataComponent {
       return;
     }
     const data: ConfirmDialogData = {
-      title: 'Archive item',
-      message: `Archive "${item.label}"? It will no longer appear in dropdowns.`,
-      confirmLabel: 'Archive',
+      title: this.i18n.translate('referenceData.archive.title'),
+      message: this.i18n.translate('referenceData.archive.message', { name: item.label }),
+      confirmLabel: this.i18n.translate('referenceData.action.archive'),
       destructive: true,
     };
     this.dialog
@@ -272,7 +337,7 @@ export class ReferenceDataComponent {
         }
         this.service.archive(category, item.id).subscribe({
           next: () => {
-            this.notify.success(`"${item.label}" archived.`);
+            this.notify.success(this.i18n.translate('referenceData.toast.archived', { name: item.label }));
             this.afterMutation();
           },
         });
@@ -286,15 +351,20 @@ export class ReferenceDataComponent {
     }
     this.service.reactivate(category, item.id).subscribe({
       next: () => {
-        this.notify.success(`"${item.label}" reactivated.`);
+        this.notify.success(this.i18n.translate('referenceData.toast.reactivated', { name: item.label }));
         this.afterMutation();
       },
     });
   }
 
-  /** Refresh the table and drop the lookup cache so dropdowns pick up the change. */
+  /** Refresh the table + the rail counts, and drop the lookup cache so dropdowns pick up the change. */
   private afterMutation(): void {
     this.lookup.invalidate(this.controls.controls.category.value);
     this.fetch();
+    // Best-effort: the counts are a convenience, so a failure here leaves the previous numbers in place.
+    this.service.categories().subscribe({
+      next: (categories) => this.categories.set(categories),
+      error: () => undefined,
+    });
   }
 }

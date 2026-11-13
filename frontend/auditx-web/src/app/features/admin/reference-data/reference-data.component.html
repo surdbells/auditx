@@ -1,11 +1,11 @@
 <app-page-header
-  title="Reference data"
-  subtitle="Managed lookups (audit types, exception categories, …) that back dropdowns across the app."
+  [title]="'referenceData.title' | t"
+  [subtitle]="'referenceData.subtitle' | t"
 >
   @if (canManage() && selectedCategory()) {
     <button actions matButton="filled" type="button" (click)="create()" data-guide="create">
       <app-icon name="add" />
-      New item
+      {{ 'referenceData.action.new' | t }}
     </button>
   }
 </app-page-header>
@@ -14,137 +14,199 @@
 
 @switch (categoriesState()) {
   @case ('loading') {
-    <app-loading message="Loading categories…" />
+    <app-loading [message]="'referenceData.loading.categories' | t" />
   }
   @case ('error') {
     <app-error-state
-      message="We couldn't load the reference-data categories."
+      [message]="'referenceData.error.categories' | t"
       (retry)="loadCategories()"
     />
   }
   @case ('ready') {
-    <mat-card appearance="outlined" class="ref__filters-card">
-      <form [formGroup]="controls" class="ref__filters">
-        <mat-button-toggle-group
-          formControlName="category"
-          aria-label="Category"
-          class="ref__categories"
-        >
+    <div class="ref">
+      <!-- The lists. A rail beside the items on wide screens; a scrolling strip above them on narrow ones. -->
+      <nav class="ref__rail" [attr.aria-label]="'referenceData.rail.aria' | t">
+        <p class="ref__rail-title">{{ 'referenceData.rail.title' | t }}</p>
+        <ul class="ref__rail-list">
           @for (c of categories(); track c.code) {
-            <mat-button-toggle [value]="c.code">{{ c.label }}</mat-button-toggle>
+            <li>
+              <button
+                type="button"
+                class="ref__rail-item"
+                [class.ref__rail-item--active]="c.code === selectedCode()"
+                [attr.aria-current]="c.code === selectedCode() ? 'true' : null"
+                (click)="selectCategory(c.code)"
+              >
+                <span class="ref__rail-label">{{ c.label }}</span>
+                @if (c.activeCount !== undefined) {
+                  <span
+                    class="ref__rail-count"
+                    [class.ref__rail-count--empty]="c.activeCount === 0"
+                    [attr.aria-label]="'referenceData.rail.count' | t: { count: c.activeCount }"
+                  >
+                    {{ c.activeCount }}
+                  </span>
+                }
+              </button>
+            </li>
           }
-        </mat-button-toggle-group>
+        </ul>
+      </nav>
 
-        <mat-slide-toggle formControlName="showInactive">
-          Show inactive
-        </mat-slide-toggle>
-      </form>
-    </mat-card>
+      <section class="ref__panel" [attr.aria-label]="selectedCategory()?.label">
+        <header class="ref__head">
+          <div class="ref__head-text">
+            <h2 class="ref__title">{{ selectedCategory()?.label }}</h2>
+            @if (selectedCategory()?.description) {
+              <p class="ref__desc">{{ selectedCategory()?.description }}</p>
+            }
+          </div>
 
-    @switch (state()) {
-      @case ('loading') {
-        <app-loading message="Loading items…" />
-      }
-      @case ('error') {
-        <app-error-state
-          message="We couldn't load the items for this category."
-          (retry)="fetch()"
-        />
-      }
-      @case ('ready') {
-        @if (isEmpty()) {
-          <app-empty-state
-            icon="list_alt"
-            title="No items"
-            [message]="
-              'Add an item to ' + (selectedCategory()?.label ?? 'this category') + '.'
-            "
-          />
-        } @else {
-          <mat-card appearance="outlined" class="ref__table-card">
-            <div class="table-scroll">
-              <table mat-table [dataSource]="items()" class="ref__table">
-                <ng-container matColumnDef="code">
-                  <th mat-header-cell *matHeaderCellDef>Code</th>
-                  <td mat-cell *matCellDef="let i">
-                    <span class="ref__code">{{ i.code }}</span>
-                  </td>
-                </ng-container>
+          <form [formGroup]="controls" class="ref__tools">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="ref__search">
+              <mat-label>{{ 'referenceData.search.label' | t }}</mat-label>
+              <app-icon matPrefix name="search" />
+              <input
+                matInput
+                type="search"
+                autocomplete="off"
+                [value]="search()"
+                (input)="search.set($any($event.target).value)"
+                [placeholder]="'referenceData.search.placeholder' | t"
+              />
+              @if (search()) {
+                <button
+                  matSuffix
+                  matIconButton
+                  type="button"
+                  (click)="search.set('')"
+                  [attr.aria-label]="'referenceData.search.clear' | t"
+                >
+                  <app-icon name="close" />
+                </button>
+              }
+            </mat-form-field>
 
-                <ng-container matColumnDef="label">
-                  <th mat-header-cell *matHeaderCellDef>Label</th>
-                  <td mat-cell *matCellDef="let i">{{ i.label }}</td>
-                </ng-container>
+            <mat-slide-toggle formControlName="showInactive">
+              {{ 'referenceData.showInactive' | t }}
+            </mat-slide-toggle>
+          </form>
+        </header>
 
-                <ng-container matColumnDef="description">
-                  <th mat-header-cell *matHeaderCellDef>Description</th>
-                  <td mat-cell *matCellDef="let i">
-                    {{ i.description || '—' }}
-                  </td>
-                </ng-container>
+        @switch (state()) {
+          @case ('loading') {
+            <app-loading [message]="'referenceData.loading.items' | t" />
+          }
+          @case ('error') {
+            <app-error-state
+              [message]="'referenceData.error.items' | t"
+              (retry)="fetch()"
+            />
+          }
+          @case ('ready') {
+            @if (isEmpty()) {
+              <app-empty-state
+                icon="list_alt"
+                [title]="'referenceData.empty.title' | t"
+                [message]="'referenceData.empty.message' | t: { category: selectedCategory()?.label ?? '' }"
+              />
+            } @else if (noMatches()) {
+              <app-empty-state
+                icon="search"
+                [title]="'referenceData.noMatch.title' | t"
+                [message]="'referenceData.noMatch.message' | t: { term: search().trim() }"
+              />
+            } @else {
+              <div class="table-scroll">
+                <table mat-table [dataSource]="visibleItems()" class="ref__table">
+                  <ng-container matColumnDef="item">
+                    <th mat-header-cell *matHeaderCellDef>{{ 'referenceData.column.item' | t }}</th>
+                    <td mat-cell *matCellDef="let i">
+                      <span class="ref__label">{{ i.label }}</span>
+                      <code class="ref__code">{{ i.code }}</code>
+                    </td>
+                  </ng-container>
 
-                <ng-container matColumnDef="sortOrder">
-                  <th mat-header-cell *matHeaderCellDef>Sort</th>
-                  <td mat-cell *matCellDef="let i">{{ i.sortOrder }}</td>
-                </ng-container>
+                  <ng-container matColumnDef="description">
+                    <th mat-header-cell *matHeaderCellDef>{{ 'referenceData.column.description' | t }}</th>
+                    <td mat-cell *matCellDef="let i" class="ref__description">
+                      {{ i.description || '—' }}
+                    </td>
+                  </ng-container>
 
-                <ng-container matColumnDef="active">
-                  <th mat-header-cell *matHeaderCellDef>Status</th>
-                  <td mat-cell *matCellDef="let i">
-                    <span
-                      class="status-badge"
-                      [attr.data-status]="i.isActive ? 'active' : 'deactivated'"
-                    >
-                      {{ i.isActive ? 'active' : 'inactive' }}
-                    </span>
-                  </td>
-                </ng-container>
+                  <ng-container matColumnDef="sortOrder">
+                    <th mat-header-cell *matHeaderCellDef class="ref__num">
+                      {{ 'referenceData.column.order' | t }}
+                    </th>
+                    <td mat-cell *matCellDef="let i" class="ref__num">{{ i.sortOrder }}</td>
+                  </ng-container>
 
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef aria-label="Actions"></th>
-                  <td mat-cell *matCellDef="let i">
-                    @if (canManage()) {
-                      <button
-                        matIconButton
-                        type="button"
-                        (click)="edit(i)"
-                        [attr.aria-label]="'Edit ' + i.label"
-                        matTooltip="Edit"
+                  <ng-container matColumnDef="active">
+                    <th mat-header-cell *matHeaderCellDef>{{ 'referenceData.column.status' | t }}</th>
+                    <td mat-cell *matCellDef="let i">
+                      <span
+                        class="status-badge"
+                        [attr.data-status]="i.isActive ? 'active' : 'deactivated'"
                       >
-                        <app-icon name="edit" />
-                      </button>
-                      @if (i.isActive) {
-                        <button
-                          matIconButton
-                          type="button"
-                          (click)="archive(i)"
-                          [attr.aria-label]="'Archive ' + i.label"
-                          matTooltip="Archive"
-                        >
-                          <app-icon name="archive" />
-                        </button>
-                      } @else {
-                        <button
-                          matIconButton
-                          type="button"
-                          (click)="reactivate(i)"
-                          [attr.aria-label]="'Reactivate ' + i.label"
-                          matTooltip="Reactivate"
-                        >
-                          <app-icon name="unarchive" />
-                        </button>
-                      }
-                    }
-                  </td>
-                </ng-container>
+                        {{ (i.isActive ? 'referenceData.status.active' : 'referenceData.status.inactive') | t }}
+                      </span>
+                    </td>
+                  </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-              </table>
-            </div>
-          </mat-card>
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef class="ref__actions">
+                      <span class="ref__sr-only">{{ 'referenceData.column.actions' | t }}</span>
+                    </th>
+                    <td mat-cell *matCellDef="let i" class="ref__actions">
+                      @if (canManage()) {
+                        <button
+                          matIconButton
+                          type="button"
+                          (click)="edit(i)"
+                          [attr.aria-label]="'referenceData.action.editAria' | t: { name: i.label }"
+                          [matTooltip]="'referenceData.action.edit' | t"
+                        >
+                          <app-icon name="edit" />
+                        </button>
+                        @if (i.isActive) {
+                          <button
+                            matIconButton
+                            type="button"
+                            (click)="archive(i)"
+                            [attr.aria-label]="'referenceData.action.archiveAria' | t: { name: i.label }"
+                            [matTooltip]="'referenceData.action.archive' | t"
+                          >
+                            <app-icon name="archive" />
+                          </button>
+                        } @else {
+                          <button
+                            matIconButton
+                            type="button"
+                            (click)="reactivate(i)"
+                            [attr.aria-label]="'referenceData.action.reactivateAria' | t: { name: i.label }"
+                            [matTooltip]="'referenceData.action.reactivate' | t"
+                          >
+                            <app-icon name="unarchive" />
+                          </button>
+                        }
+                      }
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                  <tr
+                    mat-row
+                    *matRowDef="let row; columns: displayedColumns"
+                    [class.ref__row--inactive]="!row.isActive"
+                  ></tr>
+                </table>
+              </div>
+
+              <p class="ref__summary">{{ summary() }}</p>
+            }
+          }
         }
-      }
-    }
+      </section>
+    </div>
   }
 }

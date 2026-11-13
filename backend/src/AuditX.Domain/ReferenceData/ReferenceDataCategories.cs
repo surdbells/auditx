@@ -37,24 +37,30 @@ public static class ReferenceDataCategories
     /// <summary>Regulation categories (prudential, AML/CFT, consumer protection, …) used to classify regulations in the compliance register.</summary>
     public const string RegulationCategory = "regulation_category";
 
-    /// <summary>Every category the store recognises, with its human label — the admin UI's manageable-list menu.</summary>
+    /// <summary>
+    /// Every category the store recognises, with its human label and a one-line statement of where the list is
+    /// used — the admin UI's manageable-list menu.
+    /// </summary>
     public static readonly IReadOnlyList<ReferenceDataCategoryDescriptor> All =
     [
-        new(AuditType, "Audit types"),
-        new(ExceptionCategory, "Exception categories"),
-        new(RootCauseCategory, "Root-cause categories"),
-        new(NonConformanceCategory, "Non-conformance categories"),
-        new(EvidenceDocumentType, "Evidence document types"),
-        new(EntityType, "Entity types"),
-        new(SanctionCategory, "Sanction categories"),
-        new(RiskCategory, "Risk categories"),
-        new(RegulationAuthority, "Regulatory authorities"),
-        new(RegulationCategory, "Regulation categories"),
+        new(AuditType, "Audit types", "Classifies templates, plan items and audits."),
+        new(ExceptionCategory, "Exception categories", "The category picked when an exception is raised."),
+        new(RootCauseCategory, "Root-cause categories", "The root-cause taxonomy applied to findings."),
+        new(NonConformanceCategory, "Non-conformance categories", "The non-conformance taxonomy used in compliance reporting."),
+        new(EvidenceDocumentType, "Evidence document types", "The document type named on an evidence request."),
+        new(EntityType, "Entity types", "Classifies auditable entities across the audit universe."),
+        new(SanctionCategory, "Sanction categories", "Keys the cells of the sanctions grid."),
+        new(RiskCategory, "Risk categories", "Classifies risks in the risk register."),
+        new(RegulationAuthority, "Regulatory authorities", "The issuing authority of a regulation in the compliance register."),
+        new(RegulationCategory, "Regulation categories", "Classifies regulations in the compliance register."),
     ];
 
     public static bool IsKnown(string? category) =>
         category is not null && All.Any(c => string.Equals(c.Code, category, StringComparison.Ordinal));
 }
 
-/// <summary>A managed reference-data category: its stable <paramref name="Code"/> and human <paramref name="Label"/>.</summary>
-public sealed record ReferenceDataCategoryDescriptor(string Code, string Label);
+/// <summary>
+/// A managed reference-data category: its stable <paramref name="Code"/>, human <paramref name="Label"/> and a
+/// one-line <paramref name="Description"/> of where the list is used.
+/// </summary>
+public sealed record ReferenceDataCategoryDescriptor(string Code, string Label, string Description);

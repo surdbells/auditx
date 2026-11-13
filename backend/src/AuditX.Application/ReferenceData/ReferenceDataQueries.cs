@@ -18,9 +18,15 @@ public sealed class ListReferenceDataQueryHandler(IReferenceDataRepository items
 
 public sealed record ListReferenceDataCategoriesQuery : IQuery<IReadOnlyList<ReferenceDataCategoryDto>>;
 
-public sealed class ListReferenceDataCategoriesQueryHandler
+public sealed class ListReferenceDataCategoriesQueryHandler(IReferenceDataRepository items)
     : IQueryHandler<ListReferenceDataCategoriesQuery, IReadOnlyList<ReferenceDataCategoryDto>>
 {
-    public Task<IReadOnlyList<ReferenceDataCategoryDto>> Handle(ListReferenceDataCategoriesQuery query, CancellationToken cancellationToken)
-        => Task.FromResult<IReadOnlyList<ReferenceDataCategoryDto>>(ReferenceDataCategories.All.Select(c => c.ToDto()).ToArray());
+    public async Task<IReadOnlyList<ReferenceDataCategoryDto>> Handle(ListReferenceDataCategoriesQuery query, CancellationToken cancellationToken)
+    {
+        // One grouped count for the whole catalogue, so the menu shows how populated each list is.
+        var counts = await items.CountByCategoryAsync(cancellationToken);
+        return ReferenceDataCategories.All
+            .Select(c => c.ToDto(counts.GetValueOrDefault(c.Code)))
+            .ToArray();
+    }
 }

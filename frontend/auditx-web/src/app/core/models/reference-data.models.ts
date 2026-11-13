@@ -11,6 +11,12 @@
 export interface ReferenceDataCategory {
   code: string;
   label: string;
+  /** One line on where the list is used (e.g. "Classifies templates, plan items and audits."). */
+  description?: string;
+  /** How many active items the list holds — shown in the category menu. */
+  activeCount?: number;
+  /** How many archived items the list holds. */
+  inactiveCount?: number;
 }
 
 /** A single managed item within a category. */

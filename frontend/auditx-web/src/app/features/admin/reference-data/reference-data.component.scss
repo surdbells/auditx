@@ -1,29 +1,275 @@
-.ref__filters-card {
-  margin-bottom: 1.25rem;
+// Reference data — a list rail beside the selected list's items.
+// Both surfaces mirror the app's outlined-card skin (18px radius, hairline border, soft shadow).
+
+// The layout responds to the width of the CONTENT area, not the viewport: with the app's sidebar open a
+// 1000px window leaves only ~700px here, which a viewport media query would still treat as 'wide'.
+:host {
+  display: block;
+  container: ref / inline-size;
 }
 
-.ref__filters {
+.ref {
+  display: grid;
+  grid-template-columns: minmax(220px, 264px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.ref__rail,
+.ref__panel {
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 18px;
+  box-shadow: var(--ax-shadow-1);
+}
+
+// ---- List rail ---------------------------------------------------------
+.ref__rail {
+  position: sticky;
+  top: 1rem;
+  padding: 0.75rem 0.5rem;
+}
+
+.ref__rail-title {
+  margin: 0.25rem 0.75rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.ref__rail-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ref__rail-item {
+  display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--mat-sys-on-surface);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--ax-dur) var(--ax-ease),
+    color var(--ax-dur) var(--ax-ease);
 }
 
-.ref__categories {
-  flex-wrap: wrap;
+.ref__rail-item:hover {
+  background: var(--mat-sys-surface-container-high);
 }
 
-.ref__table-card {
-  padding: 0;
+.ref__rail-item:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 1px;
+}
+
+.ref__rail-item--active,
+.ref__rail-item--active:hover {
+  background: color-mix(in srgb, var(--mat-sys-primary) 11%, transparent);
+  color: var(--mat-sys-primary);
+  font-weight: 600;
+}
+
+.ref__rail-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ref__rail-count {
+  flex: 0 0 auto;
+  min-width: 1.6rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.ref__rail-item--active .ref__rail-count {
+  background: color-mix(in srgb, var(--mat-sys-primary) 16%, transparent);
+  color: var(--mat-sys-primary);
+}
+
+// An empty list is worth noticing — nothing would appear in its dropdowns.
+.ref__rail-count--empty {
+  background: color-mix(in srgb, var(--mat-sys-error) 12%, transparent);
+  color: var(--mat-sys-error);
+}
+
+// ---- Item panel --------------------------------------------------------
+.ref__panel {
+  min-width: 0;
   overflow: hidden;
+}
+
+.ref__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.ref__head-text {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.ref__title {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.ref__desc {
+  margin: 0.2rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.ref__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+}
+
+.ref__search {
+  width: 17rem;
+  max-width: 100%;
 }
 
 .ref__table {
   width: 100%;
 }
 
+// Wide enough that an ordinary label and its code each sit on one line; the table scrolls before it squeezes.
+.mat-column-item {
+  min-width: 13rem;
+}
+
+.ref__label {
+  display: block;
+  font-weight: 600;
+}
+
 .ref__code {
-  font-family: var(--mat-sys-body-medium-font, monospace);
-  font-weight: 500;
+  display: block;
+  margin-top: 0.1rem;
+  font-family: 'Cascadia Code', Consolas, ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.ref__description {
+  max-width: 34rem;
+  color: var(--mat-sys-on-surface-variant);
+  white-space: normal;
+}
+
+.ref__num {
+  width: 5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ref__actions {
+  width: 6.5rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+// Archived items stay readable but step back behind the live ones.
+.ref__row--inactive .ref__label,
+.ref__row--inactive .ref__num {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.ref__summary {
+  margin: 0;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ref__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// ---- Narrow content area: the rail becomes a scrolling strip above the items ----
+@container ref (max-width: 880px) {
+  .ref {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .ref__rail {
+    position: static;
+    padding: 0.5rem;
+  }
+
+  .ref__rail-title {
+    display: none;
+  }
+
+  .ref__rail-list {
+    flex-direction: row;
+    gap: 0.25rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .ref__rail-item {
+    width: auto;
+    white-space: nowrap;
+  }
+
+  .ref__head {
+    padding: 1rem;
+  }
+
+  .ref__search {
+    width: 100%;
+  }
+
+  .ref__tools {
+    width: 100%;
+  }
+
+  .ref__summary {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ref__rail-item {
+    transition: none;
+  }
 }

@@ -87,6 +87,84 @@ describe('ReferenceDataComponent', () => {
     expect(text).toContain('AML');
   });
 
+  it('switches list: the heading follows the selection and the new items load', async () => {
+    setup();
+    flushInitial([item('aml', 'AML')]);
+    await fixture.whenStable();
+
+    component.search.set('aml');
+    component.selectCategory('exception_category');
+    http
+      .expectOne((r) => r.url === `${BASE}/reference-data/exception_category`)
+      .flush({ data: [item('cash', 'Cash handling', { category: 'exception_category' })] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Regression: the selection used to be read from the form control inside a computed, which is not
+    // reactive — the heading and dialog title kept naming the FIRST list after switching.
+    expect(component.selectedCategory()?.code).toBe('exception_category');
+    expect(component.search()).toBe('');
+    const heading = (fixture.nativeElement as HTMLElement).querySelector('.ref__title');
+    expect(heading?.textContent).toContain('Exception categories');
+    expect(component.visibleItems().map((i) => i.code)).toEqual(['cash']);
+  });
+
+  it('ignores a slow response for a list the user has already left', async () => {
+    setup();
+    flushInitial([item('aml', 'AML')]);
+    await fixture.whenStable();
+
+    component.selectCategory('exception_category');
+    const stale = http.expectOne((r) => r.url === `${BASE}/reference-data/exception_category`);
+    component.selectCategory('audit_type');
+    const current = http.expectOne((r) => r.url === `${BASE}/reference-data/audit_type`);
+
+    current.flush({ data: [item('it', 'IT')] });
+    stale.flush({ data: [item('cash', 'Cash handling', { category: 'exception_category' })] });
+
+    expect(component.items().map((i) => i.code)).toEqual(['it']);
+  });
+
+  it('filters the loaded items by label, code or description without refetching', async () => {
+    setup();
+    flushInitial([
+      item('aml', 'AML'),
+      item('it', 'IT general controls'),
+      item('ops', 'Operations', { description: 'Branch and back-office controls' }),
+    ]);
+    await fixture.whenStable();
+
+    component.search.set('CONTROLS');
+    expect(component.visibleItems().map((i) => i.code)).toEqual(['it', 'ops']);
+    expect(component.summary()).toContain('2 of 3');
+
+    component.search.set('zzz');
+    expect(component.noMatches()).toBe(true);
+    expect(component.isEmpty()).toBe(false);
+    // afterEach's http.verify() proves searching issued no request.
+  });
+
+  it('shows how many active items each list holds', async () => {
+    setup();
+    http.expectOne(`${BASE}/reference-data/categories`).flush({
+      data: [
+        { code: 'audit_type', label: 'Audit types', description: 'Classifies audits.', activeCount: 8, inactiveCount: 1 },
+        { code: 'entity_type', label: 'Entity types', description: 'Classifies entities.', activeCount: 0, inactiveCount: 0 },
+      ],
+    });
+    http.expectOne((r) => r.url === `${BASE}/reference-data/audit_type`).flush({ data: [item('aml', 'AML')] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const root = fixture.nativeElement as HTMLElement;
+    const counts = [...root.querySelectorAll('.ref__rail-count')].map((e) => e.textContent?.trim());
+    expect(counts).toEqual(['8', '0']);
+    // An empty list is flagged — nothing would appear in its dropdowns.
+    expect(root.querySelectorAll('.ref__rail-count--empty').length).toBe(1);
+    expect(root.querySelector('.ref__desc')?.textContent).toContain('Classifies audits.');
+    expect(component.summary()).toContain('1 archived');
+  });
+
   it('re-queries with includeInactive when the toggle is set', async () => {
     setup();
     flushInitial([item('aml', 'AML')]);

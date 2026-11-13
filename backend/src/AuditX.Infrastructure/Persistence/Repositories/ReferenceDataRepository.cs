@@ -1,4 +1,5 @@
 using AuditX.Application.Abstractions.Persistence;
+using AuditX.Application.ReferenceData;
 using AuditX.Domain.ReferenceData;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +16,15 @@ public sealed class ReferenceDataRepository(AppDbContext db) : IReferenceDataRep
         }
 
         return await query.OrderBy(i => i.SortOrder).ThenBy(i => i.Label).ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<string, ReferenceDataCategoryCounts>> CountByCategoryAsync(CancellationToken cancellationToken = default)
+    {
+        var rows = await db.ReferenceDataItems.AsNoTracking()
+            .GroupBy(i => i.Category)
+            .Select(g => new { Category = g.Key, Active = g.Count(i => i.IsActive), Inactive = g.Count(i => !i.IsActive) })
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(r => r.Category, r => new ReferenceDataCategoryCounts(r.Active, r.Inactive), StringComparer.Ordinal);
     }
 
     public Task<ReferenceDataItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
