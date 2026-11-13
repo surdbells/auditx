@@ -180,6 +180,14 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> GetResponse(Guid id, Guid itemId, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new GetChecklistResponseQuery(id, itemId), cancellationToken));
 
+    // What the respond form should offer for this item (the org's conclusion labels, the rating scale's points, the
+    // item's choices, its unit). Served from the audit — gated by ViewAudit like the other execution reads — so a
+    // responder never needs the template-library permission just to answer an item (e.g. a self-assessing auditee).
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/items/{itemId:guid}/response-input")]
+    public async Task<IActionResult> GetResponseInput(Guid id, Guid itemId, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetResponseInputQuery(id, itemId), cancellationToken));
+
     // Discard is authorised in the handler (only the draft's author or an audit manager may discard).
     [HttpDelete("{id:guid}/items/{itemId:guid}/responses/draft")]
     public async Task<IActionResult> DiscardDraft(Guid id, Guid itemId, [FromQuery] string version, CancellationToken cancellationToken)

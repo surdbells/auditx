@@ -131,7 +131,7 @@
           <div class="exec__detail-status">
             <span class="status-badge" [attr.data-status]="item.itemState">{{ item.itemState.replace('_', ' ') }}</span>
             @if (item.verdict) {
-              <span class="verdict-chip" [attr.data-verdict]="item.verdict">{{ verdictLabel(item.verdict) }}</span>
+              <span class="verdict-chip" [attr.data-verdict]="item.verdict">{{ conclusionLabel(item) }}</span>
             }
             <span class="muted">{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
             @if (responseFor(item.itemId)?.isDraft) {
@@ -139,7 +139,7 @@
             }
           </div>
 
-          @if (answerText(item.itemId); as answer) {
+          @if (answerText(item); as answer) {
             <div class="exec__answer">
               <span class="exec__answer-label muted">{{ 'audits.exec.answerLabel' | t }}</span>
               <span class="exec__answer-value">{{ answer }}</span>

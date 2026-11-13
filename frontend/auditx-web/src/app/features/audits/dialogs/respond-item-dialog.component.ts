@@ -22,18 +22,21 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 
-import { RatingScalesService } from '../../../core/services/rating-scales.service';
-import { ResponseOptionSetsService } from '../../../core/services/response-option-sets.service';
+import { AuditsService } from '../../../core/services/audits.service';
 import {
   ChecklistResponse,
-  RatingScalePoint,
-  ResponseOptionSet,
+  ResponseInput,
+  ResponseInputOption,
   ResponseType,
   ResponseVerdict,
   VALUE_RESPONSE_TYPES,
 } from '../../../core/models';
+import { parseResponseConfig } from '../../../core/models/response-type.util';
 
 export interface RespondItemDialogData {
+  /** The audit and item being answered — used to load what the item offers (labels, scale points, choices). */
+  auditId: string;
+  itemId: string;
   /** The checklist item prompt, for context. */
   prompt: string;
   /** The item's response type — drives which input is shown. */
@@ -79,8 +82,8 @@ export interface RespondItemDialogResult {
         <!-- Verdict types capture the conclusion directly -->
         @if (!isValueType()) {
           @if (usesOptionSet()) {
-            <mat-radio-group formControlName="selectedOptionCode" class="choices">
-              @for (o of optionSet()!.options; track o.code) {
+            <mat-radio-group formControlName="selectedOptionCode" class="verdicts" aria-label="Conclusion">
+              @for (o of options(); track o.code) {
                 <mat-radio-button [value]="o.code">{{ o.label }}</mat-radio-button>
               }
             </mat-radio-group>
@@ -109,7 +112,10 @@ export interface RespondItemDialogResult {
             @case ('numeric') {
               <mat-form-field appearance="outline" class="full">
                 <mat-label>Value{{ unit() ? ' (' + unit() + ')' : '' }}</mat-label>
-                <input matInput type="number" formControlName="value" />
+                <input matInput type="number" step="any" formControlName="value" />
+                @if (form.controls.value.value && !isNumber()) {
+                  <mat-hint class="warn">Enter a number.</mat-hint>
+                }
               </mat-form-field>
             }
             @case ('date') {
@@ -121,19 +127,25 @@ export interface RespondItemDialogResult {
             @case ('rating') {
               <div class="rating">
                 <span class="rating__label">Rating</span>
-                <mat-radio-group formControlName="value" class="verdicts">
-                  @for (p of ratingScale(); track p.value) {
+                <mat-radio-group formControlName="value" class="choices" aria-label="Rating">
+                  @for (p of ratingPoints(); track p.value) {
                     <mat-radio-button [value]="p.value.toString()">{{ p.label ? p.value + ' – ' + p.label : p.value }}</mat-radio-button>
                   }
                 </mat-radio-group>
               </div>
             }
             @case ('multiple_choice') {
-              <mat-radio-group formControlName="value" class="choices">
-                @for (opt of choices(); track opt) {
-                  <mat-radio-button [value]="opt">{{ opt }}</mat-radio-button>
-                }
-              </mat-radio-group>
+              @if (inputLoaded() && choices().length === 0) {
+                <p class="notice" role="alert">
+                  This item has no choices to pick from. Ask the audit manager to edit the item and add its choices.
+                </p>
+              } @else {
+                <mat-radio-group formControlName="value" class="choices" aria-label="Choice">
+                  @for (opt of choices(); track opt) {
+                    <mat-radio-button [value]="opt">{{ opt }}</mat-radio-button>
+                  }
+                </mat-radio-group>
+              }
             }
           }
 
@@ -217,6 +229,17 @@ export interface RespondItemDialogResult {
     .full {
       width: 100%;
     }
+    .warn {
+      color: var(--mat-sys-error);
+    }
+    .notice {
+      margin: 0;
+      padding: 0.6rem 0.8rem;
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--mat-sys-error) 10%, transparent);
+      color: var(--mat-sys-error);
+      font-size: 0.875rem;
+    }
     @media (max-width: 520px) {
       .form {
         min-width: auto;
@@ -230,20 +253,27 @@ export class RespondItemDialogComponent {
     MatDialogRef<RespondItemDialogComponent, RespondItemDialogResult>
   >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
-  private readonly ratingScalesService = inject(RatingScalesService);
-  private readonly responseOptionSets = inject(ResponseOptionSetsService);
+  private readonly audits = inject(AuditsService);
 
   readonly responseType = this.data.responseType;
-  private readonly config = parseConfig(this.data.responseConfigJson ?? null);
-  private readonly ratingScalePoints = signal<RatingScalePoint[] | null>(null);
-  /** The org-defined conclusion options for this verdict-based type, once loaded. */
-  readonly optionSet = signal<ResponseOptionSet | null>(null);
+  private readonly config = parseResponseConfig(this.data.responseConfigJson);
+
+  /**
+   * What this item offers, resolved by the server from the audit: the organisation's conclusion labels, the
+   * rating scale's points, the item's choices, its unit. Null until loaded (or if the load failed — the form then
+   * falls back to the built-in conclusions and whatever the item's own settings carry).
+   */
+  readonly input = signal<ResponseInput | null>(null);
+  readonly inputLoaded = signal(false);
 
   readonly isValueType = computed(() => VALUE_RESPONSE_TYPES.includes(this.responseType));
 
-  /** True when a custom option set governs this item (verdict type with configured options). */
+  /** The conclusion options for a verdict-based item (the org's own labels, or the built-in defaults). */
+  readonly options = computed<ResponseInputOption[]>(() => this.input()?.options ?? []);
+
+  /** True once the server's conclusion options are in hand for a verdict-based item. */
   usesOptionSet(): boolean {
-    return !this.isValueType() && (this.optionSet()?.options.length ?? 0) > 0;
+    return !this.isValueType() && this.options().length > 0;
   }
 
   /** A comment is mandatory for a Fail/N-A verdict, or for a chosen option that is a finding / N/A / requires-comment. */
@@ -265,45 +295,62 @@ export class RespondItemDialogComponent {
   );
 
   constructor() {
-    if (this.responseType === 'rating' && this.config.ratingScaleId) {
-      const scaleId = this.config.ratingScaleId;
-      this.ratingScalesService.list('all').subscribe((scales) => {
-        const scale = scales.find((s) => s.id === scaleId);
-        if (scale) {
-          this.ratingScalePoints.set(parsePoints(scale.pointsJson));
-        }
-      });
-    }
+    this.audits.getResponseInput(this.data.auditId, this.data.itemId).subscribe({
+      next: (input) => {
+        this.input.set(input);
+        this.inputLoaded.set(true);
+        this.adoptExistingVerdict(input.options ?? []);
+        this.form.updateValueAndValidity();
+      },
+      // Keep the form usable on failure: built-in conclusions + the item's own settings.
+      error: () => this.inputLoaded.set(true),
+    });
+  }
 
-    // Verdict-based types can be governed by an organisation-defined option set; load it so the auditor picks
-    // the org's own labels. On failure we silently keep the built-in Pass/Fail/N-A radios.
-    if (!this.isValueType()) {
-      this.responseOptionSets.get(this.responseType).subscribe({
-        next: (set) => {
-          this.optionSet.set(set);
-          this.form.controls.comment.updateValueAndValidity();
-        },
-        error: () => this.optionSet.set(null),
-      });
+  /**
+   * A response saved with a bare verdict (before conclusion options existed, or while they could not be loaded)
+   * has no option code. Pre-select the option that carries the same conclusion so re-opening it does not look blank.
+   */
+  private adoptExistingVerdict(options: ResponseInputOption[]): void {
+    const verdict = this.form.controls.verdict.value;
+    if (this.isValueType() || this.form.controls.selectedOptionCode.value || !verdict) {
+      return;
+    }
+    const match = options.find((o) =>
+      verdict === 'na'
+        ? o.isNotApplicable
+        : verdict === 'fail'
+          ? o.isDeficiency && !o.isNotApplicable
+          : !o.isDeficiency && !o.isNotApplicable,
+    );
+    if (match) {
+      this.form.controls.selectedOptionCode.setValue(match.code);
     }
   }
 
+  /** The item's choices: the server's resolved list, or the item's own settings until that arrives. */
   choices(): string[] {
-    return this.config.options ?? [];
+    return this.input()?.choices ?? this.config.options ?? [];
   }
 
-  /** Labelled scale points when a RatingScale is configured; a bare 1..max fallback otherwise. */
-  ratingScale(): RatingScalePoint[] {
-    const points = this.ratingScalePoints();
-    if (points) {
+  /** The points of the item's rating scale; a bare 1..max only for a legacy item that has no scale. */
+  ratingPoints(): { value: number; label: string }[] {
+    const points = this.input()?.ratingPoints;
+    if (points && points.length > 0) {
       return points;
     }
     const max = this.config.max ?? 5;
-    return Array.from({ length: max }, (_, i) => ({ value: i + 1, label: '', score: 0 }));
+    return Array.from({ length: max }, (_, i) => ({ value: i + 1, label: '' }));
   }
 
   unit(): string {
-    return this.config.unit ?? '';
+    return this.input()?.unit ?? this.config.unit ?? '';
+  }
+
+  /** True when the numeric box holds a real (finite) number. */
+  isNumber(): boolean {
+    const raw = String(this.form.controls.value.value ?? '').trim();
+    return raw.length > 0 && Number.isFinite(Number(raw));
   }
 
   /**
@@ -314,7 +361,7 @@ export class RespondItemDialogComponent {
   commentRequired(group: AbstractControl = this.form): boolean {
     if (this.usesOptionSet()) {
       const code = group.get('selectedOptionCode')?.value as string | undefined;
-      const o = this.optionSet()?.options.find((opt) => opt.code === code) ?? null;
+      const o = this.options().find((opt) => opt.code === code) ?? null;
       return !!o && (o.requiresComment || o.isDeficiency || o.isNotApplicable);
     }
     const v = group.get('verdict')?.value as ResponseVerdict | null;
@@ -327,7 +374,14 @@ export class RespondItemDialogComponent {
       return false;
     }
     if (this.isValueType()) {
-      return this.form.controls.value.value.trim().length > 0;
+      const value = String(this.form.controls.value.value ?? '').trim();
+      if (this.responseType === 'numeric') {
+        return this.isNumber();
+      }
+      if (this.responseType === 'multiple_choice') {
+        return this.choices().includes(value);
+      }
+      return value.length > 0;
     }
     if (this.usesOptionSet()) {
       return !!this.form.controls.selectedOptionCode.value;
@@ -361,40 +415,13 @@ export class RespondItemDialogComponent {
       comment: v.comment.trim() || null,
       observation: v.observation.trim() || null,
       recommendation: v.recommendation.trim() || null,
-      valueJson: this.isValueType() ? buildValue(this.responseType, v.value) : null,
+      valueJson: this.isValueType() ? buildValue(this.responseType, String(v.value ?? '')) : null,
       isDraft,
     });
   }
 
   cancel(): void {
     this.dialogRef.close();
-  }
-}
-
-interface ParsedConfig {
-  options?: string[];
-  max?: number;
-  unit?: string;
-  ratingScaleId?: string;
-}
-
-function parseConfig(json: string | null): ParsedConfig {
-  if (!json) {
-    return {};
-  }
-  try {
-    return JSON.parse(json) as ParsedConfig;
-  } catch {
-    return {};
-  }
-}
-
-function parsePoints(pointsJson: string): RatingScalePoint[] {
-  try {
-    const parsed = JSON.parse(pointsJson);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
   }
 }
 
@@ -422,7 +449,7 @@ function buildValue(type: ResponseType, raw: string): string | null {
     case 'text':
       return JSON.stringify({ text: trimmed });
     case 'numeric':
-      return JSON.stringify({ number: Number(trimmed) });
+      return Number.isFinite(Number(trimmed)) ? JSON.stringify({ number: Number(trimmed) }) : null;
     case 'date':
       return JSON.stringify({ date: trimmed });
     case 'rating':

@@ -26,6 +26,7 @@ import {
   FailJudgementRequest,
   FailWithoutExceptionResult,
   ResponseHistoryEntry,
+  ResponseInput,
   ReviewSummary,
   SubmitResponseRequest,
   TransferLeadRequest,
@@ -214,6 +215,14 @@ export class AuditsService {
     return this.api.get<ChecklistResponse | null>(
       `/audits/${id}/items/${itemId}/responses`,
     );
+  }
+
+  /**
+   * What the respond form should offer for an item — the organisation's conclusion labels, the rating scale's
+   * points, the item's choices or its unit. Served from the audit, so answering never needs template access.
+   */
+  getResponseInput(id: string, itemId: string): Observable<ResponseInput> {
+    return this.api.get<ResponseInput>(`/audits/${id}/items/${itemId}/response-input`);
   }
 
   discardDraft(id: string, itemId: string, version: string): Observable<void> {

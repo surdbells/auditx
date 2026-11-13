@@ -279,6 +279,29 @@ export interface ChecklistResponse {
   score?: number | null;
 }
 
+/** One conclusion option the responder may pick on a verdict-based item (the organisation's own labels). */
+export interface ResponseInputOption {
+  code: string;
+  label: string;
+  /** This conclusion is a finding. */
+  isDeficiency: boolean;
+  isNotApplicable: boolean;
+  requiresComment: boolean;
+}
+
+/**
+ * What the respond form should offer for one checklist item, resolved by the server from the audit itself:
+ * conclusion options (verdict types), the rating scale's points, the item's choices, or its unit. Only the
+ * member relevant to the item's type is populated.
+ */
+export interface ResponseInput {
+  responseType: ResponseType;
+  options?: ResponseInputOption[] | null;
+  ratingPoints?: { value: number; label: string }[] | null;
+  choices?: string[] | null;
+  unit?: string | null;
+}
+
 /** An evidence file attached to a response. */
 export interface EvidenceFile {
   id: string;

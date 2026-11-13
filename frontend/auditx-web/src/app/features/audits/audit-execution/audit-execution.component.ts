@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { parseResponseConfig } from '../../../core/models/response-type.util';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -443,6 +444,8 @@ export class AuditExecutionComponent {
     current: ChecklistResponse | null,
   ): void {
     const data: RespondItemDialogData = {
+      auditId: this.audit().id,
+      itemId: item.itemId,
       prompt: item.prompt,
       responseType: item.responseType,
       responseConfigJson: item.responseConfigJson,
@@ -787,6 +790,22 @@ export class AuditExecutionComponent {
     }
   }
 
+  /**
+   * The conclusion as the responder saw it: the organisation's own label when one was chosen (e.g. "Compliant"),
+   * Yes / No for a yes-no item, otherwise the plain Pass / Fail / N/A.
+   */
+  conclusionLabel(item: ChecklistProgressItem): string {
+    const response = this.responseFor(item.itemId);
+    const chosen = response && !response.isDraft ? response.selectedOptionLabel?.trim() : null;
+    if (chosen) {
+      return chosen;
+    }
+    if (item.responseType === 'yes_no' && (item.verdict === 'pass' || item.verdict === 'fail')) {
+      return item.verdict === 'pass' ? 'Yes' : 'No';
+    }
+    return this.verdictLabel(item.verdict);
+  }
+
   formatSize(bytes: number): string {
     if (bytes < 1024) {
       return `${bytes} B`;
@@ -801,15 +820,25 @@ export class AuditExecutionComponent {
    * The captured answer for a value-type item (text / numeric / date / rating / choice), formatted
    * for display — pass/fail/n-a items have no value (they use the verdict chip instead).
    */
-  answerText(itemId: string): string | null {
-    const json = this.responseFor(itemId)?.valueJson;
+  answerText(item: ChecklistProgressItem): string | null {
+    const json = this.responseFor(item.itemId)?.valueJson;
     if (!json) {
       return null;
     }
     try {
       const v = JSON.parse(json) as Record<string, unknown>;
       const raw = v['text'] ?? v['number'] ?? v['date'] ?? v['rating'] ?? v['choice'];
-      return raw === undefined || raw === null ? null : String(raw);
+      if (raw === undefined || raw === null) {
+        return null;
+      }
+      // A rating reads with the label of the point picked ("4 – Effective"), snapshotted when it was answered.
+      const label = typeof v['label'] === 'string' ? v['label'].trim() : '';
+      if (item.responseType === 'rating' && label) {
+        return `${String(raw)} – ${label}`;
+      }
+      // A number reads with its unit ("12 days"), exactly as the responder entered it.
+      const unit = item.responseType === 'numeric' ? parseResponseConfig(item.responseConfigJson).unit?.trim() : '';
+      return unit ? `${String(raw)} ${unit}` : String(raw);
     } catch {
       return null;
     }

@@ -24,33 +24,20 @@ import {
   ControlListItem,
   ExceptionSeverity,
   RatingScale,
-  ResponseType,
   SaveTemplateItemRequest,
   TemplateItem,
 } from '../../../../core/models';
+import {
+  buildResponseConfigGroup,
+  readResponseConfig,
+} from '../../../../core/models/response-type.util';
+import { ResponseConfigFieldsComponent } from '../../../../shared/components/response-config-fields/response-config-fields.component';
 
 export interface ItemEditorDialogData {
   /** Existing item to edit, or null to create a new one. */
   item: TemplateItem | null;
   /** Section names available to assign the item to. */
   sections: string[];
-}
-
-const RESPONSE_TYPES: { value: ResponseType; labelKey: string }[] = [
-  { value: 'pass_fail_na', labelKey: 'templatesAdmin.responseType.passFailNa' },
-  { value: 'rating', labelKey: 'templatesAdmin.responseType.rating' },
-];
-
-function parseRatingScaleId(responseConfigJson: string | null | undefined): string {
-  if (!responseConfigJson) {
-    return '';
-  }
-  try {
-    const parsed = JSON.parse(responseConfigJson) as { ratingScaleId?: string };
-    return parsed.ratingScaleId ?? '';
-  } catch {
-    return '';
-  }
 }
 
 @Component({
@@ -65,6 +52,7 @@ function parseRatingScaleId(responseConfigJson: string | null | undefined): stri
     MatCheckboxModule,
     MatButtonModule,
     TranslatePipe,
+    ResponseConfigFieldsComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ (data.item ? 'templatesAdmin.editor.editItem' : 'templatesAdmin.editor.addItem') | t }}</h2>
@@ -88,42 +76,24 @@ function parseRatingScaleId(responseConfigJson: string | null | undefined): stri
           <textarea matInput formControlName="referenceNotes" rows="2"></textarea>
         </mat-form-field>
 
-        <div class="row">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'templatesAdmin.item.responseType' | t }}</mat-label>
-            <mat-select formControlName="responseType">
-              @for (rt of responseTypes; track rt.value) {
-                <mat-option [value]="rt.value">{{ rt.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'templatesAdmin.item.section' | t }}</mat-label>
-            <mat-select formControlName="sectionName">
-              <mat-option [value]="''">{{ 'templatesAdmin.item.noSection' | t }}</mat-option>
-              @for (s of data.sections; track s) {
-                <mat-option [value]="s">{{ s }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        @if (form.controls.responseType.value === 'rating') {
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>{{ 'templatesAdmin.item.ratingScale' | t }}</mat-label>
-            <mat-select formControlName="ratingScaleId">
-              @for (rs of ratingScales(); track rs.id) {
-                <mat-option [value]="rs.id">{{ rs.name }}</mat-option>
-              }
-            </mat-select>
-            @if (form.controls.ratingScaleId.hasError('required') && form.controls.ratingScaleId.touched) {
-              <mat-error>{{ 'templatesAdmin.error.ratingScaleRequired' | t }}</mat-error>
-            }
-          </mat-form-field>
-        }
+        <!-- How the item is answered: every response type, with the settings that type needs. -->
+        <app-response-config-fields
+          [group]="form.controls.response"
+          [ratingScales]="ratingScales()"
+          [scalesLoaded]="scalesLoaded()"
+        />
 
         <mat-form-field appearance="outline" class="full">
+          <mat-label>{{ 'templatesAdmin.item.section' | t }}</mat-label>
+          <mat-select formControlName="sectionName">
+            <mat-option [value]="''">{{ 'templatesAdmin.item.noSection' | t }}</mat-option>
+            @for (s of data.sections; track s) {
+              <mat-option [value]="s">{{ s }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full hinted" subscriptSizing="dynamic">
           <mat-label>{{ 'templatesAdmin.item.riskRating' | t }}</mat-label>
           <mat-select formControlName="riskRating">
             <mat-option [value]="null">{{ 'templatesAdmin.item.noRiskRating' | t }}</mat-option>
@@ -134,7 +104,7 @@ function parseRatingScaleId(responseConfigJson: string | null | undefined): stri
           <mat-hint>{{ 'templatesAdmin.item.riskRatingHint' | t }}</mat-hint>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full">
+        <mat-form-field appearance="outline" class="full hinted" subscriptSizing="dynamic">
           <mat-label>{{ 'templatesAdmin.item.control' | t }}</mat-label>
           <mat-select formControlName="controlId">
             <mat-option [value]="null">{{ 'templatesAdmin.item.noControl' | t }}</mat-option>
@@ -165,13 +135,9 @@ function parseRatingScaleId(responseConfigJson: string | null | undefined): stri
     .full {
       width: 100%;
     }
-    .row {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .row mat-form-field {
-      flex: 1 1 180px;
+    /* Fields whose hint can wrap: the hint row grows with its text instead of overlapping the next field. */
+    .hinted {
+      margin-bottom: 1rem;
     }
     @media (max-width: 520px) {
       .form {
@@ -191,11 +157,6 @@ export class ItemEditorDialogComponent {
   private readonly ratingScalesService = inject(RatingScalesService);
   private readonly controlsService = inject(ControlsService);
 
-  readonly responseTypes = RESPONSE_TYPES.map((rt) => ({
-    value: rt.value,
-    label: this.i18n.translate(rt.labelKey),
-  }));
-
   readonly severities: { value: ExceptionSeverity; label: string }[] = [
     { value: 'low', label: this.i18n.translate('exceptions.severity.low') },
     { value: 'medium', label: this.i18n.translate('exceptions.severity.medium') },
@@ -204,41 +165,32 @@ export class ItemEditorDialogComponent {
   ];
 
   readonly ratingScales = signal<RatingScale[]>([]);
+  readonly scalesLoaded = signal(false);
   readonly controls = signal<ControlListItem[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     prompt: [this.data.item?.prompt ?? '', [Validators.required]],
     referenceNotes: [this.data.item?.referenceNotes ?? ''],
-    responseType: [
-      (this.data.item?.responseType ?? 'pass_fail_na') as ResponseType,
-      [Validators.required],
-    ],
+    // Response type + its settings (rating scale / choices / unit); the group validates per type.
+    response: buildResponseConfigGroup(this.fb, this.data.item?.responseType, this.data.item?.responseConfigJson),
     sectionName: [this.data.item?.sectionName ?? ''],
     // New template items are required by default; uncheck to make an item optional.
     isRequired: [this.data.item?.isRequired ?? true],
-    ratingScaleId: [parseRatingScaleId(this.data.item?.responseConfigJson)],
     riskRating: [(this.data.item?.riskRating ?? null) as ExceptionSeverity | null],
     controlId: [(this.data.item?.controlId ?? null) as string | null],
   });
 
   constructor() {
-    this.ratingScalesService.list('true').subscribe((scales) => this.ratingScales.set(scales));
+    // All scales, so an item that references a since-retired scale still shows it selected.
+    this.ratingScalesService.list('all').subscribe({
+      next: (scales) => {
+        this.ratingScales.set(scales);
+        this.scalesLoaded.set(true);
+      },
+      error: () => this.scalesLoaded.set(true),
+    });
     // Load active controls for the picker (load-all cap; the register is small enough to list in a dropdown).
     this.controlsService.list({ includeRetired: false, page: 1, pageSize: 0 }).subscribe((page) => this.controls.set(page.items));
-
-    this.form.controls.responseType.valueChanges.subscribe((type) => {
-      const ratingScaleId = this.form.controls.ratingScaleId;
-      if (type === 'rating') {
-        ratingScaleId.addValidators(Validators.required);
-      } else {
-        ratingScaleId.clearValidators();
-      }
-      ratingScaleId.updateValueAndValidity();
-    });
-    if (this.form.controls.responseType.value === 'rating') {
-      this.form.controls.ratingScaleId.addValidators(Validators.required);
-      this.form.controls.ratingScaleId.updateValueAndValidity();
-    }
   }
 
   submit(): void {
@@ -247,14 +199,11 @@ export class ItemEditorDialogComponent {
       return;
     }
     const v = this.form.getRawValue();
-    const responseConfigJson =
-      v.responseType === 'rating' && v.ratingScaleId
-        ? JSON.stringify({ ratingScaleId: v.ratingScaleId })
-        : (this.data.item?.responseConfigJson ?? null);
+    const { responseType, responseConfigJson } = readResponseConfig(this.form.controls.response);
     const result: SaveTemplateItemRequest = {
       prompt: v.prompt.trim(),
       referenceNotes: v.referenceNotes.trim(),
-      responseType: v.responseType,
+      responseType,
       sectionName: v.sectionName,
       isRequired: v.isRequired,
       defaultAssignmentRuleJson:

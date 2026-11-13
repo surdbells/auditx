@@ -35,6 +35,7 @@ public sealed class SubmitResponseCommandHandler(
     IPermissionResolver permissions,
     IInstitutionSettingsRepository institutionSettings,
     IResponseScoringService scoring,
+    IResponseInputResolver inputs,
     IResponseOptionSetRepository optionSets,
     ICurrentUser currentUser,
     IAuditRecorder audit,
@@ -63,11 +64,15 @@ public sealed class SubmitResponseCommandHandler(
                 ?? throw new ConflictException("response.unknown_option", $"Unknown conclusion option '{command.SelectedOptionCode}'.");
         }
 
+        // The captured value must be one this item can accept (a point on its scale, one of its choices, a real date
+        // or number). It is stored in canonical form; a verdict-only item never keeps a stray value.
+        var valueJson = await inputs.NormaliseValueAsync(item.ResponseType, item.ResponseConfigJson, command.ValueJson, cancellationToken);
+
         var verdict = option?.CanonicalVerdict ?? RespondAuthorization.ParseVerdict(command.Verdict, command.IsDraft);
         var settings = await institutionSettings.GetAsync(cancellationToken);
         var requireCommentOnPass = settings.RequireCommentOnPass || (option?.RequiresComment ?? false);
 
-        var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, requireCommentOnPass, clock.UtcNow, command.ValueJson, command.Observation, command.Recommendation, option?.Code, option?.Label);
+        var mutation = entity.RecordResponse(command.ItemId, verdict, command.Comment, command.IsDraft, userId, requireCommentOnPass, clock.UtcNow, valueJson, command.Observation, command.Recommendation, option?.Code, option?.Label);
 
         // Post-response scoring: a custom option supplies its own 0-100 score (N/A excluded); otherwise fall back to
         // the standard mapping (which the aggregate can't compute — it can't resolve a RatingScale).

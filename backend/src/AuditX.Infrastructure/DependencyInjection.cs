@@ -62,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<IRatingScaleRepository, RatingScaleRepository>();
         services.AddScoped<IResponseOptionSetRepository, ResponseOptionSetRepository>();
         services.AddScoped<Application.Execution.Services.IResponseScoringService, Application.Execution.Services.ResponseScoringService>();
+        services.AddScoped<Application.Execution.Services.IResponseInputResolver, Application.Execution.Services.ResponseInputResolver>();
         services.AddScoped<IOrgUnitRepository, OrgUnitRepository>();
         services.AddScoped<IIntegrationRepository, IntegrationRepository>();
         services.AddScoped<IWebhookRepository, WebhookRepository>();

@@ -5,6 +5,7 @@ using AuditX.Application.Audits.Mapping;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Exceptions.Commands;
+using AuditX.Application.Templates;
 using AuditX.Application.Templates.Commands;
 using AuditX.Domain.Audits;
 using AuditX.Domain.AuditTrail;
@@ -125,10 +126,10 @@ public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits,
         entity.EnsureVersion(command.Version);
         await AuditParsing.EnsureAssigneeAsync(entity, command.AssignedUserId, users, cancellationToken);
         var responseType = AuditParsing.ParseResponseType(command.ResponseType);
-        await TemplateItemValidation.EnsureRatingScaleValidAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
         await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
         var item = entity.AddChecklistItem(command.Prompt, command.ReferenceNotes, responseType, command.SectionName, command.IsRequired,
-            command.AssignedUserId, command.ResponseConfigJson, AuditParsing.ParseRiskRating(command.RiskRating), command.ControlId);
+            command.AssignedUserId, responseConfigJson, AuditParsing.ParseRiskRating(command.RiskRating), command.ControlId);
         audit.Record(AuditEventTypes.AuditChecklistItemAdded, AuditTargetTypes.AuditChecklistItem, entity.Id, payload: new { itemId = item.Id });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return entity.ToDto();
@@ -147,9 +148,9 @@ public sealed class EditAuditChecklistItemCommandHandler(IAuditRepository audits
         entity.EnsureVersion(command.Version);
         await AuditParsing.EnsureAssigneeAsync(entity, command.AssignedUserId, users, cancellationToken);
         var responseType = AuditParsing.ParseResponseType(command.ResponseType);
-        await TemplateItemValidation.EnsureRatingScaleValidAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
         await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
-        entity.EditChecklistItem(command.ItemId, command.Prompt, command.ReferenceNotes, responseType, command.ResponseConfigJson,
+        entity.EditChecklistItem(command.ItemId, command.Prompt, command.ReferenceNotes, responseType, responseConfigJson,
             command.SectionName, command.IsRequired, command.AssignedUserId, AuditParsing.ParseRiskRating(command.RiskRating), command.ControlId);
         audit.Record(AuditEventTypes.AuditChecklistItemEdited, AuditTargetTypes.AuditChecklistItem, entity.Id, payload: new { command.ItemId });
         await unitOfWork.SaveChangesAsync(cancellationToken);

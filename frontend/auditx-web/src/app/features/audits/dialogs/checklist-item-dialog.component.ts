@@ -14,14 +14,18 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { SelectAllDirective } from '../../../shared/directives/select-all.directive';
-
+import { RatingScalesService } from '../../../core/services/rating-scales.service';
 import {
   AuditChecklistItem,
+  RatingScale,
   ResponseType,
   UserDto,
 } from '../../../core/models';
+import {
+  buildResponseConfigGroup,
+  readResponseConfig,
+} from '../../../core/models/response-type.util';
+import { ResponseConfigFieldsComponent } from '../../../shared/components/response-config-fields/response-config-fields.component';
 import {
   SearchableSelectComponent,
   SelectOption,
@@ -46,21 +50,6 @@ export interface ChecklistItemDialogResult {
   assignedUserId: string | null;
 }
 
-interface TypeOption {
-  value: ResponseType;
-  label: string;
-}
-
-const TYPE_OPTIONS: TypeOption[] = [
-  { value: 'pass_fail_na', label: 'Pass / Fail / N/A' },
-  { value: 'yes_no', label: 'Yes / No' },
-  { value: 'text', label: 'Free text' },
-  { value: 'numeric', label: 'Numeric' },
-  { value: 'date', label: 'Date' },
-  { value: 'rating', label: 'Rating (scale)' },
-  { value: 'multiple_choice', label: 'Multiple choice' },
-];
-
 @Component({
   selector: 'app-checklist-item-dialog',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,11 +58,10 @@ const TYPE_OPTIONS: TypeOption[] = [
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
-    SelectAllDirective,
     MatCheckboxModule,
     MatButtonModule,
     SearchableSelectComponent,
+    ResponseConfigFieldsComponent,
   ],
   template: `
     <h2 mat-dialog-title>{{ isEdit ? 'Edit checklist item' : 'Add checklist item' }}</h2>
@@ -92,46 +80,19 @@ const TYPE_OPTIONS: TypeOption[] = [
           <textarea matInput formControlName="referenceNotes" rows="2"></textarea>
         </mat-form-field>
 
-        <div class="row">
-          <app-searchable-select
-            formControlName="sectionName"
-            label="Section"
-            [options]="sectionOptions"
-          />
-          <mat-form-field appearance="outline">
-            <mat-label>Response type</mat-label>
-            <mat-select
-              formControlName="responseType"
-              (selectionChange)="currentType.set($event.value)"
-            >
-              @for (t of typeOptions; track t.value) {
-                <mat-option [value]="t.value">{{ t.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
+        <!-- How the item is answered: every response type, with the settings that type needs. -->
+        <app-response-config-fields
+          [group]="form.controls.response"
+          [ratingScales]="ratingScales()"
+          [scalesLoaded]="scalesLoaded()"
+        />
 
-        @if (currentType() === 'multiple_choice') {
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Choices (one per line)</mat-label>
-            <textarea matInput formControlName="choices" rows="3" placeholder="Option A&#10;Option B"></textarea>
-            @if (form.controls.choices.hasError('required') && form.controls.choices.touched) {
-              <mat-error>Enter at least two choices.</mat-error>
-            }
-          </mat-form-field>
-        }
-        @if (currentType() === 'rating') {
-          <mat-form-field appearance="outline">
-            <mat-label>Maximum rating</mat-label>
-            <input matInput type="number" formControlName="ratingMax" min="2" max="10" />
-          </mat-form-field>
-        }
-        @if (currentType() === 'numeric') {
-          <mat-form-field appearance="outline">
-            <mat-label>Unit (optional)</mat-label>
-            <input matInput formControlName="unit" autocomplete="off" placeholder="e.g. days, %, USD" />
-          </mat-form-field>
-        }
+        <app-searchable-select
+          class="full"
+          formControlName="sectionName"
+          label="Section"
+          [options]="sectionOptions"
+        />
 
         <app-searchable-select
           class="full"
@@ -157,23 +118,12 @@ const TYPE_OPTIONS: TypeOption[] = [
       min-width: 460px;
       gap: 0.25rem;
     }
-    .row {
-      display: flex;
-      gap: 1rem;
-    }
-    .row mat-form-field,
-    .row app-searchable-select {
-      flex: 1;
-    }
     .full {
       width: 100%;
     }
     @media (max-width: 560px) {
       .form {
         min-width: auto;
-      }
-      .row {
-        flex-direction: column;
       }
     }
   `,
@@ -184,9 +134,12 @@ export class ChecklistItemDialogComponent {
     MatDialogRef<ChecklistItemDialogComponent, ChecklistItemDialogResult>
   >(MatDialogRef);
   private readonly fb = inject(FormBuilder);
+  private readonly ratingScalesService = inject(RatingScalesService);
 
   readonly isEdit = !!this.data.item;
-  readonly typeOptions = TYPE_OPTIONS;
+
+  readonly ratingScales = signal<RatingScale[]>([]);
+  readonly scalesLoaded = signal(false);
 
   readonly sectionOptions: SelectOption[] = [
     { value: '', label: 'Ungrouped' },
@@ -197,23 +150,27 @@ export class ChecklistItemDialogComponent {
     ...this.data.users.map((u) => ({ value: u.id, label: u.displayName })),
   ];
 
-  private readonly config = parseConfig(this.data.item?.responseConfigJson ?? null);
-  readonly currentType = signal<ResponseType>(this.data.item?.responseType ?? 'pass_fail_na');
-
   readonly form = this.fb.nonNullable.group({
     prompt: [this.data.item?.prompt ?? '', [Validators.required]],
     referenceNotes: [this.data.item?.referenceNotes ?? ''],
+    // Response type + its settings (rating scale / choices / unit); the group validates per type.
+    response: buildResponseConfigGroup(this.fb, this.data.item?.responseType, this.data.item?.responseConfigJson),
     sectionName: [this.data.item?.sectionName ?? ''],
-    responseType: [
-      (this.data.item?.responseType ?? 'pass_fail_na') as ResponseType,
-      [Validators.required],
-    ],
-    choices: [(this.config.options ?? []).join('\n')],
-    ratingMax: [this.config.max ?? 5],
-    unit: [this.config.unit ?? ''],
     assignedUserId: [this.data.item?.assignedUserId ?? ''],
     isRequired: [this.data.item?.isRequired ?? true],
   });
+
+  constructor() {
+    // All scales, so an item that references a since-retired scale still shows it selected. A failure (e.g. no
+    // template-library access) just leaves the list empty — the rating field then explains there is nothing to pick.
+    this.ratingScalesService.list('all').subscribe({
+      next: (scales) => {
+        this.ratingScales.set(scales);
+        this.scalesLoaded.set(true);
+      },
+      error: () => this.scalesLoaded.set(true),
+    });
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -221,58 +178,19 @@ export class ChecklistItemDialogComponent {
       return;
     }
     const v = this.form.getRawValue();
+    const { responseType, responseConfigJson } = readResponseConfig(this.form.controls.response);
     this.dialogRef.close({
       prompt: v.prompt.trim(),
       referenceNotes: v.referenceNotes.trim() || null,
       sectionName: v.sectionName.trim() || null,
-      responseType: v.responseType,
-      responseConfigJson: this.buildConfig(v.responseType, v.choices, v.ratingMax, v.unit),
+      responseType,
+      responseConfigJson,
       isRequired: v.isRequired,
       assignedUserId: v.assignedUserId || null,
     });
   }
 
-  private buildConfig(
-    type: ResponseType,
-    choices: string,
-    ratingMax: number,
-    unit: string,
-  ): string | null {
-    if (type === 'multiple_choice') {
-      const options = choices
-        .split('\n')
-        .map((o) => o.trim())
-        .filter((o) => o.length > 0);
-      return options.length ? JSON.stringify({ options }) : null;
-    }
-    if (type === 'rating') {
-      const max = Math.min(10, Math.max(2, Math.round(ratingMax || 5)));
-      return JSON.stringify({ max });
-    }
-    if (type === 'numeric' && unit.trim()) {
-      return JSON.stringify({ unit: unit.trim() });
-    }
-    return null;
-  }
-
   cancel(): void {
     this.dialogRef.close();
-  }
-}
-
-interface ParsedConfig {
-  options?: string[];
-  max?: number;
-  unit?: string;
-}
-
-function parseConfig(json: string | null): ParsedConfig {
-  if (!json) {
-    return {};
-  }
-  try {
-    return JSON.parse(json) as ParsedConfig;
-  } catch {
-    return {};
   }
 }

@@ -5,6 +5,7 @@ using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
 using AuditX.Application.Execution.Dtos;
 using AuditX.Application.Execution.Mapping;
+using AuditX.Application.Execution.Services;
 using AuditX.Domain.Audits;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Enums;
@@ -32,6 +33,20 @@ public sealed class GetChecklistResponseQueryHandler(IAuditRepository audits, IC
         }
 
         return response.ToDto();
+    }
+}
+
+/// <summary>The resolved input definition (options / rating points / choices / unit) for one checklist item.</summary>
+public sealed record GetResponseInputQuery(Guid AuditId, Guid ItemId) : IQuery<ResponseInputDto>;
+
+public sealed class GetResponseInputQueryHandler(IAuditRepository audits, IResponseInputResolver inputs)
+    : IQueryHandler<GetResponseInputQuery, ResponseInputDto>
+{
+    public async Task<ResponseInputDto> Handle(GetResponseInputQuery query, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        var item = entity.ChecklistItems.FirstOrDefault(i => i.Id == query.ItemId) ?? throw new NotFoundException("Checklist item", query.ItemId);
+        return await inputs.ResolveAsync(item.ResponseType, item.ResponseConfigJson, cancellationToken);
     }
 }
 

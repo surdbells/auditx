@@ -26,24 +26,6 @@ internal static class TemplateParsing
 
     public static ExceptionSeverity? ParseRiskRating(string? value)
         => string.IsNullOrWhiteSpace(value) ? null : ExceptionParsing.ParseSeverity(value);
-
-    /// <summary>Pull the referenced rating-scale id out of a Rating item's opaque ResponseConfigJson, if present.</summary>
-    public static Guid? ParseRatingScaleId(string? responseConfigJson)
-    {
-        if (string.IsNullOrWhiteSpace(responseConfigJson))
-        {
-            return null;
-        }
-
-        try
-        {
-            return AppJson.Deserialize<RatingResponseConfig>(responseConfigJson)?.RatingScaleId;
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            return null;
-        }
-    }
 }
 
 public sealed record CreateTemplateCommand(string Name, string AuditType, string? Description) : ICommand<TemplateDto>;
@@ -114,12 +96,12 @@ public sealed class AddTemplateItemCommandHandler(ITemplateRepository templates,
     {
         var template = await templates.GetByIdAsync(command.TemplateId, cancellationToken) ?? throw new NotFoundException("Template", command.TemplateId);
         var responseType = TemplateParsing.ParseResponseType(command.ResponseType);
-        await TemplateItemValidation.EnsureRatingScaleValidAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
         await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
 
         var item = template.AddItem(command.Prompt, command.ReferenceNotes, responseType,
             command.SectionName, command.IsRequired, command.DefaultAssignmentRuleJson,
-            command.ResponseConfigJson, TemplateParsing.ParseRiskRating(command.RiskRating), command.ControlId);
+            responseConfigJson, TemplateParsing.ParseRiskRating(command.RiskRating), command.ControlId);
         audit.Record(AuditEventTypes.TemplateItemAdded, AuditTargetTypes.Template, template.Id, payload: new { itemId = item.Id, item.Prompt });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return template.ToDto();
@@ -138,36 +120,24 @@ public sealed class UpdateTemplateItemCommandHandler(ITemplateRepository templat
     {
         var template = await templates.GetByIdAsync(command.TemplateId, cancellationToken) ?? throw new NotFoundException("Template", command.TemplateId);
         var responseType = TemplateParsing.ParseResponseType(command.ResponseType);
-        await TemplateItemValidation.EnsureRatingScaleValidAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
         await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
 
         template.UpdateItem(command.ItemId, command.Prompt, command.ReferenceNotes, responseType,
             command.SectionName, command.IsRequired, command.DefaultAssignmentRuleJson,
-            command.ResponseConfigJson, TemplateParsing.ParseRiskRating(command.RiskRating), command.ControlId);
+            responseConfigJson, TemplateParsing.ParseRiskRating(command.RiskRating), command.ControlId);
         audit.Record(AuditEventTypes.TemplateItemEdited, AuditTargetTypes.Template, template.Id, payload: new { itemId = command.ItemId });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return template.ToDto();
     }
 }
 
-/// <summary>A Rating item must reference an existing rating scale; a control-linked item must reference an existing control.</summary>
+/// <summary>
+/// A control-linked item must reference an existing control. (An item's per-type response settings — rating scale,
+/// choices, unit — are validated by <see cref="ResponseItemConfigRules"/>.)
+/// </summary>
 internal static class TemplateItemValidation
 {
-    public static async Task EnsureRatingScaleValidAsync(ResponseType responseType, string? responseConfigJson, IRatingScaleRepository ratingScales, CancellationToken cancellationToken)
-    {
-        if (responseType != ResponseType.Rating)
-        {
-            return;
-        }
-
-        var ratingScaleId = TemplateParsing.ParseRatingScaleId(responseConfigJson)
-            ?? throw new ConflictException("template.rating_scale_required", "A rating item must reference a rating scale.");
-        if (await ratingScales.GetByIdAsync(ratingScaleId, cancellationToken) is null)
-        {
-            throw new NotFoundException("Rating scale", ratingScaleId);
-        }
-    }
-
     public static async Task EnsureControlExistsAsync(Guid? controlId, IControlRepository controls, CancellationToken cancellationToken)
     {
         if (controlId is { } id && await controls.GetByIdAsync(id, cancellationToken) is null)

@@ -221,7 +221,7 @@
                       <div class="editor__item-notes">{{ item.referenceNotes }}</div>
                     }
                     <div class="editor__item-meta">
-                      <span class="editor__chip">{{ item.responseType }}</span>
+                      <span class="editor__chip">{{ 'audits.responseType.' + item.responseType | t }}</span>
                     </div>
                   </div>
                   @if (canEditStructure()) {

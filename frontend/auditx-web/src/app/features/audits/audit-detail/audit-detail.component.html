@@ -360,7 +360,7 @@
                   <span class="status-badge" [attr.data-status]="item.itemState">
                     {{ item.itemState.replace('_', ' ') }}
                   </span>
-                  <span class="muted">{{ item.responseType.replace('_', '/') }}</span>
+                  <span class="muted">{{ 'audits.responseType.' + item.responseType | t }}</span>
                   <span class="muted">{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
                 </div>
               </div>
