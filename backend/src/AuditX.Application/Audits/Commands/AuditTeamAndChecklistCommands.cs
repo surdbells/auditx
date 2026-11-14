@@ -120,7 +120,7 @@ public sealed class TransferAuditLeadCommandHandler(
 public sealed record AddAuditChecklistItemCommand(
     Guid AuditId, string Prompt, string? ReferenceNotes, string ResponseType, string? ResponseConfigJson, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version, string? RiskRating = null, Guid? ControlId = null) : ICommand<AuditDto>;
 
-public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IRatingScaleRepository ratingScales, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IRatingScaleRepository ratingScales, IResponseOptionSetRepository optionSets, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<AddAuditChecklistItemCommand, AuditDto>
 {
     public async Task<AuditDto> Handle(AddAuditChecklistItemCommand command, CancellationToken cancellationToken)
@@ -129,7 +129,7 @@ public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits,
         entity.EnsureVersion(command.Version);
         await AuditParsing.EnsureAssigneeAsync(entity, command.AssignedUserId, users, cancellationToken);
         var responseType = AuditParsing.ParseResponseType(command.ResponseType);
-        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, optionSets, cancellationToken);
         await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
         var item = entity.AddChecklistItem(command.Prompt, command.ReferenceNotes, responseType, command.SectionName, command.IsRequired,
             command.AssignedUserId, responseConfigJson, AuditParsing.ParseRiskRating(command.RiskRating), command.ControlId);
@@ -142,7 +142,7 @@ public sealed class AddAuditChecklistItemCommandHandler(IAuditRepository audits,
 public sealed record EditAuditChecklistItemCommand(
     Guid AuditId, Guid ItemId, string Prompt, string? ReferenceNotes, string ResponseType, string? ResponseConfigJson, string? SectionName, bool IsRequired, Guid? AssignedUserId, string Version, string? RiskRating = null, Guid? ControlId = null) : ICommand<AuditDto>;
 
-public sealed class EditAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IRatingScaleRepository ratingScales, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class EditAuditChecklistItemCommandHandler(IAuditRepository audits, IUserRepository users, IRatingScaleRepository ratingScales, IResponseOptionSetRepository optionSets, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<EditAuditChecklistItemCommand, AuditDto>
 {
     public async Task<AuditDto> Handle(EditAuditChecklistItemCommand command, CancellationToken cancellationToken)
@@ -151,7 +151,8 @@ public sealed class EditAuditChecklistItemCommandHandler(IAuditRepository audits
         entity.EnsureVersion(command.Version);
         await AuditParsing.EnsureAssigneeAsync(entity, command.AssignedUserId, users, cancellationToken);
         var responseType = AuditParsing.ParseResponseType(command.ResponseType);
-        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        var previousConfig = entity.ChecklistItems.FirstOrDefault(i => i.Id == command.ItemId)?.ResponseConfigJson;
+        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, optionSets, cancellationToken, previousConfig);
         await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
         entity.EditChecklistItem(command.ItemId, command.Prompt, command.ReferenceNotes, responseType, responseConfigJson,
             command.SectionName, command.IsRequired, command.AssignedUserId, AuditParsing.ParseRiskRating(command.RiskRating), command.ControlId);

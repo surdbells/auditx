@@ -74,9 +74,18 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
         // the per-audit ExceptionAccess check. Uses RemovedAt (IsActive is a computed, untranslatable property).
         if (filter.ParticipantUserId is { } participant)
         {
-            query = query.Where(e =>
-                e.OwnerUserId == participant ||
-                db.Audits.Any(a => a.Id == e.AuditId && a.TeamMembers.Any(m => m.RemovedAt == null && m.UserId == participant)));
+            // A caller whose visibility is limited to some org units also sees the findings that belong there.
+            var units = (filter.ParticipantOrgUnitIds ?? []).ToArray();
+            query = units.Length == 0
+                ? query.Where(e =>
+                    e.OwnerUserId == participant ||
+                    db.Audits.Any(a => a.Id == e.AuditId && a.TeamMembers.Any(m => m.RemovedAt == null && m.UserId == participant)))
+                : query.Where(e =>
+                    e.OwnerUserId == participant ||
+                    db.Audits.Any(a => a.Id == e.AuditId && a.TeamMembers.Any(m => m.RemovedAt == null && m.UserId == participant)) ||
+                    db.AuditUniverseEntities.IgnoreQueryFilters().Any(x =>
+                        x.OrgUnitId != null && units.Contains(x.OrgUnitId.Value) &&
+                        (x.Id == e.AuditableEntityId || db.Audits.Any(a => a.Id == e.AuditId && a.AuditableEntityId == x.Id))));
         }
 
         // Plan filter: no navigation properties link these aggregates, so correlate through

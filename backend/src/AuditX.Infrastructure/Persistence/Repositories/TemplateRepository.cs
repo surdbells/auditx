@@ -74,10 +74,20 @@ public sealed class RatingScaleRepository(AppDbContext db) : IRatingScaleReposit
 public sealed class ResponseOptionSetRepository(AppDbContext db) : IResponseOptionSetRepository
 {
     public Task<ResponseOptionSet?> GetByResponseTypeAsync(ResponseType responseType, CancellationToken cancellationToken = default)
-        => db.ResponseOptionSets.FirstOrDefaultAsync(s => s.ResponseType == responseType, cancellationToken);
+        => db.ResponseOptionSets.FirstOrDefaultAsync(s => s.ResponseType == responseType && s.Name == null, cancellationToken);
+
+    public Task<ResponseOptionSet?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => db.ResponseOptionSets.FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+    public Task<ResponseOptionSet?> FindByNameAsync(string name, Guid? exceptId, CancellationToken cancellationToken = default)
+    {
+        var trimmed = name.Trim();
+        return db.ResponseOptionSets.FirstOrDefaultAsync(
+            s => s.Name != null && s.Name == trimmed && (exceptId == null || s.Id != exceptId), cancellationToken);
+    }
 
     public async Task<IReadOnlyList<ResponseOptionSet>> GetAllAsync(CancellationToken cancellationToken = default)
-        => await db.ResponseOptionSets.AsNoTracking().OrderBy(s => s.ResponseType).ToListAsync(cancellationToken);
+        => await db.ResponseOptionSets.AsNoTracking().OrderBy(s => s.ResponseType).ThenBy(s => s.Name).ToListAsync(cancellationToken);
 
     public void Add(ResponseOptionSet set) => db.ResponseOptionSets.Add(set);
 }

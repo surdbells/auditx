@@ -21,7 +21,7 @@ public static class UniverseMappings
         entity.ExpectedAuditsPerYear,
         RowVersionToken.Encode(entity.Version),
         entity.IsDeleted,
-        entity.IsDeleted ? entity.DeletedAt : null);
+        entity.IsDeleted ? entity.DeletedAt : null, CreatedAt: entity.CreatedAt);
 
     public static RiskDimensionDto ToDto(this RiskDimension dimension) => new(
         dimension.Id, dimension.Name, dimension.Weight, dimension.ScaleMin, dimension.ScaleMax, dimension.IsActive, dimension.ScaleLabelOverridesJson);

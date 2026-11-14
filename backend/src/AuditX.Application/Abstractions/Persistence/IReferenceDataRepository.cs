@@ -17,5 +17,11 @@ public interface IReferenceDataRepository
     /// <summary>Whether a live (non-deleted) item with this (category, code) already exists — the uniqueness pre-check.</summary>
     Task<bool> ExistsAsync(string category, string code, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// The live item in <paramref name="category"/> already at sort position <paramref name="sortOrder"/>, other than
+    /// <paramref name="exceptId"/> — null when the position is free.
+    /// </summary>
+    Task<ReferenceDataItem?> FindBySortOrderAsync(string category, int sortOrder, Guid? exceptId, CancellationToken cancellationToken = default);
+
     void Add(ReferenceDataItem item);
 }

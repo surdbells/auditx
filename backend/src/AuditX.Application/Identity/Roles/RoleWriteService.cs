@@ -3,6 +3,7 @@ using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Identity.Services;
 using AuditX.Domain.AuditTrail;
+using AuditX.Domain.Authorization;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Identity;
 
@@ -98,13 +99,36 @@ public sealed class RoleWriteService(IRoleRepository roles, IAuditRecorder audit
         }
     }
 
+    /// <summary>
+    /// Checks a proposed permission list (known keys, known scopes, org-unit limits only where allowed) BEFORE a change
+    /// is queued for maker-checker approval — so an invalid role is refused to its maker straight away rather than
+    /// waiting for a checker and failing on approval.
+    /// </summary>
+    public static void EnsureValid(IEnumerable<RolePermissionInput> permissions)
+    {
+        foreach (var (key, _, _) in MapPermissions(permissions))
+        {
+            if (!PermissionCatalogue.IsValidKey(key))
+            {
+                throw new Domain.Common.DomainException("role.unknown_permission", $"Unknown permission key '{key}'.");
+            }
+        }
+    }
+
     private static IEnumerable<(string, PermissionScopeType, string?)> MapPermissions(IEnumerable<RolePermissionInput> permissions)
     {
         foreach (var permission in permissions)
         {
-            if (!Enum.TryParse<PermissionScopeType>(permission.ScopeType, ignoreCase: true, out var scopeType))
+            // Accepts snake_case ("org_unit") as well as the enum name.
+            if (!Enum.TryParse<PermissionScopeType>((permission.ScopeType ?? string.Empty).Replace("_", string.Empty), ignoreCase: true, out var scopeType))
             {
                 throw new ConflictException("invalid_scope_type", $"Unknown scope type '{permission.ScopeType}'.");
+            }
+
+            if (scopeType == PermissionScopeType.OrgUnit && !PermissionCatalogue.IsOrgUnitScopable(permission.Key))
+            {
+                throw new ConflictException("role.scope_not_allowed",
+                    $"'{permission.Key}' applies to the whole organisation and cannot be limited to an org unit.");
             }
 
             yield return (permission.Key, scopeType, permission.ScopePredicateJson);

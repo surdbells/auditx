@@ -105,6 +105,8 @@ export interface Audit {
   teamMembers: AuditTeamMember[];
   sections: AuditSection[];
   checklistItems: AuditChecklistItem[];
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 /** Lightweight row for the audits list. */
@@ -120,6 +122,8 @@ export interface AuditListItem {
   respondedItemCount: number;
   /** True for a self-assessment (area owner assessing their own area). */
   isSelfAssessment: boolean;
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 /** Aggregate counts by status. */

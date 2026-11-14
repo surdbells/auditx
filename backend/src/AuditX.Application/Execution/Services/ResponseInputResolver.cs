@@ -46,8 +46,7 @@ public sealed class ResponseInputResolver(IResponseOptionSetRepository optionSet
             case ResponseType.PassFailNa:
             case ResponseType.YesNo:
             {
-                var set = await optionSets.GetByResponseTypeAsync(responseType, cancellationToken);
-                var options = (set is null ? null : ResponseOptions.TryParse(set.OptionsJson)) ?? ResponseOptions.Defaults(responseType);
+                var options = await ResponseOptionResolution.ResolveAsync(optionSets, responseType, responseConfigJson, cancellationToken);
                 return new ResponseInputDto(type,
                     Options: options.Select(o => new ResponseInputOptionDto(o.Code, o.Label, o.IsDeficiency, o.IsNotApplicable, o.RequiresComment)).ToArray());
             }

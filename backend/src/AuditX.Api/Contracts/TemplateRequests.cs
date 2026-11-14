@@ -22,6 +22,12 @@ public sealed record UpdateRatingScaleRequest(string? Name, string? Description,
 /// <summary>Replace a response type's conclusion options; OptionsJson is a JSON array of {code,label,order,score,isDeficiency,isNotApplicable,requiresComment}.</summary>
 public sealed record UpdateResponseOptionSetRequest(string OptionsJson);
 
+/// <summary>Create a named response set for a verdict-based response type (pass_fail_na or yes_no).</summary>
+public sealed record CreateResponseSetRequest(string Name, string ResponseType, string OptionsJson);
+
+/// <summary>Rename a named response set and/or replace its options.</summary>
+public sealed record UpdateResponseSetRequest(string Name, string OptionsJson, string? Version);
+
 public sealed record ReorderItemsRequest(IReadOnlyList<Guid> OrderedItemIds);
 
 public sealed record AddSectionRequest(string Name);

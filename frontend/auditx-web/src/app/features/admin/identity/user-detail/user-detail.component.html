@@ -104,7 +104,15 @@
         <mat-card appearance="outlined" class="detail__roles">
           <mat-card-header class="detail__card-header">
             <mat-card-title>{{ 'identity.userDetail.roles' | t }}</mat-card-title>
-            <button matButton="filled" type="button" (click)="openGrantRole()">
+            <!-- A deactivated account gets no roles: reactivate it first (the server refuses the grant too). -->
+            <button
+              matButton="filled"
+              type="button"
+              (click)="openGrantRole()"
+              [disabled]="user()?.status === 'deactivated'"
+              [matTooltip]="'identity.grantRole.deactivatedHint' | t"
+              [matTooltipDisabled]="user()?.status !== 'deactivated'"
+            >
               <app-icon name="add" />
               {{ 'identity.grantRole.title' | t }}
             </button>
@@ -118,7 +126,7 @@
                     <span matListItemTitle>{{ role.roleName }}</span>
                     <span matListItemLine>
                       @if (role.scopeValue) {
-                        {{ 'identity.userDetail.scopePrefix' | t }}{{ role.scopeValue }}
+                        {{ 'identity.userDetail.scopePrefix' | t }}{{ orgUnitLookup.name(role.scopeValue) }}
                       } @else {
                         {{ 'identity.userDetail.globalScope' | t }}
                       }

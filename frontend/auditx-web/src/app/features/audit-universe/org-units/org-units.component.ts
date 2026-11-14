@@ -19,6 +19,7 @@ import { RouterLink } from '@angular/router';
 import { Observable, concat, last } from 'rxjs';
 
 import { OrgUnitService } from '../../../core/services/org-unit.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { OrgUnitLookupService } from '../../../core/services/org-unit-lookup.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -91,6 +92,7 @@ const ORG_UNITS_GUIDE: PageGuide = {
 })
 export class OrgUnitsComponent {
   private readonly service = inject(OrgUnitService);
+  readonly refLookup = inject(ReferenceDataLookupService);
   private readonly lookup = inject(OrgUnitLookupService);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
@@ -98,7 +100,7 @@ export class OrgUnitsComponent {
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
 
-  readonly displayedColumns = ['name', 'code', 'status', 'actions'];
+  readonly displayedColumns = ['name', 'code', 'type', 'status', 'actions'];
 
   readonly filters = this.fb.nonNullable.group({
     includeArchived: false,
@@ -184,6 +186,9 @@ export class OrgUnitsComponent {
         }
         if (result.headUserId !== result.original.headUserId) {
           ops.push(this.service.setHead(result.id, result.headUserId));
+        }
+        if (result.unitType !== result.original.unitType) {
+          ops.push(this.service.setType(result.id, result.unitType));
         }
         if (ops.length === 0) {
           return;

@@ -35,8 +35,9 @@ public sealed class CreateLocalUserCommandValidator : AbstractValidator<CreateLo
     public CreateLocalUserCommandValidator()
     {
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(320);
-        RuleFor(x => x.FirstName).MaximumLength(200);
-        RuleFor(x => x.LastName).MaximumLength(200);
+        // A person is identified by name everywhere — assignments, sign-offs, the audit trail — so both are required.
+        RuleFor(x => x.FirstName).Must(n => !string.IsNullOrWhiteSpace(n)).WithMessage("Enter the user's first name.").MaximumLength(200);
+        RuleFor(x => x.LastName).Must(n => !string.IsNullOrWhiteSpace(n)).WithMessage("Enter the user's last name.").MaximumLength(200);
         UsernameRules.Apply(this, x => x.Username);
     }
 }

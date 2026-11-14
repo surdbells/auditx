@@ -39,6 +39,7 @@ public sealed class CreateRoleCommandHandler(
 {
     public async Task<RoleMutationResult> Handle(CreateRoleCommand command, CancellationToken cancellationToken)
     {
+        RoleWriteService.EnsureValid(command.Permissions);
         var data = new CreateRoleData(command.Name.Trim(), command.Description ?? string.Empty, command.Permissions, command.ParentRoleIds);
         var payload = AppJson.Serialize(new RoleChangePayload("create", data, null));
 
@@ -92,6 +93,7 @@ public sealed class UpdateRoleCommandHandler(
             throw new ConflictException("role_builtin_immutable", "Built-in roles cannot be modified; clone into a custom role instead.");
         }
 
+        RoleWriteService.EnsureValid(command.Permissions);
         var data = new UpdateRoleData(command.Id, command.Name.Trim(), command.Description ?? string.Empty, command.Permissions, command.ParentRoleIds);
         var payload = AppJson.Serialize(new RoleChangePayload("update", null, data));
 

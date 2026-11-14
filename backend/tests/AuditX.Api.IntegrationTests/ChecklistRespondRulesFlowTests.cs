@@ -92,9 +92,13 @@ public sealed class ChecklistRespondRulesFlowTests(ApiFactory factory) : IClassF
         var a2 = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/checklist/items",
             new { prompt = "Assigned to nobody", responseType = "pass_fail_na", isRequired = true, version }));
         version = Version(a2);
-        var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
+        // The lead (on the team) plans and starts it — the administrator, who is not on the team, cannot.
+        var lead = await LoginAsync("manager");
+        var outsiderTransition = await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version });
+        Assert.Equal(HttpStatusCode.Forbidden, outsiderTransition.StatusCode);
+        var planned = await DataAsync(await lead.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);
-        var started = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
+        var started = await DataAsync(await lead.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "in_progress", reason = (string?)null, version }));
 
         var items = started.GetProperty("checklistItems").EnumerateArray().ToArray();
         var assigned = items.First(i => i.GetProperty("assignedUserId").ValueKind != JsonValueKind.Null).GetProperty("id").GetGuid();

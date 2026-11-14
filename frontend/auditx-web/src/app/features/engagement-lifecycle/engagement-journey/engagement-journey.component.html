@@ -20,7 +20,7 @@
           <span class="ej__stage" [attr.data-stage]="j.stage">{{ stageLabel(j.stage) }}</span>
         </div>
         <p class="ej__meta muted">
-          <span>{{ refLookup.label('audit_type', j.auditType) }}</span>
+          <span>{{ refLookup.label('audit_type', j.auditType, j.createdAt) }}</span>
           <span>·</span>
           <span>{{ 'engagement.journey.progress' | t: { pct: j.progressPercent } }}</span>
           @if (j.openExceptionCount) {

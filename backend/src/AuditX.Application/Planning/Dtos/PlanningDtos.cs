@@ -11,7 +11,9 @@ public sealed record PlanItemDto(
     Guid? AssignedLeadUserId,
     string Status,
     int OrderIndex,
-    IReadOnlyList<PlanItemEntityLinkDto> EntityLinks);
+    IReadOnlyList<PlanItemEntityLinkDto> EntityLinks,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);
 
 public sealed record ApprovalDecisionDto(string Decision, string? Detail, IReadOnlyList<string> Comments, Guid DecidedBy, DateTimeOffset DecidedAt);
 
@@ -28,7 +30,9 @@ public sealed record PlanDto(
     bool CanApplyMinorRevision,
     // Why the current material revision was requested (set when a plan is re-opened for AC re-approval).
     string? RevisionReason,
-    IReadOnlyList<PlanItemDto> Items);
+    IReadOnlyList<PlanItemDto> Items,
+    // Who put the plan (or its revision) forward for approval — they may not record its decision themselves.
+    Guid? SubmittedByUserId = null);
 
 public sealed record PlanListItemDto(Guid Id, string PeriodLabel, DateOnly PeriodStart, DateOnly PeriodEnd, string Status, int ItemCount);
 

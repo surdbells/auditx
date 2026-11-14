@@ -34,6 +34,8 @@ export interface TemplateListItem {
   status: TemplateStatus;
   currentVersion: number;
   itemCount: number;
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 /** A single checklist item within a template. */
@@ -227,6 +229,24 @@ export interface ResponseOptionSet {
   /** True when the org has customised the set (false = built-in defaults are in effect). */
   isCustomised: boolean;
   options: ResponseOption[];
+  version: string | null;
+  /** Null for a response type's STANDARD set; set for a named set an item can choose instead. */
+  id?: string | null;
+  /** Null for a response type's standard set. */
+  name?: string | null;
+  /** A retired named set is no longer offered for new items; items already using it keep it. */
+  isArchived?: boolean;
+}
+
+export interface CreateResponseSetRequest {
+  name: string;
+  responseType: string;
+  optionsJson: string;
+}
+
+export interface UpdateResponseSetRequest {
+  name: string;
+  optionsJson: string;
   version: string | null;
 }
 

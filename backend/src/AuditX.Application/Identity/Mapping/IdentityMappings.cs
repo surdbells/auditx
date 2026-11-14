@@ -26,12 +26,13 @@ public static class IdentityMappings
         role.IsArchived,
         role.ParentRoleIds.ToArray(),
         role.Permissions
-            .Select(p => new RolePermissionDto(p.PermissionKey, p.ScopeType.ToString(), p.ScopePredicateJson))
+            .Select(p => new RolePermissionDto(p.PermissionKey, p.ScopeType.ToSnake(), p.ScopePredicateJson))
             .ToArray(),
         role.IsAssignable);
 
     public static PermissionDto ToDto(this PermissionDefinition definition) => new(
-        definition.Key, definition.Label, definition.Description, definition.Module, definition.FinestScope.ToString());
+        definition.Key, definition.Label, definition.Description, definition.Module, definition.FinestScope.ToSnake(),
+        PermissionCatalogue.IsOrgUnitScopable(definition.Key));
 
     public static MakerCheckerActionDto ToDto(this MakerCheckerAction action) => new(
         action.Id,

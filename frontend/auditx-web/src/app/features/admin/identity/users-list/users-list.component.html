@@ -171,7 +171,8 @@
                       <app-icon name="how_to_reg" />
                       <span>{{ 'identity.actions.reactivate' | t }}</span>
                     </button>
-                  } @else {
+                  } @else if (user.id !== myUserId()) {
+                    <!-- Your own account is never offered: deactivating it would end your session (the server refuses too). -->
                     <button mat-menu-item type="button" (click)="deactivate(user, $event)">
                       <app-icon name="block" />
                       <span>{{ 'identity.actions.deactivate' | t }}</span>

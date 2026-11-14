@@ -11,10 +11,16 @@ public interface IAuditRepository
 {
     Task<Audit?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <param name="scope">
+    /// Resource-scope guard (not a user filter): when set, only audits the user is on (team or auditee) or whose
+    /// entity belongs to one of the listed org units. Null for an organisation-wide caller.
+    /// </param>
     Task<PagedResult<Audit>> SearchAsync(
-        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageSpec page, CancellationToken cancellationToken = default);
+        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageSpec page,
+        Abstractions.Authorization.ListScope? scope = null, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyDictionary<string, int>> CountsByStatusAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyDictionary<string, int>> CountsByStatusAsync(
+        Abstractions.Authorization.ListScope? scope = null, CancellationToken cancellationToken = default);
 
     /// <summary>Planned audits whose start date has arrived, for the auto-start job (US-M4-011).</summary>
     Task<IReadOnlyList<Audit>> GetPlannedDueToStartAsync(DateOnly asOfDate, CancellationToken cancellationToken = default);

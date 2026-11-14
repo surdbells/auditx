@@ -44,7 +44,7 @@
               <span class="eb__stage" [attr.data-stage]="item.stage">{{ stageLabel(item.stage) }}</span>
             </div>
             <div class="eb__meta muted">
-              <span>{{ refLookup.label('audit_type', item.auditType) }}</span>
+              <span>{{ refLookup.label('audit_type', item.auditType, item.createdAt) }}</span>
               @if (item.openExceptionCount) {
                 <span class="eb__ex">
                   <app-icon aria-hidden="true" name="report_problem" />

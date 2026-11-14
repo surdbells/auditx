@@ -121,7 +121,7 @@
           </div>
           <p class="muted evi__item-meta">
             {{ 'evidence.purpose.' + r.purpose | t }} ·
-            @if (documentTypeLabel(r.documentType); as dt) { {{ dt }} · }
+            @if (documentTypeLabel(r.documentType, r.requestedOn); as dt) { {{ dt }} · }
             {{ 'evidence.requestedFromLabel' | t }} {{ nameOf(r.requestedFromUserId) }} ·
             {{ 'evidence.field.dueDate' | t }}: {{ r.dueDate ?? '—' }}
             @if (r.status === 'waived' && r.waiveReason) {

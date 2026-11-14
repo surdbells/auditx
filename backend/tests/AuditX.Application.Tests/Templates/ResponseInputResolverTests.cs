@@ -21,10 +21,15 @@ public sealed class ResponseInputResolverTests
 
     private const string ChoiceConfig = """{"options":["Fully compliant","Partially compliant","Not compliant"]}""";
 
-    private static ResponseInputResolver Resolver(ResponseOptionSet? optionSet = null)
+    private static ResponseInputResolver Resolver(ResponseOptionSet? optionSet = null, ResponseOptionSet? named = null)
     {
         var sets = Substitute.For<IResponseOptionSetRepository>();
         sets.GetByResponseTypeAsync(Arg.Any<ResponseType>(), Arg.Any<CancellationToken>()).Returns(optionSet);
+        if (named is not null)
+        {
+            sets.GetByIdAsync(named.Id, Arg.Any<CancellationToken>()).Returns(named);
+        }
+
         var scales = Substitute.For<IRatingScaleRepository>();
         scales.GetByIdAsync(Scale.Id, Arg.Any<CancellationToken>()).Returns(Scale);
         return new ResponseInputResolver(sets, scales);
@@ -54,6 +59,20 @@ public sealed class ResponseInputResolverTests
         Assert.Equal(["Compliant", "Non-compliant"], input.Options!.Select(o => o.Label));
         Assert.True(input.Options![1].IsDeficiency);
         Assert.True(input.Options![1].RequiresComment);
+    }
+
+    [Fact]
+    public async Task An_item_that_names_a_response_set_is_offered_that_sets_options_not_the_standard_ones()
+    {
+        var standard = ResponseOptionSet.Create(ResponseType.PassFailNa,
+            """[{"code":"ok","label":"Compliant","order":0,"score":100,"isDeficiency":false,"isNotApplicable":false,"requiresComment":false}]""");
+        var named = ResponseOptionSet.CreateNamed(ResponseType.PassFailNa, "Control effectiveness", """[{"code":"eff","label":"Effective","order":0,"score":100,"isDeficiency":false,"isNotApplicable":false,"requiresComment":false},{"code":"ineff","label":"Ineffective","order":1,"score":0,"isDeficiency":true,"isNotApplicable":false,"requiresComment":true}]""");
+
+        var input = await Resolver(standard, named).ResolveAsync(ResponseType.PassFailNa, $$"""{"optionSetId":"{{named.Id}}"}""");
+        var plain = await Resolver(standard, named).ResolveAsync(ResponseType.PassFailNa, null);
+
+        Assert.Equal(["Effective", "Ineffective"], input.Options!.Select(o => o.Label));
+        Assert.Equal(["Compliant"], plain.Options!.Select(o => o.Label));
     }
 
     [Fact]

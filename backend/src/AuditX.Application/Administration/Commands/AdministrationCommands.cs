@@ -29,14 +29,44 @@ public sealed record UpdateInstitutionSettingsCommand(
 
 public sealed class UpdateInstitutionSettingsCommandValidator : AbstractValidator<UpdateInstitutionSettingsCommand>
 {
+    private static bool BeAKnownTimeZone(string? id)
+        => !string.IsNullOrWhiteSpace(id) && TimeZoneInfo.TryFindSystemTimeZoneById(id.Trim(), out _);
+
+    private static bool BeAKnownLocale(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        try
+        {
+            // Predefined cultures only: an invented tag like "xx-YY" is not a locale the app can format for.
+            return System.Globalization.CultureInfo.GetCultureInfo(name.Trim(), predefinedOnly: true) is { Name.Length: > 0 };
+        }
+        catch (System.Globalization.CultureNotFoundException)
+        {
+            return false;
+        }
+    }
+
     // ~512 KB decoded ⇒ base64 is ~4/3 of that; a generous cap keeps a logo/icon inline without bloating the row.
     private const int MaxBrandingAssetChars = 700_000;
 
     public UpdateInstitutionSettingsCommandValidator()
     {
-        RuleFor(x => x.InstitutionDisplayName).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Timezone).NotEmpty();
-        RuleFor(x => x.LocaleDefault).NotEmpty();
+        // The name is shown across the app, on every report and on the sign-in page: it must read as a name.
+        RuleFor(x => x.InstitutionDisplayName)
+            .Cascade(CascadeMode.Stop)
+            .NotEmpty().WithMessage("Enter the organisation's display name.")
+            .Must(n => n.Trim().Length >= 2).WithMessage("The display name must be at least 2 characters.")
+            .MaximumLength(200)
+            .Must(n => n.Any(char.IsLetter)).WithMessage("The display name must contain letters — not only digits or symbols.")
+            .Must(n => !n.Any(char.IsControl)).WithMessage("The display name cannot contain line breaks or control characters.");
+        RuleFor(x => x.Timezone).NotEmpty().Must(BeAKnownTimeZone)
+            .WithMessage("Choose a time zone from the list (for example Africa/Lagos).");
+        RuleFor(x => x.LocaleDefault).NotEmpty().Must(BeAKnownLocale)
+            .WithMessage("Choose a locale from the list (for example en-GB).");
         RuleFor(x => x.PrimaryColor).NotEmpty().Matches("^#[0-9a-fA-F]{6}$")
             .WithMessage("Primary colour must be a 6-digit hex value like #4f46e5.");
         RuleFor(x => x.AccentColor).NotEmpty().Matches("^#[0-9a-fA-F]{6}$")
@@ -185,6 +215,10 @@ public sealed class BulkDeactivateUsersCommandHandler(
             .Select(id => new BulkOperationErrorDto(id.ToString(), "User not found."))
             .ToList();
 
+        // Never the caller's own account, and never the last active administrator(s).
+        var refusals = await Identity.Users.UserDeactivationRules.RefusalsAsync(foundIds, currentUser.UserId, users, cancellationToken);
+        errors.AddRange(refusals.Select(r => new BulkOperationErrorDto(r.Key.ToString(), r.Value)));
+
         // Atomic: if any row is invalid, commit nothing (US-M15-002).
         if (errors.Count > 0)
         {
@@ -287,6 +321,12 @@ public sealed class BulkImportUsersCommandHandler(
                 continue;
             }
 
+            if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+            {
+                errors.Add(new BulkOperationErrorDto(identifier, $"first_name and last_name are required for '{email}'."));
+                continue;
+            }
+
             // external_subject_id is optional — when absent, derive a stable synthetic id from the email so simple
             // "email, name, roles" CSVs work. (For AD deployments, supply the real objectSid to link the account.)
             if (string.IsNullOrWhiteSpace(externalId))
@@ -382,7 +422,11 @@ public sealed class EnableSupportChannelCommandValidator : AbstractValidator<Ena
     public EnableSupportChannelCommandValidator()
     {
         RuleFor(x => x.EngineerIdentifiers).NotEmpty();
-        RuleForEach(x => x.EngineerIdentifiers).NotEmpty().MaximumLength(256);
+        // Each engineer is identified by their work email: it names their time-boxed login and is where they are
+        // reached. A free-text value used to be accepted and turned into an invented address.
+        RuleForEach(x => x.EngineerIdentifiers).NotEmpty().MaximumLength(256)
+            .Matches(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+            .WithMessage("Each engineer must be identified by a valid email address, like engineer@vendor.com.");
         RuleFor(x => x.DurationMinutes).InclusiveBetween(1, SupportChannelSession.MaxDurationMinutes);
     }
 }

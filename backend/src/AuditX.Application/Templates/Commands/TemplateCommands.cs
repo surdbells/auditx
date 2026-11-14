@@ -89,14 +89,14 @@ public sealed class AddTemplateItemCommandValidator : AbstractValidator<AddTempl
     public AddTemplateItemCommandValidator() => RuleFor(x => x.Prompt).NotEmpty().MaximumLength(2000);
 }
 
-public sealed class AddTemplateItemCommandHandler(ITemplateRepository templates, IRatingScaleRepository ratingScales, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class AddTemplateItemCommandHandler(ITemplateRepository templates, IRatingScaleRepository ratingScales, IResponseOptionSetRepository optionSets, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<AddTemplateItemCommand, TemplateDto>
 {
     public async Task<TemplateDto> Handle(AddTemplateItemCommand command, CancellationToken cancellationToken)
     {
         var template = await templates.GetByIdAsync(command.TemplateId, cancellationToken) ?? throw new NotFoundException("Template", command.TemplateId);
         var responseType = TemplateParsing.ParseResponseType(command.ResponseType);
-        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, optionSets, cancellationToken);
         await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
 
         var item = template.AddItem(command.Prompt, command.ReferenceNotes, responseType,
@@ -113,14 +113,15 @@ public sealed record UpdateTemplateItemCommand(
     string? SectionName, bool IsRequired, string? DefaultAssignmentRuleJson,
     string? ResponseConfigJson = null, string? RiskRating = null, Guid? ControlId = null) : ICommand<TemplateDto>;
 
-public sealed class UpdateTemplateItemCommandHandler(ITemplateRepository templates, IRatingScaleRepository ratingScales, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class UpdateTemplateItemCommandHandler(ITemplateRepository templates, IRatingScaleRepository ratingScales, IResponseOptionSetRepository optionSets, IControlRepository controls, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateTemplateItemCommand, TemplateDto>
 {
     public async Task<TemplateDto> Handle(UpdateTemplateItemCommand command, CancellationToken cancellationToken)
     {
         var template = await templates.GetByIdAsync(command.TemplateId, cancellationToken) ?? throw new NotFoundException("Template", command.TemplateId);
         var responseType = TemplateParsing.ParseResponseType(command.ResponseType);
-        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, cancellationToken);
+        var previousConfig = template.Items.FirstOrDefault(i => i.Id == command.ItemId)?.ResponseConfigJson;
+        var responseConfigJson = await ResponseItemConfigRules.NormaliseAsync(responseType, command.ResponseConfigJson, ratingScales, optionSets, cancellationToken, previousConfig);
         await TemplateItemValidation.EnsureControlExistsAsync(command.ControlId, controls, cancellationToken);
 
         template.UpdateItem(command.ItemId, command.Prompt, command.ReferenceNotes, responseType,

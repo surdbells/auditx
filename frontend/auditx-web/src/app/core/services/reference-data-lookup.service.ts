@@ -1,5 +1,6 @@
-import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { Injectable, Signal, computed, effect, inject, signal } from '@angular/core';
 
+import { AuthService } from './auth.service';
 import { ReferenceDataService } from './reference-data.service';
 import { ReferenceDataItem } from '../models';
 
@@ -19,9 +20,56 @@ import { ReferenceDataItem } from '../models';
  * specs to flush the `/reference-data/{category}` GET unless they actually
  * exercise the lookup.
  */
+/** The label `item` carried at `asOf`: the last version that had taken effect by then, else the current label. */
+export function labelAsOf(item: ReferenceDataItem, asOf: string | Date): string {
+  const history = item.labelHistory ?? [];
+  if (history.length === 0) {
+    return item.label;
+  }
+  const at = (asOf instanceof Date ? asOf : new Date(asOf)).getTime();
+  if (Number.isNaN(at)) {
+    return item.label;
+  }
+  let label = history[0].label;
+  for (const version of history) {
+    if (new Date(version.effectiveFrom).getTime() <= at) {
+      label = version.label;
+    }
+  }
+  return label;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReferenceDataLookupService {
   private readonly service = inject(ReferenceDataService);
+
+  /**
+   * How long a loaded category is trusted. Another administrator may change a list at any time; after this the next
+   * read quietly reloads it (the current values stay on screen meanwhile), so changes show up without a page refresh
+   * or a fresh sign-in.
+   */
+  static readonly StaleAfterMs = 60_000;
+  private readonly loadedAt = new Map<string, number>();
+
+  constructor() {
+    // A different person signing in on this tab starts from a clean cache.
+    const auth = inject(AuthService);
+    let lastUser: string | null | undefined;
+    effect(() => {
+      const user = auth.session()?.userId ?? null;
+      if (lastUser !== undefined && user !== lastUser) {
+        this.reset();
+      }
+      lastUser = user;
+    });
+  }
+
+  /** Forgets every cached list. */
+  reset(): void {
+    this.loadStarted.clear();
+    this.loadedAt.clear();
+    this.itemsByCategory.set(new Map());
+  }
 
   /** category → (code → item). */
   private readonly itemsByCategory = signal<
@@ -61,13 +109,21 @@ export class ReferenceDataLookupService {
    * Resolves an item code to its human label within a category.
    * Returns '—' for null/empty, the cached label when known, or the raw code
    * while unresolved / unknown. Triggers the lazy load on first use.
+   *
+   * Pass `asOf` — the date the record was created — to get the label as it read then: renaming a value applies
+   * from the rename onwards and never rewrites what older records said. Without `asOf` the current label is used
+   * (pickers, filters, anything that is about "now").
    */
-  label(category: string, code: string | null | undefined): string {
+  label(category: string, code: string | null | undefined, asOf?: string | Date | null): string {
     this.ensureLoaded(category);
     if (!code) {
       return '—';
     }
-    return this.itemsByCategory().get(category)?.get(code)?.label ?? code;
+    const item = this.itemsByCategory().get(category)?.get(code);
+    if (!item) {
+      return code;
+    }
+    return asOf ? labelAsOf(item, asOf) : item.label;
   }
 
   /**
@@ -79,6 +135,7 @@ export class ReferenceDataLookupService {
       return;
     }
     this.loadStarted.delete(category);
+    this.loadedAt.delete(category);
     this.itemsByCategory.update((prev) => {
       if (!prev.has(category)) {
         return prev;
@@ -92,9 +149,14 @@ export class ReferenceDataLookupService {
   /** Idempotently starts the eager load of a category's items (active + inactive, for label resolution). */
   ensureLoaded(category: string): void {
     if (this.loadStarted.has(category)) {
-      return;
+      const loaded = this.loadedAt.get(category);
+      if (loaded === undefined || Date.now() - loaded < ReferenceDataLookupService.StaleAfterMs) {
+        return; // still loading, or fresh enough
+      }
     }
     this.loadStarted.add(category);
+    // Marked now so a burst of reads during the reload does not start more of them.
+    this.loadedAt.set(category, Date.now());
     this.service.list(category, true).subscribe({
       next: (items) => {
         this.itemsByCategory.update((prev) => {

@@ -19,6 +19,16 @@
           <mat-form-field appearance="outline" class="full">
             <mat-label>{{ 'administration.institutionSettings.displayName' | t }}</mat-label>
             <input matInput formControlName="institutionDisplayName" autocomplete="off" />
+            <!-- Say what is wrong instead of only greying out Save. -->
+            @if (orgForm.controls.institutionDisplayName.hasError('required')) {
+              <mat-error>{{ 'administration.institutionSettings.displayNameRequired' | t }}</mat-error>
+            } @else if (orgForm.controls.institutionDisplayName.hasError('tooShort')) {
+              <mat-error>{{ 'administration.institutionSettings.displayNameTooShort' | t }}</mat-error>
+            } @else if (orgForm.controls.institutionDisplayName.hasError('noLetters')) {
+              <mat-error>{{ 'administration.institutionSettings.displayNameNoLetters' | t }}</mat-error>
+            } @else if (orgForm.controls.institutionDisplayName.hasError('maxlength')) {
+              <mat-error>{{ 'administration.institutionSettings.displayNameTooLong' | t }}</mat-error>
+            }
           </mat-form-field>
 
           <app-searchable-select

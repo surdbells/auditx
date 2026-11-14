@@ -35,6 +35,9 @@ public sealed class AnnualPlan : AggregateRoot
 
     public DateTimeOffset? SubmittedAt { get; private set; }
 
+    /// <summary>Who submitted the plan (or its material revision) for approval — they may not also approve it.</summary>
+    public Guid? SubmittedByUserId { get; private set; }
+
     public DateTimeOffset? ApprovedAt { get; private set; }
 
     public string? ApprovalDecisionJson { get; private set; }
@@ -116,7 +119,7 @@ public sealed class AnnualPlan : AggregateRoot
         }
     }
 
-    public void Submit(DateTimeOffset nowUtc)
+    public void Submit(DateTimeOffset nowUtc, Guid? submittedBy = null)
     {
         EnsureStatus("plan.not_submittable", PlanStatus.Draft, PlanStatus.RevisionsRequested);
         if (_items.Count == 0)
@@ -126,6 +129,7 @@ public sealed class AnnualPlan : AggregateRoot
 
         Status = PlanStatus.Submitted;
         SubmittedAt = nowUtc;
+        SubmittedByUserId = submittedBy;
         RaiseDomainEvent(new PlanSubmittedEvent(Id, PeriodLabel));
     }
 
@@ -154,11 +158,12 @@ public sealed class AnnualPlan : AggregateRoot
     }
 
     /// <summary>Material revision of an approved plan: re-opens for AC re-approval. The reason is optional context for the reviewer.</summary>
-    public void BeginMaterialRevision(string? reason, DateTimeOffset nowUtc)
+    public void BeginMaterialRevision(string? reason, DateTimeOffset nowUtc, Guid? submittedBy = null)
     {
         EnsureStatus("plan.not_revisable", PlanStatus.Approved);
         Status = PlanStatus.RevisionSubmitted;
         SubmittedAt = nowUtc;
+        SubmittedByUserId = submittedBy;
         RevisionReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
     }
 

@@ -27,7 +27,9 @@ public sealed record RiskDto(
     DateTimeOffset IdentifiedAt,
     Guid IdentifiedByUserId,
     string? ClosureRationale,
-    string Version);
+    string Version,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);
 
 /// <summary>Lightweight row for the risk-register list.</summary>
 public sealed record RiskListItemDto(
@@ -42,4 +44,6 @@ public sealed record RiskListItemDto(
     string CurrentBand,
     string? TreatmentStrategy,
     DateOnly? TargetDate,
-    DateOnly? NextReviewDate);
+    DateOnly? NextReviewDate,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);

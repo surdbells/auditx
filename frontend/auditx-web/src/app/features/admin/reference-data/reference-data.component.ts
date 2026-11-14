@@ -275,6 +275,7 @@ export class ReferenceDataComponent {
     }
     const data: ReferenceDataDialogData = {
       categoryLabel: this.selectedCategory()?.label ?? category,
+      siblings: this.items(),
     };
     this.dialog
       .open(ReferenceDataDialogComponent, { data, width: '440px' })
@@ -300,6 +301,7 @@ export class ReferenceDataComponent {
     const data: ReferenceDataDialogData = {
       categoryLabel: this.selectedCategory()?.label ?? category,
       item,
+      siblings: this.items(),
     };
     this.dialog
       .open(ReferenceDataDialogComponent, { data, width: '440px' })

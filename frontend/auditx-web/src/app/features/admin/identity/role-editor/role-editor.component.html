@@ -68,6 +68,7 @@
           <span class="editor__count">{{ 'identity.roleEditor.selectedCount' | t: { count: selectedCount() } }}</span>
         </mat-card-header>
         <mat-card-content>
+          <p class="editor__scope-hint">{{ 'identity.roleEditor.scopeHint' | t }}</p>
           <mat-accordion multi>
             @for (group of groups(); track group.module) {
               <mat-expansion-panel>

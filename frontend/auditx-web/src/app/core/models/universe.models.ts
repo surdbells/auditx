@@ -29,6 +29,8 @@ export interface Entity {
   isArchived?: boolean;
   /** When it was archived; null / absent for a live entity. */
   archivedAt?: string | null;
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 /** Lightweight row for the entities list (same shape as Entity from the API). */

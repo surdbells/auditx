@@ -41,6 +41,8 @@ export interface Risk {
   identifiedByUserId: string;
   closureRationale: string | null;
   version: string;
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 export interface RiskListItem {
@@ -56,6 +58,8 @@ export interface RiskListItem {
   treatmentStrategy: RiskTreatmentStrategy | null;
   targetDate: string | null;
   nextReviewDate: string | null;
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 /* ---- Request payloads ---- */

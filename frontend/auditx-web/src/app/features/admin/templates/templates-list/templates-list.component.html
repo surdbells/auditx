@@ -88,7 +88,7 @@
             <ng-container matColumnDef="auditType">
               <th mat-header-cell *matHeaderCellDef>{{ 'templatesAdmin.field.auditType' | t }}</th>
               <td mat-cell *matCellDef="let t">
-                {{ refLookup.label('audit_type', t.auditType) }}
+                {{ refLookup.label('audit_type', t.auditType, t.createdAt) }}
               </td>
             </ng-container>
 

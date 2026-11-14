@@ -1,4 +1,5 @@
 using AuditX.Application.Abstractions;
+using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Audits.Dtos;
 using AuditX.Application.Audits.Mapping;
@@ -53,6 +54,7 @@ public sealed class CreateAuditCommandHandler(
     IInstitutionSettingsRepository settings,
     AuditCreationService creationService,
     ICurrentUser currentUser,
+    IPermissionResolver permissions,
     IAuditRecorder audit,
     IClock clock,
     IUnitOfWork unitOfWork)
@@ -98,6 +100,12 @@ public sealed class CreateAuditCommandHandler(
         {
             throw new NotFoundException("Auditable entity", adHocEntityId);
         }
+
+        // A creator whose CreateAudit is limited to some org units audits only entities that belong there.
+        var entityUnit = command.EntityId is { } scopeEntityId
+            ? (await universe.GetByIdAsync(scopeEntityId, cancellationToken))?.OrgUnitId
+            : null;
+        await OrgReach.EnsureCoversAsync(currentUser.UserId, Domain.Authorization.PermissionKeys.CreateAudit, entityUnit, permissions, cancellationToken);
 
         var targetEnd = command.TargetEndDate ?? ComputeDefaultTargetEnd(command, plan);
         // Link the audit directly to the entity it covers — the caller's choice among the plan item's entities when

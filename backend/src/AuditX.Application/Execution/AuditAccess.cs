@@ -57,7 +57,8 @@ internal static class AuditAccess
             return;
         }
 
-        if (await permissions.HasPermissionAsync(uid, PermissionKeys.ViewAudits, null, cancellationToken)
+        // Portfolio visibility for THIS audit — a grant limited to some org units reaches it only if it belongs there.
+        if (await permissions.HasPermissionAsync(uid, PermissionKeys.ViewAudits, audit.Id.ToString(), cancellationToken)
             || await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken))
         {
             return;

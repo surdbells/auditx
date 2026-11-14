@@ -112,6 +112,9 @@ export class SupportChannelComponent {
   readonly state = signal<ViewState>('loading');
   readonly status = signal<SupportChannelStatus | null>(null);
   readonly engineers = signal<string[]>([]);
+
+  /** The last identifier refused because it is not an email address (shown under the field). */
+  readonly engineerError = signal<string | null>(null);
   readonly submitting = signal(false);
   /** Credentials just provisioned for the engineers — shown once so the admin can relay them. */
   readonly credentials = signal<SupportCredential[]>([]);
@@ -141,14 +144,27 @@ export class SupportChannelComponent {
   }
 
   addEngineer(event: MatChipInputEvent): void {
-    this.commitEngineer(event.value);
-    event.chipInput?.clear();
+    // An invalid entry stays in the box so it can be corrected; a valid one becomes a chip.
+    if (this.commitEngineer(event.value) || !(event.value ?? '').trim()) {
+      event.chipInput?.clear();
+    }
   }
 
-  /** Adds a trimmed, de-duplicated engineer identifier; returns true if it was added. */
+  /**
+   * Adds a trimmed, de-duplicated engineer identifier, which must be an email address; returns true if it was added.
+   * Anything else is refused with a message rather than silently turned into a login.
+   */
   private commitEngineer(value: string | null | undefined): boolean {
     const trimmed = (value ?? '').trim();
-    if (trimmed && !this.engineers().includes(trimmed)) {
+    if (!trimmed) {
+      return false;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmed)) {
+      this.engineerError.set(trimmed);
+      return false;
+    }
+    this.engineerError.set(null);
+    if (!this.engineers().includes(trimmed)) {
       this.engineers.update((list) => [...list, trimmed]);
       return true;
     }

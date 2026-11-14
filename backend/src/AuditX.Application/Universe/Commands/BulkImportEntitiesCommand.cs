@@ -59,6 +59,9 @@ public sealed class BulkImportEntitiesCommandHandler(
         var activeTypes = (await taxonomy.GetActiveEntityTypesAsync(cancellationToken)).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var emails = rows.Select(r => Get(r, "owner_email")).Where(e => e.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var emailToUser = await users.GetIdsByEmailsAsync(emails, cancellationToken);
+        // Owners must be active members of the organisation — not deactivated, not vendor-support logins.
+        var ownerAccounts = (await users.GetByIdsAsync(emailToUser.Values.Distinct().ToArray(), cancellationToken))
+            .ToDictionary(u => u.Id);
 
         var parentNames = rows.Select(r => Get(r, "parent_name")).Where(p => p.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var existing = await entities.GetByNamesAsync(parentNames, cancellationToken);
@@ -98,6 +101,15 @@ public sealed class BulkImportEntitiesCommandHandler(
                 if (!emailToUser.TryGetValue(ownerEmail, out var resolved))
                 {
                     errors.Add(new BulkImportErrorDto(rowNo, "owner_email", $"No user found for '{ownerEmail}'."));
+                    continue;
+                }
+
+                if (ownerAccounts.TryGetValue(resolved, out var account)
+                    && (account.Status == Domain.Enums.UserStatus.Deactivated || account.IsSupportAccount))
+                {
+                    errors.Add(new BulkImportErrorDto(rowNo, "owner_email", account.IsSupportAccount
+                        ? $"'{ownerEmail}' is a vendor-support login and cannot own an entity."
+                        : $"'{ownerEmail}' belongs to a deactivated account and cannot own an entity."));
                     continue;
                 }
 

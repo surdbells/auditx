@@ -49,6 +49,10 @@ public sealed class CreateDelegationCommandHandler(
         var role = await roles.GetByIdAsync(command.RoleId, cancellationToken) ?? throw new NotFoundException("Role", command.RoleId);
 
         role.EnsureAssignable();
+        if (toUser.Status == Domain.Enums.UserStatus.Deactivated)
+        {
+            throw new ConflictException("user.deactivated", "This account is deactivated. Reactivate it before delegating a role to it.");
+        }
 
         var delegation = UserRole.Delegate(toUser.Id, role.Id, command.FromUserId, command.StartDate, command.EndDate);
         userRoles.Add(delegation);

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -156,10 +156,26 @@ export class MyEvidenceRequestsComponent {
 
   constructor() {
     this.refresh();
+
+    // Requests are raised by auditors while this page is open: refresh when the tab regains focus and every minute
+    // while it is visible, without flashing the loader or interrupting an upload or a recall.
+    const quietly = () => {
+      if (document.visibilityState === 'visible' && !this.uploadingId() && !this.recallingId()) {
+        this.refresh(true);
+      }
+    };
+    const timer = setInterval(quietly, 60_000);
+    window.addEventListener('focus', quietly);
+    inject(DestroyRef).onDestroy(() => {
+      clearInterval(timer);
+      window.removeEventListener('focus', quietly);
+    });
   }
 
-  private refresh(): void {
-    this.loading.set(true);
+  private refresh(quiet = false): void {
+    if (!quiet) {
+      this.loading.set(true);
+    }
     this.service.mine(false).subscribe({
       next: (rows) => {
         this.requests.set(rows);

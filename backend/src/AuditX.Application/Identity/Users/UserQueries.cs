@@ -92,6 +92,22 @@ public sealed class ListUserDirectoryQueryHandler(IUserRepository users)
     }
 }
 
+/// <summary>
+/// People who can be named owner of an auditable entity: never a deactivated account or a temporary vendor-support login.
+/// Each comes with the roles they hold so the picker can be narrowed by role. Gated to whoever manages the universe —
+/// role membership is not something every signed-in user needs to see.
+/// </summary>
+public sealed record ListAssignableUsersQuery : IQuery<IReadOnlyList<AssignableUserDto>>;
+
+public sealed class ListAssignableUsersQueryHandler(IUserRepository users)
+    : IQueryHandler<ListAssignableUsersQuery, IReadOnlyList<AssignableUserDto>>
+{
+    public async Task<IReadOnlyList<AssignableUserDto>> Handle(ListAssignableUsersQuery query, CancellationToken cancellationToken)
+        => (await users.ListAssignableWithRolesAsync(cancellationToken))
+            .Select(x => new AssignableUserDto(x.User.Id, x.User.DisplayName, x.User.Email, x.Roles.Count > 0, x.Roles))
+            .ToArray();
+}
+
 /// <summary>Full user detail including roles and delegations (US-M15-005).</summary>
 public sealed record GetUserQuery(Guid Id) : IQuery<UserDetailDto>;
 

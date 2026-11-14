@@ -55,7 +55,7 @@ public static class EngagementJourneyResolver
 
         return new EngagementJourneyDto(
             audit.Id, audit.Name, audit.AuditType, audit.Status.ToSnake(),
-            stageCode, progress, openExceptions.Length, RowVersionToken.Encode(audit.Version), stages, actions);
+            stageCode, progress, openExceptions.Length, RowVersionToken.Encode(audit.Version), stages, actions, CreatedAt: audit.CreatedAt);
     }
 
     private static string CurrentStage(AuditStatus status, bool anyOpenException, bool hasCompletedReport, bool hasDistributedReport)

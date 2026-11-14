@@ -8,6 +8,7 @@ import {
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -74,6 +75,7 @@ const RATING_SCALES_GUIDE: PageGuide = {
     MatFormFieldModule,
     MatSelectModule,
     MatButtonModule,
+    MatTooltipModule,
     IconComponent,
     LoadingComponent,
     EmptyStateComponent,
@@ -165,6 +167,21 @@ export class RatingScalesComponent {
           },
         });
       });
+  }
+
+  /** Deactivate (no longer offered for new items; items already using it keep it) or reactivate a scale. */
+  setActive(scale: RatingScale, active: boolean): void {
+    this.service.update(scale.id, { isActive: active }).subscribe({
+      next: (updated) => {
+        this.notify.success(
+          this.i18n.translate(
+            active ? 'templatesAdmin.ratingScales.notify.reactivated' : 'templatesAdmin.ratingScales.notify.deactivated',
+            { name: updated.name },
+          ),
+        );
+        this.fetch();
+      },
+    });
   }
 
   edit(scale: RatingScale): void {

@@ -13,6 +13,7 @@ public sealed class OrgUnitConfiguration : IEntityTypeConfiguration<OrgUnit>
         builder.Property(o => o.Id).ValueGeneratedNever();
 
         builder.Property(o => o.Name).HasMaxLength(200).IsRequired();
+        builder.Property(o => o.UnitType).HasMaxLength(64);
         builder.Property(o => o.Code).HasMaxLength(40).IsRequired();
         builder.Property(o => o.Version).IsRowVersion();
 

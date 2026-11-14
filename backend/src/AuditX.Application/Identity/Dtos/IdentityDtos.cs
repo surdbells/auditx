@@ -35,6 +35,9 @@ public sealed record UserDto(
 /// so user references (owners, leads, authors, recipients) can be shown as names rather than raw ids.</summary>
 public sealed record UserDirectoryEntryDto(Guid Id, string DisplayName);
 
+/// <summary>Someone who can be made accountable for an entity (or similar), with the roles they hold — for owner pickers.</summary>
+public sealed record AssignableUserDto(Guid Id, string DisplayName, string Email, bool HasRole, IReadOnlyList<string> Roles);
+
 public sealed record UserDetailDto(
     Guid Id,
     string Email,
@@ -84,7 +87,8 @@ public sealed record RoleDto(
     // False for the retired built-in Auditee role: its abilities are automatic, so it is not offered for assignment.
     bool IsAssignable = true);
 
-public sealed record PermissionDto(string Key, string Label, string Description, string Module, string FinestScope);
+/// <summary>A catalogue permission. <see cref="OrgUnitScopable"/>: a role may limit it to the org unit it is granted for.</summary>
+public sealed record PermissionDto(string Key, string Label, string Description, string Module, string FinestScope, bool OrgUnitScopable = false);
 
 public sealed record MakerCheckerActionDto(
     Guid Id,
@@ -95,7 +99,11 @@ public sealed record MakerCheckerActionDto(
     string Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ResolvedAt,
-    string? ResolutionComment);
+    string? ResolutionComment,
+    // Display name of the person who raised the request, resolved for the queue (null when not resolved).
+    string? MakerName = null,
+    // True when the signed-in user raised it: they see it in the queue, but can never decide it themselves.
+    bool IsMine = false);
 
 /// <summary>Returned (with HTTP 202) when an action is intercepted by a maker-checker gate.</summary>
 public sealed record PendingActionDto(Guid PendingActionId);

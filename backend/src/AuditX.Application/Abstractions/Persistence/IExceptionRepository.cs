@@ -18,7 +18,7 @@ public sealed record ExceptionSearchFilter(
     Guid? AuditId, string? Category, bool? IsRecurrence, bool? IsOverdue, DateOnly AsOfDate, string? Search = null,
     Guid? AnnualPlanId = null, DateTimeOffset? RaisedFrom = null, DateTimeOffset? RaisedTo = null,
     string? RootCauseCategory = null, string? NonConformanceCategory = null,
-    bool? IsOpen = null, Guid? ParticipantUserId = null);
+    bool? IsOpen = null, Guid? ParticipantUserId = null, IReadOnlyCollection<Guid>? ParticipantOrgUnitIds = null);
 
 /// <summary>Flat, join-resolved export row for the cross-audit finding-register CSV.</summary>
 public sealed record ExceptionExportRow(

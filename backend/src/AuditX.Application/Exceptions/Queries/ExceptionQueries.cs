@@ -98,7 +98,7 @@ public sealed class SearchExceptionsQueryHandler(
             query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search,
             query.AnnualPlanId, query.RaisedFrom, query.RaisedTo,
             query.RootCauseCategory, query.NonConformanceCategory,
-            IsOpen: openAny ? true : null, ParticipantUserId: participant);
+            IsOpen: openAny ? true : null, ParticipantUserId: participant?.UserId, ParticipantOrgUnitIds: participant?.OrgUnitIds);
 
         var page = PageSpec.Of(query.Page, query.PageSize);
         var result = await exceptions.SearchAsync(filter, page, cancellationToken);
@@ -144,7 +144,7 @@ public sealed class ExportFindingRegisterQueryHandler(
             query.AuditableEntityId, query.AuditId, query.Category, query.IsRecurrence, query.IsOverdue, today, query.Search,
             query.AnnualPlanId, query.RaisedFrom, query.RaisedTo,
             query.RootCauseCategory, query.NonConformanceCategory,
-            IsOpen: openAny ? true : null, ParticipantUserId: participant);
+            IsOpen: openAny ? true : null, ParticipantUserId: participant?.UserId, ParticipantOrgUnitIds: participant?.OrgUnitIds);
 
         var csv = new CsvWriter(Header);
         await foreach (var r in exceptions.StreamForExportAsync(filter, cancellationToken))

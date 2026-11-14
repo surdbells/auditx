@@ -32,7 +32,7 @@ public static class RiskMappings
         risk.IdentifiedAt,
         risk.IdentifiedByUserId,
         risk.ClosureRationale,
-        RowVersionToken.Encode(risk.Version));
+        RowVersionToken.Encode(risk.Version), CreatedAt: risk.CreatedAt);
 
     public static RiskListItemDto ToListItemDto(this Risk risk) => new(
         risk.Id,
@@ -46,5 +46,5 @@ public static class RiskMappings
         RiskBands.Band(risk.CurrentScore).ToSnake(),
         risk.TreatmentStrategy?.ToSnake(),
         risk.TargetDate,
-        risk.NextReviewDate);
+        risk.NextReviewDate, CreatedAt: risk.CreatedAt);
 }

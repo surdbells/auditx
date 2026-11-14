@@ -38,7 +38,7 @@ public sealed class AuditFlowTests(ApiFactory factory) : IClassFixture<ApiFactor
     {
         var admin = await AdminAsync();
         var users = await UsersByEmailAsync(admin);
-        var lead = users["manager@auditx.local"];
+        var lead = users["admin@auditx.local"]; // only the audit's own team moves it through its lifecycle
         var auditee = users["auditee@auditx.local"];
         var auditor = users["auditor@auditx.local"];
 

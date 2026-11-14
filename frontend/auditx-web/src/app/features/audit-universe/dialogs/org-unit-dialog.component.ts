@@ -17,6 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { CreateOrgUnitRequest, OrgUnit } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
+import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import {
   SearchableSelectComponent,
   SelectOption,
@@ -37,7 +38,8 @@ export type OrgUnitDialogResult =
       name: string;
       parentOrgUnitId: string | null;
       headUserId: string | null;
-      original: { name: string; parentOrgUnitId: string | null; headUserId: string | null };
+      unitType: string | null;
+      original: { name: string; parentOrgUnitId: string | null; headUserId: string | null; unitType: string | null };
     };
 
 /**
@@ -81,6 +83,16 @@ export type OrgUnitDialogResult =
             <mat-hint>{{ 'orgUnit.hint.codeImmutable' | t }}</mat-hint>
           }
         </mat-form-field>
+
+        <!-- What kind of unit this is: legal entity, business unit, function, location, process… (configurable). -->
+        <app-searchable-select
+          class="full"
+          formControlName="unitType"
+          [label]="'orgUnit.field.type' | t"
+          [options]="typeOptions()"
+          [clearable]="true"
+          [clearLabel]="'orgUnit.value.noType' | t"
+        />
 
         <app-searchable-select
           class="full"
@@ -138,6 +150,18 @@ export class OrgUnitDialogComponent {
     inject<MatDialogRef<OrgUnitDialogComponent, OrgUnitDialogResult>>(MatDialogRef);
   private readonly fb = inject(FormBuilder);
   private readonly userLookup = inject(UserLookupService);
+  private readonly refLookup = inject(ReferenceDataLookupService);
+
+  private readonly unitTypes = this.refLookup.options('org_unit_type');
+
+  /** Active unit types, plus the unit's current type if it has since been retired (so an edit keeps it). */
+  readonly typeOptions = computed<SelectOption[]>(() => {
+    const options = this.unitTypes().map((t) => ({ value: t.code, label: t.label }));
+    const current = this.data.unit?.unitType;
+    return current && !options.some((o) => o.value === current)
+      ? [{ value: current, label: this.refLookup.label('org_unit_type', current) }, ...options]
+      : options;
+  });
 
   readonly isEdit = !!this.data.unit;
 
@@ -157,6 +181,7 @@ export class OrgUnitDialogComponent {
     ],
     parentOrgUnitId: [this.data.unit?.parentOrgUnitId ?? null as string | null],
     headUserId: [this.data.unit?.headUserId ?? null as string | null],
+    unitType: [this.data.unit?.unitType ?? null as string | null],
   });
 
   constructor() {
@@ -180,10 +205,12 @@ export class OrgUnitDialogComponent {
         name: v.name.trim(),
         parentOrgUnitId,
         headUserId: v.headUserId || null,
+        unitType: v.unitType || null,
         original: {
           name: this.data.unit.name,
           parentOrgUnitId: this.data.unit.parentOrgUnitId,
           headUserId: this.data.unit.headUserId,
+          unitType: this.data.unit.unitType ?? null,
         },
       });
     } else {
@@ -193,6 +220,7 @@ export class OrgUnitDialogComponent {
           name: v.name.trim(),
           code: v.code.trim(),
           parentOrgUnitId,
+          unitType: v.unitType || null,
         },
       });
     }

@@ -4258,6 +4258,11 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("parent_org_unit_id");
 
+                    b.Property<string>("UnitType")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasColumnName("unit_type");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("updated_at");
@@ -4334,6 +4339,10 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("SubmittedAt")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("submitted_at");
+
+                    b.Property<Guid?>("SubmittedByUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("submitted_by_user_id");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset")
@@ -4546,6 +4555,49 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.HasIndex("Category", "SortOrder");
 
                     b.ToTable("reference_data_items", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.ReferenceData.ReferenceDataLabelVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("EffectiveFrom")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("effective_from");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("item_id");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)")
+                        .HasColumnName("label");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId", "EffectiveFrom");
+
+                    b.ToTable("reference_data_label_versions", (string)null);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Reports.Report", b =>
@@ -5630,6 +5682,15 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_archived");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("name");
+
                     b.Property<string>("OptionsJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -5658,8 +5719,13 @@ namespace AuditX.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("[name] IS NOT NULL");
+
                     b.HasIndex("ResponseType")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[name] IS NULL");
 
                     b.ToTable("response_option_sets", (string)null);
                 });
@@ -6460,6 +6526,15 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AuditX.Domain.ReferenceData.ReferenceDataLabelVersion", b =>
+                {
+                    b.HasOne("AuditX.Domain.ReferenceData.ReferenceDataItem", null)
+                        .WithMany("LabelVersions")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AuditX.Domain.Reports.Report", b =>
                 {
                     b.HasOne("AuditX.Domain.Audits.Audit", null)
@@ -6614,6 +6689,11 @@ namespace AuditX.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("AuditX.Domain.Planning.PlanItem", b =>
                 {
                     b.Navigation("EntityLinks");
+                });
+
+            modelBuilder.Entity("AuditX.Domain.ReferenceData.ReferenceDataItem", b =>
+                {
+                    b.Navigation("LabelVersions");
                 });
 
             modelBuilder.Entity("AuditX.Domain.Reports.Report", b =>

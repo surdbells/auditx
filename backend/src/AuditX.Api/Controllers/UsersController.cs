@@ -53,6 +53,12 @@ public sealed class UsersController(IDispatcher dispatcher) : ApiControllerBase
         CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ListUserDirectoryQuery(page, pageSize), cancellationToken));
 
+    // Owner pickers: active people (no deactivated accounts, no vendor-support logins) with the roles they hold.
+    [RequirePermission(PermissionKeys.ManageUniverse)]
+    [HttpGet("assignable")]
+    public async Task<IActionResult> Assignable(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListAssignableUsersQuery(), cancellationToken));
+
     [RequirePermission(PermissionKeys.ManageUsers)]
     [HttpGet]
     public async Task<IActionResult> List(

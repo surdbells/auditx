@@ -57,6 +57,8 @@ export interface PlanItem {
   orderIndex: number;
   /** One or more entities this item covers — each gets its own independently-launched audit. */
   entityLinks: PlanItemEntityLink[];
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 /** Locates a plan item within its owning plan — backs the audit → plan deep link. */
@@ -86,6 +88,8 @@ export interface Plan {
   canApplyMinorRevision: boolean;
   /** Why the current material revision was requested, if any (set when the plan was re-opened for AC re-approval). */
   revisionReason: string | null;
+  /** Who submitted the plan (or its revision) for approval — they cannot record its decision themselves. */
+  submittedByUserId?: string | null;
   items: PlanItem[];
 }
 

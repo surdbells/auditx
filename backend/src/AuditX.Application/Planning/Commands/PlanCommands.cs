@@ -134,13 +134,14 @@ public sealed class ReorderPlanItemsCommandHandler(IAnnualPlanRepository plans, 
 
 public sealed record SubmitPlanCommand(Guid PlanId) : ICommand<PlanDto>;
 
-public sealed class SubmitPlanCommandHandler(IAnnualPlanRepository plans, IInstitutionSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+public sealed class SubmitPlanCommandHandler(
+    IAnnualPlanRepository plans, IInstitutionSettingsRepository settings, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<SubmitPlanCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(SubmitPlanCommand command, CancellationToken cancellationToken)
     {
         var plan = await plans.GetByIdAsync(command.PlanId, cancellationToken) ?? throw new NotFoundException("Plan", command.PlanId);
-        plan.Submit(clock.UtcNow);
+        plan.Submit(clock.UtcNow, currentUser.UserId);
         audit.Record(AuditEventTypes.PlanSubmitted, AuditTargetTypes.AnnualPlan, plan.Id);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         var bank = await settings.GetAsync(cancellationToken);
@@ -164,6 +165,15 @@ public sealed class RecordPlanDecisionCommandHandler(
         }
 
         var decidedBy = currentUser.UserId ?? throw new UnauthorizedException();
+
+        // Segregation of duties: the person who put the plan forward for approval does not approve it. (Plans
+        // submitted before this was recorded fall back to whoever created the plan.)
+        if ((plan.SubmittedByUserId ?? plan.CreatedBy) == decidedBy)
+        {
+            throw new ForbiddenAccessException(
+                "You submitted this plan for approval, so its decision must be recorded by someone else.");
+        }
+
         plan.RecordDecision(outcome, command.Detail, command.Comments ?? [], decidedBy, clock.UtcNow);
         audit.Record(AuditEventTypes.PlanDecisionRecorded, AuditTargetTypes.AnnualPlan, plan.Id, after: new { decision = outcome.ToString(), decidedBy });
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -174,7 +184,8 @@ public sealed class RecordPlanDecisionCommandHandler(
 
 public sealed record SubmitPlanRevisionCommand(Guid PlanId, string Kind, Guid? ItemId, DateOnly? NewStartDate, DateOnly? NewEndDate, string? Reason) : ICommand<PlanDto>;
 
-public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans, IInstitutionSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+public sealed class SubmitPlanRevisionCommandHandler(
+    IAnnualPlanRepository plans, IInstitutionSettingsRepository settings, ICurrentUser currentUser, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<SubmitPlanRevisionCommand, PlanDto>
 {
     public async Task<PlanDto> Handle(SubmitPlanRevisionCommand command, CancellationToken cancellationToken)
@@ -202,7 +213,7 @@ public sealed class SubmitPlanRevisionCommandHandler(IAnnualPlanRepository plans
         }
         else if (string.Equals(command.Kind, "material", StringComparison.OrdinalIgnoreCase))
         {
-            plan.BeginMaterialRevision(command.Reason, clock.UtcNow);
+            plan.BeginMaterialRevision(command.Reason, clock.UtcNow, currentUser.UserId);
         }
         else
         {

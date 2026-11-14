@@ -95,10 +95,12 @@ public sealed class ResponseOptionSetConfiguration : IEntityTypeConfiguration<Re
             .HasMaxLength(30)
             .IsRequired();
         builder.Property(s => s.OptionsJson).IsRequired();
+        builder.Property(s => s.Name).HasMaxLength(ResponseOptionSet.MaxNameLength);
         builder.Property(s => s.Version).IsRowVersion();
 
-        // One option set governs one response type.
-        builder.HasIndex(s => s.ResponseType).IsUnique();
+        // One STANDARD (unnamed) set per response type; named sets are additional and their names are unique.
+        builder.HasIndex(s => s.ResponseType).IsUnique().HasFilter("[name] IS NULL");
+        builder.HasIndex(s => s.Name).IsUnique().HasFilter("[name] IS NOT NULL");
     }
 }
 

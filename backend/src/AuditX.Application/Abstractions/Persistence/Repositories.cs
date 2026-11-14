@@ -43,6 +43,12 @@ public interface IUserRepository
     /// <summary>Resolve email addresses to user ids (case-insensitive) for bulk import (US-M3-006).</summary>
     Task<IReadOnlyDictionary<string, Guid>> GetIdsByEmailsAsync(IReadOnlyCollection<string> emails, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Everyone who can be made accountable for something (an entity owner, …): accounts that are not deactivated and
+    /// are not temporary vendor-support logins, each with the names of the roles they currently hold, by display name.
+    /// </summary>
+    Task<IReadOnlyList<(User User, IReadOnlyList<string> Roles)>> ListAssignableWithRolesAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Keyset-paginated search over users (US-M1/US-M15-004).</summary>
     Task<PagedResult<User>> SearchAsync(
         string? search,

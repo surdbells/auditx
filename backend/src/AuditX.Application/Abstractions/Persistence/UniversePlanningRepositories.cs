@@ -11,8 +11,13 @@ public interface IAuditUniverseRepository
     /// <summary>Load an entity even when it is archived (the default lookups hide archived entities) — for restoring one.</summary>
     Task<AuditableEntity?> GetByIdIncludingArchivedAsync(Guid id, CancellationToken cancellationToken = default);
 
+    /// <param name="withinOrgUnits">
+    /// Resource-scope guard: when set, only entities that belong to one of these org units (a caller whose ViewUniverse
+    /// is limited to them). Null for an organisation-wide caller.
+    /// </param>
     Task<PagedResult<AuditableEntity>> SearchAsync(
-        string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageSpec page, CancellationToken cancellationToken = default);
+        string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageSpec page,
+        IReadOnlyCollection<Guid>? withinOrgUnits = null, CancellationToken cancellationToken = default);
 
     /// <summary>Whole-universe (id → parentId) map for in-memory acyclicity checks.</summary>
     Task<IReadOnlyDictionary<Guid, Guid?>> GetParentMapAsync(CancellationToken cancellationToken = default);

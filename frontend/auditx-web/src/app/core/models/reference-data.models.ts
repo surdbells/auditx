@@ -28,6 +28,11 @@ export interface ReferenceDataItem {
   description?: string;
   sortOrder: number;
   isActive: boolean;
+  /**
+   * Every label the value has carried, oldest first (absent / empty when never renamed). A rename applies from its
+   * `effectiveFrom`; the original label applies from the beginning of time.
+   */
+  labelHistory?: { label: string; effectiveFrom: string }[];
 }
 
 /* ---- Request payloads ---- */

@@ -249,6 +249,28 @@ export class AuditDetailComponent {
     () => this.auth.hasPermission(Permissions.ManageAudit) && !this.isAuditeeHere(),
   );
 
+  /** True when the signed-in user is on this audit's working team (lead / auditor / reviewer). */
+  readonly isOnWorkingTeam = computed(() => {
+    const me = this.auth.session()?.userId;
+    return (
+      !!me &&
+      !this.isAuditeeHere() &&
+      (this.audit()?.teamMembers ?? []).some((m) => m.isActive && m.userId === me && m.teamRole !== 'auditee')
+    );
+  });
+
+  /**
+   * Moving the audit through its lifecycle (plan, start, send to review, complete, reopen, return) is for its OWN
+   * team: ManageAudit alone is not enough — a manager or administrator who is not on the team supervises the audit
+   * but does not sign it off. The server enforces the same rule.
+   */
+  readonly canDriveLifecycle = computed(() => this.canManage() && this.isOnWorkingTeam());
+
+  /** ManageAudit holder who is not on the team: shown why the lifecycle buttons are missing. */
+  readonly lifecycleBlockedNotOnTeam = computed(
+    () => this.canManage() && !this.isOnWorkingTeam() && !this.isReadOnly(),
+  );
+
   readonly canViewExceptions = computed(() =>
     this.auth.hasPermission(Permissions.ViewExceptions),
   );
@@ -443,7 +465,7 @@ export class AuditDetailComponent {
 
   /** A pre-audit kickoff may be scheduled while the audit is still in its pre-fieldwork window (draft or planned). */
   readonly canScheduleKickoff = computed(
-    () => this.canManage() && (this.isDraft() || this.isPlanned()),
+    () => this.canDriveLifecycle() && (this.isDraft() || this.isPlanned()),
   );
 
   /** Checklist items may be added in draft + in_progress. */

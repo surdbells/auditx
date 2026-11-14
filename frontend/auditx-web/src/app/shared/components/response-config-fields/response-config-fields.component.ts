@@ -8,6 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,7 +16,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
-import { RatingScale, ResponseType } from '../../../core/models';
+import { RatingScale, ResponseOptionSet, ResponseType } from '../../../core/models';
+import { ResponseOptionSetsService } from '../../../core/services/response-option-sets.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { Permissions } from '../../../core/permissions';
 import {
   MAX_CHOICES,
   MAX_CHOICE_LENGTH,
@@ -35,7 +39,7 @@ import {
 @Component({
   selector: 'app-response-config-fields',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, TranslatePipe],
+  imports: [NgTemplateOutlet, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, TranslatePipe],
   template: `
     <div [formGroup]="group()" class="rcf">
       <mat-form-field appearance="outline" class="rcf__field" subscriptSizing="dynamic">
@@ -49,6 +53,12 @@ import {
       </mat-form-field>
 
       @switch (type()) {
+        @case ('pass_fail_na') {
+          <ng-container [ngTemplateOutlet]="setPicker" />
+        }
+        @case ('yes_no') {
+          <ng-container [ngTemplateOutlet]="setPicker" />
+        }
         @case ('rating') {
           <mat-form-field appearance="outline" class="rcf__field" subscriptSizing="dynamic">
             <mat-label>{{ 'responseTypes.field.ratingScale' | t }}</mat-label>
@@ -106,6 +116,24 @@ import {
           </mat-form-field>
         }
       }
+
+      <!-- Which conclusion options a verdict item offers: its type's standard set, or a named set. -->
+      <ng-template #setPicker>
+        @if (selectableSets().length) {
+          <mat-form-field appearance="outline" class="rcf__field" subscriptSizing="dynamic">
+            <mat-label>{{ 'responseTypes.field.responseSet' | t }}</mat-label>
+            <mat-select formControlName="optionSetId">
+              <mat-option value="">{{ 'responseTypes.standardSet' | t }}</mat-option>
+              @for (s of selectableSets(); track s.id) {
+                <mat-option [value]="s.id">
+                  {{ s.name }}{{ s.isArchived ? ' ' + ('responseTypes.setRetired' | t) : '' }}
+                </mat-option>
+              }
+            </mat-select>
+            <mat-hint>{{ 'responseTypes.field.responseSetHint' | t }}</mat-hint>
+          </mat-form-field>
+        }
+      </ng-template>
     </div>
   `,
   styles: `
@@ -122,6 +150,20 @@ import {
 })
 export class ResponseConfigFieldsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly responseSets = inject(ResponseOptionSetsService);
+  private readonly auth = inject(AuthService);
+
+  /** Named response sets (loaded once, for anyone who can read templates). */
+  private readonly namedSets = signal<ResponseOptionSet[]>([]);
+  /** The set the item used when the form opened — stays selectable even if it has since been retired. */
+  private readonly originalSetId = signal('');
+
+  /** Named sets made for the selected response type: live ones, plus the item's own set even if retired. */
+  readonly selectableSets = computed(() =>
+    this.namedSets().filter(
+      (s) => s.responseType === this.type() && (!s.isArchived || s.id === this.originalSetId()),
+    ),
+  );
 
   /** The sub-form to edit — create it with `buildResponseConfigGroup`. */
   readonly group = input.required<ResponseConfigGroup>();
@@ -150,8 +192,26 @@ export class ResponseConfigFieldsComponent implements OnInit {
     const controls = this.group().controls;
     this.type.set(controls.responseType.value);
     this.originalScaleId.set(controls.ratingScaleId.value);
+    this.originalSetId.set(controls.optionSetId.value);
     controls.responseType.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((type) => this.type.set(type));
+      .subscribe((type) => {
+        this.type.set(type);
+        // A named set belongs to one response type; switching type drops a set made for the other one.
+        const chosen = this.namedSets().find((s) => s.id === controls.optionSetId.value);
+        if (chosen && chosen.responseType !== type) {
+          controls.optionSetId.setValue('');
+        }
+      });
+
+    if (this.auth.hasPermission(Permissions.ViewTemplates)) {
+      this.responseSets
+        .list()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (sets) => this.namedSets.set(sets.filter((s) => !!s.id && !!s.name)),
+          error: () => this.namedSets.set([]),
+        });
+    }
   }
 }

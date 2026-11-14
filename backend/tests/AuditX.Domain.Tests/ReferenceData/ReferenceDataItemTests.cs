@@ -31,7 +31,7 @@ public sealed class ReferenceDataItemTests
     {
         var item = ReferenceDataItem.Create("audit_type", "treasury", "Treasury", null, 1);
 
-        item.Update("  Treasury Audit  ", "Covers treasury operations", 5);
+        item.Update("  Treasury Audit  ", "Covers treasury operations", 5, DateTimeOffset.UnixEpoch);
 
         Assert.Equal("Treasury Audit", item.Label);
         Assert.Equal("Covers treasury operations", item.Description);
@@ -45,7 +45,39 @@ public sealed class ReferenceDataItemTests
     {
         var item = ReferenceDataItem.Create("audit_type", "treasury", "Treasury", null, 1);
 
-        Assert.Throws<DomainException>(() => item.Update("   ", null, 0));
+        Assert.Throws<DomainException>(() => item.Update("   ", null, 0, DateTimeOffset.UnixEpoch));
+    }
+
+    [Fact]
+    public void A_rename_applies_from_then_on_and_earlier_records_keep_the_old_label()
+    {
+        // The tester's case: risk category "Fraud" renamed to "Fraudulent" must not rewrite last year's records.
+        var item = ReferenceDataItem.Create("risk_category", "fraud", "Fraud", null, 1);
+        var renamedAt = new DateTimeOffset(2026, 11, 1, 9, 0, 0, TimeSpan.Zero);
+
+        item.Update("Fraudulent", null, 1, renamedAt);
+
+        Assert.Equal("Fraudulent", item.Label);
+        Assert.Equal("Fraud", item.LabelAsOf(renamedAt.AddDays(-30)));      // a record from before the rename
+        Assert.Equal("Fraudulent", item.LabelAsOf(renamedAt));              // from the moment of the rename
+        Assert.Equal("Fraudulent", item.LabelAsOf(renamedAt.AddDays(1)));
+        Assert.Equal(["Fraud", "Fraudulent"], item.LabelVersions.Select(v => v.Label));
+
+        // A second rename keeps the whole chain.
+        item.Update("Fraud & misconduct", null, 1, renamedAt.AddDays(10));
+        Assert.Equal("Fraudulent", item.LabelAsOf(renamedAt.AddDays(5)));
+        Assert.Equal("Fraud", item.LabelAsOf(DateTimeOffset.MinValue));
+        Assert.Equal(3, item.LabelVersions.Count);
+    }
+
+    [Fact]
+    public void Editing_without_renaming_records_no_label_history()
+    {
+        var item = ReferenceDataItem.Create("risk_category", "fraud", "Fraud", null, 1);
+        item.Update("Fraud", "Now with a description", 4, DateTimeOffset.UnixEpoch);
+
+        Assert.Empty(item.LabelVersions);
+        Assert.Equal("Fraud", item.LabelAsOf(DateTimeOffset.MinValue));
     }
 
     [Fact]

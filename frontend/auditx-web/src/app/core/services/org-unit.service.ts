@@ -37,6 +37,11 @@ export class OrgUnitService {
   }
 
   /** Designate (or clear, with null) the user who heads this org unit — the reporting-line fallback. */
+  /** Sets (or clears) what kind of unit this is. */
+  setType(id: string, unitType: string | null): Observable<OrgUnit> {
+    return this.api.patch<OrgUnit>(`/org-units/${id}/type`, { unitType });
+  }
+
   setHead(id: string, headUserId: string | null): Observable<OrgUnit> {
     return this.api.patch<OrgUnit>(`/org-units/${id}/head`, { headUserId });
   }

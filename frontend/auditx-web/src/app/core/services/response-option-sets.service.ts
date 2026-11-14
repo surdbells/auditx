@@ -3,8 +3,10 @@ import { Observable } from 'rxjs';
 
 import { ApiService } from './api.service';
 import {
+  CreateResponseSetRequest,
   ResponseOptionSet,
   UpdateResponseOptionSetRequest,
+  UpdateResponseSetRequest,
 } from '../models';
 
 /**
@@ -29,5 +31,23 @@ export class ResponseOptionSetsService {
 
   reset(responseType: string): Observable<ResponseOptionSet> {
     return this.api.post<ResponseOptionSet>(`/response-option-sets/${responseType}/reset`, {});
+  }
+
+  /** Creates a named response set — another vocabulary items of that response type can choose. */
+  createNamed(body: CreateResponseSetRequest): Observable<ResponseOptionSet> {
+    return this.api.post<ResponseOptionSet>('/response-option-sets/named', body);
+  }
+
+  updateNamed(id: string, body: UpdateResponseSetRequest): Observable<ResponseOptionSet> {
+    return this.api.put<ResponseOptionSet>(`/response-option-sets/named/${id}`, body);
+  }
+
+  /** Retires a named set: no longer offered for new items; items already using it keep it. */
+  retire(id: string): Observable<ResponseOptionSet> {
+    return this.api.post<ResponseOptionSet>(`/response-option-sets/named/${id}/retire`, {});
+  }
+
+  restore(id: string): Observable<ResponseOptionSet> {
+    return this.api.post<ResponseOptionSet>(`/response-option-sets/named/${id}/restore`, {});
   }
 }

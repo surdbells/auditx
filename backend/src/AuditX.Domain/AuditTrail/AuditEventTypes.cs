@@ -100,9 +100,15 @@ public static class AuditEventTypes
     public const string OrgUnitCreated = "org_unit_created";
     public const string OrgUnitUpdated = "org_unit_updated";
     public const string OrgUnitArchived = "org_unit_archived";
+
+    /// <summary>An inactive (archived) org unit was reactivated.</summary>
+    public const string OrgUnitRestored = "org_unit_restored";
     public const string RiskDimensionConfigured = "risk_dimension_configured";
     public const string RatingScaleConfigured = "rating_scale_configured";
     public const string ResponseOptionSetUpdated = "response_option_set_updated";
+    public const string ResponseOptionSetCreated = "response_option_set_created";
+    public const string ResponseOptionSetArchived = "response_option_set_archived";
+    public const string ResponseOptionSetRestored = "response_option_set_restored";
     public const string ExceptionRaisingRuleConfigured = "exception_raising_rule_configured";
     public const string RootCauseGapOpened = "root_cause_gap_opened";
     public const string RootCauseGapUpdated = "root_cause_gap_updated";

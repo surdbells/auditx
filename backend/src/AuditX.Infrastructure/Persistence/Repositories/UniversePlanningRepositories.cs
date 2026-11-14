@@ -16,9 +16,16 @@ public sealed class AuditUniverseRepository(AppDbContext db) : IAuditUniverseRep
         => db.AuditUniverseEntities.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
     public async Task<PagedResult<AuditableEntity>> SearchAsync(
-        string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageSpec page, CancellationToken cancellationToken = default)
+        string? entityType, Guid? ownerUserId, bool includeArchived, string? search, PageSpec page,
+        IReadOnlyCollection<Guid>? withinOrgUnits = null, CancellationToken cancellationToken = default)
     {
         var query = (includeArchived ? db.AuditUniverseEntities.IgnoreQueryFilters() : db.AuditUniverseEntities).AsNoTracking();
+
+        if (withinOrgUnits is not null)
+        {
+            var units = withinOrgUnits.ToArray();
+            query = query.Where(e => e.OrgUnitId != null && units.Contains(e.OrgUnitId.Value));
+        }
 
         if (!string.IsNullOrWhiteSpace(entityType))
         {

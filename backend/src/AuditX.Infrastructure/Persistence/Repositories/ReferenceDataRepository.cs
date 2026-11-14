@@ -9,7 +9,7 @@ public sealed class ReferenceDataRepository(AppDbContext db) : IReferenceDataRep
 {
     public async Task<IReadOnlyList<ReferenceDataItem>> ListByCategoryAsync(string category, bool includeInactive, CancellationToken cancellationToken = default)
     {
-        var query = db.ReferenceDataItems.AsNoTracking().Where(i => i.Category == category);
+        var query = db.ReferenceDataItems.AsNoTracking().Include(i => i.LabelVersions).Where(i => i.Category == category);
         if (!includeInactive)
         {
             query = query.Where(i => i.IsActive);
@@ -28,10 +28,14 @@ public sealed class ReferenceDataRepository(AppDbContext db) : IReferenceDataRep
     }
 
     public Task<ReferenceDataItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => db.ReferenceDataItems.FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+        => db.ReferenceDataItems.Include(i => i.LabelVersions).FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
 
     public Task<bool> ExistsAsync(string category, string code, CancellationToken cancellationToken = default)
         => db.ReferenceDataItems.AnyAsync(i => i.Category == category && i.Code == code, cancellationToken);
+
+    public Task<ReferenceDataItem?> FindBySortOrderAsync(string category, int sortOrder, Guid? exceptId, CancellationToken cancellationToken = default)
+        => db.ReferenceDataItems.AsNoTracking()
+            .FirstOrDefaultAsync(i => i.Category == category && i.SortOrder == sortOrder && (exceptId == null || i.Id != exceptId), cancellationToken);
 
     public void Add(ReferenceDataItem item) => db.ReferenceDataItems.Add(item);
 }

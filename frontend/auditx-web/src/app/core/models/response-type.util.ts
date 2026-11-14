@@ -47,6 +47,8 @@ export interface ResponseItemConfig {
   unit?: string;
   /** Legacy rating shape (1..max) from before rating scales — read only. */
   max?: number;
+  /** Pass/Fail/N-A or Yes/No: a named response set to use instead of the type's standard set. */
+  optionSetId?: string;
 }
 
 export function parseResponseConfig(json: string | null | undefined): ResponseItemConfig {
@@ -73,6 +75,7 @@ export function parseChoices(text: string): string[] {
 export interface ResponseConfigControls {
   responseType: FormControl<ResponseType>;
   ratingScaleId: FormControl<string>;
+  optionSetId: FormControl<string>;
   choices: FormControl<string>;
   unit: FormControl<string>;
 }
@@ -116,6 +119,8 @@ export function buildResponseConfigGroup(
   const group = fb.nonNullable.group({
     responseType: [(responseType ?? 'pass_fail_na') as ResponseType, [Validators.required]],
     ratingScaleId: [config.ratingScaleId ?? ''],
+    /** '' = the response type's standard set. */
+    optionSetId: [config.optionSetId ?? ''],
     choices: [(config.options ?? []).join('\n')],
     unit: [config.unit ?? '', [Validators.maxLength(MAX_UNIT_LENGTH)]],
   });
@@ -153,6 +158,12 @@ export function readResponseConfig(group: ResponseConfigGroup): {
       const unit = v.unit.trim();
       return { responseType: v.responseType, responseConfigJson: unit ? JSON.stringify({ unit }) : null };
     }
+    case 'pass_fail_na':
+    case 'yes_no':
+      return {
+        responseType: v.responseType,
+        responseConfigJson: v.optionSetId ? JSON.stringify({ optionSetId: v.optionSetId }) : null,
+      };
     default:
       return { responseType: v.responseType, responseConfigJson: null };
   }

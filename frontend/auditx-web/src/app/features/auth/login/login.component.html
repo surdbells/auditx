@@ -1,10 +1,15 @@
 <div class="login">
   <aside class="login__aside">
     <div class="login__aside-inner">
-      <div class="login__logo" aria-hidden="true">
-        <app-icon name="verified_user" />
+      <!-- The organisation's own identity (Configuration › Branding); the product name stays as a quiet credit. -->
+      <div class="login__logo" [class.login__logo--image]="!!logo()" aria-hidden="true">
+        @if (logo(); as src) {
+          <img [src]="src" alt="" />
+        } @else {
+          <app-icon name="verified_user" />
+        }
       </div>
-      <div class="login__aside-brand">AuditX Enterprise</div>
+      <div class="login__aside-brand">{{ orgName() }}</div>
       <p class="login__aside-tagline">{{ 'layout.platformSubtitle' | t }}</p>
       <ul class="login__aside-points">
         <li><app-icon aria-hidden="true" name="check_circle" /><span>{{ 'nav.planning' | t }} · {{ 'nav.audits' | t }} · {{ 'nav.exceptions' | t }}</span></li>
@@ -21,10 +26,15 @@
     }
     <mat-card-header class="login__header">
       <div class="login__brand">
-        <app-icon class="login__brand-icon" aria-hidden="true" name="verified_user" />
+        @if (logo(); as src) {
+          <img class="login__brand-logo" [src]="src" alt="" />
+        } @else {
+          <app-icon class="login__brand-icon" aria-hidden="true" name="verified_user" />
+        }
         <div>
-          <div class="login__brand-name">AuditX Enterprise</div>
-          <div class="login__brand-sub">{{ 'layout.platformSubtitle' | t }}</div>
+          <div class="login__brand-name">{{ orgName() }}</div>
+          <!-- The product credit only when the organisation shows its own name. -->
+          <div class="login__brand-sub">{{ (orgName() === 'AuditX' ? 'layout.platformSubtitle' : 'auth.login.poweredBy') | t }}</div>
         </div>
       </div>
       <span class="login__header-spacer"></span>

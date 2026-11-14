@@ -53,8 +53,156 @@ public sealed class PermissionResolver(
     public async Task<bool> HasPermissionAsync(Guid userId, string permissionKey, string? scopeValue = null, CancellationToken cancellationToken = default)
     {
         var permissions = await GetEffectivePermissionsAsync(userId, cancellationToken);
-        return permissions.Any(p => p.Key == permissionKey && Satisfies(p, scopeValue));
+        var matching = permissions.Where(p => p.Key == permissionKey).ToList();
+        if (matching.Any(p => Satisfies(p, scopeValue)))
+        {
+            return true;
+        }
+
+        // What remains are grants limited to an org unit. They reach a specific thing (an audit, an entity, a finding,
+        // an org unit) only when it belongs to one of those units or a unit below them.
+        var limited = matching.Where(IsOrgUnitLimited).ToList();
+        if (limited.Count == 0 || scopeValue is null || !Guid.TryParse(scopeValue, out var resourceId))
+        {
+            return false;
+        }
+
+        var unit = await OrgUnitOfAsync(resourceId, cancellationToken);
+        if (unit is null)
+        {
+            return false; // belongs to no org unit: only an organisation-wide grant reaches it
+        }
+
+        var reach = await ExpandAsync(limited, cancellationToken);
+        return reach.Contains(unit.Value);
     }
+
+    public async Task<OrgScope> GetOrgScopeAsync(Guid userId, string permissionKey, CancellationToken cancellationToken = default)
+    {
+        var matching = (await GetEffectivePermissionsAsync(userId, cancellationToken)).Where(p => p.Key == permissionKey).ToList();
+        if (matching.Count == 0)
+        {
+            return OrgScope.Nowhere;
+        }
+
+        if (matching.Any(p => !IsOrgUnitLimited(p)))
+        {
+            return OrgScope.All;
+        }
+
+        return new OrgScope(false, await ExpandAsync(matching, cancellationToken));
+    }
+
+    /// <summary>A grant of a permission the role limits to "assigned org unit", made for a specific org unit.</summary>
+    private static bool IsOrgUnitLimited(EffectivePermission permission)
+        => permission.ScopeType == PermissionScopeType.OrgUnit && permission.ScopeValue is not null;
+
+    /// <summary>The org units the limited grants were made for, plus every unit below them.</summary>
+    private async Task<HashSet<Guid>> ExpandAsync(IEnumerable<EffectivePermission> limited, CancellationToken cancellationToken)
+    {
+        var roots = limited
+            .Select(p => Guid.TryParse(p.ScopeValue, out var id) ? id : Guid.Empty)
+            .Where(id => id != Guid.Empty)
+            .ToHashSet();
+        if (roots.Count == 0)
+        {
+            return [];
+        }
+
+        var children = (await OrgTreeAsync(cancellationToken))
+            .Where(kv => kv.Value is not null)
+            .GroupBy(kv => kv.Value!.Value)
+            .ToDictionary(g => g.Key, g => g.Select(kv => kv.Key).ToList());
+
+        var reach = new HashSet<Guid>();
+        var stack = new Stack<Guid>(roots);
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            if (!reach.Add(current))
+            {
+                continue;
+            }
+
+            if (children.TryGetValue(current, out var below))
+            {
+                foreach (var child in below)
+                {
+                    stack.Push(child);
+                }
+            }
+        }
+
+        return reach;
+    }
+
+    private Dictionary<Guid, Guid?>? orgTree;
+
+    /// <summary>Org unit → parent, loaded once per request (the hierarchy is small and changes rarely).</summary>
+    private async Task<Dictionary<Guid, Guid?>> OrgTreeAsync(CancellationToken cancellationToken)
+        => orgTree ??= await db.OrgUnits.IgnoreQueryFilters().AsNoTracking()
+            .Select(o => new { o.Id, o.ParentOrgUnitId })
+            .ToDictionaryAsync(o => o.Id, o => o.ParentOrgUnitId, cancellationToken);
+
+    private readonly Dictionary<Guid, Guid?> unitOf = [];
+
+    /// <summary>
+    /// The org unit a thing belongs to, by its id: an auditable entity's own unit; an audit's, through the entity it
+    /// covers; a finding's, through its entity or else its audit; and an org unit is its own. Null when it belongs to
+    /// none (or the id is unknown).
+    /// </summary>
+    private async Task<Guid?> OrgUnitOfAsync(Guid id, CancellationToken cancellationToken)
+    {
+        // Remembered for the rest of the request: a board or list checks many things in a loop.
+        if (unitOf.TryGetValue(id, out var known))
+        {
+            return known;
+        }
+
+        var unit = await ResolveOrgUnitOfAsync(id, cancellationToken);
+        unitOf[id] = unit;
+        return unit;
+    }
+
+    private async Task<Guid?> ResolveOrgUnitOfAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var entity = await db.AuditUniverseEntities.IgnoreQueryFilters().AsNoTracking()
+            .Where(e => e.Id == id).Select(e => new { e.OrgUnitId }).FirstOrDefaultAsync(cancellationToken);
+        if (entity is not null)
+        {
+            return entity.OrgUnitId;
+        }
+
+        var audit = await db.Audits.IgnoreQueryFilters().AsNoTracking()
+            .Where(a => a.Id == id).Select(a => new { a.AuditableEntityId }).FirstOrDefaultAsync(cancellationToken);
+        if (audit is not null)
+        {
+            return await EntityUnitAsync(audit.AuditableEntityId, cancellationToken);
+        }
+
+        var finding = await db.Exceptions.IgnoreQueryFilters().AsNoTracking()
+            .Where(e => e.Id == id).Select(e => new { e.AuditableEntityId, e.AuditId }).FirstOrDefaultAsync(cancellationToken);
+        if (finding is not null)
+        {
+            var viaEntity = await EntityUnitAsync(finding.AuditableEntityId, cancellationToken);
+            if (viaEntity is not null)
+            {
+                return viaEntity;
+            }
+
+            var findingAudit = await db.Audits.IgnoreQueryFilters().AsNoTracking()
+                .Where(a => a.Id == finding.AuditId).Select(a => a.AuditableEntityId).FirstOrDefaultAsync(cancellationToken);
+            return await EntityUnitAsync(findingAudit, cancellationToken);
+        }
+
+        return (await OrgTreeAsync(cancellationToken)).ContainsKey(id) ? id : null;
+    }
+
+    private async Task<Guid?> EntityUnitAsync(Guid? entityId, CancellationToken cancellationToken)
+        => entityId is { } eid
+            ? await db.AuditUniverseEntities.IgnoreQueryFilters().AsNoTracking()
+                .Where(e => e.Id == eid).Select(e => e.OrgUnitId).FirstOrDefaultAsync(cancellationToken)
+            : null;
 
     public Task InvalidateAsync(Guid userId, CancellationToken cancellationToken = default)
         => cache.InvalidateUserAsync(userId);
@@ -62,11 +210,17 @@ public sealed class PermissionResolver(
     public async Task InvalidateAllAsync(CancellationToken cancellationToken = default)
         => await cache.Database.StringIncrementAsync(cache.VersionKey());
 
+    /// <summary>
+    /// Whether a grant satisfies a check WITHOUT resolving where the resource sits: a global grant always does; an
+    /// unscoped check ("does the user hold it anywhere?" — the controller gate) is met by any grant; a grant made for
+    /// no particular scope applies everywhere. A grant limited to an org unit never matches a specific resource here —
+    /// that needs the resource's org unit (see <see cref="HasPermissionAsync"/>).
+    /// </summary>
     private static bool Satisfies(EffectivePermission permission, string? scopeValue)
         => permission.ScopeType == PermissionScopeType.Global
            || scopeValue is null
            || permission.ScopeValue is null
-           || string.Equals(permission.ScopeValue, scopeValue, StringComparison.Ordinal);
+           || (!IsOrgUnitLimited(permission) && string.Equals(permission.ScopeValue, scopeValue, StringComparison.Ordinal));
 
     private async Task<List<EffectivePermission>> ComputeAsync(Guid userId, CancellationToken cancellationToken)
     {

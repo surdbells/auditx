@@ -17,15 +17,88 @@ public sealed class ResponseItemConfigRulesTests
     private static readonly RatingScale Scale = RatingScale.Create(
         "Effectiveness", null, """[{"value":1,"label":"Weak","score":0},{"value":2,"label":"Strong","score":100}]""");
 
+    private static readonly RatingScale RetiredScale = RetiredRatingScale();
+
+    private static readonly ResponseOptionSet EffectivenessSet = ResponseOptionSet.CreateNamed(ResponseType.PassFailNa, "Control effectiveness", """[{"code":"eff","label":"Effective","order":0,"score":100,"isDeficiency":false,"isNotApplicable":false,"requiresComment":false},{"code":"ineff","label":"Ineffective","order":1,"score":0,"isDeficiency":true,"isNotApplicable":false,"requiresComment":true}]""");
+    private static readonly ResponseOptionSet YesNoSet = ResponseOptionSet.CreateNamed(ResponseType.YesNo, "Confirmations", """[{"code":"eff","label":"Effective","order":0,"score":100,"isDeficiency":false,"isNotApplicable":false,"requiresComment":false},{"code":"ineff","label":"Ineffective","order":1,"score":0,"isDeficiency":true,"isNotApplicable":false,"requiresComment":true}]""");
+    private static readonly ResponseOptionSet RetiredSet = RetiredResponseSet();
+
+    private static RatingScale RetiredRatingScale()
+    {
+        var scale = RatingScale.Create("Old 1-3", null, """[{"value":1,"label":"Low","score":0},{"value":3,"label":"High","score":100}]""");
+        scale.Update(null, null, null, false);
+        return scale;
+    }
+
+    private static ResponseOptionSet RetiredResponseSet()
+    {
+        var set = ResponseOptionSet.CreateNamed(ResponseType.PassFailNa, "Legacy wording", """[{"code":"eff","label":"Effective","order":0,"score":100,"isDeficiency":false,"isNotApplicable":false,"requiresComment":false},{"code":"ineff","label":"Ineffective","order":1,"score":0,"isDeficiency":true,"isNotApplicable":false,"requiresComment":true}]""");
+        set.SetArchived(true);
+        return set;
+    }
+
     private static IRatingScaleRepository Scales()
     {
         var repo = Substitute.For<IRatingScaleRepository>();
         repo.GetByIdAsync(Scale.Id, Arg.Any<CancellationToken>()).Returns(Scale);
+        repo.GetByIdAsync(RetiredScale.Id, Arg.Any<CancellationToken>()).Returns(RetiredScale);
         return repo;
     }
 
-    private static Task<string?> Normalise(ResponseType type, string? json)
-        => ResponseItemConfigRules.NormaliseAsync(type, json, Scales(), CancellationToken.None);
+    private static IResponseOptionSetRepository Sets()
+    {
+        var repo = Substitute.For<IResponseOptionSetRepository>();
+        foreach (var set in new[] { EffectivenessSet, YesNoSet, RetiredSet })
+        {
+            repo.GetByIdAsync(set.Id, Arg.Any<CancellationToken>()).Returns(set);
+        }
+
+        return repo;
+    }
+
+    private static Task<string?> Normalise(ResponseType type, string? json, string? previous = null)
+        => ResponseItemConfigRules.NormaliseAsync(type, json, Scales(), Sets(), CancellationToken.None, previous);
+
+    // ---- Named response sets and retired scales ---------------------------------------------------------------
+
+    [Fact]
+    public async Task A_verdict_item_keeps_the_named_response_set_it_chose()
+    {
+        var result = await Normalise(ResponseType.PassFailNa, $$"""{"optionSetId":"{{EffectivenessSet.Id}}","unit":"stale"}""");
+
+        Assert.Equal($$"""{"optionSetId":"{{EffectivenessSet.Id}}"}""", result);
+    }
+
+    [Fact]
+    public async Task A_response_set_made_for_another_response_type_is_refused()
+    {
+        var ex = await Assert.ThrowsAsync<ConflictException>(
+            () => Normalise(ResponseType.PassFailNa, $$"""{"optionSetId":"{{YesNoSet.Id}}"}"""));
+
+        Assert.Equal("template.response_set_type_mismatch", ex.ErrorCode);
+    }
+
+    [Fact]
+    public async Task A_retired_response_set_cannot_be_newly_chosen_but_an_item_already_using_it_keeps_it()
+    {
+        var json = $$"""{"optionSetId":"{{RetiredSet.Id}}"}""";
+
+        var ex = await Assert.ThrowsAsync<ConflictException>(() => Normalise(ResponseType.PassFailNa, json));
+        Assert.Equal("template.response_set_retired", ex.ErrorCode);
+
+        Assert.Equal(json, await Normalise(ResponseType.PassFailNa, json, previous: json));
+    }
+
+    [Fact]
+    public async Task An_inactive_rating_scale_cannot_be_newly_chosen_but_an_item_already_using_it_keeps_it()
+    {
+        var json = $$"""{"ratingScaleId":"{{RetiredScale.Id}}"}""";
+
+        var ex = await Assert.ThrowsAsync<ConflictException>(() => Normalise(ResponseType.Rating, json));
+        Assert.Equal("template.rating_scale_inactive", ex.ErrorCode);
+
+        Assert.Equal(json, await Normalise(ResponseType.Rating, json, previous: json));
+    }
 
     [Theory]
     [InlineData(ResponseType.PassFailNa)]

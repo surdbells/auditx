@@ -58,8 +58,7 @@ public sealed class SubmitResponseCommandHandler(
         ResponseOption? option = null;
         if (!string.IsNullOrWhiteSpace(command.SelectedOptionCode) && ResponseOptions.SupportsOptionSet(item.ResponseType))
         {
-            var set = await optionSets.GetByResponseTypeAsync(item.ResponseType, cancellationToken);
-            var options = (set is null ? null : ResponseOptions.TryParse(set.OptionsJson)) ?? ResponseOptions.Defaults(item.ResponseType);
+            var options = await ResponseOptionResolution.ResolveAsync(optionSets, item.ResponseType, item.ResponseConfigJson, cancellationToken);
             option = options.FirstOrDefault(o => string.Equals(o.Code, command.SelectedOptionCode, StringComparison.OrdinalIgnoreCase))
                 ?? throw new ConflictException("response.unknown_option", $"Unknown conclusion option '{command.SelectedOptionCode}'.");
         }

@@ -85,3 +85,9 @@
     width: 100%;
   }
 }
+
+.editor__scope-hint {
+  margin: 0 0 0.75rem;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}

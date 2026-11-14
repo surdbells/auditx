@@ -8,10 +8,14 @@ public sealed record RegulationDto(
     string? Description,
     string? Category,
     bool IsActive,
-    string Version);
+    string Version,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);
 
 public sealed record RegulationListItemDto(
-    Guid Id, string Code, string Name, string? Authority, string? Category, bool IsActive);
+    Guid Id, string Code, string Name, string? Authority, string? Category, bool IsActive,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);
 
 /// <summary>A control linked to a finding (with the control's code/title for display).</summary>
 public sealed record FindingControlLinkDto(Guid LinkId, Guid ControlId, string Code, string Title, DateTimeOffset LinkedAt);

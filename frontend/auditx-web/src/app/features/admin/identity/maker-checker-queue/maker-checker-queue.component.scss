@@ -16,6 +16,24 @@
 
 .mc__table {
   width: 100%;
+  // Below this the columns used to squeeze until values disappeared; the wrapper scrolls sideways instead.
+  min-width: 760px;
+}
+
+.mc__you {
+  font-weight: 500;
+}
+
+.mc__waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.mc__row--mine {
+  background: var(--mat-sys-surface-container-low);
 }
 
 .mc__target-type {

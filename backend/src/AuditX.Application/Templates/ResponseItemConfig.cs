@@ -13,7 +13,7 @@ namespace AuditX.Application.Templates;
 /// shape, read (never written) so an item saved before rating scales existed still renders.
 /// </summary>
 public sealed record ResponseItemConfig(
-    Guid? RatingScaleId = null, IReadOnlyList<string>? Options = null, string? Unit = null, int? Max = null)
+    Guid? RatingScaleId = null, IReadOnlyList<string>? Options = null, string? Unit = null, int? Max = null, Guid? OptionSetId = null)
 {
     public static readonly ResponseItemConfig Empty = new();
 
@@ -49,20 +49,58 @@ public static class ResponseItemConfigRules
     public const int MaxChoiceLength = 200;
     public const int MaxUnitLength = 30;
 
+    /// <param name="previousConfigJson">
+    /// The item's settings before this edit (null for a new item): a retired rating scale or response set the item
+    /// ALREADY uses may stay, but none can be newly chosen.
+    /// </param>
     public static async Task<string?> NormaliseAsync(
-        ResponseType responseType, string? responseConfigJson, IRatingScaleRepository ratingScales, CancellationToken cancellationToken)
+        ResponseType responseType, string? responseConfigJson, IRatingScaleRepository ratingScales,
+        IResponseOptionSetRepository optionSets, CancellationToken cancellationToken, string? previousConfigJson = null)
     {
         var config = ResponseItemConfig.Parse(responseConfigJson);
+        var previous = ResponseItemConfig.Parse(previousConfigJson);
         switch (responseType)
         {
+            case ResponseType.PassFailNa:
+            case ResponseType.YesNo:
+            {
+                // No named set: the item uses its type's standard set.
+                if (config.OptionSetId is not { } setId)
+                {
+                    return null;
+                }
+
+                var set = await optionSets.GetByIdAsync(setId, cancellationToken) ?? throw new NotFoundException("Response set", setId);
+                if (set.Name is null)
+                {
+                    return null; // the standard set chosen explicitly is the same as choosing none
+                }
+
+                if (set.ResponseType != responseType)
+                {
+                    throw new ConflictException("template.response_set_type_mismatch",
+                        $"The response set '{set.Name}' is for a different response type. Choose a set made for this item's response type.");
+                }
+
+                if (set.IsArchived && previous.OptionSetId != setId)
+                {
+                    throw new ConflictException("template.response_set_retired",
+                        $"The response set '{set.Name}' has been retired and cannot be chosen for an item. Bring it back first, or choose another set.");
+                }
+
+                return AppJson.Serialize(new { optionSetId = setId });
+            }
+
             case ResponseType.Rating:
             {
                 // A rating is answered (and scored) on a configured scale — without one there is nothing to pick from.
                 var scaleId = config.RatingScaleId
                     ?? throw new ConflictException("template.rating_scale_required", "A rating item must reference a rating scale.");
-                if (await ratingScales.GetByIdAsync(scaleId, cancellationToken) is null)
+                var scale = await ratingScales.GetByIdAsync(scaleId, cancellationToken) ?? throw new NotFoundException("Rating scale", scaleId);
+                if (!scale.IsActive && previous.RatingScaleId != scaleId)
                 {
-                    throw new NotFoundException("Rating scale", scaleId);
+                    throw new ConflictException("template.rating_scale_inactive",
+                        $"The rating scale '{scale.Name}' is inactive and cannot be chosen for an item. Reactivate it first, or choose another scale.");
                 }
 
                 return AppJson.Serialize(new { ratingScaleId = scaleId });
@@ -83,7 +121,7 @@ public static class ResponseItemConfigRules
             }
 
             default:
-                // Pass/Fail/N-A, Yes/No, Text and Date carry no per-item settings.
+                // Text and Date carry no per-item settings.
                 return null;
         }
     }

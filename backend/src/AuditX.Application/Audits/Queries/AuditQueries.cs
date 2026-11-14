@@ -15,7 +15,7 @@ namespace AuditX.Application.Audits.Queries;
 public sealed record ListAuditsQuery(string? Status, string? AuditType, Guid? Lead, Guid? PlanItem, string? Search, int? Page, int? PageSize)
     : IQuery<PagedResult<AuditListItemDto>>;
 
-public sealed class ListAuditsQueryHandler(IAuditRepository audits)
+public sealed class ListAuditsQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<ListAuditsQuery, PagedResult<AuditListItemDto>>
 {
     public async Task<PagedResult<AuditListItemDto>> Handle(ListAuditsQuery query, CancellationToken cancellationToken)
@@ -29,7 +29,9 @@ public sealed class ListAuditsQueryHandler(IAuditRepository audits)
         }
 
         var page = PageSpec.Of(query.Page, query.PageSize);
-        var result = await audits.SearchAsync(status, query.AuditType, query.Lead, query.PlanItem, query.Search, page, cancellationToken);
+        // A caller whose ViewAudits is limited to some org units lists only the audits there (and the ones they are on).
+        var scope = await OrgReach.ListScopeAsync(currentUser.UserId, Domain.Authorization.PermissionKeys.ViewAudits, permissions, cancellationToken);
+        var result = await audits.SearchAsync(status, query.AuditType, query.Lead, query.PlanItem, query.Search, page, scope, cancellationToken);
         return result.Map(a => a.ToListItemDto());
     }
 }
@@ -95,9 +97,12 @@ public sealed class GetAuditHistoryQueryHandler(
 
 public sealed record AuditCountsQuery : IQuery<AuditCountsDto>;
 
-public sealed class AuditCountsQueryHandler(IAuditRepository audits)
+public sealed class AuditCountsQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
     : IQueryHandler<AuditCountsQuery, AuditCountsDto>
 {
     public async Task<AuditCountsDto> Handle(AuditCountsQuery query, CancellationToken cancellationToken)
-        => new(await audits.CountsByStatusAsync(cancellationToken));
+    {
+        var scope = await OrgReach.ListScopeAsync(currentUser.UserId, Domain.Authorization.PermissionKeys.ViewAudits, permissions, cancellationToken);
+        return new(await audits.CountsByStatusAsync(scope, cancellationToken));
+    }
 }

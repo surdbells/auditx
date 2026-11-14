@@ -80,7 +80,7 @@ export class RiskEditorDialogComponent {
     const opts = this.refCategories().map((c) => ({ code: c.code, label: c.label }));
     const current = this.data.risk?.category;
     if (current && !opts.some((o) => o.code === current)) {
-      return [{ code: current, label: this.refLookup.label('risk_category', current) }, ...opts];
+      return [{ code: current, label: this.refLookup.label('risk_category', current, this.data.risk?.createdAt) }, ...opts];
     }
     return opts;
   });

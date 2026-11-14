@@ -18,6 +18,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { AuthService } from '../../../core/services/auth.service';
+import { BrandingService } from '../../../core/services/branding.service';
 import { SessionDto } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { LanguageSwitcherComponent } from '../../../core/i18n/language-switcher.component';
@@ -45,6 +46,11 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly branding = inject(BrandingService);
+
+  /** The organisation's name and logo (Configuration › Branding), loaded anonymously at start-up. */
+  readonly orgName = this.branding.organizationName;
+  readonly logo = this.branding.logoDataUri;
 
   readonly submitting = signal(false);
   readonly ssoBusy = signal(false);

@@ -52,7 +52,7 @@ public sealed class KickoffFlowTests(ApiFactory factory) : IClassFixture<ApiFact
             auditType = "branch",
             startDate = "2027-08-10",
             targetEndDate = "2027-09-10",
-            leadUserId = users["manager@auditx.local"],
+            leadUserId = users["admin@auditx.local"], // the kickoff is scheduled by the audit's own team
             auditeeUserId = users["auditee@auditx.local"],
         }));
         var auditId = created.GetProperty("id").GetGuid();
@@ -83,7 +83,7 @@ public sealed class KickoffFlowTests(ApiFactory factory) : IClassFixture<ApiFact
             auditType = "branch",
             startDate = "2027-08-10",
             targetEndDate = "2027-09-10",
-            leadUserId = users["manager@auditx.local"],
+            leadUserId = users["admin@auditx.local"], // the kickoff is scheduled by the audit's own team
             auditeeUserId = users["auditee@auditx.local"],
         }));
         var auditId = created.GetProperty("id").GetGuid();

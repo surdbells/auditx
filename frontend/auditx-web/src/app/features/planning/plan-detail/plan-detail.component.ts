@@ -227,13 +227,22 @@ export class PlanDetailComponent {
     return this.canManage() && (s === 'approved' || s === 'revision_submitted');
   });
 
-  /** AC Chair can decide only while the plan is awaiting a decision. */
-  readonly canDecideNow = computed(() => {
+  /** The plan is awaiting a decision. */
+  readonly awaitingDecision = computed(() => {
     const s = this.plan()?.status;
-    return (
-      this.canDecide() && (s === 'submitted' || s === 'revision_submitted')
-    );
+    return s === 'submitted' || s === 'revision_submitted';
   });
+
+  /** True when the signed-in user put this plan forward — segregation of duties: someone else decides it. */
+  readonly isSubmitter = computed(() => {
+    const me = this.auth.session()?.userId;
+    return !!me && this.plan()?.submittedByUserId === me;
+  });
+
+  /** AC Chair can decide only while the plan is awaiting a decision, and never on a plan they submitted. */
+  readonly canDecideNow = computed(
+    () => this.canDecide() && this.awaitingDecision() && !this.isSubmitter(),
+  );
 
   readonly canClose = computed(() => {
     const s = this.plan()?.status;

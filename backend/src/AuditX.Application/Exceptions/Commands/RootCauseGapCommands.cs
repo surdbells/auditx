@@ -267,7 +267,7 @@ public sealed class ListRootCauseGapsQueryHandler(IRootCauseGapRepository gaps, 
 {
     public async Task<PagedResult<RootCauseGapListItemDto>> Handle(ListRootCauseGapsQuery query, CancellationToken cancellationToken)
     {
-        var participant = await ExceptionAccess.ResolveParticipantScopeAsync(currentUser.UserId, permissions, cancellationToken);
+        var participant = (await ExceptionAccess.ResolveParticipantScopeAsync(currentUser.UserId, permissions, cancellationToken))?.UserId;
         RootCauseGapStatus? status = query.Status?.ToLowerInvariant() switch
         {
             null or "" or "all" => null,
@@ -291,7 +291,7 @@ public sealed class GetRootCauseGapQueryHandler(IRootCauseGapRepository gaps, IC
 
         // Same scope as the register: without portfolio visibility, only a gap the caller answers for — and within
         // it, only the linked findings they could open themselves (never other areas' finding titles).
-        var participant = await ExceptionAccess.ResolveParticipantScopeAsync(currentUser.UserId, permissions, cancellationToken);
+        var participant = (await ExceptionAccess.ResolveParticipantScopeAsync(currentUser.UserId, permissions, cancellationToken))?.UserId;
         if (participant is { } uid && gap.OwnerUserId != uid && !gap.Remediations.Any(r => r.OwnerUserId == uid))
         {
             throw new ForbiddenAccessException("You can only open a root-cause gap you own or hold a remediation action on.");

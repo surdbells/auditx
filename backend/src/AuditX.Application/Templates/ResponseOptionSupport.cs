@@ -18,6 +18,31 @@ public sealed record ResponseOption(
         IsNotApplicable ? ResponseVerdict.Na : IsDeficiency ? ResponseVerdict.Fail : ResponseVerdict.Pass;
 }
 
+/// <summary>Which conclusion options a verdict-based checklist item offers.</summary>
+public static class ResponseOptionResolution
+{
+    /// <summary>
+    /// The options of the named set the item chose (when it still exists and is of the item's type), otherwise the
+    /// organisation's standard set for the type, otherwise the built-in defaults. A retired named set still resolves —
+    /// retiring only stops it being chosen for new items.
+    /// </summary>
+    public static async Task<IReadOnlyList<ResponseOption>> ResolveAsync(
+        Abstractions.Persistence.IResponseOptionSetRepository sets, ResponseType type, string? responseConfigJson, CancellationToken cancellationToken)
+    {
+        var config = ResponseItemConfig.Parse(responseConfigJson);
+        if (config.OptionSetId is { } id
+            && await sets.GetByIdAsync(id, cancellationToken) is { } named
+            && named.ResponseType == type
+            && ResponseOptions.TryParse(named.OptionsJson) is { } namedOptions)
+        {
+            return namedOptions;
+        }
+
+        var standard = await sets.GetByResponseTypeAsync(type, cancellationToken);
+        return (standard is null ? null : ResponseOptions.TryParse(standard.OptionsJson)) ?? ResponseOptions.Defaults(type);
+    }
+}
+
 /// <summary>Parsing + validation for a <see cref="Domain.Templates.ResponseOptionSet"/>'s opaque OptionsJson.</summary>
 public static class ResponseOptions
 {

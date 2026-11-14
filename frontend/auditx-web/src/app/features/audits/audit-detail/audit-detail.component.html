@@ -9,7 +9,7 @@
     @if (audit(); as a) {
       <app-page-header
         [title]="a.name"
-        [subtitle]="refLookup.label('audit_type', a.auditType)"
+        [subtitle]="refLookup.label('audit_type', a.auditType, a.createdAt)"
       >
         <div actions class="detail__actions">
           @if (canViewReports()) {
@@ -18,8 +18,14 @@
               {{ 'audits.actions.reports' | t }}
             </a>
           }
+          @if (lifecycleBlockedNotOnTeam()) {
+            <span class="detail__lifecycle-note" [matTooltip]="'audits.lifecycle.notOnTeamHint' | t">
+              <app-icon name="lock" aria-hidden="true" />
+              {{ 'audits.lifecycle.notOnTeam' | t }}
+            </span>
+          }
           @if (canManage()) {
-            @if (isDraft()) {
+            @if (canDriveLifecycle() && isDraft()) {
               <button
                 matButton="filled"
                 type="button"
@@ -32,7 +38,7 @@
                 {{ 'audits.actions.plan' | t }}
               </button>
             }
-            @if (isPlanned()) {
+            @if (canDriveLifecycle() && isPlanned()) {
               <button matButton="filled" type="button" (click)="start()">
                 <app-icon name="play_arrow" />
                 {{ 'audits.actions.start' | t }}
@@ -42,13 +48,13 @@
                 {{ 'audits.actions.reopen' | t }}
               </button>
             }
-            @if (isInProgress()) {
+            @if (canDriveLifecycle() && isInProgress()) {
               <button matButton="filled" type="button" (click)="sendToReview()">
                 <app-icon name="rate_review" />
                 {{ 'audits.actions.sendToReview' | t }}
               </button>
             }
-            @if (isUnderReview()) {
+            @if (canDriveLifecycle() && isUnderReview()) {
               <button matButton="filled" type="button" (click)="complete()">
                 <app-icon name="task_alt" />
                 {{ 'audits.actions.complete' | t }}

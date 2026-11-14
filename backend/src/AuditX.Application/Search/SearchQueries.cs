@@ -47,7 +47,8 @@ public sealed class SearchQueryHandler(
 
         if (granted.Contains(PermissionKeys.ViewAudits))
         {
-            var result = await audits.SearchAsync(null, null, null, null, term, pageSpec, cancellationToken);
+            var auditScope = await OrgReach.ListScopeAsync(userId, PermissionKeys.ViewAudits, permissions, cancellationToken);
+            var result = await audits.SearchAsync(null, null, null, null, term, pageSpec, auditScope, cancellationToken);
             hits.AddRange(result.Items.Select(a => new SearchHitDto("audit", a.Id.ToString(), a.Name, a.Status.ToString())));
         }
 
@@ -61,10 +62,13 @@ public sealed class SearchQueryHandler(
         {
             // Same resource scope as the Exceptions tracker: without portfolio visibility (ViewAudits) a caller
             // finds only the findings they own or whose audit they are on — never other areas' finding titles.
+            var participant = granted.Contains(PermissionKeys.ViewAudits)
+                ? await OrgReach.ListScopeAsync(userId, PermissionKeys.ViewAudits, permissions, cancellationToken)
+                : new ListScope(userId, []);
             var filter = new ExceptionSearchFilter(
                 null, null, null, null, null, null, null, null,
                 DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), term,
-                ParticipantUserId: granted.Contains(PermissionKeys.ViewAudits) ? null : userId);
+                ParticipantUserId: participant?.UserId, ParticipantOrgUnitIds: participant?.OrgUnitIds);
             var result = await exceptions.SearchAsync(filter, pageSpec, cancellationToken);
             hits.AddRange(result.Items.Select(e => new SearchHitDto("exception", e.Id.ToString(), e.Title, e.Severity.ToString())));
         }

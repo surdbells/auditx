@@ -22,7 +22,7 @@ public static class TemplateMappings
 
     public static TemplateListItemDto ToListItemDto(this Template template) => new(
         template.Id, template.Name, template.AuditType, template.Description,
-        template.Status.ToSnake(), template.CurrentVersion, template.Items.Count);
+        template.Status.ToSnake(), template.CurrentVersion, template.Items.Count, CreatedAt: template.CreatedAt);
 
     public static TemplateItemDto ToDto(this TemplateItem item) => new(
         item.Id, item.Prompt, item.ReferenceNotes, item.ResponseType.ToSnake(),

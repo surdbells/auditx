@@ -12,20 +12,29 @@ using FluentValidation;
 namespace AuditX.Application.Identity.MakerChecker;
 
 /// <summary>
-/// List pending actions the current user is eligible to check — i.e. excluding actions they made
-/// themselves, since a maker may never approve their own action (US-M1-025, BR-M1-008).
+/// The pending approval queue, with who raised each request. The caller's OWN requests are included and flagged
+/// (<c>IsMine</c>) — they used to be hidden, so someone who had just submitted a change was told it was awaiting
+/// approval yet could not find it anywhere. A maker still can never decide their own request (US-M1-025,
+/// BR-M1-008): that is enforced on approve/reject, and the queue shows it as waiting for someone else.
 /// </summary>
 public sealed record ListPendingActionsQuery(string? ActionType) : IQuery<IReadOnlyList<MakerCheckerActionDto>>;
 
-public sealed class ListPendingActionsQueryHandler(IMakerCheckerRepository pending, ICurrentUser currentUser)
+public sealed class ListPendingActionsQueryHandler(IMakerCheckerRepository pending, IUserRepository users, ICurrentUser currentUser)
     : IQueryHandler<ListPendingActionsQuery, IReadOnlyList<MakerCheckerActionDto>>
 {
     public async Task<IReadOnlyList<MakerCheckerActionDto>> Handle(ListPendingActionsQuery query, CancellationToken cancellationToken)
     {
         var actions = await pending.GetPendingAsync(query.ActionType, cancellationToken);
+        var makerIds = actions.Select(a => a.MakerUserId).Distinct().ToArray();
+        var names = (await users.GetByIdsAsync(makerIds, cancellationToken)).ToDictionary(u => u.Id, u => u.DisplayName);
+
         return actions
-            .Where(a => a.MakerUserId != currentUser.UserId)
-            .Select(a => a.ToDto())
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => a.ToDto() with
+            {
+                MakerName = names.GetValueOrDefault(a.MakerUserId),
+                IsMine = a.MakerUserId == currentUser.UserId,
+            })
             .ToArray();
     }
 }

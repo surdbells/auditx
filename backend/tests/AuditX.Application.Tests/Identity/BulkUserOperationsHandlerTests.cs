@@ -3,6 +3,7 @@ using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Abstractions.Identity;
 using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Administration.Commands;
+using AuditX.Application.Common.Models;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Identity;
@@ -139,6 +140,7 @@ public sealed class BulkUserOperationsHandlerTests
         var users = Substitute.For<IUserRepository>();
         users.GetByIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
             .Returns([a, b]);
+        WithActiveAdministrators(users, Active("admin"));
         var currentUser = Substitute.For<ICurrentUser>();
         currentUser.UserId.Returns(Guid.NewGuid());
         var permissions = Substitute.For<IPermissionResolver>();
@@ -156,5 +158,61 @@ public sealed class BulkUserOperationsHandlerTests
         audit.Received(1).Record(AuditEventTypes.UsersBulkDeactivated, Arg.Any<string>(), null,
             Arg.Any<object?>(), Arg.Any<object?>(), Arg.Any<object?>());
         await uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    private static void WithActiveAdministrators(IUserRepository users, params User[] administrators)
+        => users.SearchAsync(null, Domain.Authorization.BuiltInRoles.AdministratorName, UserStatus.Active, Arg.Any<PageSpec>(), Arg.Any<CancellationToken>())
+            .Returns(new PagedResult<User>(administrators, administrators.Length, 1, PageSpec.LoadAllCap));
+
+    private static (BulkDeactivateUsersCommandHandler Handler, IUnitOfWork Uow) DeactivateHandler(
+        Guid callerId, User[] targets, params User[] administrators)
+    {
+        var users = Substitute.For<IUserRepository>();
+        users.GetByIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>()).Returns(targets);
+        WithActiveAdministrators(users, administrators);
+        var currentUser = Substitute.For<ICurrentUser>();
+        currentUser.UserId.Returns(callerId);
+        var uow = Substitute.For<IUnitOfWork>();
+        return (new BulkDeactivateUsersCommandHandler(users, currentUser, Substitute.For<IPermissionResolver>(), Substitute.For<IAuditRecorder>(), uow), uow);
+    }
+
+    [Fact]
+    public async Task BulkDeactivate_refuses_the_callers_own_account_and_commits_nothing()
+    {
+        var me = Active("me");
+        var other = Active("other");
+        var (handler, uow) = DeactivateHandler(me.Id, [me, other], me, Active("second-admin"));
+
+        var result = await handler.Handle(new BulkDeactivateUsersCommand([me.Id, other.Id]), CancellationToken.None);
+
+        Assert.Equal(0, result.SuccessCount);
+        Assert.Equal(me.Id.ToString(), Assert.Single(result.Errors).Identifier);
+        Assert.Equal(UserStatus.Active, other.Status);
+        await uow.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task BulkDeactivate_refuses_to_remove_the_last_active_administrator()
+    {
+        var onlyAdmin = Active("only-admin");
+        var (handler, _) = DeactivateHandler(Guid.NewGuid(), [onlyAdmin], onlyAdmin);
+
+        var result = await handler.Handle(new BulkDeactivateUsersCommand([onlyAdmin.Id]), CancellationToken.None);
+
+        Assert.Equal(0, result.SuccessCount);
+        Assert.Contains("last active administrator", Assert.Single(result.Errors).Message);
+        Assert.Equal(UserStatus.Active, onlyAdmin.Status);
+    }
+
+    [Fact]
+    public async Task BulkDeactivate_allows_an_administrator_while_another_one_remains()
+    {
+        var leaving = Active("leaving-admin");
+        var (handler, _) = DeactivateHandler(Guid.NewGuid(), [leaving], leaving, Active("staying-admin"));
+
+        var result = await handler.Handle(new BulkDeactivateUsersCommand([leaving.Id]), CancellationToken.None);
+
+        Assert.Equal(1, result.SuccessCount);
+        Assert.Equal(UserStatus.Deactivated, leaving.Status);
     }
 }

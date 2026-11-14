@@ -73,11 +73,17 @@ export type CreateUserDialogResult =
         <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>{{ 'identity.field.firstName' | t }}</mat-label>
-            <input matInput formControlName="firstName" autocomplete="off" />
+            <input matInput formControlName="firstName" autocomplete="off" required />
+            @if (form.controls.firstName.invalid && form.controls.firstName.touched) {
+              <mat-error>{{ 'identity.createUser.firstNameRequired' | t }}</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>{{ 'identity.field.lastName' | t }}</mat-label>
-            <input matInput formControlName="lastName" autocomplete="off" />
+            <input matInput formControlName="lastName" autocomplete="off" required />
+            @if (form.controls.lastName.invalid && form.controls.lastName.touched) {
+              <mat-error>{{ 'identity.createUser.lastNameRequired' | t }}</mat-error>
+            }
           </mat-form-field>
         </div>
 
@@ -142,8 +148,8 @@ export class CreateUserDialogComponent {
   readonly form = this.fb.nonNullable.group({
     authType: ['directory' as 'directory' | 'local'],
     email: ['', [Validators.required, Validators.email]],
-    firstName: [''],
-    lastName: [''],
+    firstName: ['', [Validators.required, Validators.pattern(/\S/)]],
+    lastName: ['', [Validators.required, Validators.pattern(/\S/)]],
     username: [''],
     method: ['set_password' as InitialPasswordMethod],
     password: [''],

@@ -33,6 +33,12 @@
               <app-icon name="gavel" />
               {{ 'planning.detail.decision' | t }}
             </button>
+          } @else if (canDecide() && awaitingDecision() && isSubmitter()) {
+            <!-- Segregation of duties: the person who submitted the plan does not approve it. -->
+            <button matButton="filled" type="button" disabled [matTooltip]="'planning.detail.decisionOwnSubmission' | t">
+              <app-icon name="gavel" />
+              {{ 'planning.detail.decision' | t }}
+            </button>
           }
           @if (canClose()) {
             <button matButton type="button" (click)="close()">
@@ -139,7 +145,7 @@
               <ul class="detail__behind-list">
                 @for (i of exec.behindSchedule; track i.id) {
                   <li>
-                    {{ 'planning.detail.dueOn' | t: { type: refLookup.label('audit_type', i.auditType), date: (i.plannedEndDate | date: 'mediumDate') } }}
+                    {{ 'planning.detail.dueOn' | t: { type: refLookup.label('audit_type', i.auditType, i.createdAt), date: (i.plannedEndDate | date: 'mediumDate') } }}
                   </li>
                 }
               </ul>
@@ -204,7 +210,7 @@
               </ng-container>
               <ng-container matColumnDef="auditType">
                 <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colAuditType' | t }}</th>
-                <td mat-cell *matCellDef="let i">{{ refLookup.label('audit_type', i.auditType) }}</td>
+                <td mat-cell *matCellDef="let i">{{ refLookup.label('audit_type', i.auditType, i.createdAt) }}</td>
               </ng-container>
               <ng-container matColumnDef="entities">
                 <th mat-header-cell *matHeaderCellDef>{{ 'planning.detail.colEntities' | t }}</th>
@@ -308,7 +314,7 @@
                       matIconButton
                       type="button"
                       (click)="removeItem(i)"
-                      [attr.aria-label]="'planning.detail.removeItemAria' | t: { type: refLookup.label('audit_type', i.auditType) }"
+                      [attr.aria-label]="'planning.detail.removeItemAria' | t: { type: refLookup.label('audit_type', i.auditType, i.createdAt) }"
                     >
                       <app-icon name="delete" />
                     </button>

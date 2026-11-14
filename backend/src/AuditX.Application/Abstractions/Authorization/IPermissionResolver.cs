@@ -20,6 +20,13 @@ public interface IPermissionResolver
     /// </summary>
     Task<bool> HasPermissionAsync(Guid userId, string permissionKey, string? scopeValue = null, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Where in the organisation the user holds <paramref name="permissionKey"/>: everywhere, only inside some org
+    /// units (a role granted for an org unit, with the permission set to "assigned org unit"), or nowhere. Lists use it
+    /// to show only what is within reach.
+    /// </summary>
+    Task<OrgScope> GetOrgScopeAsync(Guid userId, string permissionKey, CancellationToken cancellationToken = default);
+
     /// <summary>Invalidate any cached permissions for the user (after role/delegation changes).</summary>
     Task InvalidateAsync(Guid userId, CancellationToken cancellationToken = default);
 

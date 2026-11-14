@@ -21,6 +21,12 @@ public sealed class OrgUnit : Entity
     public Guid? ParentOrgUnitId { get; private set; }
 
     /// <summary>
+    /// What kind of unit this is — a code from the <c>org_unit_type</c> reference list (legal entity, business unit,
+    /// function, location, process, …). Optional, so existing hierarchies stay valid.
+    /// </summary>
+    public string? UnitType { get; private set; }
+
+    /// <summary>
     /// The user who heads this org unit, when designated. Used by the reporting-line resolver as the fallback line
     /// manager for members of the unit that have no explicit manager. Soft reference (no FK), mirroring the codebase's
     /// user/org-unit references.
@@ -32,12 +38,16 @@ public sealed class OrgUnit : Entity
     /// <summary>Optimistic-concurrency token (rowversion).</summary>
     public byte[] Version { get; private set; } = [];
 
-    public static OrgUnit Create(string name, string code, Guid? parentOrgUnitId) => new()
+    public static OrgUnit Create(string name, string code, Guid? parentOrgUnitId, string? unitType = null) => new()
     {
         Name = Guard.NotNullOrWhiteSpace(name, "org_unit.name_required", "An org-unit name is required."),
         Code = Guard.NotNullOrWhiteSpace(code, "org_unit.code_required", "An org-unit code is required.").Trim().ToUpperInvariant(),
         ParentOrgUnitId = parentOrgUnitId,
+        UnitType = string.IsNullOrWhiteSpace(unitType) ? null : unitType.Trim(),
     };
+
+    /// <summary>Sets (or clears, with null) the unit's type.</summary>
+    public void SetUnitType(string? unitType) => UnitType = string.IsNullOrWhiteSpace(unitType) ? null : unitType.Trim();
 
     public void Rename(string name) =>
         Name = Guard.NotNullOrWhiteSpace(name, "org_unit.name_required", "An org-unit name is required.");

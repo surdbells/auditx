@@ -18,8 +18,14 @@ namespace AuditX.Application.Engagement.Queries;
 internal sealed record UserEngagementContext(
     Func<string, bool> Can,
     bool GlobalManage,
-    IReadOnlySet<string> ManageAuditScopes)
+    IReadOnlySet<string> ManageAuditScopes,
+    bool LimitedManage = false)
 {
+    /// <summary>Also counts an audit in an org unit the caller manages audits for (a grant limited to org units).</summary>
+    public async Task<bool> ManagesOrIsMemberOfAsync(Audit audit, Guid userId, IPermissionResolver permissions, CancellationToken ct)
+        => ManagesOrIsMemberOf(audit, userId)
+           || (LimitedManage && await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, audit.Id.ToString(), ct));
+
     public bool ManagesOrIsMemberOf(Audit audit, Guid userId) =>
         audit.TeamMembers.Any(m => m.IsActive && m.UserId == userId)
         || GlobalManage
@@ -31,11 +37,13 @@ internal sealed record UserEngagementContext(
         var held = effective.Select(e => e.Key).ToHashSet(StringComparer.Ordinal);
         var globalManage = effective.Any(e => e.Key == PermissionKeys.ManageAudit
             && (e.ScopeType == Domain.Enums.PermissionScopeType.Global || e.ScopeValue is null));
+        var limitedManage = effective.Any(e => e.Key == PermissionKeys.ManageAudit
+            && e.ScopeType == Domain.Enums.PermissionScopeType.OrgUnit && e.ScopeValue is not null);
         var scopes = effective
-            .Where(e => e.Key == PermissionKeys.ManageAudit && e.ScopeValue is not null)
+            .Where(e => e.Key == PermissionKeys.ManageAudit && e.ScopeValue is not null && e.ScopeType != Domain.Enums.PermissionScopeType.OrgUnit)
             .Select(e => e.ScopeValue!)
             .ToHashSet(StringComparer.Ordinal);
-        return new UserEngagementContext(held.Contains, globalManage, scopes);
+        return new UserEngagementContext(held.Contains, globalManage, scopes, limitedManage);
     }
 }
 
@@ -76,7 +84,7 @@ public sealed class GetEngagementJourneyQueryHandler(
         var (ex, hasCompleted, hasDistributed) = await EngagementFacts.LoadAsync(audit.Id, exceptions, reports, cancellationToken);
 
         return EngagementJourneyResolver.Resolve(
-            audit, ex, hasCompleted, hasDistributed, uid, ctx.Can, ctx.ManagesOrIsMemberOf(audit, uid));
+            audit, ex, hasCompleted, hasDistributed, uid, ctx.Can, await ctx.ManagesOrIsMemberOfAsync(audit, uid, permissions, cancellationToken));
     }
 }
 
@@ -108,12 +116,12 @@ public sealed class ListMyEngagementsQueryHandler(
         }
 
         var ctx = await UserEngagementContext.LoadAsync(uid, permissions, cancellationToken);
-        var page = await audits.SearchAsync(status, null, null, null, null, PageSpec.Of(1, Scan), cancellationToken);
+        var page = await audits.SearchAsync(status, null, null, null, null, PageSpec.Of(1, Scan), cancellationToken: cancellationToken);
 
         var items = new List<EngagementBoardItemDto>();
         foreach (var audit in page.Items)
         {
-            if (!ctx.ManagesOrIsMemberOf(audit, uid))
+            if (!await ctx.ManagesOrIsMemberOfAsync(audit, uid, permissions, cancellationToken))
             {
                 continue; // not the user's engagement
             }
@@ -124,7 +132,7 @@ public sealed class ListMyEngagementsQueryHandler(
             items.Add(new EngagementBoardItemDto(
                 journey.AuditId, journey.Name, journey.AuditType, journey.Status, journey.Stage,
                 journey.ProgressPercent, journey.OpenExceptionCount, journey.Version,
-                WaitingOnMe: journey.NextActions.Count > 0, journey.NextActions));
+                WaitingOnMe: journey.NextActions.Count > 0, journey.NextActions, CreatedAt: journey.CreatedAt));
         }
 
         // Surface the engagements that need the user first, then by name.

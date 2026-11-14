@@ -21,6 +21,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { UsersService } from '../../../../core/services/users.service';
 import { RolesService } from '../../../../core/services/roles.service';
 import { AdministrationService } from '../../../../core/services/administration.service';
+import { OrgUnitLookupService } from '../../../../core/services/org-unit-lookup.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import {
   DelegationDto,
@@ -163,6 +164,8 @@ export class UserDetailComponent {
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
   private readonly i18n = inject(TranslationService);
+  /** Names the org unit a role was granted for. */
+  readonly orgUnitLookup = inject(OrgUnitLookupService);
 
   readonly guide = USER_DETAIL_GUIDE;
 

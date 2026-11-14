@@ -73,6 +73,29 @@ public sealed class UserRepository(AppDbContext db) : IUserRepository
         return result;
     }
 
+    public async Task<IReadOnlyList<(User User, IReadOnlyList<string> Roles)>> ListAssignableWithRolesAsync(CancellationToken cancellationToken = default)
+    {
+        var people = await db.Users.AsNoTracking()
+            .Where(u => u.Status != UserStatus.Deactivated && u.SupportChannelSessionId == null)
+            .OrderBy(u => u.DisplayName)
+            .ToListAsync(cancellationToken);
+
+        var ids = people.Select(u => u.Id).ToArray();
+        var grants = await (
+                from ur in db.UserRoles.AsNoTracking()
+                join r in db.Roles.AsNoTracking() on ur.RoleId equals r.Id
+                where ids.Contains(ur.UserId)
+                select new { ur.UserId, r.Name })
+            .ToListAsync(cancellationToken);
+        var rolesByUser = grants
+            .GroupBy(g => g.UserId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)g.Select(x => x.Name).Distinct().OrderBy(n => n).ToArray());
+
+        return people
+            .Select(u => (u, rolesByUser.TryGetValue(u.Id, out var roles) ? roles : (IReadOnlyList<string>)[]))
+            .ToArray();
+    }
+
     public async Task<PagedResult<User>> SearchAsync(
         string? search,
         string? roleName,

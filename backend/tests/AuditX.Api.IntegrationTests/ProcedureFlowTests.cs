@@ -67,6 +67,9 @@ public sealed class ProcedureFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         var itemId = withItem.GetProperty("checklistItems").EnumerateArray().First().GetProperty("id").GetGuid();
         var withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
             new { userId = users["auditor@auditx.local"], teamRole = "auditor", version }));
+        // Only an audit's own team moves it through its lifecycle: the administrator driving it joins as reviewer.
+        withTeam = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/team",
+            new { userId = users["admin@auditx.local"], teamRole = "reviewer", version = Version(withTeam) }));
         version = Version(withTeam);
         var planned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition", new { targetState = "planned", reason = (string?)null, version }));
         version = Version(planned);

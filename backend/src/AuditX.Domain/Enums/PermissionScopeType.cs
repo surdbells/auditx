@@ -14,4 +14,10 @@ public enum PermissionScopeType
     UniverseEntity,
     Report,
     Relational,
+
+    /// <summary>
+    /// Limited to the org unit the role was granted for, and every unit below it: the audits, auditable entities and
+    /// findings that belong there. Granted for no org unit, it applies to the whole organisation.
+    /// </summary>
+    OrgUnit,
 }

@@ -28,6 +28,8 @@ export interface EngagementJourney {
   version: string;
   stages: EngagementStage[];
   nextActions: EngagementNextAction[];
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 /** A board row: an engagement with its stage and the user's next action(s). */
@@ -42,4 +44,6 @@ export interface EngagementBoardItem {
   version: string;
   waitingOnMe: boolean;
   nextActions: EngagementNextAction[];
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }

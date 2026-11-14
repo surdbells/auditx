@@ -206,8 +206,9 @@ export class SanctionsTrackerComponent {
     return this.userLookup.displayName(row.subjectUserId);
   }
 
-  categoryLabel(code: string | null | undefined): string {
-    return code ? this.refLookup.label('sanction_category', code) : '—';
+  /** The category as it read when the case was triggered (a later rename does not rewrite old cases). */
+  categoryLabel(code: string | null | undefined, asOf?: string | null): string {
+    return code ? this.refLookup.label('sanction_category', code, asOf) : '—';
   }
 
   fetchPage(page: number): void {

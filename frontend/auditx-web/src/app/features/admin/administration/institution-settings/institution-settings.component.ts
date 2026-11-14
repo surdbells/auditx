@@ -9,6 +9,7 @@ import {
   AbstractControl,
   FormBuilder,
   ReactiveFormsModule,
+  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -134,6 +135,24 @@ const BANK_SETTINGS_GUIDE: PageGuide = {
   ],
 };
 
+/**
+ * An organisation name must read as a name: at least 2 characters once trimmed and at least one letter (a value of
+ * only digits or symbols, such as "####", is refused). Required-ness is left to Validators.required.
+ */
+export function organisationNameValidator(control: AbstractControl<string | null>): ValidationErrors | null {
+  const value = (control.value ?? '').trim();
+  if (!value) {
+    return null;
+  }
+  if (value.length < 2) {
+    return { tooShort: true };
+  }
+  if (!/\p{L}/u.test(value)) {
+    return { noLetters: true };
+  }
+  return null;
+}
+
 @Component({
   selector: 'app-institution-settings',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -226,7 +245,7 @@ export class InstitutionSettingsComponent {
   );
 
   readonly orgForm = this.fb.nonNullable.group({
-    institutionDisplayName: ['', [Validators.required, Validators.maxLength(200)]],
+    institutionDisplayName: ['', [Validators.required, Validators.maxLength(200), organisationNameValidator]],
     timezone: ['', Validators.required],
     localeDefault: ['', Validators.required],
   });

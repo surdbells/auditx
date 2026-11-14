@@ -13,6 +13,13 @@ import { Entity, RiskDimension, SessionDto } from '../../../core/models';
 
 const BASE = '/api/v1';
 
+/** Eligible owners as the server returns them (deactivated accounts and support logins are already excluded). */
+const assignablePeople = [
+  { id: 'u-risk', displayName: 'Rita Owner', email: 'rita@example.com', hasRole: true, roles: ['Risk Manager'] },
+  { id: 'u-ops', displayName: 'Omar Ops', email: 'omar@example.com', hasRole: true, roles: ['Operations Head', 'Risk Manager'] },
+  { id: 'u-named', displayName: 'Nia Named', email: 'nia@example.com', hasRole: false, roles: [] },
+];
+
 function entity(overrides: Partial<Entity> = {}): Entity {
   return {
     id: 'e-1',
@@ -109,6 +116,10 @@ describe('EntityEditorDialogComponent', () => {
     http.expectOne((r) => r.url === `${BASE}/users/directory`).flush({
       data: { items: [], nextCursor: null, hasMore: false },
     });
+    // Universe managers also get the eligible owners (active, no vendor-support logins) with their roles.
+    for (const req of http.match((r) => r.url === `${BASE}/users/assignable`)) {
+      req.flush({ data: assignablePeople });
+    }
     // The org-unit picker lazily loads the org-unit tree on construction.
     http.expectOne((r) => r.url === `${BASE}/org-units`).flush({ data: [] });
     // The entity-type select lazily loads the entity_type reference category.
@@ -238,5 +249,20 @@ describe('EntityEditorDialogComponent', () => {
     expect(notify.error).toHaveBeenCalledWith(
       jasmine.stringMatching(/changed by someone else|cycle/i),
     );
+  });
+
+  it('narrows the owner picker by role and keeps a no-longer-eligible current owner selectable', () => {
+    setup(undefined, { entity: entity({ ownerUserId: 'u-gone' }), parentCandidates: [] });
+    http.expectOne((r) => r.url === `${BASE}/risk-dimensions`).flush({ data: [] });
+
+    expect(component.ownerRoleOptions()).toEqual(['Operations Head', 'Risk Manager']);
+    // Everyone eligible, plus the current owner (who has since left) flagged at the top.
+    expect(component.ownerOptions().map((o) => o.value)).toEqual(['u-gone', 'u-risk', 'u-ops', 'u-named']);
+
+    component.ownerRoleFilter.set('Risk Manager');
+    expect(component.ownerOptions().map((o) => o.value)).toEqual(['u-gone', 'u-risk', 'u-ops']);
+
+    component.ownerRoleFilter.set(component.noRoleFilter);
+    expect(component.ownerOptions().map((o) => o.value)).toEqual(['u-gone', 'u-named']);
   });
 });

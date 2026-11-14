@@ -25,5 +25,20 @@ public sealed class ReferenceDataItemConfiguration : IEntityTypeConfiguration<Re
         builder.HasIndex(i => new { i.Category, i.SortOrder });
 
         builder.HasQueryFilter(i => !i.IsDeleted);
+
+        builder.HasMany(i => i.LabelVersions).WithOne().HasForeignKey(v => v.ItemId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(i => i.LabelVersions).UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+public sealed class ReferenceDataLabelVersionConfiguration : IEntityTypeConfiguration<ReferenceDataLabelVersion>
+{
+    public void Configure(EntityTypeBuilder<ReferenceDataLabelVersion> builder)
+    {
+        builder.ToTable("reference_data_label_versions");
+        builder.HasKey(v => v.Id);
+        builder.Property(v => v.Id).ValueGeneratedNever();
+        builder.Property(v => v.Label).HasMaxLength(160).IsRequired();
+        builder.HasIndex(v => new { v.ItemId, v.EffectiveFrom });
     }
 }

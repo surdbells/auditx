@@ -26,6 +26,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { UsersService } from '../../../../core/services/users.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { RolesService } from '../../../../core/services/roles.service';
 import { AdministrationService } from '../../../../core/services/administration.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -124,6 +125,9 @@ export class UsersListComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly i18n = inject(TranslationService);
+  /** The signed-in administrator — their own row offers no Deactivate. */
+  private readonly auth = inject(AuthService);
+  readonly myUserId = computed(() => this.auth.session()?.userId ?? null);
 
   readonly guide = USERS_GUIDE;
 

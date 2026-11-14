@@ -55,18 +55,10 @@ interface PermissionGroup {
   permissions: PermissionSelection[];
 }
 
-const SCOPE_ORDER: PermissionScopeType[] = [
-  'global',
-  'business_unit',
-  'branch',
-  'self',
-];
-
+/** Whole organisation, or limited to the org unit the role is granted for (and the units below it). */
 const SCOPE_LABELS: Record<PermissionScopeType, string> = {
   global: 'identity.scope.global',
-  business_unit: 'identity.scope.business_unit',
-  branch: 'identity.scope.branch',
-  self: 'identity.scope.self',
+  org_unit: 'identity.scope.org_unit',
 };
 
 /** Contextual page guide for the role editor (drives the walkthrough + the About panel). */
@@ -237,7 +229,8 @@ export class RoleEditorComponent {
       const selection: PermissionSelection = {
         permission,
         selected: !!current,
-        scopeType: current?.scopeType ?? permission.finestScope,
+        // Legacy scope names on older roles are shown — and saved — as the whole organisation.
+        scopeType: current?.scopeType === 'org_unit' && permission.orgUnitScopable ? 'org_unit' : 'global',
       };
       const list = byModule.get(permission.module) ?? [];
       list.push(selection);
@@ -251,11 +244,12 @@ export class RoleEditorComponent {
     this.groups.set(groups);
   }
 
-  /** Scope options a permission may be constrained to (down to its finest scope). */
+  /**
+   * Where the permission can apply: always the whole organisation; and, for permissions that act on things that
+   * belong to an org unit (audits, entities, findings, reports), only the org unit the role is granted for.
+   */
   scopeOptions(permission: PermissionDto): PermissionScopeType[] {
-    const finestIndex = SCOPE_ORDER.indexOf(permission.finestScope);
-    const upper = finestIndex === -1 ? SCOPE_ORDER.length - 1 : finestIndex;
-    return SCOPE_ORDER.slice(0, upper + 1);
+    return permission.orgUnitScopable ? ['global', 'org_unit'] : ['global'];
   }
 
   togglePermission(selection: PermissionSelection, checked: boolean): void {

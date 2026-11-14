@@ -17,7 +17,7 @@ public static class PermissionCatalogue
         new(PermissionKeys.Delegate, "Delegate roles", "Grant another user time-bounded access to a role.", "M1", PermissionScopeType.Global),
         new(PermissionKeys.ViewAuditTrail, "View audit trail", "Query the append-only audit trail.", "M1", PermissionScopeType.Global),
         new(PermissionKeys.ExportAuditTrail, "Export audit trail", "Export audit-trail extracts (PDF/CSV).", "M1", PermissionScopeType.Global),
-        new(PermissionKeys.ViewConfig, "View configuration", "Read bank-wide configuration.", "M1", PermissionScopeType.Global),
+        new(PermissionKeys.ViewConfig, "View configuration", "Read organisation-wide configuration.", "M1", PermissionScopeType.Global),
 
         // M2 — Templates
         new(PermissionKeys.ViewTemplates, "View templates", "Browse the template library.", "M2", PermissionScopeType.Global),
@@ -100,7 +100,7 @@ public static class PermissionCatalogue
         new(PermissionKeys.ConfigureNotifications, "Configure notifications", "Manage notification rules and templates.", "M10", PermissionScopeType.Global),
 
         // M12 — Configuration
-        new(PermissionKeys.ManageConfiguration, "Manage configuration", "Version, activate and roll back bank-wide configuration.", "M12", PermissionScopeType.Global),
+        new(PermissionKeys.ManageConfiguration, "Manage configuration", "Version, activate and roll back organisation-wide configuration.", "M12", PermissionScopeType.Global),
 
         // M13 — Audit Committee
         new(PermissionKeys.AcMember, "Audit Committee member", "Access the AC workspace and dashboard.", "M13", PermissionScopeType.Global),
@@ -116,14 +116,14 @@ public static class PermissionCatalogue
         new(PermissionKeys.ConfigureWebhooks, "Configure webhooks", "Manage outbound webhook subscriptions.", "M14", PermissionScopeType.Global),
 
         // M15 — Administration
-        new(PermissionKeys.ViewInstitutionSettings, "View bank settings", "Read deployment-wide settings.", "M15", PermissionScopeType.Global),
-        new(PermissionKeys.ManageInstitutionSettings, "Manage bank settings", "Edit deployment-wide settings.", "M15", PermissionScopeType.Global),
+        new(PermissionKeys.ViewInstitutionSettings, "View organisation settings", "Read deployment-wide settings.", "M15", PermissionScopeType.Global),
+        new(PermissionKeys.ManageInstitutionSettings, "Manage organisation settings", "Edit deployment-wide settings.", "M15", PermissionScopeType.Global),
         new(PermissionKeys.ViewSystemHealth, "View system health", "View platform health and capacity surfaces.", "M15", PermissionScopeType.Global),
         new(PermissionKeys.ManageSupportChannel, "Manage support channel", "Enable/revoke the ITANDT support channel.", "M15", PermissionScopeType.Global),
         new(PermissionKeys.ManageRetention, "Manage retention", "Configure retention policies and extensions.", "M15", PermissionScopeType.Global),
         new(PermissionKeys.ExecRestore, "Execute restore", "Execute per-object restore operations.", "M15", PermissionScopeType.Global),
         new(PermissionKeys.InstallReleases, "Install releases", "Install approved (signed) release packages.", "M15", PermissionScopeType.Global),
-        new(PermissionKeys.ConfigureLimits, "Configure limits", "Adjust bank-wide resource limits.", "M15", PermissionScopeType.Global),
+        new(PermissionKeys.ConfigureLimits, "Configure limits", "Adjust organisation-wide resource limits.", "M15", PermissionScopeType.Global),
         new(PermissionKeys.AdminOps, "Operations administration", "Operational surfaces (dead-letter queues, tokens, drills).", "M15", PermissionScopeType.Global),
     ];
 
@@ -135,4 +135,24 @@ public static class PermissionCatalogue
 
     /// <summary>True if <paramref name="key"/> is a recognised permission key.</summary>
     public static bool IsValidKey(string key) => KeySet.Contains(key);
+
+    /// <summary>
+    /// The permissions a role may limit to the org unit it is granted for ("assigned org unit"). They act on things
+    /// that belong to an org unit — audits (through the entity they cover), auditable entities, findings and their
+    /// reports — and every check of them resolves that thing. All other permissions are organisation-wide.
+    /// </summary>
+    public static readonly IReadOnlySet<string> OrgUnitScopable = new HashSet<string>(StringComparer.Ordinal)
+    {
+        PermissionKeys.ViewUniverse, PermissionKeys.ManageUniverse, PermissionKeys.ScoreRisk,
+        PermissionKeys.ViewAudits, PermissionKeys.ViewAudit, PermissionKeys.CreateAudit, PermissionKeys.ManageAudit,
+        PermissionKeys.RespondItem, PermissionKeys.UploadEvidence, PermissionKeys.ViewEvidence, PermissionKeys.ManageEvidence,
+        PermissionKeys.LogTime,
+        PermissionKeys.ViewExceptions, PermissionKeys.RaiseException, PermissionKeys.ManageException,
+        PermissionKeys.SubmitMap, PermissionKeys.ApproveMap, PermissionKeys.CloseException, PermissionKeys.CancelException,
+        PermissionKeys.ReopenException, PermissionKeys.VerifyException,
+        PermissionKeys.GenerateReport, PermissionKeys.ViewReport, PermissionKeys.DistributeReport,
+    };
+
+    /// <summary>True if a role may limit <paramref name="key"/> to the org unit it is granted for.</summary>
+    public static bool IsOrgUnitScopable(string key) => OrgUnitScopable.Contains(key);
 }

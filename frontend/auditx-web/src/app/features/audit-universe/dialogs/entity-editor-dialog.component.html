@@ -37,6 +37,21 @@
       </mat-select>
     </mat-form-field>
 
+    <!-- Narrow the owner list by role; deactivated accounts and vendor-support logins are never offered. -->
+    @if (ownerRoleOptions().length) {
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>{{ 'universe.owner.roleFilter' | t }}</mat-label>
+        <mat-select [value]="ownerRoleFilter()" (selectionChange)="ownerRoleFilter.set($event.value)">
+          <mat-option value="">{{ 'universe.owner.anyRole' | t }}</mat-option>
+          @for (r of ownerRoleOptions(); track r) {
+            <mat-option [value]="r">{{ r }}</mat-option>
+          }
+          <mat-option [value]="noRoleFilter">{{ 'universe.owner.noRole' | t }}</mat-option>
+        </mat-select>
+        <mat-hint>{{ 'universe.owner.roleFilterHint' | t }}</mat-hint>
+      </mat-form-field>
+    }
+
     <app-searchable-select
       class="full"
       formControlName="ownerUserId"

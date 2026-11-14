@@ -6,7 +6,12 @@ export type UserStatus =
   | 'locked';
 
 /** Scope granularity a permission can be constrained to. */
-export type PermissionScopeType = 'global' | 'business_unit' | 'branch' | 'self';
+/**
+ * Where a permission in a role applies when the role is granted for an org unit: 'global' = the whole organisation,
+ * 'org_unit' = only the assigned org unit and the units below it. (Older roles may carry other legacy scope names; the
+ * role editor shows those as the whole organisation.)
+ */
+export type PermissionScopeType = 'global' | 'org_unit';
 
 /** Authenticated session view (from `/auth/session` and `/auth/login`). */
 export interface SessionDto {
@@ -131,6 +136,15 @@ export interface UserDirectoryEntry {
   displayName: string;
 }
 
+/** Someone who can be made accountable for an entity: active, not a vendor-support login, with the roles they hold. */
+export interface AssignableUser {
+  id: string;
+  displayName: string;
+  email: string;
+  hasRole: boolean;
+  roles: string[];
+}
+
 /** The current user's display preferences: IANA timezone + BCP-47 locale. */
 export interface MyPreferences {
   timezone: string;
@@ -179,7 +193,8 @@ export interface DelegationDto {
 
 export interface RolePermissionDto {
   key: string;
-  scopeType: PermissionScopeType;
+  /** 'global' | 'org_unit' (or a legacy scope name on an older role). */
+  scopeType: PermissionScopeType | string;
   scopePredicateJson: string | null;
 }
 
@@ -203,7 +218,9 @@ export interface PermissionDto {
   label: string;
   description: string;
   module: string;
-  finestScope: PermissionScopeType;
+  finestScope: string;
+  /** A role may limit this permission to the org unit it is granted for. */
+  orgUnitScopable?: boolean;
 }
 
 export type MakerCheckerStatus = 'pending' | 'approved' | 'rejected';
@@ -214,7 +231,10 @@ export interface MakerCheckerActionDto {
   targetObjectType: string;
   targetObjectId: string;
   makerUserId: string;
-  makerName: string;
+  /** Display name of whoever raised it (null if it could not be resolved). */
+  makerName: string | null;
+  /** True when the signed-in user raised it: shown in the queue, but only someone else can decide it. */
+  isMine?: boolean;
   status: MakerCheckerStatus;
   createdAt: string;
 }

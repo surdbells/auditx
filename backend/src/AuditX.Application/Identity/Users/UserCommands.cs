@@ -27,6 +27,14 @@ public sealed class DeactivateUserCommandHandler(
         var user = await users.GetByIdAsync(command.UserId, cancellationToken)
             ?? throw new NotFoundException("User", command.UserId);
 
+        // Never your own account, and never the last active administrator.
+        var refusals = await UserDeactivationRules.RefusalsAsync([user.Id], currentUser.UserId, users, cancellationToken);
+        if (refusals.TryGetValue(user.Id, out var reason))
+        {
+            throw new ConflictException(
+                reason == UserDeactivationRules.SelfMessage ? "user.cannot_deactivate_self" : "user.last_administrator", reason);
+        }
+
         var before = new { status = user.Status.ToString() };
         user.Deactivate(currentUser.UserId);
         audit.Record(AuditEventTypes.UserDeactivated, AuditTargetTypes.User, user.Id,
@@ -48,8 +56,8 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
     public CreateUserCommandValidator()
     {
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(320);
-        RuleFor(x => x.FirstName).MaximumLength(200);
-        RuleFor(x => x.LastName).MaximumLength(200);
+        RuleFor(x => x.FirstName).Must(n => !string.IsNullOrWhiteSpace(n)).WithMessage("Enter the user's first name.").MaximumLength(200);
+        RuleFor(x => x.LastName).Must(n => !string.IsNullOrWhiteSpace(n)).WithMessage("Enter the user's last name.").MaximumLength(200);
     }
 }
 
@@ -357,6 +365,7 @@ public sealed class GrantRoleCommandHandler(
     IUserRepository users,
     IRoleRepository roles,
     IUserRoleRepository userRoles,
+    IOrgUnitRepository orgUnits,
     ICurrentUser currentUser,
     IPermissionResolver permissions,
     IAuditRecorder audit,
@@ -375,19 +384,27 @@ public sealed class GrantRoleCommandHandler(
             throw new ConflictException("role_archived", "Cannot grant an archived role.");
         }
 
-        if (await userRoles.ExistsAsync(user.Id, role.Id, command.ScopeValue, cancellationToken))
+        if (user.Status == Domain.Enums.UserStatus.Deactivated)
+        {
+            throw new ConflictException("user.deactivated", "This account is deactivated. Reactivate it before giving it a role.");
+        }
+
+        // Whole organisation, or one active org unit (for a role with permissions limited to the assigned org unit).
+        var scopeValue = await RoleGrantScope.NormaliseAsync(role, command.ScopeValue, orgUnits, roles, cancellationToken);
+
+        if (await userRoles.ExistsAsync(user.Id, role.Id, scopeValue, cancellationToken))
         {
             throw new ConflictException("role_already_granted", "The user already holds this role at this scope.");
         }
 
         role.EnsureAssignable();
 
-        var assignment = UserRole.Grant(user.Id, role.Id, command.ScopeValue);
+        var assignment = UserRole.Grant(user.Id, role.Id, scopeValue);
         userRoles.Add(assignment);
         user.MarkActiveOnFirstRole();
 
         audit.Record(AuditEventTypes.RoleGranted, AuditTargetTypes.UserRole, assignment.Id,
-            payload: new { userId = user.Id, roleId = role.Id, role.Name, scopeValue = command.ScopeValue, grantedBy = currentUser.UserId });
+            payload: new { userId = user.Id, roleId = role.Id, role.Name, scopeValue, grantedBy = currentUser.UserId });
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
         await permissions.InvalidateAsync(user.Id, cancellationToken);

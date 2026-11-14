@@ -24,12 +24,14 @@ import { MatTableModule } from '@angular/material/table';
 import { UniverseService } from '../../../core/services/universe.service';
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import { UserLookupService } from '../../../core/services/user-lookup.service';
+import { UsersService } from '../../../core/services/users.service';
 import { OrgUnitLookupService } from '../../../core/services/org-unit-lookup.service';
 import { RiskDimensionsService } from '../../../core/services/risk-dimensions.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
 import {
+  AssignableUser,
   AuditTrailEntryView,
   Entity,
   RiskDimension,
@@ -93,10 +95,47 @@ export class EntityEditorDialogComponent {
   readonly entityTypeOptions = this.refLookup.options('entity_type');
   /** Populates the owner select (lazy directory load). */
   readonly userLookup = inject(UserLookupService);
-  /** Owner directory mapped to searchable-select options (so the owner picker is type-to-filter). */
-  readonly ownerOptions = computed<SelectOption[]>(() =>
-    this.userLookup.options().map((u) => ({ value: u.id, label: u.displayName })),
+  private readonly usersService = inject(UsersService);
+
+  /**
+   * People who can own an entity: active accounts only — never a deactivated account or a vendor-support login —
+   * each with the roles they hold. Null until loaded (or when the caller cannot list them; the picker then falls back
+   * to the plain directory, and the server still refuses an ineligible owner).
+   */
+  private readonly assignable = signal<AssignableUser[] | null>(null);
+
+  /** Narrows the owner picker to holders of one role ('' = anyone; NoRoleFilter = people named without a role). */
+  readonly ownerRoleFilter = signal('');
+  static readonly NoRoleFilter = '__no_role__';
+
+  /** The roles held by anyone eligible to own an entity — the choices of the role filter. */
+  readonly ownerRoleOptions = computed<string[]>(() =>
+    [...new Set((this.assignable() ?? []).flatMap((u) => u.roles))].sort((a, b) => a.localeCompare(b)),
   );
+
+  /** Owner choices (type-to-filter), narrowed by the role filter. The current owner always stays selectable. */
+  readonly ownerOptions = computed<SelectOption[]>(() => {
+    const people = this.assignable();
+    if (people === null) {
+      return this.userLookup.options().map((u) => ({ value: u.id, label: u.displayName }));
+    }
+    const role = this.ownerRoleFilter();
+    const shown = people.filter((u) =>
+      !role ? true : role === EntityEditorDialogComponent.NoRoleFilter ? !u.hasRole : u.roles.includes(role),
+    );
+    const options = shown.map((u) => ({ value: u.id, label: `${u.displayName} · ${u.email}` }));
+    const current = this.data.entity?.ownerUserId;
+    if (current && !options.some((o) => o.value === current)) {
+      const eligible = people.some((u) => u.id === current);
+      options.unshift({
+        value: current,
+        label: eligible
+          ? this.userLookup.displayName(current)
+          : `${this.userLookup.displayName(current)} — ${this.i18n.translate('universe.owner.noLongerEligible')}`,
+      });
+    }
+    return options;
+  });
   /** Populates the org-unit picker (lazy tree load). */
   readonly orgUnitLookup = inject(OrgUnitLookupService);
   private readonly riskDimensions = inject(RiskDimensionsService);
@@ -105,6 +144,8 @@ export class EntityEditorDialogComponent {
   private readonly i18n = inject(TranslationService);
 
   readonly isEdit = !!this.data.entity;
+  /** Exposed to the template: the role-filter value meaning "people named without a role". */
+  readonly noRoleFilter = EntityEditorDialogComponent.NoRoleFilter;
 
   /** Tracks the current persisted entity (refreshed after each save). */
   readonly entity = signal<Entity | null>(this.data.entity ?? null);
@@ -158,6 +199,12 @@ export class EntityEditorDialogComponent {
   constructor() {
     this.userLookup.ensureLoaded();
     this.orgUnitLookup.ensureLoaded();
+    if (this.auth.hasPermission(Permissions.ManageUniverse)) {
+      this.usersService.assignable().subscribe({
+        next: (people) => this.assignable.set(people),
+        error: () => this.assignable.set(null),
+      });
+    }
     if (this.isEdit) {
       this.loadScoreRows();
     }

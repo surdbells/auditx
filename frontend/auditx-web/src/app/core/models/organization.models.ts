@@ -14,7 +14,10 @@ export interface OrgUnit {
   parentOrgUnitId: string | null;
   /** The user who heads this unit — the reporting-line fallback for members without an explicit manager. */
   headUserId: string | null;
+  /** Shown as "Inactive": kept for history, not offered for new assignments. */
   isArchived: boolean;
+  /** What kind of unit this is — a code from the org_unit_type reference list (legal entity, business unit, …). */
+  unitType?: string | null;
 }
 
 /* ---- Request payloads ---- */
@@ -23,6 +26,7 @@ export interface CreateOrgUnitRequest {
   name: string;
   code: string;
   parentOrgUnitId?: string | null;
+  unitType?: string | null;
 }
 
 export interface RenameOrgUnitRequest {

@@ -19,6 +19,7 @@ import {
   UpdateUserProfileRequest,
   UserDetailDto,
   UserDirectoryEntry,
+  AssignableUser,
   UserDto,
   UserQuery,
   UserRoleDto,
@@ -58,6 +59,11 @@ export class UsersService {
   }
 
   /** Authenticated-only id→name directory (no admin permission required) for resolving user references. */
+  /** People who can own an entity — active, no vendor-support logins — with their roles (needs universe management). */
+  assignable(): Observable<AssignableUser[]> {
+    return this.api.get<AssignableUser[]>('/users/assignable');
+  }
+
   directory(query: { page?: number; pageSize?: number } = {}): Observable<PagedResult<UserDirectoryEntry>> {
     return this.api.get<PagedResult<UserDirectoryEntry>>('/users/directory', {
       page: query.page,

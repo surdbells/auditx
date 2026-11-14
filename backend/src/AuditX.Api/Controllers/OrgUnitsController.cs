@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AuditX.Api.Controllers;
 
-public sealed record CreateOrgUnitRequest(string Name, string Code, Guid? ParentOrgUnitId);
+public sealed record CreateOrgUnitRequest(string Name, string Code, Guid? ParentOrgUnitId, string? UnitType = null);
+public sealed record SetOrgUnitTypeRequest(string? UnitType);
 public sealed record RenameOrgUnitRequest(string Name);
 public sealed record ReparentOrgUnitRequest(Guid? ParentOrgUnitId);
 public sealed record SetOrgUnitHeadRequest(Guid? HeadUserId);
@@ -25,7 +26,7 @@ public sealed class OrgUnitsController(IDispatcher dispatcher) : ApiControllerBa
     [RequirePermission(PermissionKeys.ManageUniverse)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateOrgUnitRequest request, CancellationToken cancellationToken)
-        => Created(await dispatcher.Send(new CreateOrgUnitCommand(request.Name, request.Code, request.ParentOrgUnitId), cancellationToken));
+        => Created(await dispatcher.Send(new CreateOrgUnitCommand(request.Name, request.Code, request.ParentOrgUnitId, request.UnitType), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUniverse)]
     [HttpPatch("{id:guid}/rename")]
@@ -36,6 +37,11 @@ public sealed class OrgUnitsController(IDispatcher dispatcher) : ApiControllerBa
     [HttpPatch("{id:guid}/parent")]
     public async Task<IActionResult> Reparent(Guid id, [FromBody] ReparentOrgUnitRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new ReparentOrgUnitCommand(id, request.ParentOrgUnitId), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageUniverse)]
+    [HttpPatch("{id:guid}/type")]
+    public async Task<IActionResult> SetType(Guid id, [FromBody] SetOrgUnitTypeRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SetOrgUnitTypeCommand(id, request.UnitType), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageUniverse)]
     [HttpPatch("{id:guid}/head")]

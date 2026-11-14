@@ -25,9 +25,10 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
             .MaxAsync(a => a.ActualEndDate, cancellationToken);
 
     public async Task<PagedResult<Audit>> SearchAsync(
-        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageSpec page, CancellationToken cancellationToken = default)
+        AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageSpec page,
+        Application.Abstractions.Authorization.ListScope? scope = null, CancellationToken cancellationToken = default)
     {
-        var query = db.Audits.AsNoTracking().Include(a => a.ChecklistItems).AsQueryable();
+        var query = Within(db.Audits.AsNoTracking().Include(a => a.ChecklistItems).AsQueryable(), scope);
 
         if (status is { } s)
         {
@@ -60,9 +61,31 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
         return await query.OrderBy(a => a.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
-    public async Task<IReadOnlyDictionary<string, int>> CountsByStatusAsync(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Narrows audits to a caller whose permission is limited to some org units: those they are on (team or auditee)
+    /// plus those whose entity belongs to one of the units. Null scope: no narrowing.
+    /// </summary>
+    private IQueryable<Audit> Within(IQueryable<Audit> query, Application.Abstractions.Authorization.ListScope? scope)
     {
-        var rows = await db.Audits.AsNoTracking()
+        if (scope is null)
+        {
+            return query;
+        }
+
+        var uid = scope.UserId;
+        var units = scope.OrgUnitIds.ToArray();
+        return units.Length == 0
+            ? query.Where(a => a.AuditeeUserId == uid || a.TeamMembers.Any(m => m.RemovedAt == null && m.UserId == uid))
+            : query.Where(a => a.AuditeeUserId == uid
+                || a.TeamMembers.Any(m => m.RemovedAt == null && m.UserId == uid)
+                || (a.AuditableEntityId != null && db.AuditUniverseEntities.IgnoreQueryFilters().Any(e =>
+                    e.Id == a.AuditableEntityId && e.OrgUnitId != null && units.Contains(e.OrgUnitId.Value))));
+    }
+
+    public async Task<IReadOnlyDictionary<string, int>> CountsByStatusAsync(
+        Application.Abstractions.Authorization.ListScope? scope = null, CancellationToken cancellationToken = default)
+    {
+        var rows = await Within(db.Audits.AsNoTracking(), scope)
             .GroupBy(a => a.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);

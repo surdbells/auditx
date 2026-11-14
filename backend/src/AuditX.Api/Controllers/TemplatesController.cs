@@ -206,4 +206,26 @@ public sealed class ResponseOptionSetsController(IDispatcher dispatcher) : ApiCo
     [HttpPost("{responseType}/reset")]
     public async Task<IActionResult> Reset(string responseType, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new ResetResponseOptionSetCommand(responseType), cancellationToken));
+
+    // ---- Named response sets: additional vocabularies a checklist item can choose instead of its type's standard set.
+
+    [RequirePermission(PermissionKeys.ManageTemplates)]
+    [HttpPost("named")]
+    public async Task<IActionResult> CreateNamed([FromBody] CreateResponseSetRequest request, CancellationToken cancellationToken)
+        => Created(await dispatcher.Send(new CreateResponseSetCommand(request.Name, request.ResponseType, request.OptionsJson), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageTemplates)]
+    [HttpPut("named/{id:guid}")]
+    public async Task<IActionResult> UpdateNamed(Guid id, [FromBody] UpdateResponseSetRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new UpdateResponseSetCommand(id, request.Name, request.OptionsJson, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageTemplates)]
+    [HttpPost("named/{id:guid}/retire")]
+    public async Task<IActionResult> Retire(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SetResponseSetArchivedCommand(id, true), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageTemplates)]
+    [HttpPost("named/{id:guid}/restore")]
+    public async Task<IActionResult> Restore(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SetResponseSetArchivedCommand(id, false), cancellationToken));
 }

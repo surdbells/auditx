@@ -37,7 +37,13 @@ public interface IRatingScaleRepository
 /// <summary>Persistence operations for organisation-defined <see cref="ResponseOptionSet"/>s.</summary>
 public interface IResponseOptionSetRepository
 {
+    /// <summary>The STANDARD (unnamed) set of a response type, if the organisation has customised it.</summary>
     Task<ResponseOptionSet?> GetByResponseTypeAsync(ResponseType responseType, CancellationToken cancellationToken = default);
+
+    Task<ResponseOptionSet?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>A named set with this name (case-insensitive), other than <paramref name="exceptId"/>.</summary>
+    Task<ResponseOptionSet?> FindByNameAsync(string name, Guid? exceptId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ResponseOptionSet>> GetAllAsync(CancellationToken cancellationToken = default);
 

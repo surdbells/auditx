@@ -104,7 +104,11 @@
                 (matChipInputTokenEnd)="addEngineer($event)"
               />
             </mat-chip-grid>
-            <mat-hint>{{ 'administration.support.hint' | t }}</mat-hint>
+            @if (engineerError(); as bad) {
+              <mat-hint class="support__error" role="alert">{{ 'administration.support.invalidEmail' | t: { value: bad } }}</mat-hint>
+            } @else {
+              <mat-hint>{{ 'administration.support.hint' | t }}</mat-hint>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="outline">

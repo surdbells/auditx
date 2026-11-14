@@ -115,6 +115,8 @@ export interface Regulation {
   category: string | null;
   isActive: boolean;
   version: string;
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 export interface RegulationListItem {
@@ -124,6 +126,8 @@ export interface RegulationListItem {
   authority: string | null;
   category: string | null;
   isActive: boolean;
+  /** When the record was created (ISO) — reference labels on it read as they did at that time. */
+  createdAt?: string | null;
 }
 
 export interface RegisterRegulationRequest {

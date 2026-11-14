@@ -37,6 +37,9 @@ public static class ReferenceDataCategories
     /// <summary>Regulation categories (prudential, AML/CFT, consumer protection, …) used to classify regulations in the compliance register.</summary>
     public const string RegulationCategory = "regulation_category";
 
+    /// <summary>Org-unit types (legal entity, business unit, function, location, process) — what kind of node a unit is.</summary>
+    public const string OrgUnitType = "org_unit_type";
+
     /// <summary>
     /// Every category the store recognises, with its human label and a one-line statement of where the list is
     /// used — the admin UI's manageable-list menu.
@@ -53,6 +56,7 @@ public static class ReferenceDataCategories
         new(RiskCategory, "Risk categories", "Classifies risks in the risk register."),
         new(RegulationAuthority, "Regulatory authorities", "The issuing authority of a regulation in the compliance register."),
         new(RegulationCategory, "Regulation categories", "Classifies regulations in the compliance register."),
+        new(OrgUnitType, "Org-unit types", "What kind of unit each node of the organisation hierarchy is."),
     ];
 
     public static bool IsKnown(string? category) =>

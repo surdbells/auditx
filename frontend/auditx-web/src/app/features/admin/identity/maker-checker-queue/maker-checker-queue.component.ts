@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   inject,
   signal,
@@ -120,7 +121,11 @@ export class MakerCheckerQueueComponent {
   private readonly service = inject(MakerCheckerService);
   private readonly notify = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
-  private readonly userLookup = inject(UserLookupService);
+  readonly userLookup = inject(UserLookupService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** The queue refreshes itself so a request raised elsewhere shows up without a reload or a fresh sign-in. */
+  private static readonly AutoRefreshMs = 30_000;
 
   readonly guide = MAKER_CHECKER_GUIDE;
 
@@ -132,12 +137,17 @@ export class MakerCheckerQueueComponent {
     'actions',
   ];
 
+  /** The action types the server actually raises (the filter used to offer codes it never produces). */
   readonly actionTypes = [
     { value: '', label: 'All action types' },
-    { value: 'role_create', label: 'Role create' },
-    { value: 'role_update', label: 'Role update' },
-    { value: 'role_archive', label: 'Role archive' },
-    { value: 'user_role_grant', label: 'User role grant' },
+    { value: 'role_permission_change', label: 'Role & permission change' },
+    { value: 'template_publish', label: 'Template publish' },
+    { value: 'plan_approval', label: 'Plan approval' },
+    { value: 'map_approval', label: 'Action plan approval' },
+    { value: 'sanction_application', label: 'Sanction application' },
+    { value: 'sanctions_grid_edit', label: 'Sanctions grid change' },
+    { value: 'retention_policy_change', label: 'Retention policy change' },
+    { value: 'config_activation', label: 'Configuration activation' },
   ];
 
   readonly actionTypeFilter = new FormControl('', { nonNullable: true });
@@ -152,18 +162,46 @@ export class MakerCheckerQueueComponent {
 
   constructor() {
     this.fetch();
+
+    // Keep the queue current: poll while the tab is visible, and refresh as soon as it regains focus.
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        this.fetch(true);
+      }
+    }, MakerCheckerQueueComponent.AutoRefreshMs);
+    const onFocus = () => this.fetch(true);
+    window.addEventListener('focus', onFocus);
+    this.destroyRef.onDestroy(() => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    });
   }
 
-  fetch(): void {
-    this.state.set('loading');
+  /** Loads the queue. A quiet refresh keeps the current rows on screen and never flips to the error state. */
+  fetch(quiet = false): void {
+    if (quiet && (this.state() !== 'ready' || this.processingId())) {
+      return;
+    }
+    if (!quiet) {
+      this.state.set('loading');
+    }
     const filter = this.actionTypeFilter.value || undefined;
     this.service.pending(filter).subscribe({
       next: (actions) => {
         this.actions.set(actions);
         this.state.set('ready');
       },
-      error: () => this.state.set('error'),
+      error: () => {
+        if (!quiet) {
+          this.state.set('error');
+        }
+      },
     });
+  }
+
+  /** A readable name for an action type code. */
+  typeLabel(type: string): string {
+    return this.actionTypes.find((t) => t.value === type)?.label ?? type;
   }
 
   onFilterChange(): void {
@@ -173,7 +211,7 @@ export class MakerCheckerQueueComponent {
   approve(action: MakerCheckerActionDto): void {
     const data: ConfirmDialogData = {
       title: 'Approve change',
-      message: `Approve "${this.actionLabel(action)}" raised by ${action.makerName}? This will apply the change immediately.`,
+      message: `Approve "${this.actionLabel(action)}" raised by ${action.makerName || this.userLookup.displayName(action.makerUserId)}? This will apply the change immediately.`,
       confirmLabel: 'Approve',
     };
     this.dialog
@@ -235,7 +273,7 @@ export class MakerCheckerQueueComponent {
   }
 
   actionLabel(action: MakerCheckerActionDto): string {
-    return `${action.actionType} on ${action.targetObjectType}`;
+    return `${this.typeLabel(action.actionType)} on ${action.targetObjectType}`;
   }
 
   /**

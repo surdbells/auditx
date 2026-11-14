@@ -62,7 +62,7 @@ internal static class ExceptionAccess
             return;
         }
 
-        if (await permissions.HasPermissionAsync(uid, PermissionKeys.ViewAudits, null, cancellationToken)
+        if (await permissions.HasPermissionAsync(uid, PermissionKeys.ViewAudits, audit.Id.ToString(), cancellationToken)
             || await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken))
         {
             return;
@@ -78,16 +78,11 @@ internal static class ExceptionAccess
     /// findings they own or whose audit they are an active team member of. Returns the user id to scope to, or
     /// <c>null</c> for an unrestricted portfolio view. Without an authenticated user, throws 403.
     /// </summary>
-    public static async Task<Guid?> ResolveParticipantScopeAsync(
+    /// <remarks>
+    /// A caller whose ViewAudits is limited to some org units also sees the findings of audits in those units. The
+    /// result is null for an organisation-wide view.
+    /// </remarks>
+    public static async Task<ListScope?> ResolveParticipantScopeAsync(
         Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
-    {
-        if (userId is not { } uid)
-        {
-            throw new ForbiddenAccessException();
-        }
-
-        return await permissions.HasPermissionAsync(uid, PermissionKeys.ViewAudits, null, cancellationToken)
-            ? null
-            : uid;
-    }
+        => await OrgReach.ListScopeAsync(userId, PermissionKeys.ViewAudits, permissions, cancellationToken);
 }

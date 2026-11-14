@@ -36,11 +36,15 @@ public sealed record AuditDto(
     IReadOnlyList<AuditChecklistItemDto> ChecklistItems,
     // Name of the linked audit-universe entity. Filled by the read query (and by set-entity); null when the audit is
     // not linked, or on command results that do not resolve it.
-    string? AuditableEntityName = null);
+    string? AuditableEntityName = null,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);
 
 public sealed record AuditListItemDto(
     Guid Id, string Name, string AuditType, string Status, DateOnly StartDate, DateOnly TargetEndDate,
-    Guid LeadUserId, int ChecklistItemCount, int RespondedItemCount, bool IsSelfAssessment = false);
+    Guid LeadUserId, int ChecklistItemCount, int RespondedItemCount, bool IsSelfAssessment = false,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);
 
 public sealed record AuditCountsDto(IReadOnlyDictionary<string, int> ByStatus);
 

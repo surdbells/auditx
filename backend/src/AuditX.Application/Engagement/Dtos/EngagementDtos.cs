@@ -27,7 +27,9 @@ public sealed record EngagementJourneyDto(
     int OpenExceptionCount,
     string Version,
     IReadOnlyList<LifecycleStageDto> Stages,
-    IReadOnlyList<NextActionDto> NextActions);
+    IReadOnlyList<NextActionDto> NextActions,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);
 
 /// <summary>A board row: an engagement with its current stage and the signed-in user's next action(s).</summary>
 public sealed record EngagementBoardItemDto(
@@ -40,4 +42,6 @@ public sealed record EngagementBoardItemDto(
     int OpenExceptionCount,
     string Version,
     bool WaitingOnMe,
-    IReadOnlyList<NextActionDto> NextActions);
+    IReadOnlyList<NextActionDto> NextActions,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);

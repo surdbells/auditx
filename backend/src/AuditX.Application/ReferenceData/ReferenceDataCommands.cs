@@ -21,6 +21,23 @@ public sealed class CreateReferenceDataItemCommandValidator : AbstractValidator<
         RuleFor(x => x.Code).NotEmpty().MaximumLength(64);
         RuleFor(x => x.Label).NotEmpty().MaximumLength(160);
         RuleFor(x => x.Description).MaximumLength(500);
+        RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0).WithMessage("The sort position cannot be negative.");
+    }
+}
+
+internal static class ReferenceDataSortPosition
+{
+    /// <summary>
+    /// Each position in a list holds one value, so the order of a dropdown is never ambiguous. Refuses a position
+    /// another live value already holds, naming it.
+    /// </summary>
+    public static async Task EnsureFreeAsync(IReferenceDataRepository items, string category, int sortOrder, Guid? exceptId, CancellationToken cancellationToken)
+    {
+        if (await items.FindBySortOrderAsync(category, sortOrder, exceptId, cancellationToken) is { } taken)
+        {
+            throw new ConflictException("reference_data.sort_order_taken",
+                $"Sort position {sortOrder} is already used by \"{taken.Label}\". Choose a different position.");
+        }
     }
 }
 
@@ -35,6 +52,8 @@ public sealed class CreateReferenceDataItemCommandHandler(IReferenceDataReposito
         {
             throw new ConflictException("reference_data.code_taken", $"A '{category}' item with code '{code}' already exists.");
         }
+
+        await ReferenceDataSortPosition.EnsureFreeAsync(items, category, command.SortOrder, null, cancellationToken);
 
         var item = ReferenceDataItem.Create(category, code, command.Label, command.Description, command.SortOrder);
         items.Add(item);
@@ -55,17 +74,25 @@ public sealed class UpdateReferenceDataItemCommandValidator : AbstractValidator<
     {
         RuleFor(x => x.Label).NotEmpty().MaximumLength(160);
         RuleFor(x => x.Description).MaximumLength(500);
+        RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0).WithMessage("The sort position cannot be negative.");
     }
 }
 
-public sealed class UpdateReferenceDataItemCommandHandler(IReferenceDataRepository items, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class UpdateReferenceDataItemCommandHandler(IReferenceDataRepository items, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateReferenceDataItemCommand, ReferenceDataItemDto>
 {
     public async Task<ReferenceDataItemDto> Handle(UpdateReferenceDataItemCommand command, CancellationToken cancellationToken)
     {
         var item = await items.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Reference-data item", command.Id);
-        item.Update(command.Label, command.Description, command.SortOrder);
-        audit.Record(AuditEventTypes.ReferenceDataItemUpdated, AuditTargetTypes.ReferenceDataItem, item.Id, after: new { item.Label, item.SortOrder });
+        if (item.SortOrder != command.SortOrder)
+        {
+            await ReferenceDataSortPosition.EnsureFreeAsync(items, item.Category, command.SortOrder, item.Id, cancellationToken);
+        }
+
+        var before = new { item.Label, item.Description, item.SortOrder };
+        item.Update(command.Label, command.Description, command.SortOrder, clock.UtcNow);
+        audit.Record(AuditEventTypes.ReferenceDataItemUpdated, AuditTargetTypes.ReferenceDataItem, item.Id,
+            before: before, after: new { item.Label, item.Description, item.SortOrder });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return item.ToDto();
     }

@@ -49,6 +49,30 @@
   backdrop-filter: blur(4px);
   margin-bottom: 1.75rem;
 }
+.login__logo--image {
+  width: auto;
+  min-width: 56px;
+  max-width: 220px;
+  height: 64px;
+  padding: 8px 12px;
+  background: #fff;
+}
+
+.login__logo img {
+  display: block;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.login__brand-logo {
+  display: block;
+  height: 38px;
+  max-width: 120px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
 .login__logo mat-icon {
   font-size: 30px;
   width: 30px;

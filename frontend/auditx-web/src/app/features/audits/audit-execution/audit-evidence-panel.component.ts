@@ -140,8 +140,9 @@ export class AuditEvidencePanelComponent {
     return this.lookup.displayName(userId);
   }
 
-  documentTypeLabel(code: string | null): string | null {
-    return code ? this.refLookup.label('evidence_document_type', code) : null;
+  /** The document type as it read when the request was made (a later rename does not rewrite old requests). */
+  documentTypeLabel(code: string | null, requestedOn?: string | null): string | null {
+    return code ? this.refLookup.label('evidence_document_type', code, requestedOn) : null;
   }
 
   promptFor(checklistItemId: string | null): string | null {

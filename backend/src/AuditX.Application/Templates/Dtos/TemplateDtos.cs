@@ -39,7 +39,9 @@ public sealed record TemplateListItemDto(
     string Description,
     string Status,
     int CurrentVersion,
-    int ItemCount);
+    int ItemCount,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);
 
 public sealed record TemplateItemSnapshotDto(
     string Prompt,

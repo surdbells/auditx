@@ -91,6 +91,16 @@
                   >
                     <app-icon name="edit" />
                   </button>
+                  <!-- Deactivating stops the scale being chosen for new items; items already using it keep it. -->
+                  <button
+                    matIconButton
+                    type="button"
+                    (click)="setActive(s, !s.isActive)"
+                    [matTooltip]="(s.isActive ? 'templatesAdmin.ratingScales.deactivate' : 'templatesAdmin.ratingScales.reactivate') | t"
+                    [attr.aria-label]="(s.isActive ? 'templatesAdmin.ratingScales.deactivate' : 'templatesAdmin.ratingScales.reactivate') | t"
+                  >
+                    <app-icon [name]="s.isActive ? 'archive' : 'unarchive'" />
+                  </button>
                 }
               </td>
             </ng-container>

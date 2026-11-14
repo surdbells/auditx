@@ -1,6 +1,6 @@
 <app-page-header
   title="Maker-Checker Queue"
-  subtitle="Review and authorise sensitive changes raised by other administrators."
+  subtitle="Review and authorise sensitive changes. Requests you raised are listed too, waiting for someone else to decide them."
 >
   <button actions matButton="outlined" type="button" (click)="fetch()">
     <app-icon name="refresh" />
@@ -32,8 +32,8 @@
     @if (isEmpty()) {
       <app-empty-state
         icon="task_alt"
-        title="Nothing to review"
-        message="There are no pending changes awaiting your approval."
+        title="Nothing pending"
+        message="There are no changes waiting for approval."
       />
     } @else {
       <mat-card appearance="outlined" class="mc__card">
@@ -43,7 +43,7 @@
               <th mat-header-cell *matHeaderCellDef>Action</th>
               <td mat-cell *matCellDef="let a">
                 <mat-chip-set>
-                  <mat-chip highlighted>{{ a.actionType }}</mat-chip>
+                  <mat-chip highlighted [matTooltip]="a.actionType">{{ typeLabel(a.actionType) }}</mat-chip>
                 </mat-chip-set>
               </td>
             </ng-container>
@@ -60,7 +60,13 @@
 
             <ng-container matColumnDef="maker">
               <th mat-header-cell *matHeaderCellDef>Raised by</th>
-              <td mat-cell *matCellDef="let a">{{ a.makerName }}</td>
+              <td mat-cell *matCellDef="let a">
+                @if (a.isMine) {
+                  <span class="mc__you">You</span>
+                } @else {
+                  {{ a.makerName || userLookup.displayName(a.makerUserId) }}
+                }
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="createdAt">
@@ -71,6 +77,13 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef class="mc__actions-col">Decision</th>
               <td mat-cell *matCellDef="let a" class="mc__actions-col">
+                @if (a.isMine) {
+                  <!-- Separation of duties: nobody decides a request they raised. -->
+                  <span class="mc__waiting" matTooltip="Another authoriser must approve or reject a change you raised.">
+                    <app-icon name="hourglass_top" aria-hidden="true" />
+                    Awaiting another approver
+                  </span>
+                } @else {
                 <button
                   matButton="filled"
                   type="button"
@@ -90,11 +103,12 @@
                   <app-icon name="close" />
                   Reject
                 </button>
+                }
               </td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.mc__row--mine]="row.isMine"></tr>
           </table>
         </div>
       </mat-card>

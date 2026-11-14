@@ -24,6 +24,15 @@ internal static class AuditManageAuthorization
 
         if (await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken))
         {
+            // Holding ManageAudit is not enough on its own: an audit is planned, started, sent for review, completed
+            // or reopened by its OWN team (lead / auditor / reviewer). A manager or administrator who is not on the
+            // team supervises it but does not sign it off — the same rule as checklist work, with no override.
+            if (!audit.IsSelfAssessment && !Execution.RespondAuthorization.IsActiveTeamMember(audit, userId))
+            {
+                throw new ForbiddenAccessException(
+                    "Only members of this audit's team can move it through its lifecycle. Ask the audit lead, or have yourself added to the team while it is being planned.");
+            }
+
             return;
         }
 

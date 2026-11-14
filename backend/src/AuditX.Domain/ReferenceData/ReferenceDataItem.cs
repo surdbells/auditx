@@ -11,9 +11,17 @@ namespace AuditX.Domain.ReferenceData;
 /// </summary>
 public sealed class ReferenceDataItem : AggregateRoot, ISoftDeletable
 {
+    private readonly List<ReferenceDataLabelVersion> _labelVersions = [];
+
     private ReferenceDataItem()
     {
     }
+
+    /// <summary>
+    /// Every label this value has carried, oldest first (empty until it is first renamed). Renames are prospective:
+    /// a record keeps the label that was current when it was created — see <see cref="LabelAsOf"/>.
+    /// </summary>
+    public IReadOnlyList<ReferenceDataLabelVersion> LabelVersions => _labelVersions.AsReadOnly();
 
     /// <summary>The list this item belongs to (one of <see cref="ReferenceDataCategories"/>), e.g. <c>audit_type</c>.</summary>
     public string Category { get; private set; } = null!;
@@ -50,13 +58,33 @@ public sealed class ReferenceDataItem : AggregateRoot, ISoftDeletable
             IsActive = true,
         };
 
-    /// <summary>Edit the mutable fields. <see cref="Category"/> and <see cref="Code"/> are stable keys and never change.</summary>
-    public void Update(string label, string? description, int sortOrder)
+    /// <summary>
+    /// Edit the mutable fields. <see cref="Category"/> and <see cref="Code"/> are stable keys and never change. A new
+    /// label takes effect from <paramref name="nowUtc"/>: the previous one is kept in the history, so records created
+    /// before the rename go on showing what they meant when they were made.
+    /// </summary>
+    public void Update(string label, string? description, int sortOrder, DateTimeOffset nowUtc)
     {
-        Label = Guard.NotNullOrWhiteSpace(label, "reference_data.label_required", "A reference-data label is required.").Trim();
+        var newLabel = Guard.NotNullOrWhiteSpace(label, "reference_data.label_required", "A reference-data label is required.").Trim();
+        if (!string.Equals(newLabel, Label, StringComparison.Ordinal))
+        {
+            if (_labelVersions.Count == 0)
+            {
+                // The label in use until now has applied since the value was created.
+                _labelVersions.Add(new ReferenceDataLabelVersion(Id, Label, DateTimeOffset.MinValue));
+            }
+
+            _labelVersions.Add(new ReferenceDataLabelVersion(Id, newLabel, nowUtc));
+            Label = newLabel;
+        }
+
         Description = description;
         SortOrder = sortOrder;
     }
+
+    /// <summary>The label that applied at <paramref name="asOf"/> (the current label when the value was never renamed).</summary>
+    public string LabelAsOf(DateTimeOffset asOf)
+        => _labelVersions.Where(v => v.EffectiveFrom <= asOf).OrderBy(v => v.EffectiveFrom).LastOrDefault()?.Label ?? Label;
 
     public void Activate() => IsActive = true;
 

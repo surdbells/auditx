@@ -31,7 +31,7 @@ public static class PlanningMappings
     public static PlanItemDto ToDto(this PlanItem item) => new(
         item.Id, item.AuditType, item.PlannedStartDate, item.PlannedEndDate,
         item.EstimatedEffortDays, item.AssignedLeadUserId, item.Status.ToSnake(), item.OrderIndex,
-        item.EntityLinks.Select(l => l.ToDto()).ToArray());
+        item.EntityLinks.Select(l => l.ToDto()).ToArray(), CreatedAt: item.CreatedAt);
 
     public static PlanDto ToDto(this AnnualPlan plan, bool canLaunchAudits, bool canApplyMinorRevision)
     {
@@ -42,7 +42,8 @@ public static class PlanningMappings
         return new PlanDto(
             plan.Id, plan.PeriodLabel, plan.PeriodStart, plan.PeriodEnd, plan.Status.ToSnake(),
             plan.SubmittedAt, plan.ApprovedAt, decision, canLaunchAudits, canApplyMinorRevision, plan.RevisionReason,
-            plan.Items.OrderBy(i => i.OrderIndex).Select(i => i.ToDto()).ToArray());
+            plan.Items.OrderBy(i => i.OrderIndex).Select(i => i.ToDto()).ToArray(),
+            plan.SubmittedByUserId ?? plan.CreatedBy);
     }
 
     public static PlanListItemDto ToListItemDto(this AnnualPlan plan) => new(

@@ -70,6 +70,14 @@
   margin: 0.75rem 0 0;
 }
 
+.detail__lifecycle-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .detail__entity {
   display: flex;
   flex-wrap: wrap;

@@ -16,7 +16,9 @@ public sealed record EntityDto(
     int? ExpectedAuditsPerYear,
     string Version,
     bool IsArchived = false,
-    DateTimeOffset? ArchivedAt = null);
+    DateTimeOffset? ArchivedAt = null,
+    // When the record was created — reference labels on it are shown as they read at that time.
+    DateTimeOffset? CreatedAt = null);
 
 public sealed record RiskDimensionDto(
     Guid Id, string Name, decimal Weight, int ScaleMin, int ScaleMax, bool IsActive, string? ScaleLabelOverridesJson);

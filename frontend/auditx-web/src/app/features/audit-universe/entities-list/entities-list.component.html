@@ -107,7 +107,7 @@
 
             <ng-container matColumnDef="entityType">
               <th mat-header-cell *matHeaderCellDef>{{ 'universe.field.type' | t }}</th>
-              <td mat-cell *matCellDef="let e">{{ refLookup.label('entity_type', e.entityType) }}</td>
+              <td mat-cell *matCellDef="let e">{{ refLookup.label('entity_type', e.entityType, e.createdAt) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="owner">

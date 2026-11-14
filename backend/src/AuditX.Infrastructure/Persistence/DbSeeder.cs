@@ -433,6 +433,8 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
             (ReferenceDataCategories.EntityType, "system", "System"),
             (ReferenceDataCategories.EntityType, "vendor", "Vendor"),
             (ReferenceDataCategories.EntityType, "product", "Product"),
+            // Industry-neutral location type (an operating site, plant, depot or office) — used by the demo dataset.
+            (ReferenceDataCategories.EntityType, "site", "Site"),
 
             // Sanction categories — the CODE forms part of the grid cell key "<category>|<severity>|<recurrence>",
             // so these codes must match the seeded sanctions grid's cell categories.
@@ -465,6 +467,13 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
             (ReferenceDataCategories.RegulationAuthority, "nitda", "National IT Development Agency (NITDA)"),
             (ReferenceDataCategories.RegulationAuthority, "basel", "Basel Committee (BCBS)"),
             (ReferenceDataCategories.RegulationAuthority, "fatf", "Financial Action Task Force (FATF)"),
+            // Industry-neutral authorities any regulated organisation recognises — used by the demo dataset.
+            (ReferenceDataCategories.RegulationAuthority, "data_protection_authority", "Data Protection Authority"),
+            (ReferenceDataCategories.RegulationAuthority, "anti_corruption_agency", "Anti-Corruption Agency"),
+            (ReferenceDataCategories.RegulationAuthority, "occupational_safety_agency", "Occupational Safety Agency"),
+            (ReferenceDataCategories.RegulationAuthority, "environmental_agency", "Environmental Protection Agency"),
+            (ReferenceDataCategories.RegulationAuthority, "cybersecurity_agency", "National Cybersecurity Agency"),
+            (ReferenceDataCategories.RegulationAuthority, "consumer_protection_authority", "Consumer Protection Authority"),
 
             (ReferenceDataCategories.RegulationCategory, "prudential", "Prudential"),
             (ReferenceDataCategories.RegulationCategory, "aml_cft", "AML / CFT"),
@@ -475,6 +484,16 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
             (ReferenceDataCategories.RegulationCategory, "capital_markets", "Capital markets"),
             (ReferenceDataCategories.RegulationCategory, "financial_reporting", "Financial reporting"),
             (ReferenceDataCategories.RegulationCategory, "operational_risk", "Operational risk"),
+            // Industry-neutral obligation categories — used by the demo dataset.
+            (ReferenceDataCategories.RegulationCategory, "anti_bribery", "Anti-bribery & corruption"),
+            (ReferenceDataCategories.RegulationCategory, "health_safety", "Health & safety"),
+            (ReferenceDataCategories.RegulationCategory, "environmental", "Environmental"),
+            // The kinds of node in the organisation hierarchy — industry-neutral; renamable and extendable per customer.
+            (ReferenceDataCategories.OrgUnitType, "legal_entity", "Legal entity"),
+            (ReferenceDataCategories.OrgUnitType, "business_unit", "Business unit"),
+            (ReferenceDataCategories.OrgUnitType, "function", "Function"),
+            (ReferenceDataCategories.OrgUnitType, "location", "Location"),
+            (ReferenceDataCategories.OrgUnitType, "process", "Process"),
         };
 
         // One round-trip: existing (category, code) pairs across the seeded categories. Include soft-deleted rows so
