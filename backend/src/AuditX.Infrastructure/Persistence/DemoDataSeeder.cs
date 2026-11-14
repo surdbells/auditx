@@ -131,7 +131,7 @@ public sealed class DemoDataSeeder(
         GrantRole(auditee, rolesByName, BuiltInRoles.AuditeeName);
         GrantRole(auditee, rolesByName, AcRoles.AuditCommitteeMember); // auditee doubles as an AC member for the demo
 
-        // Provision additional named directory users as data actors. These are realistic Nigerian-bank personas.
+        // Provision additional named directory users as data actors (team members, owners, committee members).
         var manager2 = ProvisionActor("chinelo.okafor", "Chinelo", "Okafor", 2001, rolesByName, BuiltInRoles.AuditManagerName);
         var auditor2 = ProvisionActor("emeka.balogun", "Emeka", "Balogun", 2002, rolesByName, BuiltInRoles.AuditorName);
         var auditor3 = ProvisionActor("fatima.suleiman", "Fatima", "Suleiman", 2003, rolesByName, BuiltInRoles.AuditorName);
@@ -192,47 +192,47 @@ public sealed class DemoDataSeeder(
     // M2 — Templates. Three PUBLISHED checklist templates, each with sections + items, published via the domain
     // Publish() factory (which snapshots items into an immutable TemplateVersion, exactly as the API publish flow).
     // ---------------------------------------------------------------------------------------------------------
-    private sealed record DemoTemplates(Template BranchOps, Template ItGeneralControls, Template CreditRisk);
+    private sealed record DemoTemplates(Template SiteOps, Template ItGeneralControls, Template ProcureToPay);
 
     private async Task<DemoTemplates> SeedTemplatesAsync(CancellationToken ct)
     {
-        var branch = BuildTemplate(
-            "Branch Operations Audit", "branch_operations", "Standard operational audit for retail branches.",
+        var site = BuildTemplate(
+            "Site Operations Audit", "operational", "Standard operational audit for operating sites.",
             [
-                ("Cash & Teller", "Is cash counted and reconciled daily by two officers?", true),
-                ("Cash & Teller", "Are vault access logs complete and dual-controlled?", true),
-                ("Cash & Teller", "Are teller till limits enforced and exceptions escalated?", true),
-                ("Account Opening", "Is KYC documentation complete for new accounts sampled?", true),
-                ("Account Opening", "Are dormant accounts flagged and reactivations authorised?", false),
+                ("Health & Safety", "Are workplace risk assessments current and signed off by the site manager?", true),
+                ("Health & Safety", "Are incidents and near-misses logged and corrective actions tracked to closure?", true),
+                ("Health & Safety", "Are statutory equipment inspections (fire, electrical, lifting) in date?", true),
+                ("Cash Handling", "Are site cash receipts counted and reconciled daily by two staff members?", true),
+                ("Cash Handling", "Are cash-safe access logs complete and dual-controlled?", false),
                 ("Physical Security", "Are CCTV and alarm systems tested and operational?", true),
                 ("Physical Security", "Is after-hours access restricted and logged?", false),
             ]);
 
         var itgc = BuildTemplate(
-            "IT General Controls Review", "it_general_controls", "General controls review over core banking and infrastructure.",
+            "IT General Controls Review", "it_general_controls", "General controls review over the ERP platform and supporting infrastructure.",
             [
                 ("Access Management", "Are privileged accounts reviewed quarterly?", true),
-                ("Access Management", "Is segregation of duties enforced in the core banking application?", true),
+                ("Access Management", "Is segregation of duties enforced in the ERP application?", true),
                 ("Change Management", "Are production changes approved and tested before release?", true),
                 ("Change Management", "Is emergency-change access time-boxed and reviewed?", false),
                 ("Backup & Recovery", "Are backups taken daily and restore-tested periodically?", true),
                 ("Backup & Recovery", "Is the DR runbook current and last exercised within 12 months?", true),
             ]);
 
-        var credit = BuildTemplate(
-            "Credit Risk Review", "credit_review", "Review of credit origination, approval and monitoring.",
+        var procureToPay = BuildTemplate(
+            "Procure-to-Pay Compliance Review", "regulatory_compliance", "Review of supplier sourcing, due diligence, approval and payment controls.",
             [
-                ("Origination", "Are credit appraisals documented and independently reviewed?", true),
-                ("Origination", "Is collateral valuation current and within policy limits?", true),
-                ("Approval", "Are approvals within delegated authority limits?", true),
-                ("Approval", "Are exceptions to policy escalated and approved by the credit committee?", true),
-                ("Monitoring", "Are past-due facilities identified and classified correctly?", true),
-                ("Monitoring", "Are provisions computed in line with the ECL model?", false),
+                ("Sourcing & Due Diligence", "Are supplier selections documented and supported by competitive quotes or tenders?", true),
+                ("Sourcing & Due Diligence", "Are anti-bribery and sanctions screening checks current for active suppliers?", true),
+                ("Approval", "Are purchase approvals within delegated authority limits?", true),
+                ("Approval", "Are contract awards supported by an independent bid evaluation and approved by the procurement committee?", true),
+                ("Payments", "Are supplier payments matched to approved purchase orders and goods receipts?", true),
+                ("Payments", "Are period-end accruals computed in line with the accounting policy?", false),
             ]);
 
-        db.Templates.AddRange(branch, itgc, credit);
+        db.Templates.AddRange(site, itgc, procureToPay);
         await db.SaveChangesAsync(ct);
-        return new DemoTemplates(branch, itgc, credit);
+        return new DemoTemplates(site, itgc, procureToPay);
     }
 
     private Template BuildTemplate(string name, string auditType, string description, (string Section, string Prompt, bool Required)[] items)
@@ -258,14 +258,14 @@ public sealed class DemoDataSeeder(
     // M3 — Audit universe (hierarchy + risk scores) and one APPROVED annual plan (2026) with plan items.
     // ---------------------------------------------------------------------------------------------------------
     private sealed record DemoEntities(
-        Guid LagosBranchId,
-        Guid AbujaBranchId,
-        Guid PhBranchId,
-        Guid CoreBankingId,
+        Guid CentralSiteId,
+        Guid NorthernSiteId,
+        Guid SouthernSiteId,
+        Guid ErpId,
         Guid DataCentreId,
-        Guid TreasuryId,
-        Guid CreditId,
-        Guid OperationsId);
+        Guid FinanceId,
+        Guid ProcurementId,
+        Guid SharedServicesId);
 
     private async Task<(DemoEntities Entities, AnnualPlan Plan)> SeedUniverseAndPlanAsync(DemoUsers users, CancellationToken ct)
     {
@@ -273,48 +273,48 @@ public sealed class DemoDataSeeder(
         var specs = dimensions.Select(d => d.ToSpec()).ToList();
 
         // Divisions (parents).
-        var retail = AuditableEntity.Create("process", "Retail Banking", "Retail banking division.", null, users.Auditee1Id);
+        var regionalOps = AuditableEntity.Create("process", "Regional Operations", "Regional operating-sites division.", null, users.Auditee1Id);
         var technology = AuditableEntity.Create("process", "Technology", "Technology division.", null, users.Auditee2Id);
-        db.AuditUniverseEntities.AddRange(retail, technology);
+        db.AuditUniverseEntities.AddRange(regionalOps, technology);
         await db.SaveChangesAsync(ct); // persist so child FKs (ParentEntityId) reference committed rows
 
         // Children + standalone units.
-        var lagos = AuditableEntity.Create("branch", "Lagos Main Branch", "Flagship Lagos branch.", retail.Id, users.Auditee1Id);
-        var abuja = AuditableEntity.Create("branch", "Abuja Branch", "Abuja regional branch.", retail.Id, users.Auditee2Id);
-        var ph = AuditableEntity.Create("branch", "Port Harcourt Branch", "Port Harcourt branch.", retail.Id, users.Auditee3Id);
-        var coreBanking = AuditableEntity.Create("system", "Core Banking System", "Flexcube core banking platform.", technology.Id, users.Auditee2Id);
+        var central = AuditableEntity.Create("site", "Central Site", "Flagship central operating site.", regionalOps.Id, users.Auditee1Id);
+        var northern = AuditableEntity.Create("site", "Northern Site", "Northern regional operating site.", regionalOps.Id, users.Auditee2Id);
+        var southern = AuditableEntity.Create("site", "Southern Site", "Southern regional operating site.", regionalOps.Id, users.Auditee3Id);
+        var erp = AuditableEntity.Create("system", "ERP System", "Enterprise resource planning platform (finance, procurement and inventory).", technology.Id, users.Auditee2Id);
         var dataCentre = AuditableEntity.Create("system", "Primary Data Centre", "Primary data-centre facility.", technology.Id, users.Auditee2Id);
-        var treasury = AuditableEntity.Create("process", "Treasury", "Treasury and financial markets.", null, users.Auditee3Id);
-        var credit = AuditableEntity.Create("process", "Credit", "Credit risk management.", null, users.Auditee3Id);
-        var operations = AuditableEntity.Create("process", "Operations", "Central operations and settlements.", null, users.Auditee1Id);
+        var finance = AuditableEntity.Create("process", "Finance", "Financial control, cash management and financial reporting.", null, users.Auditee3Id);
+        var procurement = AuditableEntity.Create("process", "Procurement", "Sourcing, supplier management and purchasing.", null, users.Auditee3Id);
+        var sharedServices = AuditableEntity.Create("process", "Shared Services", "Central shared services: accounts payable, payroll and HR administration.", null, users.Auditee1Id);
 
-        ApplyScores(lagos, specs, high: true);
-        ApplyScores(abuja, specs, high: false);
-        ApplyScores(ph, specs, high: false);
-        ApplyScores(coreBanking, specs, high: true);
+        ApplyScores(central, specs, high: true);
+        ApplyScores(northern, specs, high: false);
+        ApplyScores(southern, specs, high: false);
+        ApplyScores(erp, specs, high: true);
         ApplyScores(dataCentre, specs, high: true);
-        ApplyScores(treasury, specs, high: true);
-        ApplyScores(credit, specs, high: true);
-        ApplyScores(operations, specs, high: false);
+        ApplyScores(finance, specs, high: true);
+        ApplyScores(procurement, specs, high: true);
+        ApplyScores(sharedServices, specs, high: false);
 
-        db.AuditUniverseEntities.AddRange(lagos, abuja, ph, coreBanking, dataCentre, treasury, credit, operations);
+        db.AuditUniverseEntities.AddRange(central, northern, southern, erp, dataCentre, finance, procurement, sharedServices);
         await db.SaveChangesAsync(ct);
 
-        var entities = new DemoEntities(lagos.Id, abuja.Id, ph.Id, coreBanking.Id, dataCentre.Id, treasury.Id, credit.Id, operations.Id);
+        var entities = new DemoEntities(central.Id, northern.Id, southern.Id, erp.Id, dataCentre.Id, finance.Id, procurement.Id, sharedServices.Id);
 
         // One approved 2026 annual plan with six plan items scheduling audits of the entities above.
         var plan = AnnualPlan.Create("FY2026 Annual Audit Plan", new DateOnly(2026, 1, 1), new DateOnly(2026, 12, 31));
-        plan.AddItem([lagos.Id], "branch_operations", new DateOnly(2026, 2, 1), new DateOnly(2026, 3, 15), 20m, users.Manager1Id);
-        plan.AddItem([abuja.Id], "branch_operations", new DateOnly(2026, 3, 1), new DateOnly(2026, 4, 15), 18m, users.Manager1Id);
-        plan.AddItem([coreBanking.Id], "it_general_controls", new DateOnly(2026, 4, 1), new DateOnly(2026, 5, 20), 25m, users.Manager2Id);
-        plan.AddItem([credit.Id], "credit_review", new DateOnly(2026, 5, 1), new DateOnly(2026, 6, 20), 22m, users.Manager2Id);
-        plan.AddItem([treasury.Id], "treasury", new DateOnly(2026, 6, 1), new DateOnly(2026, 7, 20), 20m, users.Manager1Id);
-        plan.AddItem([ph.Id], "branch_operations", new DateOnly(2026, 7, 1), new DateOnly(2026, 8, 15), 18m, users.Manager1Id);
+        plan.AddItem([central.Id], "operational", new DateOnly(2026, 2, 1), new DateOnly(2026, 3, 15), 20m, users.Manager1Id);
+        plan.AddItem([northern.Id], "operational", new DateOnly(2026, 3, 1), new DateOnly(2026, 4, 15), 18m, users.Manager1Id);
+        plan.AddItem([erp.Id], "it_general_controls", new DateOnly(2026, 4, 1), new DateOnly(2026, 5, 20), 25m, users.Manager2Id);
+        plan.AddItem([procurement.Id], "regulatory_compliance", new DateOnly(2026, 5, 1), new DateOnly(2026, 6, 20), 22m, users.Manager2Id);
+        plan.AddItem([finance.Id], "financial_statement", new DateOnly(2026, 6, 1), new DateOnly(2026, 7, 20), 20m, users.Manager1Id);
+        plan.AddItem([southern.Id], "operational", new DateOnly(2026, 7, 1), new DateOnly(2026, 8, 15), 18m, users.Manager1Id);
 
         // Drive the plan to Approved (Draft → Submit → RecordDecision(Approved)) so audits can link to its items.
         plan.Submit(_now);
         plan.RecordDecision(AcDecisionOutcome.Approved, "Approved by the audit committee for FY2026.",
-            ["Coverage aligns with the risk assessment.", "Prioritise the high-risk core-banking review."], users.AcChairId, _now);
+            ["Coverage aligns with the risk assessment.", "Prioritise the high-risk ERP general-controls review."], users.AcChairId, _now);
 
         db.AnnualPlans.Add(plan);
         await db.SaveChangesAsync(ct);
@@ -338,10 +338,10 @@ public sealed class DemoDataSeeder(
     {
         var headOffice = AuditX.Domain.Organization.OrgUnit.Create("Head Office", "HO", null);
         db.OrgUnits.Add(headOffice);
-        var retail = AuditX.Domain.Organization.OrgUnit.Create("Retail Banking", "RETAIL", headOffice.Id);
-        var cib = AuditX.Domain.Organization.OrgUnit.Create("Corporate & Investment Banking", "CIB", headOffice.Id);
+        var regions = AuditX.Domain.Organization.OrgUnit.Create("Regional Operations", "OPS", headOffice.Id);
+        var corporate = AuditX.Domain.Organization.OrgUnit.Create("Corporate Functions", "CORP", headOffice.Id);
         var tech = AuditX.Domain.Organization.OrgUnit.Create("Technology", "TECH", headOffice.Id);
-        db.OrgUnits.AddRange(retail, cib, tech);
+        db.OrgUnits.AddRange(regions, corporate, tech);
         await db.SaveChangesAsync(ct);
 
         // Assign each auditable entity to a division by its type/name; everything else rolls up to Head Office.
@@ -350,15 +350,15 @@ public sealed class DemoDataSeeder(
             var name = entity.Name.ToLowerInvariant();
             var type = entity.EntityType.ToLowerInvariant();
             var unitId =
-                type == "branch" || name.Contains("branch") ? retail.Id
-                : name.Contains("treasury") || name.Contains("credit") ? cib.Id
-                : type == "system" || name.Contains("core banking") || name.Contains("data centre") || name.Contains("it ") ? tech.Id
+                type == "site" || name.Contains(" site") ? regions.Id
+                : name.Contains("finance") || name.Contains("procurement") ? corporate.Id
+                : type == "system" || name.Contains("erp system") || name.Contains("data centre") || name.Contains("it ") ? tech.Id
                 : headOffice.Id;
             entity.SetOrgUnit(unitId);
         }
 
         // Populate the auditors' org affiliation (utilisation-by-org reporting) — spread across the divisions.
-        var divisions = new[] { retail.Id, cib.Id, tech.Id };
+        var divisions = new[] { regions.Id, corporate.Id, tech.Id };
         var users = await db.Users.IgnoreQueryFilters().ToListAsync(ct);
         for (var i = 0; i < users.Count; i++)
         {
@@ -369,24 +369,25 @@ public sealed class DemoDataSeeder(
     }
 
     // ---------------------------------------------------------------------------------------------------------
-    // P1-B — Compliance. A regulatory register (Nigerian-bank authorities) + an internal-control register linked
-    // to auditable entities, so the Regulations and Controls screens land on populated, realistic data. Authority
+    // P1-B — Compliance. A regulatory register (industry-neutral authorities: data protection, anti-bribery, health &
+    // safety, environment, information security, financial reporting) + an internal-control register linked to
+    // auditable entities, so the Regulations and Controls screens land on populated, realistic data. Authority
     // and category use the seeded reference-data codes (regulation_authority / regulation_category).
     // ---------------------------------------------------------------------------------------------------------
     private async Task SeedComplianceAsync(DemoUsers users, DemoEntities entities, CancellationToken ct)
     {
         var regulations = new[]
         {
-            AuditX.Domain.Compliance.Regulation.Register("CBN-PRU-01", "Prudential Guidelines for Deposit Money Banks", "cbn", "Capital adequacy, liquidity and provisioning requirements for banks.", "prudential"),
-            AuditX.Domain.Compliance.Regulation.Register("CBN-AML-02", "AML/CFT Regulations", "cbn", "Anti-money-laundering and combating-the-financing-of-terrorism obligations.", "aml_cft"),
-            AuditX.Domain.Compliance.Regulation.Register("NFIU-STR-01", "Suspicious Transaction Reporting Guidelines", "nfiu", "Filing of suspicious- and currency-transaction reports.", "aml_cft"),
+            AuditX.Domain.Compliance.Regulation.Register("DP-ACT-01", "Personal Data Protection Act", "data_protection_authority", "Lawful-processing, consent, retention and breach-notification duties for personal data.", "data_protection"),
+            AuditX.Domain.Compliance.Regulation.Register("ABC-ACT-01", "Anti-Bribery and Corruption Act", "anti_corruption_agency", "Prohibition of bribery and the duty to maintain adequate anti-corruption procedures.", "anti_bribery"),
+            AuditX.Domain.Compliance.Regulation.Register("ABC-TPD-02", "Third-Party Due Diligence Guidance", "anti_corruption_agency", "Risk-based due diligence and monitoring of suppliers, agents and intermediaries.", "anti_bribery"),
             AuditX.Domain.Compliance.Regulation.Register("SEC-CG-01", "Code of Corporate Governance", "sec", "Board composition, oversight and disclosure requirements.", "corporate_governance"),
-            AuditX.Domain.Compliance.Regulation.Register("NDIC-DI-01", "Deposit Insurance Framework", "ndic", "Deposit-insurance premium and reporting obligations.", "prudential"),
-            AuditX.Domain.Compliance.Regulation.Register("NDPR-01", "Nigeria Data Protection Regulation", "nitda", "Processing, consent and breach-notification duties for personal data.", "data_protection"),
-            AuditX.Domain.Compliance.Regulation.Register("CBN-CYB-03", "Risk-Based Cybersecurity Framework", "cbn", "Cyber-risk governance, controls and incident reporting for banks.", "cybersecurity"),
+            AuditX.Domain.Compliance.Regulation.Register("OSH-REG-01", "Occupational Safety and Health Regulations", "occupational_safety_agency", "Workplace risk-assessment, incident-reporting and safety-training duties.", "health_safety"),
+            AuditX.Domain.Compliance.Regulation.Register("ENV-PRM-01", "Environmental Permit Conditions", "environmental_agency", "Emissions, waste-handling and monitoring obligations attached to site operating permits.", "environmental"),
+            AuditX.Domain.Compliance.Regulation.Register("CYB-REG-01", "Information Security Requirements", "cybersecurity_agency", "Information-security governance, controls and incident-reporting obligations.", "cybersecurity"),
             AuditX.Domain.Compliance.Regulation.Register("FRC-IFRS-01", "IFRS Financial Reporting Standards", "frc", "Adoption of International Financial Reporting Standards.", "financial_reporting"),
-            AuditX.Domain.Compliance.Regulation.Register("BASEL-III", "Basel III Capital & Liquidity Standards", "basel", "International capital, leverage and liquidity standards.", "prudential"),
-            AuditX.Domain.Compliance.Regulation.Register("CBN-CP-04", "Consumer Protection Framework", "cbn", "Fair-treatment, disclosure and complaints-handling requirements.", "consumer_protection"),
+            AuditX.Domain.Compliance.Regulation.Register("FRC-ICFR-02", "Internal Control over Financial Reporting Guidance", "frc", "Design, operation and annual attestation of internal controls over financial reporting.", "financial_reporting"),
+            AuditX.Domain.Compliance.Regulation.Register("CP-CODE-01", "Consumer Protection Code (2015 edition)", "consumer_protection_authority", "Fair-treatment, disclosure and complaints-handling requirements (superseded).", "consumer_protection"),
         };
         // Retire one so the register shows an inactive lifecycle state too.
         regulations[^1].SetActive(false);
@@ -405,16 +406,16 @@ public sealed class DemoDataSeeder(
             db.Controls.Add(control);
         }
 
-        AddControl("CTL-001", "Daily cash reconciliation", "Teller cash is counted and reconciled daily by two officers.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Daily, users.Auditee1Id, entities.LagosBranchId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
-        AddControl("CTL-002", "Dual control on vault access", "Vault access requires two authorised officers and is logged.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee1Id, entities.LagosBranchId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
-        AddControl("CTL-003", "Privileged access review", "Privileged core-banking accounts are reviewed each quarter.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Quarterly, users.Auditee2Id, entities.CoreBankingId, AuditX.Domain.Enums.ControlEffectiveness.PartiallyEffective);
-        AddControl("CTL-004", "Segregation of duties in core banking", "Segregation of duties is enforced across core-banking roles.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee2Id, entities.CoreBankingId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
-        AddControl("CTL-005", "Change management approval", "Production changes are approved and tested before release.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.AdHoc, users.Auditee2Id, entities.CoreBankingId, AuditX.Domain.Enums.ControlEffectiveness.NotTested);
+        AddControl("CTL-001", "Daily cash reconciliation", "Site cash receipts are counted and reconciled daily by two staff members.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Daily, users.Auditee1Id, entities.CentralSiteId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-002", "Dual control on cash-safe access", "Cash-safe access requires two authorised staff members and is logged.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee1Id, entities.CentralSiteId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-003", "Privileged access review", "Privileged ERP accounts are reviewed each quarter.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Quarterly, users.Auditee2Id, entities.ErpId, AuditX.Domain.Enums.ControlEffectiveness.PartiallyEffective);
+        AddControl("CTL-004", "Segregation of duties in the ERP", "Segregation of duties is enforced across ERP roles.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee2Id, entities.ErpId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-005", "Change management approval", "Production changes are approved and tested before release.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.AdHoc, users.Auditee2Id, entities.ErpId, AuditX.Domain.Enums.ControlEffectiveness.NotTested);
         AddControl("CTL-006", "Daily backup verification", "Backups run daily and restore tests are performed periodically.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Daily, users.Auditee2Id, entities.DataCentreId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
-        AddControl("CTL-007", "Credit approval limits enforcement", "Facilities above limits require the appropriate approval tier.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee3Id, entities.CreditId, AuditX.Domain.Enums.ControlEffectiveness.Ineffective);
-        AddControl("CTL-008", "Treasury deal confirmation", "Every treasury deal is independently confirmed before settlement.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Daily, users.Auditee3Id, entities.TreasuryId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
-        AddControl("CTL-009", "KYC documentation review", "New-account KYC packs are sampled and reviewed monthly.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Monthly, users.Auditee1Id, entities.OperationsId, AuditX.Domain.Enums.ControlEffectiveness.PartiallyEffective);
-        AddControl("CTL-010", "AML transaction monitoring", "Transactions are screened continuously for suspicious patterns.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee1Id, entities.OperationsId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-007", "Purchase approval limits enforcement", "Purchase orders above delegated limits require the appropriate approval tier.", AuditX.Domain.Enums.ControlType.Preventive, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee3Id, entities.ProcurementId, AuditX.Domain.Enums.ControlEffectiveness.Ineffective);
+        AddControl("CTL-008", "Payment-run independent confirmation", "Every supplier payment run is independently confirmed before release to the bank.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Daily, users.Auditee3Id, entities.FinanceId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
+        AddControl("CTL-009", "Supplier onboarding documentation review", "New-supplier onboarding and due-diligence packs are sampled and reviewed monthly.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Monthly, users.Auditee1Id, entities.SharedServicesId, AuditX.Domain.Enums.ControlEffectiveness.PartiallyEffective);
+        AddControl("CTL-010", "Payment anomaly monitoring", "Supplier payments are screened continuously for duplicate, unusual or suspicious patterns.", AuditX.Domain.Enums.ControlType.Detective, AuditX.Domain.Enums.ControlFrequency.Continuous, users.Auditee1Id, entities.SharedServicesId, AuditX.Domain.Enums.ControlEffectiveness.Effective);
 
         await db.SaveChangesAsync(ct);
     }
@@ -442,16 +443,16 @@ public sealed class DemoDataSeeder(
             return risk;
         }
 
-        var creditConcentration = AddRisk(
-            "Concentration risk in top-20 credit exposures", "The top 20 obligors represent a disproportionate share of the loan book, exposing the bank to correlated default losses.",
-            "credit", users.Auditee3Id, entities.CreditId, 4, 4, Today.AddMonths(6), users.Auditor3Id,
+        var supplierFailure = AddRisk(
+            "Financial-failure risk in single-source suppliers", "Several critical inputs are single-sourced from suppliers whose financial health has weakened, exposing operations to disruption on a supplier default.",
+            "credit", users.Auditee3Id, entities.ProcurementId, 4, 4, Today.AddMonths(6), users.Auditor3Id,
             residualLikelihood: 3, residualImpact: 3, strategy: RiskTreatmentStrategy.Mitigate,
-            treatmentPlan: "Diversify the large-exposure book and tighten single-obligor concentration limits.", nextReviewDate: Today.AddMonths(3));
-        creditConcentration.ChangeStatus(RiskStatus.Mitigating, null, users.Auditee3Id, _now);
+            treatmentPlan: "Qualify alternative suppliers for critical inputs and tighten single-supplier concentration limits.", nextReviewDate: Today.AddMonths(3));
+        supplierFailure.ChangeStatus(RiskStatus.Mitigating, null, users.Auditee3Id, _now);
 
         AddRisk(
-            "Core banking system single point of failure", "The core banking platform runs on a single active instance with no automated failover, risking extended downtime on hardware failure.",
-            "technology", users.Auditee2Id, entities.CoreBankingId, 4, 5, Today.AddMonths(4), users.Auditor2Id);
+            "ERP system single point of failure", "The ERP platform runs on a single active instance with no automated failover, risking extended downtime on hardware failure.",
+            "technology", users.Auditee2Id, entities.ErpId, 4, 5, Today.AddMonths(4), users.Auditor2Id);
 
         var drGap = AddRisk(
             "Data-centre disaster-recovery gap", "The DR site is not warm-standby; a primary data-centre outage would require a multi-day manual recovery.",
@@ -461,39 +462,39 @@ public sealed class DemoDataSeeder(
         drGap.ChangeStatus(RiskStatus.Monitoring, null, users.Auditee2Id, _now);
 
         AddRisk(
-            "AML transaction-monitoring false-negative risk", "Rule thresholds have not been re-tuned since go-live, risking missed suspicious-activity patterns in the monitoring engine.",
-            "compliance", users.Auditee1Id, entities.OperationsId, 3, 4, Today.AddMonths(3), users.Auditor1Id);
+            "Anti-bribery screening gaps in third-party payments", "Payment-screening rules have not been re-tuned since go-live, risking missed bribery, sanctions or fraud red flags in supplier and agent payments.",
+            "compliance", users.Auditee1Id, entities.SharedServicesId, 3, 4, Today.AddMonths(3), users.Auditor1Id);
 
-        var fxLimit = AddRisk(
-            "Treasury FX open-position limit breach", "Intraday FX open positions have approached the board-approved limit during volatile trading sessions.",
-            "market", users.Auditee3Id, entities.TreasuryId, 3, 3, Today.AddMonths(4), users.Auditor3Id,
+        var fxExposure = AddRisk(
+            "Unhedged foreign-currency exposure on imported inputs", "Foreign-currency payables for imported materials have approached the board-approved unhedged-exposure limit during volatile periods.",
+            "market", users.Auditee3Id, entities.FinanceId, 3, 3, Today.AddMonths(4), users.Auditor3Id,
             residualLikelihood: 2, residualImpact: 2, strategy: RiskTreatmentStrategy.Mitigate,
-            treatmentPlan: "Add a real-time limit-breach alert to the treasury dealing system.", nextReviewDate: Today.AddMonths(6));
+            treatmentPlan: "Add an automated exposure-limit alert to the cash-management system.", nextReviewDate: Today.AddMonths(6));
 
         AddRisk(
-            "Cash/vault-handling fraud at branch level", "Dual-control lapses at high-cash branches create an opportunity for teller-level cash misappropriation.",
-            "fraud", users.Auditee1Id, entities.LagosBranchId, 2, 4, Today.AddMonths(2), users.Auditor1Id);
+            "Cash misappropriation at site level", "Dual-control lapses at high-cash-volume sites create an opportunity for misappropriation of site cash receipts.",
+            "fraud", users.Auditee1Id, entities.CentralSiteId, 2, 4, Today.AddMonths(2), users.Auditor1Id);
 
         AddRisk(
-            "Third-party vendor cyber-security exposure", "Key vendors with network access have not been re-assessed against the bank's current cyber-security questionnaire.",
+            "Third-party vendor cyber-security exposure", "Key vendors with network access have not been re-assessed against the organisation's current cyber-security questionnaire.",
             "technology", users.Auditee2Id, null, 4, 4, Today.AddMonths(3), users.Manager2Id);
 
-        var regReporting = AddRisk(
-            "Regulatory-return inaccuracy (CBN returns)", "Manual spreadsheet consolidation in the regulatory-returns process is prone to transcription error ahead of CBN submission deadlines.",
-            "regulatory", users.Auditee1Id, entities.OperationsId, 3, 3, Today.AddMonths(2), users.Auditor1Id,
+        var statutoryFiling = AddRisk(
+            "Statutory-filing inaccuracy (regulatory returns)", "Manual spreadsheet consolidation in the statutory-returns process is prone to transcription error ahead of filing deadlines.",
+            "regulatory", users.Auditee1Id, entities.SharedServicesId, 3, 3, Today.AddMonths(2), users.Auditor1Id,
             residualLikelihood: 2, residualImpact: 2, strategy: RiskTreatmentStrategy.Mitigate,
             treatmentPlan: "Automate the returns-consolidation workflow and add a four-eyes sign-off.", nextReviewDate: Today.AddMonths(4));
-        regReporting.ChangeStatus(RiskStatus.Mitigating, null, users.Auditee1Id, _now);
+        statutoryFiling.ChangeStatus(RiskStatus.Mitigating, null, users.Auditee1Id, _now);
 
         var liquidity = AddRisk(
-            "Liquidity coverage ratio stress risk", "A sustained deposit run-off scenario could pressure the LCR below the internal early-warning threshold before regulatory breach.",
-            "liquidity", users.Auditee3Id, entities.TreasuryId, 2, 5, Today.AddMonths(5), users.Manager1Id,
+            "Working-capital liquidity stress risk", "A sustained slowdown in customer collections could reduce cash headroom below the internal early-warning threshold before a lending-covenant breach.",
+            "liquidity", users.Auditee3Id, entities.FinanceId, 2, 5, Today.AddMonths(5), users.Manager1Id,
             residualLikelihood: 2, residualImpact: 3, strategy: RiskTreatmentStrategy.Mitigate,
-            treatmentPlan: "Grow the high-quality liquid-asset buffer and diversify the funding base.", nextReviewDate: Today.AddMonths(3));
+            treatmentPlan: "Extend the committed credit facility and diversify funding sources.", nextReviewDate: Today.AddMonths(3));
 
         var keyPerson = AddRisk(
-            "Key-person dependency in core-banking support", "A single engineer holds undocumented tribal knowledge of core-banking batch jobs, risking a support gap on departure.",
-            "operational", users.Auditee2Id, entities.CoreBankingId, 3, 3, Today.AddMonths(4), users.Auditor2Id,
+            "Key-person dependency in ERP support", "A single engineer holds undocumented tribal knowledge of ERP batch jobs, risking a support gap on departure.",
+            "operational", users.Auditee2Id, entities.ErpId, 3, 3, Today.AddMonths(4), users.Auditor2Id,
             residualLikelihood: 2, residualImpact: 3, strategy: RiskTreatmentStrategy.Mitigate,
             treatmentPlan: "Document runbooks and cross-train a second engineer.", nextReviewDate: Today.AddMonths(2));
         keyPerson.ChangeStatus(RiskStatus.Monitoring, null, users.Auditee2Id, _now);
@@ -503,26 +504,26 @@ public sealed class DemoDataSeeder(
             "reputational", users.Auditee1Id, null, 2, 3, Today.AddMonths(3), users.Manager1Id);
 
         AddRisk(
-            "Strategic risk — delayed digital-channel migration", "The migration of retail customers to the digital banking channel is behind plan, prolonging reliance on higher-cost branch servicing.",
+            "Strategic risk — delayed digital-transformation programme", "The move of customers and suppliers to self-service digital channels is behind plan, prolonging reliance on higher-cost manual processing.",
             "strategic", users.Auditee1Id, null, 3, 4, Today.AddMonths(9), users.Manager2Id);
 
         AddRisk(
-            "Credit risk model validation gap", "The retail-lending scorecard has not been independently revalidated since its last recalibration.",
-            "credit", users.Auditee3Id, entities.CreditId, 3, 4, Today.AddMonths(6), users.Auditor3Id);
+            "Supplier risk-scoring model validation gap", "The supplier financial-health scoring model has not been independently revalidated since its last recalibration.",
+            "credit", users.Auditee3Id, entities.ProcurementId, 3, 4, Today.AddMonths(6), users.Auditor3Id);
 
         var financialReporting = AddRisk(
-            "Financial-reporting misstatement risk in loan-loss provisioning", "IFRS 9 expected-credit-loss inputs rely on a manually-maintained spreadsheet model outside the core ledger.",
+            "Financial-reporting misstatement risk in inventory provisioning", "Inventory obsolescence and valuation provisions rely on a manually-maintained spreadsheet model outside the general ledger.",
             "financial", users.Auditee1Id, null, 3, 4, Today.AddMonths(3), users.Manager1Id,
             residualLikelihood: 2, residualImpact: 3, strategy: RiskTreatmentStrategy.Mitigate,
-            treatmentPlan: "Migrate the ECL model into a controlled, version-managed calculation engine.", nextReviewDate: Today.AddMonths(5));
+            treatmentPlan: "Migrate the provisioning model into a controlled, version-managed calculation engine.", nextReviewDate: Today.AddMonths(5));
 
-        var citRisk = AddRisk(
-            "Legacy cash-in-transit risk (Port Harcourt)", "The branch's cash-in-transit provider used an unarmed escort model, exposing cash movements to robbery risk.",
-            "operational", users.Auditee3Id, entities.PhBranchId, 2, 3, Today.AddMonths(1), users.Auditor1Id,
+        var transitRisk = AddRisk(
+            "Legacy goods-in-transit security risk (Southern Site)", "The site's haulage provider used an untracked, unescorted delivery model, exposing high-value consignments to theft in transit.",
+            "operational", users.Auditee3Id, entities.SouthernSiteId, 2, 3, Today.AddMonths(1), users.Auditor1Id,
             residualLikelihood: 1, residualImpact: 2, strategy: RiskTreatmentStrategy.Transfer,
-            treatmentPlan: "Move to an armed-escort CIT provider under an insured contract.", nextReviewDate: Today.AddMonths(12));
-        citRisk.ChangeStatus(RiskStatus.Closed,
-            "CIT contract renegotiated with an armed-escort provider; residual exposure is now within the board-approved risk appetite.",
+            treatmentPlan: "Move to a GPS-tracked haulage provider under an insured contract.", nextReviewDate: Today.AddMonths(12));
+        transitRisk.ChangeStatus(RiskStatus.Closed,
+            "Haulage contract renegotiated with a tracked, insured provider; residual exposure is now within the board-approved risk appetite.",
             users.Auditee3Id, _now);
 
         await db.SaveChangesAsync(ct);
@@ -544,47 +545,47 @@ public sealed class DemoDataSeeder(
     private async Task<DemoAudits> SeedAuditsAsync(DemoUsers users, DemoTemplates templates, AnnualPlan plan, DemoEntities entities, CancellationToken ct)
     {
         var items = plan.Items.OrderBy(i => i.PlannedStartDate).ToList();
-        // items: [0]=Lagos branch, [1]=Abuja branch, [2]=Core banking, [3]=Credit, [4]=Treasury, [5]=PH branch
+        // items: [0]=Central site, [1]=Northern site, [2]=ERP, [3]=Procurement, [4]=Finance, [5]=Southern site
 
-        // 1. Completed — Lagos branch, started 90d ago, completed 20d ago.
+        // 1. Completed — Central site, started 90d ago, completed 20d ago.
         var completed1 = await BuildAuditAsync(
-            "Lagos Main Branch Operations Audit FY2026", "branch_operations", templates.BranchOps.Id, items[0].Id,
+            "Central Site Operations Audit FY2026", "operational", templates.SiteOps.Id, items[0].Id,
             users.Manager1Id, users.Auditee1Id, [users.Auditor1Id, users.Auditor2Id],
             startOffsetDays: -90, targetOffsetDays: -20, plan, ct);
 
-        // 2. Completed — Core banking ITGC, started 80d ago, completed 15d ago.
+        // 2. Completed — ERP ITGC, started 80d ago, completed 15d ago.
         var completed2 = await BuildAuditAsync(
-            "Core Banking IT General Controls Review FY2026", "it_general_controls", templates.ItGeneralControls.Id, items[2].Id,
+            "ERP IT General Controls Review FY2026", "it_general_controls", templates.ItGeneralControls.Id, items[2].Id,
             users.Manager2Id, users.Auditee2Id, [users.Auditor2Id, users.Auditor3Id],
             startOffsetDays: -80, targetOffsetDays: -15, plan, ct);
 
-        // 3. Under review — Credit risk, started 40d ago.
+        // 3. Under review — Procurement compliance, started 40d ago.
         var underReview = await BuildAuditAsync(
-            "Credit Risk Review FY2026", "credit_review", templates.CreditRisk.Id, items[3].Id,
+            "Procurement & Third-Party Compliance Review FY2026", "regulatory_compliance", templates.ProcureToPay.Id, items[3].Id,
             users.Manager2Id, users.Auditee3Id, [users.Auditor1Id, users.Auditor3Id],
             startOffsetDays: -40, targetOffsetDays: 10, plan, ct);
 
-        // 4. In progress — Abuja branch, started 25d ago.
+        // 4. In progress — Northern site, started 25d ago.
         var inProgress1 = await BuildAuditAsync(
-            "Abuja Branch Operations Audit FY2026", "branch_operations", templates.BranchOps.Id, items[1].Id,
+            "Northern Site Operations Audit FY2026", "operational", templates.SiteOps.Id, items[1].Id,
             users.Manager1Id, users.Auditee2Id, [users.Auditor2Id],
             startOffsetDays: -25, targetOffsetDays: 20, plan, ct);
 
-        // 5. In progress — Treasury, started 15d ago.
+        // 5. In progress — Finance, started 15d ago.
         var inProgress2 = await BuildAuditAsync(
-            "Treasury Controls Review FY2026", "treasury", templates.CreditRisk.Id, items[4].Id,
+            "Financial Controls Review FY2026", "financial_statement", templates.ProcureToPay.Id, items[4].Id,
             users.Manager1Id, users.Auditee3Id, [users.Auditor3Id],
             startOffsetDays: -15, targetOffsetDays: 30, plan, ct);
 
-        // 6. Planned — Port Harcourt branch, starts in 10d (kept in Planned state).
+        // 6. Planned — Southern site, starts in 10d (kept in Planned state).
         var planned = await BuildAuditAsync(
-            "Port Harcourt Branch Operations Audit FY2026", "branch_operations", templates.BranchOps.Id, items[5].Id,
+            "Southern Site Operations Audit FY2026", "operational", templates.SiteOps.Id, items[5].Id,
             users.Manager1Id, users.Auditee3Id, [users.Auditor1Id],
             startOffsetDays: 10, targetOffsetDays: 55, plan, ct, stopAt: AuditLifecycleStage.Planned);
 
-        // 7. Draft — Operations (no plan link), stays in Draft.
+        // 7. Draft — Shared services (no plan link), stays in Draft.
         var draft = await BuildAuditAsync(
-            "Operations & Settlements Review (Draft)", "operational", templates.CreditRisk.Id, planItemId: null,
+            "Shared Services Operations Review (Draft)", "operational", templates.ProcureToPay.Id, planItemId: null,
             users.Manager2Id, users.Auditee1Id, [users.Auditor2Id],
             startOffsetDays: 30, targetOffsetDays: 75, plan, ct, stopAt: AuditLifecycleStage.Draft);
 
@@ -686,7 +687,7 @@ public sealed class DemoDataSeeder(
             else if (index % 5 == 2)
             {
                 verdict = ResponseVerdict.Na;
-                comment = "Not applicable to this branch's operating model.";
+                comment = "Not applicable to this unit's operating model.";
             }
             else
             {
@@ -746,12 +747,12 @@ public sealed class DemoDataSeeder(
     {
         var created = new List<AuditException>();
 
-        // The recurrence cluster: three CLOSED cash-handling exceptions on the Lagos branch entity (same entity +
+        // The recurrence cluster: three CLOSED cash-handling exceptions on the Central Site entity (same entity +
         // category), all closed within the recurrence window. Drives RecurrenceClusterService to detect a cluster.
         for (var n = 0; n < 3; n++)
         {
             var ex = await RaiseExceptionAsync(
-                audits.Completed1Id, entities.LagosBranchId, "Cash reconciliation not performed daily",
+                audits.Completed1Id, entities.CentralSiteId, "Site cash receipts not reconciled daily",
                 ExceptionSeverity.High, "cash_handling", users.Auditee1Id, users.Auditor1Id,
                 raisedOffsetDays: -70 + (n * 10), ct);
             await DriveExceptionToClosedAsync(ex, users, closedOffsetDays: -30 + (n * 5), ct);
@@ -760,54 +761,54 @@ public sealed class DemoDataSeeder(
 
         // A fourth closed cash-handling exception on the same entity (reinforces the cluster; will be a recurrence).
         var ex4 = await RaiseExceptionAsync(
-            audits.Completed1Id, entities.LagosBranchId, "Vault dual-control not evidenced",
+            audits.Completed1Id, entities.CentralSiteId, "Cash-safe dual control not evidenced",
             ExceptionSeverity.Medium, "cash_handling", users.Auditee1Id, users.Auditor1Id, raisedOffsetDays: -25, ct);
         await DriveExceptionToClosedAsync(ex4, users, closedOffsetDays: -10, ct);
         created.Add(ex4);
 
-        // A CLOSED access-management exception on the core-banking entity (a second, distinct closed finding).
+        // A CLOSED access-management exception on the ERP entity (a second, distinct closed finding).
         var exItgc = await RaiseExceptionAsync(
-            audits.Completed2Id, entities.CoreBankingId, "Privileged access not reviewed quarterly",
-            ExceptionSeverity.High, "access_management", users.Auditee2Id, users.Auditor2Id, raisedOffsetDays: -60, ct);
+            audits.Completed2Id, entities.ErpId, "Privileged access not reviewed quarterly",
+            ExceptionSeverity.High, "it_security", users.Auditee2Id, users.Auditor2Id, raisedOffsetDays: -60, ct);
         await DriveExceptionToClosedAsync(exItgc, users, closedOffsetDays: -12, ct);
         created.Add(exItgc);
 
         // Under-review audit: a PENDING-CLOSURE exception (Critical → will sit on CIA hold) and a MAP-APPROVED one.
         var exPending = await RaiseExceptionAsync(
-            audits.UnderReviewId, entities.CreditId, "Credit appraisals lack independent review",
-            ExceptionSeverity.Critical, "credit_process", users.Auditee3Id, users.Auditor1Id, raisedOffsetDays: -30, ct);
+            audits.UnderReviewId, entities.ProcurementId, "Contracts awarded without independent bid evaluation",
+            ExceptionSeverity.Critical, "operational", users.Auditee3Id, users.Auditor1Id, raisedOffsetDays: -30, ct);
         await DriveExceptionToPendingClosureAsync(exPending, users, ct); // Critical → PendingClosure + CiaPending
         created.Add(exPending);
 
         var exApproved = await RaiseExceptionAsync(
-            audits.UnderReviewId, entities.CreditId, "Collateral valuations outdated",
-            ExceptionSeverity.High, "credit_process", users.Auditee3Id, users.Auditor3Id, raisedOffsetDays: -28, ct);
+            audits.UnderReviewId, entities.ProcurementId, "Supplier anti-bribery due diligence outdated",
+            ExceptionSeverity.High, "regulatory", users.Auditee3Id, users.Auditor3Id, raisedOffsetDays: -28, ct);
         await SubmitAndApproveMapAsync(exApproved, users, ct); // stops at MapApproved
         created.Add(exApproved);
 
         // In-progress audit: a MAP-SUBMITTED exception and an OPEN one (no MAP yet).
         var exMapSubmitted = await RaiseExceptionAsync(
-            audits.InProgress1Id, entities.AbujaBranchId, "Teller till limits exceeded without escalation",
+            audits.InProgress1Id, entities.NorthernSiteId, "Petty-cash float limits exceeded without escalation",
             ExceptionSeverity.Medium, "cash_handling", users.Auditee2Id, users.Auditor2Id, raisedOffsetDays: -20, ct);
         await SubmitMapAsync(exMapSubmitted, users, ct); // stops at MapSubmitted
         created.Add(exMapSubmitted);
 
         var exOpen = await RaiseExceptionAsync(
-            audits.InProgress1Id, entities.AbujaBranchId, "Dormant accounts not flagged",
-            ExceptionSeverity.Low, "account_management", users.Auditee2Id, users.Auditor2Id, raisedOffsetDays: -18, ct);
+            audits.InProgress1Id, entities.NorthernSiteId, "Near-miss corrective actions not tracked to closure",
+            ExceptionSeverity.Low, "regulatory", users.Auditee2Id, users.Auditor2Id, raisedOffsetDays: -18, ct);
         created.Add(exOpen); // stays Open
 
-        // Treasury in-progress: one more OPEN exception for portfolio spread.
+        // Finance in-progress: one more OPEN exception for portfolio spread.
         var exOpen2 = await RaiseExceptionAsync(
-            audits.InProgress2Id, entities.TreasuryId, "Position limits monitored manually",
-            ExceptionSeverity.Medium, "treasury_process", users.Auditee3Id, users.Auditor3Id, raisedOffsetDays: -10, ct);
+            audits.InProgress2Id, entities.FinanceId, "Bank reconciliations not independently reviewed",
+            ExceptionSeverity.Medium, "financial_reporting", users.Auditee3Id, users.Auditor3Id, raisedOffsetDays: -10, ct);
         created.Add(exOpen2);
 
-        // Quantify financial exposure on the material findings (feeds $-exposure reporting; NGN base currency).
-        exPending.SetFinancialImpact(45_000_000m, "NGN");
-        exApproved.SetFinancialImpact(12_500_000m, "NGN");
-        exItgc.SetFinancialImpact(8_000_000m, "NGN");
-        exOpen2.SetFinancialImpact(30_000_000m, "NGN");
+        // Quantify financial exposure on the material findings (feeds $-exposure reporting; USD as the demo currency).
+        exPending.SetFinancialImpact(450_000m, "USD");
+        exApproved.SetFinancialImpact(125_000m, "USD");
+        exItgc.SetFinancialImpact(80_000m, "USD");
+        exOpen2.SetFinancialImpact(300_000m, "USD");
         await db.SaveChangesAsync(ct);
 
         return created;
@@ -858,7 +859,7 @@ public sealed class DemoDataSeeder(
     {
         // A remediation action cannot be due after the exception's target date, so clamp to the target date.
         exception.AddMapAction("Introduce dual control and evidence daily reconciliation.", exception.OwnerUserId, exception.TargetDate, "screenshot");
-        exception.AddMapAction("Retrain branch staff on the control procedure.", exception.OwnerUserId, exception.TargetDate, "attendance_register");
+        exception.AddMapAction("Retrain the responsible staff on the control procedure.", exception.OwnerUserId, exception.TargetDate, "attendance_register");
         exception.SubmitMap(exception.OwnerUserId, _now);
         await db.SaveChangesAsync(ct);
     }
@@ -919,7 +920,7 @@ public sealed class DemoDataSeeder(
 
         // Case 1 — recommendation drafted only.
         var c1 = SanctionsCase.Trigger(closed[0].Id, users.Auditee1Id, closed[0].Category, closed[0].Severity, closed[0].IsRecurrence, users.Manager1Id, _now);
-        c1.RecordRecommendation("Written warning to the branch operations officer.", gridVersion: 1,
+        c1.RecordRecommendation("Written warning to the site cash officer.", gridVersion: 1,
             gridRange: "Written warning to two-week suspension", withinRange: true, deviationReason: null, users.Manager1Id, _now);
         db.SanctionsCases.Add(c1);
 
@@ -940,7 +941,7 @@ public sealed class DemoDataSeeder(
 
         // Case 4 — referred to DC → DC decision recorded → appealed.
         var c4 = SanctionsCase.Trigger(closed[3].Id, users.Auditee3Id, closed[3].Category, closed[3].Severity, closed[3].IsRecurrence, users.Manager2Id, _now);
-        c4.RecordRecommendation("Dismissal recommended for the critical credit-process failure.", gridVersion: 1,
+        c4.RecordRecommendation("Dismissal recommended for the repeated cash-safe dual-control failure.", gridVersion: 1,
             gridRange: "Final written warning to dismissal", withinRange: false,
             deviationReason: "Aggravating factors: repeated breach and material loss exposure.", users.Manager2Id, _now);
         c4.SubmitRecommendation(users.Manager2Id, _now);
@@ -987,7 +988,7 @@ public sealed class DemoDataSeeder(
     }
 
     // ---------------------------------------------------------------------------------------------------------
-    // M9 — Analytics. Run the recurrence scan so the ≥3 closed cash-handling exceptions on the Lagos entity surface
+    // M9 — Analytics. Run the recurrence scan so the ≥3 closed cash-handling exceptions on the Central Site surface
     // as a cluster. Dashboards are already seeded by DbSeeder and compute live.
     // ---------------------------------------------------------------------------------------------------------
     private async Task SeedAnalyticsAsync(CancellationToken ct)
@@ -1067,7 +1068,7 @@ public sealed class DemoDataSeeder(
         }
 
         // Three AC action items in varied states.
-        var itemOpen = AcActionItem.Create("Tighten branch cash controls bank-wide", "Per AC review of the Lagos findings.",
+        var itemOpen = AcActionItem.Create("Tighten site cash controls organisation-wide", "Per AC review of the Central Site findings.",
             users.Manager1Id, Today.AddDays(60), users.AcMember1Id);
 
         var itemInProgress = AcActionItem.Create("Accelerate privileged-access review cadence", "Move to monthly reviews.",
@@ -1086,7 +1087,7 @@ public sealed class DemoDataSeeder(
         db.AcComments.Add(AcComment.Create(AcCommentTargetType.Pack, pack.Id,
             "The committee notes the recurring cash-handling weakness and requests a follow-up next quarter.", users.AcChairId, _now));
         db.AcComments.Add(AcComment.Create(AcCommentTargetType.Finding, itemOpen.Id,
-            "Please provide a remediation timeline for the branch cash controls.", users.AcMember2Id, _now));
+            "Please provide a remediation timeline for the site cash controls.", users.AcMember2Id, _now));
         await db.SaveChangesAsync(ct);
     }
 
@@ -1098,18 +1099,18 @@ public sealed class DemoDataSeeder(
     {
         var smtp = IntegrationConfiguration.Create(
             IntegrationType.Smtp, "Primary SMTP Relay",
-            "{\"host\":\"smtp.internal.bank\",\"port\":587,\"senderDomain\":\"auditx.bank\"}",
+            "{\"host\":\"smtp.internal.example\",\"port\":587,\"senderDomain\":\"auditx.example\"}",
             credentialProtector.Protect("smtp-service-account-password"), timeoutSeconds: 30);
 
         var siem = IntegrationConfiguration.Create(
             IntegrationType.Siem, "Enterprise SIEM Feed",
-            "{\"endpoint\":\"https://siem.internal.bank/ingest\",\"format\":\"cef\"}",
+            "{\"endpoint\":\"https://siem.internal.example/ingest\",\"format\":\"cef\"}",
             encryptedCredentials: null, timeoutSeconds: 60);
 
         db.Integrations.AddRange(smtp, siem);
 
         var webhook = WebhookSubscription.Create(
-            "https://ops.internal.bank/hooks/auditx",
+            "https://ops.internal.example/hooks/auditx",
             [Domain.AuditTrail.AuditEventTypes.ExceptionRaised, Domain.AuditTrail.AuditEventTypes.ReportGenerated],
             credentialProtector.Protect("webhook-hmac-shared-secret"),
             retryPolicyJson: "{\"maxAttempts\":5,\"backoffSeconds\":60}");
@@ -1119,7 +1120,7 @@ public sealed class DemoDataSeeder(
     }
 
     // ---------------------------------------------------------------------------------------------------------
-    // M15 — Administration. Ensure bank settings exist (DbSeeder seeds them) and set explicit resource limits so
+    // M15 — Administration. Ensure institution settings exist (DbSeeder seeds them) and set explicit resource limits so
     // the admin resource-limits screen shows configured values rather than defaults.
     // ---------------------------------------------------------------------------------------------------------
     private async Task SeedAdministrationAsync(CancellationToken ct)
