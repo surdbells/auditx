@@ -9,6 +9,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { PasswordFieldComponent } from '../../../../shared/components/password-field/password-field.component';
@@ -34,6 +35,7 @@ export type ResetPasswordDialogResult = AdminResetPasswordRequest & { username?:
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     TranslatePipe,
     PasswordFieldComponent,

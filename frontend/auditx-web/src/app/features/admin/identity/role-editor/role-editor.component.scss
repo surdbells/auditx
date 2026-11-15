@@ -73,6 +73,17 @@
   flex: 0 0 auto;
 }
 
+/* A permission that always applies to the whole organisation: a quiet label in the scope column. */
+.perm-scope--fixed {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 0.75rem;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  cursor: help;
+}
+
 .editor__actions {
   display: flex;
   justify-content: flex-end;

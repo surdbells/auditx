@@ -14,6 +14,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SharedLinksService } from '../../../core/services/shared-links.service';
@@ -40,6 +41,7 @@ export interface ReportShareDialogData {
     MatDialogModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     IconComponent,
     MatTooltipModule,

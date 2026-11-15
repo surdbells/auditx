@@ -8,6 +8,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 
 import { VERIFICATION_RESULTS, VerificationResult } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -27,6 +28,7 @@ export interface VerificationDialogResult {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     TranslatePipe,
   ],

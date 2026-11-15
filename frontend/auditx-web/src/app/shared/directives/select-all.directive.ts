@@ -37,7 +37,13 @@ export class SelectAllDirective implements OnDestroy {
     bar.className = 'ax-select-all';
     bar.appendChild(this.button(this.i18n.translate('common.selectAll'), () => this.setAll(true)));
     bar.appendChild(this.button(this.i18n.translate('common.clearAll'), () => this.setAll(false)));
-    panel.insertBefore(bar, panel.firstChild);
+    // Join the panel's search header when there is one (both pinned to the top would overlap).
+    const head = panel.querySelector(':scope > .ax-select-head');
+    if (head) {
+      head.appendChild(bar);
+    } else {
+      panel.insertBefore(bar, panel.firstChild);
+    }
   }
 
   private button(label: string, onClick: () => void): HTMLButtonElement {
@@ -55,10 +61,20 @@ export class SelectAllDirective implements OnDestroy {
     return btn;
   }
 
+  /**
+   * Select all / Clear act on the options in view: with a search typed, only the matches are added or removed and
+   * the rest of the selection is kept; with no search, every option.
+   */
   private setAll(select: boolean): void {
+    const shown = this.select.options.filter((o) => o._getHostElement().style.display !== 'none');
+    const filtered = shown.length < this.select.options.length;
+    const current: unknown[] = Array.isArray(this.select.value) ? this.select.value : [];
+    const shownValues = new Set(shown.map((o) => o.value));
     const values = select
-      ? this.select.options.filter((o) => !o.disabled).map((o) => o.value)
-      : [];
+      ? [...new Set([...(filtered ? current : []), ...shown.filter((o) => !o.disabled).map((o) => o.value)])]
+      : filtered
+        ? current.filter((v) => !shownValues.has(v))
+        : [];
     const control = this.select.ngControl?.control;
     if (control) {
       control.setValue(values);

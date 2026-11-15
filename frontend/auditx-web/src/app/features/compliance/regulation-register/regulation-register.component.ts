@@ -17,6 +17,7 @@ import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 
 import { RegulationsService } from '../../../core/services/regulations.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -84,6 +85,7 @@ const REGULATION_GUIDE: PageGuide = {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatCheckboxModule,
     MatButtonModule,
     IconComponent,

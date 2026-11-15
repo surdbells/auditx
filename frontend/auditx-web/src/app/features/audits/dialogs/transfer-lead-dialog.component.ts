@@ -9,6 +9,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 
 import { AuditTeamMember } from '../../../core/models';
 
@@ -35,6 +36,7 @@ export interface TransferLeadDialogResult {
     MatDialogModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatCheckboxModule,
     MatButtonModule,
   ],

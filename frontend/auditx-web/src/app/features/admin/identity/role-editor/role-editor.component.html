@@ -94,18 +94,26 @@
                         }
                       </mat-checkbox>
 
-                      <mat-form-field appearance="outline" class="perm-scope" subscriptSizing="dynamic">
-                        <mat-label>{{ 'identity.roleEditor.scope' | t }}</mat-label>
-                        <mat-select
-                          [value]="item.scopeType"
-                          [disabled]="!item.selected || isReadOnly()"
-                          (selectionChange)="setScope(item, $event.value)"
-                        >
-                          @for (scope of scopeOptions(item.permission); track scope) {
-                            <mat-option [value]="scope">{{ scopeLabels[scope] | t }}</mat-option>
-                          }
-                        </mat-select>
-                      </mat-form-field>
+                      <!-- Only permissions on audits, entities, findings and reports can be limited to an org unit; for
+                           the rest the scope is fixed, so it is shown as a label rather than a one-choice list. -->
+                      @if (item.permission.orgUnitScopable) {
+                        <mat-form-field appearance="outline" class="perm-scope" subscriptSizing="dynamic">
+                          <mat-label>{{ 'identity.roleEditor.scope' | t }}</mat-label>
+                          <mat-select
+                            [value]="item.scopeType"
+                            [disabled]="isReadOnly()"
+                            (selectionChange)="setScope(item, $event.value)"
+                          >
+                            @for (scope of scopeOptions(item.permission); track scope) {
+                              <mat-option [value]="scope">{{ scopeLabels[scope] | t }}</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                      } @else {
+                        <span class="perm-scope perm-scope--fixed" [matTooltip]="'identity.roleEditor.scopeFixedHint' | t">
+                          {{ 'identity.scope.global' | t }}
+                        </span>
+                      }
                     </div>
                   }
                 </div>

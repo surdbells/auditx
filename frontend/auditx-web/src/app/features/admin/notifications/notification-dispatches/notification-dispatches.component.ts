@@ -14,6 +14,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 
 import { NotificationAdminService } from '../../../../core/services/notifications-admin.service';
@@ -41,6 +42,7 @@ const DEFAULT_PAGE_SIZE = 25;
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     IconComponent,
     TranslatePipe,

@@ -16,6 +16,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 
 import { IconComponent } from '../../../../core/icons/icon.component';
 import { RootCauseGapsService } from '../../../../core/services/root-cause-gaps.service';
@@ -44,6 +45,7 @@ export interface RootCauseGapDetailDialogData {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     IconComponent,
     TranslatePipe,

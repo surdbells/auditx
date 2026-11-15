@@ -7,6 +7,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import { IconComponent } from '../../../../core/icons/icon.component';
@@ -77,6 +78,7 @@ interface EditableSet {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatCheckboxModule,
     MatSlideToggleModule,
     MatButtonModule,

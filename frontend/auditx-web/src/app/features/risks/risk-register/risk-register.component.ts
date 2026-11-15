@@ -17,6 +17,7 @@ import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 
@@ -99,6 +100,7 @@ const RISK_GUIDE: PageGuide = {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatCheckboxModule,
     MatButtonModule,
     IconComponent,

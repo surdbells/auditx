@@ -1774,6 +1774,7 @@
   "identity.grantRole.wholeOrganisation": "Whole organisation",
   "identity.grantRole.organisationWide": "Every permission of this role applies to the whole organisation. To limit it to an org unit, set some of its permissions to “Assigned org unit” in the role editor.",
   "identity.roleEditor.scopeHint": "“Assigned org unit” limits the permission to the org unit the role is granted for, and the units below it.",
+  "identity.roleEditor.scopeFixedHint": "This permission always applies to the whole organisation. Only permissions on audits, entities, findings and reports can be limited to an org unit.",
   "identity.reject.title": "Reject change",
   "identity.reject.hintBefore": "Provide a reason for rejecting ",
   "identity.reject.hintAfter": ". This is recorded in the audit trail (minimum {{min}} characters).",

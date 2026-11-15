@@ -21,6 +21,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 import { SelectAllDirective } from '../../../../shared/directives/select-all.directive';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
@@ -91,6 +92,7 @@ function jsonValidator(control: AbstractControl): ValidationErrors | null {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     SelectAllDirective,
     MatSlideToggleModule,
     MatButtonModule,

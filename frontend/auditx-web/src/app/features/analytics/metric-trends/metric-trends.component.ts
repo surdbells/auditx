@@ -12,6 +12,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { RouterLink } from '@angular/router';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -79,6 +80,7 @@ interface MetricOption {
     MatButtonToggleModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     IconComponent,
     TranslatePipe,
     LineChartComponent,

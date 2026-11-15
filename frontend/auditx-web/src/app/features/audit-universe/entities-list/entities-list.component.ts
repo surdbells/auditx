@@ -19,6 +19,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 import { debounceTime } from 'rxjs';
 
@@ -101,6 +102,7 @@ const UNIVERSE_GUIDE: PageGuide = {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatCheckboxModule,
     MatButtonModule,
     IconComponent,

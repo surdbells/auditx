@@ -13,6 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
@@ -122,6 +123,7 @@ const STATUS_OPTIONS = [
     IconComponent,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatTooltipModule,
     LoadingComponent,
     EmptyStateComponent,

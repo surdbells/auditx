@@ -19,6 +19,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 
 import { UniverseService } from '../../../core/services/universe.service';
@@ -74,6 +75,7 @@ interface ScoreRow {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     MatTableModule,
     MatExpansionModule,

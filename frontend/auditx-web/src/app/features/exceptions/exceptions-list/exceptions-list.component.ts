@@ -17,6 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { debounceTime } from 'rxjs';
@@ -112,6 +113,7 @@ function toIsoEnd(value: Date | null): string | undefined {
     MatTableModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatInputModule,
     MatDatepickerModule,
     MatButtonModule,

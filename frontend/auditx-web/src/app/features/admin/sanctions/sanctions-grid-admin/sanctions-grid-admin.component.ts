@@ -14,6 +14,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 
 import { SanctionsService } from '../../../../core/services/sanctions.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -117,6 +118,7 @@ interface GridRow {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     IconComponent,
     TranslatePipe,
     LoadingComponent,

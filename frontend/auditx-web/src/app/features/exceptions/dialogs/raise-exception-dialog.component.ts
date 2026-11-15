@@ -12,6 +12,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 
 import { ReferenceDataLookupService } from '../../../core/services/reference-data-lookup.service';
 import {
@@ -57,6 +58,7 @@ function toDateOnly(value: Date | null): string {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatDatepickerModule,
     MatCheckboxModule,
     MatButtonModule,

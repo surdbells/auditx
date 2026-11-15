@@ -8,6 +8,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 import { UserLookupService } from '../../../../core/services/user-lookup.service';
@@ -33,6 +34,7 @@ export interface SetManagerResult {
     MatDialogModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     TranslatePipe,
   ],

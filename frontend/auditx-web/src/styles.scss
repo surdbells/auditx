@@ -450,6 +450,57 @@ html[data-theme='dark'] *::-webkit-scrollbar-thumb {
   min-width: 0;
 }
 
+// ---- Search header injected into every select panel (SelectSearchDirective) ---
+// The panel lives in the CDK overlay (outside component style scope), so this is global.
+.ax-select-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-top: -8px; // over the panel's own top padding
+  margin-bottom: 4px;
+  background: var(--mat-sys-surface-container, #fff);
+  border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+}
+.ax-select-search {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  color: var(--mat-sys-on-surface-variant, #64748b);
+}
+.ax-select-search svg {
+  flex: 0 0 auto;
+}
+.ax-select-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--mat-sys-on-surface, #0f172a);
+  padding: 0.2rem 0;
+}
+.ax-select-search__input::placeholder {
+  color: var(--mat-sys-on-surface-variant, #64748b);
+}
+.ax-select-search:focus-within {
+  color: var(--mat-sys-primary, #4f46e5);
+}
+.ax-select-search__empty {
+  margin: 0;
+  padding: 0.6rem 1rem;
+  color: var(--mat-sys-on-surface-variant, #64748b);
+  font-size: 0.85rem;
+}
+// The select-all bar inside the search header is part of it, not a second sticky bar.
+.ax-select-head .ax-select-all {
+  position: static;
+  border-bottom: none;
+  border-top: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+}
+
 // ---- Select-all / Clear header injected into every multi-select panel ---
 // The panel lives in the CDK overlay (outside component style scope), so this is global.
 .ax-select-all {

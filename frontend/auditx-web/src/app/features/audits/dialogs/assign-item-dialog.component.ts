@@ -8,6 +8,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 
 /** A team member selectable as an item assignee. */
 export interface AssignableMember {
@@ -38,6 +39,7 @@ export interface AssignItemDialogResult {
     MatDialogModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
   ],
   template: `

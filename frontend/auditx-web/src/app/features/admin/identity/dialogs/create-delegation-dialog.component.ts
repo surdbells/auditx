@@ -21,6 +21,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 
 import { UserLookupService } from '../../../../core/services/user-lookup.service';
 import { CreateDelegationRequest, RoleDto } from '../../../../core/models';
@@ -49,6 +50,7 @@ function dateRangeValidator(group: AbstractControl): ValidationErrors | null {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatDatepickerModule,
     MatButtonModule,
   ],

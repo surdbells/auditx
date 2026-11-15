@@ -14,6 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../directives/select-search.directive';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { RatingScale, ResponseOptionSet, ResponseType } from '../../../core/models';
@@ -39,7 +40,7 @@ import {
 @Component({
   selector: 'app-response-config-fields',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgTemplateOutlet, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, TranslatePipe],
+  imports: [NgTemplateOutlet, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, SelectSearchDirective, TranslatePipe],
   template: `
     <div [formGroup]="group()" class="rcf">
       <mat-form-field appearance="outline" class="rcf__field" subscriptSizing="dynamic">

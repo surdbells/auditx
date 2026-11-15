@@ -13,6 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 
 import { WebhooksService } from '../../../../core/services/webhooks.service';
@@ -45,6 +46,7 @@ const DEFAULT_PAGE_SIZE = 25;
     MatTableModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     IconComponent,
     TranslatePipe,

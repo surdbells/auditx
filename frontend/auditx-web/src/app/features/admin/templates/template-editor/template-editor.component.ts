@@ -17,6 +17,7 @@ import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   CdkDropList,
@@ -106,6 +107,7 @@ const TEMPLATE_EDITOR_GUIDE: PageGuide = {
     IconComponent,
     MatMenuModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatChipsModule,
     MatTooltipModule,
     CdkDropList,

@@ -8,6 +8,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -35,6 +36,7 @@ export interface MarkRecurrenceDialogResult {
     MatDialogModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     TranslatePipe,
   ],

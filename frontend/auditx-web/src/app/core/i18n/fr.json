@@ -1774,6 +1774,7 @@
   "identity.grantRole.wholeOrganisation": "Toute l'organisation",
   "identity.grantRole.organisationWide": "Toutes les permissions de ce rôle s'appliquent à toute l'organisation. Pour le limiter à une unité, passez certaines de ses permissions à « Unité attribuée » dans l'éditeur de rôle.",
   "identity.roleEditor.scopeHint": "« Unité attribuée » limite la permission à l'unité pour laquelle le rôle est attribué, et aux unités qui en dépendent.",
+  "identity.roleEditor.scopeFixedHint": "Cette permission s'applique toujours à toute l'organisation. Seules les permissions sur les audits, entités, constats et rapports peuvent être limitées à une unité.",
   "identity.reject.title": "Rejeter la modification",
   "identity.reject.hintBefore": "Indiquez un motif pour rejeter ",
   "identity.reject.hintAfter": ". Ceci est consigné dans la piste d'audit (minimum {{min}} caractères).",

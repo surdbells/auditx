@@ -18,6 +18,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 
 import { MapActionInput, UserDto } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -59,6 +60,7 @@ type ActionGroup = FormGroup<{
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatDatepickerModule,
     IconComponent,
     MatButtonModule,

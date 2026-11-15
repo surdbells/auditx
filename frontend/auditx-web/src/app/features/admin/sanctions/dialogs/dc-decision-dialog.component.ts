@@ -8,6 +8,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 
 import { DcDecisionType } from '../../../../core/models';
 
@@ -33,6 +34,7 @@ const DECISIONS: { value: DcDecisionType; label: string }[] = [
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
   ],
   template: `

@@ -13,6 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 
 import { RiskDimensionsService } from '../../../core/services/risk-dimensions.service';
@@ -61,6 +62,7 @@ const RISK_DIMENSIONS_GUIDE: PageGuide = {
     MatTableModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     IconComponent,
     LoadingComponent,

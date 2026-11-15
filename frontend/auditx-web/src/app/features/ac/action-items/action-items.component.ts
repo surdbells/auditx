@@ -12,6 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 
 import { AcService } from '../../../core/services/ac.service';
@@ -107,6 +108,7 @@ const AC_ACTION_ITEMS_GUIDE: PageGuide = {
     IconComponent,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     LoadingComponent,
     EmptyStateComponent,
     ErrorStateComponent,

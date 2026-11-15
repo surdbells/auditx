@@ -8,6 +8,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../directives/select-search.directive';
 
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -26,7 +27,7 @@ export const LOAD_ALL_CAP = 5000;
 @Component({
   selector: 'app-paginator',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, IconComponent, MatSelectModule, TranslatePipe],
+  imports: [MatButtonModule, IconComponent, MatSelectModule, SelectSearchDirective, TranslatePipe],
   template: `
     <div class="ax-pager">
       <div class="ax-pager__summary">

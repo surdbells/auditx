@@ -17,6 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
@@ -144,6 +145,7 @@ const STANDALONE_REPORTS_GUIDE: PageGuide = {
     MatCheckboxModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     IconComponent,
     MatProgressSpinnerModule,
     MatTooltipModule,

@@ -10,6 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 import { IconComponent } from '../../../../core/icons/icon.component';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
@@ -108,6 +109,7 @@ const DUAL_CONTROL_GUIDE: PageGuide = {
     MatSlideToggleModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     IconComponent,
     MatProgressBarModule,
     TranslatePipe,

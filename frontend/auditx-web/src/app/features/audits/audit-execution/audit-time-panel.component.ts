@@ -17,6 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { TimeTrackingService } from '../../../core/services/time-tracking.service';
@@ -53,6 +54,7 @@ const LOGGABLE = new Set(['planned', 'in_progress', 'under_review', 'completed']
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     IconComponent,
     MatTooltipModule,

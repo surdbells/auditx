@@ -12,6 +12,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 
 import { AdministrationService } from '../../../../core/services/administration.service';
@@ -99,6 +100,7 @@ const BACKUP_GUIDE: PageGuide = {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     LoadingComponent,
     ErrorStateComponent,

@@ -14,6 +14,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 
 import { IconComponent } from '../../../core/icons/icon.component';
 import { ControlsService } from '../../../core/services/controls.service';
@@ -40,6 +41,7 @@ export interface ControlRisksDialogData {
     MatDialogModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     IconComponent,
     TranslatePipe,

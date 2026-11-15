@@ -11,6 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { SelectAllDirective } from '../../../shared/directives/select-all.directive';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
@@ -74,6 +75,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    SelectSearchDirective,
     SelectAllDirective,
     MatChipsModule,
     MatSlideToggleModule,

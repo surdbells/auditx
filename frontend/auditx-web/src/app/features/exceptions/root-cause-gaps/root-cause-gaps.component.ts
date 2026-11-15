@@ -14,6 +14,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
+import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { MatTableModule } from '@angular/material/table';
 
 import { RootCauseGapsService } from '../../../core/services/root-cause-gaps.service';
@@ -80,6 +81,7 @@ const ROOT_CAUSE_GAPS_GUIDE: PageGuide = {
     MatTableModule,
     MatFormFieldModule,
     MatSelectModule,
+    SelectSearchDirective,
     MatButtonModule,
     MatMenuModule,
     IconComponent,
