@@ -13,6 +13,7 @@ using AuditX.Application.Sanctions;
 using AuditX.Domain.Ac;
 using AuditX.Domain.Authorization;
 using AuditX.Domain.Configuration;
+using AuditX.Domain.Engagement;
 using AuditX.Domain.Enums;
 using AuditX.Domain.Evidence;
 using AuditX.Domain.Exceptions;
@@ -629,16 +630,53 @@ public sealed class DemoDataSeeder(
         if (stopAt >= AuditLifecycleStage.Planned)
         {
             audit.Plan();
+            // The lead declares independence while planning; the rest of the team before fieldwork starts, so a planned
+            // demo audit shows the team's declarations still to come.
+            audit.DeclareIndependence(leadId, hasConflict: false, conflictDetails: null, _now);
+            var letter = EngagementLetter.Draft(audit.Id, DemoEngagementLetter(name, startDate, targetEnd), leadId, _now);
+            letter.Issue(leadId, _now, name, auditeeId);
+            if (stopAt >= AuditLifecycleStage.InProgress)
+            {
+                letter.Acknowledge(auditeeId, comment: null, _now, name);
+            }
+
+            db.EngagementLetters.Add(letter);
         }
 
         if (stopAt >= AuditLifecycleStage.InProgress)
         {
-            audit.Start();
+            foreach (var memberId in audit.IndependenceOutstanding())
+            {
+                audit.DeclareIndependence(memberId, hasConflict: false, conflictDetails: null, _now);
+            }
+
+            audit.Start(requireIndependence: true);
+            db.AuditMeetings.Add(AuditMeeting.Record(
+                audit.Id, MeetingKind.Kickoff, _now.AddHours(-2), [leadId, auditeeId, .. auditorIds], [],
+                $"Kickoff for {name}. The team walked through the objectives, scope and timetable in the engagement letter; management named its contacts for each area.",
+                ["Management provides the requested documents within five working days.", "Weekly status call on Thursdays until fieldwork closes."],
+                reportId: null, leadId, _now, name, auditeeId));
         }
 
         await db.SaveChangesAsync(ct);
         return audit;
     }
+
+    /// <summary>A plain engagement letter for a demo audit: objectives, scope, timing, and what the team needs.</summary>
+    private static string DemoEngagementLetter(string name, DateOnly startDate, DateOnly targetEnd) =>
+        $"""
+        Engagement letter: {name}
+
+        Objective: to give the Audit Committee an independent view of whether the controls in this area are designed well and work as intended.
+
+        Scope: the processes, systems and records named in the audit's scope, for the twelve months before fieldwork starts.
+
+        Timing: fieldwork runs from {startDate:d MMMM yyyy} to {targetEnd:d MMMM yyyy}. We will hold a kickoff meeting before fieldwork and an exit meeting on the draft report.
+
+        What we ask of management: a named contact for each area, the documents we request within five working days, and a management response to each finding.
+
+        Please acknowledge this letter in AuditX.
+        """;
 
     // ---------------------------------------------------------------------------------------------------------
     // M5 — Responses + evidence. Records checklist responses (mix of pass/fail/na) for the in-progress /

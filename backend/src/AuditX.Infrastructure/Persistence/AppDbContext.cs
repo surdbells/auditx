@@ -5,6 +5,7 @@ using AuditX.Domain.Audits;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Compliance;
 using AuditX.Domain.Configuration;
+using AuditX.Domain.Engagement;
 using AuditX.Domain.Controls;
 using AuditX.Domain.Evidence;
 using AuditX.Domain.Exceptions;
@@ -111,6 +112,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
 
     public DbSet<AuditProcedure> AuditProcedures => Set<AuditProcedure>();
+
+    public DbSet<EngagementLetter> EngagementLetters => Set<EngagementLetter>();
+
+    public DbSet<AuditMeeting> AuditMeetings => Set<AuditMeeting>();
 
     public DbSet<EvidenceRequest> EvidenceRequests => Set<EvidenceRequest>();
 

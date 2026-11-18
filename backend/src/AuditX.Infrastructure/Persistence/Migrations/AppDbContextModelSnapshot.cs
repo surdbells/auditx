@@ -1462,6 +1462,76 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.ToTable("checklist_responses", (string)null);
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Audits.IndependenceDeclaration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuditId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("audit_id");
+
+                    b.Property<string>("ConflictDetails")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("conflict_details");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("DeclaredAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("declared_at");
+
+                    b.Property<bool>("HasConflict")
+                        .HasColumnType("bit")
+                        .HasColumnName("has_conflict");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("review_note");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("reviewed_by");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuditId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("independence_declarations", (string)null);
+                });
+
             modelBuilder.Entity("AuditX.Domain.Audits.ReviewNote", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2015,6 +2085,252 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.HasIndex("ControlId");
 
                     b.ToTable("control_tests", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Engagement.AuditMeeting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.PrimitiveCollection<string>("AgreedPoints")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("agreed_points");
+
+                    b.PrimitiveCollection<string>("AttendeeUserIds")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("attendee_user_ids");
+
+                    b.Property<Guid>("AuditId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("audit_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.PrimitiveCollection<string>("ExternalAttendees")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("external_attendees");
+
+                    b.Property<DateTimeOffset>("HeldAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("held_at");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTimeOffset?>("LastEditedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("last_edited_at");
+
+                    b.Property<Guid?>("LastEditedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("last_edited_by");
+
+                    b.Property<string>("Minutes")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("minutes");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("recorded_at");
+
+                    b.Property<Guid>("RecordedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("recorded_by");
+
+                    b.Property<Guid?>("ReportId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("report_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportId");
+
+                    b.HasIndex("AuditId", "Kind")
+                        .IsUnique();
+
+                    b.ToTable("audit_meetings", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Engagement.EngagementLetter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AcknowledgedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("acknowledged_at");
+
+                    b.Property<Guid?>("AcknowledgedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("acknowledged_by");
+
+                    b.Property<string>("AcknowledgementComment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("acknowledgement_comment");
+
+                    b.Property<Guid>("AuditId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("audit_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(20000)
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("DraftedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("drafted_at");
+
+                    b.Property<Guid>("DraftedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("drafted_by");
+
+                    b.Property<DateTimeOffset?>("IssuedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("issued_at");
+
+                    b.Property<Guid?>("IssuedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("issued_by");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("int")
+                        .HasColumnName("revision");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuditId")
+                        .IsUnique();
+
+                    b.ToTable("engagement_letters", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Engagement.EngagementLetterRevision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AcknowledgedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("acknowledged_at");
+
+                    b.Property<Guid?>("AcknowledgedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("acknowledged_by");
+
+                    b.Property<string>("AcknowledgementComment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("acknowledgement_comment");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(20000)
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid?>("EngagementLetterId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("engagement_letter_id");
+
+                    b.Property<DateTimeOffset?>("IssuedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("issued_at");
+
+                    b.Property<Guid?>("IssuedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("issued_by");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("int")
+                        .HasColumnName("revision");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EngagementLetterId", "Revision")
+                        .IsUnique()
+                        .HasFilter("[engagement_letter_id] IS NOT NULL");
+
+                    b.ToTable("engagement_letter_revisions", (string)null);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Evidence.EvidenceFile", b =>
@@ -3120,6 +3436,10 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.Property<bool>("RequireCommentOnPass")
                         .HasColumnType("bit")
                         .HasColumnName("require_comment_on_pass");
+
+                    b.Property<bool>("RequireIndependenceDeclaration")
+                        .HasColumnType("bit")
+                        .HasColumnName("require_independence_declaration");
 
                     b.Property<bool>("ShowOverview")
                         .HasColumnType("bit")
@@ -6513,6 +6833,15 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Audits.IndependenceDeclaration", b =>
+                {
+                    b.HasOne("AuditX.Domain.Audits.Audit", null)
+                        .WithMany("IndependenceDeclarations")
+                        .HasForeignKey("AuditId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AuditX.Domain.Audits.ReviewNote", b =>
                 {
                     b.HasOne("AuditX.Domain.Audits.Audit", null)
@@ -6587,6 +6916,37 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ControlId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Engagement.AuditMeeting", b =>
+                {
+                    b.HasOne("AuditX.Domain.Audits.Audit", null)
+                        .WithMany()
+                        .HasForeignKey("AuditId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AuditX.Domain.Reports.Report", null)
+                        .WithMany()
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Engagement.EngagementLetter", b =>
+                {
+                    b.HasOne("AuditX.Domain.Audits.Audit", null)
+                        .WithMany()
+                        .HasForeignKey("AuditId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Engagement.EngagementLetterRevision", b =>
+                {
+                    b.HasOne("AuditX.Domain.Engagement.EngagementLetter", null)
+                        .WithMany("PreviousRevisions")
+                        .HasForeignKey("EngagementLetterId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Evidence.EvidenceRequest", b =>
@@ -6848,6 +7208,8 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                 {
                     b.Navigation("ChecklistItems");
 
+                    b.Navigation("IndependenceDeclarations");
+
                     b.Navigation("Responses");
 
                     b.Navigation("ReviewNotes");
@@ -6855,6 +7217,11 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.Navigation("Sections");
 
                     b.Navigation("TeamMembers");
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Engagement.EngagementLetter", b =>
+                {
+                    b.Navigation("PreviousRevisions");
                 });
 
             modelBuilder.Entity("AuditX.Domain.Exceptions.AuditException", b =>

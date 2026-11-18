@@ -20,6 +20,7 @@ function settings(overrides: Partial<InstitutionSettings> = {}): InstitutionSett
     allowOverlappingPlanPeriods: false,
     allowAuditLaunchBeforeApproval: false,
     allowMinorPlanRevisionAfterApproval: false,
+    requireIndependenceDeclaration: true,
     primaryColor: '#4f46e5',
     accentColor: '#7c3aed',
     logoDataUri: null,

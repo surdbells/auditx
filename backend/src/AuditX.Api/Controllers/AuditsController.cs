@@ -3,6 +3,7 @@ using AuditX.Api.Contracts;
 using AuditX.Application.Audits.Commands;
 using AuditX.Application.Audits.Queries;
 using AuditX.Application.Common.Messaging;
+using AuditX.Application.Engagement.Records;
 using AuditX.Application.Execution.Commands;
 using AuditX.Application.Execution.Queries;
 using AuditX.Domain.Audits;
@@ -247,6 +248,44 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     [HttpPost("{id:guid}/items/{itemId:guid}/sign-off")]
     public async Task<IActionResult> SignOffItem(Guid id, Guid itemId, [FromBody] SignOffItemRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new SignOffItemCommand(id, itemId, request.Version), cancellationToken));
+
+    // ---- Engagement records: letter, independence, meetings ----
+    // Writing the letter and recording meetings is the audit team's (ManageAudit, on the team); declaring independence is
+    // each team member's own (checked in the domain); accepting a conflict is a manager's. The auditee reads the records
+    // here and acknowledges the letter on engagement-letters/{id}; the independence filter refuses them every write here.
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/engagement")]
+    public async Task<IActionResult> EngagementRecords(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetEngagementRecordsQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPut("{id:guid}/engagement/letter")]
+    public async Task<IActionResult> SaveEngagementLetter(Guid id, [FromBody] SaveEngagementLetterRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SaveEngagementLetterCommand(id, request.Body, request.LetterVersion), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/engagement/letter/issue")]
+    public async Task<IActionResult> IssueEngagementLetter(Guid id, [FromBody] IssueEngagementLetterRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new IssueEngagementLetterCommand(id, request.LetterVersion), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpPost("{id:guid}/engagement/independence")]
+    public async Task<IActionResult> DeclareIndependence(Guid id, [FromBody] DeclareIndependenceRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new DeclareIndependenceCommand(id, request.HasConflict, request.ConflictDetails, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/engagement/independence/{declarationId:guid}/accept")]
+    public async Task<IActionResult> AcceptIndependenceConflict(
+        Guid id, Guid declarationId, [FromBody] AcceptIndependenceConflictRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new AcceptIndependenceConflictCommand(id, declarationId, request.Safeguards, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPut("{id:guid}/engagement/meetings/{kind}")]
+    public async Task<IActionResult> RecordAuditMeeting(Guid id, string kind, [FromBody] RecordAuditMeetingRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new RecordAuditMeetingCommand(
+            id, kind.ToLowerInvariant(), request.HeldAt, request.AttendeeUserIds ?? [], request.ExternalAttendees ?? [], request.Minutes,
+            request.AgreedPoints ?? [], request.ReportId, request.MeetingVersion), cancellationToken));
 
     [RequirePermission(PermissionKeys.ViewAudit)]
     [HttpPost("{id:guid}/review-notes")]

@@ -30,7 +30,7 @@ public sealed class WorkingPaperReviewTests
         a.AddChecklistItem("Cash counted?", null, ResponseType.PassFailNa, null, true, null);
         a.AddChecklistItem("Vault dual control?", null, ResponseType.PassFailNa, null, true, null);
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         return a;
     }
 
@@ -234,7 +234,7 @@ public sealed class WorkingPaperReviewTests
         var a = Audit.Create("Self review", "branch", Start, End, null, null, null, null, null, Lead, Lead, null, Lead, Now, isSelfAssessment: true);
         a.AddChecklistItem("Q", null, ResponseType.PassFailNa, null, true, null);
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         a.RecordResponse(a.ChecklistItems[0].Id, ResponseVerdict.Pass, null, isDraft: false, Lead, requireCommentOnPass: false, Now);
 
         a.Complete(End);

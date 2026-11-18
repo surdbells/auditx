@@ -28,7 +28,7 @@ public sealed class AdminController(IDispatcher dispatcher) : ApiControllerBase
             request.AllowOverlappingPlanPeriods, request.AllowAuditLaunchBeforeApproval, request.AllowMinorPlanRevisionAfterApproval,
             request.PrimaryColor, request.AccentColor, request.LogoDataUri, request.IconDataUri,
             request.ShowOverview, request.ShowWalkthrough, request.ReportRetentionMonths, request.AutoStartWalkthrough,
-            request.IdleTimeoutMinutes, request.IdleWarningSeconds), cancellationToken));
+            request.IdleTimeoutMinutes, request.IdleWarningSeconds, request.RequireIndependenceDeclaration), cancellationToken));
 
     [RequirePermission(PermissionKeys.ConfigureLimits)]
     [HttpPatch("resource-limits")]

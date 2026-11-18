@@ -94,6 +94,8 @@ import { PageGuideComponent } from '../../../shared/components/page-guide/page-g
 import { PageGuide } from '../../../core/models/page-guide.models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { TranslationService } from '../../../core/i18n/translation.service';
+import { EngagementRecordsComponent } from '../engagement-records/engagement-records.component';
+import { EngagementRecordsStore } from '../engagement-records/engagement-records.store';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -187,7 +189,9 @@ const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
     PageHeaderComponent,
     PageGuideComponent,
     TranslatePipe,
+    EngagementRecordsComponent,
   ],
+  providers: [EngagementRecordsStore],
   templateUrl: './audit-detail.component.html',
   styleUrl: './audit-detail.component.scss',
 })
@@ -207,6 +211,8 @@ export class AuditDetailComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+  /** The audit's engagement records (letter, independence, meetings), shared with the cards that show them. */
+  readonly engagementStore = inject(EngagementRecordsStore);
   /** Resolves the stored audit-type code to its human label (lazy-loaded). */
   readonly refLookup = inject(ReferenceDataLookupService);
 
@@ -440,6 +446,20 @@ export class AuditDetailComponent {
     return items > 0 || notes > 0 ? { items, notes } : null;
   });
 
+  /**
+   * Fieldwork starts once everyone on the audit team has declared independence, where the institution requires it.
+   * The number still outstanding, or null when nothing holds the start (the server still decides).
+   */
+  readonly independenceOutstanding = computed(() => {
+    const ind = this.engagementStore.records()?.independence;
+    return ind && ind.required && !ind.complete ? ind.outstanding : null;
+  });
+
+  readonly startHint = computed(() => {
+    const count = this.independenceOutstanding();
+    return count ? this.i18n.translate('engagement.independence.startBlocked', { count }) : '';
+  });
+
   readonly completeHint = computed(() => {
     const o = this.reviewOutstanding();
     return o ? this.i18n.translate('audits.review.completeBlocked', o) : '';
@@ -639,7 +659,9 @@ export class AuditDetailComponent {
   /** Loads the active-user list (for the team/checklist pickers) and warms the display-name directory. */
   private ensureUsers(): void {
     this.userLookup.ensureLoaded();
-    if (this.usersCache.length) {
+    // The full user list feeds the team and assignee pickers, which only an audit manager opens; anyone else (the
+    // audit's auditee among them) is not sent asking for a list the API would refuse them.
+    if (this.usersCache.length || !this.canManage()) {
       return;
     }
     this.users.list({ status: 'active', pageSize: 0 }).subscribe({
@@ -679,6 +701,12 @@ export class AuditDetailComponent {
     review_note_answered: 'audits.activity.reviewNoteAnswered',
     review_note_cleared: 'audits.activity.reviewNoteCleared',
     review_note_reopened: 'audits.activity.reviewNoteReopened',
+    engagement_letter_saved: 'audits.activity.engagementLetterSaved',
+    engagement_letter_issued: 'audits.activity.engagementLetterIssued',
+    engagement_letter_acknowledged: 'audits.activity.engagementLetterAcknowledged',
+    independence_declared: 'audits.activity.independenceDeclared',
+    independence_conflict_accepted: 'audits.activity.independenceConflictAccepted',
+    audit_meeting_recorded: 'audits.activity.auditMeetingRecorded',
   };
 
   private parseState(json: string | null): { status?: string; reason?: string } | null {
@@ -847,6 +875,16 @@ export class AuditDetailComponent {
 
   start(): void {
     this.transitionTo('in_progress', this.i18n.translate('audits.notify.started'));
+  }
+
+  /** Re-reads the audit in place (after an engagement-record change moved its version), without the loading state. */
+  refreshAudit(): void {
+    this.service.getById(this.id()).subscribe({
+      next: (audit) => {
+        this.audit.set(audit);
+        this.loadActivity();
+      },
+    });
   }
 
   complete(): void {

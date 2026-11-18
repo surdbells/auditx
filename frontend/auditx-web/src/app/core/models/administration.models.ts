@@ -14,6 +14,8 @@ export interface InstitutionSettings {
   allowAuditLaunchBeforeApproval: boolean;
   /** When true, an Approved plan's items may still be edited directly (no re-approval); when false, the plan is fully locked and a material revision (re-approval) is the only route to change it. */
   allowMinorPlanRevisionAfterApproval: boolean;
+  /** When true (default), fieldwork starts only once the whole audit team has declared independence. */
+  requireIndependenceDeclaration: boolean;
   primaryColor: string;
   accentColor: string;
   logoDataUri: string | null;
@@ -60,6 +62,7 @@ export interface UpdateInstitutionSettingsRequest {
   allowOverlappingPlanPeriods: boolean;
   allowAuditLaunchBeforeApproval: boolean;
   allowMinorPlanRevisionAfterApproval: boolean;
+  requireIndependenceDeclaration: boolean;
   primaryColor: string;
   accentColor: string;
   logoDataUri: string | null;

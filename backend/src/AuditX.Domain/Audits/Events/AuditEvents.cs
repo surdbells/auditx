@@ -53,4 +53,13 @@ public sealed record ReviewNoteClearedEvent(Guid AuditId, Guid NoteId, Guid? Ite
 /// <summary>A reviewer reopened an answered review note; the person who answered it (<c>AnsweredBy</c>) is told.</summary>
 public sealed record ReviewNoteReopenedEvent(Guid AuditId, string AuditName, Guid NoteId, Guid? ItemId, Guid ReopenedBy, Guid AnsweredBy) : AuditEvent;
 
+/// <summary>A team member declared they are independent of the area the audit examines (no conflict).</summary>
+public sealed record IndependenceDeclaredEvent(Guid AuditId, Guid DeclarationId, Guid UserId) : AuditEvent;
+
+/// <summary>A team member disclosed a conflict of interest on the audit; its lead (<c>LeadUserId</c>) is told to decide on it.</summary>
+public sealed record IndependenceConflictDisclosedEvent(Guid AuditId, string AuditName, Guid DeclarationId, Guid UserId, Guid LeadUserId) : AuditEvent;
+
+/// <summary>A manager accepted a disclosed conflict with safeguards; the person who disclosed it (<c>DeclarantUserId</c>) is told.</summary>
+public sealed record IndependenceConflictAcceptedEvent(Guid AuditId, string AuditName, Guid DeclarationId, Guid DeclarantUserId, Guid AcceptedBy) : AuditEvent;
+
 public sealed record ItemAssignedEvent(Guid AuditId, Guid ItemId, Guid? AssigneeUserId) : AuditEvent;

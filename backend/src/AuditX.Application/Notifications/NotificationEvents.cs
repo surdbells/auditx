@@ -46,6 +46,9 @@ public static class NotificationEvents
         // M5 execution
         "item_assigned", "evidence_requested", "evidence_recalled",
         "review_note_raised", "review_note_answered", "review_note_reopened",
+        // Engagement records
+        "engagement_letter_issued", "engagement_letter_acknowledged", "independence_conflict_disclosed",
+        "independence_conflict_accepted", "audit_meeting_recorded",
         // M6 exceptions
         "exception_raised", "exception_owner_reassigned", "map_submitted", "map_approved", "map_rejected",
         "map_completed", "exception_pending_cia", "exception_closed", "exception_cancelled", "management_response_recorded",

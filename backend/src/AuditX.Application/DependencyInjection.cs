@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<MakerCheckerGateService>();
         services.AddScoped<Integrations.Webhooks.WebhookDispatchService>();
         services.AddScoped<Audits.Services.AuditCreationService>();
+        services.AddScoped<Engagement.Records.EngagementRecordsContext>();
         services.AddScoped<Notifications.Services.NotificationIngestService>();
         services.AddScoped<Organization.IReportingLineResolver, Organization.ReportingLineResolver>();
 

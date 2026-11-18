@@ -55,6 +55,13 @@ public sealed class InstitutionSettings : Entity
     /// </summary>
     public bool AllowMinorPlanRevisionAfterApproval { get; private set; }
 
+    /// <summary>
+    /// When true (default), fieldwork on an audit starts only once everyone on its audit team has declared their
+    /// independence in AuditX, or had a disclosed conflict accepted by a manager. Turn it off only where independence
+    /// is confirmed outside the platform (an annual declaration held by HR or compliance); declarations stay available.
+    /// </summary>
+    public bool RequireIndependenceDeclaration { get; private set; } = true;
+
     /// <summary>Primary brand colour (hex, e.g. <c>#4f46e5</c>) applied to the UI theme.</summary>
     public string PrimaryColor { get; private set; } = "#4f46e5";
 
@@ -160,6 +167,8 @@ public sealed class InstitutionSettings : Entity
     public void SetAllowAuditLaunchBeforeApproval(bool value) => AllowAuditLaunchBeforeApproval = value;
 
     public void SetAllowMinorPlanRevisionAfterApproval(bool value) => AllowMinorPlanRevisionAfterApproval = value;
+
+    public void SetRequireIndependenceDeclaration(bool value) => RequireIndependenceDeclaration = value;
 
     /// <summary>Sets the page-guide behaviour: the "Overview" / "Walkthrough" buttons and the auto-start tour.</summary>
     public void SetPageGuideVisibility(bool showOverview, bool showWalkthrough, bool autoStartWalkthrough)

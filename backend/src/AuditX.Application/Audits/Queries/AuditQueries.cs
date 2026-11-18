@@ -85,6 +85,9 @@ public sealed class GetAuditHistoryQueryHandler(
         AuditEventTypes.ReviewNoteAnswered,
         AuditEventTypes.ReviewNoteCleared,
         AuditEventTypes.ReviewNoteReopened,
+        // Independence declarations and decisions are the team's own record (they name conflicts of interest).
+        AuditEventTypes.IndependenceDeclared,
+        AuditEventTypes.IndependenceConflictAccepted,
     ];
 
     public async Task<IReadOnlyList<AuditHistoryEntryDto>> Handle(GetAuditHistoryQuery query, CancellationToken cancellationToken)

@@ -215,6 +215,14 @@ public static class AuditEventTypes
     public const string ReviewNoteAnswered = "review_note_answered";
     public const string ReviewNoteCleared = "review_note_cleared";
     public const string ReviewNoteReopened = "review_note_reopened";
+
+    // Engagement records (all targeted at the audit). Independence entries are internal to the audit team.
+    public const string IndependenceDeclared = "independence_declared";
+    public const string IndependenceConflictAccepted = "independence_conflict_accepted";
+    public const string EngagementLetterSaved = "engagement_letter_saved";
+    public const string EngagementLetterIssued = "engagement_letter_issued";
+    public const string EngagementLetterAcknowledged = "engagement_letter_acknowledged";
+    public const string AuditMeetingRecorded = "audit_meeting_recorded";
     public const string EvidenceUploaded = "evidence_uploaded";
     public const string EvidenceSoftDeleted = "evidence_soft_deleted";
     public const string EvidenceHashMismatch = "evidence_hash_mismatch";

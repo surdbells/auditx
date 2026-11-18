@@ -13,7 +13,7 @@ public static class AdministrationMappings
         bank.AllowAuditLaunchBeforeApproval, bank.AllowMinorPlanRevisionAfterApproval,
         bank.PrimaryColor, bank.AccentColor, bank.LogoDataUri, bank.IconDataUri,
         bank.ShowOverview, bank.ShowWalkthrough, bank.ReportRetentionMonths, bank.AutoStartWalkthrough,
-        bank.IdleTimeoutMinutes, bank.IdleWarningSeconds, bank.ToPasswordPolicyDto());
+        bank.IdleTimeoutMinutes, bank.IdleWarningSeconds, bank.ToPasswordPolicyDto(), bank.RequireIndependenceDeclaration);
 
     public static PasswordPolicyDto ToPasswordPolicyDto(this InstitutionSettings s) => new(
         s.EnableLocalPasswords, s.PasswordMinLength,

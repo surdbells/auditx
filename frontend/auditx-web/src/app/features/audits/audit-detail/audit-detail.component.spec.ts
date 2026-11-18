@@ -13,6 +13,7 @@ import {
   AuditChecklistItem,
   AuditStatus,
   AuditTeamMember,
+  EngagementRecords,
   SessionDto,
 } from '../../../core/models';
 
@@ -76,6 +77,23 @@ function audit(status: AuditStatus = 'draft', overrides: Partial<Audit> = {}): A
   };
 }
 
+/** Engagement records with nothing written yet, and the team's independence not required. */
+function noEngagementRecords(overrides: Partial<EngagementRecords> = {}): EngagementRecords {
+  return {
+    auditId: 'a-1',
+    isSelfAssessment: false,
+    canManage: false,
+    isAuditee: false,
+    canAcknowledge: false,
+    letter: null,
+    independence: { required: false, complete: true, outstanding: 0, canDeclare: false, canDecide: false, members: [] },
+    meetings: [],
+    draftReports: [],
+    auditVersion: 'v1',
+    ...overrides,
+  };
+}
+
 function session(permissions: string[]): SessionDto {
   return {
     userId: 'u1',
@@ -97,6 +115,8 @@ describe('AuditDetailComponent', () => {
   let http: HttpTestingController;
   let notify: jasmine.SpyObj<NotificationService>;
   let dialog: jasmine.SpyObj<MatDialog>;
+  /** How many times the last setup saw the full user list requested. */
+  let usersListRequests = 0;
 
   async function setup(perms: string[], initial: Audit): Promise<void> {
     notify = jasmine.createSpyObj<NotificationService>('NotificationService', [
@@ -147,10 +167,11 @@ describe('AuditDetailComponent', () => {
           hasNext: false,
         },
       });
-    // ensureUsers still loads the active-user list for the team/checklist assignment pickers.
-    http
-      .expectOne((r) => r.url === `${BASE}/users`)
-      .flush({
+    // ensureUsers loads the active-user list for the team/checklist assignment pickers — for an audit manager only.
+    usersListRequests = 0;
+    for (const req of http.match((r) => r.url === `${BASE}/users`)) {
+      usersListRequests++;
+      req.flush({
         data: {
           items: [
             { id: 'u-lead', displayName: 'Lara Lead' },
@@ -161,6 +182,7 @@ describe('AuditDetailComponent', () => {
           hasMore: false,
         },
       });
+    }
     fixture.detectChanges();
     await fixture.whenStable();
     // When the audit is past Draft the execution child mounts and loads its
@@ -207,7 +229,14 @@ describe('AuditDetailComponent', () => {
     for (const req of http.match((r) => r.url === `${BASE}/audits/a-1/history`)) {
       req.flush({ data: [] });
     }
+    // The engagement records (letter, independence, meetings) load whenever the audit does.
+    for (const req of http.match((r) => r.url === `${BASE}/audits/a-1/engagement`)) {
+      req.flush({ data: engagementRecords });
+    }
   }
+
+  /** What the engagement-records request answers in these specs (a test may replace it before its setup). */
+  let engagementRecords: EngagementRecords = noEngagementRecords();
 
   afterEach(() => {
     // A status transition can mount the execution child mid-test; flush change
@@ -216,6 +245,71 @@ describe('AuditDetailComponent', () => {
     fixture?.detectChanges();
     drainExecution();
     http.verify();
+    engagementRecords = noEngagementRecords();
+  });
+
+  /* ---- Engagement records ---- */
+
+  const leadingTeam = (status: AuditStatus) =>
+    audit(status, { teamMembers: [member({ id: 'm-lead', userId: 'u1', teamRole: 'lead' }), member()] });
+
+  it('holds the start of fieldwork while the team has not all declared independence, and says why', async () => {
+    engagementRecords = noEngagementRecords({
+      independence: {
+        required: true, complete: false, outstanding: 1, canDeclare: true, canDecide: true,
+        members: [
+          { userId: 'u1', teamRole: 'lead', status: 'declared', declarationId: 'd-1', declaredAt: '2026-01-02T09:00:00Z', conflictDetails: null, reviewedBy: null, reviewedAt: null, reviewNote: null },
+          { userId: 'u-auditor', teamRole: 'auditor', status: 'pending', declarationId: null, declaredAt: null, conflictDetails: null, reviewedBy: null, reviewedAt: null, reviewNote: null },
+        ],
+      },
+    });
+    await setup(['ManageAudit', 'ViewAudit'], leadingTeam('planned'));
+    fixture.detectChanges();
+
+    expect(component.independenceOutstanding()).toBe(1);
+    expect(component.startHint()).toContain('Still to declare, or with a conflict to decide: 1');
+    const start = [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find((b) =>
+      (b.textContent ?? '').includes('Start'),
+    );
+    expect(start?.getAttribute('aria-disabled') === 'true' || start?.disabled).toBeTrue();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Not declared');
+  });
+
+  it('asks for the full user list only for an audit manager, never for the auditee or a viewer', async () => {
+    await setup(['ViewAudit'], audit('planned'));
+    expect(usersListRequests).toBe(0);
+  });
+
+  it('loads the user list for an audit manager who picks team members and assignees', async () => {
+    await setup(['ManageAudit', 'ViewAudit'], audit('draft'));
+    expect(usersListRequests).toBe(1);
+  });
+
+  it('lets fieldwork start once independence is complete or not required', async () => {
+    await setup(['ManageAudit', 'ViewAudit'], leadingTeam('planned'));
+    fixture.detectChanges();
+    expect(component.independenceOutstanding()).toBeNull();
+  });
+
+  it('shows the issued engagement letter and asks the auditee to acknowledge it', async () => {
+    engagementRecords = noEngagementRecords({
+      isAuditee: true,
+      canAcknowledge: true,
+      independence: null,
+      letter: {
+        id: 'l-1', status: 'issued', revision: 1, body: 'Objectives, scope and timing of the audit.',
+        draftedBy: 'u-lead', draftedAt: '2026-01-02T09:00:00Z', issuedBy: 'u-lead', issuedAt: '2026-01-02T10:00:00Z',
+        acknowledgedBy: null, acknowledgedAt: null, acknowledgementComment: null, previousRevisions: [], version: 'lv1',
+      },
+    });
+    await setup(['ViewAudit'], audit('planned'));
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Objectives, scope and timing of the audit.');
+    expect(text).toContain('Acknowledge');
+    // The auditee never sees the team's independence record.
+    expect(text).not.toContain('Declare my independence');
   });
 
   it('loads the audit and resolves lead / auditee display names', async () => {

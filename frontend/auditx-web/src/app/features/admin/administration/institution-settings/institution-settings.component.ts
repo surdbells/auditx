@@ -267,6 +267,7 @@ export class InstitutionSettingsComponent {
     allowOverlappingPlanPeriods: [false],
     allowAuditLaunchBeforeApproval: [false],
     allowMinorPlanRevisionAfterApproval: [false],
+    requireIndependenceDeclaration: [true],
   });
 
   readonly sessionForm = this.fb.nonNullable.group({
@@ -349,6 +350,8 @@ export class InstitutionSettingsComponent {
       allowOverlappingPlanPeriods: s.allowOverlappingPlanPeriods,
       allowAuditLaunchBeforeApproval: s.allowAuditLaunchBeforeApproval,
       allowMinorPlanRevisionAfterApproval: s.allowMinorPlanRevisionAfterApproval,
+      // Older servers do not send it: the platform's default (required) stands.
+      requireIndependenceDeclaration: s.requireIndependenceDeclaration ?? true,
     });
     this.sessionForm.reset({
       idleTimeoutMinutes: s.idleTimeoutMinutes,
@@ -399,6 +402,7 @@ export class InstitutionSettingsComponent {
       allowOverlappingPlanPeriods: b.allowOverlappingPlanPeriods,
       allowAuditLaunchBeforeApproval: b.allowAuditLaunchBeforeApproval,
       allowMinorPlanRevisionAfterApproval: b.allowMinorPlanRevisionAfterApproval,
+      requireIndependenceDeclaration: b.requireIndependenceDeclaration ?? true,
       primaryColor: b.primaryColor,
       accentColor: b.accentColor,
       logoDataUri: b.logoDataUri,
@@ -485,6 +489,7 @@ export class InstitutionSettingsComponent {
       allowOverlappingPlanPeriods: v.allowOverlappingPlanPeriods,
       allowAuditLaunchBeforeApproval: v.allowAuditLaunchBeforeApproval,
       allowMinorPlanRevisionAfterApproval: v.allowMinorPlanRevisionAfterApproval,
+      requireIndependenceDeclaration: v.requireIndependenceDeclaration,
     });
   }
 

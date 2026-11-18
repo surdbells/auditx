@@ -31,6 +31,18 @@ public enum ReviewNoteStatus
     Cleared,
 }
 
+/// <summary>
+/// A team member's independence declaration for one audit: <see cref="Declared"/> (no conflict),
+/// <see cref="ConflictDisclosed"/> (a conflict of interest, awaiting a manager's decision) or
+/// <see cref="ConflictAccepted"/> (a manager accepted the conflict with recorded safeguards).
+/// </summary>
+public enum IndependenceStatus
+{
+    Declared,
+    ConflictDisclosed,
+    ConflictAccepted,
+}
+
 /// <summary>Per-item execution state on an audit checklist (advanced by M5 responses).</summary>
 public enum ChecklistItemState
 {

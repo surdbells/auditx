@@ -16,6 +16,7 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
             .Include(a => a.ChecklistItems)
             .Include(a => a.Responses)
             .Include(a => a.ReviewNotes)
+            .Include(a => a.IndependenceDeclarations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
@@ -104,6 +105,10 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
 
     public async Task<IReadOnlyList<Audit>> GetPlannedDueToStartAsync(DateOnly asOfDate, CancellationToken cancellationToken = default)
         => await db.Audits
+            // The team and its independence declarations decide whether an audit may start on its own.
+            .Include(a => a.TeamMembers)
+            .Include(a => a.IndependenceDeclarations)
+            .AsSplitQuery()
             .Where(a => a.Status == AuditStatus.Planned && a.StartDate <= asOfDate)
             .ToListAsync(cancellationToken);
 

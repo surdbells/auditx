@@ -17,6 +17,7 @@ public sealed class Audit : AggregateRoot
     private readonly List<AuditChecklistItem> _checklistItems = [];
     private readonly List<ChecklistResponse> _responses = [];
     private readonly List<ReviewNote> _reviewNotes = [];
+    private readonly List<IndependenceDeclaration> _independenceDeclarations = [];
 
     private Audit()
     {
@@ -85,6 +86,9 @@ public sealed class Audit : AggregateRoot
 
     /// <summary>The reviewers' notes on the working papers (never deleted; cleared once resolved).</summary>
     public IReadOnlyList<ReviewNote> ReviewNotes => _reviewNotes.AsReadOnly();
+
+    /// <summary>Each team member's independence declaration on this audit (one each; declaring again replaces it).</summary>
+    public IReadOnlyList<IndependenceDeclaration> IndependenceDeclarations => _independenceDeclarations.AsReadOnly();
 
     private IEnumerable<AuditTeamMember> ActiveTeam => _teamMembers.Where(m => m.IsActive);
 
@@ -463,7 +467,22 @@ public sealed class Audit : AggregateRoot
         Transition(AuditStatus.Planned, null);
     }
 
-    public void Start() => Transition(AuditStatus.InProgress, null, AuditStatus.Planned);
+    /// <summary>
+    /// Start fieldwork. Where the institution requires it (<paramref name="requireIndependence"/>), everyone on the
+    /// audit side of the team must first have declared their independence, or had a disclosed conflict accepted by a
+    /// manager. A self-assessment has no independent auditor, so it is exempt.
+    /// </summary>
+    public void Start(bool requireIndependence)
+    {
+        if (requireIndependence && Status == AuditStatus.Planned && IndependenceOutstanding() is { Count: > 0 } outstanding)
+        {
+            throw new DomainException(
+                "audit.independence_outstanding",
+                $"Fieldwork cannot start until the whole audit team has declared independence: {outstanding.Count} member(s) still need to declare, or have a disclosed conflict accepted.");
+        }
+
+        Transition(AuditStatus.InProgress, null, AuditStatus.Planned);
+    }
 
     public void SendToReview(string? reason)
     {
@@ -542,6 +561,7 @@ public sealed class Audit : AggregateRoot
     public ResponseMutation RecordResponse(Guid itemId, ResponseVerdict? verdict, string? comment, bool isDraft, Guid actorUserId, bool requireCommentOnPass, DateTimeOffset nowUtc, string? valueJson = null, string? observation = null, string? recommendation = null, string? selectedOptionCode = null, string? selectedOptionLabel = null)
     {
         EnsureStatus("audit.responses_locked", AuditStatus.InProgress);
+        EnsureNoPendingConflict(actorUserId);
         var item = FindItem(itemId);
 
         var response = _responses.FirstOrDefault(r => r.ChecklistItemId == itemId);
@@ -586,6 +606,81 @@ public sealed class Audit : AggregateRoot
         return responseId;
     }
 
+    // ---- Independence ----
+
+    /// <summary>
+    /// The members of the audit side of the team (active, not its auditee) who may not yet work the audit: they have
+    /// not declared, or they disclosed a conflict that no manager has accepted. Empty for a self-assessment.
+    /// </summary>
+    public IReadOnlyList<Guid> IndependenceOutstanding()
+        => IsSelfAssessment
+            ? []
+            : [.. ActiveTeam.Where(m => !IsAuditee(m.UserId)).Select(m => m.UserId).Distinct()
+                .Where(userId => DeclarationOf(userId) is not { IsCleared: true })];
+
+    public IndependenceDeclaration? DeclarationOf(Guid userId) => _independenceDeclarations.FirstOrDefault(d => d.UserId == userId);
+
+    /// <summary>
+    /// A member of the audit team declares that they are independent of the area the audit examines, or discloses a
+    /// conflict of interest. Declaring again (circumstances change) replaces the earlier declaration and its decision.
+    /// </summary>
+    public IndependenceDeclaration DeclareIndependence(Guid userId, bool hasConflict, string? conflictDetails, DateTimeOffset nowUtc)
+    {
+        Guard.Against(IsSelfAssessment, "audit.independence_not_applicable",
+            "A self-assessment is carried out by the area itself, so it has no independence declarations.");
+        EnsureStatus("audit.independence_locked", AuditStatus.Draft, AuditStatus.Planned, AuditStatus.InProgress, AuditStatus.UnderReview);
+        if (!IsOnAuditTeam(userId))
+        {
+            throw new DomainException("audit.not_on_team", "Only a member of the audit team declares independence on it.");
+        }
+
+        var declaration = DeclarationOf(userId);
+        if (declaration is null)
+        {
+            declaration = new IndependenceDeclaration(Id, userId, hasConflict, conflictDetails, nowUtc);
+            _independenceDeclarations.Add(declaration);
+        }
+        else
+        {
+            declaration.Redeclare(hasConflict, conflictDetails, nowUtc);
+        }
+
+        RaiseDomainEvent(hasConflict
+            ? new IndependenceConflictDisclosedEvent(Id, Name, declaration.Id, userId, LeadUserId)
+            : new IndependenceDeclaredEvent(Id, declaration.Id, userId));
+        return declaration;
+    }
+
+    /// <summary>
+    /// A manager accepts a disclosed conflict and records the safeguards that make it acceptable (a second reviewer, a
+    /// narrower part of the scope). Never the person who disclosed it, and never the audit's auditee.
+    /// </summary>
+    public IndependenceDeclaration AcceptIndependenceConflict(Guid declarationId, Guid acceptedBy, string safeguards, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("audit.independence_locked", AuditStatus.Draft, AuditStatus.Planned, AuditStatus.InProgress, AuditStatus.UnderReview);
+        if (IsAuditee(acceptedBy))
+        {
+            throw new DomainException("audit.not_independent", "The audit's auditee cannot decide on its team's independence.");
+        }
+
+        var declaration = _independenceDeclarations.FirstOrDefault(d => d.Id == declarationId)
+            ?? throw new DomainException("audit.declaration_not_found", "The declaration does not exist on this audit.");
+        declaration.AcceptConflict(acceptedBy, safeguards, nowUtc);
+        RaiseDomainEvent(new IndependenceConflictAcceptedEvent(Id, Name, declarationId, declaration.UserId, acceptedBy));
+        return declaration;
+    }
+
+    /// <summary>A disclosed conflict that no manager has accepted keeps its declarant off the audit's working papers.</summary>
+    private void EnsureNoPendingConflict(Guid userId)
+    {
+        if (DeclarationOf(userId) is { Status: IndependenceStatus.ConflictDisclosed })
+        {
+            throw new DomainException(
+                "audit.independence_conflict_pending",
+                "You disclosed a conflict of interest on this audit. A manager must accept it before you work on the audit.");
+        }
+    }
+
     // ---- Working-paper review ----
 
     /// <summary>
@@ -606,6 +701,7 @@ public sealed class Audit : AggregateRoot
     {
         EnsureStatus("audit.review_locked", AuditStatus.InProgress, AuditStatus.UnderReview);
         EnsureReviewer(reviewerUserId);
+        EnsureNoPendingConflict(reviewerUserId);
         var item = FindItem(itemId);
         var response = _responses.FirstOrDefault(r => r.ChecklistItemId == itemId);
         if (item.ItemState != ChecklistItemState.Responded || response is null || response.IsDraft)

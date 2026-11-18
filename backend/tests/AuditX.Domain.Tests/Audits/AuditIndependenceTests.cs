@@ -93,7 +93,7 @@ public sealed class AuditIndependenceTests
         var audit = AuditA();
         var item = audit.AddChecklistItem("Is dual control enforced?", null, ResponseType.PassFailNa, null, true, null);
         audit.Plan();
-        audit.Start();
+        audit.Start(requireIndependence: false);
 
         foreach (var auditee in Auditees)
         {
@@ -111,7 +111,7 @@ public sealed class AuditIndependenceTests
         var audit = AuditA();
         audit.AddChecklistItem("Is dual control enforced?", null, ResponseType.PassFailNa, null, true, null);
         audit.Plan();
-        audit.Start();
+        audit.Start(requireIndependence: false);
 
         // Nobody can be moved on, off, or across the audit once fieldwork is under way.
         var extra = audit.TeamMembers.Single(m => m.UserId == AuditeeTwo);

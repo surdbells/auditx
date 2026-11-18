@@ -22,7 +22,7 @@ public sealed class ExecutionTests
         }
 
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         return a;
     }
 
@@ -51,7 +51,7 @@ public sealed class ExecutionTests
         a.AddTeamMember(Auditor, TeamRole.Auditor, Lead, Now);
         a.AddChecklistItem("How many exceptions?", null, type, null, true, null);
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         return a;
     }
 

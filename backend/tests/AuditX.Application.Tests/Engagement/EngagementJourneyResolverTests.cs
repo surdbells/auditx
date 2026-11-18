@@ -78,7 +78,7 @@ public sealed class EngagementJourneyResolverTests
     {
         var (a, _) = Ready();
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
 
         var forAuditor = Resolve(a, Grants(PermissionKeys.RespondItem, PermissionKeys.RaiseException), Auditor);
         Assert.Equal("fieldwork", forAuditor.Stage);
@@ -94,7 +94,7 @@ public sealed class EngagementJourneyResolverTests
     {
         var (a, itemId) = Ready();
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         a.RecordResponse(itemId, ResponseVerdict.Fail, "no control", isDraft: false, Auditor, requireCommentOnPass: false, Now);
 
         var journey = Resolve(a, Grants(PermissionKeys.RaiseException), Auditor);
@@ -106,7 +106,7 @@ public sealed class EngagementJourneyResolverTests
     {
         var (a, itemId) = Ready();
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         // Responding the last item auto-transitions the aggregate to Under review.
         a.RecordResponse(itemId, ResponseVerdict.Pass, null, isDraft: false, Auditor, requireCommentOnPass: false, Now);
 
@@ -127,7 +127,7 @@ public sealed class EngagementJourneyResolverTests
     {
         var (a, itemId) = Ready();
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         a.RecordResponse(itemId, ResponseVerdict.Pass, null, isDraft: false, Auditor, requireCommentOnPass: false, Now);
         var note = a.RaiseReviewNote(itemId, "Reference the sample.", Manager, Now);
 
@@ -145,7 +145,7 @@ public sealed class EngagementJourneyResolverTests
     {
         var (a, itemId) = Ready();
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         a.RecordResponse(itemId, ResponseVerdict.Pass, null, isDraft: false, Auditor, requireCommentOnPass: false, Now);
         a.SignOffItem(itemId, Manager, Now);
         a.Complete(Target); // already Under review via the auto-transition above
@@ -165,7 +165,7 @@ public sealed class EngagementJourneyResolverTests
     {
         var (a, itemId) = Ready();
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         // The single Fail response auto-transitions the aggregate to Under review.
         a.RecordResponse(itemId, ResponseVerdict.Fail, "no control", isDraft: false, Auditor, requireCommentOnPass: false, Now);
 
@@ -183,5 +183,84 @@ public sealed class EngagementJourneyResolverTests
         var journey = Resolve(a, Grants(PermissionKeys.ManageAudit), Manager);
         Assert.Equal("cancelled", journey.Stage);
         Assert.Empty(journey.NextActions);
+    }
+
+    /* ---- Engagement records ---- */
+
+    private static EngagementRecordFacts Records(
+        bool requireIndependence = true, EngagementLetterStatus? letter = EngagementLetterStatus.Acknowledged, bool kickoff = true,
+        bool exit = false, bool draftReport = false, bool managesAudit = true)
+        => new(requireIndependence, letter, kickoff, exit, draftReport, managesAudit);
+
+    private static EngagementJourneyDto ResolveWith(Audit a, Func<string, bool> can, Guid userId, EngagementRecordFacts records, bool hasCompletedReport = false)
+        => EngagementJourneyResolver.Resolve(a, [], hasCompletedReport, false, userId, can, onTeamOrManager: true, records);
+
+    [Fact]
+    public void Fieldwork_is_offered_only_once_the_whole_team_has_declared_independence()
+    {
+        var (a, _) = Ready();
+        a.Plan();
+        var manage = Grants(PermissionKeys.ManageAudit, PermissionKeys.ViewAudit);
+
+        var waiting = ResolveWith(a, manage, Manager, Records());
+        Assert.DoesNotContain(waiting.NextActions, x => x.Code == "launch_fieldwork");
+        Assert.Contains(waiting.NextActions, x => x.Code == "declare_independence");
+        Assert.Contains(ResolveWith(a, Grants(PermissionKeys.ViewAudit), Auditor, Records()).NextActions, x => x.Code == "declare_independence");
+
+        a.DeclareIndependence(Manager, hasConflict: false, null, Now);
+        a.DeclareIndependence(Auditor, hasConflict: false, null, Now);
+        var ready = ResolveWith(a, manage, Manager, Records());
+        Assert.Contains(ready.NextActions, x => x.Code == "launch_fieldwork");
+        Assert.DoesNotContain(ready.NextActions, x => x.Code == "declare_independence");
+
+        // Where the institution does not require declarations, fieldwork is offered straight away.
+        var (b, _) = Ready();
+        b.Plan();
+        Assert.Contains(ResolveWith(b, manage, Manager, Records(requireIndependence: false)).NextActions, x => x.Code == "launch_fieldwork");
+    }
+
+    [Fact]
+    public void A_disclosed_conflict_asks_a_manager_other_than_the_declarant_to_decide()
+    {
+        var (a, _) = Ready();
+        a.Plan();
+        a.DeclareIndependence(Auditor, hasConflict: true, "Worked in the branch last year.", Now);
+
+        Assert.Contains(ResolveWith(a, Grants(PermissionKeys.ManageAudit), Manager, Records()).NextActions, x => x.Code == "decide_independence_conflicts");
+        Assert.DoesNotContain(ResolveWith(a, Grants(PermissionKeys.ManageAudit), Auditor, Records()).NextActions, x => x.Code == "decide_independence_conflicts");
+        Assert.DoesNotContain(ResolveWith(a, Grants(PermissionKeys.ViewAudit), Manager, Records(managesAudit: false)).NextActions, x => x.Code == "decide_independence_conflicts");
+    }
+
+    [Fact]
+    public void The_lead_issues_the_letter_and_the_auditee_acknowledges_it()
+    {
+        var (a, _) = Ready();
+        var lead = ResolveWith(a, Grants(PermissionKeys.ManageAudit), Manager, Records(letter: null));
+        Assert.Contains(lead.NextActions, x => x.Code == "issue_engagement_letter");
+        Assert.Contains(ResolveWith(a, Grants(PermissionKeys.ManageAudit), Manager, Records(letter: EngagementLetterStatus.Draft)).NextActions, x => x.Code == "issue_engagement_letter");
+        Assert.DoesNotContain(ResolveWith(a, Grants(PermissionKeys.ManageAudit), Manager, Records(letter: EngagementLetterStatus.Issued)).NextActions, x => x.Code == "issue_engagement_letter");
+
+        var auditee = ResolveWith(a, Grants(PermissionKeys.ViewAudit, PermissionKeys.ManageAudit), Auditee, Records(letter: EngagementLetterStatus.Issued));
+        Assert.Contains(auditee.NextActions, x => x.Code == "acknowledge_engagement_letter");
+        // The auditee never drives the audit side, whatever they hold elsewhere.
+        Assert.DoesNotContain(auditee.NextActions, x => x.Code == "issue_engagement_letter");
+        Assert.DoesNotContain(ResolveWith(a, Grants(PermissionKeys.ViewAudit), Auditee, Records()).NextActions, x => x.Code == "acknowledge_engagement_letter");
+    }
+
+    [Fact]
+    public void The_team_is_asked_for_the_kickoff_minutes_in_fieldwork_and_the_exit_meeting_once_a_draft_exists()
+    {
+        var (a, item) = Ready();
+        a.Plan();
+        a.Start(requireIndependence: false);
+        var manage = Grants(PermissionKeys.ManageAudit);
+        Assert.Contains(ResolveWith(a, manage, Manager, Records(requireIndependence: false, kickoff: false)).NextActions, x => x.Code == "record_kickoff_minutes");
+        Assert.DoesNotContain(ResolveWith(a, manage, Manager, Records(requireIndependence: false)).NextActions, x => x.Code == "record_kickoff_minutes");
+
+        a.RecordResponse(item, ResponseVerdict.Pass, null, isDraft: false, Auditor, requireCommentOnPass: false, Now);
+        Assert.Equal(AuditStatus.UnderReview, a.Status);
+        Assert.DoesNotContain(ResolveWith(a, manage, Manager, Records(requireIndependence: false)).NextActions, x => x.Code == "record_exit_meeting");
+        Assert.Contains(ResolveWith(a, manage, Manager, Records(requireIndependence: false, draftReport: true)).NextActions, x => x.Code == "record_exit_meeting");
+        Assert.DoesNotContain(ResolveWith(a, manage, Manager, Records(requireIndependence: false, draftReport: true, exit: true)).NextActions, x => x.Code == "record_exit_meeting");
     }
 }

@@ -173,6 +173,24 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
             ("review_note_reopened", "review_note_reopened", "payload_derived", "AnsweredBy", "[\"email\"]",
                 "A review note was reopened",
                 "The reviewer reopened a review note you answered on the audit \"{{ AuditName }}\". See it at {{ AppBaseUrl }}/audits/{{ AuditId }}/execute."),
+            // Engagement records: the auditee is asked to acknowledge the letter and told when meeting minutes are recorded;
+            // whoever issued the letter hears it was acknowledged; the lead decides on a disclosed conflict of interest and
+            // the person who disclosed it hears the decision.
+            ("engagement_letter_issued", "engagement_letter_issued", "payload_derived", "AuditeeUserId", "[\"email\"]",
+                "Please acknowledge the engagement letter",
+                "The audit team issued the engagement letter for the audit \"{{ AuditName }}\". Read it and acknowledge it at {{ AppBaseUrl }}/audits/{{ AuditId }}."),
+            ("engagement_letter_acknowledged", "engagement_letter_acknowledged", "payload_derived", "IssuedBy", "[\"email\"]",
+                "The engagement letter was acknowledged",
+                "The auditee acknowledged the engagement letter for the audit \"{{ AuditName }}\". See it at {{ AppBaseUrl }}/audits/{{ AuditId }}."),
+            ("independence_conflict_disclosed", "independence_conflict_disclosed", "payload_derived", "LeadUserId", "[\"email\"]",
+                "A conflict of interest was disclosed on your audit",
+                "A member of the team disclosed a conflict of interest on the audit \"{{ AuditName }}\". A manager of the audit decides on it at {{ AppBaseUrl }}/audits/{{ AuditId }}; until then they cannot work on the audit."),
+            ("independence_conflict_accepted", "independence_conflict_accepted", "payload_derived", "DeclarantUserId", "[\"email\"]",
+                "Your disclosed conflict of interest was accepted",
+                "A manager accepted the conflict of interest you disclosed on the audit \"{{ AuditName }}\", with safeguards. You can work on the audit again; see them at {{ AppBaseUrl }}/audits/{{ AuditId }}."),
+            ("audit_meeting_recorded", "audit_meeting_recorded", "payload_derived", "AuditeeUserId", "[\"email\"]",
+                "Meeting minutes recorded",
+                "The audit team recorded the minutes of the {{ Meeting }} meeting for the audit \"{{ AuditName }}\". Read them at {{ AppBaseUrl }}/audits/{{ AuditId }}."),
             // Auditor requests a document from an auditee → email the auditee a link to upload it (US: evidence request).
             ("evidence_requested", "evidence_requested", "payload_derived", "RequestedFromUserId", "[\"email\"]",
                 "A document has been requested from you",

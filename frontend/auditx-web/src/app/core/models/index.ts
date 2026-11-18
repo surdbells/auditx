@@ -27,3 +27,4 @@ export * from './saved-view.models';
 export * from './shared-link.models';
 export * from './report-schedule.models';
 export * from './engagement.models';
+export * from './engagement-records.models';

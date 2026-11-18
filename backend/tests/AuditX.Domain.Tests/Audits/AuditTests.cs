@@ -113,7 +113,7 @@ public sealed class AuditTests
     {
         var a = ReadyToPlan();
         a.Plan();
-        a.Start(); // InProgress — past the pre-audit window
+        a.Start(requireIndependence: false); // InProgress — past the pre-audit window
         Assert.Throws<InvalidStateTransitionException>(() => a.ScheduleKickoff(Now.AddDays(2), null, null, Now));
     }
 
@@ -123,7 +123,7 @@ public sealed class AuditTests
         var a = ReadyToPlan();
         a.Plan();
         Assert.Equal(AuditStatus.Planned, a.Status);
-        a.Start();
+        a.Start(requireIndependence: false);
         Assert.Equal(AuditStatus.InProgress, a.Status);
 
         // Unanswered items require a reason to move to review.
@@ -148,7 +148,7 @@ public sealed class AuditTests
     {
         var a = ReadyToPlan();
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         a.SendToReview("submitting for review");
         Assert.Equal(AuditStatus.UnderReview, a.Status);
 
@@ -162,14 +162,14 @@ public sealed class AuditTests
     {
         var a = ReadyToPlan();
         a.Plan();
-        a.Start();
+        a.Start(requireIndependence: false);
         a.SendToReview("moving on with one item open for review");
         Assert.Throws<DomainException>(() => a.Complete(End));
     }
 
     [Fact]
     public void Start_from_draft_is_invalid()
-        => Assert.Throws<InvalidStateTransitionException>(() => New().Start());
+        => Assert.Throws<InvalidStateTransitionException>(() => New().Start(requireIndependence: false));
 
     [Fact]
     public void Cancel_requires_20_char_reason_and_blocks_when_terminal()
@@ -241,7 +241,7 @@ public sealed class AuditTests
         var i1 = a.ChecklistItems[0]; // ungrouped
         a.AddTeamMember(Guid.NewGuid(), TeamRole.Auditor, Lead, Now);
         a.Plan();
-        a.Start(); // InProgress — item edit is blocked here, but arrange (reorder + move) is allowed
+        a.Start(requireIndependence: false); // InProgress — item edit is blocked here, but arrange (reorder + move) is allowed
 
         // Move the ungrouped item into "Controls" and put it first.
         a.ArrangeChecklistItems([

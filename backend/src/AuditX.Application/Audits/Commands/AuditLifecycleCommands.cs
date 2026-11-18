@@ -156,6 +156,7 @@ public sealed class TransitionAuditCommandHandler(
     IAuditRepository audits,
     IAnnualPlanRepository plans,
     IAuditUniverseRepository universe,
+    IInstitutionSettingsRepository settings,
     IPermissionResolver permissions,
     ICurrentUser currentUser,
     IAuditRecorder audit,
@@ -184,7 +185,7 @@ public sealed class TransitionAuditCommandHandler(
                 }
                 else
                 {
-                    entity.Start();
+                    entity.Start((await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration);
                 }
 
                 break;
@@ -258,26 +259,37 @@ public sealed class CancelAuditCommandHandler(
 /// <summary>Auto-start planned audits whose start date has arrived (US-M4-011). Invoked by the hourly job.</summary>
 public sealed record AutoStartAuditsCommand : ICommand<int>;
 
-public sealed class AutoStartAuditsCommandHandler(IAuditRepository audits, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
+public sealed class AutoStartAuditsCommandHandler(
+    IAuditRepository audits, IInstitutionSettingsRepository settings, IAuditRecorder audit, IClock clock, IUnitOfWork unitOfWork)
     : ICommandHandler<AutoStartAuditsCommand, int>
 {
     public async Task<int> Handle(AutoStartAuditsCommand command, CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
         var due = await audits.GetPlannedDueToStartAsync(today, cancellationToken);
+        var requireIndependence = (await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration;
 
+        var started = 0;
         foreach (var entity in due)
         {
-            entity.Start();
+            // An audit whose team has not all declared independence stays planned: its lead sees who is outstanding
+            // and starts it once they have. It is picked up again on the next run.
+            if (requireIndependence && entity.IndependenceOutstanding().Count > 0)
+            {
+                continue;
+            }
+
+            entity.Start(requireIndependence);
             audit.RecordAs(ActorType.System, "audit-auto-start", null, AuditEventTypes.AuditTransitioned, AuditTargetTypes.Audit, entity.Id,
                 after: new { status = entity.Status.ToSnake() });
+            started++;
         }
 
-        if (due.Count > 0)
+        if (started > 0)
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        return due.Count;
+        return started;
     }
 }

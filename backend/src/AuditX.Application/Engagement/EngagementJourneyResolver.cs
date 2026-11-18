@@ -15,6 +15,25 @@ namespace AuditX.Application.Engagement;
 /// Every action is emitted only when the user both holds the required permission AND is on the audit team
 /// (or manages it) — the same authorization the target screens enforce.
 /// </summary>
+/// <summary>
+/// What the journey needs to know about an audit's engagement records beyond the aggregate: whether fieldwork waits
+/// for independence declarations, the engagement letter's state (null when none is written), whether the kickoff and
+/// exit minutes are recorded, whether a completed draft report exists, and whether the caller manages the audit
+/// (may decide on a disclosed conflict).
+/// </summary>
+public sealed record EngagementRecordFacts(
+    bool RequireIndependence,
+    EngagementLetterStatus? LetterStatus,
+    bool KickoffRecorded,
+    bool ExitRecorded,
+    bool HasDraftReport,
+    bool ManagesAudit,
+    bool Loaded = true)
+{
+    /// <summary>The records were not loaded (or there are none to keep: a self-assessment): no record-based actions.</summary>
+    public static readonly EngagementRecordFacts None = new(false, null, false, false, false, false, Loaded: false);
+}
+
 public static class EngagementJourneyResolver
 {
     /// <summary>The canonical ordered lifecycle stages, with English labels (the UI may localise by code).</summary>
@@ -36,8 +55,10 @@ public static class EngagementJourneyResolver
         bool hasDistributedReport,
         Guid userId,
         Func<string, bool> can,
-        bool onTeamOrManager)
+        bool onTeamOrManager,
+        EngagementRecordFacts? records = null)
     {
+        records ??= EngagementRecordFacts.None;
         var totalItems = audit.ChecklistItems.Count;
         var respondedItems = audit.ChecklistItems.Count(i => i.ItemState == ChecklistItemState.Responded);
         var progress = totalItems == 0 ? 0 : (int)Math.Round(100.0 * respondedItems / totalItems);
@@ -50,7 +71,7 @@ public static class EngagementJourneyResolver
         var stageCode = CurrentStage(audit.Status, openExceptions.Length > 0, hasCompletedReport, hasDistributedReport);
         var stages = BuildTimeline(stageCode, audit.Status == AuditStatus.Cancelled);
         var actions = onTeamOrManager
-            ? NextActions(audit, openExceptions, hasCompletedReport, hasDistributedReport, userId, can)
+            ? NextActions(audit, openExceptions, hasCompletedReport, hasDistributedReport, userId, can, records)
             : [];
 
         return new EngagementJourneyDto(
@@ -96,7 +117,8 @@ public static class EngagementJourneyResolver
         bool hasCompletedReport,
         bool hasDistributedReport,
         Guid userId,
-        Func<string, bool> can)
+        Func<string, bool> can,
+        EngagementRecordFacts records)
     {
         var actions = new List<NextActionDto>();
         var auditRoute = $"/audits/{audit.Id}";
@@ -123,6 +145,46 @@ public static class EngagementJourneyResolver
         var reviewComplete = audit.IsSelfAssessment
             || (audit.ChecklistItems.All(i => i.ReviewedBy is not null) && !audit.ReviewNotes.Any(n => n.IsOutstanding));
 
+        // Engagement records. The team (with ManageAudit) writes the letter and records the meetings; each member
+        // declares their own independence; the audit's managers decide on disclosed conflicts; the auditee acknowledges.
+        var independent = !audit.IsSelfAssessment && records.Loaded;
+        var teamManages = independent && audit.IsOnAuditTeam(userId) && can(PermissionKeys.ManageAudit);
+        var independenceOutstanding = independent && records.RequireIndependence ? audit.IndependenceOutstanding().Count : 0;
+        var mine = audit.DeclarationOf(userId);
+        var conflictsToDecide = audit.IndependenceDeclarations.Count(d => d.Status == IndependenceStatus.ConflictDisclosed && d.UserId != userId);
+        var independenceOpen = audit.Status is AuditStatus.Draft or AuditStatus.Planned or AuditStatus.InProgress or AuditStatus.UnderReview;
+
+        if (independent && records.RequireIndependence && independenceOpen && audit.IsOnAuditTeam(userId) && mine is null)
+        {
+            actions.Add(Route("declare_independence", "Declare your independence", auditRoute, PermissionKeys.ViewAudit));
+        }
+
+        if (independent && independenceOpen && conflictsToDecide > 0 && records.ManagesAudit && !audit.IsAuditee(userId))
+        {
+            actions.Add(Route("decide_independence_conflicts", $"Decide on {conflictsToDecide} disclosed conflict(s) of interest", auditRoute, PermissionKeys.ManageAudit));
+        }
+
+        if (teamManages && audit.Status is AuditStatus.Draft or AuditStatus.Planned or AuditStatus.InProgress
+            && records.LetterStatus is null or EngagementLetterStatus.Draft)
+        {
+            actions.Add(Route("issue_engagement_letter", "Issue the engagement letter", auditRoute, PermissionKeys.ManageAudit));
+        }
+
+        if (independent && audit.IsAuditee(userId) && records.LetterStatus == EngagementLetterStatus.Issued && audit.Status != AuditStatus.Cancelled)
+        {
+            actions.Add(Route("acknowledge_engagement_letter", "Acknowledge the engagement letter", auditRoute, PermissionKeys.ViewAudit));
+        }
+
+        if (teamManages && audit.Status is AuditStatus.InProgress or AuditStatus.UnderReview && !records.KickoffRecorded)
+        {
+            actions.Add(Route("record_kickoff_minutes", "Record the kickoff meeting minutes", auditRoute, PermissionKeys.ManageAudit));
+        }
+
+        if (teamManages && audit.Status is AuditStatus.UnderReview or AuditStatus.Completed && records.HasDraftReport && !records.ExitRecorded)
+        {
+            actions.Add(Route("record_exit_meeting", "Record the exit meeting on the draft report", auditRoute, PermissionKeys.ManageAudit));
+        }
+
         switch (audit.Status)
         {
             case AuditStatus.Draft:
@@ -137,7 +199,11 @@ public static class EngagementJourneyResolver
             case AuditStatus.Planned:
                 if (can(PermissionKeys.ManageAudit))
                 {
-                    actions.Add(Transition("launch_fieldwork", "Launch fieldwork", "in_progress"));
+                    // Fieldwork waits until the whole team has declared independence (where the institution requires it).
+                    if (independenceOutstanding == 0)
+                    {
+                        actions.Add(Transition("launch_fieldwork", "Launch fieldwork", "in_progress"));
+                    }
                 }
                 break;
 

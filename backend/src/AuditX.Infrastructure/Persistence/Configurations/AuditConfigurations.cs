@@ -45,11 +45,33 @@ public sealed class AuditConfiguration : IEntityTypeConfiguration<Audit>
         builder.HasMany(a => a.ChecklistItems).WithOne().HasForeignKey(i => i.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(a => a.Responses).WithOne().HasForeignKey(r => r.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(a => a.ReviewNotes).WithOne().HasForeignKey(n => n.AuditId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(a => a.IndependenceDeclarations).WithOne().HasForeignKey(d => d.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(a => a.TeamMembers).HasField("_teamMembers").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.Sections).HasField("_sections").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.ChecklistItems).HasField("_checklistItems").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.Responses).HasField("_responses").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.ReviewNotes).HasField("_reviewNotes").UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(a => a.IndependenceDeclarations).HasField("_independenceDeclarations").UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+public sealed class IndependenceDeclarationConfiguration : IEntityTypeConfiguration<IndependenceDeclaration>
+{
+    public void Configure(EntityTypeBuilder<IndependenceDeclaration> builder)
+    {
+        builder.ToTable("independence_declarations");
+        builder.HasKey(d => d.Id);
+        builder.Property(d => d.Id).ValueGeneratedNever();
+
+        builder.Property(d => d.ConflictDetails).HasMaxLength(IndependenceDeclaration.MaxLength);
+        builder.Property(d => d.ReviewNote).HasMaxLength(IndependenceDeclaration.MaxLength);
+        builder.Property(d => d.Status)
+            .HasConversion(new SnakeCaseEnumConverter<IndependenceStatus>())
+            .HasMaxLength(30)
+            .IsRequired();
+
+        // One declaration per member per audit; declaring again updates it.
+        builder.HasIndex(d => new { d.AuditId, d.UserId }).IsUnique();
     }
 }
 
