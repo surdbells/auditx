@@ -6,6 +6,19 @@ using AuditX.Domain.Authorization;
 
 namespace AuditX.Application.Exceptions;
 
+/// <summary>How the caller may record a finding's management response.</summary>
+public enum ManagementResponseRole
+{
+    /// <summary>The caller cannot record a response.</summary>
+    None,
+
+    /// <summary>The caller is management for this finding — its owner or an auditee of its audit — and responds in their own name.</summary>
+    Management,
+
+    /// <summary>The caller is on the audit side and may record management's response for them, marked as such.</summary>
+    OnBehalf,
+}
+
 internal static class ExceptionAccess
 {
     /// <summary>
@@ -69,6 +82,35 @@ internal static class ExceptionAccess
         }
 
         throw new ForbiddenAccessException("You are not a party to this finding.");
+    }
+
+    /// <summary>
+    /// Who may record a finding's management response. Management for a finding is its OWNER (who must remediate it)
+    /// and the AUDITEES of its audit; they respond in their own name and need no audit role to do it. Someone on the
+    /// audit side who holds ManageException and may work on the audit can record it on management's behalf (for
+    /// example, a reply received by email); that response is marked as recorded on their behalf.
+    /// </summary>
+    public static async Task<ManagementResponseRole> ResolveManagementResponseRoleAsync(
+        Audit audit, Domain.Exceptions.AuditException exception, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
+    {
+        if (userId is not { } uid)
+        {
+            return ManagementResponseRole.None;
+        }
+
+        if (exception.OwnerUserId == uid || audit.IsAuditee(uid))
+        {
+            return ManagementResponseRole.Management;
+        }
+
+        if (!await permissions.HasPermissionAsync(uid, PermissionKeys.ManageException, scopeValue: null, cancellationToken))
+        {
+            return ManagementResponseRole.None;
+        }
+
+        var onAudit = audit.TeamMembers.Any(m => m.IsActive && m.UserId == uid)
+            || await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken);
+        return onAudit ? ManagementResponseRole.OnBehalf : ManagementResponseRole.None;
     }
 
     /// <summary>

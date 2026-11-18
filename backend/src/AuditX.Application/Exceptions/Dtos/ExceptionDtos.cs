@@ -45,6 +45,7 @@ public sealed record ExceptionDto(
     string? ManagementResponseComment,
     Guid? ManagementRespondedBy,
     DateTimeOffset? ManagementRespondedAt,
+    bool ManagementResponseOnBehalf,
     DateOnly? ManagementResponseDueDate,
     string? ManagementResponseTimeliness,
     int ReopenCount,

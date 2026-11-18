@@ -44,6 +44,12 @@ export type ManagementResponseDecision = 'accepted' | 'partially_accepted' | 'di
 /** Outcome of a post-closure follow-up verification (P2-B). */
 export type VerificationResult = 'passed' | 'partially_passed' | 'failed';
 
+/**
+ * How the signed-in user may record a finding's management response: as management (its owner or the audit's
+ * auditee), for management (the audit team, marked as such), or not at all.
+ */
+export type ManagementResponseRole = 'management' | 'on_behalf' | 'none';
+
 export const MANAGEMENT_RESPONSE_DECISIONS: readonly ManagementResponseDecision[] = ['accepted', 'partially_accepted', 'disputed'];
 export const VERIFICATION_RESULTS: readonly VerificationResult[] = ['passed', 'partially_passed', 'failed'];
 
@@ -112,6 +118,8 @@ export interface Exception {
   managementResponseComment?: string | null;
   managementRespondedBy?: string | null;
   managementRespondedAt?: string | null;
+  /** True when the audit team recorded the response for management; false when management recorded it themselves. */
+  managementResponseOnBehalf?: boolean;
   // Response-timeliness / SLA: due date + derived on_time | late | overdue | due (null when no due date).
   managementResponseDueDate?: string | null;
   managementResponseTimeliness?: string | null;

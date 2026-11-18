@@ -50,15 +50,43 @@ public sealed class RecordManagementResponseCommandHandler(
     {
         var exception = await exceptions.GetByIdAsync(command.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", command.ExceptionId);
         var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
-        await ExceptionAccess.EnsureCanAccessAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
+        var role = await ExceptionAccess.ResolveManagementResponseRoleAsync(auditEntity, exception, currentUser.UserId, permissions, cancellationToken);
+        if (role == ManagementResponseRole.None)
+        {
+            throw new ForbiddenAccessException("Only the finding's owner, the audit's auditee, or the audit team on their behalf can record management's response.");
+        }
+
         exception.EnsureVersion(command.Version);
 
         var decision = FollowUpParsing.ParseDecision(command.Decision);
-        exception.RecordManagementResponse(decision, command.Comment, currentUser.UserId ?? Guid.Empty, clock.UtcNow);
+        var onBehalf = role == ManagementResponseRole.OnBehalf;
+        var before = exception.ManagementResponseDecision is { } prior
+            ? new { decision = prior.ToSnake(), comment = exception.ManagementResponseComment, onBehalfOfManagement = exception.ManagementResponseOnBehalf }
+            : null;
+        exception.RecordManagementResponse(decision, command.Comment, currentUser.UserId!.Value, clock.UtcNow, onBehalf);
         audit.Record(AuditEventTypes.ManagementResponseRecorded, AuditTargetTypes.Exception, exception.Id,
-            after: new { decision = decision.ToSnake() });
+            before: before, after: new { decision = decision.ToSnake(), comment = exception.ManagementResponseComment, onBehalfOfManagement = onBehalf });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return exception.ToDto(DateOnly.FromDateTime(clock.UtcNow.UtcDateTime));
+    }
+}
+
+/// <summary>How the signed-in user may respond to a finding: <c>management</c>, <c>on_behalf</c> or <c>none</c>.</summary>
+public sealed record ManagementResponseAccessDto(string RespondAs);
+
+public sealed record GetManagementResponseAccessQuery(Guid ExceptionId) : IQuery<ManagementResponseAccessDto>;
+
+public sealed class GetManagementResponseAccessQueryHandler(
+    IExceptionRepository exceptions, IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser)
+    : IQueryHandler<GetManagementResponseAccessQuery, ManagementResponseAccessDto>
+{
+    public async Task<ManagementResponseAccessDto> Handle(GetManagementResponseAccessQuery query, CancellationToken cancellationToken)
+    {
+        var exception = await exceptions.GetByIdAsync(query.ExceptionId, cancellationToken) ?? throw new NotFoundException("Exception", query.ExceptionId);
+        var auditEntity = await audits.GetByIdAsync(exception.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", exception.AuditId);
+        await ExceptionAccess.EnsureCanViewAsync(auditEntity, exception, currentUser.UserId, permissions, cancellationToken);
+        var role = await ExceptionAccess.ResolveManagementResponseRoleAsync(auditEntity, exception, currentUser.UserId, permissions, cancellationToken);
+        return new ManagementResponseAccessDto(role.ToSnake());
     }
 }
 

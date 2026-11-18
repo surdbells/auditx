@@ -93,6 +93,23 @@ public sealed class ListUserDirectoryQueryHandler(IUserRepository users)
 }
 
 /// <summary>
+/// The people a signed-in user can pick when naming someone (an action owner, a finding owner): active accounts that
+/// are not vendor-support logins, by name only. Any signed-in user may read it, as with the directory — the auditee
+/// writing their action plan needs it as much as an administrator does.
+/// </summary>
+public sealed record ListActiveUserDirectoryQuery : IQuery<IReadOnlyList<UserDirectoryEntryDto>>;
+
+public sealed class ListActiveUserDirectoryQueryHandler(IUserRepository users)
+    : IQueryHandler<ListActiveUserDirectoryQuery, IReadOnlyList<UserDirectoryEntryDto>>
+{
+    public async Task<IReadOnlyList<UserDirectoryEntryDto>> Handle(ListActiveUserDirectoryQuery query, CancellationToken cancellationToken)
+        => (await users.ListAssignableWithRolesAsync(cancellationToken))
+            .Select(x => new UserDirectoryEntryDto(x.User.Id, x.User.DisplayName))
+            .OrderBy(u => u.DisplayName, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+}
+
+/// <summary>
 /// People who can be named owner of an auditable entity: never a deactivated account or a temporary vendor-support login.
 /// Each comes with the roles they hold so the picker can be narrowed by role. Gated to whoever manages the universe —
 /// role membership is not something every signed-in user needs to see.

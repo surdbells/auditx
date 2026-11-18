@@ -447,6 +447,64 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
     }
 
     [Fact]
+    public async Task Management_responds_in_their_own_name_and_the_audit_team_cannot_overwrite_it()
+    {
+        var admin = await AdminAsync();
+        var (auditId, failItem, _, auditee) = await SeedAuditWithResponsesAsync(admin);
+        var users = await UsersByEmailAsync(admin);
+        var ex = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/exceptions", new
+        {
+            checklistItemId = failItem, title = "Unreconciled suspense account", severity = "medium", rootCause = "rc", recommendation = "rec",
+            ownerUserId = auditee,
+        }));
+        var exId = ex.GetProperty("id").GetGuid();
+
+        // The auditee holds no role: being named on the audit and the finding is what lets them respond.
+        var auditeeClient = await LoginAsync("auditee");
+        var auditorClient = await LoginAsync("auditor");
+        async Task<string> RespondAsAsync(HttpClient client)
+            => (await DataAsync(await client.GetAsync($"/api/v1/exceptions/{exId}/management-response/access"))).GetProperty("respondAs").GetString()!;
+        Assert.Equal("management", await RespondAsAsync(auditeeClient));
+        Assert.Equal("on_behalf", await RespondAsAsync(admin));
+        Assert.Equal("none", await RespondAsAsync(auditorClient)); // on the team, but cannot manage findings
+
+        // Management names the owners of their actions without any admin access: the people picker is open to them.
+        var people = await DataAsync(await auditeeClient.GetAsync("/api/v1/users/directory/active"));
+        Assert.Contains(people.EnumerateArray(), p => p.GetProperty("id").GetGuid() == users["auditor@auditx.local"]);
+        Assert.Equal(HttpStatusCode.Forbidden, (await auditeeClient.GetAsync("/api/v1/users?status=active")).StatusCode);
+
+        // The auditor on the team without ManageException cannot record one at all.
+        var refused = await auditorClient.PostAsJsonAsync($"/api/v1/exceptions/{exId}/management-response", new
+        {
+            decision = "accepted", comment = "Recorded by someone who may not.", version = Version(ex),
+        });
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+
+        // The audit team records management's emailed reply for them — marked as such.
+        var forThem = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/exceptions/{exId}/management-response", new
+        {
+            decision = "accepted", comment = "Accepted by email on 3 March.", version = Version(ex),
+        }));
+        Assert.True(forThem.GetProperty("managementResponseOnBehalf").GetBoolean());
+
+        // Management then gives their own response, in their own name.
+        var own = await DataAsync(await auditeeClient.PostAsJsonAsync($"/api/v1/exceptions/{exId}/management-response", new
+        {
+            decision = "partially_accepted", comment = "We accept the gap but not the rating; see our analysis.", version = Version(forThem),
+        }));
+        Assert.Equal("partially_accepted", own.GetProperty("managementResponseDecision").GetString());
+        Assert.False(own.GetProperty("managementResponseOnBehalf").GetBoolean());
+        Assert.Equal(users["auditee@auditx.local"], own.GetProperty("managementRespondedBy").GetGuid());
+
+        // The audit team can no longer change it: those are management's words.
+        var overwrite = await admin.PostAsJsonAsync($"/api/v1/exceptions/{exId}/management-response", new
+        {
+            decision = "accepted", comment = "Overwriting management's response.", version = Version(own),
+        });
+        Assert.Equal(HttpStatusCode.Conflict, overwrite.StatusCode);
+    }
+
+    [Fact]
     public async Task Response_due_date_drives_timeliness_and_sla_analytics()
     {
         var admin = await AdminAsync();

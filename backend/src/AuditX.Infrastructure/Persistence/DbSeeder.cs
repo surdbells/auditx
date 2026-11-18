@@ -174,6 +174,10 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
                 "An exception was raised against you", "Exception {{ ExceptionId }} ({{ Severity }}) was raised on audit {{ AuditId }}. Please review."),
             ("exception_owner_reassigned", "exception_owner_reassigned", "payload_derived", "NewOwnerUserId", "[\"email\"]",
                 "An exception was reassigned to you", "Exception {{ ExceptionId }} has been reassigned to you."),
+            // Management answered a finding → tell the auditor who raised it, with a link straight to the finding.
+            (Domain.AuditTrail.AuditEventTypes.ManagementResponseRecorded, "management_response_recorded", "payload_derived", "RaisedByUserId", "[\"email\"]",
+                "Management has responded to a finding",
+                "Management's response to finding {{ ExceptionId }} on audit {{ AuditId }} has been recorded. Read it at {{ AppBaseUrl }}/exceptions/{{ ExceptionId }}."),
             ("map_submitted", "map_submitted", "role", BuiltInRoles.AuditManagerName, "[\"email\"]",
                 "A management action plan was submitted", "A MAP was submitted for exception {{ ExceptionId }} and awaits your review."),
             // P2 reporting-line escalation: an overdue MAP escalates to the owner's line manager (line_manager off the

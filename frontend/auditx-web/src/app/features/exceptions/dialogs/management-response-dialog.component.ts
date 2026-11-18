@@ -17,6 +17,8 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 export interface ManagementResponseDialogData {
   decision?: ManagementResponseDecision | null;
   comment?: string | null;
+  /** The audit team is recording management's response for them (e.g. a reply received by email). */
+  onBehalf?: boolean;
 }
 
 export interface ManagementResponseDialogResult {
@@ -41,6 +43,9 @@ export interface ManagementResponseDialogResult {
   template: `
     <h2 mat-dialog-title>{{ 'exceptions.dialog.managementResponseTitle' | t }}</h2>
     <mat-dialog-content>
+      <p class="hint" [class.hint--behalf]="data.onBehalf">
+        {{ (data.onBehalf ? 'exceptions.dialog.responseOnBehalfHint' : 'exceptions.dialog.responseOwnHint') | t }}
+      </p>
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
           <mat-label>{{ 'exceptions.field.responseDecision' | t }}</mat-label>
@@ -70,15 +75,21 @@ export interface ManagementResponseDialogResult {
     .form {
       display: flex;
       flex-direction: column;
-      min-width: 440px;
     }
     .full {
       width: 100%;
     }
-    @media (max-width: 520px) {
-      .form {
-        min-width: auto;
-      }
+    .hint {
+      margin: 0 0 16px;
+      color: var(--mat-sys-on-surface-variant);
+      font-size: 0.875rem;
+      line-height: 1.45;
+    }
+    .hint--behalf {
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--mat-sys-surface-container-high);
+      color: var(--mat-sys-on-surface);
     }
   `,
 })

@@ -2286,6 +2286,10 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("date")
                         .HasColumnName("management_response_due_date");
 
+                    b.Property<bool>("ManagementResponseOnBehalf")
+                        .HasColumnType("bit")
+                        .HasColumnName("management_response_on_behalf");
+
                     b.Property<DateTimeOffset?>("MapApprovedAt")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("map_approved_at");

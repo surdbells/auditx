@@ -20,6 +20,7 @@ import {
   FindingRegulationLink,
   AddVerificationRequest,
   ManagementResponseRequest,
+  ManagementResponseRole,
   SetResponseDueDateRequest,
   RaiseExceptionRequest,
   ReassignOwnerRequest,
@@ -179,6 +180,13 @@ export class ExceptionsService {
 
   recordManagementResponse(id: string, body: ManagementResponseRequest): Observable<Exception> {
     return this.api.post<Exception>(`/exceptions/${id}/management-response`, body);
+  }
+
+  /** How the signed-in user may record this finding's management response. */
+  getManagementResponseRole(id: string): Observable<ManagementResponseRole> {
+    return this.api
+      .get<{ respondAs: ManagementResponseRole }>(`/exceptions/${id}/management-response/access`)
+      .pipe(map((r) => r.respondAs));
   }
 
   /** Set (or clear) the management-response due date (response-timeliness / SLA). */

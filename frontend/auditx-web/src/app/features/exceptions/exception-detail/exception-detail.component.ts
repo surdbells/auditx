@@ -29,9 +29,10 @@ import {
   FindingControlLink,
   FindingLinks,
   FindingRegulationLink,
+  ManagementResponseRole,
   MapAction,
   ProblemDetails,
-  UserDto,
+  UserDirectoryEntry,
 } from '../../../core/models';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
@@ -194,7 +195,10 @@ export class ExceptionDetailComponent {
   /** Linked controls + regulations (P1-B). */
   readonly links = signal<FindingLinks | null>(null);
 
-  private usersCache: UserDto[] = [];
+  /** How the signed-in user may record management's response — decided by the server (owner / auditee / audit team). */
+  readonly responseRole = signal<ManagementResponseRole>('none');
+
+  private usersCache: UserDirectoryEntry[] = [];
 
   /* ---- Permissions ---- */
 
@@ -270,8 +274,26 @@ export class ExceptionDetailComponent {
   );
   readonly canManageNow = computed(() => this.canManage() && !this.isReadOnly());
   readonly canCancelNow = computed(() => this.canCancel() && !this.isReadOnly());
-  /** Management response can be recorded any time except once cancelled. */
-  readonly canRecordResponse = computed(() => this.canManage() && this.status() !== 'cancelled');
+  /**
+   * Management (the finding's owner or the audit's auditee) records their own response any time until the finding is
+   * cancelled. The audit team may record it for them, but not over a response management gave themselves.
+   */
+  readonly canRecordResponse = computed(() => {
+    const ex = this.exception();
+    const role = this.responseRole();
+    if (!ex || role === 'none' || this.status() === 'cancelled') {
+      return false;
+    }
+    return role === 'management' || !ex.managementResponseDecision || ex.managementResponseOnBehalf === true;
+  });
+  /** Management has not answered yet and the signed-in user is management: prompt them. */
+  readonly awaitingMyResponse = computed(
+    () => this.responseRole() === 'management' && this.status() !== 'cancelled' && !this.exception()?.managementResponseDecision,
+  );
+  /** The response due date is the audit team's to set. */
+  readonly canSetResponseDue = computed(
+    () => this.canManage() && this.responseRole() === 'on_behalf' && this.status() !== 'cancelled',
+  );
   /** Reopen + follow-up verification are only meaningful once the finding is closed. */
   readonly canReopenNow = computed(() => this.canReopen() && this.status() === 'closed');
   readonly canVerifyNow = computed(() => this.canVerify() && this.status() === 'closed');
@@ -313,8 +335,17 @@ export class ExceptionDetailComponent {
         this.state.set('ready');
         this.ensureUsers();
         this.loadLinks();
+        this.loadResponseRole();
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  private loadResponseRole(): void {
+    this.service.getManagementResponseRole(this.id()).subscribe({
+      next: (role) => this.responseRole.set(role),
+      // Non-fatal: without it the response stays read-only.
+      error: () => this.responseRole.set('none'),
     });
   }
 
@@ -335,15 +366,18 @@ export class ExceptionDetailComponent {
     });
   }
 
-  /** Loads the active-user list (for the assignment pickers) and warms the display-name directory. */
+  /**
+   * Loads the active people for the assignment pickers (readable by anyone signed in — the finding's owner names action
+   * owners without any admin access) and warms the display-name directory.
+   */
   private ensureUsers(): void {
     this.userLookup.ensureLoaded();
     if (this.usersCache.length) {
       return;
     }
-    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
-      next: (page) => {
-        this.usersCache = page.items;
+    this.users.activeDirectory().subscribe({
+      next: (people) => {
+        this.usersCache = people;
       },
       error: () => {
         // Non-fatal: the pickers fall back to empty; names still resolve via the directory.
@@ -690,9 +724,10 @@ export class ExceptionDetailComponent {
     const data: ManagementResponseDialogData = {
       decision: ex.managementResponseDecision,
       comment: ex.managementResponseComment,
+      onBehalf: this.responseRole() === 'on_behalf',
     };
     this.dialog
-      .open(ManagementResponseDialogComponent, { data, width: '480px' })
+      .open(ManagementResponseDialogComponent, { data, width: '480px', maxWidth: '95vw' })
       .afterClosed()
       .subscribe((result?: ManagementResponseDialogResult) => {
         if (!result) {

@@ -129,10 +129,20 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
 
     // ---- Management response / follow-up verification / reopen (P2-B) ----
 
-    [RequirePermission(PermissionKeys.ManageException)]
+    /// <summary>
+    /// Management's response is recorded by management — the finding's owner or the audit's auditee — or by the audit
+    /// team on their behalf. Everyone named on a finding holds ViewExceptions; the handler decides who may respond.
+    /// </summary>
+    [RequirePermission(PermissionKeys.ViewExceptions)]
     [HttpPost("api/v1/exceptions/{id:guid}/management-response")]
     public async Task<IActionResult> RecordManagementResponse(Guid id, [FromBody] ManagementResponseRequest request, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Send(new RecordManagementResponseCommand(id, request.Decision, request.Comment, request.Version), cancellationToken));
+
+    /// <summary>How the signed-in user may record this finding's management response (management / on_behalf / none).</summary>
+    [RequirePermission(PermissionKeys.ViewExceptions)]
+    [HttpGet("api/v1/exceptions/{id:guid}/management-response/access")]
+    public async Task<IActionResult> GetManagementResponseAccess(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetManagementResponseAccessQuery(id), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageException)]
     [HttpPatch("api/v1/exceptions/{id:guid}/response-due-date")]

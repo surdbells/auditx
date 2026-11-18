@@ -47,7 +47,7 @@ public static class NotificationEvents
         "item_assigned", "evidence_requested", "evidence_recalled",
         // M6 exceptions
         "exception_raised", "exception_owner_reassigned", "map_submitted", "map_approved", "map_rejected",
-        "map_completed", "exception_pending_cia", "exception_closed", "exception_cancelled",
+        "map_completed", "exception_pending_cia", "exception_closed", "exception_cancelled", "management_response_recorded",
         // M3 planning
         "plan_submitted", "plan_decided",
         // M8 reports

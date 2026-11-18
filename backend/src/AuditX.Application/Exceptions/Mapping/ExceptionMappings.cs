@@ -44,6 +44,7 @@ public static class ExceptionMappings
         e.IsOverdue(today), e.DaysPastTarget(today), e.MapSubmittedAt, e.MapApprovedAt, e.MapRejectionReason,
         e.ClosureEvidenceNote, e.ClosedBy, e.ClosedAt, e.CiaCountersignedBy, e.CancellationReason,
         e.ManagementResponseDecision?.ToSnake(), e.ManagementResponseComment, e.ManagementRespondedBy, e.ManagementRespondedAt,
+        e.ManagementResponseOnBehalf,
         e.ManagementResponseDueDate, e.ResponseTimeliness(today),
         e.ReopenCount, e.ReopenedBy, e.ReopenedAt, e.ReopenReason,
         RowVersionToken.Encode(e.Version),

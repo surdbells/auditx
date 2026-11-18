@@ -35,7 +35,12 @@ public sealed record ExceptionClosedEvent(Guid ExceptionId, Guid ClosedBy, Guid?
 
 public sealed record ExceptionCancelledEvent(Guid ExceptionId, Guid ActorUserId, string Reason) : ExceptionEvent;
 
-public sealed record ManagementResponseRecordedEvent(Guid ExceptionId, ManagementResponseDecision Decision, Guid ActorUserId) : ExceptionEvent;
+/// <summary>
+/// Management's response to a finding was recorded. <c>RaisedByUserId</c> (the auditor who raised the finding) is the
+/// default notification recipient; <c>OnBehalfOfManagement</c> is true when the audit team recorded it for management.
+/// </summary>
+public sealed record ManagementResponseRecordedEvent(
+    Guid ExceptionId, Guid AuditId, ManagementResponseDecision Decision, Guid ActorUserId, Guid RaisedByUserId, bool OnBehalfOfManagement) : ExceptionEvent;
 
 public sealed record FindingVerifiedEvent(Guid ExceptionId, Guid VerificationId, VerificationResult Result, Guid VerifiedByUserId) : ExceptionEvent;
 

@@ -8,7 +8,7 @@ import { ExceptionDetailComponent } from './exception-detail.component';
 import { provideTestEnv } from '../../../../testing/test-providers';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { Exception, ExceptionStatus, SessionDto } from '../../../core/models';
+import { Exception, ExceptionStatus, ManagementResponseRole, SessionDto } from '../../../core/models';
 
 const BASE = '/api/v1';
 
@@ -67,7 +67,7 @@ describe('ExceptionDetailComponent', () => {
   let notify: jasmine.SpyObj<NotificationService>;
   let dialog: jasmine.SpyObj<MatDialog>;
 
-  async function setup(perms: string[], ex: Exception): Promise<void> {
+  async function setup(perms: string[], ex: Exception, respondAs: ManagementResponseRole = 'none'): Promise<void> {
     notify = jasmine.createSpyObj<NotificationService>('NotificationService', [
       'success',
       'info',
@@ -112,19 +112,18 @@ describe('ExceptionDetailComponent', () => {
         hasNext: false,
       },
     });
-    // ensureUsers still loads the active-user list for the reassign / submit-MAP pickers.
-    http.expectOne((r) => r.url === `${BASE}/users`).flush({
-      data: {
-        items: [
-          { id: 'u-owner', displayName: 'Olive Owner' },
-          { id: 'u-raiser', displayName: 'Ray Raiser' },
-        ],
-        nextCursor: null,
-        hasMore: false,
-      },
+    // ensureUsers loads the active people for the reassign / submit-MAP pickers — readable by anyone signed in, so the
+    // finding's owner (who holds no admin access) can name action owners.
+    http.expectOne(`${BASE}/users/directory/active`).flush({
+      data: [
+        { id: 'u-owner', displayName: 'Olive Owner' },
+        { id: 'u-raiser', displayName: 'Ray Raiser' },
+      ],
     });
     // P1-B: the detail page also loads the finding's control/regulation links.
     http.expectOne(`${BASE}/exceptions/x-1/links`).flush({ data: { controls: [], regulations: [] } });
+    // …and how the signed-in user may record management's response (decided server-side).
+    http.expectOne(`${BASE}/exceptions/x-1/management-response/access`).flush({ data: { respondAs } });
     fixture.detectChanges();
     await fixture.whenStable();
   }
@@ -137,6 +136,40 @@ describe('ExceptionDetailComponent', () => {
     expect(component.exception()?.title).toBe('Missing control');
     expect(component.ownerName()).toBe('Olive Owner');
     expect(component.raisedByName()).toBe('Ray Raiser');
+  });
+
+  it('asks management for their response, and lets them revise it', async () => {
+    await setup(['ViewExceptions'], exception('open', { ownerUserId: 'u1' }), 'management');
+    expect(component.awaitingMyResponse()).toBe(true);
+    expect(component.canRecordResponse()).toBe(true);
+    // The due date is the audit team's to set, not management's.
+    expect(component.canSetResponseDue()).toBe(false);
+
+    component.exception.set(exception('open', { ownerUserId: 'u1', managementResponseDecision: 'accepted', managementResponseOnBehalf: false }));
+    expect(component.awaitingMyResponse()).toBe(false);
+    expect(component.canRecordResponse()).toBe(true);
+
+    component.exception.set(exception('cancelled', { ownerUserId: 'u1' }));
+    expect(component.canRecordResponse()).toBe(false);
+  });
+
+  it("lets the audit team record a response for management, but not over management's own", async () => {
+    await setup(['ViewExceptions', 'ManageException'], exception('open'), 'on_behalf');
+    expect(component.canRecordResponse()).toBe(true);
+    expect(component.canSetResponseDue()).toBe(true);
+    expect(component.awaitingMyResponse()).toBe(false);
+
+    component.exception.set(exception('open', { managementResponseDecision: 'accepted', managementResponseOnBehalf: true }));
+    expect(component.canRecordResponse()).toBe(true);
+
+    component.exception.set(exception('open', { managementResponseDecision: 'disputed', managementResponseOnBehalf: false }));
+    expect(component.canRecordResponse()).toBe(false);
+  });
+
+  it('offers no response action to someone who may not respond', async () => {
+    await setup(['ViewExceptions', 'ManageException'], exception('open'));
+    expect(component.canRecordResponse()).toBe(false);
+    expect(component.canSetResponseDue()).toBe(false);
   });
 
   it('lets the finding owner submit a MAP, only when open or rejected', async () => {

@@ -220,6 +220,35 @@ public sealed class AuditExceptionTests
         Assert.Equal(ManagementResponseDecision.PartiallyAccepted, e.ManagementResponseDecision);
         Assert.Equal(Actor, e.ManagementRespondedBy);
         Assert.Contains(e.DomainEvents, x => x is ManagementResponseRecordedEvent);
+        Assert.False(e.ManagementResponseOnBehalf);
+    }
+
+    [Fact]
+    public void The_audit_team_can_record_a_response_for_management_but_never_over_managements_own()
+    {
+        var auditor = Guid.NewGuid();
+        var e = New();
+
+        // Recorded for management (e.g. a reply received by email) — flagged, and the raiser is told.
+        e.RecordManagementResponse(ManagementResponseDecision.Accepted, "Accepted by email on 3 March.", auditor, Now, onBehalfOfManagement: true);
+        Assert.True(e.ManagementResponseOnBehalf);
+        var recorded = Assert.IsType<ManagementResponseRecordedEvent>(e.DomainEvents.Last());
+        Assert.True(recorded.OnBehalfOfManagement);
+        Assert.Equal(e.RaisedByUserId, recorded.RaisedByUserId);
+
+        // The team can correct its own transcription…
+        e.RecordManagementResponse(ManagementResponseDecision.PartiallyAccepted, "Accepted in part, by email on 3 March.", auditor, Now, onBehalfOfManagement: true);
+
+        // …management can replace it with their own words…
+        e.RecordManagementResponse(ManagementResponseDecision.Disputed, "We dispute the rating; see the attached analysis.", Actor, Now);
+        Assert.False(e.ManagementResponseOnBehalf);
+        Assert.Equal(Actor, e.ManagementRespondedBy);
+
+        // …and from then on only management changes it.
+        var refused = Assert.Throws<InvalidStateTransitionException>(() => e.RecordManagementResponse(
+            ManagementResponseDecision.Accepted, "Overwriting management.", auditor, Now, onBehalfOfManagement: true));
+        Assert.Equal("exception.response_given_by_management", refused.Code);
+        Assert.Equal(ManagementResponseDecision.Disputed, e.ManagementResponseDecision);
     }
 
     [Fact]

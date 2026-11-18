@@ -103,6 +103,12 @@ public sealed class AuditException : AggregateRoot
 
     public DateTimeOffset? ManagementRespondedAt { get; private set; }
 
+    /// <summary>
+    /// True when the response was recorded by the audit team on management's behalf (for example, management replied
+    /// by email); false when management recorded it themselves.
+    /// </summary>
+    public bool ManagementResponseOnBehalf { get; private set; }
+
     /// <summary>The date by which management is expected to respond — the substrate for response-timeliness / SLA reporting.</summary>
     public DateOnly? ManagementResponseDueDate { get; private set; }
 
@@ -401,19 +407,33 @@ public sealed class AuditException : AggregateRoot
         ManagementResponseDueDate = dueDate;
     }
 
-    /// <summary>Records management's formal position on the finding (accept / partially accept / dispute). Overwrites any prior response; blocked once cancelled.</summary>
-    public void RecordManagementResponse(ManagementResponseDecision decision, string comment, Guid actorUserId, DateTimeOffset nowUtc)
+    /// <summary>
+    /// Records management's formal position on the finding (accept / partially accept / dispute). Management may revise
+    /// their response at any time until the finding is cancelled. The audit team may record a response on management's
+    /// behalf (<paramref name="onBehalfOfManagement"/>), but never over one management recorded themselves: those are
+    /// management's own words.
+    /// </summary>
+    public void RecordManagementResponse(
+        ManagementResponseDecision decision, string comment, Guid actorUserId, DateTimeOffset nowUtc, bool onBehalfOfManagement = false)
     {
         if (Status == ExceptionStatus.Cancelled)
         {
             throw new InvalidStateTransitionException("exception.response_locked", "A cancelled exception cannot take a management response.");
         }
 
+        if (onBehalfOfManagement && ManagementResponseDecision is not null && !ManagementResponseOnBehalf)
+        {
+            throw new InvalidStateTransitionException(
+                "exception.response_given_by_management",
+                "Management has recorded their own response to this finding. Only they can change it.");
+        }
+
         ManagementResponseDecision = decision;
         ManagementResponseComment = Guard.NotNullOrWhiteSpace(comment, "exception.response_comment_required", "A management-response comment is required.");
         ManagementRespondedBy = actorUserId;
         ManagementRespondedAt = nowUtc;
-        RaiseDomainEvent(new ManagementResponseRecordedEvent(Id, decision, actorUserId));
+        ManagementResponseOnBehalf = onBehalfOfManagement;
+        RaiseDomainEvent(new ManagementResponseRecordedEvent(Id, AuditId, decision, actorUserId, RaisedByUserId, onBehalfOfManagement));
     }
 
     /// <summary>Records a post-closure follow-up verification of the remediation (only meaningful once the finding is Closed).</summary>

@@ -71,6 +71,11 @@ export class UsersService {
     });
   }
 
+  /** Active people (no deactivated or vendor-support accounts), names only — readable by anyone signed in, for pickers. */
+  activeDirectory(): Observable<UserDirectoryEntry[]> {
+    return this.api.get<UserDirectoryEntry[]>('/users/directory/active');
+  }
+
   getById(id: string): Observable<UserDetailDto> {
     return this.api.get<UserDetailDto>(`/users/${id}`);
   }

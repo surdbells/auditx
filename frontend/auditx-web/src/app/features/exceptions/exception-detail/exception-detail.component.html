@@ -211,19 +211,37 @@
       <mat-card appearance="outlined" class="detail__card">
         <div class="detail__card-head">
           <h3 class="detail__card-title">{{ 'exceptions.detail.responseTitle' | t }}</h3>
-          @if (canRecordResponse()) {
+          @if (canSetResponseDue() || (canRecordResponse() && !awaitingMyResponse())) {
             <div class="detail__card-actions">
-              <button matButton type="button" (click)="setResponseDueDate()">
-                <app-icon name="event" />
-                {{ 'exceptions.action.setResponseDue' | t }}
-              </button>
-              <button matButton type="button" (click)="recordManagementResponse()">
-                <app-icon name="rate_review" />
-                {{ (e.managementResponseDecision ? 'exceptions.action.editResponse' : 'exceptions.action.recordResponse') | t }}
-              </button>
+              @if (canSetResponseDue()) {
+                <button matButton type="button" (click)="setResponseDueDate()">
+                  <app-icon name="event" />
+                  {{ 'exceptions.action.setResponseDue' | t }}
+                </button>
+              }
+              @if (canRecordResponse() && !awaitingMyResponse()) {
+                <button matButton type="button" (click)="recordManagementResponse()">
+                  <app-icon name="rate_review" />
+                  {{ (e.managementResponseDecision
+                      ? 'exceptions.action.editResponse'
+                      : (responseRole() === 'on_behalf' ? 'exceptions.action.recordResponseForManagement' : 'exceptions.action.recordResponse')) | t }}
+                </button>
+              }
             </div>
           }
         </div>
+        @if (awaitingMyResponse()) {
+          <div class="detail__callout" role="status">
+            <app-icon name="rate_review" />
+            <div>
+              <strong>{{ 'exceptions.detail.responseNeededTitle' | t }}</strong>
+              <p>{{ 'exceptions.detail.responseNeededBody' | t }}</p>
+            </div>
+            <button matButton="filled" type="button" (click)="recordManagementResponse()">
+              {{ 'exceptions.action.recordResponse' | t }}
+            </button>
+          </div>
+        }
         @if (e.managementResponseDueDate || e.managementResponseTimeliness) {
           <div class="detail__status-row">
             <span class="muted">
@@ -242,7 +260,10 @@
             <span class="status-badge" [attr.data-status]="e.managementResponseDecision === 'disputed' ? 'map_rejected' : (e.managementResponseDecision === 'accepted' ? 'responded' : 'pending_closure')">
               {{ 'exceptions.responseDecision.' + e.managementResponseDecision | t }}
             </span>
-            <span class="muted">{{ nameOf(e.managementRespondedBy) }} · {{ e.managementRespondedAt | date: 'mediumDate' }}</span>
+            <span class="muted">
+              {{ (e.managementResponseOnBehalf ? 'exceptions.detail.respondedOnBehalf' : 'exceptions.detail.respondedBy') | t: { name: nameOf(e.managementRespondedBy) } }}
+              · {{ e.managementRespondedAt | date: 'mediumDate' }}
+            </span>
           </div>
           <p class="detail__response-comment">{{ e.managementResponseComment }}</p>
         } @else {

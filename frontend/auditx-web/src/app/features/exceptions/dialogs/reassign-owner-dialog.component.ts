@@ -10,12 +10,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 
-import { UserDto } from '../../../core/models';
+import { UserDirectoryEntry } from '../../../core/models';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface ReassignOwnerDialogData {
   currentOwnerId: string;
-  users: UserDto[];
+  users: UserDirectoryEntry[];
 }
 
 export interface ReassignOwnerDialogResult {
