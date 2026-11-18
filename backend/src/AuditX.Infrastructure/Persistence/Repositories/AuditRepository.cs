@@ -15,6 +15,8 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
             .Include(a => a.Sections)
             .Include(a => a.ChecklistItems)
             .Include(a => a.Responses)
+            .Include(a => a.ReviewNotes)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
     public async Task<DateOnly?> GetLatestCompletionDateForEntityAsync(Guid auditableEntityId, Guid? excludingAuditId, CancellationToken cancellationToken = default)

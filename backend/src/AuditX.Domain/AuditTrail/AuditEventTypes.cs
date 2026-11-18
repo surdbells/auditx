@@ -208,6 +208,13 @@ public static class AuditEventTypes
     public const string ItemAssigned = "item_assigned";
     public const string ItemsBulkReassigned = "items_bulk_reassigned";
     public const string FailJudgementRecorded = "fail_judgement_recorded";
+
+    // Working-paper review (all targeted at the audit; the item / note ids are in the after-state)
+    public const string ItemSignedOff = "item_signed_off";
+    public const string ReviewNoteRaised = "review_note_raised";
+    public const string ReviewNoteAnswered = "review_note_answered";
+    public const string ReviewNoteCleared = "review_note_cleared";
+    public const string ReviewNoteReopened = "review_note_reopened";
     public const string EvidenceUploaded = "evidence_uploaded";
     public const string EvidenceSoftDeleted = "evidence_soft_deleted";
     public const string EvidenceHashMismatch = "evidence_hash_mismatch";

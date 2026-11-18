@@ -76,6 +76,17 @@ public sealed class GetAuditHistoryQueryHandler(
         AuditTargetTypes.AuditChecklistItem,
     ];
 
+    // The working-paper review is the audit function's own quality review: its entries (which carry the notes' text)
+    // are not shown to the audit's auditee.
+    private static readonly HashSet<string> ReviewEvents =
+    [
+        AuditEventTypes.ItemSignedOff,
+        AuditEventTypes.ReviewNoteRaised,
+        AuditEventTypes.ReviewNoteAnswered,
+        AuditEventTypes.ReviewNoteCleared,
+        AuditEventTypes.ReviewNoteReopened,
+    ];
+
     public async Task<IReadOnlyList<AuditHistoryEntryDto>> Handle(GetAuditHistoryQuery query, CancellationToken cancellationToken)
     {
         var audit = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
@@ -87,7 +98,9 @@ public sealed class GetAuditHistoryQueryHandler(
             entries.AddRange(await trail.GetForTargetAsync(target, query.AuditId, eventType: null, limit: 200, cancellationToken));
         }
 
+        var hideReview = currentUser.UserId is { } uid && !audit.IsSelfAssessment && audit.IsAuditee(uid);
         return entries
+            .Where(e => !hideReview || !ReviewEvents.Contains(e.EventType))
             .OrderBy(e => e.OccurredAtUtc)
             .Select(e => new AuditHistoryEntryDto(
                 e.Id, e.EventType, e.TargetObjectType, e.ActorUserId, e.OccurredAtUtc, e.AfterStateJson ?? e.EventPayloadJson))

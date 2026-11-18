@@ -29,6 +29,7 @@ import {
   ResponseHistoryEntry,
   ResponseInput,
   ReviewSummary,
+  WorkingPaperReview,
   SubmitResponseRequest,
   TransferLeadRequest,
   TransitionAuditRequest,
@@ -279,6 +280,32 @@ export class AuditsService {
 
   getReviewSummary(id: string): Observable<ReviewSummary> {
     return this.api.get<ReviewSummary>(`/audits/${id}/review/summary`);
+  }
+
+  /* ---- Working-paper review (audit version; each returns the review as it now stands) ---- */
+
+  getWorkingPaperReview(id: string): Observable<WorkingPaperReview> {
+    return this.api.get<WorkingPaperReview>(`/audits/${id}/review/working-papers`);
+  }
+
+  signOffItem(id: string, itemId: string, version: string): Observable<WorkingPaperReview> {
+    return this.api.post<WorkingPaperReview>(`/audits/${id}/items/${itemId}/sign-off`, { version });
+  }
+
+  raiseReviewNote(id: string, itemId: string | null, body: string, version: string): Observable<WorkingPaperReview> {
+    return this.api.post<WorkingPaperReview>(`/audits/${id}/review-notes`, { itemId, body, version });
+  }
+
+  answerReviewNote(id: string, noteId: string, answer: string, version: string): Observable<WorkingPaperReview> {
+    return this.api.post<WorkingPaperReview>(`/audits/${id}/review-notes/${noteId}/answer`, { answer, version });
+  }
+
+  clearReviewNote(id: string, noteId: string, version: string): Observable<WorkingPaperReview> {
+    return this.api.post<WorkingPaperReview>(`/audits/${id}/review-notes/${noteId}/clear`, { version });
+  }
+
+  reopenReviewNote(id: string, noteId: string, version: string): Observable<WorkingPaperReview> {
+    return this.api.post<WorkingPaperReview>(`/audits/${id}/review-notes/${noteId}/reopen`, { version });
   }
 
   recordFailJudgement(

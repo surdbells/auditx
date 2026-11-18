@@ -47,6 +47,11 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
 
     public DateTimeOffset? FailJudgedAt { get; private set; }
 
+    /// <summary>The reviewer who signed this item's working paper off; null until reviewed (or after it changed).</summary>
+    public Guid? ReviewedBy { get; private set; }
+
+    public DateTimeOffset? ReviewedAt { get; private set; }
+
     /// <summary>How severe a failure of this item is. Drives the default severity of any exception raised against it.</summary>
     public ExceptionSeverity? RiskRating { get; private set; }
 
@@ -100,6 +105,19 @@ public sealed class AuditChecklistItem : Entity, IBelongsToAggregate
 
     /// <summary>Set by M5 when a response is recorded/cleared.</summary>
     public void SetState(ChecklistItemState state) => ItemState = state;
+
+    internal void MarkReviewed(Guid reviewerUserId, DateTimeOffset nowUtc)
+    {
+        ReviewedBy = reviewerUserId;
+        ReviewedAt = nowUtc;
+    }
+
+    /// <summary>The reviewed work changed (or a note was raised on it): it needs reviewing again.</summary>
+    internal void ClearReview()
+    {
+        ReviewedBy = null;
+        ReviewedAt = null;
+    }
 
     /// <summary>Set/cleared by the M6 exception hook.</summary>
     internal void MarkHasException(bool value) => HasException = value;

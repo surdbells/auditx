@@ -13,6 +13,7 @@ import {
   ChecklistProgress,
   ResponseVerdict,
   SessionDto,
+  WorkingPaperReview,
 } from '../../../core/models';
 
 const BASE = '/api/v1';
@@ -90,6 +91,28 @@ function progress(): ChecklistProgress {
   };
 }
 
+/** The working-paper review: i-1 answered by u-auditor and awaiting sign-off, i-2 not answered yet. */
+function review(overrides: Partial<WorkingPaperReview> = {}): WorkingPaperReview {
+  return {
+    isRequired: true,
+    isOpen: true,
+    canReview: false,
+    canAnswer: true,
+    totalItems: 2,
+    signedOffItems: 0,
+    readyForSignOff: 1,
+    openNotes: 0,
+    answeredNotes: 0,
+    items: [
+      { itemId: 'i-1', isAnswered: true, responderUserId: 'u-auditor', reviewedBy: null, reviewedAt: null, outstandingNotes: 0 },
+      { itemId: 'i-2', isAnswered: false, responderUserId: null, reviewedBy: null, reviewedAt: null, outstandingNotes: 0 },
+    ],
+    notes: [],
+    version: 'v1',
+    ...overrides,
+  };
+}
+
 function session(permissions: string[], userId = 'u1'): SessionDto {
   return {
     userId,
@@ -123,6 +146,7 @@ describe('AuditExecutionComponent', () => {
     }[] = [],
     /** Who is signed in. 'u1' is NOT on the audit's team; 'u-auditor' is its one active team member. */
     userId = 'u1',
+    reviewData: WorkingPaperReview = review(),
   ): Promise<void> {
     notify = jasmine.createSpyObj<NotificationService>('NotificationService', [
       'success',
@@ -159,6 +183,10 @@ describe('AuditExecutionComponent', () => {
       .flush({
         data: { totalItems: 2, responded: 1, pass: 1, fail: 0, na: 0, exceptions: 0 },
       });
+    // The working-paper review loads once fieldwork has started (never for the audit's auditee).
+    for (const req of http.match(`${BASE}/audits/a-1/review/working-papers`)) {
+      req.flush({ data: reviewData });
+    }
     // The fail worklist loads for anyone who can raise an exception (or manage) while the checklist is live.
     if (
       (a.status === 'under_review' || a.status === 'in_progress') &&
@@ -212,7 +240,13 @@ describe('AuditExecutionComponent', () => {
     }
   }
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    // A self-refresh after a mutation reloads the review too; these specs are not about that.
+    for (const req of http.match(`${BASE}/audits/a-1/review/working-papers`)) {
+      req.flush({ data: review() });
+    }
+    http.verify();
+  });
 
   it('loads progress and computes the responded percentage', async () => {
     await setup(['RespondItem', 'ViewAudit'], audit('in_progress'));
@@ -444,6 +478,77 @@ describe('AuditExecutionComponent', () => {
     expect(component.showFailWorklist()).toBe(true);
     expect(component.failItems().length).toBe(1);
     expect(component.canManage()).toBe(false);
+  });
+
+  /* ---- Working-paper review ---- */
+
+  const leadOnTeam = (status: AuditStatus = 'in_progress') =>
+    audit(status, {
+      teamMembers: [
+        { id: 'm-1', userId: 'u-auditor', teamRole: 'auditor', isActive: true, addedAt: '', removedAt: null },
+        { id: 'm-2', userId: 'u-lead', teamRole: 'lead', isActive: true, addedAt: '', removedAt: null },
+      ],
+    });
+
+  const signedOff = (): WorkingPaperReview['items'] => [
+    { itemId: 'i-1', isAnswered: true, responderUserId: 'u-auditor', reviewedBy: 'u-lead', reviewedAt: '2026-02-01T10:00:00Z', outstandingNotes: 0 },
+    { itemId: 'i-2', isAnswered: false, responderUserId: null, reviewedBy: null, reviewedAt: null, outstandingNotes: 0 },
+  ];
+
+  it('loads the working-paper review for the team and marks signed-off items on the rail', async () => {
+    await setup(['ViewAudit'], leadOnTeam(), [], 'u-lead', review({ canReview: true, signedOffItems: 1, items: signedOff() }));
+
+    expect(component.showReview()).toBe(true);
+    expect(component.reviewStore.review()?.canReview).toBe(true);
+    expect(component.isSignedOff('i-1')).toBe(true);
+    expect(component.isSignedOff('i-2')).toBe(false);
+  });
+
+  it("never asks for the review as the audit's auditee", async () => {
+    await setup(['ViewAudit'], audit('in_progress'), [], 'u-auditee');
+
+    expect(component.showReview()).toBe(false);
+    http.expectNone(`${BASE}/audits/a-1/review/working-papers`);
+    expect(component.reviewStore.review()).toBeNull();
+  });
+
+  it('signs an item off with the audit version, then asks the page to reload the audit', async () => {
+    await setup(['ViewAudit'], leadOnTeam(), [], 'u-lead', review({ canReview: true }));
+    const reload = spyOn(component.reloadRequested, 'emit');
+
+    component.reviewStore.signOff('i-1');
+    const req = http.expectOne(`${BASE}/audits/a-1/items/i-1/sign-off`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ version: 'v1' });
+    req.flush({ data: review({ canReview: true, signedOffItems: 1, items: signedOff(), version: 'v2' }) });
+
+    expect(component.isSignedOff('i-1')).toBe(true);
+    expect(notify.success).toHaveBeenCalled();
+    expect(reload).toHaveBeenCalled();
+  });
+
+  it('raises review notes from the dialog, each carrying the newest audit version', async () => {
+    await setup(['ViewAudit'], leadOnTeam(), [], 'u-lead', review({ canReview: true }));
+    dialog.open.and.returnValue({ afterClosed: () => of('Reference the sample selection.') } as MatDialogRef<unknown>);
+
+    component.reviewStore.raise('i-1', 'Verify SoD');
+    const first = http.expectOne(`${BASE}/audits/a-1/review-notes`);
+    expect(first.request.body).toEqual({ itemId: 'i-1', body: 'Reference the sample selection.', version: 'v1' });
+    first.flush({ data: review({ canReview: true, openNotes: 1, version: 'v2' }) });
+
+    component.reviewStore.raise(null, null);
+    const second = http.expectOne(`${BASE}/audits/a-1/review-notes`);
+    expect(second.request.body).toEqual({ itemId: null, body: 'Reference the sample selection.', version: 'v2' });
+    second.flush({ data: review({ canReview: true, openNotes: 2, version: 'v3' }) });
+    expect(component.reviewStore.review()?.openNotes).toBe(2);
+  });
+
+  it('does nothing when the note dialog is cancelled', async () => {
+    await setup(['ViewAudit'], leadOnTeam(), [], 'u-lead', review({ canReview: true }));
+    dialog.open.and.returnValue({ afterClosed: () => of(undefined) } as MatDialogRef<unknown>);
+
+    component.reviewStore.raise('i-1', 'Verify SoD');
+    http.expectNone(`${BASE}/audits/a-1/review-notes`);
   });
 
   // Re-create the component in a single test that needs two states without a

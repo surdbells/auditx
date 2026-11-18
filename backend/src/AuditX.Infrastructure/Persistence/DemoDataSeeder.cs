@@ -725,16 +725,44 @@ public sealed class DemoDataSeeder(
 
         await db.SaveChangesAsync(ct);
 
-        // Complete the audit if requested. Once all items are finalised the domain auto-moved it to UnderReview;
+        // Review the working papers, then complete the audit if requested. Once all items are finalised the domain
+        // auto-moved it to UnderReview. The lead reviews (they did not answer the items): a completed audit was signed
+        // off in full; the under-review audit is part-way through, with one review note waiting on the team.
         // Complete() moves UnderReview → Completed and stamps the actual end date + MarkAudited on the entity.
-        if (complete)
+        if (finaliseAll)
         {
-            var reloaded = await db.Audits.Include(a => a.ChecklistItems).FirstAsync(a => a.Id == auditId, ct);
-            if (reloaded.Status == AuditStatus.UnderReview)
+            var reloaded = await db.Audits
+                .Include(a => a.TeamMembers)
+                .Include(a => a.ChecklistItems)
+                .Include(a => a.Responses)
+                .Include(a => a.ReviewNotes)
+                .AsSplitQuery()
+                .FirstAsync(a => a.Id == auditId, ct);
+            var reviewerId = reloaded.LeadUserId;
+            var answered = reloaded.ChecklistItems
+                .Where(item => item.ItemState == ChecklistItemState.Responded)
+                .OrderBy(item => item.OrderIndex)
+                .ToList();
+            var toSignOff = complete ? answered : answered.Take(answered.Count / 2).ToList();
+            foreach (var item in toSignOff)
+            {
+                reloaded.SignOffItem(item.Id, reviewerId, _now);
+            }
+
+            if (!complete && answered.Count > toSignOff.Count)
+            {
+                reloaded.RaiseReviewNote(
+                    answered[toSignOff.Count].Id,
+                    "Please reference the sample selection in the working paper so the testing can be re-performed.",
+                    reviewerId, _now);
+            }
+
+            if (complete && reloaded.Status == AuditStatus.UnderReview)
             {
                 reloaded.Complete(Today);
-                await db.SaveChangesAsync(ct);
             }
+
+            await db.SaveChangesAsync(ct);
         }
     }
 

@@ -9,3 +9,11 @@ public sealed record BulkAssignmentRequest(Guid ItemId, Guid? AssigneeUserId);
 public sealed record BulkReassignRequest(IReadOnlyList<BulkAssignmentRequest> Assignments, string Version);
 
 public sealed record FailJudgementRequest(string Justification, string Version);
+
+public sealed record SignOffItemRequest(string Version);
+
+public sealed record RaiseReviewNoteRequest(Guid? ItemId, string Body, string Version);
+
+public sealed record AnswerReviewNoteRequest(string Answer, string Version);
+
+public sealed record ReviewNoteActionRequest(string Version);

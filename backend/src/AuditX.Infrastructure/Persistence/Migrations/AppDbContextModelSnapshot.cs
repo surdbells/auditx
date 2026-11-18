@@ -1227,6 +1227,14 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(30)")
                         .HasColumnName("response_type");
 
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("reviewed_by");
+
                     b.Property<string>("RiskRating")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)")
@@ -1452,6 +1460,86 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("checklist_responses", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Audits.ReviewNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Answer")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)")
+                        .HasColumnName("answer");
+
+                    b.Property<DateTimeOffset?>("AnsweredAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("answered_at");
+
+                    b.Property<Guid?>("AnsweredBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("answered_by");
+
+                    b.Property<Guid>("AuditId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("audit_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)")
+                        .HasColumnName("body");
+
+                    b.Property<Guid?>("ChecklistItemId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("checklist_item_id");
+
+                    b.Property<DateTimeOffset?>("ClearedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("cleared_at");
+
+                    b.Property<Guid?>("ClearedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("cleared_by");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("RaisedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("raised_at");
+
+                    b.Property<Guid>("RaisedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("raised_by");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChecklistItemId");
+
+                    b.HasIndex("AuditId", "Status");
+
+                    b.ToTable("review_notes", (string)null);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Compliance.ExceptionControlLink", b =>
@@ -6425,6 +6513,20 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Audits.ReviewNote", b =>
+                {
+                    b.HasOne("AuditX.Domain.Audits.Audit", null)
+                        .WithMany("ReviewNotes")
+                        .HasForeignKey("AuditId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AuditX.Domain.Audits.AuditChecklistItem", null)
+                        .WithMany()
+                        .HasForeignKey("ChecklistItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("AuditX.Domain.Compliance.ExceptionControlLink", b =>
                 {
                     b.HasOne("AuditX.Domain.Controls.Control", null)
@@ -6747,6 +6849,8 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.Navigation("ChecklistItems");
 
                     b.Navigation("Responses");
+
+                    b.Navigation("ReviewNotes");
 
                     b.Navigation("Sections");
 

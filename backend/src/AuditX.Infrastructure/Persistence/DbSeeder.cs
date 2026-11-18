@@ -162,6 +162,17 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
                 "A kickoff meeting for \"{{ AuditName }}\" is scheduled for {{ ScheduledAtUtc }}. Location / join: {{ Location }}. Please make yourself available."),
             ("item_assigned", "item_assigned", "payload_derived", "AssigneeUserId", "[\"email\"]",
                 "A checklist item was assigned to you", "Checklist item {{ ItemId }} on audit {{ AuditId }} has been assigned to you."),
+            // Working-paper review: whoever prepared the work hears of a note on it; the reviewer hears the answer; the
+            // person who answered hears when the reviewer is not satisfied and reopens the note.
+            ("review_note_raised", "review_note_raised", "payload_derived", "PreparerUserId", "[\"email\"]",
+                "A reviewer raised a note on your work",
+                "A reviewer raised a note on your work on the audit \"{{ AuditName }}\". Answer it at {{ AppBaseUrl }}/audits/{{ AuditId }}/execute."),
+            ("review_note_answered", "review_note_answered", "payload_derived", "RaisedBy", "[\"email\"]",
+                "Your review note was answered",
+                "The team answered your review note on the audit \"{{ AuditName }}\". Clear it or reopen it at {{ AppBaseUrl }}/audits/{{ AuditId }}/execute."),
+            ("review_note_reopened", "review_note_reopened", "payload_derived", "AnsweredBy", "[\"email\"]",
+                "A review note was reopened",
+                "The reviewer reopened a review note you answered on the audit \"{{ AuditName }}\". See it at {{ AppBaseUrl }}/audits/{{ AuditId }}/execute."),
             // Auditor requests a document from an auditee → email the auditee a link to upload it (US: evidence request).
             ("evidence_requested", "evidence_requested", "payload_derived", "RequestedFromUserId", "[\"email\"]",
                 "A document has been requested from you",

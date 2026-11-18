@@ -316,6 +316,32 @@ describe('AuditsService', () => {
     expect(result?.fail).toBe(1);
   });
 
+  it('reads the working-paper review and posts each review action with the audit version', () => {
+    service.getWorkingPaperReview('a-1').subscribe();
+    expect(http.expectOne(`${BASE}/audits/a-1/review/working-papers`).request.method).toBe('GET');
+
+    service.signOffItem('a-1', 'i-1', 'v1').subscribe();
+    const signOff = http.expectOne(`${BASE}/audits/a-1/items/i-1/sign-off`);
+    expect(signOff.request.method).toBe('POST');
+    expect(signOff.request.body).toEqual({ version: 'v1' });
+
+    service.raiseReviewNote('a-1', null, 'Add the scope memo.', 'v2').subscribe();
+    expect(http.expectOne(`${BASE}/audits/a-1/review-notes`).request.body).toEqual({
+      itemId: null,
+      body: 'Add the scope memo.',
+      version: 'v2',
+    });
+
+    service.answerReviewNote('a-1', 'n-1', 'Filed.', 'v3').subscribe();
+    expect(http.expectOne(`${BASE}/audits/a-1/review-notes/n-1/answer`).request.body).toEqual({ answer: 'Filed.', version: 'v3' });
+
+    service.clearReviewNote('a-1', 'n-1', 'v4').subscribe();
+    expect(http.expectOne(`${BASE}/audits/a-1/review-notes/n-1/clear`).request.body).toEqual({ version: 'v4' });
+
+    service.reopenReviewNote('a-1', 'n-1', 'v5').subscribe();
+    expect(http.expectOne(`${BASE}/audits/a-1/review-notes/n-1/reopen`).request.body).toEqual({ version: 'v5' });
+  });
+
   it('records a fail judgement carrying the version', () => {
     service
       .recordFailJudgement('a-1', 'i-1', {

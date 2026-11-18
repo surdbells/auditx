@@ -44,10 +44,12 @@ public sealed class AuditConfiguration : IEntityTypeConfiguration<Audit>
         builder.HasMany(a => a.Sections).WithOne().HasForeignKey(s => s.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(a => a.ChecklistItems).WithOne().HasForeignKey(i => i.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(a => a.Responses).WithOne().HasForeignKey(r => r.AuditId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(a => a.ReviewNotes).WithOne().HasForeignKey(n => n.AuditId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(a => a.TeamMembers).HasField("_teamMembers").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.Sections).HasField("_sections").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.ChecklistItems).HasField("_checklistItems").UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(a => a.Responses).HasField("_responses").UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(a => a.ReviewNotes).HasField("_reviewNotes").UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
 
@@ -64,6 +66,31 @@ public sealed class AuditSectionConfiguration : IEntityTypeConfiguration<AuditSe
         builder.HasIndex(s => s.AuditId);
         // One section name per audit (case-insensitive under the default SQL Server collation).
         builder.HasIndex(s => new { s.AuditId, s.Name }).IsUnique();
+    }
+}
+
+/// <summary>Review notes on an audit's working papers. Never deleted while the audit exists — they evidence the review.</summary>
+public sealed class ReviewNoteConfiguration : IEntityTypeConfiguration<ReviewNote>
+{
+    public void Configure(EntityTypeBuilder<ReviewNote> builder)
+    {
+        builder.ToTable("review_notes");
+        builder.HasKey(n => n.Id);
+        builder.Property(n => n.Id).ValueGeneratedNever();
+
+        builder.Property(n => n.Body).HasMaxLength(ReviewNote.MaxLength).IsRequired();
+        builder.Property(n => n.Answer).HasMaxLength(ReviewNote.MaxLength);
+        builder.Property(n => n.Status)
+            .HasConversion(new SnakeCaseEnumConverter<ReviewNoteStatus>())
+            .HasMaxLength(20)
+            .IsRequired();
+
+        // The item the note is about (none for a note on the audit as a whole). Items are removable only while the
+        // audit is a draft and notes exist only once fieldwork starts, so Restrict never blocks a legitimate removal.
+        builder.HasOne<AuditChecklistItem>().WithMany().HasForeignKey(n => n.ChecklistItemId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(n => new { n.AuditId, n.Status });
+        builder.HasIndex(n => n.ChecklistItemId);
     }
 }
 

@@ -45,6 +45,7 @@ public static class NotificationEvents
         "audit_kickoff_scheduled",
         // M5 execution
         "item_assigned", "evidence_requested", "evidence_recalled",
+        "review_note_raised", "review_note_answered", "review_note_reopened",
         // M6 exceptions
         "exception_raised", "exception_owner_reassigned", "map_submitted", "map_approved", "map_rejected",
         "map_completed", "exception_pending_cia", "exception_closed", "exception_cancelled", "management_response_recorded",

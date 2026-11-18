@@ -50,6 +50,25 @@ public sealed record ResponseHistoryEntryDto(
 
 public sealed record ReviewSummaryDto(int TotalItems, int Responded, int Pass, int Fail, int Na, int Exceptions);
 
+/// <summary>A reviewer's note on the working papers and the team's answer. Status: open / answered / cleared.</summary>
+public sealed record ReviewNoteDto(
+    Guid Id, Guid? ChecklistItemId, string Body, string Status, Guid RaisedBy, DateTimeOffset RaisedAt,
+    string? Answer, Guid? AnsweredBy, DateTimeOffset? AnsweredAt, Guid? ClearedBy, DateTimeOffset? ClearedAt);
+
+/// <summary>One checklist item's review: who answered it, who signed it off, and how many notes on it are not cleared.</summary>
+public sealed record ReviewItemDto(
+    Guid ItemId, bool IsAnswered, Guid? ResponderUserId, Guid? ReviewedBy, DateTimeOffset? ReviewedAt, int OutstandingNotes);
+
+/// <summary>
+/// The working-paper review of an audit. <c>IsRequired</c> is false for a self-assessment (no independent reviewer);
+/// <c>IsOpen</c> while the audit is in progress or under review. <c>CanReview</c> / <c>CanAnswer</c> say what the
+/// caller may do. <c>Version</c> is the audit's concurrency token after the read or change.
+/// </summary>
+public sealed record WorkingPaperReviewDto(
+    bool IsRequired, bool IsOpen, bool CanReview, bool CanAnswer,
+    int TotalItems, int SignedOffItems, int ReadyForSignOff, int OpenNotes, int AnsweredNotes,
+    IReadOnlyList<ReviewItemDto> Items, IReadOnlyList<ReviewNoteDto> Notes, string Version);
+
 public sealed record FailWithoutExceptionItemDto(Guid ItemId, string Prompt, string? Comment, Guid? AssignedUserId);
 
 public sealed record FailWithoutExceptionDto(int Count, IReadOnlyList<FailWithoutExceptionItemDto> Items);

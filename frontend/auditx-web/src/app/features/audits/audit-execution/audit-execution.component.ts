@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
@@ -9,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { parseResponseConfig } from '../../../core/models/response-type.util';
 import { MatButtonModule } from '@angular/material/button';
@@ -83,6 +85,9 @@ import { TranslationService } from '../../../core/i18n/translation.service';
 import { AuditTimePanelComponent } from './audit-time-panel.component';
 import { AuditProceduresPanelComponent } from './audit-procedures-panel.component';
 import { AuditEvidencePanelComponent } from './audit-evidence-panel.component';
+import { AuditReviewPanelComponent } from './audit-review-panel.component';
+import { ItemReviewComponent } from './item-review.component';
+import { WorkingPaperReviewStore } from './working-paper-review.store';
 
 const CONCURRENCY_CONFLICT = 'audit.concurrency_conflict';
 
@@ -116,7 +121,11 @@ interface ProgressGroup {
     AuditTimePanelComponent,
     AuditProceduresPanelComponent,
     AuditEvidencePanelComponent,
+    AuditReviewPanelComponent,
+    ItemReviewComponent,
   ],
+  // The working-paper review is shared by the review card and the open item's review section.
+  providers: [WorkingPaperReviewStore],
   templateUrl: './audit-execution.component.html',
   styleUrl: './audit-execution.component.scss',
 })
@@ -139,6 +148,7 @@ export class AuditExecutionComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+  readonly reviewStore = inject(WorkingPaperReviewStore);
 
   readonly progress = signal<ChecklistProgress | null>(null);
   readonly summary = signal<ReviewSummary | null>(null);
@@ -398,12 +408,43 @@ export class AuditExecutionComponent {
   constructor() {
     // Refetch progress / summary whenever the audit id first appears or changes.
     effect(() => {
-      const id = this.audit().id;
+      const audit = this.audit();
+      // Keep the review's concurrency token current on every reload of the audit.
+      this.reviewStore.setAudit(audit);
+      const id = audit.id;
       if (id && id !== this.lastAuditId) {
         this.lastAuditId = id;
         this.refresh();
       }
     });
+    // A review change moved the audit's version: the parent reloads it.
+    this.reviewStore.changed.pipe(takeUntilDestroyed(inject(DestroyRef))).subscribe(() => this.reloadRequested.emit());
+  }
+
+  /**
+   * The working-paper review is the audit team's own quality review: shown once fieldwork starts, and never to the
+   * audit's auditee (the server refuses them too).
+   */
+  readonly showReview = computed(
+    () => !this.isAuditee() && ['in_progress', 'under_review', 'completed'].includes(this.status()),
+  );
+
+  /** Signed off by a reviewer (for the checklist rail's marker). */
+  isSignedOff(itemId: string): boolean {
+    return !!this.reviewStore.review() && !!this.reviewStore.itemReview(itemId)?.reviewedBy;
+  }
+
+  /** Review notes on the item not yet cleared (for the checklist rail's marker). */
+  outstandingNotes(itemId: string): number {
+    return this.reviewStore.review() ? (this.reviewStore.itemReview(itemId)?.outstandingNotes ?? 0) : 0;
+  }
+
+  /** Opens an item by id (from a review note's link). */
+  openItemById(itemId: string): void {
+    const item = this.orderedItems().find((i) => i.itemId === itemId);
+    if (item) {
+      this.selectItem(item);
+    }
   }
 
   /** Reloads progress, review summary, and (when reviewing) the fail list. */
@@ -418,6 +459,11 @@ export class AuditExecutionComponent {
     this.service.getReviewSummary(id).subscribe({
       next: (s) => this.summary.set(s),
     });
+    if (this.showReview()) {
+      this.reviewStore.load();
+    } else {
+      this.reviewStore.clear();
+    }
     // Load the fail worklist for anyone who can act on it (raise an exception or, as reviewer, record
     // judgement) while the checklist is live — so auditors get the same at-a-glance shortcut as reviewers.
     if (

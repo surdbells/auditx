@@ -296,6 +296,34 @@
 }
 
 // Why the signed-in user cannot respond to this item (not on the team / assigned to someone else).
+.exec__review {
+  display: block;
+}
+
+.exec__rail-reviewed,
+.exec__rail-note {
+  flex: 0 0 auto;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.exec__rail-reviewed {
+  color: #2e7d32;
+}
+
+.exec__rail-note {
+  color: #b45309;
+}
+
+:host-context([data-theme='dark']) .exec__rail-reviewed {
+  color: #86efac;
+}
+
+:host-context([data-theme='dark']) .exec__rail-note {
+  color: #fbbf24;
+}
+
 .exec__blocked {
   display: flex;
   align-items: flex-start;

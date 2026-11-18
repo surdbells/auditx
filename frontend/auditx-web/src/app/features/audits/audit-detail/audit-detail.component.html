@@ -55,7 +55,15 @@
               </button>
             }
             @if (canDriveLifecycle() && isUnderReview()) {
-              <button matButton="filled" type="button" (click)="complete()">
+              <button
+                matButton="filled"
+                type="button"
+                (click)="complete()"
+                [disabled]="!!reviewOutstanding()"
+                disabledInteractive
+                [matTooltip]="completeHint()"
+                [matTooltipDisabled]="!reviewOutstanding()"
+              >
                 <app-icon name="task_alt" />
                 {{ 'audits.actions.complete' | t }}
               </button>

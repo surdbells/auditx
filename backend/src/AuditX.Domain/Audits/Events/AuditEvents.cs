@@ -35,4 +35,22 @@ public sealed record ItemRespondedEvent(Guid AuditId, Guid ItemId, Guid Response
 
 public sealed record DraftDiscardedEvent(Guid AuditId, Guid ItemId, Guid ResponseId) : AuditEvent;
 
+/// <summary>A reviewer signed a checklist item's working paper off.</summary>
+public sealed record ItemSignedOffEvent(Guid AuditId, Guid ItemId, Guid ReviewerUserId) : AuditEvent;
+
+/// <summary>
+/// A reviewer raised a note on the working papers. <c>PreparerUserId</c> — who answered the item, or the lead for a
+/// note on the audit as a whole — is told.
+/// </summary>
+public sealed record ReviewNoteRaisedEvent(Guid AuditId, string AuditName, Guid NoteId, Guid? ItemId, Guid RaisedBy, Guid PreparerUserId) : AuditEvent;
+
+/// <summary>The team answered a review note; the reviewer who raised it (<c>RaisedBy</c>) is told.</summary>
+public sealed record ReviewNoteAnsweredEvent(Guid AuditId, string AuditName, Guid NoteId, Guid? ItemId, Guid AnsweredBy, Guid RaisedBy) : AuditEvent;
+
+/// <summary>A reviewer cleared a review note.</summary>
+public sealed record ReviewNoteClearedEvent(Guid AuditId, Guid NoteId, Guid? ItemId, Guid ClearedBy) : AuditEvent;
+
+/// <summary>A reviewer reopened an answered review note; the person who answered it (<c>AnsweredBy</c>) is told.</summary>
+public sealed record ReviewNoteReopenedEvent(Guid AuditId, string AuditName, Guid NoteId, Guid? ItemId, Guid ReopenedBy, Guid AnsweredBy) : AuditEvent;
+
 public sealed record ItemAssignedEvent(Guid AuditId, Guid ItemId, Guid? AssigneeUserId) : AuditEvent;

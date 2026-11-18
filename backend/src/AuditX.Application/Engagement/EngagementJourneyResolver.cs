@@ -112,6 +112,17 @@ public static class EngagementJourneyResolver
         var failsWithoutException = audit.ChecklistItems.Count(i => !i.HasException
             && audit.Responses.Any(r => r.ChecklistItemId == i.Id && !r.IsDraft && r.Verdict == ResponseVerdict.Fail));
 
+        // Working-paper review: answered items still to sign off (not the reviewer's own work, no note outstanding on
+        // them), answered notes waiting on a reviewer, and open notes waiting on the team.
+        var isReviewer = audit.IsReviewer(userId);
+        var toSignOff = audit.ChecklistItems.Count(i => i.ItemState == ChecklistItemState.Responded && i.ReviewedBy is null
+            && audit.Responses.Any(r => r.ChecklistItemId == i.Id && !r.IsDraft && r.ResponderUserId != userId)
+            && !audit.ReviewNotes.Any(n => n.ChecklistItemId == i.Id && n.IsOutstanding));
+        var notesToClear = audit.ReviewNotes.Count(n => n.Status == ReviewNoteStatus.Answered);
+        var notesToAnswer = audit.ReviewNotes.Count(n => n.Status == ReviewNoteStatus.Open);
+        var reviewComplete = audit.IsSelfAssessment
+            || (audit.ChecklistItems.All(i => i.ReviewedBy is not null) && !audit.ReviewNotes.Any(n => n.IsOutstanding));
+
         switch (audit.Status)
         {
             case AuditStatus.Draft:
@@ -139,6 +150,7 @@ public static class EngagementJourneyResolver
                 {
                     actions.Add(Route("raise_exception", $"Raise exception on {failsWithoutException} failed item(s)", executeRoute, PermissionKeys.RaiseException));
                 }
+                AddReviewActions(actions, executeRoute, isReviewer, audit.IsOnAuditTeam(userId), toSignOff, notesToClear, notesToAnswer);
                 // Note: the aggregate auto-transitions to Under review once every item is responded, so
                 // there is no manual "submit for review" step to surface here.
                 break;
@@ -149,7 +161,9 @@ public static class EngagementJourneyResolver
                     actions.Add(Route("raise_exception", $"Raise exception on {failsWithoutException} failed item(s)", executeRoute, PermissionKeys.RaiseException));
                 }
                 AddRemediationActions(actions, openExceptions, userId, can);
-                if (openExceptions.Count == 0 && can(PermissionKeys.ManageAudit))
+                AddReviewActions(actions, executeRoute, isReviewer, audit.IsOnAuditTeam(userId), toSignOff, notesToClear, notesToAnswer);
+                // The audit completes only once its working papers are fully reviewed.
+                if (openExceptions.Count == 0 && reviewComplete && can(PermissionKeys.ManageAudit))
                 {
                     actions.Add(Transition("complete_review", "Complete review", "completed"));
                 }
@@ -172,6 +186,25 @@ public static class EngagementJourneyResolver
         }
 
         return actions;
+    }
+
+    private static void AddReviewActions(
+        List<NextActionDto> actions, string executeRoute, bool isReviewer, bool onTeam, int toSignOff, int notesToClear, int notesToAnswer)
+    {
+        if (isReviewer && toSignOff > 0)
+        {
+            actions.Add(Route("sign_off_working_papers", $"Review and sign off {toSignOff} item(s)", executeRoute, PermissionKeys.ViewAudit));
+        }
+
+        if (isReviewer && notesToClear > 0)
+        {
+            actions.Add(Route("clear_review_notes", $"Clear or reopen {notesToClear} answered review note(s)", executeRoute, PermissionKeys.ViewAudit));
+        }
+
+        if (onTeam && notesToAnswer > 0)
+        {
+            actions.Add(Route("answer_review_notes", $"Answer {notesToAnswer} review note(s)", executeRoute, PermissionKeys.ViewAudit));
+        }
     }
 
     private static void AddRemediationActions(

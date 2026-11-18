@@ -27,6 +27,11 @@
   }
 </mat-card>
 
+<!-- Working-paper review: sign-off progress, outstanding review notes, and why the audit cannot complete yet. -->
+@if (showReview()) {
+  <app-audit-review-panel class="exec__review" [items]="orderedItems()" [status]="status()" (openItem)="openItemById($event)" />
+}
+
 <!-- Failures still needing an exception — visible to anyone who can raise one, not just the reviewer. -->
 @if (showFailWorklist()) {
   <mat-card appearance="outlined" class="exec__card">
@@ -89,6 +94,19 @@
               >
                 <span class="exec__rail-dot" [attr.data-state]="railState(item)" aria-hidden="true"></span>
                 <span class="exec__rail-label">{{ item.prompt }}</span>
+                @if (outstandingNotes(item.itemId); as notes) {
+                  <app-icon
+                    class="exec__rail-note"
+                    [matTooltip]="'audits.review.railNotes' | t: { count: notes }"
+                    [attr.aria-label]="'audits.review.railNotes' | t: { count: notes }"
+                    name="rate_review" />
+                } @else if (isSignedOff(item.itemId)) {
+                  <app-icon
+                    class="exec__rail-reviewed"
+                    [matTooltip]="'audits.review.railSignedOff' | t"
+                    [attr.aria-label]="'audits.review.railSignedOff' | t"
+                    name="verified" />
+                }
                 @if (item.hasException) {
                   <app-icon
                     class="exec__rail-flag"
@@ -204,6 +222,11 @@
               </button>
             }
           </div>
+
+          <!-- Working-paper review of this item -->
+          @if (showReview()) {
+            <app-item-review [item]="item" />
+          }
 
           <!-- Evidence -->
           @if (canViewEvidence()) {

@@ -110,9 +110,34 @@ public sealed class EngagementJourneyResolverTests
         // Responding the last item auto-transitions the aggregate to Under review.
         a.RecordResponse(itemId, ResponseVerdict.Pass, null, isDraft: false, Auditor, requireCommentOnPass: false, Now);
 
+        // The lead first reviews the working paper; only then can the review be completed.
+        var unreviewed = Resolve(a, Grants(PermissionKeys.ManageAudit), Manager);
+        Assert.Equal("review", unreviewed.Stage);
+        Assert.Contains(unreviewed.NextActions, x => x.Code == "sign_off_working_papers");
+        Assert.DoesNotContain(unreviewed.NextActions, x => x.Code == "complete_review");
+
+        a.SignOffItem(itemId, Manager, Now);
         var journey = Resolve(a, Grants(PermissionKeys.ManageAudit), Manager);
-        Assert.Equal("review", journey.Stage);
+        Assert.DoesNotContain(journey.NextActions, x => x.Code == "sign_off_working_papers");
         Assert.Contains(journey.NextActions, x => x.Code == "complete_review" && x.TargetState == "completed");
+    }
+
+    [Fact]
+    public void A_review_note_asks_the_team_to_answer_and_the_reviewer_to_clear()
+    {
+        var (a, itemId) = Ready();
+        a.Plan();
+        a.Start();
+        a.RecordResponse(itemId, ResponseVerdict.Pass, null, isDraft: false, Auditor, requireCommentOnPass: false, Now);
+        var note = a.RaiseReviewNote(itemId, "Reference the sample.", Manager, Now);
+
+        Assert.Contains(Resolve(a, Grants(), Auditor).NextActions, x => x.Code == "answer_review_notes");
+        Assert.DoesNotContain(Resolve(a, Grants(), Auditee).NextActions, x => x.Code == "answer_review_notes");
+
+        a.AnswerReviewNote(note.Id, "Sample referenced in WP 3.", Auditor, Now);
+        var forLead = Resolve(a, Grants(PermissionKeys.ManageAudit), Manager);
+        Assert.Contains(forLead.NextActions, x => x.Code == "clear_review_notes");
+        Assert.DoesNotContain(forLead.NextActions, x => x.Code == "complete_review");
     }
 
     [Fact]
@@ -122,6 +147,7 @@ public sealed class EngagementJourneyResolverTests
         a.Plan();
         a.Start();
         a.RecordResponse(itemId, ResponseVerdict.Pass, null, isDraft: false, Auditor, requireCommentOnPass: false, Now);
+        a.SignOffItem(itemId, Manager, Now);
         a.Complete(Target); // already Under review via the auto-transition above
 
         var reporting = Resolve(a, Grants(PermissionKeys.GenerateReport), Manager);

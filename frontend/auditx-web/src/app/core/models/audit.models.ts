@@ -407,6 +407,58 @@ export interface FailWithoutExceptionResult {
   items: FailWithoutExceptionItem[];
 }
 
+/** A review note is open until the team answers it, then answered until a reviewer clears (or reopens) it. */
+export type ReviewNoteStatus = 'open' | 'answered' | 'cleared';
+
+/** A reviewer's note on the working papers, with the team's answer. */
+export interface ReviewNote {
+  id: string;
+  /** The checklist item the note is about; null for a note on the audit as a whole. */
+  checklistItemId: string | null;
+  body: string;
+  status: ReviewNoteStatus;
+  raisedBy: string;
+  raisedAt: string;
+  answer: string | null;
+  answeredBy: string | null;
+  answeredAt: string | null;
+  clearedBy: string | null;
+  clearedAt: string | null;
+}
+
+/** One checklist item's review: who answered it, who signed it off, and its notes not yet cleared. */
+export interface ReviewItem {
+  itemId: string;
+  isAnswered: boolean;
+  responderUserId: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  outstandingNotes: number;
+}
+
+/**
+ * The audit's working-paper review. Every item must be signed off by a reviewer who did not answer it, and every
+ * note cleared, before the audit completes (not required for a self-assessment). `version` is the audit's
+ * concurrency token after the read or change.
+ */
+export interface WorkingPaperReview {
+  isRequired: boolean;
+  /** True while the audit is in progress or under review. */
+  isOpen: boolean;
+  /** The signed-in user is the audit's lead or a reviewer on its team. */
+  canReview: boolean;
+  /** The signed-in user is on the audit team and can answer notes. */
+  canAnswer: boolean;
+  totalItems: number;
+  signedOffItems: number;
+  readyForSignOff: number;
+  openNotes: number;
+  answeredNotes: number;
+  items: ReviewItem[];
+  notes: ReviewNote[];
+  version: string;
+}
+
 /* ---- Request payloads ---- */
 
 export interface SubmitResponseRequest {

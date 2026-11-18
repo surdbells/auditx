@@ -47,6 +47,7 @@ import {
   ScheduleKickoffRequest,
   TransitionTarget,
   UserDto,
+  WorkingPaperReview,
 } from '../../../core/models';
 import {
   ChecklistItemDialogComponent,
@@ -225,6 +226,8 @@ export class AuditDetailComponent {
   readonly exceptions = signal<ExceptionListItem[]>([]);
   /** The audit's activity timeline (lifecycle / team / section / checklist events). */
   readonly activity = signal<AuditHistoryEntry[]>([]);
+  /** The working-paper review, loaded while the audit is under review so Complete can say what is still missing. */
+  readonly workingPaperReview = signal<WorkingPaperReview | null>(null);
 
   private usersCache: UserDto[] = [];
 
@@ -422,6 +425,25 @@ export class AuditDetailComponent {
   );
   readonly isInProgress = computed(() => this.status() === 'in_progress');
   readonly isUnderReview = computed(() => this.status() === 'under_review');
+
+  /**
+   * The audit completes only once its working papers are reviewed: every item signed off and every review note
+   * cleared (a self-assessment has no independent review). Null while unknown — the server still decides.
+   */
+  readonly reviewOutstanding = computed(() => {
+    const r = this.workingPaperReview();
+    if (!r || !r.isRequired) {
+      return null;
+    }
+    const items = r.totalItems - r.signedOffItems;
+    const notes = r.openNotes + r.answeredNotes;
+    return items > 0 || notes > 0 ? { items, notes } : null;
+  });
+
+  readonly completeHint = computed(() => {
+    const o = this.reviewOutstanding();
+    return o ? this.i18n.translate('audits.review.completeBlocked', o) : '';
+  });
   /**
    * Name of the linked audit-universe entity. The server resolves it when the audit is read (and when the link is
    * changed); other command results omit it, so it is remembered here rather than read off the audit each time.
@@ -513,8 +535,21 @@ export class AuditDetailComponent {
         this.resolvePlanLink(audit.planItemId);
         this.loadExceptions();
         this.loadActivity();
+        this.loadWorkingPaperReview(audit);
       },
       error: () => this.state.set('error'),
+    });
+  }
+
+  /** Only the team that drives the lifecycle needs it, and only while the audit is under review. */
+  private loadWorkingPaperReview(audit: Audit): void {
+    this.workingPaperReview.set(null);
+    if (audit.status !== 'under_review' || audit.isSelfAssessment || !this.canDriveLifecycle()) {
+      return;
+    }
+    this.service.getWorkingPaperReview(audit.id).subscribe({
+      next: (r) => this.workingPaperReview.set(r),
+      error: () => this.workingPaperReview.set(null),
     });
   }
 
@@ -639,6 +674,11 @@ export class AuditDetailComponent {
     audit_section_renamed: 'audits.activity.sectionRenamed',
     audit_section_removed: 'audits.activity.sectionRemoved',
     audit_sections_reordered: 'audits.activity.sectionsReordered',
+    item_signed_off: 'audits.activity.itemSignedOff',
+    review_note_raised: 'audits.activity.reviewNoteRaised',
+    review_note_answered: 'audits.activity.reviewNoteAnswered',
+    review_note_cleared: 'audits.activity.reviewNoteCleared',
+    review_note_reopened: 'audits.activity.reviewNoteReopened',
   };
 
   private parseState(json: string | null): { status?: string; reason?: string } | null {

@@ -228,6 +228,40 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     public async Task<IActionResult> FailWithoutException(Guid id, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new ListFailWithoutExceptionQuery(id), cancellationToken));
 
+    // ---- Working-paper review ----
+    // Who may sign off, raise, clear or answer is decided by the audit's own team (its lead and reviewers review; the
+    // team answers) in the domain; the audit's auditee is refused by the independence filter (writes) and the query.
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/review/working-papers")]
+    public async Task<IActionResult> WorkingPaperReview(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetWorkingPaperReviewQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpPost("{id:guid}/items/{itemId:guid}/sign-off")]
+    public async Task<IActionResult> SignOffItem(Guid id, Guid itemId, [FromBody] SignOffItemRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SignOffItemCommand(id, itemId, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpPost("{id:guid}/review-notes")]
+    public async Task<IActionResult> RaiseReviewNote(Guid id, [FromBody] RaiseReviewNoteRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new RaiseReviewNoteCommand(id, request.ItemId, request.Body, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpPost("{id:guid}/review-notes/{noteId:guid}/answer")]
+    public async Task<IActionResult> AnswerReviewNote(Guid id, Guid noteId, [FromBody] AnswerReviewNoteRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new AnswerReviewNoteCommand(id, noteId, request.Answer, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpPost("{id:guid}/review-notes/{noteId:guid}/clear")]
+    public async Task<IActionResult> ClearReviewNote(Guid id, Guid noteId, [FromBody] ReviewNoteActionRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ClearReviewNoteCommand(id, noteId, request.Version), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpPost("{id:guid}/review-notes/{noteId:guid}/reopen")]
+    public async Task<IActionResult> ReopenReviewNote(Guid id, Guid noteId, [FromBody] ReviewNoteActionRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ReopenReviewNoteCommand(id, noteId, request.Version), cancellationToken));
+
     [RequirePermission(PermissionKeys.ViewAudit)]
     [HttpGet("{id:guid}/review/summary")]
     public async Task<IActionResult> ReviewSummary(Guid id, CancellationToken cancellationToken)

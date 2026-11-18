@@ -12,10 +12,12 @@ namespace AuditX.Api.IntegrationTests;
 /// </summary>
 public sealed class EntityCoverageFlowTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
-    private async Task<HttpClient> AdminAsync()
+    private async Task<HttpClient> AdminAsync() => await LoginAsync("admin");
+
+    private async Task<HttpClient> LoginAsync(string username)
     {
         var client = factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { HandleCookies = true });
-        (await client.PostAsJsonAsync("/api/v1/auth/login", new { username = "admin", password = "Passw0rd!" })).EnsureSuccessStatusCode();
+        (await client.PostAsJsonAsync("/api/v1/auth/login", new { username, password = "Passw0rd!" })).EnsureSuccessStatusCode();
         return client;
     }
 
@@ -66,11 +68,15 @@ public sealed class EntityCoverageFlowTests(ApiFactory factory) : IClassFixture<
     private static async Task<string> AuditVersionAsync(HttpClient admin, Guid auditId)
         => Version(await DataAsync(await admin.GetAsync($"/api/v1/audits/{auditId}")));
 
-    private static async Task CompleteAsync(HttpClient admin, Guid auditId, Guid itemId)
+    private async Task CompleteAsync(HttpClient admin, Guid auditId, Guid itemId)
     {
-        // Answering the last open item moves the audit to review on its own; completing it is the explicit step.
+        // Answering the last open item moves the audit to review on its own; the lead (the manager, who did not answer
+        // it) signs the working paper off; completing it is the explicit step.
         await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/responses",
             new { verdict = "pass", comment = (string?)null, isDraft = false, version = await AuditVersionAsync(admin, auditId) }));
+        var lead = await LoginAsync("manager");
+        await DataAsync(await lead.PostAsJsonAsync($"/api/v1/audits/{auditId}/items/{itemId}/sign-off",
+            new { version = await AuditVersionAsync(admin, auditId) }));
         var completed = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/audits/{auditId}/transition",
             new { targetState = "completed", reason = (string?)null, version = await AuditVersionAsync(admin, auditId) }));
         Assert.Equal("completed", completed.GetProperty("status").GetString());

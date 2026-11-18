@@ -14,10 +14,12 @@ public sealed class AuditTests
 
     private static Audit New() => Audit.Create("Branch Audit", "branch", Start, End, null, null, null, null, null, Lead, Auditee, null, Lead, Now);
 
+    private static readonly Guid Fieldworker = Guid.NewGuid();
+
     private static Audit ReadyToPlan()
     {
         var a = New();
-        a.AddTeamMember(Guid.NewGuid(), TeamRole.Auditor, Lead, Now);
+        a.AddTeamMember(Fieldworker, TeamRole.Auditor, Lead, Now);
         a.AddChecklistItem("Cash counted?", null, ResponseType.PassFailNa, null, true, null);
         return a;
     }
@@ -126,9 +128,14 @@ public sealed class AuditTests
 
         // Unanswered items require a reason to move to review.
         Assert.Throws<DomainException>(() => a.SendToReview(null));
-        a.ChecklistItems[0].SetState(ChecklistItemState.Responded);
-        a.SendToReview(null);
+        // Answering the last item moves the audit to review on its own.
+        a.RecordResponse(a.ChecklistItems[0].Id, ResponseVerdict.Pass, null, isDraft: false, Fieldworker, requireCommentOnPass: false, Now);
         Assert.Equal(AuditStatus.UnderReview, a.Status);
+
+        // The working paper is reviewed before the audit completes.
+        var unreviewed = Assert.Throws<DomainException>(() => a.Complete(new DateOnly(2027, 2, 5)));
+        Assert.Equal("audit.review_incomplete", unreviewed.Code);
+        a.SignOffItem(a.ChecklistItems[0].Id, Lead, Now);
 
         a.Complete(new DateOnly(2027, 2, 5));
         Assert.Equal(AuditStatus.Completed, a.Status);

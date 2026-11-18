@@ -137,6 +137,28 @@ public sealed class ListFailWithoutExceptionQueryHandler(IAuditRepository audits
     }
 }
 
+/// <summary>
+/// The audit's working-paper review: item sign-offs and review notes. Review notes are the audit function's own
+/// quality review, so the audit's auditee does not see them (a self-assessment, run by its auditee, excepted).
+/// </summary>
+public sealed record GetWorkingPaperReviewQuery(Guid AuditId) : IQuery<WorkingPaperReviewDto>;
+
+public sealed class GetWorkingPaperReviewQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
+    : IQueryHandler<GetWorkingPaperReviewQuery, WorkingPaperReviewDto>
+{
+    public async Task<WorkingPaperReviewDto> Handle(GetWorkingPaperReviewQuery query, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        if (currentUser.UserId is { } uid && !entity.IsSelfAssessment && entity.IsAuditee(uid))
+        {
+            throw new ForbiddenAccessException("The working-paper review is internal to the audit team.");
+        }
+
+        await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
+        return entity.ToReviewDto(currentUser.UserId);
+    }
+}
+
 public sealed record GetReviewSummaryQuery(Guid AuditId) : IQuery<ReviewSummaryDto>;
 
 public sealed class GetReviewSummaryQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)

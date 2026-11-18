@@ -16,6 +16,7 @@ public sealed class Audit : AggregateRoot
     private readonly List<AuditSection> _sections = [];
     private readonly List<AuditChecklistItem> _checklistItems = [];
     private readonly List<ChecklistResponse> _responses = [];
+    private readonly List<ReviewNote> _reviewNotes = [];
 
     private Audit()
     {
@@ -81,6 +82,9 @@ public sealed class Audit : AggregateRoot
     public IReadOnlyList<AuditChecklistItem> ChecklistItems => _checklistItems.AsReadOnly();
 
     public IReadOnlyList<ChecklistResponse> Responses => _responses.AsReadOnly();
+
+    /// <summary>The reviewers' notes on the working papers (never deleted; cleared once resolved).</summary>
+    public IReadOnlyList<ReviewNote> ReviewNotes => _reviewNotes.AsReadOnly();
 
     private IEnumerable<AuditTeamMember> ActiveTeam => _teamMembers.Where(m => m.IsActive);
 
@@ -482,6 +486,20 @@ public sealed class Audit : AggregateRoot
             throw new DomainException("audit.items_unanswered", "All checklist items must be responded before completion.");
         }
 
+        // The working papers are reviewed before the audit completes: every item signed off by a reviewer who did not
+        // do the work, and every review note cleared. A self-assessment has no independent reviewer, so is exempt.
+        if (!IsSelfAssessment)
+        {
+            var unreviewed = _checklistItems.Count(i => i.ReviewedBy is null);
+            var outstanding = _reviewNotes.Count(n => n.IsOutstanding);
+            if (unreviewed > 0 || outstanding > 0)
+            {
+                throw new DomainException(
+                    "audit.review_incomplete",
+                    $"The working papers are not fully reviewed: {unreviewed} item(s) still need a reviewer's sign-off and {outstanding} review note(s) are not cleared.");
+            }
+        }
+
         ActualEndDate = today;
         Status = AuditStatus.Completed;
         RaiseDomainEvent(new AuditTransitionedEvent(Id, AuditStatus.UnderReview, Status, null));
@@ -536,6 +554,8 @@ public sealed class Audit : AggregateRoot
 
         response.Apply(verdict, comment, valueJson, isDraft, actorUserId, requireCommentOnPass, item.ResponseType.IsValueType(), nowUtc, observation, recommendation, selectedOptionCode, selectedOptionLabel);
         item.SetState(isDraft ? ChecklistItemState.InProgress : ChecklistItemState.Responded);
+        // The reviewed work changed, so its sign-off no longer stands.
+        item.ClearReview();
         RaiseDomainEvent(new ItemRespondedEvent(Id, itemId, response.Id, verdict, isDraft));
 
         var autoTransitioned = false;
@@ -565,6 +585,120 @@ public sealed class Audit : AggregateRoot
         RaiseDomainEvent(new DraftDiscardedEvent(Id, itemId, responseId));
         return responseId;
     }
+
+    // ---- Working-paper review ----
+
+    /// <summary>
+    /// A reviewer of this audit: its lead or a team member with the Reviewer role. Reviewers sign working papers off
+    /// and raise review notes; the audit's auditee never reviews it.
+    /// </summary>
+    public bool IsReviewer(Guid userId)
+        => !IsAuditee(userId) && ActiveTeam.Any(m => m.UserId == userId && m.TeamRole is TeamRole.Lead or TeamRole.Reviewer);
+
+    /// <summary>On the audit side of this audit: an active member of its team who is not its auditee.</summary>
+    public bool IsOnAuditTeam(Guid userId) => !IsAuditee(userId) && ActiveTeam.Any(m => m.UserId == userId);
+
+    /// <summary>
+    /// Sign an answered item's working paper off. The reviewer must not have answered it themselves — a review is a
+    /// second pair of eyes — and every note on the item must be cleared first.
+    /// </summary>
+    public void SignOffItem(Guid itemId, Guid reviewerUserId, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("audit.review_locked", AuditStatus.InProgress, AuditStatus.UnderReview);
+        EnsureReviewer(reviewerUserId);
+        var item = FindItem(itemId);
+        var response = _responses.FirstOrDefault(r => r.ChecklistItemId == itemId);
+        if (item.ItemState != ChecklistItemState.Responded || response is null || response.IsDraft)
+        {
+            throw new DomainException("audit.item_not_answered", "An item can be signed off only once it has been answered.");
+        }
+
+        if (response.ResponderUserId == reviewerUserId)
+        {
+            throw new DomainException("audit.review_own_work", "You answered this item, so another reviewer must sign it off.");
+        }
+
+        if (_reviewNotes.Any(n => n.ChecklistItemId == itemId && n.IsOutstanding))
+        {
+            throw new DomainException("audit.item_has_open_notes", "Clear the review notes on this item before signing it off.");
+        }
+
+        item.MarkReviewed(reviewerUserId, nowUtc);
+        RaiseDomainEvent(new ItemSignedOffEvent(Id, itemId, reviewerUserId));
+    }
+
+    /// <summary>
+    /// Raise a review note on an item (or, with no item, on the audit as a whole). A note on an item withdraws its
+    /// sign-off: the item is reviewed again once the note is cleared.
+    /// </summary>
+    public ReviewNote RaiseReviewNote(Guid? itemId, string body, Guid reviewerUserId, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("audit.review_locked", AuditStatus.InProgress, AuditStatus.UnderReview);
+        EnsureReviewer(reviewerUserId);
+        var preparer = LeadUserId;
+        if (itemId is { } id)
+        {
+            var item = FindItem(id);
+            item.ClearReview();
+            preparer = _responses.FirstOrDefault(r => r.ChecklistItemId == id)?.ResponderUserId ?? item.AssignedUserId ?? LeadUserId;
+        }
+
+        var note = new ReviewNote(Id, itemId, body, reviewerUserId, nowUtc);
+        _reviewNotes.Add(note);
+        RaiseDomainEvent(new ReviewNoteRaisedEvent(Id, Name, note.Id, itemId, reviewerUserId, preparer));
+        return note;
+    }
+
+    /// <summary>Anyone working on the audit answers a note: what they changed, or why no change is needed.</summary>
+    public ReviewNote AnswerReviewNote(Guid noteId, string answer, Guid actorUserId, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("audit.review_locked", AuditStatus.InProgress, AuditStatus.UnderReview);
+        if (!IsOnAuditTeam(actorUserId))
+        {
+            throw new DomainException("audit.not_on_team", "Only the audit team can answer a review note.");
+        }
+
+        var note = FindNote(noteId);
+        note.AnswerWith(answer, actorUserId, nowUtc);
+        RaiseDomainEvent(new ReviewNoteAnsweredEvent(Id, Name, note.Id, note.ChecklistItemId, actorUserId, note.RaisedBy));
+        return note;
+    }
+
+    /// <summary>A reviewer accepts the answer (or withdraws the note): it no longer holds up sign-off or completion.</summary>
+    public ReviewNote ClearReviewNote(Guid noteId, Guid reviewerUserId, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("audit.review_locked", AuditStatus.InProgress, AuditStatus.UnderReview);
+        EnsureReviewer(reviewerUserId);
+        var note = FindNote(noteId);
+        note.Clear(reviewerUserId, nowUtc);
+        RaiseDomainEvent(new ReviewNoteClearedEvent(Id, note.Id, note.ChecklistItemId, reviewerUserId));
+        return note;
+    }
+
+    /// <summary>A reviewer is not satisfied with the answer: the note is open again.</summary>
+    public ReviewNote ReopenReviewNote(Guid noteId, Guid reviewerUserId)
+    {
+        EnsureStatus("audit.review_locked", AuditStatus.InProgress, AuditStatus.UnderReview);
+        EnsureReviewer(reviewerUserId);
+        var note = FindNote(noteId);
+        var answeredBy = note.AnsweredBy;
+        note.Reopen();
+        RaiseDomainEvent(new ReviewNoteReopenedEvent(Id, Name, note.Id, note.ChecklistItemId, reviewerUserId, answeredBy ?? LeadUserId));
+        return note;
+    }
+
+    private void EnsureReviewer(Guid userId)
+    {
+        if (!IsReviewer(userId))
+        {
+            throw new DomainException(
+                "audit.not_reviewer", "Only the audit's lead or a reviewer on its team can review the working papers.");
+        }
+    }
+
+    private ReviewNote FindNote(Guid noteId)
+        => _reviewNotes.FirstOrDefault(n => n.Id == noteId)
+            ?? throw new DomainException("audit.review_note_not_found", "The review note does not exist on this audit.");
 
     /// <summary>Assign (or clear) a checklist item's owner (US-M5-012). Manager-only is enforced in the app layer.</summary>
     public void AssignItem(Guid itemId, Guid? assigneeUserId)
