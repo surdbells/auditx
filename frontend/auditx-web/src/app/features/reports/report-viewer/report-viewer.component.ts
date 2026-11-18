@@ -9,6 +9,9 @@ import {
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
@@ -27,9 +30,10 @@ import { Permissions } from '../../../core/permissions';
 import {
   Report,
   ReportArtefact,
+  ReportComment,
   ReportDistribution,
   ReportHashVerification,
-  UserDto,
+  UserDirectoryEntry,
 } from '../../../core/models';
 import { humanise, shortHash } from '../humanise';
 import { downloadBlobResponse } from '../download';
@@ -39,6 +43,11 @@ import {
   DistributeReportDialogData,
 } from '../dialogs/distribute-report-dialog.component';
 import { ReportShareDialogComponent } from '../dialogs/report-share-dialog.component';
+import {
+  ReportSignOffDialogComponent,
+  ReportSignOffDialogData,
+} from '../dialogs/report-sign-off-dialog.component';
+import { reviewBadge } from '../review-badge';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
@@ -97,6 +106,9 @@ const REPORT_VIEWER_GUIDE: PageGuide = {
     PageGuideComponent,
     PaginatorComponent,
     TranslatePipe,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
   ],
   templateUrl: './report-viewer.component.html',
   styleUrl: './report-viewer.component.scss',
@@ -144,7 +156,7 @@ export class ReportViewerComponent {
   readonly previewHtml = signal<SafeHtml | null>(null);
   readonly previewState = signal<'idle' | 'loading' | 'ready' | 'error'>('idle');
 
-  private usersCache: UserDto[] = [];
+  private usersCache: UserDirectoryEntry[] = [];
 
   readonly humanise = humanise;
   readonly shortHash = shortHash;
@@ -158,6 +170,38 @@ export class ReportViewerComponent {
 
   readonly status = computed(() => this.report()?.status ?? null);
   readonly isCompleted = computed(() => this.status() === 'completed');
+
+  /* ---- Draft-to-final review ---- */
+
+  private readonly myUserId = computed(() => this.auth.session()?.userId ?? null);
+  /** Engagement reports go through draft and final; standalone reports do not. */
+  readonly isEngagement = computed(() => !!this.report()?.auditId);
+  readonly isDraft = computed(() => this.report()?.stage === 'draft');
+  readonly badge = computed(() => reviewBadge(this.report() ?? {}));
+  /** The signed-in user generated this report, so someone else must sign it off. */
+  readonly preparedByMe = computed(() => !!this.report() && this.report()!.generatedBy === this.myUserId());
+  /** The Chief Internal Auditor decides a final report awaiting sign-off — unless they prepared it. */
+  readonly canDecide = computed(
+    () =>
+      this.auth.hasPermission(Permissions.CIA) &&
+      this.isEngagement() &&
+      this.report()?.signOffStatus === 'awaiting' &&
+      !this.preparedByMe(),
+  );
+  readonly deciding = signal(false);
+  /** Distribution is offered for a completed draft, or a final once it has been signed off. */
+  readonly canDistributeNow = computed(
+    () => this.canDistribute() && this.isCompleted() && this.report()?.isDistributable === true,
+  );
+
+  readonly comments = signal<ReportComment[]>([]);
+  readonly posting = signal(false);
+  readonly commentText = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.maxLength(4000)],
+  });
+  /** Drafts are discussed: comments are shown and taken once the draft is ready. */
+  readonly showComments = computed(() => this.isEngagement() && this.isDraft() && this.isCompleted());
 
   readonly artefacts = computed<ReportArtefact[]>(
     () => this.report()?.producedArtefacts ?? [],
@@ -177,7 +221,8 @@ export class ReportViewerComponent {
         this.state.set('ready');
         this.resolveAuditName(report.auditId);
         this.loadPreview(report);
-        this.ensureUsers(() => this.fetchDistributions(1));
+        this.fetchDistributions(1);
+        this.loadComments();
       },
       error: () => this.state.set('error'),
     });
@@ -315,6 +360,76 @@ export class ReportViewerComponent {
     });
   }
 
+  /* ---- Review: sign-off and draft comments ---- */
+
+  /** Sign the final off, or return it for changes, after confirming in a dialog. */
+  decide(mode: 'sign_off' | 'return'): void {
+    const r = this.report();
+    if (!r || this.deciding()) {
+      return;
+    }
+    const data: ReportSignOffDialogData = { mode, versionNumber: r.versionNumber };
+    this.dialog
+      .open(ReportSignOffDialogComponent, { data, width: '480px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((text?: string | null) => {
+        if (text === undefined) {
+          return; // cancelled
+        }
+        this.deciding.set(true);
+        const call =
+          mode === 'sign_off' ? this.service.signOff(r.id, text) : this.service.returnForChanges(r.id, text ?? '');
+        call.subscribe({
+          next: (updated) => {
+            this.report.set(updated);
+            this.deciding.set(false);
+            this.notify.success(
+              this.i18n.translate(mode === 'sign_off' ? 'reports.review.notify.signedOff' : 'reports.review.notify.returned'),
+            );
+          },
+          // The error interceptor shows the server's reason (e.g. "you generated this report").
+          error: () => this.deciding.set(false),
+        });
+      });
+  }
+
+  private loadComments(): void {
+    if (!this.showComments()) {
+      this.comments.set([]);
+      return;
+    }
+    this.service.comments(this.id()).subscribe({
+      next: (comments) => this.comments.set(comments),
+      error: () => {
+        // Non-fatal: the thread just stays empty.
+      },
+    });
+  }
+
+  postComment(): void {
+    if (this.commentText.invalid || this.posting()) {
+      this.commentText.markAsTouched();
+      return;
+    }
+    const body = this.commentText.value.trim();
+    if (!body) {
+      return;
+    }
+    this.posting.set(true);
+    this.service.addComment(this.id(), body).subscribe({
+      next: (comment) => {
+        this.comments.update((list) => [...list, comment]);
+        this.commentText.reset('');
+        this.posting.set(false);
+      },
+      error: () => this.posting.set(false),
+    });
+  }
+
+  nameOf(userId: string | null | undefined): string {
+    return this.userLookup.displayName(userId);
+  }
+
   /* ---- Distribution ---- */
 
   distribute(): void {
@@ -407,9 +522,10 @@ export class ReportViewerComponent {
       onReady();
       return;
     }
-    this.users.list({ status: 'active', pageSize: 0 }).subscribe({
-      next: (page) => {
-        this.usersCache = page.items;
+    // Active people, names only — readable by anyone signed in (the full user list is an administrator's).
+    this.users.activeDirectory().subscribe({
+      next: (people) => {
+        this.usersCache = people;
         onReady();
       },
       error: () => onReady(),

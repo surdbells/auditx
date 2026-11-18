@@ -1,7 +1,17 @@
 namespace AuditX.Api.Contracts;
 
 /// <summary>Body for POST /audits/{id}/reports. HTML is always produced; <c>docx</c> additionally requests DOCX.</summary>
-public sealed record GenerateReportRequest(bool? Docx);
+/// <summary>Body for POST /audits/{id}/reports. <c>stage</c> is <c>draft</c> (default) or <c>final</c>.</summary>
+public sealed record GenerateReportRequest(bool? Docx, string? Stage = null);
+
+/// <summary>Body for POST /reports/{id}/sign-off: an optional remark recorded with the sign-off.</summary>
+public sealed record SignOffReportRequest(string? Note);
+
+/// <summary>Body for POST /reports/{id}/return: what needs to change.</summary>
+public sealed record ReturnReportRequest(string Reason);
+
+/// <summary>Body for POST /reports/{id}/comments.</summary>
+public sealed record AddReportCommentRequest(string Body);
 
 /// <summary>
 /// Body for POST /reports/standalone. <c>kind</c> is the standalone report kind (<c>executive_summary</c>,

@@ -14,9 +14,11 @@ import {
   GenerateStandaloneReportRequest,
   PagedResult,
   Report,
+  ReportComment,
   ReportDistribution,
   ReportHashVerification,
   ReportListItem,
+  ReportSignOffQueueItem,
   ReportTemplate,
   StandaloneReportKind,
 } from '../models';
@@ -117,6 +119,32 @@ export class ReportsService {
   /** Stored-vs-recomputed integrity check for a report artefact. */
   verifyHash(id: string): Observable<ReportHashVerification> {
     return this.api.get<ReportHashVerification>(`/reports/${id}/verify-hash`);
+  }
+
+  /* ---- Draft-to-final review ---- */
+
+  /** Final reports awaiting the Chief Internal Auditor's sign-off. */
+  awaitingSignOff(): Observable<ReportSignOffQueueItem[]> {
+    return this.api.get<ReportSignOffQueueItem[]>('/reports/awaiting-sign-off');
+  }
+
+  /** Sign a final report off (Chief Internal Auditor), with an optional remark. */
+  signOff(id: string, note: string | null): Observable<Report> {
+    return this.api.post<Report>(`/reports/${id}/sign-off`, { note });
+  }
+
+  /** Return a final report for changes, saying what needs to change. */
+  returnForChanges(id: string, reason: string): Observable<Report> {
+    return this.api.post<Report>(`/reports/${id}/return`, { reason });
+  }
+
+  /** Comments on a draft report, oldest first. */
+  comments(id: string): Observable<ReportComment[]> {
+    return this.api.get<ReportComment[]>(`/reports/${id}/comments`);
+  }
+
+  addComment(id: string, body: string): Observable<ReportComment> {
+    return this.api.post<ReportComment>(`/reports/${id}/comments`, { body });
   }
 
   /* ---- Distribution ---- */

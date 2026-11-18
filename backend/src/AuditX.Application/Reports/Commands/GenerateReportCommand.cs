@@ -18,11 +18,21 @@ namespace AuditX.Application.Reports.Commands;
 /// report id IS the job handle — D1). The audit must be UnderReview or Completed (422). HTML is always produced;
 /// <c>Docx</c> additionally requests the DOCX format when the active renderer supports it.
 /// </summary>
-public sealed record GenerateReportCommand(Guid AuditId, bool Docx) : ICommand<ReportGenerationAcceptedDto>;
+/// <remarks>
+/// <c>Stage</c> is <c>draft</c> (the default: for discussion with management, who comment on it) or <c>final</c>
+/// (goes to the Chief Internal Auditor for sign-off before it can be distributed).
+/// </remarks>
+public sealed record GenerateReportCommand(Guid AuditId, bool Docx, string? Stage = null) : ICommand<ReportGenerationAcceptedDto>;
 
 public sealed class GenerateReportCommandValidator : AbstractValidator<GenerateReportCommand>
 {
-    public GenerateReportCommandValidator() => RuleFor(x => x.AuditId).NotEmpty();
+    public GenerateReportCommandValidator()
+    {
+        RuleFor(x => x.AuditId).NotEmpty();
+        RuleFor(x => x.Stage)
+            .Must(s => s is null || s is "draft" or "final")
+            .WithMessage("Stage must be 'draft' or 'final'.");
+    }
 }
 
 public sealed class GenerateReportCommandHandler(
@@ -50,16 +60,17 @@ public sealed class GenerateReportCommandHandler(
         var nextVersion = await reports.GetNextVersionAsync(command.AuditId, cancellationToken) + 1;
 
         var requestedFormats = command.Docx ? new[] { "html", "docx" } : ["html"];
+        var stage = command.Stage == "final" ? ReportStage.Final : ReportStage.Draft;
         var report = Report.Start(
             command.AuditId, nextVersion, template.Id, template.VersionNumber, template.TemplateDefinitionJson,
-            requestedFormats, actorId, clock.UtcNow);
+            requestedFormats, actorId, clock.UtcNow, stage);
         reports.Add(report);
 
         // Record the REQUEST here (report is still pending); the completion/failure trail entries are written by
         // ReportGenerationService once the async job actually finishes, so the trail never claims a pending/failed
         // report was "generated".
         audit.Record(AuditEventTypes.ReportGenerationRequested, AuditTargetTypes.Report, report.Id,
-            after: new { report.AuditId, report.VersionNumber, status = ReportStatus.Pending.ToString() });
+            after: new { report.AuditId, report.VersionNumber, stage = stage.ToString().ToLowerInvariant(), status = ReportStatus.Pending.ToString() });
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Fire-and-forget the generation job AFTER the row is committed so the worker can load it.

@@ -9,8 +9,14 @@ public interface IReportRepository
     /// <summary>Loads a report including its distribution log.</summary>
     Task<Report?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    /// <summary>Offset-paginated report versions for an audit, newest version first (ordered by version number desc).</summary>
-    Task<PagedResult<Report>> ListByAuditAsync(Guid auditId, PageSpec page, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Offset-paginated report versions for an audit, newest version first (ordered by version number desc). With
+    /// <paramref name="distributedOnly"/>, only versions that have been sent to someone.
+    /// </summary>
+    Task<PagedResult<Report>> ListByAuditAsync(Guid auditId, PageSpec page, bool distributedOnly = false, CancellationToken cancellationToken = default);
+
+    /// <summary>Final engagement reports awaiting the Chief Internal Auditor's sign-off, oldest first.</summary>
+    Task<IReadOnlyList<Report>> ListAwaitingSignOffAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Offset-paginated standalone (cross-audit) reports, newest first. When <paramref name="kind"/> is supplied the

@@ -264,6 +264,9 @@ public static class AuditEventTypes
     public const string ReportGenerated = "report_generated";
     public const string ReportGenerationFailed = "report_generation_failed";
     public const string ReportDistributed = "report_distributed";
+    public const string ReportSignedOff = "report_signed_off";
+    public const string ReportReturnedForChanges = "report_returned";
+    public const string ReportCommentAdded = "report_comment_added";
     public const string ReportDownloaded = "report_downloaded";
     public const string ReportExpired = "report_expired";
     public const string ReportDeliveryOutcomeRecorded = "report_delivery_outcome_recorded";

@@ -27,7 +27,16 @@ public static class ReportMappings
         RowVersionToken.Encode(r.Version),
         ReportBranding.ReadSnapshot(r.BrandingSnapshotJson) is { } b
             ? new ReportBrandingDto(b.InstitutionName, b.PrimaryColor, b.AccentColor, b.LogoSha256)
-            : null);
+            : null)
+    {
+        Stage = r.Stage.ToSnake(),
+        SignOffStatus = r.SignOffStatus.ToSnake(),
+        SignOffBy = r.SignOffBy,
+        SignOffAt = r.SignOffAt,
+        SignOffNote = r.SignOffNote,
+        IsDistributed = r.Distributions.Count > 0,
+        IsDistributable = r.IsDistributable,
+    };
 
     public static ReportListItemDto ToListDto(this Report r) => new(
         r.Id,
@@ -39,7 +48,14 @@ public static class ReportMappings
         ParseArtefacts(r.ProducedArtefactsJson).Select(a => a.Format).ToArray(),
         r.GeneratedBy,
         r.RequestedAt,
-        r.CompletedAt);
+        r.CompletedAt)
+    {
+        Stage = r.Stage.ToSnake(),
+        SignOffStatus = r.SignOffStatus.ToSnake(),
+    };
+
+    public static ReportCommentDto ToDto(this ReportComment c) => new(
+        c.Id, c.ReportId, c.ReportVersionNumber, c.AuthorUserId, c.Body, c.PostedAt);
 
     public static ReportDistributionDto ToDto(this ReportDistribution d) => new(
         d.Id, d.ReportId, d.ReportVersionNumber, d.RecipientUserId, d.RecipientEmail,

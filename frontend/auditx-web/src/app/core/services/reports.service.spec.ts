@@ -35,6 +35,10 @@ function report(overrides: Partial<Report> = {}): Report {
     requestedAt: '2026-06-01T10:00:00Z',
     completedAt: '2026-06-01T10:01:00Z',
     version: 'v1',
+    stage: 'final',
+    signOffStatus: 'signed_off',
+    isDistributed: false,
+    isDistributable: true,
     ...overrides,
   };
 }
@@ -51,6 +55,8 @@ function listItem(overrides: Partial<ReportListItem> = {}): ReportListItem {
     generatedBy: 'u-1',
     requestedAt: '2026-06-01T10:00:00Z',
     completedAt: '2026-06-01T10:01:00Z',
+    stage: 'final',
+    signOffStatus: 'signed_off',
     ...overrides,
   };
 }
@@ -191,6 +197,45 @@ describe('ReportsService', () => {
       data: { storedHash: 'abc', recomputedHash: 'abc', match: true },
     });
     expect(match).toBe(true);
+  });
+
+  it('signs a final report off with an optional remark', () => {
+    let status: string | undefined;
+    service.signOff('r-1', 'Approved for issue.').subscribe((r) => (status = r.signOffStatus));
+    const req = http.expectOne(`${BASE}/reports/r-1/sign-off`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ note: 'Approved for issue.' });
+    req.flush({ data: report({ signOffStatus: 'signed_off' }) });
+    expect(status).toBe('signed_off');
+  });
+
+  it('returns a final report for changes with the reason', () => {
+    service.returnForChanges('r-1', 'Finding 2 needs a response.').subscribe();
+    const req = http.expectOne(`${BASE}/reports/r-1/return`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ reason: 'Finding 2 needs a response.' });
+    req.flush({ data: report({ signOffStatus: 'returned' }) });
+  });
+
+  it('reads and adds comments on a draft', () => {
+    let count: number | undefined;
+    service.comments('r-1').subscribe((c) => (count = c.length));
+    http.expectOne(`${BASE}/reports/r-1/comments`).flush({ data: [] });
+    expect(count).toBe(0);
+
+    service.addComment('r-1', 'Please reword finding 1.').subscribe();
+    const req = http.expectOne((r) => r.method === 'POST' && r.url === `${BASE}/reports/r-1/comments`);
+    expect(req.request.body).toEqual({ body: 'Please reword finding 1.' });
+    req.flush({ data: { id: 'c-1', reportId: 'r-1', reportVersionNumber: 1, authorUserId: 'u-1', body: 'x', postedAt: '2026-06-01T10:00:00Z' } });
+  });
+
+  it('lists the reports awaiting sign-off', () => {
+    let names: string[] = [];
+    service.awaitingSignOff().subscribe((items) => (names = items.map((i) => i.auditName)));
+    http.expectOne(`${BASE}/reports/awaiting-sign-off`).flush({
+      data: [{ reportId: 'r-1', auditId: 'au-1', auditName: 'Payroll', versionNumber: 3, generatedBy: 'u-1', completedAt: null }],
+    });
+    expect(names).toEqual(['Payroll']);
   });
 
   it('distributes a report to users and free-text emails', () => {

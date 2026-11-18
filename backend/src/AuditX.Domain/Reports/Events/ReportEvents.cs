@@ -16,6 +16,18 @@ public sealed record ReportGenerationRequestedEvent(Guid ReportId, Guid? AuditId
 /// </summary>
 public sealed record ReportGeneratedEvent(Guid ReportId, Guid? AuditId, int VersionNumber, Guid GeneratedBy) : ReportEvent;
 
+/// <summary>A final engagement report was generated and awaits the Chief Internal Auditor's sign-off.</summary>
+public sealed record ReportSignOffRequestedEvent(Guid ReportId, Guid AuditId, int VersionNumber, Guid GeneratedBy) : ReportEvent;
+
+/// <summary>The final report was signed off; the preparer (<c>GeneratedBy</c>) is told it may now be distributed.</summary>
+public sealed record ReportSignedOffEvent(Guid ReportId, Guid AuditId, int VersionNumber, Guid SignedOffBy, Guid GeneratedBy) : ReportEvent;
+
+/// <summary>The final report was returned for changes; the preparer (<c>GeneratedBy</c>) is told why.</summary>
+public sealed record ReportReturnedEvent(Guid ReportId, Guid AuditId, int VersionNumber, Guid ReturnedBy, Guid GeneratedBy, string Reason) : ReportEvent;
+
+/// <summary>Someone commented on a draft report; the preparer (<c>GeneratedBy</c>) is told.</summary>
+public sealed record ReportCommentAddedEvent(Guid ReportId, Guid AuditId, int VersionNumber, Guid AuthorUserId, Guid GeneratedBy) : ReportEvent;
+
 /// <summary>Raised when generation fails (status → failed). <c>AuditId</c> is null for standalone reports.</summary>
 public sealed record ReportGenerationFailedEvent(Guid ReportId, Guid? AuditId, int VersionNumber, string FailureReason) : ReportEvent;
 
@@ -33,7 +45,8 @@ public sealed record ReportDistributedEvent(
     string AuditName,
     int TotalCount,
     int ExceptionCount,
-    string SeveritySummary) : ReportEvent;
+    string SeveritySummary,
+    string Stage = "final") : ReportEvent;
 
 /// <summary>
 /// Raised when a stored report artefact fails its SHA-256 verification on read (C1/C2). Payload carries

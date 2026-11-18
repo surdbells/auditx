@@ -17,6 +17,9 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
 
         builder.Property(r => r.Status).HasConversion(new SnakeCaseEnumConverter<ReportStatus>()).HasMaxLength(20).IsRequired();
         builder.Property(r => r.Kind).HasConversion(new SnakeCaseEnumConverter<ReportKind>()).HasMaxLength(30).IsRequired();
+        builder.Property(r => r.Stage).HasConversion(new SnakeCaseEnumConverter<ReportStage>()).HasMaxLength(10).IsRequired();
+        builder.Property(r => r.SignOffStatus).HasConversion(new SnakeCaseEnumConverter<ReportSignOffStatus>()).HasMaxLength(20).IsRequired();
+        builder.Property(r => r.SignOffNote).HasMaxLength(2000);
         builder.Property(r => r.Sha256Hash).HasMaxLength(64);
         builder.Property(r => r.TemplateDefinitionSnapshotJson).IsRequired();
         // Compact: name, colours and the logo's hash only — the logo bytes live in the stored artefacts.
@@ -34,14 +37,30 @@ public sealed class ReportConfiguration : IEntityTypeConfiguration<Report>
         builder.HasMany(r => r.Distributions).WithOne().HasForeignKey(d => d.ReportId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(r => r.Distributions).HasField("_distributions").UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.HasMany(r => r.Comments).WithOne().HasForeignKey(c => c.ReportId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(r => r.Comments).HasField("_comments").UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasIndex(r => r.AuditId);
         builder.HasIndex(r => r.Status);
+        builder.HasIndex(r => r.SignOffStatus);
         // Engagement reports: per-audit integer versioning is unique (no two engagement rows share an (audit, version)).
         builder.HasIndex(r => new { r.AuditId, r.VersionNumber }).IsUnique().HasFilter("[audit_id] IS NOT NULL");
         // Standalone reports: per-kind integer versioning is unique (no audit).
         builder.HasIndex(r => new { r.Kind, r.VersionNumber }).IsUnique().HasFilter("[audit_id] IS NULL");
 
         builder.HasQueryFilter(r => !r.IsDeleted);
+    }
+}
+
+public sealed class ReportCommentConfiguration : IEntityTypeConfiguration<ReportComment>
+{
+    public void Configure(EntityTypeBuilder<ReportComment> builder)
+    {
+        builder.ToTable("report_comments");
+        builder.HasKey(c => c.Id);
+        builder.Property(c => c.Id).ValueGeneratedNever();
+        builder.Property(c => c.Body).HasMaxLength(ReportComment.MaxBodyLength).IsRequired();
+        builder.HasIndex(c => new { c.ReportId, c.PostedAt });
     }
 }
 

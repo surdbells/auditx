@@ -19,6 +19,7 @@ namespace AuditX.Domain.Reports;
 public sealed class Report : AggregateRoot, ISoftDeletable
 {
     private readonly List<ReportDistribution> _distributions = [];
+    private readonly List<ReportComment> _comments = [];
 
     private Report()
     {
@@ -79,16 +80,39 @@ public sealed class Report : AggregateRoot, ISoftDeletable
 
     public IReadOnlyList<ReportDistribution> Distributions => _distributions.AsReadOnly();
 
+    /// <summary>Comments made on this version while it was a draft under discussion.</summary>
+    public IReadOnlyList<ReportComment> Comments => _comments.AsReadOnly();
+
+    /// <summary>Draft for discussion with management, or the final report. Standalone reports are always final.</summary>
+    public ReportStage Stage { get; private set; } = ReportStage.Final;
+
+    /// <summary>The final report's sign-off by the Chief Internal Auditor (not required for drafts).</summary>
+    public ReportSignOffStatus SignOffStatus { get; private set; } = ReportSignOffStatus.NotRequired;
+
+    /// <summary>Who signed the final report off, or returned it for changes.</summary>
+    public Guid? SignOffBy { get; private set; }
+
+    public DateTimeOffset? SignOffAt { get; private set; }
+
+    /// <summary>The signer's note: an optional remark when signing off, the reason when returning it.</summary>
+    public string? SignOffNote { get; private set; }
+
+    /// <summary>True when the report may go out: a completed draft, or a completed final that has been signed off.</summary>
+    public bool IsDistributable
+        => Status == ReportStatus.Completed
+            && SignOffStatus is ReportSignOffStatus.NotRequired or ReportSignOffStatus.SignedOff;
+
     /// <summary>The engagement construction path: a manual per-audit generation request (status → pending).</summary>
     public static Report Start(
         Guid auditId, int versionNumber, Guid templateId, int templateVersion, string templateDefinitionSnapshotJson,
-        IReadOnlyList<string> requestedFormats, Guid actorId, DateTimeOffset nowUtc)
+        IReadOnlyList<string> requestedFormats, Guid actorId, DateTimeOffset nowUtc, ReportStage stage = ReportStage.Final)
     {
         var formats = NormaliseFormats(requestedFormats);
         var report = new Report
         {
             AuditId = auditId,
             Kind = ReportKind.AuditEngagement,
+            Stage = stage,
             VersionNumber = versionNumber,
             Status = ReportStatus.Pending,
             TemplateId = templateId,
@@ -176,6 +200,83 @@ public sealed class Report : AggregateRoot, ISoftDeletable
         ProducedArtefactsJson = Guard.NotNullOrWhiteSpace(producedArtefactsJson, "report.artefacts_required", "Produced artefacts are required.");
         CompletedAt = nowUtc;
         RaiseDomainEvent(new ReportGeneratedEvent(Id, AuditId, VersionNumber, GeneratedBy));
+
+        // A final engagement report goes to the Chief Internal Auditor for sign-off before anyone receives it.
+        if (Kind == ReportKind.AuditEngagement && Stage == ReportStage.Final)
+        {
+            SignOffStatus = ReportSignOffStatus.Awaiting;
+            RaiseDomainEvent(new ReportSignOffRequestedEvent(Id, AuditId!.Value, VersionNumber, GeneratedBy));
+        }
+    }
+
+    /// <summary>
+    /// The Chief Internal Auditor signs the final report off: it may now be distributed. Whoever generated the report
+    /// cannot sign it off — the sign-off is an independent review of what they prepared.
+    /// </summary>
+    public void SignOff(Guid signerUserId, string? note, DateTimeOffset nowUtc)
+    {
+        EnsureAwaitingSignOff(signerUserId);
+        SignOffStatus = ReportSignOffStatus.SignedOff;
+        SignOffBy = signerUserId;
+        SignOffAt = nowUtc;
+        SignOffNote = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        RaiseDomainEvent(new ReportSignedOffEvent(Id, AuditId!.Value, VersionNumber, signerUserId, GeneratedBy));
+    }
+
+    /// <summary>
+    /// The Chief Internal Auditor returns the final report for changes, saying why. It can no longer be distributed;
+    /// the team makes the changes and generates a new version.
+    /// </summary>
+    public void ReturnForChanges(Guid signerUserId, string reason, DateTimeOffset nowUtc)
+    {
+        var trimmed = Guard.MinLength(reason, 10, "report.return_reason_required", "Say what needs to change (at least 10 characters).").Trim();
+        EnsureAwaitingSignOff(signerUserId);
+        SignOffStatus = ReportSignOffStatus.Returned;
+        SignOffBy = signerUserId;
+        SignOffAt = nowUtc;
+        SignOffNote = trimmed;
+        RaiseDomainEvent(new ReportReturnedEvent(Id, AuditId!.Value, VersionNumber, signerUserId, GeneratedBy, trimmed));
+    }
+
+    /// <summary>
+    /// Comment on a draft report. Drafts exist to be discussed with management before the final is issued; a final
+    /// report is not discussed this way — it is signed off or returned.
+    /// </summary>
+    public ReportComment AddComment(Guid authorUserId, string body, DateTimeOffset nowUtc)
+    {
+        if (Kind != ReportKind.AuditEngagement || Stage != ReportStage.Draft)
+        {
+            throw new InvalidStateTransitionException("report.comment_not_draft", "Only a draft report takes comments.");
+        }
+
+        if (Status != ReportStatus.Completed)
+        {
+            throw new InvalidStateTransitionException("report.not_completed", "The draft is not ready yet.");
+        }
+
+        var comment = new ReportComment(Id, VersionNumber, authorUserId, body, nowUtc);
+        _comments.Add(comment);
+        RaiseDomainEvent(new ReportCommentAddedEvent(Id, AuditId!.Value, VersionNumber, authorUserId, GeneratedBy));
+        return comment;
+    }
+
+    private void EnsureAwaitingSignOff(Guid signerUserId)
+    {
+        if (Kind != ReportKind.AuditEngagement || Stage != ReportStage.Final)
+        {
+            throw new InvalidStateTransitionException("report.signoff_not_final", "Only a final engagement report is signed off.");
+        }
+
+        if (SignOffStatus != ReportSignOffStatus.Awaiting)
+        {
+            throw new InvalidStateTransitionException("report.signoff_not_awaiting", "This report is not awaiting sign-off.");
+        }
+
+        if (signerUserId == GeneratedBy)
+        {
+            throw new DomainException(
+                "report.signoff_by_preparer", "You generated this report, so someone else must sign it off.");
+        }
     }
 
     /// <summary>
@@ -211,10 +312,17 @@ public sealed class Report : AggregateRoot, ISoftDeletable
             throw new InvalidStateTransitionException("report.not_completed", "Only a completed report can be distributed.");
         }
 
+        if (!IsDistributable)
+        {
+            throw new InvalidStateTransitionException(
+                "report.not_signed_off", "A final report can be distributed only once it has been signed off.");
+        }
+
         var distribution = new ReportDistribution(Id, VersionNumber, recipientUserId, recipientEmail, dispatchedBy, nowUtc);
         _distributions.Add(distribution);
         RaiseDomainEvent(new ReportDistributedEvent(
-            Id, AuditId, VersionNumber, recipientUserId, resolvedEmail, auditName, totalCount, exceptionCount, severitySummary));
+            Id, AuditId, VersionNumber, recipientUserId, resolvedEmail, auditName, totalCount, exceptionCount, severitySummary,
+            Stage == ReportStage.Draft ? "draft" : "final"));
         return distribution;
     }
 

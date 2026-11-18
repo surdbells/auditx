@@ -4685,6 +4685,31 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(64)")
                         .HasColumnName("sha256_hash");
 
+                    b.Property<DateTimeOffset?>("SignOffAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("sign_off_at");
+
+                    b.Property<Guid?>("SignOffBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("sign_off_by");
+
+                    b.Property<string>("SignOffNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("sign_off_note");
+
+                    b.Property<string>("SignOffStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("sign_off_status");
+
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)")
+                        .HasColumnName("stage");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -4727,6 +4752,8 @@ namespace AuditX.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("AuditId");
 
+                    b.HasIndex("SignOffStatus");
+
                     b.HasIndex("Status");
 
                     b.HasIndex("AuditId", "VersionNumber")
@@ -4738,6 +4765,57 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasFilter("[audit_id] IS NULL");
 
                     b.ToTable("reports", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Reports.ReportComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AuthorUserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("author_user_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("PostedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("posted_at");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("report_id");
+
+                    b.Property<int>("ReportVersionNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("report_version_number");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReportId", "PostedAt");
+
+                    b.ToTable("report_comments", (string)null);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Reports.ReportDistribution", b =>
@@ -6547,6 +6625,15 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Reports.ReportComment", b =>
+                {
+                    b.HasOne("AuditX.Domain.Reports.Report", null)
+                        .WithMany("Comments")
+                        .HasForeignKey("ReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AuditX.Domain.Reports.ReportDistribution", b =>
                 {
                     b.HasOne("AuditX.Domain.Reports.Report", null)
@@ -6702,6 +6789,8 @@ namespace AuditX.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("AuditX.Domain.Reports.Report", b =>
                 {
+                    b.Navigation("Comments");
+
                     b.Navigation("Distributions");
                 });
 

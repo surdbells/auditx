@@ -1,6 +1,29 @@
 namespace AuditX.Domain.Enums;
 
 /// <summary>
+/// Whether an engagement report version is a DRAFT — for discussion with management, who comment on it — or the
+/// FINAL report, which the Chief Internal Auditor signs off before it is distributed. Standalone reports are final.
+/// </summary>
+public enum ReportStage
+{
+    Final,
+    Draft,
+}
+
+/// <summary>
+/// Where a final engagement report stands in its sign-off. <see cref="NotRequired"/> for drafts, standalone reports
+/// and reports issued before sign-off existed; a new final report starts <see cref="Awaiting"/> and is either
+/// <see cref="SignedOff"/> (it may then be distributed) or <see cref="Returned"/> for changes (a new version follows).
+/// </summary>
+public enum ReportSignOffStatus
+{
+    NotRequired,
+    Awaiting,
+    SignedOff,
+    Returned,
+}
+
+/// <summary>
 /// The audit-report generation lifecycle (M8). Persisted snake_case (via <c>SnakeCaseEnumConverter</c>). The
 /// lifecycle IS the status (not a rich state machine): <c>pending → running → {completed | failed}</c>. A
 /// completed report is content-immutable — there is no edit and no further transition.

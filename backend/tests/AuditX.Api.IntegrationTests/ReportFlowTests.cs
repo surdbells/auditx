@@ -161,6 +161,110 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     [Fact]
+    public async Task A_draft_is_discussed_with_management_and_the_final_goes_out_only_once_signed_off()
+    {
+        var admin = await LoginAsync("admin"); // holds the Chief Internal Auditor authority
+        var auditId = await BuildReportableAuditAsync(admin);
+        var manager = await ReporterAsync(admin); // the audit's lead, who prepares the report
+        var auditee = await LoginAsync("auditee");
+        var users = await UsersByEmailAsync(admin);
+
+        async Task<JsonElement> GenerateAsync(string stage)
+        {
+            var accepted = await manager.PostAsJsonAsync($"/api/v1/audits/{auditId}/reports", new { docx = false, stage });
+            Assert.Equal(HttpStatusCode.Accepted, accepted.StatusCode);
+            var reportId = JsonDocument.Parse(await accepted.Content.ReadAsStringAsync())
+                .RootElement.GetProperty("data").GetProperty("reportId").GetGuid();
+            await NudgeGenerationAsync(reportId);
+            return await PollUntilSettledAsync(manager, reportId);
+        }
+
+        Task<HttpResponseMessage> DistributeAsync(Guid reportId) => manager.PostAsJsonAsync($"/api/v1/reports/{reportId}/distribute", new
+        {
+            recipientUserIds = new[] { users["auditee@auditx.local"] },
+            recipientEmailAddresses = Array.Empty<string>(),
+        });
+
+        // The draft: says so on its face, needs no sign-off, and the auditee sees it only once it is sent to them.
+        var draft = await GenerateAsync("draft");
+        var draftId = draft.GetProperty("id").GetGuid();
+        Assert.Equal("draft", draft.GetProperty("stage").GetString());
+        Assert.Equal("not_required", draft.GetProperty("signOffStatus").GetString());
+        var html = await (await manager.GetAsync($"/api/v1/reports/{draftId}/download?format=html")).Content.ReadAsStringAsync();
+        Assert.Contains("DRAFT", html);
+
+        Assert.Equal(0, (await DataAsync(await auditee.GetAsync($"/api/v1/audits/{auditId}/reports"))).GetProperty("items").GetArrayLength());
+        Assert.Equal(HttpStatusCode.Forbidden, (await auditee.GetAsync($"/api/v1/reports/{draftId}")).StatusCode);
+        (await DistributeAsync(draftId)).EnsureSuccessStatusCode();
+        Assert.Equal(1, (await DataAsync(await auditee.GetAsync($"/api/v1/audits/{auditId}/reports"))).GetProperty("items").GetArrayLength());
+
+        // Management comments on the draft; the comments are kept with it.
+        var comment = await DataAsync(await auditee.PostAsJsonAsync($"/api/v1/reports/{draftId}/comments",
+            new { body = "Finding 1 overstates the gap: the control ran on 11 of 12 days." }));
+        Assert.Equal(users["auditee@auditx.local"], comment.GetProperty("authorUserId").GetGuid());
+        var comments = await DataAsync(await manager.GetAsync($"/api/v1/reports/{draftId}/comments"));
+        Assert.Equal(1, comments.GetArrayLength());
+
+        // The final: awaits sign-off, cannot go out before it, and is not management's to see yet.
+        var final = await GenerateAsync("final");
+        var finalId = final.GetProperty("id").GetGuid();
+        Assert.Equal("awaiting", final.GetProperty("signOffStatus").GetString());
+        Assert.False(final.GetProperty("isDistributable").GetBoolean());
+        Assert.Equal(HttpStatusCode.UnprocessableContent, (await DistributeAsync(finalId)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await auditee.GetAsync($"/api/v1/reports/{finalId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await manager.PostAsJsonAsync($"/api/v1/reports/{finalId}/comments",
+            new { body = "Comments belong on drafts." })).StatusCode);
+
+        // It is in the Chief Internal Auditor's queue; the preparer, who lacks that authority, cannot sign it off.
+        var queue = await DataAsync(await admin.GetAsync("/api/v1/reports/awaiting-sign-off"));
+        Assert.Contains(queue.EnumerateArray(), q => q.GetProperty("reportId").GetGuid() == finalId);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await manager.PostAsJsonAsync($"/api/v1/reports/{finalId}/sign-off", new { note = (string?)null })).StatusCode);
+
+        var signed = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/reports/{finalId}/sign-off", new { note = "Approved for issue." }));
+        Assert.Equal("signed_off", signed.GetProperty("signOffStatus").GetString());
+        Assert.Equal(users["admin@auditx.local"], signed.GetProperty("signOffBy").GetGuid());
+        Assert.True(signed.GetProperty("isDistributable").GetBoolean());
+
+        (await DistributeAsync(finalId)).EnsureSuccessStatusCode();
+        Assert.Equal("final", (await DataAsync(await auditee.GetAsync($"/api/v1/reports/{finalId}"))).GetProperty("stage").GetString());
+        var queueAfter = await DataAsync(await admin.GetAsync("/api/v1/reports/awaiting-sign-off"));
+        Assert.DoesNotContain(queueAfter.EnumerateArray(), q => q.GetProperty("reportId").GetGuid() == finalId);
+    }
+
+    [Fact]
+    public async Task A_final_report_returned_for_changes_cannot_be_distributed()
+    {
+        var admin = await LoginAsync("admin");
+        var auditId = await BuildReportableAuditAsync(admin);
+        var manager = await ReporterAsync(admin);
+
+        var accepted = await manager.PostAsJsonAsync($"/api/v1/audits/{auditId}/reports", new { docx = false, stage = "final" });
+        var reportId = JsonDocument.Parse(await accepted.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("data").GetProperty("reportId").GetGuid();
+        await NudgeGenerationAsync(reportId);
+        await PollUntilSettledAsync(manager, reportId);
+
+        Assert.Equal(HttpStatusCode.UnprocessableContent,
+            (await admin.PostAsJsonAsync($"/api/v1/reports/{reportId}/return", new { reason = "short" })).StatusCode);
+        var returned = await DataAsync(await admin.PostAsJsonAsync($"/api/v1/reports/{reportId}/return",
+            new { reason = "Management has not yet responded to the critical finding." }));
+        Assert.Equal("returned", returned.GetProperty("signOffStatus").GetString());
+        Assert.Equal("Management has not yet responded to the critical finding.", returned.GetProperty("signOffNote").GetString());
+
+        var distribute = await manager.PostAsJsonAsync($"/api/v1/reports/{reportId}/distribute", new
+        {
+            recipientUserIds = Array.Empty<Guid>(),
+            recipientEmailAddresses = new[] { "board@example.com" },
+        });
+        Assert.Equal(HttpStatusCode.UnprocessableContent, distribute.StatusCode);
+
+        // An unknown stage is refused outright.
+        Assert.Equal(HttpStatusCode.UnprocessableContent,
+            (await manager.PostAsJsonAsync($"/api/v1/audits/{auditId}/reports", new { docx = false, stage = "published" })).StatusCode);
+    }
+
+    [Fact]
     public async Task Generating_again_produces_a_distinct_newer_version()
     {
         var admin = await LoginAsync("admin");

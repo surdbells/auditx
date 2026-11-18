@@ -91,6 +91,8 @@ function listItem(overrides: Partial<ReportListItem> = {}): ReportListItem {
     generatedBy: 'u-1',
     requestedAt: '2026-06-01T10:00:00Z',
     completedAt: '2026-06-01T10:01:00Z',
+    stage: 'draft',
+    signOffStatus: 'not_required',
     ...overrides,
   };
 }
@@ -112,6 +114,10 @@ function report(overrides: Partial<Report> = {}): Report {
     requestedAt: '2026-06-02T10:00:00Z',
     completedAt: null,
     version: 'v1',
+    stage: 'draft',
+    signOffStatus: 'not_required',
+    isDistributed: false,
+    isDistributable: false,
     ...overrides,
   };
 }
@@ -219,6 +225,42 @@ describe('ReportsPanelComponent', () => {
     expect(component.generating()).toBe(false);
     expect(notify.success).toHaveBeenCalled();
     expect(component.reports().length).toBe(1);
+  });
+
+  it('generates a draft by default, and a final when chosen', async () => {
+    await setup(['ViewReport', 'GenerateReport'], 'completed', []);
+    jasmine.clock().install();
+    try {
+      component.generate();
+      const draftReq = http.expectOne(`${BASE}/audits/au-1/reports`);
+      expect(draftReq.request.body.stage).toBe('draft');
+      draftReq.flush({ data: { reportId: 'r-9', status: 'pending' } }, { status: 202, statusText: 'Accepted' });
+      jasmine.clock().tick(0);
+      http.expectOne(`${BASE}/reports/r-9`).flush({ data: report({ status: 'completed' }) });
+      http.expectOne((r) => r.url === `${BASE}/audits/au-1/reports`).flush({ data: pagedResult([]) });
+
+      component.stage = 'final';
+      component.generate();
+      const finalReq = http.expectOne(`${BASE}/audits/au-1/reports`);
+      expect(finalReq.request.body.stage).toBe('final');
+      finalReq.flush({ data: { reportId: 'r-10', status: 'pending' } }, { status: 202, statusText: 'Accepted' });
+      jasmine.clock().tick(0);
+      http
+        .expectOne(`${BASE}/reports/r-10`)
+        .flush({ data: report({ id: 'r-10', status: 'completed', stage: 'final', signOffStatus: 'awaiting' }) });
+      http.expectOne((r) => r.url === `${BASE}/audits/au-1/reports`).flush({ data: pagedResult([]) });
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it('labels each version by stage and sign-off', async () => {
+    await setup(['ViewReport'], 'completed', []);
+    expect(component.reviewBadge(listItem({ stage: 'draft' })).labelKey).toBe('reports.stage.draft');
+    expect(component.reviewBadge(listItem({ stage: 'final', signOffStatus: 'awaiting' })).labelKey).toBe('reports.stage.awaiting');
+    expect(component.reviewBadge(listItem({ stage: 'final', signOffStatus: 'signed_off' })).status).toBe('approved');
+    expect(component.reviewBadge(listItem({ stage: 'final', signOffStatus: 'returned' })).labelKey).toBe('reports.stage.returned');
+    expect(component.reviewBadge(listItem({ stage: 'final', signOffStatus: 'not_required' })).labelKey).toBe('reports.stage.final');
   });
 
   it('navigates to another page via the paginator, carrying page + pageSize', async () => {

@@ -34,6 +34,7 @@ public static class ReportTabularProjection
             [
                 Kv("Institution", institutionName),
                 Kv("Audit", c.AuditName),
+                Kv("Report stage", c.IsDraft ? "DRAFT — for discussion with management, not for reliance" : "Final"),
                 Kv("Audit type", c.AuditType),
                 Kv("Status", c.AuditStatus),
                 Kv("Report version", c.VersionNumber.ToString()),
@@ -60,6 +61,26 @@ public static class ReportTabularProjection
                     e.Title, e.Severity, e.Category ?? "", e.Status, e.IsRecurrence ? "Yes" : "No",
                     e.CompletedMapActionCount.ToString(), e.MapActionCount.ToString(),
                 ]).ToArray()));
+
+            // Management's response to each finding, in their words.
+            sheets.Add(new ReportSheet("Management responses",
+                ["Finding", "Owner", "Response", "Comment", "Recorded by"],
+                c.Exceptions.Select(e => (IReadOnlyList<string>)
+                [
+                    e.Title, e.OwnerName ?? "", e.ManagementResponse ?? "Awaited", e.ManagementResponseComment ?? "",
+                    e.ManagementRespondedBy is null
+                        ? ""
+                        : e.ManagementResponseOnBehalf ? $"{e.ManagementRespondedBy} (on behalf of management)" : e.ManagementRespondedBy,
+                ]).ToArray()));
+
+            var actions = c.Exceptions.SelectMany(e => e.Actions.Select(a => (IReadOnlyList<string>)
+            [
+                e.Title, a.Description, a.OwnerName ?? "", a.TargetDate.ToString("yyyy-MM-dd"), a.Status.Replace('_', ' '),
+            ])).ToArray();
+            if (actions.Length > 0)
+            {
+                sheets.Add(new ReportSheet("Agreed actions", ["Finding", "Action", "Owner", "Target date", "Status"], actions));
+            }
         }
 
         if (c.ChecklistLines.Count > 0)

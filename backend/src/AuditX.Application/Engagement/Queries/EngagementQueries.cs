@@ -54,7 +54,7 @@ internal static class EngagementFacts
         LoadAsync(Guid auditId, IExceptionRepository exceptions, IReportRepository reports, CancellationToken ct)
     {
         var ex = await exceptions.ListByAuditAsync(auditId, null, ct);
-        var reportPage = await reports.ListByAuditAsync(auditId, PageSpec.Of(1, 100), ct);
+        var reportPage = await reports.ListByAuditAsync(auditId, PageSpec.Of(1, 100), cancellationToken: ct);
         var hasCompleted = reportPage.Items.Any(r => r.Status == ReportStatus.Completed);
         var hasDistributed = reportPage.Items.Any(r => r.Distributions.Count > 0);
         return (ex, hasCompleted, hasDistributed);

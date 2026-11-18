@@ -43,13 +43,21 @@ public sealed class HtmlReportRenderer : IReportRenderer
 
         var branding = context.Branding;
         var sb = new StringBuilder();
-        AppendHead(sb, $"{title} — {c.AuditName}", branding);
+        AppendHead(sb, $"{(c.IsDraft ? "DRAFT — " : string.Empty)}{title} — {c.AuditName}", branding);
         AppendBrandHeader(sb, branding, title);
+
+        // A draft says so on its face: it is for discussion with management, not for reliance.
+        if (c.IsDraft)
+        {
+            sb.Append("<p class=\"draft\" role=\"note\"><strong>DRAFT</strong> — for discussion with management. ")
+                .Append("Not for reliance or onward distribution; the final report follows once it is signed off.</p>");
+        }
 
         // Cover
         sb.Append("<h1>").Append(Html(title)).Append("</h1>");
         sb.Append("<table class=\"meta\">");
         Row(sb, "Audit", c.AuditName);
+        Row(sb, "Report stage", c.IsDraft ? "Draft for discussion" : "Final");
         Row(sb, "Audit type", c.AuditType);
         Row(sb, "Status", c.AuditStatus);
         Row(sb, "Report version", c.VersionNumber.ToString());
@@ -179,6 +187,9 @@ public sealed class HtmlReportRenderer : IReportRenderer
             .Append("code{font-family:Consolas,monospace}.meta th{width:16rem}.sub{color:#555}")
             .Append(".tablewrap{overflow-x:auto;margin-top:.5rem}.tablewrap table{margin-top:0}")
             .Append(".foot{margin-top:2rem;padding-top:.75rem;border-top:1px solid #ccc;color:#555;font-size:.8rem}")
+            .Append(".draft{margin:0 0 1rem;padding:.6rem .9rem;border:2px dashed #b45309;color:#7c2d12;background:#fff7ed}")
+            .Append(".finding{margin-top:1.25rem;break-inside:avoid}.finding h3{font-size:1rem;margin:0 0 .35rem;color:").Append(palette.HeadingText.Hex).Append('}')
+            .Append(".finding p{margin:.25rem 0}.finding .label{font-weight:600}.muted{color:#555}")
             .Append("@media print{body{margin:0}.brand{break-inside:avoid}h2{break-after:avoid}}")
             .Append("</style>");
         sb.Append("</head><body>");
@@ -273,7 +284,63 @@ public sealed class HtmlReportRenderer : IReportRenderer
         }
 
         sb.Append("</table>");
+        AppendFindingDetails(sb, c);
     }
+
+    /// <summary>
+    /// Each finding in full: what was found and recommended, management's response in their words, and the actions
+    /// they agreed to take — the part of an audit report management signs up to.
+    /// </summary>
+    private static void AppendFindingDetails(StringBuilder sb, ReportComposition c)
+    {
+        var index = 0;
+        foreach (var e in c.Exceptions)
+        {
+            index++;
+            sb.Append("<section class=\"finding\"><h3>").Append(index).Append(". ").Append(Html(e.Title))
+                .Append(" <span class=\"muted\">(").Append(Html(e.Severity)).Append(")</span></h3>");
+            Para(sb, "Root cause", e.RootCause);
+            Para(sb, "Recommendation", e.Recommendation);
+            Para(sb, "Owner", e.OwnerName is null ? null : e.TargetDate is { } due ? $"{e.OwnerName} — target {due:yyyy-MM-dd}" : e.OwnerName);
+
+            if (e.ManagementResponse is { } response)
+            {
+                var by = e.ManagementRespondedBy is null
+                    ? string.Empty
+                    : e.ManagementResponseOnBehalf
+                        ? $" (recorded by {e.ManagementRespondedBy} on behalf of management)"
+                        : $" ({e.ManagementRespondedBy})";
+                Para(sb, "Management response", response + by);
+                if (!string.IsNullOrWhiteSpace(e.ManagementResponseComment))
+                {
+                    sb.Append("<p>").Append(Html(e.ManagementResponseComment)).Append("</p>");
+                }
+            }
+            else
+            {
+                Para(sb, "Management response", "Awaited.");
+            }
+
+            if (e.Actions.Count > 0)
+            {
+                sb.Append("<table><tr><th>Agreed action</th><th>Owner</th><th>Target date</th><th>Status</th></tr>");
+                foreach (var action in e.Actions)
+                {
+                    sb.Append("<tr><td>").Append(Html(action.Description)).Append("</td><td>").Append(Html(action.OwnerName ?? "—"))
+                        .Append("</td><td>").Append(action.TargetDate.ToString("yyyy-MM-dd")).Append("</td><td>")
+                        .Append(Html(action.Status.Replace('_', ' '))).Append("</td></tr>");
+                }
+
+                sb.Append("</table>");
+            }
+
+            sb.Append("</section>");
+        }
+    }
+
+    private static void Para(StringBuilder sb, string label, string? value)
+        => sb.Append("<p><span class=\"label\">").Append(Html(label)).Append(":</span> ")
+            .Append(string.IsNullOrWhiteSpace(value) ? "&mdash;" : Html(value)).Append("</p>");
 
     private static void AppendEvidence(StringBuilder sb, ReportComposition c, string heading = "Evidence references (SHA-256)")
     {

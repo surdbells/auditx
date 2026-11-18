@@ -71,7 +71,8 @@ public sealed class ReportGenerationService(
                     ?? throw new InvalidOperationException($"Engagement report {reportId} has no audit.");
                 var audit = await audits.GetByIdAsync(auditId, cancellationToken)
                     ?? throw new InvalidOperationException($"Audit {auditId} for report {reportId} no longer exists.");
-                var composition = await assembler.AssembleAsync(audit, report.VersionNumber, cancellationToken);
+                var composition = await assembler.AssembleAsync(
+                    audit, report.VersionNumber, cancellationToken, isDraft: report.Stage == ReportStage.Draft);
                 context = ReportRenderContext.ForEngagement(composition, report.TemplateDefinitionSnapshotJson, report.TemplateVersionSnapshot, branding);
             }
             else

@@ -29,11 +29,18 @@
               {{ 'reports.viewer.action.share' | t }}
             </button>
           }
-          @if (canDistribute() && isCompleted()) {
+          @if (canDistributeNow()) {
             <button matButton="filled" type="button" (click)="distribute()">
               <app-icon name="send" />
-              {{ 'reports.viewer.action.distribute' | t }}
+              {{ (isDraft() ? 'reports.viewer.action.sendDraft' : 'reports.viewer.action.distribute') | t }}
             </button>
+          } @else if (canDistribute() && isCompleted() && isEngagement()) {
+            <span [matTooltip]="(r.signOffStatus === 'returned' ? 'reports.review.returnedNoDistribute' : 'reports.review.awaitingNoDistribute') | t">
+              <button matButton="filled" type="button" disabled>
+                <app-icon name="send" />
+                {{ 'reports.viewer.action.distribute' | t }}
+              </button>
+            </span>
           }
         </div>
       </app-page-header>
@@ -102,6 +109,90 @@
           <div class="viewer__notice">{{ 'reports.viewer.expiredNote' | t }}</div>
         }
       </mat-card>
+
+      <!-- Draft or final, and the final's sign-off -->
+      @if (isEngagement() && isCompleted()) {
+        <mat-card appearance="outlined" class="viewer__card viewer__review">
+          <div class="viewer__card-head">
+            <h3 class="viewer__card-title">{{ 'reports.review.title' | t }}</h3>
+            <span class="status-badge" [attr.data-status]="badge().status">{{ badge().labelKey | t }}</span>
+          </div>
+          @if (isDraft()) {
+            <p class="viewer__review-text">{{ 'reports.review.draftNote' | t }}</p>
+          } @else {
+            @switch (r.signOffStatus) {
+              @case ('awaiting') {
+                <p class="viewer__review-text">{{ 'reports.review.awaitingNote' | t }}</p>
+                @if (canDecide()) {
+                  <div class="viewer__review-actions">
+                    <button matButton="filled" type="button" (click)="decide('sign_off')" [disabled]="deciding()">
+                      <app-icon name="verified" />
+                      {{ 'reports.review.action.signOff' | t }}
+                    </button>
+                    <button matButton="outlined" type="button" (click)="decide('return')" [disabled]="deciding()">
+                      <app-icon name="undo" />
+                      {{ 'reports.review.action.return' | t }}
+                    </button>
+                  </div>
+                } @else if (preparedByMe()) {
+                  <p class="muted viewer__review-text">{{ 'reports.review.preparedByYou' | t }}</p>
+                }
+              }
+              @case ('signed_off') {
+                <p class="viewer__review-text">
+                  {{ 'reports.review.signedOffBy' | t: { name: nameOf(r.signOffBy), date: (r.signOffAt | date: 'medium') ?? '' } }}
+                </p>
+                @if (r.signOffNote) {
+                  <blockquote class="viewer__review-quote">{{ r.signOffNote }}</blockquote>
+                }
+              }
+              @case ('returned') {
+                <p class="viewer__review-text">
+                  {{ 'reports.review.returnedBy' | t: { name: nameOf(r.signOffBy), date: (r.signOffAt | date: 'medium') ?? '' } }}
+                </p>
+                <blockquote class="viewer__review-quote">{{ r.signOffNote }}</blockquote>
+                <p class="muted viewer__review-text">{{ 'reports.review.returnedNext' | t }}</p>
+              }
+              @default {
+                <p class="muted viewer__review-text">{{ 'reports.review.legacyNote' | t }}</p>
+              }
+            }
+          }
+        </mat-card>
+      }
+
+      <!-- Comments on a draft -->
+      @if (showComments()) {
+        <mat-card appearance="outlined" class="viewer__card viewer__comments">
+          <h3 class="viewer__card-title">{{ 'reports.comments.title' | t }}</h3>
+          <p class="muted viewer__review-text">{{ 'reports.comments.hint' | t }}</p>
+          <ol class="viewer__comment-list">
+            @for (c of comments(); track c.id) {
+              <li class="viewer__comment">
+                <div class="viewer__comment-head">
+                  <strong>{{ nameOf(c.authorUserId) }}</strong>
+                  <span class="muted">{{ c.postedAt | date: 'medium' }}</span>
+                </div>
+                <p class="viewer__comment-body">{{ c.body }}</p>
+              </li>
+            } @empty {
+              <li class="muted">{{ 'reports.comments.empty' | t }}</li>
+            }
+          </ol>
+          <div class="viewer__comment-form">
+            <mat-form-field appearance="outline" class="viewer__comment-field">
+              <mat-label>{{ 'reports.comments.add' | t }}</mat-label>
+              <textarea matInput [formControl]="commentText" rows="3"></textarea>
+              @if (commentText.hasError('maxlength')) {
+                <mat-error>{{ 'reports.comments.tooLong' | t }}</mat-error>
+              }
+            </mat-form-field>
+            <button matButton="filled" type="button" (click)="postComment()" [disabled]="posting() || !commentText.value.trim()">
+              {{ 'reports.comments.post' | t }}
+            </button>
+          </div>
+        </mat-card>
+      }
 
       <!-- Inline preview (view before export) -->
       @if (isCompleted()) {

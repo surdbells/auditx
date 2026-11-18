@@ -58,7 +58,9 @@ public sealed class PdfReportRenderer : IReportRenderer
     {
         if (context.Kind == ReportKind.AuditEngagement && context.Composition is { } c)
         {
-            return (c.AuditName, $"Audit report v{c.VersionNumber} — generated {c.GeneratedAtUtc:yyyy-MM-dd} (UTC)");
+            return c.IsDraft
+                ? ($"DRAFT — {c.AuditName}", $"Draft audit report v{c.VersionNumber} for discussion with management, not for reliance — generated {c.GeneratedAtUtc:yyyy-MM-dd} (UTC)")
+                : (c.AuditName, $"Audit report v{c.VersionNumber} — generated {c.GeneratedAtUtc:yyyy-MM-dd} (UTC)");
         }
 
         return context.Standalone is { } model ? (model.Title, model.Subtitle) : ("Report", string.Empty);

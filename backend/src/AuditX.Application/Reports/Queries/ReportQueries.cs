@@ -27,10 +27,15 @@ public sealed class ListAuditReportsQueryHandler(
     public async Task<PagedResult<ReportListItemDto>> Handle(ListAuditReportsQuery query, CancellationToken cancellationToken)
     {
         var audit = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
-        await ReportAccess.EnsureCanAccessAsync(audit, currentUser.UserId, permissions, cancellationToken);
+        var visibility = await ReportAccess.ResolveVisibilityAsync(audit, currentUser.UserId, permissions, cancellationToken);
+        if (visibility == AuditReportVisibility.None)
+        {
+            throw new ForbiddenAccessException("You are not a member of this audit.");
+        }
 
         var page = PageSpec.Of(query.Page, query.PageSize);
-        var result = await reports.ListByAuditAsync(query.AuditId, page, cancellationToken);
+        var result = await reports.ListByAuditAsync(
+            query.AuditId, page, distributedOnly: visibility == AuditReportVisibility.Distributed, cancellationToken);
         return result.Map(r => r.ToListDto());
     }
 }

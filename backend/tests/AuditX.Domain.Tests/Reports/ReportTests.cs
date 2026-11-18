@@ -9,9 +9,11 @@ public sealed class ReportTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.UnixEpoch;
 
-    private static Report NewReport() => Report.Start(
+    private static readonly Guid Preparer = Guid.NewGuid();
+
+    private static Report NewReport(ReportStage stage = ReportStage.Draft) => Report.Start(
         Guid.NewGuid(), versionNumber: 1, Guid.NewGuid(), templateVersion: 1, "{\"sections\":[]}",
-        ["html"], Guid.NewGuid(), Now);
+        ["html"], Preparer, Now, stage);
 
     private static readonly IReadOnlyList<ProducedArtefact> Artefacts =
         [new ProducedArtefact("html", "reports/x/v1/html/a.html", "text/html", 123, "abc123")];
@@ -93,6 +95,111 @@ public sealed class ReportTests
         // neither user nor ad-hoc email set
         Assert.ThrowsAny<DomainException>(() => r.RecordDistribution(
             null, null, "resolved@b.com", Guid.NewGuid(), Now, "Audit", 1, 0, "none"));
+    }
+}
+
+public sealed class ReportReviewTests
+{
+    private static readonly DateTimeOffset Now = DateTimeOffset.UnixEpoch;
+    private static readonly Guid Preparer = Guid.NewGuid();
+    private static readonly Guid Cae = Guid.NewGuid();
+
+    private static readonly IReadOnlyList<ProducedArtefact> Artefacts =
+        [new ProducedArtefact("html", "reports/x/v1/html/a.html", "text/html", 123, "abc123")];
+
+    private static Report Completed(ReportStage stage)
+    {
+        var r = Report.Start(Guid.NewGuid(), 1, Guid.NewGuid(), 1, "{\"sections\":[]}", ["html"], Preparer, Now, stage);
+        r.MarkRunning();
+        r.Complete("h", Artefacts, "[{}]", Now);
+        return r;
+    }
+
+    private static void Distribute(Report r)
+        => r.RecordDistribution(Guid.NewGuid(), null, "a@b.com", Preparer, Now, "Audit", 10, 2, "summary");
+
+    [Fact]
+    public void A_draft_needs_no_sign_off_and_can_be_sent_for_comment()
+    {
+        var draft = Completed(ReportStage.Draft);
+        Assert.Equal(ReportSignOffStatus.NotRequired, draft.SignOffStatus);
+        Assert.True(draft.IsDistributable);
+        Distribute(draft);
+        Assert.Equal("draft", Assert.IsType<ReportDistributedEvent>(draft.DomainEvents.Last()).Stage);
+    }
+
+    [Fact]
+    public void A_final_report_awaits_sign_off_and_cannot_go_out_before_it()
+    {
+        var final = Completed(ReportStage.Final);
+        Assert.Equal(ReportSignOffStatus.Awaiting, final.SignOffStatus);
+        Assert.Contains(final.DomainEvents, e => e is ReportSignOffRequestedEvent);
+        Assert.False(final.IsDistributable);
+
+        var refused = Assert.Throws<InvalidStateTransitionException>(() => Distribute(final));
+        Assert.Equal("report.not_signed_off", refused.Code);
+    }
+
+    [Fact]
+    public void The_preparer_cannot_sign_off_their_own_report()
+    {
+        var final = Completed(ReportStage.Final);
+        var refused = Assert.Throws<DomainException>(() => final.SignOff(Preparer, null, Now));
+        Assert.Equal("report.signoff_by_preparer", refused.Code);
+        Assert.Equal(ReportSignOffStatus.Awaiting, final.SignOffStatus);
+    }
+
+    [Fact]
+    public void Once_signed_off_a_final_report_can_be_distributed()
+    {
+        var final = Completed(ReportStage.Final);
+        final.SignOff(Cae, "  Approved for issue.  ", Now);
+
+        Assert.Equal(ReportSignOffStatus.SignedOff, final.SignOffStatus);
+        Assert.Equal(Cae, final.SignOffBy);
+        Assert.Equal("Approved for issue.", final.SignOffNote);
+        Assert.Contains(final.DomainEvents, e => e is ReportSignedOffEvent);
+        Distribute(final);
+        Assert.Single(final.Distributions);
+
+        // A decision is made once.
+        Assert.Throws<InvalidStateTransitionException>(() => final.ReturnForChanges(Cae, "Second thoughts on wording.", Now));
+    }
+
+    [Fact]
+    public void A_returned_final_report_says_why_and_never_goes_out()
+    {
+        var final = Completed(ReportStage.Final);
+        Assert.Throws<DomainException>(() => final.ReturnForChanges(Cae, "too short", Now));
+
+        final.ReturnForChanges(Cae, "Finding 2 needs management's response first.", Now);
+        Assert.Equal(ReportSignOffStatus.Returned, final.SignOffStatus);
+        Assert.Equal("Finding 2 needs management's response first.", final.SignOffNote);
+        Assert.Contains(final.DomainEvents, e => e is ReportReturnedEvent);
+        Assert.Throws<InvalidStateTransitionException>(() => Distribute(final));
+        Assert.Throws<InvalidStateTransitionException>(() => final.SignOff(Cae, null, Now));
+    }
+
+    [Fact]
+    public void Drafts_take_comments_and_finals_do_not()
+    {
+        var draft = Completed(ReportStage.Draft);
+        var comment = draft.AddComment(Cae, "  Please soften the wording of finding 1.  ", Now);
+        Assert.Equal("Please soften the wording of finding 1.", comment.Body);
+        Assert.Single(draft.Comments);
+        Assert.Contains(draft.DomainEvents, e => e is ReportCommentAddedEvent);
+        Assert.Throws<DomainException>(() => draft.AddComment(Cae, "   ", Now));
+
+        var final = Completed(ReportStage.Final);
+        var refused = Assert.Throws<InvalidStateTransitionException>(() => final.AddComment(Cae, "A comment on the final.", Now));
+        Assert.Equal("report.comment_not_draft", refused.Code);
+    }
+
+    [Fact]
+    public void A_draft_is_never_signed_off()
+    {
+        var draft = Completed(ReportStage.Draft);
+        Assert.Throws<InvalidStateTransitionException>(() => draft.SignOff(Cae, null, Now));
     }
 }
 

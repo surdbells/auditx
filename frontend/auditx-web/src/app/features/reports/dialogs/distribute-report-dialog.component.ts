@@ -19,13 +19,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { SelectSearchDirective } from '../../../shared/directives/select-search.directive';
 import { SelectAllDirective } from '../../../shared/directives/select-all.directive';
 
-import { DistributeReportRequest, UserDto } from '../../../core/models';
+import { DistributeReportRequest, UserDirectoryEntry } from '../../../core/models';
 import { RolesService } from '../../../core/services/roles.service';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 export interface DistributeReportDialogData {
   /** Active users for the recipient picker. */
-  users: UserDto[];
+  users: UserDirectoryEntry[];
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -59,7 +59,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           <mat-select formControlName="userIds" multiple>
             @for (u of data.users; track u.id) {
               <mat-option [value]="u.id">
-                {{ u.displayName }} ({{ u.email }})
+                {{ u.displayName }}
               </mat-option>
             }
           </mat-select>

@@ -50,6 +50,12 @@ export interface ReportBranding {
   logoSha256: string | null;
 }
 
+/** A draft is for discussion with management; a final is signed off by the Chief Internal Auditor before it goes out. */
+export type ReportStage = 'draft' | 'final';
+
+/** Where a final report stands in its sign-off (drafts and older reports need none). */
+export type ReportSignOffStatus = 'not_required' | 'awaiting' | 'signed_off' | 'returned';
+
 export interface Report {
   id: string;
   /** Null for standalone (cross-audit) reports. */
@@ -69,6 +75,37 @@ export interface Report {
   version: string;
   /** Null until generation starts, and for reports issued before branding was recorded. */
   branding?: ReportBranding | null;
+  stage: ReportStage;
+  signOffStatus: ReportSignOffStatus;
+  /** Who signed the final off, or returned it for changes. */
+  signOffBy?: string | null;
+  signOffAt?: string | null;
+  /** The signer's remark, or the reason it was returned. */
+  signOffNote?: string | null;
+  /** True once the report has been sent to anyone. */
+  isDistributed: boolean;
+  /** True when it may be distributed now: a completed draft, or a signed-off final. */
+  isDistributable: boolean;
+}
+
+/** A comment on a draft report. */
+export interface ReportComment {
+  id: string;
+  reportId: string;
+  reportVersionNumber: number;
+  authorUserId: string;
+  body: string;
+  postedAt: string;
+}
+
+/** A final report awaiting the Chief Internal Auditor's sign-off. */
+export interface ReportSignOffQueueItem {
+  reportId: string;
+  auditId: string;
+  auditName: string;
+  versionNumber: number;
+  generatedBy: string;
+  completedAt: string | null;
 }
 
 /** Lightweight row for the per-audit / per-kind report version list. */
@@ -84,6 +121,8 @@ export interface ReportListItem {
   generatedBy: string;
   requestedAt: string;
   completedAt: string | null;
+  stage: ReportStage;
+  signOffStatus: ReportSignOffStatus;
 }
 
 /** A single distribution record for a report version. */
@@ -128,6 +167,8 @@ export interface ReportTemplate {
 /** Body for POST /audits/{auditId}/reports. `docx` opts a DOCX artefact in. */
 export interface GenerateReportRequest {
   docx?: boolean;
+  /** Draft (the default) or final. */
+  stage?: ReportStage;
 }
 
 /** Body for POST /reports/standalone. `kind` is the standalone report kind. */

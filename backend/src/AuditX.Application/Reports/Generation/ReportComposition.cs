@@ -3,6 +3,9 @@ namespace AuditX.Application.Reports.Generation;
 /// <summary>An evidence reference embedded in a report — filename + SHA-256 + size only, never bytes (FR-M8-011).</summary>
 public sealed record ReportEvidenceReference(string Filename, string Sha256Hash, long SizeBytes);
 
+/// <summary>One action management agreed to take on a finding, as it stood when the report was generated.</summary>
+public sealed record ReportActionLine(string Description, string? OwnerName, DateOnly TargetDate, string Status);
+
 /// <summary>An exception finding projected for the report (M6 data — severity/category/recurrence/MAP-action count).</summary>
 public sealed record ReportExceptionLine(
     Guid ExceptionId,
@@ -12,7 +15,31 @@ public sealed record ReportExceptionLine(
     string Status,
     bool IsRecurrence,
     int MapActionCount,
-    int CompletedMapActionCount);
+    int CompletedMapActionCount)
+{
+    public string? RootCause { get; init; }
+
+    public string? Recommendation { get; init; }
+
+    /// <summary>Who in management owns the finding.</summary>
+    public string? OwnerName { get; init; }
+
+    public DateOnly? TargetDate { get; init; }
+
+    /// <summary>Management's position, as a label: Accepted / Partially accepted / Disputed. Null while awaited.</summary>
+    public string? ManagementResponse { get; init; }
+
+    public string? ManagementResponseComment { get; init; }
+
+    /// <summary>Who recorded management's response.</summary>
+    public string? ManagementRespondedBy { get; init; }
+
+    /// <summary>True when the audit team recorded the response on management's behalf.</summary>
+    public bool ManagementResponseOnBehalf { get; init; }
+
+    /// <summary>The actions management agreed to take (the approved or proposed action plan).</summary>
+    public IReadOnlyList<ReportActionLine> Actions { get; init; } = [];
+}
 
 /// <summary>
 /// A checklist item + its (final) response projected for the report (M4/M5 data). <paramref name="Answer"/> is what
@@ -56,6 +83,11 @@ public sealed record ReportComposition(
     IReadOnlyList<ReportEvidenceReference> EvidenceReferences,
     DateTimeOffset GeneratedAtUtc)
 {
+    /// <summary>
+    /// True for a DRAFT report — for discussion with management, not for reliance. Every artefact says so on its face.
+    /// </summary>
+    public bool IsDraft { get; init; }
+
     /// <summary>Human-readable severity rollup for the distribution email body (E1), e.g. "1 critical, 3 high".</summary>
     public string SeveritySummary { get; init; } = string.Empty;
 

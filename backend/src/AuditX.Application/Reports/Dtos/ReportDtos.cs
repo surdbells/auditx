@@ -31,7 +31,27 @@ public sealed record ReportDto(
     DateTimeOffset RequestedAt,
     DateTimeOffset? CompletedAt,
     string Version,
-    ReportBrandingDto? Branding = null);
+    ReportBrandingDto? Branding = null)
+{
+    /// <summary><c>draft</c> (for discussion with management) or <c>final</c>.</summary>
+    public string Stage { get; init; } = "final";
+
+    /// <summary><c>not_required</c>, <c>awaiting</c>, <c>signed_off</c> or <c>returned</c>.</summary>
+    public string SignOffStatus { get; init; } = "not_required";
+
+    public Guid? SignOffBy { get; init; }
+
+    public DateTimeOffset? SignOffAt { get; init; }
+
+    /// <summary>The signer's remark when signing off, or the reason when returning it for changes.</summary>
+    public string? SignOffNote { get; init; }
+
+    /// <summary>True once the report has been sent to anyone.</summary>
+    public bool IsDistributed { get; init; }
+
+    /// <summary>True when the report may be distributed now (a completed draft, or a signed-off final).</summary>
+    public bool IsDistributable { get; init; }
+}
 
 /// <summary>Compact list item for the per-audit / per-kind version list. <c>AuditId</c> is null for standalone reports.</summary>
 public sealed record ReportListItemDto(
@@ -44,7 +64,19 @@ public sealed record ReportListItemDto(
     IReadOnlyList<string> ProducedFormats,
     Guid GeneratedBy,
     DateTimeOffset RequestedAt,
-    DateTimeOffset? CompletedAt);
+    DateTimeOffset? CompletedAt)
+{
+    public string Stage { get; init; } = "final";
+
+    public string SignOffStatus { get; init; } = "not_required";
+}
+
+/// <summary>A comment on a draft report.</summary>
+public sealed record ReportCommentDto(Guid Id, Guid ReportId, int ReportVersionNumber, Guid AuthorUserId, string Body, DateTimeOffset PostedAt);
+
+/// <summary>A final report awaiting the Chief Internal Auditor's sign-off.</summary>
+public sealed record ReportSignOffQueueItemDto(
+    Guid ReportId, Guid AuditId, string AuditName, int VersionNumber, Guid GeneratedBy, DateTimeOffset? CompletedAt);
 
 /// <summary>A single distribution-log row.</summary>
 public sealed record ReportDistributionDto(

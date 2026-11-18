@@ -204,6 +204,20 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
             // M8 reports. report_generated → the requesting Audit Manager (the single user on GeneratedBy).
             (Domain.AuditTrail.AuditEventTypes.ReportGenerated, "report_generated", "payload_derived", "GeneratedBy", "[\"email\"]",
                 "Your audit report is ready", "Report version {{ VersionNumber }} for audit {{ AuditId }} has been generated and is ready to view."),
+            // Draft-to-final review: a final report goes to the Chief Internal Auditor for sign-off; the preparer hears the
+            // outcome and every comment management makes on a draft.
+            ("report_sign_off_requested", "report_sign_off_requested", "role", AcRoles.ChiefInternalAuditor, "[\"email\"]",
+                "A final audit report awaits your sign-off",
+                "Final report version {{ VersionNumber }} for audit {{ AuditId }} is ready for your sign-off: {{ AppBaseUrl }}/reports/{{ ReportId }}."),
+            ("report_signed_off", "report_signed_off", "payload_derived", "GeneratedBy", "[\"email\"]",
+                "Your final report was signed off",
+                "Final report version {{ VersionNumber }} for audit {{ AuditId }} has been signed off and may now be distributed: {{ AppBaseUrl }}/reports/{{ ReportId }}."),
+            ("report_returned", "report_returned", "payload_derived", "GeneratedBy", "[\"email\"]",
+                "Your final report was returned for changes",
+                "Final report version {{ VersionNumber }} for audit {{ AuditId }} was returned for changes: {{ Reason }}. Make the changes and generate a new version: {{ AppBaseUrl }}/reports/{{ ReportId }}."),
+            ("report_comment_added", "report_comment_added", "payload_derived", "GeneratedBy", "[\"email\"]",
+                "New comment on a draft report",
+                "There is a new comment on draft report version {{ VersionNumber }} for audit {{ AuditId }}: {{ AppBaseUrl }}/reports/{{ ReportId }}."),
             // report_hash_mismatch → Security/Administrator. The event payload carries Severity=Critical so the M10
             // suppression-override + SMS escalation fires (channel data-driven via the rule; defaults to email).
             (Domain.AuditTrail.AuditEventTypes.ReportHashMismatch, "report_integrity_alert", "role", BuiltInRoles.AdministratorName, "[\"email\"]",

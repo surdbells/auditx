@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -25,7 +26,8 @@ import { AuditsService } from '../../../core/services/audits.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
-import { AuditStatus, Report, ReportListItem } from '../../../core/models';
+import { AuditStatus, Report, ReportListItem, ReportStage } from '../../../core/models';
+import { reviewBadge } from '../review-badge';
 import { humanise, shortHash } from '../humanise';
 import { downloadBlobResponse } from '../download';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
@@ -82,6 +84,7 @@ const REPORTS_PANEL_GUIDE: PageGuide = {
     MatTableModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatButtonToggleModule,
     IconComponent,
     MatProgressSpinnerModule,
     MatTooltipModule,
@@ -109,6 +112,7 @@ export class ReportsPanelComponent {
 
   readonly displayedColumns = [
     'version',
+    'stage',
     'status',
     'requestedAt',
     'hash',
@@ -128,6 +132,9 @@ export class ReportsPanelComponent {
   readonly generating = signal(false);
   /** DOCX opt-in for the next generation, bound to the checkbox. */
   includeDocx = false;
+  /** Draft (for discussion with management) or final (goes to the Chief Internal Auditor for sign-off). */
+  stage: ReportStage = 'draft';
+  readonly reviewBadge = reviewBadge;
 
   private pollSub: Subscription | null = null;
 
@@ -204,7 +211,7 @@ export class ReportsPanelComponent {
     }
     this.generating.set(true);
     this.service
-      .generate(this.auditId(), { docx: this.includeDocx })
+      .generate(this.auditId(), { docx: this.includeDocx, stage: this.stage })
       .subscribe({
         next: (result) => {
           this.notify.info(

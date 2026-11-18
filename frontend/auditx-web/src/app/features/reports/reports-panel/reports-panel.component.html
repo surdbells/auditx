@@ -23,9 +23,20 @@
     @if (canGenerate()) {
       <mat-card appearance="outlined" class="panel__generate">
         <div class="panel__generate-row">
-          <mat-checkbox [(ngModel)]="includeDocx" [disabled]="generating()">
-            {{ 'reports.panel.alsoDocx' | t }}
-          </mat-checkbox>
+          <div class="panel__generate-options">
+            <mat-button-toggle-group
+              [(ngModel)]="stage"
+              [disabled]="generating()"
+              [attr.aria-label]="'reports.panel.stageLabel' | t"
+              hideSingleSelectionIndicator
+            >
+              <mat-button-toggle value="draft">{{ 'reports.stage.draft' | t }}</mat-button-toggle>
+              <mat-button-toggle value="final">{{ 'reports.stage.final' | t }}</mat-button-toggle>
+            </mat-button-toggle-group>
+            <mat-checkbox [(ngModel)]="includeDocx" [disabled]="generating()">
+              {{ 'reports.panel.alsoDocx' | t }}
+            </mat-checkbox>
+          </div>
           <button
             matButton="filled"
             type="button"
@@ -42,6 +53,9 @@
             {{ 'reports.panel.action.generate' | t }}
           </button>
         </div>
+        <p class="panel__stage-hint">
+          {{ (stage === 'final' ? 'reports.panel.finalHint' : 'reports.panel.draftHint') | t }}
+        </p>
         @if (generating()) {
           <div class="panel__progress">
             <mat-progress-spinner mode="indeterminate" diameter="20" />
@@ -70,6 +84,19 @@
                   </a>
                 } @else {
                   v{{ r.versionNumber }}
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="stage">
+              <th mat-header-cell *matHeaderCellDef>{{ 'reports.panel.column.stage' | t }}</th>
+              <td mat-cell *matCellDef="let r">
+                @if (r.status === 'completed' || r.status === 'expired') {
+                  <span class="status-badge" [attr.data-status]="reviewBadge(r).status">
+                    {{ reviewBadge(r).labelKey | t }}
+                  </span>
+                } @else {
+                  {{ ('reports.stage.' + r.stage) | t }}
                 }
               </td>
             </ng-container>

@@ -52,6 +52,7 @@ public static class NotificationEvents
         "plan_submitted", "plan_decided",
         // M8 reports
         "report_generated", "report_distributed", "report_hash_mismatch",
+        "report_sign_off_requested", "report_signed_off", "report_returned", "report_comment_added",
         // M9 analytics
         "recurrence_cluster_detected",
         // M13 audit committee

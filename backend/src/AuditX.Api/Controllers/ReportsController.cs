@@ -24,7 +24,7 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
     [HttpPost("api/v1/audits/{auditId:guid}/reports")]
     public async Task<IActionResult> Generate(Guid auditId, [FromBody] GenerateReportRequest? request, CancellationToken cancellationToken)
     {
-        var result = await dispatcher.Send(new GenerateReportCommand(auditId, request?.Docx ?? false), cancellationToken);
+        var result = await dispatcher.Send(new GenerateReportCommand(auditId, request?.Docx ?? false, request?.Stage), cancellationToken);
         return Accepted(result);
     }
 
@@ -73,6 +73,32 @@ public sealed class ReportsController(IDispatcher dispatcher) : ApiControllerBas
     [HttpGet("api/v1/reports/{id:guid}/verify-hash")]
     public async Task<IActionResult> VerifyHash(Guid id, CancellationToken cancellationToken)
         => Envelope(await dispatcher.Query(new VerifyReportHashQuery(id), cancellationToken));
+
+    /// <summary>Final engagement reports awaiting the Chief Internal Auditor's sign-off.</summary>
+    [RequirePermission(PermissionKeys.Cia)]
+    [HttpGet("api/v1/reports/awaiting-sign-off")]
+    public async Task<IActionResult> AwaitingSignOff(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListReportsAwaitingSignOffQuery(), cancellationToken));
+
+    [RequirePermission(PermissionKeys.Cia)]
+    [HttpPost("api/v1/reports/{id:guid}/sign-off")]
+    public async Task<IActionResult> SignOff(Guid id, [FromBody] SignOffReportRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new SignOffReportCommand(id, request.Note), cancellationToken));
+
+    [RequirePermission(PermissionKeys.Cia)]
+    [HttpPost("api/v1/reports/{id:guid}/return")]
+    public async Task<IActionResult> Return(Guid id, [FromBody] ReturnReportRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ReturnReportCommand(id, request.Reason), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewReport)]
+    [HttpGet("api/v1/reports/{id:guid}/comments")]
+    public async Task<IActionResult> Comments(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new ListReportCommentsQuery(id), cancellationToken));
+
+    [RequirePermission(PermissionKeys.ViewReport)]
+    [HttpPost("api/v1/reports/{id:guid}/comments")]
+    public async Task<IActionResult> AddComment(Guid id, [FromBody] AddReportCommentRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new AddReportCommentCommand(id, request.Body), cancellationToken));
 
     [RequirePermission(PermissionKeys.DistributeReport)]
     [HttpPost("api/v1/reports/{id:guid}/distribute")]

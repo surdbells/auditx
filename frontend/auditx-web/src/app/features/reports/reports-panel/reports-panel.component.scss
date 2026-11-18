@@ -16,6 +16,19 @@
   justify-content: space-between;
 }
 
+.panel__generate-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.panel__stage-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .panel__progress {
   display: flex;
   align-items: center;

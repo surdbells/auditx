@@ -422,6 +422,14 @@ export const routes: Routes = [
           ).then((m) => m.StandaloneReportsComponent),
       },
       {
+        // The Chief Internal Auditor's queue of final reports awaiting sign-off (before reports/:id, which would match it).
+        path: 'reports/sign-off',
+        title: 'Report sign-off · AuditX',
+        canActivate: [permissionGuard(Permissions.CIA)],
+        loadComponent: () =>
+          import('./features/reports/sign-off-queue/sign-off-queue.component').then((m) => m.SignOffQueueComponent),
+      },
+      {
         path: 'reports/:id',
         title: 'Report · AuditX',
         canActivate: [permissionGuard(Permissions.ViewReport)],

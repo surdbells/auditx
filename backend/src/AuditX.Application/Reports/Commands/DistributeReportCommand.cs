@@ -67,6 +67,15 @@ public sealed class DistributeReportCommandHandler(
             throw new DomainException("report.not_distributable", "Only a completed report can be distributed.");
         }
 
+        if (!report.IsDistributable)
+        {
+            throw new DomainException(
+                "report.not_signed_off",
+                report.SignOffStatus == ReportSignOffStatus.Returned
+                    ? "This final report was returned for changes. Generate a new version and have it signed off."
+                    : "A final report can be distributed only once the Chief Internal Auditor has signed it off.");
+        }
+
         // Resolve and dedupe recipients: directory users (by id → email) + ad-hoc external addresses.
         var resolvedUsers = await users.GetByIdsAsync(command.RecipientUserIds?.Distinct().ToArray() ?? [], cancellationToken);
         var seenEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

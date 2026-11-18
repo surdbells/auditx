@@ -18,12 +18,12 @@ namespace AuditX.Application.Reports.Generation;
 /// sanctions type (FR-M7-010 confidentiality; M8-XC-A2). It is a pure composition service (no port).
 /// </summary>
 public sealed class ReportContentAssembler(
-    IExceptionRepository exceptions, IEvidenceRepository evidence, IClock clock)
+    IExceptionRepository exceptions, IEvidenceRepository evidence, IUserRepository users, IClock clock)
 {
     /// <summary>The placeholder token the HTML renderer substitutes with the canonical SHA-256 after hashing.</summary>
     public const string Sha256Placeholder = "{{REPORT_SHA256}}";
 
-    public async Task<ReportComposition> AssembleAsync(Audit audit, int versionNumber, CancellationToken cancellationToken)
+    public async Task<ReportComposition> AssembleAsync(Audit audit, int versionNumber, CancellationToken cancellationToken, bool isDraft = false)
     {
         // M4/M5: checklist items + their (final) responses.
         var responsesByItem = audit.Responses
@@ -72,9 +72,42 @@ public sealed class ReportContentAssembler(
 
         // M6: exceptions with their MAP actions.
         var exceptionEntities = await exceptions.ListByAuditWithMapActionsAsync(audit.Id, cancellationToken);
+
+        // Names, not ids: who owns each finding and action, and who recorded management's response.
+        var peopleIds = exceptionEntities
+            .SelectMany(e => e.MapActions.Select(a => a.OwnerUserId)
+                .Append(e.OwnerUserId)
+                .Concat(e.ManagementRespondedBy is { } by ? [by] : []))
+            .Distinct()
+            .ToArray();
+        var names = peopleIds.Length == 0
+            ? new Dictionary<Guid, string>()
+            : (await users.GetByIdsAsync(peopleIds, cancellationToken)).ToDictionary(u => u.Id, u => u.DisplayName);
+        string? NameOf(Guid? id) => id is { } value && names.TryGetValue(value, out var name) ? name : null;
+
         var exceptionLines = exceptionEntities.Select(e => new ReportExceptionLine(
             e.Id, e.Title, e.Severity.ToSnake(), e.Category, e.Status.ToSnake(), e.IsRecurrence,
-            e.MapActions.Count, e.MapActions.Count(a => a.Status == MapActionStatus.Complete))).ToArray();
+            e.MapActions.Count, e.MapActions.Count(a => a.Status == MapActionStatus.Complete))
+        {
+            RootCause = e.RootCause,
+            Recommendation = e.Recommendation,
+            OwnerName = NameOf(e.OwnerUserId),
+            TargetDate = e.TargetDate,
+            ManagementResponse = e.ManagementResponseDecision switch
+            {
+                ManagementResponseDecision.Accepted => "Accepted",
+                ManagementResponseDecision.PartiallyAccepted => "Partially accepted",
+                ManagementResponseDecision.Disputed => "Disputed",
+                _ => null,
+            },
+            ManagementResponseComment = e.ManagementResponseComment,
+            ManagementRespondedBy = NameOf(e.ManagementRespondedBy),
+            ManagementResponseOnBehalf = e.ManagementResponseOnBehalf,
+            Actions = e.MapActions
+                .OrderBy(a => a.TargetDate)
+                .Select(a => new ReportActionLine(a.Description, NameOf(a.OwnerUserId), a.TargetDate, a.Status.ToSnake()))
+                .ToArray(),
+        }).ToArray();
 
         var criticalCount = exceptionEntities.Count(e => e.Severity == ExceptionSeverity.Critical);
         var recurrenceCount = exceptionEntities.Count(e => e.IsRecurrence);
@@ -123,6 +156,7 @@ public sealed class ReportContentAssembler(
         {
             SeveritySummary = severitySummary,
             RecordedCount = recorded,
+            IsDraft = isDraft,
         };
     }
 

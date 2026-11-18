@@ -14,6 +14,18 @@ namespace AuditX.Application.Reports;
 /// of the report's audit OR hold <c>ManageAudit</c> scoped to it. Mirrors the M5 <c>AuditAccess</c> predicate so
 /// Auditee/Auditor <c>ViewReport</c> resolves to the audit they belong to. Throws 403 otherwise.
 /// </summary>
+/// <summary>What a caller may see of an audit's engagement reports.</summary>
+public enum AuditReportVisibility
+{
+    None,
+
+    /// <summary>Only versions that have been sent out (the audit's auditees).</summary>
+    Distributed,
+
+    /// <summary>Every version (the audit team, ManageAudit for the audit, the Chief Internal Auditor).</summary>
+    All,
+}
+
 public static class ReportAccess
 {
     /// <summary>
@@ -44,6 +56,35 @@ public static class ReportAccess
         }
 
         throw new ForbiddenAccessException("You are not a member of this audit.");
+    }
+
+    /// <summary>
+    /// How much of an audit's engagement reports the caller may see. The audit's AUDITEES see only the versions that
+    /// have been sent out (a draft sent to them for comment, a signed-off final) — never a draft still being written or
+    /// a final awaiting sign-off. The audit team, holders of ManageAudit for it, and the Chief Internal Auditor (who
+    /// signs finals off) see every version.
+    /// </summary>
+    public static async Task<AuditReportVisibility> ResolveVisibilityAsync(
+        Audit audit, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
+    {
+        if (userId is not { } uid)
+        {
+            return AuditReportVisibility.None;
+        }
+
+        if (audit.IsAuditee(uid))
+        {
+            return AuditReportVisibility.Distributed;
+        }
+
+        if (audit.TeamMembers.Any(m => m.IsActive && m.UserId == uid)
+            || await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken)
+            || await permissions.HasPermissionAsync(uid, PermissionKeys.Cia, null, cancellationToken))
+        {
+            return AuditReportVisibility.All;
+        }
+
+        return AuditReportVisibility.None;
     }
 
     /// <summary>
@@ -85,7 +126,12 @@ public static class ReportAccess
         if (report.AuditId is { } auditId)
         {
             var audit = await audits.GetByIdAsync(auditId, cancellationToken) ?? throw new NotFoundException("Audit", auditId);
-            await EnsureCanAccessAsync(audit, userId, permissions, cancellationToken);
+            var visibility = await ResolveVisibilityAsync(audit, userId, permissions, cancellationToken);
+            if (visibility == AuditReportVisibility.None
+                || (visibility == AuditReportVisibility.Distributed && report.Distributions.Count == 0))
+            {
+                throw new ForbiddenAccessException("This report has not been shared with you.");
+            }
         }
         else
         {

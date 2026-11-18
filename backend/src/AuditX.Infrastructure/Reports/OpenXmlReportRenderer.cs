@@ -54,8 +54,14 @@ public sealed class OpenXmlReportRenderer : IReportRenderer
             AddBrandStyles(mainPart, palette);
             AppendLetterhead(mainPart, body, context.Branding);
 
-            Heading(body, title, 1);
+            Heading(body, c.IsDraft ? $"DRAFT — {title}" : title, 1);
+            if (c.IsDraft)
+            {
+                Paragraph(body, "DRAFT — for discussion with management. Not for reliance or onward distribution; the final report follows once it is signed off.");
+            }
+
             KeyValue(body, "Audit", c.AuditName);
+            KeyValue(body, "Report stage", c.IsDraft ? "Draft for discussion" : "Final");
             KeyValue(body, "Audit type", c.AuditType);
             KeyValue(body, "Status", c.AuditStatus);
             KeyValue(body, "Report version", c.VersionNumber.ToString());
@@ -358,6 +364,43 @@ public sealed class OpenXmlReportRenderer : IReportRenderer
         foreach (var e in c.Exceptions)
         {
             Paragraph(body, $"{e.Title} — {e.Severity} ({e.Category ?? "uncategorised"}) — {e.Status} — recurrence: {(e.IsRecurrence ? "yes" : "no")} — MAP {e.CompletedMapActionCount}/{e.MapActionCount}");
+        }
+
+        // Each finding in full: root cause, recommendation, management's response and the actions they agreed to.
+        var index = 0;
+        foreach (var e in c.Exceptions)
+        {
+            index++;
+            Heading(body, $"{index}. {e.Title} ({e.Severity})", 2);
+            KeyValue(body, "Root cause", string.IsNullOrWhiteSpace(e.RootCause) ? "—" : e.RootCause);
+            KeyValue(body, "Recommendation", string.IsNullOrWhiteSpace(e.Recommendation) ? "—" : e.Recommendation);
+            if (e.OwnerName is { } owner)
+            {
+                KeyValue(body, "Owner", e.TargetDate is { } due ? $"{owner} — target {due:yyyy-MM-dd}" : owner);
+            }
+
+            if (e.ManagementResponse is { } response)
+            {
+                var by = e.ManagementRespondedBy is null
+                    ? string.Empty
+                    : e.ManagementResponseOnBehalf
+                        ? $" (recorded by {e.ManagementRespondedBy} on behalf of management)"
+                        : $" ({e.ManagementRespondedBy})";
+                KeyValue(body, "Management response", response + by);
+                if (!string.IsNullOrWhiteSpace(e.ManagementResponseComment))
+                {
+                    Paragraph(body, e.ManagementResponseComment);
+                }
+            }
+            else
+            {
+                KeyValue(body, "Management response", "Awaited.");
+            }
+
+            foreach (var action in e.Actions)
+            {
+                Paragraph(body, $"Agreed action: {action.Description} — {action.OwnerName ?? "—"} — target {action.TargetDate:yyyy-MM-dd} — {action.Status.Replace('_', ' ')}");
+            }
         }
     }
 

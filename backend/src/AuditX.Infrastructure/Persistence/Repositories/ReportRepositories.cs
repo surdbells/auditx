@@ -9,11 +9,17 @@ namespace AuditX.Infrastructure.Persistence.Repositories;
 public sealed class ReportRepository(AppDbContext db) : IReportRepository
 {
     public Task<Report?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => db.Reports.Include(r => r.Distributions).FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+        => db.Reports.Include(r => r.Distributions).Include(r => r.Comments).AsSplitQuery()
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
-    public async Task<PagedResult<Report>> ListByAuditAsync(Guid auditId, PageSpec page, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Report>> ListByAuditAsync(
+        Guid auditId, PageSpec page, bool distributedOnly = false, CancellationToken cancellationToken = default)
     {
         var query = db.Reports.AsNoTracking().Where(r => r.AuditId == auditId);
+        if (distributedOnly)
+        {
+            query = query.Where(r => r.Distributions.Any());
+        }
 
         // Newest version first (per-audit versions are a dense incrementing int, a stable total order).
         return await query.OrderByDescending(r => r.VersionNumber).ToPagedResultAsync(page, cancellationToken);
@@ -37,6 +43,12 @@ public sealed class ReportRepository(AppDbContext db) : IReportRepository
         var query = db.Set<ReportDistribution>().AsNoTracking().Where(d => d.ReportId == reportId);
         return await query.OrderBy(d => d.Id).ToPagedResultAsync(page, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Report>> ListAwaitingSignOffAsync(CancellationToken cancellationToken = default)
+        => await db.Reports.AsNoTracking()
+            .Where(r => r.AuditId != null && r.Status == ReportStatus.Completed && r.SignOffStatus == ReportSignOffStatus.Awaiting)
+            .OrderBy(r => r.CompletedAt)
+            .ToListAsync(cancellationToken);
 
     public async Task<int> GetNextVersionAsync(Guid auditId, CancellationToken cancellationToken = default)
         => await db.Reports.Where(r => r.AuditId == auditId).AnyAsync(cancellationToken)
