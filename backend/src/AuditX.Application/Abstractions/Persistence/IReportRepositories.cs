@@ -4,6 +4,18 @@ using AuditX.Domain.Reports;
 
 namespace AuditX.Application.Abstractions.Persistence;
 
+/// <summary>
+/// Where an audit's engagement report stands. A final report is ready when it is completed and may go out (signed
+/// off, or no sign-off needed), awaiting sign-off while the Chief Internal Auditor has it, and distributed once it
+/// has been sent to someone. A returned final counts as none: the team generates the next version.
+/// </summary>
+public sealed record AuditReportState(
+    Guid AuditId, bool FinalReady, bool FinalAwaitingSignOff, bool FinalDistributed, bool DraftCompleted)
+{
+    /// <summary>No report has been generated for the audit.</summary>
+    public static AuditReportState None(Guid auditId) => new(auditId, false, false, false, false);
+}
+
 public interface IReportRepository
 {
     /// <summary>Loads a report including its distribution log.</summary>
@@ -14,6 +26,11 @@ public interface IReportRepository
     /// <paramref name="distributedOnly"/>, only versions that have been sent to someone.
     /// </summary>
     Task<PagedResult<Report>> ListByAuditAsync(Guid auditId, PageSpec page, bool distributedOnly = false, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Where the engagement report of each of the audits stands, in one query. An audit with no report has no entry.
+    /// </summary>
+    Task<IReadOnlyList<AuditReportState>> GetAuditReportStatesAsync(IReadOnlyCollection<Guid> auditIds, CancellationToken cancellationToken = default);
 
     /// <summary>Final engagement reports awaiting the Chief Internal Auditor's sign-off, oldest first.</summary>
     Task<IReadOnlyList<Report>> ListAwaitingSignOffAsync(CancellationToken cancellationToken = default);

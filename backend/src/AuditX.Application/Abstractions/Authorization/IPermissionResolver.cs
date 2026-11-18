@@ -27,6 +27,13 @@ public interface IPermissionResolver
     /// </summary>
     Task<OrgScope> GetOrgScopeAsync(Guid userId, string permissionKey, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// The org units the user's grants of <paramref name="permissionKey"/> that are limited to an org unit reach: each
+    /// unit a grant was made for and every unit below it. Grants that apply everywhere or name one resource are not
+    /// counted, so a caller combines this with those. Empty when there are no such grants.
+    /// </summary>
+    Task<IReadOnlySet<Guid>> GetLimitedOrgUnitsAsync(Guid userId, string permissionKey, CancellationToken cancellationToken = default);
+
     /// <summary>Invalidate any cached permissions for the user (after role/delegation changes).</summary>
     Task InvalidateAsync(Guid userId, CancellationToken cancellationToken = default);
 

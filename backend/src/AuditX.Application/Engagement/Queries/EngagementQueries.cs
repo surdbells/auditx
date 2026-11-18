@@ -1,10 +1,8 @@
 using AuditX.Application.Abstractions;
 using AuditX.Application.Abstractions.Authorization;
 using AuditX.Application.Abstractions.Persistence;
-using AuditX.Application.Common.Enums;
 using AuditX.Application.Common.Exceptions;
 using AuditX.Application.Common.Messaging;
-using AuditX.Application.Common.Models;
 using AuditX.Application.Engagement.Dtos;
 using AuditX.Application.Execution;
 using AuditX.Domain.Audits;
@@ -14,72 +12,91 @@ using AuditX.Domain.Exceptions;
 
 namespace AuditX.Application.Engagement.Queries;
 
-/// <summary>Resolves the caller's role/permission context once, so the resolver stays a pure function.</summary>
+/// <summary>
+/// The caller's permissions, resolved once so the resolver stays a pure function: what they hold anywhere, and where
+/// they manage audits (everywhere, the audits a grant names, or inside some org units).
+/// </summary>
 internal sealed record UserEngagementContext(
     Func<string, bool> Can,
     bool GlobalManage,
-    IReadOnlySet<string> ManageAuditScopes,
-    bool LimitedManage = false)
+    IReadOnlySet<Guid> ManagedAuditIds,
+    bool LimitedManage)
 {
-    /// <summary>Also counts an audit in an org unit the caller manages audits for (a grant limited to org units).</summary>
-    public async Task<bool> ManagesOrIsMemberOfAsync(Audit audit, Guid userId, IPermissionResolver permissions, CancellationToken ct)
-        => ManagesOrIsMemberOf(audit, userId)
-           || (LimitedManage && await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, audit.Id.ToString(), ct));
-
-    public bool ManagesOrIsMemberOf(Audit audit, Guid userId) =>
-        audit.TeamMembers.Any(m => m.IsActive && m.UserId == userId)
-        || GlobalManage
-        || ManageAuditScopes.Contains(audit.Id.ToString());
-
     public static async Task<UserEngagementContext> LoadAsync(Guid userId, IPermissionResolver permissions, CancellationToken ct)
     {
         var effective = await permissions.GetEffectivePermissionsAsync(userId, ct);
         var held = effective.Select(e => e.Key).ToHashSet(StringComparer.Ordinal);
-        var globalManage = effective.Any(e => e.Key == PermissionKeys.ManageAudit
-            && (e.ScopeType == Domain.Enums.PermissionScopeType.Global || e.ScopeValue is null));
-        var limitedManage = effective.Any(e => e.Key == PermissionKeys.ManageAudit
-            && e.ScopeType == Domain.Enums.PermissionScopeType.OrgUnit && e.ScopeValue is not null);
-        var scopes = effective
-            .Where(e => e.Key == PermissionKeys.ManageAudit && e.ScopeValue is not null && e.ScopeType != Domain.Enums.PermissionScopeType.OrgUnit)
-            .Select(e => e.ScopeValue!)
-            .ToHashSet(StringComparer.Ordinal);
-        return new UserEngagementContext(held.Contains, globalManage, scopes, limitedManage);
+        var manage = effective.Where(e => e.Key == PermissionKeys.ManageAudit).ToList();
+        var globalManage = manage.Any(e => e.ScopeType == PermissionScopeType.Global || e.ScopeValue is null);
+        var limitedManage = manage.Any(e => e.ScopeType == PermissionScopeType.OrgUnit && e.ScopeValue is not null);
+        var auditIds = manage
+            .Where(e => e.ScopeType != PermissionScopeType.OrgUnit && e.ScopeValue is not null)
+            .Select(e => Guid.TryParse(e.ScopeValue, out var id) ? id : Guid.Empty)
+            .Where(id => id != Guid.Empty)
+            .ToHashSet();
+        return new UserEngagementContext(held.Contains, globalManage, auditIds, limitedManage);
+    }
+
+    /// <summary>Whose engagements the board lists for this caller.</summary>
+    public async Task<EngagementBoardReach> BoardReachAsync(Guid userId, IPermissionResolver permissions, CancellationToken ct)
+    {
+        IReadOnlyCollection<Guid> orgUnits = !GlobalManage && LimitedManage
+            ? await permissions.GetLimitedOrgUnitsAsync(userId, PermissionKeys.ManageAudit, ct)
+            : [];
+        return new EngagementBoardReach(userId, GlobalManage, ManagedAuditIds, orgUnits);
     }
 }
 
+/// <summary>What the journey reads about an audit beyond the aggregate.</summary>
+internal sealed record AuditJourneyFacts(
+    IReadOnlyList<AuditException> OpenExceptions, AuditReportState Report, EngagementRecordFacts Records);
+
 internal static class EngagementFacts
 {
-    /// <summary>The audit's engagement-record facts for the journey: letter state, meetings, a draft report, the policy.</summary>
-    public static async Task<EngagementRecordFacts> LoadRecordsAsync(
-        Audit audit, Guid userId, bool requireIndependence, IEngagementLetterRepository letters, IAuditMeetingRepository meetings,
-        IReportRepository reports, IPermissionResolver permissions, CancellationToken ct)
+    /// <summary>
+    /// The facts the journey needs beyond each aggregate: the open findings, where the report stands, and the
+    /// engagement records (the letter's state, the minuted meetings). The number of queries does not grow with the
+    /// number of audits. <paramref name="managesAudit"/> says whether the caller manages an audit.
+    /// </summary>
+    public static async Task<IReadOnlyDictionary<Guid, AuditJourneyFacts>> LoadAsync(
+        IReadOnlyCollection<Audit> audits,
+        bool requireIndependence,
+        Func<Audit, bool> managesAudit,
+        IExceptionRepository exceptions,
+        IReportRepository reports,
+        IEngagementLetterRepository letters,
+        IAuditMeetingRepository meetings,
+        CancellationToken ct)
     {
-        if (audit.IsSelfAssessment)
+        if (audits.Count == 0)
         {
-            return EngagementRecordFacts.None;
+            return new Dictionary<Guid, AuditJourneyFacts>();
         }
 
-        var letter = await letters.GetByAuditAsync(audit.Id, ct);
-        var meetingRecords = await meetings.ListByAuditAsync(audit.Id, ct);
-        var reportPage = await reports.ListByAuditAsync(audit.Id, PageSpec.Of(1, 100), cancellationToken: ct);
-        return new EngagementRecordFacts(
-            requireIndependence,
-            letter?.Status,
-            meetingRecords.Any(m => m.Kind == MeetingKind.Kickoff),
-            meetingRecords.Any(m => m.Kind == MeetingKind.Exit),
-            reportPage.Items.Any(r => r.Stage == ReportStage.Draft && r.Status == ReportStatus.Completed),
-            await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, audit.Id.ToString(), ct));
-    }
+        var ids = audits.Select(a => a.Id).ToArray();
+        var open = (await exceptions.ListByAuditsAsync(ids, EngagementJourneyResolver.OpenExceptionStatuses, ct))
+            .ToLookup(e => e.AuditId);
+        var reportStates = (await reports.GetAuditReportStatesAsync(ids, ct)).ToDictionary(s => s.AuditId);
 
-    /// <summary>Loads the per-audit facts the resolver needs beyond the aggregate: open exceptions + report state.</summary>
-    public static async Task<(IReadOnlyList<AuditException> Exceptions, bool HasCompletedReport, bool HasDistributedReport)>
-        LoadAsync(Guid auditId, IExceptionRepository exceptions, IReportRepository reports, CancellationToken ct)
-    {
-        var ex = await exceptions.ListByAuditAsync(auditId, null, ct);
-        var reportPage = await reports.ListByAuditAsync(auditId, PageSpec.Of(1, 100), cancellationToken: ct);
-        var hasCompleted = reportPage.Items.Any(r => r.Status == ReportStatus.Completed);
-        var hasDistributed = reportPage.Items.Any(r => r.Distributions.Count > 0);
-        return (ex, hasCompleted, hasDistributed);
+        // A self-assessment keeps no engagement records.
+        var withRecords = audits.Where(a => !a.IsSelfAssessment).Select(a => a.Id).ToArray();
+        var letterStates = await letters.GetStatusesByAuditAsync(withRecords, ct);
+        var minuted = (await meetings.ListRecordedAsync(withRecords, ct)).ToLookup(m => m.AuditId, m => m.Kind);
+
+        return audits.ToDictionary(a => a.Id, a =>
+        {
+            var report = reportStates.GetValueOrDefault(a.Id) ?? AuditReportState.None(a.Id);
+            var records = a.IsSelfAssessment
+                ? EngagementRecordFacts.None
+                : new EngagementRecordFacts(
+                    requireIndependence,
+                    letterStates.TryGetValue(a.Id, out var letter) ? letter : (EngagementLetterStatus?)null,
+                    minuted[a.Id].Contains(MeetingKind.Kickoff),
+                    minuted[a.Id].Contains(MeetingKind.Exit),
+                    report.DraftCompleted,
+                    managesAudit(a));
+            return new AuditJourneyFacts([.. open[a.Id]], report, records);
+        });
     }
 }
 
@@ -106,12 +123,14 @@ public sealed class GetEngagementJourneyQueryHandler(
         var uid = currentUser.UserId!.Value;
 
         var ctx = await UserEngagementContext.LoadAsync(uid, permissions, cancellationToken);
-        var (ex, hasCompleted, hasDistributed) = await EngagementFacts.LoadAsync(audit.Id, exceptions, reports, cancellationToken);
+        var manages = await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken);
         var requireIndependence = (await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration;
-        var records = await EngagementFacts.LoadRecordsAsync(audit, uid, requireIndependence, letters, meetings, reports, permissions, cancellationToken);
+        var facts = (await EngagementFacts.LoadAsync(
+            [audit], requireIndependence, _ => manages, exceptions, reports, letters, meetings, cancellationToken))[audit.Id];
 
+        var onTeam = audit.TeamMembers.Any(m => m.IsActive && m.UserId == uid);
         return EngagementJourneyResolver.Resolve(
-            audit, ex, hasCompleted, hasDistributed, uid, ctx.Can, await ctx.ManagesOrIsMemberOfAsync(audit, uid, permissions, cancellationToken), records);
+            audit, facts.OpenExceptions, facts.Report, uid, ctx.Can, onTeam || manages, facts.Records);
     }
 }
 
@@ -119,6 +138,10 @@ public sealed class GetEngagementJourneyQueryHandler(
 
 public sealed record ListMyEngagementsQuery(string? Status) : IQuery<IReadOnlyList<EngagementBoardItemDto>>;
 
+/// <summary>
+/// The caller's engagements: the audits they are on the team of (the auditee included) and those they manage, each
+/// with its journey. The newest <see cref="Max"/> are listed, those waiting on the caller first.
+/// </summary>
 public sealed class ListMyEngagementsQueryHandler(
     IAuditRepository audits,
     IExceptionRepository exceptions,
@@ -130,8 +153,8 @@ public sealed class ListMyEngagementsQueryHandler(
     ICurrentUser currentUser)
     : IQueryHandler<ListMyEngagementsQuery, IReadOnlyList<EngagementBoardItemDto>>
 {
-    // The board is scoped to a user's own engagements (a small set); we cap the underlying scan defensively.
-    private const int Scan = 500;
+    /// <summary>The most audits one board lists; someone who manages every audit sees the newest.</summary>
+    public const int Max = 500;
 
     public async Task<IReadOnlyList<EngagementBoardItemDto>> Handle(ListMyEngagementsQuery query, CancellationToken cancellationToken)
     {
@@ -146,20 +169,25 @@ public sealed class ListMyEngagementsQueryHandler(
         }
 
         var ctx = await UserEngagementContext.LoadAsync(uid, permissions, cancellationToken);
-        var requireIndependence = (await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration;
-        var page = await audits.SearchAsync(status, null, null, null, null, PageSpec.Of(1, Scan), cancellationToken: cancellationToken);
-
-        var items = new List<EngagementBoardItemDto>();
-        foreach (var audit in page.Items)
+        var reach = await ctx.BoardReachAsync(uid, permissions, cancellationToken);
+        var rows = await audits.ListForEngagementBoardAsync(reach, status, Max, cancellationToken);
+        if (rows.Count == 0)
         {
-            if (!await ctx.ManagesOrIsMemberOfAsync(audit, uid, permissions, cancellationToken))
-            {
-                continue; // not the user's engagement
-            }
+            return [];
+        }
 
-            var (ex, hasCompleted, hasDistributed) = await EngagementFacts.LoadAsync(audit.Id, exceptions, reports, cancellationToken);
-            var records = await EngagementFacts.LoadRecordsAsync(audit, uid, requireIndependence, letters, meetings, reports, permissions, cancellationToken);
-            var journey = EngagementJourneyResolver.Resolve(audit, ex, hasCompleted, hasDistributed, uid, ctx.Can, onTeamOrManager: true, records);
+        var unitOf = rows.ToDictionary(r => r.Audit.Id, r => r.OrgUnitId);
+        var requireIndependence = (await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration;
+        var facts = await EngagementFacts.LoadAsync(
+            [.. rows.Select(r => r.Audit)], requireIndependence, a => reach.Manages(a.Id, unitOf[a.Id]),
+            exceptions, reports, letters, meetings, cancellationToken);
+
+        var items = new List<EngagementBoardItemDto>(rows.Count);
+        foreach (var audit in rows.Select(r => r.Audit))
+        {
+            var f = facts[audit.Id];
+            var journey = EngagementJourneyResolver.Resolve(
+                audit, f.OpenExceptions, f.Report, uid, ctx.Can, onTeamOrManager: true, f.Records);
 
             items.Add(new EngagementBoardItemDto(
                 journey.AuditId, journey.Name, journey.AuditType, journey.Status, journey.Stage,

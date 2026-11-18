@@ -25,6 +25,33 @@ public sealed class ReportRepository(AppDbContext db) : IReportRepository
         return await query.OrderByDescending(r => r.VersionNumber).ToPagedResultAsync(page, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AuditReportState>> GetAuditReportStatesAsync(
+        IReadOnlyCollection<Guid> auditIds, CancellationToken cancellationToken = default)
+    {
+        if (auditIds.Count == 0)
+        {
+            return [];
+        }
+
+        var ids = auditIds.ToArray();
+        var rows = await db.Reports.AsNoTracking()
+            .Where(r => r.AuditId != null && ids.Contains(r.AuditId.Value))
+            .Select(r => new { AuditId = r.AuditId!.Value, r.Stage, r.Status, r.SignOffStatus, Distributed = r.Distributions.Any() })
+            .ToListAsync(cancellationToken);
+
+        return [.. rows.GroupBy(r => r.AuditId).Select(g =>
+        {
+            var finals = g.Where(r => r.Stage == ReportStage.Final).ToList();
+            return new AuditReportState(
+                g.Key,
+                FinalReady: finals.Any(r => r.Status == ReportStatus.Completed
+                    && r.SignOffStatus is ReportSignOffStatus.NotRequired or ReportSignOffStatus.SignedOff),
+                FinalAwaitingSignOff: finals.Any(r => r.Status == ReportStatus.Completed && r.SignOffStatus == ReportSignOffStatus.Awaiting),
+                FinalDistributed: finals.Any(r => r.Distributed),
+                DraftCompleted: g.Any(r => r.Stage == ReportStage.Draft && r.Status == ReportStatus.Completed));
+        })];
+    }
+
     public async Task<PagedResult<Report>> ListStandaloneAsync(ReportKind? kind, PageSpec page, CancellationToken cancellationToken = default)
     {
         // Standalone reports have no audit; order newest first. Report ids are GUID v7 (time-ordered), so ordering by

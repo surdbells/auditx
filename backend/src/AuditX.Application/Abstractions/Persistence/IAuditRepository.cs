@@ -7,6 +7,22 @@ namespace AuditX.Application.Abstractions.Persistence;
 /// <summary>Checklist-completion rollup for the audit linked to one entity of a plan item (feeds plan-progress aggregation).</summary>
 public sealed record PlanItemAuditProgress(Guid PlanItemId, Guid EntityId, Guid AuditId, AuditStatus AuditStatus, int TotalChecklistItems, int RespondedChecklistItems);
 
+/// <summary>
+/// Whose engagements the board lists: the audits <paramref name="UserId"/> is on the active team of (the auditee
+/// included), plus the audits they manage. Those are every audit (<paramref name="AllAudits"/>), the audits a grant
+/// names (<paramref name="AuditIds"/>), and the audits of entities in <paramref name="OrgUnitIds"/>.
+/// </summary>
+public sealed record EngagementBoardReach(
+    Guid UserId, bool AllAudits, IReadOnlyCollection<Guid> AuditIds, IReadOnlyCollection<Guid> OrgUnitIds)
+{
+    /// <summary>Whether the user manages the audit, given the org unit of the entity it covers.</summary>
+    public bool Manages(Guid auditId, Guid? orgUnitId)
+        => AllAudits || AuditIds.Contains(auditId) || (orgUnitId is { } unit && OrgUnitIds.Contains(unit));
+}
+
+/// <summary>An audit on the engagement board, with the org unit of the entity it covers (null when it covers none).</summary>
+public sealed record EngagementBoardAudit(Audit Audit, Guid? OrgUnitId);
+
 public interface IAuditRepository
 {
     Task<Audit?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
@@ -18,6 +34,14 @@ public interface IAuditRepository
     Task<PagedResult<Audit>> SearchAsync(
         AuditStatus? status, string? auditType, Guid? leadUserId, Guid? planItemId, string? search, PageSpec page,
         Abstractions.Authorization.ListScope? scope = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The audits on a user's engagement board (see <see cref="EngagementBoardReach"/>), newest first and at most
+    /// <paramref name="max"/>, read-only. Each comes with what the journey reads: the team, checklist, responses,
+    /// review notes and independence declarations.
+    /// </summary>
+    Task<IReadOnlyList<EngagementBoardAudit>> ListForEngagementBoardAsync(
+        EngagementBoardReach reach, AuditStatus? status, int max, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyDictionary<string, int>> CountsByStatusAsync(
         Abstractions.Authorization.ListScope? scope = null, CancellationToken cancellationToken = default);

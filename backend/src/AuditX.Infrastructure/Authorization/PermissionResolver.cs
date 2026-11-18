@@ -93,6 +93,14 @@ public sealed class PermissionResolver(
         return new OrgScope(false, await ExpandAsync(matching, cancellationToken));
     }
 
+    public async Task<IReadOnlySet<Guid>> GetLimitedOrgUnitsAsync(Guid userId, string permissionKey, CancellationToken cancellationToken = default)
+    {
+        var limited = (await GetEffectivePermissionsAsync(userId, cancellationToken))
+            .Where(p => p.Key == permissionKey && IsOrgUnitLimited(p))
+            .ToList();
+        return limited.Count == 0 ? new HashSet<Guid>() : await ExpandAsync(limited, cancellationToken);
+    }
+
     /// <summary>A grant of a permission the role limits to "assigned org unit", made for a specific org unit.</summary>
     private static bool IsOrgUnitLimited(EffectivePermission permission)
         => permission.ScopeType == PermissionScopeType.OrgUnit && permission.ScopeValue is not null;

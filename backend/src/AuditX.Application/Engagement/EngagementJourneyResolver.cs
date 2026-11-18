@@ -1,3 +1,4 @@
+using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Common.Concurrency;
 using AuditX.Application.Common.Enums;
 using AuditX.Application.Engagement.Dtos;
@@ -48,30 +49,31 @@ public static class EngagementJourneyResolver
         ("closed", "Closed"),
     ];
 
+    /// <summary>The finding statuses that keep an engagement in remediation.</summary>
+    public static readonly IReadOnlyList<ExceptionStatus> OpenExceptionStatuses =
+        [ExceptionStatus.Open, ExceptionStatus.MapSubmitted, ExceptionStatus.MapRejected, ExceptionStatus.PendingClosure];
+
     public static EngagementJourneyDto Resolve(
         Audit audit,
         IReadOnlyList<AuditException> exceptions,
-        bool hasCompletedReport,
-        bool hasDistributedReport,
+        AuditReportState? report,
         Guid userId,
         Func<string, bool> can,
         bool onTeamOrManager,
         EngagementRecordFacts? records = null)
     {
         records ??= EngagementRecordFacts.None;
+        report ??= AuditReportState.None(audit.Id);
         var totalItems = audit.ChecklistItems.Count;
         var respondedItems = audit.ChecklistItems.Count(i => i.ItemState == ChecklistItemState.Responded);
         var progress = totalItems == 0 ? 0 : (int)Math.Round(100.0 * respondedItems / totalItems);
 
-        var openExceptions = exceptions
-            .Where(e => e.Status is ExceptionStatus.Open or ExceptionStatus.MapSubmitted
-                or ExceptionStatus.MapRejected or ExceptionStatus.PendingClosure)
-            .ToArray();
+        var openExceptions = exceptions.Where(e => OpenExceptionStatuses.Contains(e.Status)).ToArray();
 
-        var stageCode = CurrentStage(audit.Status, openExceptions.Length > 0, hasCompletedReport, hasDistributedReport);
+        var stageCode = CurrentStage(audit.Status, openExceptions.Length > 0, report.FinalDistributed);
         var stages = BuildTimeline(stageCode, audit.Status == AuditStatus.Cancelled);
         var actions = onTeamOrManager
-            ? NextActions(audit, openExceptions, hasCompletedReport, hasDistributedReport, userId, can, records)
+            ? NextActions(audit, openExceptions, report, userId, can, records)
             : [];
 
         return new EngagementJourneyDto(
@@ -79,7 +81,8 @@ public static class EngagementJourneyResolver
             stageCode, progress, openExceptions.Length, RowVersionToken.Encode(audit.Version), stages, actions, CreatedAt: audit.CreatedAt);
     }
 
-    private static string CurrentStage(AuditStatus status, bool anyOpenException, bool hasCompletedReport, bool hasDistributedReport)
+    /// <summary>A completed engagement closes once its final report has gone out and no finding is open.</summary>
+    private static string CurrentStage(AuditStatus status, bool anyOpenException, bool finalDistributed)
         => status switch
         {
             AuditStatus.Cancelled => "cancelled",
@@ -88,7 +91,7 @@ public static class EngagementJourneyResolver
             AuditStatus.InProgress => "fieldwork",
             AuditStatus.UnderReview => anyOpenException ? "remediation" : "review",
             AuditStatus.Completed => anyOpenException ? "remediation"
-                : (hasCompletedReport && hasDistributedReport) ? "closed" : "reporting",
+                : finalDistributed ? "closed" : "reporting",
             _ => "setup",
         };
 
@@ -114,8 +117,7 @@ public static class EngagementJourneyResolver
     private static IReadOnlyList<NextActionDto> NextActions(
         Audit audit,
         IReadOnlyList<AuditException> openExceptions,
-        bool hasCompletedReport,
-        bool hasDistributedReport,
+        AuditReportState report,
         Guid userId,
         Func<string, bool> can,
         EngagementRecordFacts records)
@@ -239,11 +241,13 @@ public static class EngagementJourneyResolver
                 AddRemediationActions(actions, openExceptions, userId, can);
                 if (openExceptions.Count == 0)
                 {
-                    if (!hasCompletedReport && can(PermissionKeys.GenerateReport))
+                    // A final with the Chief Internal Auditor waits for the sign-off; a returned one is generated again.
+                    if (!report.FinalReady && !report.FinalAwaitingSignOff && !report.FinalDistributed
+                        && can(PermissionKeys.GenerateReport))
                     {
                         actions.Add(Route("generate_report", "Generate report", auditRoute, PermissionKeys.GenerateReport));
                     }
-                    else if (hasCompletedReport && !hasDistributedReport && can(PermissionKeys.DistributeReport))
+                    else if (report.FinalReady && !report.FinalDistributed && can(PermissionKeys.DistributeReport))
                     {
                         actions.Add(Route("distribute_report", "Distribute report", auditRoute, PermissionKeys.DistributeReport));
                     }

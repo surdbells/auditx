@@ -64,6 +64,54 @@ public sealed class AuditRepository(AppDbContext db) : IAuditRepository
         return await query.OrderBy(a => a.Id).ToPagedResultAsync(page, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<EngagementBoardAudit>> ListForEngagementBoardAsync(
+        EngagementBoardReach reach, AuditStatus? status, int max, CancellationToken cancellationToken = default)
+    {
+        var query = db.Audits.AsNoTracking();
+        if (!reach.AllAudits)
+        {
+            var uid = reach.UserId;
+            var auditIds = reach.AuditIds.ToArray();
+            var units = reach.OrgUnitIds.ToArray();
+            query = query.Where(a => a.TeamMembers.Any(m => m.RemovedAt == null && m.UserId == uid)
+                || auditIds.Contains(a.Id)
+                || (a.AuditableEntityId != null && db.AuditUniverseEntities.IgnoreQueryFilters().Any(e =>
+                    e.Id == a.AuditableEntityId && e.OrgUnitId != null && units.Contains(e.OrgUnitId.Value))));
+        }
+
+        if (status is { } s)
+        {
+            query = query.Where(a => a.Status == s);
+        }
+
+        var audits = await query
+            .OrderByDescending(a => a.CreatedAt)
+            .ThenBy(a => a.Id)
+            .Take(max)
+            .Include(a => a.TeamMembers)
+            .Include(a => a.ChecklistItems)
+            .Include(a => a.Responses)
+            .Include(a => a.ReviewNotes)
+            .Include(a => a.IndependenceDeclarations)
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+
+        var entityIds = audits
+            .Where(a => a.AuditableEntityId is not null)
+            .Select(a => a.AuditableEntityId!.Value)
+            .Distinct()
+            .ToArray();
+        Dictionary<Guid, Guid?> unitOf = entityIds.Length == 0
+            ? []
+            : await db.AuditUniverseEntities.IgnoreQueryFilters().AsNoTracking()
+                .Where(e => entityIds.Contains(e.Id))
+                .Select(e => new { e.Id, e.OrgUnitId })
+                .ToDictionaryAsync(e => e.Id, e => e.OrgUnitId, cancellationToken);
+
+        return [.. audits.Select(a => new EngagementBoardAudit(
+            a, a.AuditableEntityId is { } entityId && unitOf.TryGetValue(entityId, out var unit) ? unit : null))];
+    }
+
     /// <summary>
     /// Narrows audits to a caller whose permission is limited to some org units: those they are on (team or auditee)
     /// plus those whose entity belongs to one of the units. Null scope: no narrowing.

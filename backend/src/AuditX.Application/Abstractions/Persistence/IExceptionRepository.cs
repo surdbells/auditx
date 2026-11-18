@@ -36,6 +36,10 @@ public interface IExceptionRepository
 
     Task<IReadOnlyList<AuditException>> ListByAuditAsync(Guid auditId, ExceptionStatus? status, CancellationToken cancellationToken = default);
 
+    /// <summary>The findings of several audits that are in one of <paramref name="statuses"/>, read-only, in one query.</summary>
+    Task<IReadOnlyList<AuditException>> ListByAuditsAsync(
+        IReadOnlyCollection<Guid> auditIds, IReadOnlyCollection<ExceptionStatus> statuses, CancellationToken cancellationToken = default);
+
     /// <summary>All exceptions for an audit WITH their MAP actions eagerly loaded (for report assembly — M8).</summary>
     Task<IReadOnlyList<AuditException>> ListByAuditWithMapActionsAsync(Guid auditId, CancellationToken cancellationToken = default);
 

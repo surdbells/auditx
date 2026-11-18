@@ -25,6 +25,22 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
         return await query.OrderBy(e => e.TargetDate).ThenBy(e => e.Id).ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AuditException>> ListByAuditsAsync(
+        IReadOnlyCollection<Guid> auditIds, IReadOnlyCollection<ExceptionStatus> statuses, CancellationToken cancellationToken = default)
+    {
+        if (auditIds.Count == 0 || statuses.Count == 0)
+        {
+            return [];
+        }
+
+        var ids = auditIds.ToArray();
+        var wanted = statuses.ToArray();
+        return await db.Exceptions.AsNoTracking()
+            .Where(e => ids.Contains(e.AuditId) && wanted.Contains(e.Status))
+            .OrderBy(e => e.TargetDate).ThenBy(e => e.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<AuditException>> ListByAuditWithMapActionsAsync(Guid auditId, CancellationToken cancellationToken = default)
         => await db.Exceptions.AsNoTracking()
             .Include(e => e.MapActions)

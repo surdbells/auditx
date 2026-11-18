@@ -1,3 +1,4 @@
+using AuditX.Application.Abstractions.Persistence;
 using AuditX.Application.Engagement;
 using AuditX.Application.Engagement.Dtos;
 using AuditX.Domain.Audits;
@@ -36,9 +37,8 @@ public sealed class EngagementJourneyResolverTests
     }
 
     private static EngagementJourneyDto Resolve(Audit a, Func<string, bool> can, Guid userId,
-        IReadOnlyList<AuditException>? exceptions = null, bool hasCompletedReport = false, bool hasDistributedReport = false,
-        bool onTeamOrManager = true) =>
-        EngagementJourneyResolver.Resolve(a, exceptions ?? [], hasCompletedReport, hasDistributedReport, userId, can, onTeamOrManager);
+        IReadOnlyList<AuditException>? exceptions = null, AuditReportState? report = null, bool onTeamOrManager = true) =>
+        EngagementJourneyResolver.Resolve(a, exceptions ?? [], report, userId, can, onTeamOrManager);
 
     private static AuditException OpenException(Guid auditId, Guid owner) => AuditException.Raise(
         auditId, Guid.NewGuid(), Guid.NewGuid(), "Gap", ExceptionSeverity.Medium, "root", "fix",
@@ -143,21 +143,57 @@ public sealed class EngagementJourneyResolverTests
     [Fact]
     public void Completed_without_a_report_asks_to_generate_then_closes_once_distributed()
     {
+        var a = CompletedAudit();
+
+        var reporting = Resolve(a, Grants(PermissionKeys.GenerateReport), Manager);
+        Assert.Equal("reporting", reporting.Stage);
+        Assert.Contains(reporting.NextActions, x => x.Code == "generate_report");
+
+        var closed = Resolve(a, ReportGrants, Manager,
+            report: new AuditReportState(a.Id, FinalReady: true, FinalAwaitingSignOff: false, FinalDistributed: true, DraftCompleted: false));
+        Assert.Equal("closed", closed.Stage);
+        Assert.Empty(closed.NextActions);
+    }
+
+    private static readonly Func<string, bool> ReportGrants = Grants(PermissionKeys.GenerateReport, PermissionKeys.DistributeReport);
+
+    private static Audit CompletedAudit()
+    {
         var (a, itemId) = Ready();
         a.Plan();
         a.Start(requireIndependence: false);
         a.RecordResponse(itemId, ResponseVerdict.Pass, null, isDraft: false, Auditor, requireCommentOnPass: false, Now);
         a.SignOffItem(itemId, Manager, Now);
         a.Complete(Target); // already Under review via the auto-transition above
+        return a;
+    }
 
-        var reporting = Resolve(a, Grants(PermissionKeys.GenerateReport), Manager);
-        Assert.Equal("reporting", reporting.Stage);
-        Assert.Contains(reporting.NextActions, x => x.Code == "generate_report");
+    [Fact]
+    public void A_completed_draft_is_not_the_report_the_engagement_closes_on()
+    {
+        var a = CompletedAudit();
+        var journey = Resolve(a, ReportGrants, Manager,
+            report: new AuditReportState(a.Id, FinalReady: false, FinalAwaitingSignOff: false, FinalDistributed: false, DraftCompleted: true));
 
-        var closed = Resolve(a, Grants(PermissionKeys.GenerateReport, PermissionKeys.DistributeReport), Manager,
-            hasCompletedReport: true, hasDistributedReport: true);
-        Assert.Equal("closed", closed.Stage);
-        Assert.Empty(closed.NextActions);
+        Assert.Equal("reporting", journey.Stage);
+        Assert.Contains(journey.NextActions, x => x.Code == "generate_report");
+        Assert.DoesNotContain(journey.NextActions, x => x.Code == "distribute_report");
+    }
+
+    [Fact]
+    public void A_final_with_the_chief_internal_auditor_waits_and_a_signed_off_one_is_distributed()
+    {
+        var a = CompletedAudit();
+
+        var awaiting = Resolve(a, ReportGrants, Manager,
+            report: new AuditReportState(a.Id, FinalReady: false, FinalAwaitingSignOff: true, FinalDistributed: false, DraftCompleted: true));
+        Assert.Equal("reporting", awaiting.Stage);
+        Assert.Empty(awaiting.NextActions);
+
+        var signedOff = Resolve(a, ReportGrants, Manager,
+            report: new AuditReportState(a.Id, FinalReady: true, FinalAwaitingSignOff: false, FinalDistributed: false, DraftCompleted: true));
+        var action = Assert.Single(signedOff.NextActions);
+        Assert.Equal("distribute_report", action.Code);
     }
 
     [Fact]
@@ -192,8 +228,8 @@ public sealed class EngagementJourneyResolverTests
         bool exit = false, bool draftReport = false, bool managesAudit = true)
         => new(requireIndependence, letter, kickoff, exit, draftReport, managesAudit);
 
-    private static EngagementJourneyDto ResolveWith(Audit a, Func<string, bool> can, Guid userId, EngagementRecordFacts records, bool hasCompletedReport = false)
-        => EngagementJourneyResolver.Resolve(a, [], hasCompletedReport, false, userId, can, onTeamOrManager: true, records);
+    private static EngagementJourneyDto ResolveWith(Audit a, Func<string, bool> can, Guid userId, EngagementRecordFacts records)
+        => EngagementJourneyResolver.Resolve(a, [], null, userId, can, onTeamOrManager: true, records);
 
     [Fact]
     public void Fieldwork_is_offered_only_once_the_whole_team_has_declared_independence()
