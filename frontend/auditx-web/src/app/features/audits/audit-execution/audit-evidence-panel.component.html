@@ -9,6 +9,12 @@
     }
   </div>
 
+  @if (available() === false) {
+    <p class="muted evi__closed">
+      <app-icon name="lock" aria-hidden="true" />
+      {{ 'evidence.teamOnly' | t }}
+    </p>
+  } @else {
   @if (adding()) {
     <form [formGroup]="form" class="evi__form">
       <mat-form-field appearance="outline" class="full">
@@ -157,5 +163,6 @@
         </li>
       }
     </ul>
+  }
   }
 </mat-card>

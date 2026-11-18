@@ -30,6 +30,7 @@ import {
   ResponseInput,
   ReviewSummary,
   WorkingPaperReview,
+  AuditCallerAccess,
   SubmitResponseRequest,
   TransferLeadRequest,
   TransitionAuditRequest,
@@ -283,6 +284,11 @@ export class AuditsService {
   }
 
   /* ---- Working-paper review (audit version; each returns the review as it now stands) ---- */
+
+  /** What the signed-in user may open and do on this audit — so a screen offers only what the API allows. */
+  getCallerAccess(id: string): Observable<AuditCallerAccess> {
+    return this.api.get<AuditCallerAccess>(`/audits/${id}/access`);
+  }
 
   getWorkingPaperReview(id: string): Observable<WorkingPaperReview> {
     return this.api.get<WorkingPaperReview>(`/audits/${id}/review/working-papers`);

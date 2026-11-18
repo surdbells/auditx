@@ -64,6 +64,14 @@ public sealed record ReviewItemDto(
 /// <c>IsOpen</c> while the audit is in progress or under review. <c>CanReview</c> / <c>CanAnswer</c> say what the
 /// caller may do. <c>Version</c> is the audit's concurrency token after the read or change.
 /// </summary>
+/// <summary>
+/// The signed-in user's standing on one audit. <c>OnTeam</c>: on its working team (not its auditee).
+/// <c>ManagesAudit</c>: holds ManageAudit for it. <c>CanSeeWorkingPapers</c>: may read its procedures, document
+/// requests and evidence (a team member, or a manager of the audit). <c>CanActAsAuditor</c>: may also raise findings
+/// and record audit work on it — the same, minus the audit's own auditee.
+/// </summary>
+public sealed record AuditCallerAccessDto(bool OnTeam, bool IsAuditee, bool ManagesAudit, bool CanSeeWorkingPapers, bool CanActAsAuditor);
+
 public sealed record WorkingPaperReviewDto(
     bool IsRequired, bool IsOpen, bool CanReview, bool CanAnswer,
     int TotalItems, int SignedOffItems, int ReadyForSignOff, int OpenNotes, int AnsweredNotes,

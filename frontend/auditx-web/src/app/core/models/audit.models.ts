@@ -441,6 +441,19 @@ export interface ReviewItem {
  * note cleared, before the audit completes (not required for a self-assessment). `version` is the audit's
  * concurrency token after the read or change.
  */
+/**
+ * The signed-in user's standing on one audit (GET audits/{id}/access). `canSeeWorkingPapers`: may read its
+ * evidence, procedures and document requests (its team, or a manager of the audit). `canActAsAuditor`: may also
+ * raise findings and record audit work on it (the same, minus the audit's own auditee).
+ */
+export interface AuditCallerAccess {
+  onTeam: boolean;
+  isAuditee: boolean;
+  managesAudit: boolean;
+  canSeeWorkingPapers: boolean;
+  canActAsAuditor: boolean;
+}
+
 export interface WorkingPaperReview {
   isRequired: boolean;
   /** True while the audit is in progress or under review. */

@@ -159,6 +159,35 @@ public sealed class GetWorkingPaperReviewQueryHandler(IAuditRepository audits, I
     }
 }
 
+/// <summary>
+/// What the signed-in user can open and do on one audit, so a screen offers only what the API will allow. Anyone who
+/// can read the audit may ask; the answers apply the same rules the endpoints enforce.
+/// </summary>
+public sealed record GetAuditCallerAccessQuery(Guid AuditId) : IQuery<AuditCallerAccessDto>;
+
+public sealed class GetAuditCallerAccessQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)
+    : IQueryHandler<GetAuditCallerAccessQuery, AuditCallerAccessDto>
+{
+    public async Task<AuditCallerAccessDto> Handle(GetAuditCallerAccessQuery query, CancellationToken cancellationToken)
+    {
+        var entity = await audits.GetByIdAsync(query.AuditId, cancellationToken) ?? throw new NotFoundException("Audit", query.AuditId);
+        await AuditAccess.EnsureCanViewAsync(entity, currentUser.UserId, permissions, cancellationToken);
+        var uid = currentUser.UserId!.Value;
+
+        var isAuditee = entity.IsAuditee(uid);
+        var managesAudit = await permissions.HasPermissionAsync(uid, Domain.Authorization.PermissionKeys.ManageAudit, entity.Id.ToString(), cancellationToken);
+        var canSeeWorkingPapers = await AuditAccess.CanAccessAsync(entity, uid, permissions, cancellationToken);
+
+        return new AuditCallerAccessDto(
+            OnTeam: entity.IsOnAuditTeam(uid),
+            IsAuditee: isAuditee,
+            ManagesAudit: managesAudit,
+            CanSeeWorkingPapers: canSeeWorkingPapers,
+            // Raising a finding or recording audit work also needs independence from the area (ExceptionAccess).
+            CanActAsAuditor: canSeeWorkingPapers && !isAuditee);
+    }
+}
+
 public sealed record GetReviewSummaryQuery(Guid AuditId) : IQuery<ReviewSummaryDto>;
 
 public sealed class GetReviewSummaryQueryHandler(IAuditRepository audits, ICurrentUser currentUser, IPermissionResolver permissions)

@@ -9,6 +9,12 @@
     }
   </div>
 
+  @if (available() === false) {
+    <p class="muted proc__closed">
+      <app-icon name="lock" aria-hidden="true" />
+      {{ 'procedure.teamOnly' | t }}
+    </p>
+  } @else {
   @if (adding()) {
     <form [formGroup]="form" class="proc__form">
       <div class="proc__row">
@@ -133,5 +139,6 @@
         </li>
       }
     </ul>
+  }
   }
 </mat-card>

@@ -35,6 +35,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
 import {
   Audit,
+  AuditCallerAccess,
   ChecklistProgress,
   ChecklistProgressItem,
   ChecklistResponse,
@@ -197,6 +198,20 @@ export class AuditExecutionComponent {
   readonly canRaiseException = computed(() =>
     this.auth.hasPermission(Permissions.RaiseException),
   );
+
+  /**
+   * What the server says the signed-in user may open and do on this audit (null until it answers). A permission is
+   * held across the whole portfolio, but the audit's working papers — its evidence, procedures and document
+   * requests — open only to its team and its managers, and only they raise findings on it.
+   */
+  readonly access = signal<AuditCallerAccess | null>(null);
+  /** true / false once the server has answered; null while waiting. */
+  readonly workingPapersAvailable = computed(() => {
+    const access = this.access();
+    return access ? access.canSeeWorkingPapers : null;
+  });
+  /** Raise a finding: the permission, on an audit the user works as its auditor. */
+  readonly canRaise = computed(() => this.canRaiseException() && !!this.access()?.canActAsAuditor);
   /** Recording a control test needs the controls-manage permission (it updates the control register). */
   readonly canRecordControlTest = computed(() =>
     this.auth.hasPermission(Permissions.ManageControls),
@@ -282,7 +297,7 @@ export class AuditExecutionComponent {
       return false;
     }
     const canReview = this.canManage() && this.isUnderReview();
-    if (!this.canRaiseException() && !canReview) {
+    if (!this.canRaise() && !canReview) {
       return false;
     }
     // Reviewers keep the panel throughout review; auditors see it only when something needs action.
@@ -414,6 +429,7 @@ export class AuditExecutionComponent {
       const id = audit.id;
       if (id && id !== this.lastAuditId) {
         this.lastAuditId = id;
+        this.loadAccess(id);
         this.refresh();
       }
     });
@@ -472,6 +488,23 @@ export class AuditExecutionComponent {
     ) {
       this.loadFailItems();
     }
+  }
+
+  private loadAccess(id: string): void {
+    this.access.set(null);
+    this.service.getCallerAccess(id).subscribe({
+      next: (access) => {
+        if (id !== this.audit().id) {
+          return;
+        }
+        this.access.set(access);
+        // The open item's evidence waited for the answer.
+        const selected = this.selectedItemId();
+        if (selected) {
+          this.loadEvidence(this.responseFor(selected)?.id);
+        }
+      },
+    });
   }
 
   private loadFailItems(): void {
@@ -782,7 +815,8 @@ export class AuditExecutionComponent {
   /* ---- Evidence (NO audit version) ---- */
 
   loadEvidence(responseId: string | null | undefined): void {
-    if (!responseId || responseId in this.evidence()) {
+    // Only the audit's team and its managers may see the evidence; nobody else is sent asking for it.
+    if (!responseId || responseId in this.evidence() || this.workingPapersAvailable() !== true) {
       return;
     }
     this.service.listEvidence(this.audit().id, responseId).subscribe({

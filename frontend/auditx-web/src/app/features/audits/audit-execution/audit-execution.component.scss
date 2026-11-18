@@ -375,6 +375,13 @@
   margin: 0.25rem 0;
 }
 
+.exec__evidence-closed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0.5rem 0 0;
+}
+
 .exec__files {
   list-style: none;
   margin: 0;

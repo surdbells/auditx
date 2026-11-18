@@ -316,6 +316,17 @@ describe('AuditsService', () => {
     expect(result?.fail).toBe(1);
   });
 
+  it("reads the caller's access to an audit", () => {
+    let result: { canSeeWorkingPapers: boolean } | undefined;
+    service.getCallerAccess('a-1').subscribe((a) => (result = a));
+    const req = http.expectOne(`${BASE}/audits/a-1/access`);
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      data: { onTeam: false, isAuditee: false, managesAudit: false, canSeeWorkingPapers: false, canActAsAuditor: false },
+    });
+    expect(result?.canSeeWorkingPapers).toBe(false);
+  });
+
   it('reads the working-paper review and posts each review action with the audit version', () => {
     service.getWorkingPaperReview('a-1').subscribe();
     expect(http.expectOne(`${BASE}/audits/a-1/review/working-papers`).request.method).toBe('GET');

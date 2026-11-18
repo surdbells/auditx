@@ -19,18 +19,19 @@ internal static class AuditAccess
             throw new ForbiddenAccessException();
         }
 
-        if (audit.TeamMembers.Any(m => m.IsActive && m.UserId == uid))
+        if (!await CanAccessAsync(audit, uid, permissions, cancellationToken))
         {
-            return;
+            throw new ForbiddenAccessException("You are not a member of this audit.");
         }
-
-        if (await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken))
-        {
-            return;
-        }
-
-        throw new ForbiddenAccessException("You are not a member of this audit.");
     }
+
+    /// <summary>
+    /// The rule behind <see cref="EnsureCanAccessAsync"/> — and behind the procedure, document-request and evidence
+    /// reads, which apply the same one: an active team member of the audit, or a holder of ManageAudit for it.
+    /// </summary>
+    public static async Task<bool> CanAccessAsync(Audit audit, Guid userId, IPermissionResolver permissions, CancellationToken cancellationToken)
+        => audit.TeamMembers.Any(m => m.IsActive && m.UserId == userId)
+           || await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken);
 
     /// <summary>
     /// Who may READ an audit — its detail, team, checklist, responses, progress, review figures and history.

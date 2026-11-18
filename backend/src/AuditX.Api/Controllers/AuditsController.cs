@@ -232,6 +232,12 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     // Who may sign off, raise, clear or answer is decided by the audit's own team (its lead and reviewers review; the
     // team answers) in the domain; the audit's auditee is refused by the independence filter (writes) and the query.
 
+    /// <summary>What the signed-in user can open and do on this audit, so the screens offer only what the API allows.</summary>
+    [RequirePermission(PermissionKeys.ViewAudit)]
+    [HttpGet("{id:guid}/access")]
+    public async Task<IActionResult> CallerAccess(Guid id, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new GetAuditCallerAccessQuery(id), cancellationToken));
+
     [RequirePermission(PermissionKeys.ViewAudit)]
     [HttpGet("{id:guid}/review/working-papers")]
     public async Task<IActionResult> WorkingPaperReview(Guid id, CancellationToken cancellationToken)

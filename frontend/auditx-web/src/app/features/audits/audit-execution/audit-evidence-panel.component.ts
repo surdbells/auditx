@@ -67,6 +67,11 @@ export class AuditEvidencePanelComponent {
   readonly audit = input.required<Audit>();
   /** When set, the panel is scoped to one checklist item (filter + pre-attach + hide the item picker). */
   readonly scopedItemId = input<string | null>(null);
+  /**
+   * Whether the signed-in user may see this audit's document requests (the server's answer, from GET audits/{id}/access): true
+   * loads them, false shows why not instead of asking for something the API would refuse, null waits for the answer.
+   */
+  readonly available = input.required<boolean | null>();
 
   readonly isScoped = computed(() => !!this.scopedItemId());
 
@@ -99,7 +104,9 @@ export class AuditEvidencePanelComponent {
   // RespondItem alone — ManageAudit is only a resource-scope alternative to team membership, not a substitute
   // for the permission (mirrors the sibling procedures panel's canRecord).
   readonly canManage = computed(() => this.auth.hasPermission(Permissions.RespondItem));
-  readonly canActionNow = computed(() => this.canManage() && ACTIONABLE.has(this.audit().status));
+  readonly canActionNow = computed(
+    () => this.available() === true && this.canManage() && ACTIONABLE.has(this.audit().status),
+  );
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.maxLength(300)]],
@@ -120,6 +127,9 @@ export class AuditEvidencePanelComponent {
     // The user directory + document types load lazily on first use (mirrors the procedures panel).
     effect(() => {
       const id = this.audit().id;
+      if (this.available() !== true) {
+        return;
+      }
       if (id && id !== this.lastAuditId) {
         this.lastAuditId = id;
         this.refresh();

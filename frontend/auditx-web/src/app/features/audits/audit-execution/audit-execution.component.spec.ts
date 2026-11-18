@@ -14,6 +14,7 @@ import {
   ResponseVerdict,
   SessionDto,
   WorkingPaperReview,
+  AuditCallerAccess,
 } from '../../../core/models';
 
 const BASE = '/api/v1';
@@ -91,6 +92,11 @@ function progress(): ChecklistProgress {
   };
 }
 
+/** The caller's standing on the audit (GET audits/{id}/access): by default a member of its team. */
+function access(overrides: Partial<AuditCallerAccess> = {}): AuditCallerAccess {
+  return { onTeam: true, isAuditee: false, managesAudit: false, canSeeWorkingPapers: true, canActAsAuditor: true, ...overrides };
+}
+
 /** The working-paper review: i-1 answered by u-auditor and awaiting sign-off, i-2 not answered yet. */
 function review(overrides: Partial<WorkingPaperReview> = {}): WorkingPaperReview {
   return {
@@ -134,6 +140,8 @@ describe('AuditExecutionComponent', () => {
   let http: HttpTestingController;
   let notify: jasmine.SpyObj<NotificationService>;
   let dialog: jasmine.SpyObj<MatDialog>;
+  /** The working-paper requests (document requests, procedures, response evidence) the last setup saw go out. */
+  let workingPaperRequests: string[] = [];
 
   async function setup(
     perms: string[],
@@ -147,7 +155,9 @@ describe('AuditExecutionComponent', () => {
     /** Who is signed in. 'u1' is NOT on the audit's team; 'u-auditor' is its one active team member. */
     userId = 'u1',
     reviewData: WorkingPaperReview = review(),
+    accessData: AuditCallerAccess = access(),
   ): Promise<void> {
+    workingPaperRequests = [];
     notify = jasmine.createSpyObj<NotificationService>('NotificationService', [
       'success',
       'info',
@@ -173,6 +183,9 @@ describe('AuditExecutionComponent', () => {
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
     await fixture.whenStable();
+
+    // What the caller may open on the audit is asked once, before any working paper is.
+    http.expectOne(`${BASE}/audits/a-1/access`).flush({ data: accessData });
 
     // The effect fires refresh() which loads progress + summary.
     http
@@ -205,10 +218,17 @@ describe('AuditExecutionComponent', () => {
     }
     // The item-work tabs (evidence requests + procedures, and time when permitted) load their lists;
     // the evidence panel also lazy-loads the document-type reference-data for its form. Drain tolerantly.
+    fixture.detectChanges();
     for (const req of http.match(`${BASE}/audits/a-1/evidence-requests`)) {
+      workingPaperRequests.push(req.request.url);
       req.flush({ data: [] });
     }
     for (const req of http.match(`${BASE}/audits/a-1/procedures`)) {
+      workingPaperRequests.push(req.request.url);
+      req.flush({ data: [] });
+    }
+    for (const req of http.match((r) => /\/audits\/a-1\/responses\/.+\/evidence$/.test(r.url))) {
+      workingPaperRequests.push(req.request.url);
       req.flush({ data: [] });
     }
     for (const req of http.match((r) => r.url === `${BASE}/reference-data/evidence_document_type`)) {
@@ -510,6 +530,50 @@ describe('AuditExecutionComponent', () => {
     expect(component.showReview()).toBe(false);
     http.expectNone(`${BASE}/audits/a-1/review/working-papers`);
     expect(component.reviewStore.review()).toBeNull();
+  });
+
+  /* ---- Who may open the working papers ---- */
+
+  it('loads the document requests and procedures for the audit team', async () => {
+    await setup(['ViewAudit', 'RespondItem'], audit('in_progress'), [], 'u-auditor');
+
+    expect(component.workingPapersAvailable()).toBe(true);
+    expect(workingPaperRequests).toContain(`${BASE}/audits/a-1/evidence-requests`);
+    expect(workingPaperRequests).toContain(`${BASE}/audits/a-1/procedures`);
+  });
+
+  it('asks nothing of the working papers for a viewer who is neither on the team nor manages the audit', async () => {
+    await setup(
+      ['ViewAudit', 'ViewEvidence', 'RaiseException', 'RespondItem'],
+      audit('in_progress'),
+      [{ itemId: 'i-1', prompt: 'Verify SoD', comment: null, assignedUserId: null }],
+      'u1',
+      review(),
+      access({ onTeam: false, canSeeWorkingPapers: false, canActAsAuditor: false }),
+    );
+    fixture.detectChanges();
+
+    expect(component.workingPapersAvailable()).toBe(false);
+    expect(workingPaperRequests).toEqual([]);
+    // Holding RaiseException across the portfolio does not make them this audit's auditor.
+    expect(component.canRaise()).toBe(false);
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Only the audit team and the managers of this audit can see its document requests.');
+    expect(text).not.toContain('Raise exception');
+  });
+
+  it('keeps the audit\'s auditee from raising findings while letting them read the working papers', async () => {
+    await setup(
+      ['ViewAudit', 'RaiseException'],
+      audit('in_progress'),
+      [],
+      'u-auditee',
+      review(),
+      access({ onTeam: false, isAuditee: true, canSeeWorkingPapers: true, canActAsAuditor: false }),
+    );
+
+    expect(component.workingPapersAvailable()).toBe(true);
+    expect(component.canRaise()).toBe(false);
   });
 
   it('signs an item off with the audit version, then asks the page to reload the audit', async () => {

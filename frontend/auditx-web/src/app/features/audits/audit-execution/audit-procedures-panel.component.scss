@@ -93,6 +93,13 @@
   margin: 0.5rem 0;
 }
 
+.proc__closed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0.5rem 0;
+}
+
 @media (max-width: 560px) {
   .proc__row {
     grid-template-columns: 1fr;

@@ -60,6 +60,11 @@ export class AuditProceduresPanelComponent {
   readonly audit = input.required<Audit>();
   /** When set, the panel is scoped to one checklist item (filter + pre-attach + hide the item picker). */
   readonly scopedItemId = input<string | null>(null);
+  /**
+   * Whether the signed-in user may see this audit's procedures (the server's answer, from GET audits/{id}/access): true
+   * loads them, false shows why not instead of asking for something the API would refuse, null waits for the answer.
+   */
+  readonly available = input.required<boolean | null>();
 
   readonly isScoped = computed(() => !!this.scopedItemId());
 
@@ -89,7 +94,9 @@ export class AuditProceduresPanelComponent {
 
   readonly canRecord = computed(() => this.auth.hasPermission(Permissions.RespondItem));
   readonly canManage = computed(() => this.auth.hasPermission(Permissions.ManageAudit));
-  readonly canRecordNow = computed(() => this.canRecord() && RECORDABLE.has(this.audit().status));
+  readonly canRecordNow = computed(
+    () => this.available() === true && this.canRecord() && RECORDABLE.has(this.audit().status),
+  );
 
   readonly form = this.fb.nonNullable.group({
     type: ['sampling' as ProcedureType, Validators.required],
@@ -110,6 +117,9 @@ export class AuditProceduresPanelComponent {
     // The user directory loads lazily the first time a row resolves a name (mirrors the time panel).
     effect(() => {
       const id = this.audit().id;
+      if (this.available() !== true) {
+        return;
+      }
       if (id && id !== this.lastAuditId) {
         this.lastAuditId = id;
         this.refresh();

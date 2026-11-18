@@ -47,7 +47,7 @@
               <span class="muted">{{ 'audits.field.assignee' | t: { name: nameOf(item.assignedUserId) } }}</span>
             </div>
             <div class="exec__fail-actions">
-              @if (canRaiseException()) {
+              @if (canRaise()) {
                 <button matButton type="button" (click)="raiseException(item)">
                   <app-icon name="report_problem" />
                   {{ 'audits.actions.raiseException' | t }}
@@ -192,7 +192,7 @@
               }
             }
             <!-- Raise an exception directly on a failed item (auditors + reviewers). -->
-            @if (canRaiseException() && item.verdict === 'fail' && !item.hasException) {
+            @if (canRaise() && item.verdict === 'fail' && !item.hasException) {
               <button matButton="tonal" type="button" class="exec__raise" (click)="raiseException(item)">
                 <app-icon name="report_problem" />
                 {{ 'audits.actions.raiseException' | t }}
@@ -229,7 +229,12 @@
           }
 
           <!-- Evidence -->
-          @if (canViewEvidence()) {
+          @if (canViewEvidence() && workingPapersAvailable() === false) {
+            <p class="muted exec__evidence-closed">
+              <app-icon name="lock" aria-hidden="true" />
+              {{ 'audits.exec.evidenceTeamOnly' | t }}
+            </p>
+          } @else if (canViewEvidence() && workingPapersAvailable()) {
             @let response = responseFor(item.itemId);
             @if (response) {
               <div class="exec__evidence">
@@ -309,10 +314,10 @@
 
     <mat-tab-group class="exec__tabs" mat-stretch-tabs="false" animationDuration="0ms">
       <mat-tab [label]="'audits.exec.tab.evidence' | t">
-        <app-audit-evidence-panel [audit]="audit()" [scopedItemId]="scopedIdForPanels()" />
+        <app-audit-evidence-panel [audit]="audit()" [scopedItemId]="scopedIdForPanels()" [available]="workingPapersAvailable()" />
       </mat-tab>
       <mat-tab [label]="'audits.exec.tab.procedures' | t">
-        <app-audit-procedures-panel [audit]="audit()" [scopedItemId]="scopedIdForPanels()" />
+        <app-audit-procedures-panel [audit]="audit()" [scopedItemId]="scopedIdForPanels()" [available]="workingPapersAvailable()" />
       </mat-tab>
       @if (canViewTime()) {
         <mat-tab [label]="'audits.exec.tab.time' | t">
