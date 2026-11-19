@@ -15,6 +15,7 @@ public sealed class AuditException : AggregateRoot
 {
     private readonly List<MapAction> _mapActions = [];
     private readonly List<FindingVerification> _verifications = [];
+    private readonly List<DueDateExtensionRequest> _extensionRequests = [];
 
     private AuditException()
     {
@@ -134,6 +135,12 @@ public sealed class AuditException : AggregateRoot
 
     public IReadOnlyList<FindingVerification> Verifications => _verifications.AsReadOnly();
 
+    /// <summary>Every due-date extension asked for on this finding or its actions, pending and decided.</summary>
+    public IReadOnlyList<DueDateExtensionRequest> ExtensionRequests => _extensionRequests.AsReadOnly();
+
+    /// <summary>The actions of the current plan (a reopen supersedes the earlier plan's actions, which stay as history).</summary>
+    public IEnumerable<MapAction> CurrentMapActions => _mapActions.Where(a => a.IsCurrent);
+
     public bool RequiresCiaCountersign => Severity == ExceptionSeverity.Critical;
 
     public static AuditException Raise(
@@ -251,11 +258,14 @@ public sealed class AuditException : AggregateRoot
         return action;
     }
 
-    /// <summary>Discard the prior MAP before a resubmission so a rejected plan's stale actions don't accumulate.</summary>
+    /// <summary>
+    /// Discard the prior MAP before a resubmission so a rejected plan's stale actions don't accumulate. Actions a reopen
+    /// superseded are history and stay.
+    /// </summary>
     public void ClearMapActions()
     {
         EnsureStatus("exception.map_locked", ExceptionStatus.Open, ExceptionStatus.MapRejected);
-        _mapActions.Clear();
+        _mapActions.RemoveAll(a => a.IsCurrent);
     }
 
     /// <summary>
@@ -277,7 +287,7 @@ public sealed class AuditException : AggregateRoot
 
     public void SubmitMap(Guid actorUserId, DateTimeOffset nowUtc)
     {
-        if (_mapActions.Count == 0)
+        if (!CurrentMapActions.Any())
         {
             throw new DomainException("exception.map_requires_action", "A MAP must have at least one remediation action.");
         }
@@ -308,7 +318,7 @@ public sealed class AuditException : AggregateRoot
     public void MarkMapActionComplete(Guid actionId, bool requireEvidence, bool hasEvidence, Guid completedBy, DateTimeOffset nowUtc)
     {
         EnsureStatus("exception.map_not_approved", ExceptionStatus.MapApproved);
-        var action = _mapActions.FirstOrDefault(a => a.Id == actionId)
+        var action = CurrentMapActions.FirstOrDefault(a => a.Id == actionId)
             ?? throw new DomainException("exception.action_not_found", "Remediation action not found.");
         if (requireEvidence && !hasEvidence)
         {
@@ -319,15 +329,16 @@ public sealed class AuditException : AggregateRoot
         RaiseDomainEvent(new MapActionCompletedEvent(Id, actionId, completedBy));
     }
 
-    public void MarkMapComplete(Guid actorUserId)
+    public void MarkMapComplete(Guid actorUserId, DateTimeOffset nowUtc)
     {
         EnsureStatus("exception.map_not_approved", ExceptionStatus.MapApproved);
-        if (_mapActions.Any(a => a.Status != MapActionStatus.Complete))
+        if (!CurrentMapActions.Any() || CurrentMapActions.Any(a => a.Status != MapActionStatus.Complete))
         {
             throw new DomainException("exception.actions_incomplete", "All remediation actions must be complete first.");
         }
 
         Transition(ExceptionStatus.PendingClosure, ExceptionStatus.MapApproved);
+        WithdrawPendingExtensions(actorUserId, "The action plan was completed.", nowUtc);
         RaiseDomainEvent(new MapCompletedEvent(Id, actorUserId));
     }
 
@@ -391,6 +402,7 @@ public sealed class AuditException : AggregateRoot
         CancelledBy = actorUserId;
         CancelledAt = nowUtc;
         Status = ExceptionStatus.Cancelled;
+        WithdrawPendingExtensions(actorUserId, "The finding was cancelled.", nowUtc);
         RaiseDomainEvent(new ExceptionCancelledEvent(Id, actorUserId, CancellationReason));
     }
 
@@ -436,23 +448,56 @@ public sealed class AuditException : AggregateRoot
         RaiseDomainEvent(new ManagementResponseRecordedEvent(Id, AuditId, decision, actorUserId, RaisedByUserId, onBehalfOfManagement));
     }
 
-    /// <summary>Records a post-closure follow-up verification of the remediation (only meaningful once the finding is Closed).</summary>
-    public FindingVerification AddVerification(VerificationResult result, string? notes, Guid verifiedByUserId, DateTimeOffset nowUtc)
+    /// <summary>
+    /// Records a post-closure follow-up verification of the remediation (only meaningful once the finding is Closed).
+    /// A FAILED verification means the weakness is still there: the notes must say what was found, and the finding is
+    /// reopened at once with a new target date for the business to fix it again.
+    /// </summary>
+    public FindingVerification AddVerification(
+        VerificationResult result, string? notes, Guid verifiedByUserId, DateTimeOffset nowUtc, DateOnly today, DateOnly? newTargetDate = null)
     {
         EnsureStatus("exception.not_closed_for_verification", ExceptionStatus.Closed);
+        if (result == VerificationResult.Failed)
+        {
+            Guard.MinLength(notes, 20, "exception.failed_verification_notes_required",
+                "Say what the follow-up found (at least 20 characters): it becomes the reason the finding is reopened.");
+            Guard.Against(newTargetDate is null, "exception.reopen_target_date_required",
+                "A failed verification reopens the finding: give the new target date for fixing it.");
+            Guard.Against(newTargetDate <= today, "exception.reopen_target_date_past", "The new target date must be after today.");
+        }
+
         var verification = new FindingVerification(Id, result, verifiedByUserId, notes, nowUtc);
         _verifications.Add(verification);
         RaiseDomainEvent(new FindingVerifiedEvent(Id, verification.Id, result, verifiedByUserId));
+
+        if (result == VerificationResult.Failed)
+        {
+            Reopen($"Follow-up verification failed: {verification.Notes}", verifiedByUserId, nowUtc, today, newTargetDate!.Value);
+        }
+
         return verification;
     }
 
-    /// <summary>Reopens a closed finding back to Open (e.g. after a failed follow-up), clearing the closure and incrementing the reopen count.</summary>
-    public void Reopen(string reason, Guid actorUserId, DateTimeOffset nowUtc)
+    /// <summary>
+    /// Reopens a closed finding back to Open (e.g. after a failed follow-up), clearing the closure and incrementing the
+    /// reopen count. The earlier plan's actions are superseded (kept as history) so the business writes a new plan, due
+    /// by <paramref name="newTargetDate"/>, which must be in the future.
+    /// </summary>
+    public void Reopen(string reason, Guid actorUserId, DateTimeOffset nowUtc, DateOnly today, DateOnly newTargetDate)
     {
         EnsureStatus("exception.not_closed_for_reopen", ExceptionStatus.Closed);
         var trimmed = Guard.MinLength(reason, 20, "exception.reopen_reason_required", "A reopen reason of at least 20 characters is required.");
+        Guard.Against(newTargetDate <= today, "exception.reopen_target_date_past", "The new target date must be after today.");
 
         Status = ExceptionStatus.Open;
+        TargetDate = newTargetDate;
+        MapOverdueEscalatedAt = null;
+        MapRejectionReason = null;
+        foreach (var action in CurrentMapActions.ToList())
+        {
+            action.Supersede();
+        }
+
         ReopenCount += 1;
         ReopenedBy = actorUserId;
         ReopenedAt = nowUtc;
@@ -465,7 +510,175 @@ public sealed class AuditException : AggregateRoot
         CiaPending = false;
         CiaCountersignedBy = null;
         CiaCountersignedAt = null;
-        RaiseDomainEvent(new ExceptionReopenedEvent(Id, actorUserId, trimmed, ReopenCount));
+        RaiseDomainEvent(new ExceptionReopenedEvent(Id, actorUserId, trimmed, ReopenCount, OwnerUserId, Title, TargetDate));
+    }
+
+    // ---- Action follow-up: due-date extensions and reminders ----
+
+    private static readonly ExceptionStatus[] ExtendableStatuses =
+        [ExceptionStatus.Open, ExceptionStatus.MapSubmitted, ExceptionStatus.MapApproved, ExceptionStatus.MapRejected];
+
+    /// <summary>
+    /// Asks for a later due date: the finding's own target date (<paramref name="actionId"/> null) or one open action's.
+    /// Only while the finding is still being remediated, only for a date later than both today and the current one, and
+    /// only one pending request per date at a time.
+    /// </summary>
+    public DueDateExtensionRequest RequestExtension(
+        Guid? actionId, DateOnly requestedDate, string reason, Guid requestedBy, DateOnly today, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("exception.extension_not_allowed", ExtendableStatuses);
+        var trimmed = Guard.MinLength(reason, 20, "exception.extension_reason_required", "Explain why more time is needed (at least 20 characters).");
+        Guard.Against(trimmed.Length > 2000, "exception.extension_reason_too_long", "The reason cannot be longer than 2000 characters.");
+
+        DateOnly current;
+        if (actionId is { } id)
+        {
+            var action = CurrentMapActions.FirstOrDefault(a => a.Id == id)
+                ?? throw new DomainException("exception.action_not_found", "Remediation action not found.");
+            Guard.Against(action.Status != MapActionStatus.Pending, "exception.extension_action_complete", "This action is already complete.");
+            current = action.TargetDate;
+        }
+        else
+        {
+            current = TargetDate;
+        }
+
+        Guard.Against(requestedDate <= current, "exception.extension_not_later", "The new date must be later than the current due date.");
+        Guard.Against(requestedDate <= today, "exception.extension_not_future", "The new date must be after today.");
+        Guard.Against(_extensionRequests.Any(r => r.Status == ExtensionRequestStatus.Pending && r.ActionId == actionId),
+            "exception.extension_already_pending", "There is already a pending request to move this date.");
+
+        var request = new DueDateExtensionRequest(Id, actionId, current, requestedDate, trimmed, requestedBy, nowUtc);
+        _extensionRequests.Add(request);
+        RaiseDomainEvent(new DueDateExtensionRequestedEvent(
+            Id, AuditId, Title, request.Id, actionId, requestedBy, RaisedByUserId, current, requestedDate));
+        return request;
+    }
+
+    /// <summary>
+    /// Approves an extension and moves the date. Moving an action past the finding's own target date moves that too, so
+    /// the plan stays inside it. An extended date starts the reminder sequence (and the finding's overdue escalation)
+    /// again. The person who asked cannot approve their own request.
+    /// </summary>
+    public void ApproveExtension(Guid requestId, Guid decidedBy, string? note, DateTimeOffset nowUtc)
+    {
+        var request = PendingExtension(requestId, decidedBy);
+        EnsureStatus("exception.extension_not_allowed", ExtendableStatuses);
+
+        if (request.ActionId is { } actionId)
+        {
+            var action = CurrentMapActions.FirstOrDefault(a => a.Id == actionId && a.Status == MapActionStatus.Pending)
+                ?? throw new InvalidStateTransitionException("exception.extension_action_complete", "This action is already complete or no longer part of the plan.");
+            action.Reschedule(request.RequestedDate);
+            if (request.RequestedDate > TargetDate)
+            {
+                MoveTargetDate(request.RequestedDate);
+            }
+        }
+        else
+        {
+            MoveTargetDate(request.RequestedDate);
+        }
+
+        request.Decide(ExtensionRequestStatus.Approved, decidedBy, note, nowUtc);
+        RaiseDomainEvent(new DueDateExtensionApprovedEvent(
+            Id, Title, request.Id, request.ActionId, request.RequestedBy, decidedBy, request.RequestedDate, request.DecisionNote));
+    }
+
+    /// <summary>Rejects an extension; the date stays. The reason is required so the business knows what to do instead.</summary>
+    public void RejectExtension(Guid requestId, Guid decidedBy, string note, DateTimeOffset nowUtc)
+    {
+        var request = PendingExtension(requestId, decidedBy);
+        var trimmed = Guard.MinLength(note, 20, "exception.extension_reject_reason_required", "Explain the rejection (at least 20 characters).");
+        request.Decide(ExtensionRequestStatus.Rejected, decidedBy, trimmed, nowUtc);
+        RaiseDomainEvent(new DueDateExtensionRejectedEvent(
+            Id, Title, request.Id, request.ActionId, request.RequestedBy, decidedBy, request.CurrentDate, request.DecisionNote));
+    }
+
+    /// <summary>The person who asked takes their request back before it is decided.</summary>
+    public void WithdrawExtension(Guid requestId, Guid actorUserId, DateTimeOffset nowUtc)
+    {
+        var request = _extensionRequests.FirstOrDefault(r => r.Id == requestId)
+            ?? throw new DomainException("exception.extension_not_found", "Extension request not found.");
+        if (request.Status != ExtensionRequestStatus.Pending)
+        {
+            throw new InvalidStateTransitionException("exception.extension_not_pending", "This request has already been decided.");
+        }
+
+        Guard.Against(request.RequestedBy != actorUserId, "exception.extension_not_requester", "Only the person who asked can withdraw the request.");
+        request.Decide(ExtensionRequestStatus.Withdrawn, actorUserId, null, nowUtc);
+    }
+
+    /// <summary>
+    /// The daily reminder pass over the agreed plan (MAP approved): for each open action, at most one message per run, and
+    /// each stage once: due soon (within <paramref name="dueSoonDays"/>), overdue (the day after its due date), escalated
+    /// to the owner's line manager (<paramref name="escalateAfterDays"/> days overdue). Returns how many were sent.
+    /// </summary>
+    public int SendActionReminders(DateOnly today, DateTimeOffset nowUtc, int dueSoonDays, int escalateAfterDays)
+    {
+        if (Status != ExceptionStatus.MapApproved)
+        {
+            return 0;
+        }
+
+        var sent = 0;
+        foreach (var action in CurrentMapActions.Where(a => a.Status == MapActionStatus.Pending))
+        {
+            var daysLeft = action.TargetDate.DayNumber - today.DayNumber;
+            if (daysLeft < 0 && -daysLeft >= escalateAfterDays && action.ReminderStage < MapActionReminderStage.Escalated)
+            {
+                action.MarkReminded(MapActionReminderStage.Escalated, nowUtc);
+                RaiseDomainEvent(new MapActionEscalatedEvent(Id, Title, action.Id, action.Description, action.OwnerUserId, action.TargetDate, -daysLeft));
+                sent++;
+            }
+            else if (daysLeft < 0 && action.ReminderStage < MapActionReminderStage.Overdue)
+            {
+                action.MarkReminded(MapActionReminderStage.Overdue, nowUtc);
+                RaiseDomainEvent(new MapActionOverdueEvent(Id, Title, action.Id, action.Description, action.OwnerUserId, action.TargetDate, -daysLeft));
+                sent++;
+            }
+            else if (daysLeft >= 0 && daysLeft <= dueSoonDays && action.ReminderStage < MapActionReminderStage.DueSoon)
+            {
+                action.MarkReminded(MapActionReminderStage.DueSoon, nowUtc);
+                RaiseDomainEvent(new MapActionDueSoonEvent(Id, Title, action.Id, action.Description, action.OwnerUserId, action.TargetDate, daysLeft));
+                sent++;
+            }
+        }
+
+        return sent;
+    }
+
+    private DueDateExtensionRequest PendingExtension(Guid requestId, Guid decidedBy)
+    {
+        var request = _extensionRequests.FirstOrDefault(r => r.Id == requestId)
+            ?? throw new DomainException("exception.extension_not_found", "Extension request not found.");
+        if (request.Status != ExtensionRequestStatus.Pending)
+        {
+            throw new InvalidStateTransitionException("exception.extension_not_pending", "This request has already been decided.");
+        }
+
+        Guard.Against(request.RequestedBy == decidedBy, "exception.extension_self_decision", "You cannot decide your own extension request.");
+        return request;
+    }
+
+    private void MoveTargetDate(DateOnly newDate)
+    {
+        TargetDate = newDate;
+
+        // A new target date is a new deadline: the one-off overdue escalation may fire again if it is missed too (unless
+        // a separate management-response due date is what the escalation is measured against).
+        if (ManagementResponseDueDate is null)
+        {
+            MapOverdueEscalatedAt = null;
+        }
+    }
+
+    private void WithdrawPendingExtensions(Guid actorUserId, string note, DateTimeOffset nowUtc)
+    {
+        foreach (var request in _extensionRequests.Where(r => r.Status == ExtensionRequestStatus.Pending))
+        {
+            request.Decide(ExtensionRequestStatus.Withdrawn, actorUserId, note, nowUtc);
+        }
     }
 
     private void Transition(ExceptionStatus to, params ExceptionStatus[] from)

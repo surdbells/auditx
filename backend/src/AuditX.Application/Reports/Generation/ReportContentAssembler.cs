@@ -87,7 +87,7 @@ public sealed class ReportContentAssembler(
 
         var exceptionLines = exceptionEntities.Select(e => new ReportExceptionLine(
             e.Id, e.Title, e.Severity.ToSnake(), e.Category, e.Status.ToSnake(), e.IsRecurrence,
-            e.MapActions.Count, e.MapActions.Count(a => a.Status == MapActionStatus.Complete))
+            e.CurrentMapActions.Count(), e.CurrentMapActions.Count(a => a.Status == MapActionStatus.Complete))
         {
             RootCause = e.RootCause,
             Recommendation = e.Recommendation,
@@ -103,7 +103,8 @@ public sealed class ReportContentAssembler(
             ManagementResponseComment = e.ManagementResponseComment,
             ManagementRespondedBy = NameOf(e.ManagementRespondedBy),
             ManagementResponseOnBehalf = e.ManagementResponseOnBehalf,
-            Actions = e.MapActions
+            // The current plan only: actions a reopen replaced are history on the finding, not part of the plan reported.
+            Actions = e.CurrentMapActions
                 .OrderBy(a => a.TargetDate)
                 .Select(a => new ReportActionLine(a.Description, NameOf(a.OwnerUserId), a.TargetDate, a.Status.ToSnake()))
                 .ToArray(),

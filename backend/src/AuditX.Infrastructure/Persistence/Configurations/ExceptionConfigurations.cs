@@ -42,12 +42,19 @@ public sealed class AuditExceptionConfiguration : IEntityTypeConfiguration<Audit
         builder.HasMany(e => e.Verifications).WithOne().HasForeignKey(v => v.ExceptionId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(e => e.Verifications).HasField("_verifications").UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        // Derived view over MapActions (the current plan), not a relationship of its own.
+        builder.Ignore(e => e.CurrentMapActions);
+
+        builder.HasMany(e => e.ExtensionRequests).WithOne().HasForeignKey(r => r.ExceptionId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(e => e.ExtensionRequests).HasField("_extensionRequests").UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasIndex(e => new { e.Status, e.Severity, e.TargetDate });
         builder.HasIndex(e => new { e.AuditableEntityId, e.Category, e.Status });
         // Serves the recurrence lookup (entity + closed + recent), which seeks on status and ranges/sorts on closed_at.
         builder.HasIndex(e => new { e.AuditableEntityId, e.Status, e.ClosedAt });
         builder.HasIndex(e => e.AuditId);
         builder.HasIndex(e => e.OwnerUserId);
+        builder.HasIndex(e => e.RaisedByUserId);
     }
 }
 
@@ -62,8 +69,29 @@ public sealed class MapActionConfiguration : IEntityTypeConfiguration<MapAction>
         builder.Property(a => a.Description).IsRequired();
         builder.Property(a => a.ExpectedEvidenceType).HasMaxLength(255);
         builder.Property(a => a.Status).HasConversion(new SnakeCaseEnumConverter<MapActionStatus>()).HasMaxLength(20).IsRequired();
+        builder.Property(a => a.ReminderStage).HasConversion(new SnakeCaseEnumConverter<MapActionReminderStage>()).HasMaxLength(20)
+            .IsRequired().HasDefaultValue(MapActionReminderStage.None);
 
         builder.HasIndex(a => a.ExceptionId);
+
+        // "My actions" looks actions up by their owner.
+        builder.HasIndex(a => new { a.OwnerUserId, a.Status });
+    }
+}
+
+public sealed class DueDateExtensionRequestConfiguration : IEntityTypeConfiguration<DueDateExtensionRequest>
+{
+    public void Configure(EntityTypeBuilder<DueDateExtensionRequest> builder)
+    {
+        builder.ToTable("due_date_extension_requests");
+        builder.HasKey(r => r.Id);
+        builder.Property(r => r.Id).ValueGeneratedNever();
+
+        builder.Property(r => r.Reason).HasMaxLength(2000).IsRequired();
+        builder.Property(r => r.DecisionNote).HasMaxLength(2000);
+        builder.Property(r => r.Status).HasConversion(new SnakeCaseEnumConverter<ExtensionRequestStatus>()).HasMaxLength(20).IsRequired();
+
+        builder.HasIndex(r => new { r.ExceptionId, r.Status });
     }
 }
 

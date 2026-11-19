@@ -945,7 +945,7 @@ public sealed class DemoDataSeeder(
             exception.MarkMapActionComplete(action.Id, requireEvidence: false, hasEvidence: true, users.Auditee1Id, _now);
         }
 
-        exception.MarkMapComplete(users.Auditor1Id);
+        exception.MarkMapComplete(users.Auditor1Id, _now);
         exception.Close("All remediation actions completed and evidenced.", users.Manager1Id, _now); // Critical → CiaPending
         await db.SaveChangesAsync(ct);
     }
@@ -958,7 +958,7 @@ public sealed class DemoDataSeeder(
             exception.MarkMapActionComplete(action.Id, requireEvidence: false, hasEvidence: true, exception.OwnerUserId, _now);
         }
 
-        exception.MarkMapComplete(users.Auditor1Id);
+        exception.MarkMapComplete(users.Auditor1Id, _now);
 
         var closedAt = _now.AddDays(closedOffsetDays);
         // Non-critical closes straight to Closed; a Critical would go on CIA hold (handled elsewhere).

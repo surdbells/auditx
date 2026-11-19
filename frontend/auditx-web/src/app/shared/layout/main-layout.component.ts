@@ -117,6 +117,7 @@ export class MainLayoutComponent {
       collapsible: false,
       items: [
         { labelKey: 'nav.dashboard', icon: 'dashboard', route: '/dashboard', permissions: [] },
+        { labelKey: 'nav.myActions', icon: 'task_alt', route: '/my/actions', permissions: [] },
         { labelKey: 'nav.myEvidenceRequests', icon: 'upload_file', route: '/my/evidence-requests', permissions: [] },
       ],
     },

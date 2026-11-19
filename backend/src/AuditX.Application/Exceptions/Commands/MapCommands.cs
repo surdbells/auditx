@@ -157,7 +157,7 @@ public sealed class MarkMapCompleteCommandHandler(
     {
         var (exception, _) = await MapHandlerSupport.LoadForOwnerAsync(exceptions, audits, permissions, currentUser, command.ExceptionId, null, cancellationToken);
         exception.EnsureVersion(command.Version);
-        exception.MarkMapComplete(currentUser.UserId ?? Guid.Empty);
+        exception.MarkMapComplete(currentUser.UserId ?? Guid.Empty, clock.UtcNow);
         audit.Record(AuditEventTypes.MapCompleted, AuditTargetTypes.Exception, exception.Id);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return exception.ToDto(DateOnly.FromDateTime(clock.UtcNow.UtcDateTime));
@@ -339,7 +339,7 @@ internal static class MapHandlerSupport
 
     public static async Task<bool> HasAnyMapEvidenceAsync(Domain.Exceptions.AuditException exception, IEvidenceRepository evidence, CancellationToken cancellationToken)
     {
-        foreach (var action in exception.MapActions)
+        foreach (var action in exception.CurrentMapActions)
         {
             var files = await evidence.ListForContextAsync(exception.AuditId, EvidenceContextType.MapAction, action.Id, cancellationToken);
             if (files.Count > 0)

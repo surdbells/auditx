@@ -249,6 +249,13 @@ public static class AuditEventTypes
     public const string FindingVerified = "finding_verified";
     public const string ExceptionReopened = "exception_reopened";
 
+    // Action follow-up: due-date extensions and the daily reminder run.
+    public const string DueDateExtensionRequested = "due_date_extension_requested";
+    public const string DueDateExtensionApproved = "due_date_extension_approved";
+    public const string DueDateExtensionRejected = "due_date_extension_rejected";
+    public const string DueDateExtensionWithdrawn = "due_date_extension_withdrawn";
+    public const string MapActionRemindersSent = "map_action_reminders_sent";
+
     // M10 notifications (NotificationPreferencesUpdated already defined above for M1)
     public const string NotificationDispatched = "notification_dispatched";
     public const string NotificationRetried = "notification_retried";

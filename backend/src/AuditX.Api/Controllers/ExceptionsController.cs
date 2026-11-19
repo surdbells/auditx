@@ -152,12 +152,46 @@ public sealed class ExceptionsController(IDispatcher dispatcher) : ApiController
     [RequirePermission(PermissionKeys.VerifyException)]
     [HttpPost("api/v1/exceptions/{id:guid}/verifications")]
     public async Task<IActionResult> AddVerification(Guid id, [FromBody] AddVerificationRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new AddFindingVerificationCommand(id, request.Result, request.Notes, request.Version), cancellationToken));
+        => Envelope(await dispatcher.Send(
+            new AddFindingVerificationCommand(id, request.Result, request.Notes, request.Version, request.NewTargetDate), cancellationToken));
 
     [RequirePermission(PermissionKeys.ReopenException)]
     [HttpPost("api/v1/exceptions/{id:guid}/reopen")]
-    public async Task<IActionResult> Reopen(Guid id, [FromBody] ReasonVersionRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new ReopenExceptionCommand(id, request.Reason, request.Version), cancellationToken));
+    public async Task<IActionResult> Reopen(Guid id, [FromBody] ReopenRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ReopenExceptionCommand(id, request.Reason, request.NewTargetDate, request.Version), cancellationToken));
+
+    // ---- Action follow-up: more time, and the signed-in user's worklist ----
+
+    /// <summary>
+    /// Asks for more time on the finding or one of its actions. The people remediating it ask (the finding's owner, the
+    /// action's owner, or a manager of the audit for them); the handler enforces who.
+    /// </summary>
+    [RequirePermission(PermissionKeys.SubmitMap)]
+    [HttpPost("api/v1/exceptions/{id:guid}/extension-requests")]
+    public async Task<IActionResult> RequestExtension(Guid id, [FromBody] RequestExtensionRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(
+            new RequestDueDateExtensionCommand(id, request.ActionId, request.RequestedDate, request.Reason, request.Version), cancellationToken));
+
+    /// <summary>Approves or rejects a request for more time: audit-side, never the audit's auditee or the person who asked.</summary>
+    [RequirePermission(PermissionKeys.ApproveMap)]
+    [HttpPost("api/v1/exceptions/{id:guid}/extension-requests/{requestId:guid}/decision")]
+    public async Task<IActionResult> DecideExtension(Guid id, Guid requestId, [FromBody] DecideExtensionRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(
+            new DecideDueDateExtensionCommand(id, requestId, request.Approve, request.Note, request.Version), cancellationToken));
+
+    /// <summary>The person who asked takes the request back before it is decided.</summary>
+    [RequirePermission(PermissionKeys.SubmitMap)]
+    [HttpPost("api/v1/exceptions/{id:guid}/extension-requests/{requestId:guid}/withdraw")]
+    public async Task<IActionResult> WithdrawExtension(Guid id, Guid requestId, [FromBody] VersionOnlyRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new WithdrawDueDateExtensionCommand(id, requestId, request.Version), cancellationToken));
+
+    /// <summary>
+    /// What waits on the signed-in user across findings still being remediated. Built only from findings that name the
+    /// caller (owner, action owner, or raiser awaiting a decision), so it needs no permission beyond sign-in.
+    /// </summary>
+    [HttpGet("api/v1/my/actions")]
+    public async Task<IActionResult> MyActions(CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Query(new MyActionsQuery(), cancellationToken));
 
     // ---- MAP ----
 

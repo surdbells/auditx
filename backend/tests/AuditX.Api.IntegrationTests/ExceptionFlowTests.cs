@@ -429,7 +429,7 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         // Reopen + verification are only valid once closed → 409 on an open finding (endpoint + permission wired).
         var reopen = await admin.PostAsJsonAsync($"/api/v1/exceptions/{exId}/reopen", new
         {
-            reason = "Trying to reopen a finding that is not closed yet.", version = Version(responded),
+            reason = "Trying to reopen a finding that is not closed yet.", newTargetDate = "2099-01-01", version = Version(responded),
         });
         Assert.Equal(HttpStatusCode.Conflict, reopen.StatusCode);
 
@@ -580,7 +580,7 @@ public sealed class ExceptionFlowTests(ApiFactory factory) : IClassFixture<ApiFa
         (await auditee.PostAsJsonAsync("/api/v1/auth/login", new { username = "auditee", password = "Passw0rd!" })).EnsureSuccessStatusCode();
         var resp = await auditee.PostAsJsonAsync($"/api/v1/exceptions/{ex.GetProperty("id").GetGuid()}/reopen", new
         {
-            reason = "Auditee should not be able to reopen a finding at all.", version = Version(ex),
+            reason = "Auditee should not be able to reopen a finding at all.", newTargetDate = "2099-01-01", version = Version(ex),
         });
         Assert.Equal(HttpStatusCode.Forbidden, resp.StatusCode);
     }

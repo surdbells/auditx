@@ -2,7 +2,23 @@ namespace AuditX.Application.Exceptions.Dtos;
 
 public sealed record MapActionDto(
     Guid Id, Guid ExceptionId, string Description, Guid OwnerUserId, DateOnly TargetDate,
-    string? ExpectedEvidenceType, string Status, DateTimeOffset? CompletedAt, Guid? CompletedBy);
+    string? ExpectedEvidenceType, string Status, DateTimeOffset? CompletedAt, Guid? CompletedBy, string ReminderStage);
+
+/// <summary>A request to move the finding's target date (<c>ActionId</c> null) or one action's due date.</summary>
+public sealed record DueDateExtensionRequestDto(
+    Guid Id, Guid? ActionId, DateOnly CurrentDate, DateOnly RequestedDate, string Reason, Guid RequestedBy,
+    DateTimeOffset RequestedAt, string Status, Guid? DecidedBy, DateTimeOffset? DecidedAt, string? DecisionNote);
+
+/// <summary>
+/// One thing waiting on the signed-in user in the follow-up of findings. <c>Kind</c>: <c>respond</c> (record
+/// management's response), <c>submit_plan</c> (write or rewrite the action plan), <c>complete_action</c> (finish one
+/// action and attach its evidence), <c>complete_plan</c> (every action is done: mark the plan complete) or
+/// <c>decide_extension</c> (someone asked for more time on a finding you raised).
+/// </summary>
+public sealed record MyActionItemDto(
+    string Kind, Guid ExceptionId, string ExceptionTitle, string Severity, string ExceptionStatus, Guid AuditId,
+    Guid? ActionId, Guid? ExtensionRequestId, string? Description, DateOnly? DueDate, int? DaysUntilDue,
+    bool IsOverdue, bool ExtensionPending);
 
 /// <summary>A post-closure follow-up verification of a finding's remediation (P2-B).</summary>
 public sealed record FindingVerificationDto(
@@ -54,7 +70,8 @@ public sealed record ExceptionDto(
     string? ReopenReason,
     string Version,
     IReadOnlyList<MapActionDto> MapActions,
-    IReadOnlyList<FindingVerificationDto> Verifications);
+    IReadOnlyList<FindingVerificationDto> Verifications,
+    IReadOnlyList<DueDateExtensionRequestDto> ExtensionRequests);
 
 public sealed record ExceptionListItemDto(
     Guid Id, Guid AuditId, string Title, string Severity, string Status, Guid OwnerUserId,

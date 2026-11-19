@@ -52,6 +52,8 @@ public static class NotificationEvents
         // M6 exceptions
         "exception_raised", "exception_owner_reassigned", "map_submitted", "map_approved", "map_rejected",
         "map_completed", "exception_pending_cia", "exception_closed", "exception_cancelled", "management_response_recorded",
+        "exception_reopened", "due_date_extension_requested", "due_date_extension_approved", "due_date_extension_rejected",
+        "map_action_due_soon", "map_action_overdue", "map_action_escalated",
         // M3 planning
         "plan_submitted", "plan_decided",
         // M8 reports

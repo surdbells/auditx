@@ -19,7 +19,11 @@ import {
   FindingLinks,
   FindingRegulationLink,
   AddVerificationRequest,
+  DecideExtensionRequest,
   ManagementResponseRequest,
+  MyActionItem,
+  ReopenRequest,
+  RequestExtensionRequest,
   ManagementResponseRole,
   SetResponseDueDateRequest,
   RaiseExceptionRequest,
@@ -198,8 +202,30 @@ export class ExceptionsService {
     return this.api.post<Exception>(`/exceptions/${id}/verifications`, body);
   }
 
-  reopen(id: string, body: ReasonVersionRequest): Observable<Exception> {
+  reopen(id: string, body: ReopenRequest): Observable<Exception> {
     return this.api.post<Exception>(`/exceptions/${id}/reopen`, body);
+  }
+
+  /* ---- Action follow-up: more time, and the signed-in user's worklist ---- */
+
+  /** Ask for a later due date: the finding's own (`actionId` null) or one action's. */
+  requestExtension(id: string, body: RequestExtensionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/extension-requests`, body);
+  }
+
+  /** Approve or reject a request for more time (a rejection needs a note). */
+  decideExtension(id: string, requestId: string, body: DecideExtensionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/extension-requests/${requestId}/decision`, body);
+  }
+
+  /** The person who asked takes the request back. */
+  withdrawExtension(id: string, requestId: string, body: VersionRequest): Observable<Exception> {
+    return this.api.post<Exception>(`/exceptions/${id}/extension-requests/${requestId}/withdraw`, body);
+  }
+
+  /** Everything on findings still being remediated that waits on the signed-in user. */
+  myActions(): Observable<MyActionItem[]> {
+    return this.api.get<MyActionItem[]>('/my/actions');
   }
 
   /* ---- MAP lifecycle ---- */

@@ -12,6 +12,8 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
         => db.Exceptions
             .Include(e => e.MapActions)
             .Include(e => e.Verifications)
+            .Include(e => e.ExtensionRequests)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<AuditException>> ListByAuditAsync(Guid auditId, ExceptionStatus? status, CancellationToken cancellationToken = default)
@@ -176,7 +178,7 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
                 db.Audits.Where(a => a.Id == e.AuditId).Select(a => a.Name).FirstOrDefault() ?? string.Empty,
                 e.Title, e.Severity, e.Category, e.Status, e.CiaPending, e.IsRecurrence, e.OwnerUserId,
                 e.AuditableEntityId, e.RaisedAt, e.TargetDate,
-                e.MapActions.Count, e.MapActions.Count(a => a.Status == MapActionStatus.Complete),
+                e.MapActions.Count(a => a.Status != MapActionStatus.Superseded), e.MapActions.Count(a => a.Status == MapActionStatus.Complete),
                 e.FinancialImpact, e.FinancialImpactCurrency))
             .AsAsyncEnumerable();
     }
@@ -206,6 +208,30 @@ public sealed class ExceptionRepository(AppDbContext db) : IExceptionRepository
                 && e.MapOverdueEscalatedAt == null
                 && ((e.ManagementResponseDueDate != null && e.ManagementResponseDueDate < today)
                     || (e.ManagementResponseDueDate == null && e.TargetDate < today)))
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<AuditException>> ListForActionRemindersAsync(DateOnly horizon, CancellationToken cancellationToken = default)
+        => await db.Exceptions // tracked: the job records each reminder it sends.
+            .Include(e => e.MapActions)
+            .Where(e => e.Status == ExceptionStatus.MapApproved
+                && e.MapActions.Any(a => a.Status == MapActionStatus.Pending
+                    && a.TargetDate <= horizon
+                    && a.ReminderStage != MapActionReminderStage.Escalated))
+            .OrderBy(e => e.Id)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<AuditException>> ListFollowUpForUserAsync(Guid userId, int max, CancellationToken cancellationToken = default)
+        => await db.Exceptions.AsNoTracking()
+            .Include(e => e.MapActions)
+            .Include(e => e.ExtensionRequests)
+            .Where(e => e.Status != ExceptionStatus.Closed && e.Status != ExceptionStatus.Cancelled
+                && (e.OwnerUserId == userId
+                    || e.MapActions.Any(a => a.OwnerUserId == userId && a.Status == MapActionStatus.Pending)
+                    || (e.RaisedByUserId == userId
+                        && e.ExtensionRequests.Any(r => r.Status == ExtensionRequestStatus.Pending && r.RequestedBy != userId))))
+            .OrderBy(e => e.TargetDate).ThenBy(e => e.Id)
+            .Take(max)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyDictionary<Guid, OwnerFindingCounts>> CountOpenAndOverdueByOwnersAsync(

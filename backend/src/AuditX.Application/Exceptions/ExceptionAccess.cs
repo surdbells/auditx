@@ -60,7 +60,8 @@ internal static class ExceptionAccess
     /// Who may READ one finding: anyone on its audit, a holder of ManageAudit for it, a holder of portfolio visibility
     /// (ViewAudits — they already see it in the tracker), and the finding's OWNER. The owner is named on the finding
     /// and must act on it, but is often not on the audit's team: without this they saw it in their tracker and got a
-    /// 403 opening it.
+    /// 403 opening it. The same holds for the owner of one of its remediation actions, who works that action from the
+    /// finding's page (and reaches it from "My actions").
     /// </summary>
     public static async Task EnsureCanViewAsync(
         Audit audit, Domain.Exceptions.AuditException exception, Guid? userId, IPermissionResolver permissions, CancellationToken cancellationToken)
@@ -70,7 +71,9 @@ internal static class ExceptionAccess
             throw new ForbiddenAccessException();
         }
 
-        if (exception.OwnerUserId == uid || audit.TeamMembers.Any(m => m.IsActive && m.UserId == uid))
+        if (exception.OwnerUserId == uid
+            || exception.MapActions.Any(a => a.OwnerUserId == uid)
+            || audit.TeamMembers.Any(m => m.IsActive && m.UserId == uid))
         {
             return;
         }

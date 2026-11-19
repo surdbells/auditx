@@ -214,6 +214,29 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
             ("map_overdue_escalated", "map_overdue_escalated", "line_manager", "OwnerUserId", "[\"email\"]",
                 "An overdue action plan needs your attention",
                 "The management action plan for exception {{ ExceptionId }} ({{ Severity }}, target {{ TargetDate }}) is {{ DaysOverdue }} day(s) overdue and has been escalated to you as the owner's line manager. Please follow up: {{ AppBaseUrl }}/exceptions/{{ ExceptionId }}."),
+            // Action follow-up. More time: the auditor who raised the finding hears of a request; whoever asked hears the
+            // decision. Reminders through an action's life go to its owner, then to the owner's line manager.
+            ("due_date_extension_requested", "due_date_extension_requested", "payload_derived", "RaisedByUserId", "[\"email\"]",
+                "More time was requested on a finding you raised",
+                "More time was requested on the finding \"{{ Title }}\": from {{ CurrentDate }} to {{ RequestedDate }}. Approve or reject it at {{ AppBaseUrl }}/exceptions/{{ ExceptionId }}."),
+            ("due_date_extension_approved", "due_date_extension_approved", "payload_derived", "RequestedBy", "[\"email\"]",
+                "Your request for more time was approved",
+                "Your request for more time on the finding \"{{ Title }}\" was approved. The new due date is {{ RequestedDate }}. See it at {{ AppBaseUrl }}/exceptions/{{ ExceptionId }}."),
+            ("due_date_extension_rejected", "due_date_extension_rejected", "payload_derived", "RequestedBy", "[\"email\"]",
+                "Your request for more time was rejected",
+                "Your request for more time on the finding \"{{ Title }}\" was rejected, so the due date stays {{ CurrentDate }}. Reason: {{ Note }}. See it at {{ AppBaseUrl }}/exceptions/{{ ExceptionId }}."),
+            ("map_action_due_soon", "map_action_due_soon", "payload_derived", "OwnerUserId", "[\"email\"]",
+                "A remediation action is due soon",
+                "Your action \"{{ Description }}\" on the finding \"{{ Title }}\" is due on {{ TargetDate }} ({{ DaysLeft }} day(s) left). Complete it and attach its evidence at {{ AppBaseUrl }}/my/actions, or ask for more time there."),
+            ("map_action_overdue", "map_action_overdue", "payload_derived", "OwnerUserId", "[\"email\"]",
+                "A remediation action is overdue",
+                "Your action \"{{ Description }}\" on the finding \"{{ Title }}\" was due on {{ TargetDate }} and is {{ DaysOverdue }} day(s) overdue. Complete it at {{ AppBaseUrl }}/my/actions, or ask for more time there."),
+            ("map_action_escalated", "map_action_escalated", "line_manager", "OwnerUserId", "[\"email\"]",
+                "An overdue remediation action needs your attention",
+                "A remediation action owned by someone who reports to you, \"{{ Description }}\" on the finding \"{{ Title }}\", was due on {{ TargetDate }} and is {{ DaysOverdue }} day(s) overdue. Please follow up: {{ AppBaseUrl }}/exceptions/{{ ExceptionId }}."),
+            ("exception_reopened", "exception_reopened", "payload_derived", "OwnerUserId", "[\"email\"]",
+                "A finding you own was reopened",
+                "The finding \"{{ Title }}\" was reopened: {{ Reason }}. Write a new action plan by {{ TargetDate }} at {{ AppBaseUrl }}/exceptions/{{ ExceptionId }}."),
 
             // M7 sanctions (pinned event-key/recipient-field names). Multi-party events resolve a single ROLE recipient
             // set (payload_derived resolves only ONE user, so it is reserved for the appeal-routing event).

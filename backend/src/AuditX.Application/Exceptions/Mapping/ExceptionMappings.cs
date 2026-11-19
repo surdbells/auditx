@@ -49,11 +49,16 @@ public static class ExceptionMappings
         e.ReopenCount, e.ReopenedBy, e.ReopenedAt, e.ReopenReason,
         RowVersionToken.Encode(e.Version),
         e.MapActions.Select(a => a.ToDto()).ToArray(),
-        e.Verifications.OrderByDescending(v => v.VerifiedAt).Select(v => v.ToDto()).ToArray());
+        e.Verifications.OrderByDescending(v => v.VerifiedAt).Select(v => v.ToDto()).ToArray(),
+        e.ExtensionRequests.OrderByDescending(r => r.RequestedAt).Select(r => r.ToDto()).ToArray());
 
     public static MapActionDto ToDto(this MapAction a) => new(
         a.Id, a.ExceptionId, a.Description, a.OwnerUserId, a.TargetDate, a.ExpectedEvidenceType,
-        a.Status.ToSnake(), a.CompletedAt, a.CompletedBy);
+        a.Status.ToSnake(), a.CompletedAt, a.CompletedBy, a.ReminderStage.ToSnake());
+
+    public static DueDateExtensionRequestDto ToDto(this DueDateExtensionRequest r) => new(
+        r.Id, r.ActionId, r.CurrentDate, r.RequestedDate, r.Reason, r.RequestedBy, r.RequestedAt,
+        r.Status.ToSnake(), r.DecidedBy, r.DecidedAt, r.DecisionNote);
 
     public static FindingVerificationDto ToDto(this FindingVerification v) => new(
         v.Id, v.ExceptionId, v.Result.ToSnake(), v.VerifiedByUserId, v.VerifiedAt, v.Notes);

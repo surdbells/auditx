@@ -485,6 +485,14 @@ export const routes: Routes = [
           ).then((m) => m.RootCauseGapsComponent),
       },
       {
+        // The signed-in user's follow-up worklist across findings (reached from reminder emails). Any signed-in user:
+        // the server builds it only from findings that name them.
+        path: 'my/actions',
+        title: 'My Actions · AuditX',
+        loadComponent: () =>
+          import('./features/exceptions/my-actions/my-actions.component').then((m) => m.MyActionsComponent),
+      },
+      {
         // Auditee's personal document-request worklist (reached from the request email). Any signed-in user.
         path: 'my/evidence-requests',
         title: 'My Evidence Requests · AuditX',

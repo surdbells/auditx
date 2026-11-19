@@ -35,8 +35,71 @@ export type ExceptionStatus =
  */
 export type ExceptionStatusFilter = ExceptionStatus | 'open_any';
 
-/** Status of a single management-action-plan action. */
-export type MapActionStatus = 'pending' | 'complete';
+/**
+ * Status of a single management-action-plan action. `superseded`: the action belonged to a plan a reopen replaced; it
+ * is kept as history and no longer counts towards the current plan.
+ */
+export type MapActionStatus = 'pending' | 'complete' | 'superseded';
+
+/** How far the daily reminders have gone for one action (each stage is sent once; more time starts them again). */
+export type MapActionReminderStage = 'none' | 'due_soon' | 'overdue' | 'escalated';
+
+/** State of a request to move a due date. */
+export type ExtensionRequestStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn';
+
+/** A request to move the finding's target date (no `actionId`) or one action's due date. */
+export interface DueDateExtensionRequest {
+  id: string;
+  actionId?: string | null;
+  currentDate: string;
+  requestedDate: string;
+  reason: string;
+  requestedBy: string;
+  requestedAt: string;
+  status: ExtensionRequestStatus;
+  decidedBy?: string | null;
+  decidedAt?: string | null;
+  decisionNote?: string | null;
+}
+
+/** What one worklist item asks of the signed-in user. */
+export type MyActionKind = 'respond' | 'submit_plan' | 'complete_action' | 'complete_plan' | 'decide_extension';
+
+/** One thing waiting on the signed-in user in the follow-up of findings (GET /my/actions). */
+export interface MyActionItem {
+  kind: MyActionKind;
+  exceptionId: string;
+  exceptionTitle: string;
+  severity: ExceptionSeverity;
+  exceptionStatus: ExceptionStatus;
+  auditId: string;
+  actionId?: string | null;
+  extensionRequestId?: string | null;
+  description?: string | null;
+  dueDate?: string | null;
+  daysUntilDue?: number | null;
+  isOverdue: boolean;
+  extensionPending: boolean;
+}
+
+export interface RequestExtensionRequest {
+  actionId: string | null;
+  requestedDate: string;
+  reason: string;
+  version: string;
+}
+
+export interface DecideExtensionRequest {
+  approve: boolean;
+  note: string | null;
+  version: string;
+}
+
+export interface ReopenRequest {
+  reason: string;
+  newTargetDate: string;
+  version: string;
+}
 
 /** Management's formal position on a finding (P2-B). */
 export type ManagementResponseDecision = 'accepted' | 'partially_accepted' | 'disputed';
@@ -64,6 +127,7 @@ export interface MapAction {
   status: MapActionStatus;
   completedAt?: string | null;
   completedBy?: string | null;
+  reminderStage?: MapActionReminderStage;
 }
 
 /** A post-closure follow-up verification of a finding's remediation (P2-B). */
@@ -132,6 +196,8 @@ export interface Exception {
   mapActions: MapAction[];
   // P2-B — post-closure follow-up verifications (newest first).
   verifications: FindingVerification[];
+  /** Requests for more time on the finding or its actions, newest first. */
+  extensionRequests?: DueDateExtensionRequest[];
 }
 
 /** Lightweight row for the exceptions tracker list. */
@@ -212,6 +278,8 @@ export interface AddVerificationRequest {
   result: VerificationResult;
   notes?: string | null;
   version: string;
+  /** Required for a failed result: it reopens the finding, due by this date. */
+  newTargetDate?: string | null;
 }
 
 export interface ReassignOwnerRequest {

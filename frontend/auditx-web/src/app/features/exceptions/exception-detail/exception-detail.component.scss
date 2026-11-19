@@ -109,7 +109,86 @@
 
 .detail__action-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.detail__action-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+/* An action a reopen replaced: kept as history, visibly out of the current plan. */
+.detail__action--superseded {
+  border-style: dashed;
+  opacity: 0.7;
+
+  .detail__action-desc {
+    text-decoration: line-through;
+    text-decoration-color: var(--mat-sys-outline);
+  }
+}
+
+.detail__pending-note {
+  margin: 0 0 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+/* Requests for more time */
+.detail__extensions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail__extension {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.detail__extension-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.detail__extension-subject {
+  font-weight: 500;
+}
+
+.detail__extension-dates {
+  font-variant-numeric: tabular-nums;
+}
+
+.detail__extension-reason,
+.detail__extension-note {
+  white-space: pre-line;
+}
+
+.detail__extension-note {
+  border-left: 3px solid var(--mat-sys-outline-variant);
+  padding-left: 0.6rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.detail__extension-meta {
+  font-size: 0.8125rem;
 }
 
 .detail__evidence {

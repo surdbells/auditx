@@ -28,6 +28,14 @@ public sealed class MapAction : Entity, IBelongsToAggregate
 
     public Guid? CompletedBy { get; private set; }
 
+    /// <summary>The last reminder stage the daily job sent for this action (each stage is sent once).</summary>
+    public MapActionReminderStage ReminderStage { get; private set; } = MapActionReminderStage.None;
+
+    public DateTimeOffset? LastRemindedAt { get; private set; }
+
+    /// <summary>True while the action still counts towards the current plan (not replaced by a reopen).</summary>
+    public bool IsCurrent => Status != MapActionStatus.Superseded;
+
     internal MapAction(Guid exceptionId, string description, Guid ownerUserId, DateOnly targetDate, string? expectedEvidenceType)
     {
         ExceptionId = exceptionId;
@@ -42,5 +50,21 @@ public sealed class MapAction : Entity, IBelongsToAggregate
         Status = MapActionStatus.Complete;
         CompletedAt = completedAt;
         CompletedBy = completedBy;
+    }
+
+    internal void Supersede() => Status = MapActionStatus.Superseded;
+
+    /// <summary>Moves the due date after an approved extension and starts the reminder sequence again.</summary>
+    internal void Reschedule(DateOnly newTargetDate)
+    {
+        TargetDate = newTargetDate;
+        ReminderStage = MapActionReminderStage.None;
+        LastRemindedAt = null;
+    }
+
+    internal void MarkReminded(MapActionReminderStage stage, DateTimeOffset at)
+    {
+        ReminderStage = stage;
+        LastRemindedAt = at;
     }
 }

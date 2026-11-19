@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  LOCALE_ID,
   computed,
   inject,
   input,
@@ -14,7 +15,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { IconComponent } from '../../../core/icons/icon.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
+import { DatePipe, formatDate } from '@angular/common';
 import { Observable } from 'rxjs';
 
 import { ExceptionsService } from '../../../core/services/exceptions.service';
@@ -24,6 +25,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AuthService } from '../../../core/services/auth.service';
 import { Permissions } from '../../../core/permissions';
 import {
+  DueDateExtensionRequest,
   EvidenceFile,
   Exception,
   FindingControlLink,
@@ -90,6 +92,15 @@ import {
   VerificationDialogComponent,
   VerificationDialogResult,
 } from '../dialogs/verification-dialog.component';
+import {
+  DateReasonDialogComponent,
+  DateReasonDialogData,
+  DateReasonDialogResult,
+  earliestNewDate,
+} from '../dialogs/date-reason-dialog.component';
+
+/** While the finding is being remediated its dates can still move. */
+const EXTENDABLE_STATUSES = ['open', 'map_submitted', 'map_approved', 'map_rejected'];
 
 type ViewState = 'loading' | 'ready' | 'error';
 
@@ -185,6 +196,7 @@ export class ExceptionDetailComponent {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly i18n = inject(TranslationService);
+  private readonly locale = inject(LOCALE_ID);
 
   readonly guide = EXCEPTION_DETAIL_GUIDE;
 
@@ -302,6 +314,62 @@ export class ExceptionDetailComponent {
     () => this.canSubmitMap() && this.status() === 'map_approved',
   );
 
+  /** The signed-in user's id. */
+  private readonly me = computed(() => this.auth.session()?.userId ?? null);
+
+  /** The finding is still being remediated, so its dates can move. */
+  readonly extendable = computed(() => EXTENDABLE_STATUSES.includes(this.status() ?? ''));
+
+  /** Requests for more time, newest first. */
+  readonly extensionRequests = computed(() => this.exception()?.extensionRequests ?? []);
+
+  /** True while a request to move this date (the finding's when `actionId` is null) awaits a decision. */
+  hasPendingExtension(actionId: string | null): boolean {
+    return this.extensionRequests().some((r) => r.status === 'pending' && (r.actionId ?? null) === actionId);
+  }
+
+  /** The finding's owner (or a manager of the audit for them) may ask to move the finding's own date. */
+  readonly canAskFindingExtension = computed(
+    () =>
+      this.extendable() &&
+      this.auth.hasPermission(Permissions.SubmitMap) &&
+      (this.isOwner() || this.canActForBusiness()) &&
+      !this.hasPendingExtension(null),
+  );
+
+  /** Whoever works an open action may ask to move its due date. */
+  canAskActionExtension(action: MapAction): boolean {
+    return this.extendable() && action.status === 'pending' && this.canActOn(action) && !this.hasPendingExtension(action.id);
+  }
+
+  /** The audit side decides, never the person who asked. */
+  canDecideExtension(request: DueDateExtensionRequest): boolean {
+    return this.canApproveMap() && this.extendable() && request.status === 'pending' && request.requestedBy !== this.me();
+  }
+
+  canWithdrawExtension(request: DueDateExtensionRequest): boolean {
+    return request.status === 'pending' && request.requestedBy === this.me();
+  }
+
+  /** What a request would move: the finding's target date, or one action (by its description). */
+  extensionSubject(request: DueDateExtensionRequest): string {
+    if (!request.actionId) {
+      return this.i18n.translate('exceptions.extension.wholeFinding');
+    }
+    const action = this.exception()?.mapActions.find((a) => a.id === request.actionId);
+    return action?.description ?? this.i18n.translate('exceptions.extension.removedAction');
+  }
+
+  /** An open action past its due date. */
+  isActionOverdue(action: MapAction): boolean {
+    if (action.status !== 'pending') {
+      return false;
+    }
+    const today = new Date();
+    const due = new Date(action.targetDate + 'T23:59:59');
+    return due < today;
+  }
+
   /** One action is worked by the finding's owner, by that action's own owner, or by a manager on their behalf. */
   canActOn(action: MapAction): boolean {
     const me = this.auth.session()?.userId;
@@ -318,8 +386,9 @@ export class ExceptionDetailComponent {
     this.nameOf(this.exception()?.raisedByUserId),
   );
 
+  /** The current plan's actions (a reopen keeps the earlier plan's as superseded history). */
   allActionsComplete(): boolean {
-    const actions = this.exception()?.mapActions ?? [];
+    const actions = (this.exception()?.mapActions ?? []).filter((a) => a.status !== 'superseded');
     return actions.length > 0 && actions.every((a) => a.status === 'complete');
   }
 
@@ -769,7 +838,7 @@ export class ExceptionDetailComponent {
 
   addVerification(): void {
     this.dialog
-      .open(VerificationDialogComponent, { width: '480px' })
+      .open(VerificationDialogComponent, { width: '520px', maxWidth: '95vw' })
       .afterClosed()
       .subscribe((result?: VerificationDialogResult) => {
         if (!result) {
@@ -779,28 +848,122 @@ export class ExceptionDetailComponent {
           this.service.addVerification(this.id(), {
             result: result.result,
             notes: result.notes,
+            newTargetDate: result.newTargetDate,
             version: this.version(),
           }),
-          this.i18n.translate('exceptions.notify.verificationRecorded'),
+          this.i18n.translate(
+            result.result === 'failed' ? 'exceptions.notify.verificationReopened' : 'exceptions.notify.verificationRecorded',
+          ),
         );
       });
   }
 
   reopen(): void {
-    this.openReason(
+    this.openDateReason(
       {
         title: this.i18n.translate('exceptions.action.reopen'),
         message: this.i18n.translate('exceptions.dialog.reopenMessage'),
-        reasonRequired: true,
+        dateLabel: this.i18n.translate('exceptions.reopen.newTargetDate'),
+        reasonLabel: this.i18n.translate('exceptions.field.reason'),
         confirmLabel: this.i18n.translate('exceptions.action.reopen'),
+        minDate: earliestNewDate(null),
         destructive: true,
       },
-      (reason) =>
+      (result) =>
         this.runMutation(
-          this.service.reopen(this.id(), { reason, version: this.version() }),
+          this.service.reopen(this.id(), { reason: result.reason, newTargetDate: result.date, version: this.version() }),
           this.i18n.translate('exceptions.notify.reopened'),
         ),
     );
+  }
+
+  /* ---- More time ---- */
+
+  /** Ask to move the finding's own target date (no action) or one action's due date. */
+  requestExtension(action: MapAction | null): void {
+    const ex = this.exception();
+    if (!ex) {
+      return;
+    }
+    const current = action ? action.targetDate : ex.targetDate;
+    this.openDateReason(
+      {
+        title: this.i18n.translate(action ? 'exceptions.extension.titleAction' : 'exceptions.extension.titleFinding'),
+        message: action ? action.description : undefined,
+        currentDateNote: this.i18n.translate('exceptions.extension.currentDate', { date: this.formatDay(current) }),
+        dateLabel: this.i18n.translate('exceptions.extension.newDate'),
+        reasonLabel: this.i18n.translate('exceptions.extension.reason'),
+        confirmLabel: this.i18n.translate('exceptions.extension.send'),
+        minDate: earliestNewDate(current),
+      },
+      (result) =>
+        this.runMutation(
+          this.service.requestExtension(this.id(), {
+            actionId: action?.id ?? null,
+            requestedDate: result.date,
+            reason: result.reason,
+            version: this.version(),
+          }),
+          this.i18n.translate('exceptions.extension.notify.requested'),
+        ),
+    );
+  }
+
+  approveExtension(request: DueDateExtensionRequest): void {
+    this.openReason(
+      {
+        title: this.i18n.translate('exceptions.extension.approveTitle'),
+        message: this.i18n.translate('exceptions.extension.approveMessage', { date: this.formatDay(request.requestedDate) }),
+        label: this.i18n.translate('exceptions.extension.note'),
+        reasonRequired: false,
+        confirmLabel: this.i18n.translate('exceptions.extension.approve'),
+      },
+      (note) =>
+        this.runMutation(
+          this.service.decideExtension(this.id(), request.id, { approve: true, note: note || null, version: this.version() }),
+          this.i18n.translate('exceptions.extension.notify.approved'),
+        ),
+    );
+  }
+
+  rejectExtension(request: DueDateExtensionRequest): void {
+    this.openReason(
+      {
+        title: this.i18n.translate('exceptions.extension.rejectTitle'),
+        message: this.i18n.translate('exceptions.extension.rejectMessage'),
+        reasonRequired: true,
+        confirmLabel: this.i18n.translate('exceptions.extension.reject'),
+        destructive: true,
+      },
+      (note) =>
+        this.runMutation(
+          this.service.decideExtension(this.id(), request.id, { approve: false, note, version: this.version() }),
+          this.i18n.translate('exceptions.extension.notify.rejected'),
+        ),
+    );
+  }
+
+  withdrawExtension(request: DueDateExtensionRequest): void {
+    this.runMutation(
+      this.service.withdrawExtension(this.id(), request.id, { version: this.version() }),
+      this.i18n.translate('exceptions.extension.notify.withdrawn'),
+    );
+  }
+
+  /** A yyyy-MM-dd date as the reader's medium date (e.g. "Dec 31, 2026"). */
+  private formatDay(date: string): string {
+    return formatDate(date, 'mediumDate', this.locale);
+  }
+
+  private openDateReason(config: DateReasonDialogData, onResult: (result: DateReasonDialogResult) => void): void {
+    this.dialog
+      .open(DateReasonDialogComponent, { data: config, width: '520px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((result?: DateReasonDialogResult) => {
+        if (result) {
+          onResult(result);
+        }
+      });
   }
 
   private openReason(

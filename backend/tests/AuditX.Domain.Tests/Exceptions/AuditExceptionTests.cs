@@ -9,6 +9,7 @@ public sealed class AuditExceptionTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.UnixEpoch;
     private static readonly DateOnly Target = new(2027, 3, 1);
+    private static readonly DateOnly Today = new(2027, 1, 1);
     private static readonly Guid AuditId = Guid.NewGuid();
     private static readonly Guid ItemId = Guid.NewGuid();
     private static readonly Guid Owner = Guid.NewGuid();
@@ -106,7 +107,7 @@ public sealed class AuditExceptionTests
         Assert.Throws<DomainException>(() => e.MarkMapActionComplete(actionId, requireEvidence: true, hasEvidence: false, Owner, Now));
 
         e.MarkMapActionComplete(actionId, requireEvidence: true, hasEvidence: true, Owner, Now);
-        e.MarkMapComplete(Owner);
+        e.MarkMapComplete(Owner, Now);
         Assert.Equal(ExceptionStatus.PendingClosure, e.Status);
     }
 
@@ -115,7 +116,7 @@ public sealed class AuditExceptionTests
     {
         var e = Approved();
         e.MarkMapActionComplete(e.MapActions[0].Id, true, true, Owner, Now);
-        e.MarkMapComplete(Owner);
+        e.MarkMapComplete(Owner, Now);
         e.Close("verified", Actor, Now);
         Assert.Equal(ExceptionStatus.Closed, e.Status);
         Assert.False(e.CiaPending);
@@ -144,7 +145,7 @@ public sealed class AuditExceptionTests
         e.SubmitMap(Owner, Now);
         e.ApproveMap(Actor, Now);
         e.MarkMapActionComplete(e.MapActions[0].Id, true, true, Owner, Now);
-        e.MarkMapComplete(Owner);
+        e.MarkMapComplete(Owner, Now);
         return e;
     }
 
@@ -255,10 +256,10 @@ public sealed class AuditExceptionTests
     public void Verification_is_only_allowed_once_closed()
     {
         var open = New();
-        Assert.Throws<InvalidStateTransitionException>(() => open.AddVerification(VerificationResult.Passed, null, Actor, Now));
+        Assert.Throws<InvalidStateTransitionException>(() => open.AddVerification(VerificationResult.Passed, null, Actor, Now, Today));
 
         var closed = Closed();
-        closed.AddVerification(VerificationResult.PartiallyPassed, "Two of three controls now operating.", Actor, Now);
+        closed.AddVerification(VerificationResult.PartiallyPassed, "Two of three controls now operating.", Actor, Now, Today);
         Assert.Single(closed.Verifications);
         Assert.Equal(VerificationResult.PartiallyPassed, closed.Verifications[0].Result);
         Assert.Contains(closed.DomainEvents, x => x is FindingVerifiedEvent);
@@ -268,12 +269,12 @@ public sealed class AuditExceptionTests
     public void Reopen_requires_closed_and_a_reason_and_increments_count()
     {
         var open = New();
-        Assert.Throws<InvalidStateTransitionException>(() => open.Reopen("Failed the follow-up verification review.", Actor, Now));
+        Assert.Throws<InvalidStateTransitionException>(() => open.Reopen("Failed the follow-up verification review.", Actor, Now, Today, Target.AddDays(30)));
 
         var e = Closed();
-        Assert.Throws<DomainException>(() => e.Reopen("too short", Actor, Now));
+        Assert.Throws<DomainException>(() => e.Reopen("too short", Actor, Now, Today, Target.AddDays(30)));
 
-        e.Reopen("Follow-up verification failed; the control regressed within a month.", Actor, Now);
+        e.Reopen("Follow-up verification failed; the control regressed within a month.", Actor, Now, Today, Target.AddDays(30));
         Assert.Equal(ExceptionStatus.Open, e.Status);
         Assert.Equal(1, e.ReopenCount);
         Assert.Equal(Actor, e.ReopenedBy);
@@ -286,9 +287,9 @@ public sealed class AuditExceptionTests
         e.SubmitMap(Owner, Now);
         e.ApproveMap(Actor, Now);
         e.MarkMapActionComplete(e.MapActions[^1].Id, false, false, Owner, Now);
-        e.MarkMapComplete(Owner);
+        e.MarkMapComplete(Owner, Now);
         e.Close("re-verified", Actor, Now);
-        e.Reopen("Regressed a second time after the seasonal peak.", Actor, Now);
+        e.Reopen("Regressed a second time after the seasonal peak.", Actor, Now, Today, Target.AddDays(30));
         Assert.Equal(2, e.ReopenCount);
     }
 }

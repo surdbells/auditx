@@ -7,13 +7,23 @@ public sealed record RaiseExceptionRequest(
 
 public sealed record ChangeSeverityRequest(string Severity, string Reason, string Version);
 
-// P2-B — management response, follow-up verification (reopen reuses ReasonVersionRequest).
+// P2-B — management response, follow-up verification, reopen.
 public sealed record ManagementResponseRequest(string Decision, string Comment, string Version);
 
 /// <summary>Sets (or clears, with a null date) the management-response due date for response-timeliness reporting.</summary>
 public sealed record SetResponseDueDateRequest(DateOnly? DueDate, string Version);
 
-public sealed record AddVerificationRequest(string Result, string? Notes, string Version);
+/// <summary>A follow-up verification. A <c>failed</c> result reopens the finding and needs <c>NewTargetDate</c>.</summary>
+public sealed record AddVerificationRequest(string Result, string? Notes, string Version, DateOnly? NewTargetDate = null);
+
+/// <summary>Reopens a closed finding with a new target date for the new plan.</summary>
+public sealed record ReopenRequest(string Reason, DateOnly NewTargetDate, string Version);
+
+/// <summary>Asks for a later due date: the finding's (no <c>ActionId</c>) or one action's.</summary>
+public sealed record RequestExtensionRequest(Guid? ActionId, DateOnly RequestedDate, string Reason, string Version);
+
+/// <summary>Approves or rejects a request for more time; a rejection needs a note.</summary>
+public sealed record DecideExtensionRequest(bool Approve, string? Note, string Version);
 
 public sealed record ReassignOwnerRequest(Guid OwnerUserId, string Version);
 

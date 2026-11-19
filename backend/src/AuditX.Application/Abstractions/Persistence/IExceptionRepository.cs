@@ -52,6 +52,18 @@ public interface IExceptionRepository
     /// daily reporting-line escalation job.</summary>
     Task<IReadOnlyList<AuditException>> ListOverdueForEscalationAsync(DateOnly today, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Findings with an agreed plan (MAP approved) holding an open action that is due by <paramref name="horizon"/> and
+    /// not yet escalated: what the daily reminder job works through. Tracked, with their actions.
+    /// </summary>
+    Task<IReadOnlyList<AuditException>> ListForActionRemindersAsync(DateOnly horizon, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Findings still being remediated in which the user has something to do: they own the finding, own an open action
+    /// of it, or raised it and someone is waiting on a decision about more time. With actions and extension requests.
+    /// </summary>
+    Task<IReadOnlyList<AuditException>> ListFollowUpForUserAsync(Guid userId, int max, CancellationToken cancellationToken = default);
+
     /// <summary>Per-owner open + overdue finding counts for a set of owners — the fact behind the management-line roll-up.</summary>
     Task<IReadOnlyDictionary<Guid, OwnerFindingCounts>> CountOpenAndOverdueByOwnersAsync(
         IReadOnlyCollection<Guid> ownerIds, DateOnly today, CancellationToken cancellationToken = default);

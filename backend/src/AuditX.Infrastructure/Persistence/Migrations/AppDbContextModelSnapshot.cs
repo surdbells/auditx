@@ -2824,6 +2824,8 @@ namespace AuditX.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("OwnerUserId");
 
+                    b.HasIndex("RaisedByUserId");
+
                     b.HasIndex("AuditableEntityId", "Category", "Status");
 
                     b.HasIndex("AuditableEntityId", "Status", "ClosedAt");
@@ -2831,6 +2833,84 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.HasIndex("Status", "Severity", "TargetDate");
 
                     b.ToTable("exceptions", (string)null);
+                });
+
+            modelBuilder.Entity("AuditX.Domain.Exceptions.DueDateExtensionRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ActionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("action_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateOnly>("CurrentDate")
+                        .HasColumnType("date")
+                        .HasColumnName("current_date");
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("decided_at");
+
+                    b.Property<Guid?>("DecidedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("decided_by");
+
+                    b.Property<string>("DecisionNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("decision_note");
+
+                    b.Property<Guid>("ExceptionId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("exception_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("requested_at");
+
+                    b.Property<Guid>("RequestedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("requested_by");
+
+                    b.Property<DateOnly>("RequestedDate")
+                        .HasColumnType("date")
+                        .HasColumnName("requested_date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExceptionId", "Status");
+
+                    b.ToTable("due_date_extension_requests", (string)null);
                 });
 
             modelBuilder.Entity("AuditX.Domain.Exceptions.ExceptionRaisingRule", b =>
@@ -2969,9 +3049,21 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("expected_evidence_type");
 
+                    b.Property<DateTimeOffset?>("LastRemindedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("last_reminded_at");
+
                     b.Property<Guid>("OwnerUserId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("owner_user_id");
+
+                    b.Property<string>("ReminderStage")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("none")
+                        .HasColumnName("reminder_stage");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -2994,6 +3086,8 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ExceptionId");
+
+                    b.HasIndex("OwnerUserId", "Status");
 
                     b.ToTable("map_actions", (string)null);
                 });
@@ -6972,6 +7066,15 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AuditX.Domain.Exceptions.DueDateExtensionRequest", b =>
+                {
+                    b.HasOne("AuditX.Domain.Exceptions.AuditException", null)
+                        .WithMany("ExtensionRequests")
+                        .HasForeignKey("ExceptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("AuditX.Domain.Exceptions.FindingVerification", b =>
                 {
                     b.HasOne("AuditX.Domain.Exceptions.AuditException", null)
@@ -7226,6 +7329,8 @@ namespace AuditX.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("AuditX.Domain.Exceptions.AuditException", b =>
                 {
+                    b.Navigation("ExtensionRequests");
+
                     b.Navigation("MapActions");
 
                     b.Navigation("Verifications");

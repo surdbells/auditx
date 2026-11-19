@@ -126,7 +126,12 @@ public sealed class SetManagementResponseDueDateCommandHandler(
 
 // ---- Follow-up verification (P2-B) ----
 
-public sealed record AddFindingVerificationCommand(Guid ExceptionId, string Result, string? Notes, string Version) : ICommand<ExceptionDto>;
+/// <summary>
+/// Records a follow-up verification. A <c>failed</c> result reopens the finding, so it needs notes saying what was found
+/// and <c>NewTargetDate</c>, the date the business must fix it by this time.
+/// </summary>
+public sealed record AddFindingVerificationCommand(Guid ExceptionId, string Result, string? Notes, string Version, DateOnly? NewTargetDate = null)
+    : ICommand<ExceptionDto>;
 
 public sealed class AddFindingVerificationCommandValidator : AbstractValidator<AddFindingVerificationCommand>
 {
@@ -152,9 +157,21 @@ public sealed class AddFindingVerificationCommandHandler(
         exception.EnsureVersion(command.Version);
 
         var result = FollowUpParsing.ParseVerificationResult(command.Result);
-        var verification = exception.AddVerification(result, command.Notes, currentUser.UserId ?? Guid.Empty, clock.UtcNow);
+        var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        var wasClosed = exception.Status == ExceptionStatus.Closed;
+        var verification = exception.AddVerification(
+            result, command.Notes, currentUser.UserId ?? Guid.Empty, clock.UtcNow, today, command.NewTargetDate);
         audit.Record(AuditEventTypes.FindingVerified, AuditTargetTypes.FindingVerification, verification.Id,
             after: new { command.ExceptionId, result = result.ToSnake() });
+
+        if (wasClosed && exception.Status == ExceptionStatus.Open)
+        {
+            // The failed follow-up reopened the finding: its checklist item is outstanding again, as on a manual reopen.
+            auditEntity.SetItemException(exception.ChecklistItemId, true);
+            audit.Record(AuditEventTypes.ExceptionReopened, AuditTargetTypes.Exception, exception.Id,
+                after: new { Reason = exception.ReopenReason, exception.ReopenCount, exception.TargetDate, byVerification = verification.Id });
+        }
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return exception.ToDto(DateOnly.FromDateTime(clock.UtcNow.UtcDateTime));
     }
@@ -162,7 +179,8 @@ public sealed class AddFindingVerificationCommandHandler(
 
 // ---- Reopen (P2-B) ----
 
-public sealed record ReopenExceptionCommand(Guid ExceptionId, string Reason, string Version) : ICommand<ExceptionDto>;
+/// <summary>Reopens a closed finding; the business gets a new plan to write, due by <c>NewTargetDate</c>.</summary>
+public sealed record ReopenExceptionCommand(Guid ExceptionId, string Reason, DateOnly NewTargetDate, string Version) : ICommand<ExceptionDto>;
 
 public sealed class ReopenExceptionCommandValidator : AbstractValidator<ReopenExceptionCommand>
 {
@@ -170,6 +188,7 @@ public sealed class ReopenExceptionCommandValidator : AbstractValidator<ReopenEx
     {
         RuleFor(x => x.ExceptionId).NotEmpty();
         RuleFor(x => x.Reason).NotEmpty().MaximumLength(2000);
+        RuleFor(x => x.NewTargetDate).NotEmpty();
         RuleFor(x => x.Version).NotEmpty();
     }
 }
@@ -186,11 +205,12 @@ public sealed class ReopenExceptionCommandHandler(
         await ExceptionAccess.EnsureCanActAsAuditorAsync(auditEntity, currentUser.UserId, permissions, cancellationToken);
         exception.EnsureVersion(command.Version);
 
-        exception.Reopen(command.Reason, currentUser.UserId ?? Guid.Empty, clock.UtcNow);
+        exception.Reopen(command.Reason, currentUser.UserId ?? Guid.Empty, clock.UtcNow,
+            DateOnly.FromDateTime(clock.UtcNow.UtcDateTime), command.NewTargetDate);
         // The originating checklist item is once again outstanding.
         auditEntity.SetItemException(exception.ChecklistItemId, true);
         audit.Record(AuditEventTypes.ExceptionReopened, AuditTargetTypes.Exception, exception.Id,
-            after: new { command.Reason, exception.ReopenCount });
+            after: new { command.Reason, exception.ReopenCount, exception.TargetDate });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return exception.ToDto(DateOnly.FromDateTime(clock.UtcNow.UtcDateTime));
     }

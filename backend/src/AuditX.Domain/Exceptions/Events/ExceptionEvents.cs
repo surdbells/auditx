@@ -44,4 +44,36 @@ public sealed record ManagementResponseRecordedEvent(
 
 public sealed record FindingVerifiedEvent(Guid ExceptionId, Guid VerificationId, VerificationResult Result, Guid VerifiedByUserId) : ExceptionEvent;
 
-public sealed record ExceptionReopenedEvent(Guid ExceptionId, Guid ActorUserId, string Reason, int ReopenCount) : ExceptionEvent;
+/// <summary>A closed finding was reopened. Its owner (<c>OwnerUserId</c>) is told it needs a new plan by <c>TargetDate</c>.</summary>
+public sealed record ExceptionReopenedEvent(
+    Guid ExceptionId, Guid ActorUserId, string Reason, int ReopenCount, Guid OwnerUserId, string Title, DateOnly TargetDate) : ExceptionEvent;
+
+/// <summary>
+/// Someone remediating a finding asked for more time. <c>RaisedByUserId</c> (the auditor who raised the finding) is told,
+/// so the audit side can decide. <c>ActionId</c> is null when the finding's own target date is to move.
+/// </summary>
+public sealed record DueDateExtensionRequestedEvent(
+    Guid ExceptionId, Guid AuditId, string Title, Guid RequestId, Guid? ActionId, Guid RequestedBy, Guid RaisedByUserId,
+    DateOnly CurrentDate, DateOnly RequestedDate) : ExceptionEvent;
+
+/// <summary>An extension request was approved and the date moved. The person who asked (<c>RequestedBy</c>) is told.</summary>
+public sealed record DueDateExtensionApprovedEvent(
+    Guid ExceptionId, string Title, Guid RequestId, Guid? ActionId, Guid RequestedBy, Guid DecidedBy, DateOnly RequestedDate, string? Note)
+    : ExceptionEvent;
+
+/// <summary>An extension request was rejected; the date stays. The person who asked (<c>RequestedBy</c>) is told why.</summary>
+public sealed record DueDateExtensionRejectedEvent(
+    Guid ExceptionId, string Title, Guid RequestId, Guid? ActionId, Guid RequestedBy, Guid DecidedBy, DateOnly CurrentDate, string? Note)
+    : ExceptionEvent;
+
+/// <summary>A remediation action falls due within the reminder window. Its owner (<c>OwnerUserId</c>) is reminded.</summary>
+public sealed record MapActionDueSoonEvent(
+    Guid ExceptionId, string Title, Guid ActionId, string Description, Guid OwnerUserId, DateOnly TargetDate, int DaysLeft) : ExceptionEvent;
+
+/// <summary>A remediation action passed its due date. Its owner (<c>OwnerUserId</c>) is told.</summary>
+public sealed record MapActionOverdueEvent(
+    Guid ExceptionId, string Title, Guid ActionId, string Description, Guid OwnerUserId, DateOnly TargetDate, int DaysOverdue) : ExceptionEvent;
+
+/// <summary>A remediation action stayed overdue past the escalation threshold. The owner's line manager is told.</summary>
+public sealed record MapActionEscalatedEvent(
+    Guid ExceptionId, string Title, Guid ActionId, string Description, Guid OwnerUserId, DateOnly TargetDate, int DaysOverdue) : ExceptionEvent;

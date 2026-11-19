@@ -304,19 +304,40 @@
                 {{ 'exceptions.action.returnForEvidence' | t }}
               </button>
             }
+            @if (canAskFindingExtension()) {
+              <button matButton type="button" (click)="requestExtension(null)">
+                <app-icon name="schedule" />
+                {{ 'exceptions.extension.askFinding' | t }}
+              </button>
+            }
           </div>
         </div>
+        @if (hasPendingExtension(null)) {
+          <p class="detail__pending-note">{{ 'exceptions.extension.pendingFinding' | t }}</p>
+        }
 
         @if (!e.mapActions.length) {
           <p class="muted detail__empty">{{ 'exceptions.detail.noActions' | t }}</p>
         } @else {
           <ul class="detail__actions-list">
             @for (action of e.mapActions; track action.id) {
-              <li class="detail__action">
+              <li class="detail__action" [class.detail__action--superseded]="action.status === 'superseded'">
                 <div class="detail__action-head">
                   <p class="detail__action-desc">{{ action.description }}</p>
-                  <span class="status-badge" [attr.data-status]="action.status === 'complete' ? 'completed' : 'planned'">
-                    {{ action.status }}
+                  <span class="detail__action-badges">
+                    @if (isActionOverdue(action)) {
+                      <span class="overdue-badge">{{ 'exceptions.extension.actionOverdue' | t }}</span>
+                    }
+                    @if (hasPendingExtension(action.id)) {
+                      <span class="status-badge" data-status="map_submitted">{{ 'exceptions.extension.pendingBadge' | t }}</span>
+                    }
+                    <span
+                      class="status-badge"
+                      [attr.data-status]="action.status === 'complete' ? 'completed' : action.status === 'superseded' ? 'cancelled' : 'planned'"
+                      [matTooltip]="action.status === 'superseded' ? ('exceptions.extension.supersededHint' | t) : ''"
+                    >
+                      {{ 'exceptions.actionStatus.' + action.status | t }}
+                    </span>
                   </span>
                 </div>
                 <div class="detail__action-meta muted">
@@ -328,10 +349,16 @@
                 </div>
 
                 <div class="detail__action-actions">
-                  @if (status() === 'map_approved' && canActOn(action) && action.status !== 'complete') {
+                  @if (status() === 'map_approved' && canActOn(action) && action.status === 'pending') {
                     <button matButton type="button" (click)="markActionComplete(action)">
                       <app-icon name="done" />
                       {{ 'exceptions.action.markComplete' | t }}
+                    </button>
+                  }
+                  @if (canAskActionExtension(action)) {
+                    <button matButton type="button" (click)="requestExtension(action)">
+                      <app-icon name="schedule" />
+                      {{ 'exceptions.extension.askAction' | t }}
                     </button>
                   }
                 </div>
@@ -345,7 +372,7 @@
                         <app-icon name="refresh" />
                         {{ 'exceptions.action.load' | t }}
                       </button>
-                      @if (canUploadEvidence() && !isReadOnly() && canActOn(action)) {
+                      @if (canUploadEvidence() && !isReadOnly() && canActOn(action) && action.status !== 'superseded') {
                         <button matButton type="button" (click)="fileInput.click()">
                           <app-icon name="upload_file" />
                           {{ 'exceptions.action.upload' | t }}
@@ -393,6 +420,58 @@
           </ul>
         }
       </mat-card>
+
+      <!-- Requests for more time -->
+      @if (extensionRequests().length) {
+        <mat-card appearance="outlined" class="detail__card" data-guide="extensions">
+          <h3 class="detail__card-title">{{ 'exceptions.extension.sectionTitle' | t }}</h3>
+          <ul class="detail__extensions">
+            @for (r of extensionRequests(); track r.id) {
+              <li class="detail__extension">
+                <div class="detail__extension-head">
+                  <span class="detail__extension-subject">{{ extensionSubject(r) }}</span>
+                  <span class="status-badge" [attr.data-status]="r.status === 'approved' ? 'completed' : r.status === 'rejected' ? 'map_rejected' : r.status === 'pending' ? 'map_submitted' : 'cancelled'">
+                    {{ 'exceptions.extension.status.' + r.status | t }}
+                  </span>
+                </div>
+                <p class="detail__extension-dates">
+                  {{ r.currentDate | date: 'mediumDate' }} → <strong>{{ r.requestedDate | date: 'mediumDate' }}</strong>
+                </p>
+                <p class="detail__extension-reason">{{ r.reason }}</p>
+                <p class="muted detail__extension-meta">
+                  {{ 'exceptions.extension.askedBy' | t: { name: nameOf(r.requestedBy) } }} · {{ r.requestedAt | date: 'medium' }}
+                  @if (r.decidedBy && r.status !== 'withdrawn') {
+                    · {{ 'exceptions.extension.decidedBy' | t: { name: nameOf(r.decidedBy) } }}
+                  }
+                </p>
+                @if (r.decisionNote) {
+                  <p class="detail__extension-note">{{ r.decisionNote }}</p>
+                }
+                @if (canDecideExtension(r) || canWithdrawExtension(r)) {
+                  <div class="detail__action-actions">
+                    @if (canDecideExtension(r)) {
+                      <button matButton="filled" type="button" (click)="approveExtension(r)">
+                        <app-icon name="check" />
+                        {{ 'exceptions.extension.approve' | t }}
+                      </button>
+                      <button matButton type="button" (click)="rejectExtension(r)">
+                        <app-icon name="close" />
+                        {{ 'exceptions.extension.reject' | t }}
+                      </button>
+                    }
+                    @if (canWithdrawExtension(r)) {
+                      <button matButton type="button" (click)="withdrawExtension(r)">
+                        <app-icon name="undo" />
+                        {{ 'exceptions.extension.withdraw' | t }}
+                      </button>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        </mat-card>
+      }
 
       <!-- Follow-up verification (P2-B) -->
       @if (e.verifications.length || canVerifyNow()) {

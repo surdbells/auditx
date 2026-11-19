@@ -110,6 +110,7 @@ builder.Services.AddScoped<NotificationRetryJob>();
 builder.Services.AddScoped<ReportGenerationJob>();
 builder.Services.AddScoped<RecurrenceClusterScanJob>();
 builder.Services.AddScoped<MapOverdueEscalationJob>();
+builder.Services.AddScoped<MapActionReminderJob>();
 builder.Services.AddScoped<AnalyticsSnapshotJob>();
 builder.Services.AddScoped<AcPackGenerationJob>();
 builder.Services.AddScoped<AcPackRecurringGenerationJob>();
@@ -203,6 +204,12 @@ recurringJobs.AddOrUpdate<RecurrenceClusterScanJob>(
 // Daily escalation of overdue MAPs up the reporting line (P2): notifies each finding owner's line manager.
 recurringJobs.AddOrUpdate<MapOverdueEscalationJob>(
     MapOverdueEscalationJob.RecurringJobId,
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Daily);
+
+// Daily reminders through each remediation action's life: due soon, overdue, then escalated to the owner's line manager.
+recurringJobs.AddOrUpdate<MapActionReminderJob>(
+    MapActionReminderJob.RecurringJobId,
     job => job.RunAsync(CancellationToken.None),
     Cron.Daily);
 
