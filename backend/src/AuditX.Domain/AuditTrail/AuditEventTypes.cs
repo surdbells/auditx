@@ -135,6 +135,7 @@ public static class AuditEventTypes
     // M4 audits — lifecycle & team
     public const string AuditCreated = "audit_created";
     public const string AuditMetadataUpdated = "audit_metadata_updated";
+    public const string AuditProgrammeApproved = "audit_programme_approved";
     public const string AuditTransitioned = "audit_transitioned";
     public const string AuditCompleted = "audit_completed";
     public const string AuditCancelled = "audit_cancelled";

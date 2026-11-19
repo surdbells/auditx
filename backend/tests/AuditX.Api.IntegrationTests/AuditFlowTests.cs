@@ -104,7 +104,8 @@ public sealed class AuditFlowTests(ApiFactory factory) : IClassFixture<ApiFactor
             auditType = "process",
             startDate = "2027-05-01",
             targetEndDate = "2027-05-31",
-            leadUserId = users["manager@auditx.local"],
+            // The editor must be on the audit's team: admin leads it.
+            leadUserId = users["admin@auditx.local"],
             auditeeUserId = users["auditee@auditx.local"],
         }));
         var auditId = created.GetProperty("id").GetGuid();

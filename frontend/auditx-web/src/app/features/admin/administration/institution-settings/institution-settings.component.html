@@ -207,6 +207,10 @@
               {{ 'administration.institutionSettings.requireIndependence' | t }}
             </mat-slide-toggle>
             <p class="settings__toggle-hint">{{ 'administration.institutionSettings.requireIndependenceHint' | t }}</p>
+            <mat-slide-toggle formControlName="requireProgrammeApproval">
+              {{ 'administration.institutionSettings.requireProgrammeApproval' | t }}
+            </mat-slide-toggle>
+            <p class="settings__toggle-hint">{{ 'administration.institutionSettings.requireProgrammeApprovalHint' | t }}</p>
           </div>
 
           @if (canManageSettings()) {

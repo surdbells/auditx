@@ -17,7 +17,7 @@ namespace AuditX.Api.IntegrationTests;
 ///
 /// Fieldwork normally starts only once the whole audit team has declared independence (the institution setting
 /// defaults on). Most flows here are about something else and start fieldwork without that step, so this factory turns
-/// the setting off once the database is seeded; <see cref="StrictIndependenceApiFactory"/> keeps it on for the tests of
+/// the independence and programme-approval settings off once the database is seeded; <see cref="StrictIndependenceApiFactory"/> keeps it on for the tests of
 /// the independence gate itself.
 /// </summary>
 public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
@@ -31,6 +31,9 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     /// <summary>Whether fieldwork waits for the team's independence declarations in this factory's database.</summary>
     protected virtual bool RequireIndependenceDeclaration => false;
+
+    /// <summary>Whether fieldwork waits for a manager to approve the audit programme in this factory's database.</summary>
+    protected virtual bool RequireProgrammeApproval => false;
 
     public async Task InitializeAsync()
     {
@@ -66,6 +69,7 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var settings = db.InstitutionSettings.Single();
         settings.SetRequireIndependenceDeclaration(RequireIndependenceDeclaration);
+        settings.SetRequireProgrammeApproval(RequireProgrammeApproval);
         db.SaveChanges();
         return host;
     }
@@ -75,4 +79,10 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 public sealed class StrictIndependenceApiFactory : ApiFactory
 {
     protected override bool RequireIndependenceDeclaration => true;
+}
+
+/// <summary>An <see cref="ApiFactory"/> whose institution requires the audit programme to be approved before fieldwork (the default).</summary>
+public sealed class StrictProgrammeApprovalApiFactory : ApiFactory
+{
+    protected override bool RequireProgrammeApproval => true;
 }

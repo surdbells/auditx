@@ -1086,9 +1086,27 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("name");
 
+                    b.Property<string>("Objectives")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)")
+                        .HasColumnName("objectives");
+
                     b.Property<Guid?>("PlanItemId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("plan_item_id");
+
+                    b.Property<string>("ProgrammeApprovalNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnName("programme_approval_note");
+
+                    b.Property<DateTimeOffset?>("ProgrammeApprovedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("programme_approved_at");
+
+                    b.Property<Guid?>("ProgrammeApprovedBy")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("programme_approved_by");
 
                     b.Property<string>("ScopeDescription")
                         .HasColumnType("nvarchar(max)")
@@ -3534,6 +3552,10 @@ namespace AuditX.Infrastructure.Persistence.Migrations
                     b.Property<bool>("RequireIndependenceDeclaration")
                         .HasColumnType("bit")
                         .HasColumnName("require_independence_declaration");
+
+                    b.Property<bool>("RequireProgrammeApproval")
+                        .HasColumnType("bit")
+                        .HasColumnName("require_programme_approval");
 
                     b.Property<bool>("ShowOverview")
                         .HasColumnType("bit")

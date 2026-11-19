@@ -24,7 +24,7 @@ public sealed record UpdateInstitutionSettingsCommand(
     bool AllowOverlappingPlanPeriods, bool AllowAuditLaunchBeforeApproval, bool AllowMinorPlanRevisionAfterApproval,
     string PrimaryColor, string AccentColor, string? LogoDataUri, string? IconDataUri,
     bool ShowOverview, bool ShowWalkthrough, int ReportRetentionMonths, bool AutoStartWalkthrough,
-    int IdleTimeoutMinutes, int IdleWarningSeconds, bool RequireIndependenceDeclaration = true)
+    int IdleTimeoutMinutes, int IdleWarningSeconds, bool RequireIndependenceDeclaration = true, bool RequireProgrammeApproval = true)
     : ICommand<InstitutionSettingsDto>;
 
 public sealed class UpdateInstitutionSettingsCommandValidator : AbstractValidator<UpdateInstitutionSettingsCommand>
@@ -103,6 +103,7 @@ public sealed class UpdateInstitutionSettingsCommandHandler(IInstitutionSettings
         bank.SetAllowAuditLaunchBeforeApproval(command.AllowAuditLaunchBeforeApproval);
         bank.SetAllowMinorPlanRevisionAfterApproval(command.AllowMinorPlanRevisionAfterApproval);
         bank.SetRequireIndependenceDeclaration(command.RequireIndependenceDeclaration);
+        bank.SetRequireProgrammeApproval(command.RequireProgrammeApproval);
         bank.SetPageGuideVisibility(command.ShowOverview, command.ShowWalkthrough, command.AutoStartWalkthrough);
         bank.SetReportRetentionMonths(command.ReportRetentionMonths);
         bank.SetIdleTimeout(command.IdleTimeoutMinutes, command.IdleWarningSeconds);
@@ -112,7 +113,7 @@ public sealed class UpdateInstitutionSettingsCommandHandler(IInstitutionSettings
         audit.Record(AuditEventTypes.InstitutionSettingsUpdated, AuditTargetTypes.InstitutionSettings, bank.Id, after: new
         {
             bank.InstitutionDisplayName, bank.Timezone, bank.AllowOverlappingPlanPeriods, bank.AllowAuditLaunchBeforeApproval, bank.AllowMinorPlanRevisionAfterApproval,
-            bank.RequireIndependenceDeclaration, bank.ShowOverview, bank.ShowWalkthrough, bank.AutoStartWalkthrough,
+            bank.RequireIndependenceDeclaration, bank.RequireProgrammeApproval, bank.ShowOverview, bank.ShowWalkthrough, bank.AutoStartWalkthrough,
             bank.ReportRetentionMonths, bank.IdleTimeoutMinutes, bank.IdleWarningSeconds,
             bank.PrimaryColor, bank.AccentColor, hasLogo = bank.LogoDataUri is not null, hasIcon = bank.IconDataUri is not null,
         });

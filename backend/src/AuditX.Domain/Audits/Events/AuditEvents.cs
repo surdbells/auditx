@@ -10,6 +10,9 @@ public abstract record AuditEvent : IDomainEvent
 
 public sealed record AuditCreatedEvent(Guid AuditId, string Name, string AuditType, Guid? PlanItemId) : AuditEvent;
 
+/// <summary>A manager approved the audit's programme for fieldwork. The lead (<c>LeadUserId</c>) is told.</summary>
+public sealed record AuditProgrammeApprovedEvent(Guid AuditId, string AuditName, Guid ApprovedBy, Guid LeadUserId) : AuditEvent;
+
 public sealed record AuditTransitionedEvent(Guid AuditId, AuditStatus FromStatus, AuditStatus ToStatus, string? Reason) : AuditEvent;
 
 public sealed record AuditCompletedEvent(Guid AuditId, Guid? PlanItemId, DateOnly ActualEndDate) : AuditEvent;

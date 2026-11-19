@@ -35,6 +35,7 @@ import {
   TransferLeadRequest,
   TransitionAuditRequest,
   UpdateAuditRequest,
+  ApproveProgrammeRequest,
   UpdateChecklistItemRequest,
 } from '../models';
 
@@ -80,6 +81,11 @@ export class AuditsService {
 
   update(id: string, body: UpdateAuditRequest): Observable<Audit> {
     return this.api.patch<Audit>(`/audits/${id}`, body);
+  }
+
+  /** Approve the planned audit's programme for fieldwork (a manager of the audit other than its lead). */
+  approveProgramme(id: string, body: ApproveProgrammeRequest): Observable<Audit> {
+    return this.api.post<Audit>(`/audits/${id}/programme/approve`, body);
   }
 
   /** Link an ad-hoc audit to the entity it examines (drives coverage); a null entityId clears the link. */

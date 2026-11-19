@@ -16,6 +16,7 @@ export interface InstitutionSettings {
   allowMinorPlanRevisionAfterApproval: boolean;
   /** When true (default), fieldwork starts only once the whole audit team has declared independence. */
   requireIndependenceDeclaration: boolean;
+  requireProgrammeApproval: boolean;
   primaryColor: string;
   accentColor: string;
   logoDataUri: string | null;
@@ -63,6 +64,7 @@ export interface UpdateInstitutionSettingsRequest {
   allowAuditLaunchBeforeApproval: boolean;
   allowMinorPlanRevisionAfterApproval: boolean;
   requireIndependenceDeclaration: boolean;
+  requireProgrammeApproval: boolean;
   primaryColor: string;
   accentColor: string;
   logoDataUri: string | null;

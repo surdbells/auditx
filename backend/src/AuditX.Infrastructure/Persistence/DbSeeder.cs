@@ -160,6 +160,10 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher, IL
             ("audit_kickoff_scheduled", "audit_kickoff_scheduled", "payload_derived", "AuditeeUserId", "[\"email\",\"teams\"]",
                 "Audit kickoff meeting scheduled",
                 "A kickoff meeting for \"{{ AuditName }}\" is scheduled for {{ ScheduledAtUtc }}. Location / join: {{ Location }}. Please make yourself available."),
+            // The programme was approved for fieldwork: the lead, who prepared it, can now start.
+            ("audit_programme_approved", "audit_programme_approved", "payload_derived", "LeadUserId", "[\"email\"]",
+                "Your audit programme was approved",
+                "The programme for the audit \"{{ AuditName }}\" was approved for fieldwork. You can start fieldwork at {{ AppBaseUrl }}/audits/{{ AuditId }}."),
             ("item_assigned", "item_assigned", "payload_derived", "AssigneeUserId", "[\"email\"]",
                 "A checklist item was assigned to you", "Checklist item {{ ItemId }} on audit {{ AuditId }} has been assigned to you."),
             // Working-paper review: whoever prepared the work hears of a note on it; the reviewer hears the answer; the

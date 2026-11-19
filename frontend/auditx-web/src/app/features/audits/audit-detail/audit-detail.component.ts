@@ -80,6 +80,11 @@ import {
   TransitionReasonResult,
 } from '../dialogs/transition-reason-dialog.component';
 import {
+  EditScopeDialogComponent,
+  EditScopeDialogData,
+  EditScopeDialogResult,
+} from '../dialogs/edit-scope-dialog.component';
+import {
   ScheduleKickoffDialogComponent,
   ScheduleKickoffDialogData,
 } from '../dialogs/schedule-kickoff-dialog.component';
@@ -455,10 +460,82 @@ export class AuditDetailComponent {
     return ind && ind.required && !ind.complete ? ind.outstanding : null;
   });
 
+  /** Approval of the programme before fieldwork, as the server reports it for the signed-in user. */
+  readonly programme = computed(() => this.engagementStore.records()?.programme ?? null);
+
+  /** The institution requires approval and the planned programme is not yet approved: fieldwork waits. */
+  readonly programmeAwaitingApproval = computed(() => {
+    const p = this.programme();
+    return this.isPlanned() && !!p && p.required && !p.approved;
+  });
+
+  /** Anything that holds the start of fieldwork (the server still decides). */
+  readonly startBlocked = computed(() => !!this.independenceOutstanding() || this.programmeAwaitingApproval());
+
   readonly startHint = computed(() => {
+    if (this.programmeAwaitingApproval()) {
+      return this.i18n.translate('audits.programme.startBlocked');
+    }
     const count = this.independenceOutstanding();
     return count ? this.i18n.translate('engagement.independence.startBlocked', { count }) : '';
   });
+
+  /** Scope, objectives and dates are edited by the audit's team while it is a draft or planned. */
+  readonly canEditScope = computed(() => this.canDriveLifecycle() && (this.isDraft() || this.isPlanned()));
+
+  editScope(): void {
+    const a = this.audit();
+    if (!a || !this.canEditScope()) {
+      return;
+    }
+    const data: EditScopeDialogData = {
+      name: a.name,
+      scopeDescription: a.scopeDescription,
+      objectives: a.objectives ?? null,
+      startDate: a.startDate,
+      targetEndDate: a.targetEndDate,
+      scopeLocked: !!a.programmeApprovedAt,
+    };
+    this.dialog
+      .open(EditScopeDialogComponent, { data, width: '600px', maxWidth: '95vw' })
+      .afterClosed()
+      .subscribe((result?: EditScopeDialogResult) => {
+        if (!result) {
+          return;
+        }
+        this.runMutation(
+          this.service.update(this.id(), { ...result, version: this.version() }),
+          this.i18n.translate('audits.scope.saved'),
+        );
+      });
+  }
+
+  approveProgramme(): void {
+    if (!this.programme()?.canApprove) {
+      return;
+    }
+    this.dialog
+      .open(TransitionReasonDialogComponent, {
+        data: {
+          title: this.i18n.translate('audits.programme.approveTitle'),
+          message: this.i18n.translate('audits.programme.approveMessage'),
+          label: this.i18n.translate('audits.programme.note'),
+          reasonRequired: false,
+          confirmLabel: this.i18n.translate('audits.programme.approve'),
+        } satisfies TransitionReasonDialogData,
+        width: '480px',
+      })
+      .afterClosed()
+      .subscribe((result?: TransitionReasonResult) => {
+        if (!result) {
+          return;
+        }
+        this.runMutation(
+          this.service.approveProgramme(this.id(), { note: result.reason || null, version: this.version() }),
+          this.i18n.translate('audits.programme.approved'),
+        );
+      });
+  }
 
   readonly completeHint = computed(() => {
     const o = this.reviewOutstanding();

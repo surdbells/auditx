@@ -43,10 +43,10 @@
                 matButton="filled"
                 type="button"
                 (click)="start()"
-                [disabled]="!!independenceOutstanding()"
+                [disabled]="startBlocked()"
                 disabledInteractive
                 [matTooltip]="startHint()"
-                [matTooltipDisabled]="!independenceOutstanding()"
+                [matTooltipDisabled]="!startBlocked()"
               >
                 <app-icon name="play_arrow" />
                 {{ 'audits.actions.start' | t }}
@@ -115,7 +115,15 @@
 
       <!-- Overview -->
       <mat-card appearance="outlined" class="detail__card" data-guide="overview">
-        <h3 class="detail__card-title">{{ 'audits.detail.overview' | t }}</h3>
+        <div class="detail__card-head">
+          <h3 class="detail__card-title">{{ 'audits.detail.overview' | t }}</h3>
+          @if (canEditScope()) {
+            <button matButton type="button" (click)="editScope()">
+              <app-icon name="edit" />
+              {{ 'audits.scope.edit' | t }}
+            </button>
+          }
+        </div>
         <dl class="detail__grid">
           <div>
             <dt>{{ 'audits.field.window' | t }}</dt>
@@ -174,11 +182,44 @@
             </dd>
           </div>
         </dl>
-        @if (a.scopeDescription) {
-          <div class="detail__scope">
-            <dt>{{ 'audits.field.scope' | t }}</dt>
-            <dd>{{ a.scopeDescription }}</dd>
-          </div>
+        <div class="detail__scope">
+          <dt>{{ 'audits.field.scope' | t }}</dt>
+          <dd>{{ a.scopeDescription || ('audits.scope.none' | t) }}</dd>
+        </div>
+        <div class="detail__scope">
+          <dt>{{ 'audits.field.objectives' | t }}</dt>
+          <dd>{{ a.objectives || ('audits.scope.noObjectives' | t) }}</dd>
+        </div>
+
+        <!-- Programme approval before fieldwork -->
+        @if (programme(); as p) {
+          @if (p.approved) {
+            <div class="detail__programme detail__programme--approved" data-guide="programme">
+              <app-icon name="verified" aria-hidden="true" />
+              <div>
+                <p class="detail__programme-title">
+                  {{ 'audits.programme.approvedBy' | t: { name: nameOf(p.approvedBy), date: (p.approvedAt | date: 'mediumDate') ?? '' } }}
+                </p>
+                @if (p.note) {
+                  <p class="detail__programme-note">{{ p.note }}</p>
+                }
+              </div>
+            </div>
+          } @else if (p.required && isPlanned()) {
+            <div class="detail__programme" data-guide="programme">
+              <app-icon name="pending_actions" aria-hidden="true" />
+              <div class="detail__programme-body">
+                <p class="detail__programme-title">{{ 'audits.programme.awaiting' | t }}</p>
+                <p class="detail__programme-note">{{ 'audits.programme.awaitingHint' | t }}</p>
+              </div>
+              @if (p.canApprove) {
+                <button matButton="filled" type="button" (click)="approveProgramme()">
+                  <app-icon name="check" />
+                  {{ 'audits.programme.approve' | t }}
+                </button>
+              }
+            </div>
+          }
         }
       </mat-card>
 

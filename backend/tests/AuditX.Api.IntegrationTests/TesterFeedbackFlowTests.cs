@@ -159,6 +159,7 @@ public sealed class TesterFeedbackFlowTests(ApiFactory factory) : IClassFixture<
             idleTimeoutMinutes = current.GetProperty("idleTimeoutMinutes").GetInt32(),
             idleWarningSeconds = current.GetProperty("idleWarningSeconds").GetInt32(),
             requireIndependenceDeclaration = current.GetProperty("requireIndependenceDeclaration").GetBoolean(),
+            requireProgrammeApproval = current.GetProperty("requireProgrammeApproval").GetBoolean(),
         });
 
         Assert.Equal(HttpStatusCode.UnprocessableContent, response.StatusCode);

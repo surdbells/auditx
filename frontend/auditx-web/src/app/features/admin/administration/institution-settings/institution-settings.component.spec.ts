@@ -21,6 +21,7 @@ function settings(overrides: Partial<InstitutionSettings> = {}): InstitutionSett
     allowAuditLaunchBeforeApproval: false,
     allowMinorPlanRevisionAfterApproval: false,
     requireIndependenceDeclaration: true,
+    requireProgrammeApproval: true,
     primaryColor: '#4f46e5',
     accentColor: '#7c3aed',
     logoDataUri: null,

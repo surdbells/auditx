@@ -107,6 +107,12 @@ export interface Audit {
   checklistItems: AuditChecklistItem[];
   /** When the record was created (ISO) — reference labels on it read as they did at that time. */
   createdAt?: string | null;
+  /** What the engagement sets out to achieve. */
+  objectives?: string | null;
+  /** Who approved the programme for fieldwork, when, and their note. Null until approved. */
+  programmeApprovedBy?: string | null;
+  programmeApprovedAt?: string | null;
+  programmeApprovalNote?: string | null;
 }
 
 /** Lightweight row for the audits list. */
@@ -184,11 +190,18 @@ export interface CreateSelfAssessmentRequest {
   auditableEntityId?: string | null;
 }
 
+/** A full replace of the engagement's name, scope, objectives and dates. */
 export interface UpdateAuditRequest {
   name: string;
   scopeDescription?: string | null;
+  objectives?: string | null;
   startDate: string;
   targetEndDate: string | null;
+  version: string;
+}
+
+export interface ApproveProgrammeRequest {
+  note: string | null;
   version: string;
 }
 

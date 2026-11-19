@@ -5,7 +5,8 @@ public sealed record UpdateInstitutionSettingsRequest(
     bool AllowOverlappingPlanPeriods = false, bool AllowAuditLaunchBeforeApproval = false, bool AllowMinorPlanRevisionAfterApproval = false,
     string PrimaryColor = "#4f46e5", string AccentColor = "#7c3aed", string? LogoDataUri = null, string? IconDataUri = null,
     bool ShowOverview = true, bool ShowWalkthrough = true, int ReportRetentionMonths = 0, bool AutoStartWalkthrough = true,
-    int IdleTimeoutMinutes = 15, int IdleWarningSeconds = 60, bool RequireIndependenceDeclaration = true);
+    int IdleTimeoutMinutes = 15, int IdleWarningSeconds = 60, bool RequireIndependenceDeclaration = true,
+    bool RequireProgrammeApproval = true);
 
 public sealed record UpdateResourceLimitsRequest(int MaxEvidenceFileMb, int MaxAuditEvidenceGb);
 

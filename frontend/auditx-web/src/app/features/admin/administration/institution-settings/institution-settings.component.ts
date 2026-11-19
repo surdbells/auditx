@@ -268,6 +268,7 @@ export class InstitutionSettingsComponent {
     allowAuditLaunchBeforeApproval: [false],
     allowMinorPlanRevisionAfterApproval: [false],
     requireIndependenceDeclaration: [true],
+    requireProgrammeApproval: [true],
   });
 
   readonly sessionForm = this.fb.nonNullable.group({
@@ -352,6 +353,7 @@ export class InstitutionSettingsComponent {
       allowMinorPlanRevisionAfterApproval: s.allowMinorPlanRevisionAfterApproval,
       // Older servers do not send it: the platform's default (required) stands.
       requireIndependenceDeclaration: s.requireIndependenceDeclaration ?? true,
+      requireProgrammeApproval: s.requireProgrammeApproval ?? true,
     });
     this.sessionForm.reset({
       idleTimeoutMinutes: s.idleTimeoutMinutes,
@@ -403,6 +405,7 @@ export class InstitutionSettingsComponent {
       allowAuditLaunchBeforeApproval: b.allowAuditLaunchBeforeApproval,
       allowMinorPlanRevisionAfterApproval: b.allowMinorPlanRevisionAfterApproval,
       requireIndependenceDeclaration: b.requireIndependenceDeclaration ?? true,
+      requireProgrammeApproval: b.requireProgrammeApproval ?? true,
       primaryColor: b.primaryColor,
       accentColor: b.accentColor,
       logoDataUri: b.logoDataUri,
@@ -490,6 +493,7 @@ export class InstitutionSettingsComponent {
       allowAuditLaunchBeforeApproval: v.allowAuditLaunchBeforeApproval,
       allowMinorPlanRevisionAfterApproval: v.allowMinorPlanRevisionAfterApproval,
       requireIndependenceDeclaration: v.requireIndependenceDeclaration,
+      requireProgrammeApproval: v.requireProgrammeApproval,
     });
   }
 

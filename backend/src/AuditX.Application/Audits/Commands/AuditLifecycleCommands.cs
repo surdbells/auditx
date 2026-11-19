@@ -9,20 +9,43 @@ using AuditX.Application.Common.Messaging;
 using AuditX.Domain.AuditTrail;
 using AuditX.Domain.Authorization;
 using AuditX.Domain.Enums;
+using FluentValidation;
 
 namespace AuditX.Application.Audits.Commands;
 
-public sealed record UpdateAuditMetadataCommand(Guid Id, string Name, string? ScopeDescription, DateOnly StartDate, DateOnly TargetEndDate, string Version) : ICommand<AuditDto>;
+/// <summary>Edits the engagement's name, scope, objectives and dates (a full replace) while it is a draft or planned.</summary>
+public sealed record UpdateAuditMetadataCommand(
+    Guid Id, string Name, string? ScopeDescription, DateOnly StartDate, DateOnly TargetEndDate, string Version, string? Objectives = null)
+    : ICommand<AuditDto>;
 
-public sealed class UpdateAuditMetadataCommandHandler(IAuditRepository audits, IAuditRecorder audit, IUnitOfWork unitOfWork)
+public sealed class UpdateAuditMetadataCommandValidator : AbstractValidator<UpdateAuditMetadataCommand>
+{
+    public UpdateAuditMetadataCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.Name).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.ScopeDescription).MaximumLength(4000);
+        RuleFor(x => x.Objectives).MaximumLength(4000);
+        RuleFor(x => x.Version).NotEmpty();
+    }
+}
+
+public sealed class UpdateAuditMetadataCommandHandler(
+    IAuditRepository audits, IPermissionResolver permissions, ICurrentUser currentUser, IAuditRecorder audit, IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateAuditMetadataCommand, AuditDto>
 {
     public async Task<AuditDto> Handle(UpdateAuditMetadataCommand command, CancellationToken cancellationToken)
     {
         var entity = await audits.GetByIdAsync(command.Id, cancellationToken) ?? throw new NotFoundException("Audit", command.Id);
+
+        // [RequirePermission(ManageAudit)] only gates globally: the caller must manage THIS audit, be on its team, and
+        // never be its auditee (the same rule as every other change to how the audit is run).
+        await AuditManageAuthorization.EnsureCanManageAsync(entity, currentUser.UserId, permissions, cancellationToken);
         entity.EnsureVersion(command.Version);
-        entity.UpdateMetadata(command.Name.Trim(), command.ScopeDescription, command.StartDate, command.TargetEndDate);
-        audit.Record(AuditEventTypes.AuditMetadataUpdated, AuditTargetTypes.Audit, entity.Id);
+        var before = new { entity.Name, entity.ScopeDescription, entity.Objectives, entity.StartDate, entity.TargetEndDate };
+        entity.UpdateMetadata(command.Name.Trim(), command.ScopeDescription, command.StartDate, command.TargetEndDate, command.Objectives);
+        audit.Record(AuditEventTypes.AuditMetadataUpdated, AuditTargetTypes.Audit, entity.Id,
+            before: before, after: new { entity.Name, entity.ScopeDescription, entity.Objectives, entity.StartDate, entity.TargetEndDate });
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return entity.ToDto();
     }
@@ -185,7 +208,8 @@ public sealed class TransitionAuditCommandHandler(
                 }
                 else
                 {
-                    entity.Start((await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration);
+                    var rules = await settings.GetAsync(cancellationToken);
+                    entity.Start(rules.RequireIndependenceDeclaration, rules.RequireProgrammeApproval);
                 }
 
                 break;
@@ -267,19 +291,26 @@ public sealed class AutoStartAuditsCommandHandler(
     {
         var today = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
         var due = await audits.GetPlannedDueToStartAsync(today, cancellationToken);
-        var requireIndependence = (await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration;
+        var rules = await settings.GetAsync(cancellationToken);
+        var requireIndependence = rules.RequireIndependenceDeclaration;
+        var requireApproval = rules.RequireProgrammeApproval;
 
         var started = 0;
         foreach (var entity in due)
         {
-            // An audit whose team has not all declared independence stays planned: its lead sees who is outstanding
-            // and starts it once they have. It is picked up again on the next run.
+            // An audit whose team has not all declared independence, or whose programme is not yet approved, stays
+            // planned: its lead sees what is outstanding and starts it once done. It is picked up again on the next run.
             if (requireIndependence && entity.IndependenceOutstanding().Count > 0)
             {
                 continue;
             }
 
-            entity.Start(requireIndependence);
+            if (requireApproval && !entity.IsSelfAssessment && !entity.ProgrammeApproved)
+            {
+                continue;
+            }
+
+            entity.Start(requireIndependence, requireApproval);
             audit.RecordAs(ActorType.System, "audit-auto-start", null, AuditEventTypes.AuditTransitioned, AuditTargetTypes.Audit, entity.Id,
                 after: new { status = entity.Status.ToSnake() });
             started++;

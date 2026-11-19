@@ -42,7 +42,7 @@ public static class NotificationEvents
         "maker_checker_submitted", "maker_checker_rejected",
         // M4 audit lifecycle
         "audit_team_member_added", "audit_lead_transferred", "audit_transitioned", "audit_completed", "audit_cancelled",
-        "audit_kickoff_scheduled",
+        "audit_kickoff_scheduled", "audit_programme_approved",
         // M5 execution
         "item_assigned", "evidence_requested", "evidence_recalled",
         "review_note_raised", "review_note_answered", "review_note_reopened",

@@ -74,6 +74,20 @@ public sealed class Audit : AggregateRoot
     /// <summary>Free-text agenda for the kickoff meeting. Null when unset.</summary>
     public string? KickoffAgenda { get; private set; }
 
+    /// <summary>What the engagement sets out to achieve: the audit objectives the work programme is built to meet.</summary>
+    public string? Objectives { get; private set; }
+
+    /// <summary>Who approved the audit programme (its scope, objectives and checklist) for fieldwork. Null until approved.</summary>
+    public Guid? ProgrammeApprovedBy { get; private set; }
+
+    public DateTimeOffset? ProgrammeApprovedAt { get; private set; }
+
+    /// <summary>The approver's note, if any (for example, conditions on the fieldwork).</summary>
+    public string? ProgrammeApprovalNote { get; private set; }
+
+    /// <summary>True once the programme has been approved for fieldwork (cleared when the audit goes back to draft).</summary>
+    public bool ProgrammeApproved => ProgrammeApprovedAt is not null;
+
     public byte[] Version { get; private set; } = [];
 
     public IReadOnlyList<AuditTeamMember> TeamMembers => _teamMembers.AsReadOnly();
@@ -145,7 +159,12 @@ public sealed class Audit : AggregateRoot
         return audit;
     }
 
-    public void UpdateMetadata(string name, string? scopeDescription, DateOnly startDate, DateOnly targetEndDate)
+    /// <summary>
+    /// Edits the engagement's name, scope, objectives and dates. Allowed while the audit is a draft or planned. Once the
+    /// programme is approved its scope and objectives are what was approved: changing them takes the audit back to draft
+    /// (reopen), which withdraws the approval.
+    /// </summary>
+    public void UpdateMetadata(string name, string? scopeDescription, DateOnly startDate, DateOnly targetEndDate, string? objectives = null)
     {
         EnsureStatus("audit.metadata_locked", AuditStatus.Draft, AuditStatus.Planned);
         if (targetEndDate < startDate)
@@ -153,8 +172,20 @@ public sealed class Audit : AggregateRoot
             throw new DomainException("audit.target_before_start", "Target end date must be on or after the start date.");
         }
 
+        var scope = string.IsNullOrWhiteSpace(scopeDescription) ? null : scopeDescription.Trim();
+        var aims = string.IsNullOrWhiteSpace(objectives) ? null : objectives.Trim();
+        Guard.Against(scope?.Length > 4000, "audit.scope_too_long", "The scope cannot be longer than 4000 characters.");
+        Guard.Against(aims?.Length > 4000, "audit.objectives_too_long", "The objectives cannot be longer than 4000 characters.");
+        if (ProgrammeApproved && (scope != ScopeDescription || aims != Objectives))
+        {
+            throw new InvalidStateTransitionException(
+                "audit.programme_approved",
+                "The scope and objectives were approved with the programme. Return the audit to draft to change them; it then needs approving again.");
+        }
+
         Name = Guard.NotNullOrWhiteSpace(name, "audit.name_required", "Audit name is required.");
-        ScopeDescription = scopeDescription;
+        ScopeDescription = scope;
+        Objectives = aims;
         StartDate = startDate;
         TargetEndDate = targetEndDate;
     }
@@ -472,8 +503,15 @@ public sealed class Audit : AggregateRoot
     /// audit side of the team must first have declared their independence, or had a disclosed conflict accepted by a
     /// manager. A self-assessment has no independent auditor, so it is exempt.
     /// </summary>
-    public void Start(bool requireIndependence)
+    public void Start(bool requireIndependence, bool requireProgrammeApproval = false)
     {
+        if (requireProgrammeApproval && Status == AuditStatus.Planned && !IsSelfAssessment && !ProgrammeApproved)
+        {
+            throw new DomainException(
+                "audit.programme_not_approved",
+                "Fieldwork cannot start until a manager of the audit has approved its programme (scope, objectives and checklist).");
+        }
+
         if (requireIndependence && Status == AuditStatus.Planned && IndependenceOutstanding() is { Count: > 0 } outstanding)
         {
             throw new DomainException(
@@ -536,7 +574,34 @@ public sealed class Audit : AggregateRoot
     {
         EnsureStatus("audit.invalid_transition", AuditStatus.Planned);
         LastTransitionReason = Guard.NotNullOrWhiteSpace(reason, "audit.reason_required", "A reason is required.");
+
+        // Back in draft the programme can change, so any approval of it no longer stands.
+        ProgrammeApprovedBy = null;
+        ProgrammeApprovedAt = null;
+        ProgrammeApprovalNote = null;
         Transition(AuditStatus.Draft, reason);
+    }
+
+    /// <summary>
+    /// Approves the audit programme (scope, objectives and checklist as planned) for fieldwork. Only while planned (the
+    /// checklist is locked then), never for a self-assessment, and never by the audit's lead, who prepared it.
+    /// </summary>
+    public void ApproveProgramme(Guid approverUserId, string? note, DateTimeOffset nowUtc)
+    {
+        EnsureStatus("audit.programme_not_planned", AuditStatus.Planned);
+        Guard.Against(IsSelfAssessment, "audit.programme_self_assessment", "A self-assessment has no programme to approve.");
+        Guard.Against(approverUserId == LeadUserId, "audit.programme_self_approval", "The audit's lead prepared the programme and cannot approve it.");
+        if (ProgrammeApproved)
+        {
+            throw new InvalidStateTransitionException("audit.programme_already_approved", "The programme is already approved.");
+        }
+
+        var trimmed = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        Guard.Against(trimmed?.Length > 2000, "audit.programme_note_too_long", "The note cannot be longer than 2000 characters.");
+        ProgrammeApprovedBy = approverUserId;
+        ProgrammeApprovedAt = nowUtc;
+        ProgrammeApprovalNote = trimmed;
+        RaiseDomainEvent(new AuditProgrammeApprovedEvent(Id, Name, approverUserId, LeadUserId));
     }
 
     public void Cancel(string reason, DateTimeOffset nowUtc)

@@ -445,3 +445,44 @@
 .muted {
   color: var(--mat-sys-on-surface-variant);
 }
+
+/* Programme approval before fieldwork, shown under the scope and objectives. */
+.detail__programme {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-low);
+
+  > app-icon {
+    color: var(--mat-sys-tertiary);
+    margin-top: 0.1rem;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.detail__programme--approved > app-icon {
+  color: var(--mat-sys-primary);
+}
+
+.detail__programme-body {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.detail__programme-title {
+  font-weight: 500;
+}
+
+.detail__programme-note {
+  margin-top: 0.2rem;
+  color: var(--mat-sys-on-surface-variant);
+  white-space: pre-line;
+}

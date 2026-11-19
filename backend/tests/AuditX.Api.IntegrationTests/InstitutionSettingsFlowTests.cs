@@ -60,6 +60,7 @@ public sealed class InstitutionSettingsFlowTests(ApiFactory factory) : IClassFix
             idleTimeoutMinutes = 30,
             idleWarningSeconds = 90,
             requireIndependenceDeclaration = current.GetProperty("requireIndependenceDeclaration").GetBoolean(),
+            requireProgrammeApproval = current.GetProperty("requireProgrammeApproval").GetBoolean(),
         }));
         Assert.False(updated.GetProperty("showOverview").GetBoolean());
         Assert.True(updated.GetProperty("showWalkthrough").GetBoolean());

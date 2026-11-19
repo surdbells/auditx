@@ -18,6 +18,8 @@ export interface EngagementRecords {
   draftReports: DraftReportOption[];
   /** The audit's version after the last change (declaring and accepting change it). */
   auditVersion: string;
+  /** Approval of the programme before fieldwork (null for a self-assessment and for the auditee). */
+  programme?: ProgrammeApproval | null;
 }
 
 export type EngagementLetterStatus = 'draft' | 'issued' | 'acknowledged';
@@ -46,6 +48,16 @@ export interface EngagementLetterRevision {
   acknowledgedBy: string | null;
   acknowledgedAt: string | null;
   acknowledgementComment: string | null;
+}
+
+/** Approval of the audit programme before fieldwork. `canApprove`: the signed-in user may approve it now. */
+export interface ProgrammeApproval {
+  required: boolean;
+  approved: boolean;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  note: string | null;
+  canApprove: boolean;
 }
 
 export type IndependenceMemberStatus = 'pending' | 'declared' | 'conflict_disclosed' | 'conflict_accepted';

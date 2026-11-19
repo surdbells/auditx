@@ -58,7 +58,17 @@ public sealed class AuditsController(IDispatcher dispatcher) : ApiControllerBase
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAuditRequest request, CancellationToken cancellationToken)
-        => Envelope(await dispatcher.Send(new UpdateAuditMetadataCommand(id, request.Name, request.ScopeDescription, request.StartDate, request.TargetEndDate, request.Version), cancellationToken));
+        => Envelope(await dispatcher.Send(new UpdateAuditMetadataCommand(
+            id, request.Name, request.ScopeDescription, request.StartDate, request.TargetEndDate, request.Version, request.Objectives), cancellationToken));
+
+    /// <summary>
+    /// Approves the planned audit's programme for fieldwork: a manager of this audit who is neither its lead (who
+    /// prepared it) nor its auditee. The handler enforces who.
+    /// </summary>
+    [RequirePermission(PermissionKeys.ManageAudit)]
+    [HttpPost("{id:guid}/programme/approve")]
+    public async Task<IActionResult> ApproveProgramme(Guid id, [FromBody] ApproveProgrammeRequest request, CancellationToken cancellationToken)
+        => Envelope(await dispatcher.Send(new ApproveAuditProgrammeCommand(id, request.Note, request.Version), cancellationToken));
 
     [RequirePermission(PermissionKeys.ManageAudit)]
     [HttpPatch("{id:guid}/budget")]

@@ -29,7 +29,8 @@ public sealed record EngagementRecordFacts(
     bool ExitRecorded,
     bool HasDraftReport,
     bool ManagesAudit,
-    bool Loaded = true)
+    bool Loaded = true,
+    bool RequireProgrammeApproval = false)
 {
     /// <summary>The records were not loaded (or there are none to keep: a self-assessment): no record-based actions.</summary>
     public static readonly EngagementRecordFacts None = new(false, null, false, false, false, false, Loaded: false);
@@ -199,15 +200,23 @@ public static class EngagementJourneyResolver
                 break;
 
             case AuditStatus.Planned:
-                if (can(PermissionKeys.ManageAudit))
+            {
+                // Where the institution requires it, a manager of the audit other than its lead approves the programme
+                // before fieldwork. (A self-assessment loads no records, so it is never held here.)
+                var approvalPending = records.Loaded && records.RequireProgrammeApproval && !audit.ProgrammeApproved;
+                if (approvalPending && records.ManagesAudit && userId != audit.LeadUserId && !audit.IsAuditee(userId))
                 {
-                    // Fieldwork waits until the whole team has declared independence (where the institution requires it).
-                    if (independenceOutstanding == 0)
-                    {
-                        actions.Add(Transition("launch_fieldwork", "Launch fieldwork", "in_progress"));
-                    }
+                    actions.Add(Route("approve_programme", "Approve the audit programme", auditRoute, PermissionKeys.ManageAudit));
                 }
+
+                // Fieldwork waits until the programme is approved and the whole team has declared independence.
+                if (can(PermissionKeys.ManageAudit) && independenceOutstanding == 0 && !approvalPending)
+                {
+                    actions.Add(Transition("launch_fieldwork", "Launch fieldwork", "in_progress"));
+                }
+
                 break;
+            }
 
             case AuditStatus.InProgress:
                 if (myPending > 0 && can(PermissionKeys.RespondItem))

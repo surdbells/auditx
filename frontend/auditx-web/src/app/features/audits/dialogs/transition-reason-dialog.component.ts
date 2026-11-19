@@ -9,9 +9,13 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
+
 export interface TransitionReasonDialogData {
   title: string;
   message?: string;
+  /** The field's label (defaults to "Reason"); e.g. "Note" where the text is not a justification. */
+  label?: string;
   /** Whether a reason is mandatory (defaults to true). */
   reasonRequired?: boolean;
   confirmLabel?: string;
@@ -36,6 +40,7 @@ export interface TransitionReasonResult {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    TranslatePipe,
   ],
   template: `
     <h2 mat-dialog-title>{{ data.title }}</h2>
@@ -45,16 +50,16 @@ export interface TransitionReasonResult {
       }
       <form [formGroup]="form" class="form">
         <mat-form-field appearance="outline" class="full">
-          <mat-label>Reason{{ reasonRequired ? '' : ' (optional)' }}</mat-label>
+          <mat-label>{{ data.label ?? ('exceptions.field.reason' | t) }}{{ reasonRequired ? '' : ('exceptions.reason.optional' | t) }}</mat-label>
           <textarea matInput formControlName="reason" rows="3"></textarea>
           @if (form.controls.reason.hasError('required') && form.controls.reason.touched) {
-            <mat-error>A reason is required.</mat-error>
+            <mat-error>{{ 'exceptions.error.fieldRequired' | t }}</mat-error>
           }
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button matButton type="button" (click)="cancel()">Cancel</button>
+      <button matButton type="button" (click)="cancel()">{{ 'common.cancel' | t }}</button>
       <button
         matButton="filled"
         type="button"
@@ -62,7 +67,7 @@ export interface TransitionReasonResult {
         (click)="submit()"
         [disabled]="form.invalid"
       >
-        {{ data.confirmLabel ?? 'Confirm' }}
+        {{ data.confirmLabel ?? ('exceptions.action.confirm' | t) }}
       </button>
     </mat-dialog-actions>
   `,

@@ -25,7 +25,12 @@ public sealed record CreateSelfAssessmentRequest(
     Guid? TemplateId,
     Guid? AuditableEntityId);
 
-public sealed record UpdateAuditRequest(string Name, string? ScopeDescription, DateOnly StartDate, DateOnly TargetEndDate, string Version);
+/// <summary>A full replace of the engagement's name, scope, objectives and dates.</summary>
+public sealed record UpdateAuditRequest(
+    string Name, string? ScopeDescription, DateOnly StartDate, DateOnly TargetEndDate, string Version, string? Objectives = null);
+
+/// <summary>Approves the audit programme for fieldwork, with an optional note.</summary>
+public sealed record ApproveProgrammeRequest(string? Note, string Version);
 
 public sealed record SetAuditBudgetRequest(decimal? BudgetedHours, string Version);
 

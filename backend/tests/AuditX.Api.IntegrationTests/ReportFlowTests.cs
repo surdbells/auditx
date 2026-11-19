@@ -468,6 +468,7 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
             reportRetentionMonths = 12,
             // Keep this class's fieldwork free of the independence gate (see ApiFactory).
             requireIndependenceDeclaration = false,
+            requireProgrammeApproval = false,
         })).EnsureSuccessStatusCode();
 
         // Generate a standalone report — completion stamps RetentionUntil from the policy.
@@ -540,6 +541,7 @@ public sealed class ReportFlowTests(ApiFactory factory) : IClassFixture<ApiFacto
             idleTimeoutMinutes = current.GetProperty("idleTimeoutMinutes").GetInt32(),
             idleWarningSeconds = current.GetProperty("idleWarningSeconds").GetInt32(),
             requireIndependenceDeclaration = current.GetProperty("requireIndependenceDeclaration").GetBoolean(),
+            requireProgrammeApproval = current.GetProperty("requireProgrammeApproval").GetBoolean(),
         })).EnsureSuccessStatusCode();
     }
 

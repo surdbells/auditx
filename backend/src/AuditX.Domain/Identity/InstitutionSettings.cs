@@ -62,6 +62,12 @@ public sealed class InstitutionSettings : Entity
     /// </summary>
     public bool RequireIndependenceDeclaration { get; private set; } = true;
 
+    /// <summary>
+    /// When true (default), fieldwork on an audit starts only once a manager of the audit, other than its lead, has
+    /// approved its programme (scope, objectives and checklist). Self-assessments are exempt.
+    /// </summary>
+    public bool RequireProgrammeApproval { get; private set; } = true;
+
     /// <summary>Primary brand colour (hex, e.g. <c>#4f46e5</c>) applied to the UI theme.</summary>
     public string PrimaryColor { get; private set; } = "#4f46e5";
 
@@ -169,6 +175,8 @@ public sealed class InstitutionSettings : Entity
     public void SetAllowMinorPlanRevisionAfterApproval(bool value) => AllowMinorPlanRevisionAfterApproval = value;
 
     public void SetRequireIndependenceDeclaration(bool value) => RequireIndependenceDeclaration = value;
+
+    public void SetRequireProgrammeApproval(bool value) => RequireProgrammeApproval = value;
 
     /// <summary>Sets the page-guide behaviour: the "Overview" / "Walkthrough" buttons and the auto-start tour.</summary>
     public void SetPageGuideVisibility(bool showOverview, bool showWalkthrough, bool autoStartWalkthrough)

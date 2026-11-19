@@ -61,6 +61,7 @@ internal static class EngagementFacts
     public static async Task<IReadOnlyDictionary<Guid, AuditJourneyFacts>> LoadAsync(
         IReadOnlyCollection<Audit> audits,
         bool requireIndependence,
+        bool requireProgrammeApproval,
         Func<Audit, bool> managesAudit,
         IExceptionRepository exceptions,
         IReportRepository reports,
@@ -94,7 +95,8 @@ internal static class EngagementFacts
                     minuted[a.Id].Contains(MeetingKind.Kickoff),
                     minuted[a.Id].Contains(MeetingKind.Exit),
                     report.DraftCompleted,
-                    managesAudit(a));
+                    managesAudit(a),
+                    RequireProgrammeApproval: requireProgrammeApproval);
             return new AuditJourneyFacts([.. open[a.Id]], report, records);
         });
     }
@@ -124,9 +126,9 @@ public sealed class GetEngagementJourneyQueryHandler(
 
         var ctx = await UserEngagementContext.LoadAsync(uid, permissions, cancellationToken);
         var manages = await permissions.HasPermissionAsync(uid, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken);
-        var requireIndependence = (await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration;
+        var rules = await settings.GetAsync(cancellationToken);
         var facts = (await EngagementFacts.LoadAsync(
-            [audit], requireIndependence, _ => manages, exceptions, reports, letters, meetings, cancellationToken))[audit.Id];
+            [audit], rules.RequireIndependenceDeclaration, rules.RequireProgrammeApproval, _ => manages, exceptions, reports, letters, meetings, cancellationToken))[audit.Id];
 
         var onTeam = audit.TeamMembers.Any(m => m.IsActive && m.UserId == uid);
         return EngagementJourneyResolver.Resolve(
@@ -177,9 +179,9 @@ public sealed class ListMyEngagementsQueryHandler(
         }
 
         var unitOf = rows.ToDictionary(r => r.Audit.Id, r => r.OrgUnitId);
-        var requireIndependence = (await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration;
+        var rules = await settings.GetAsync(cancellationToken);
         var facts = await EngagementFacts.LoadAsync(
-            [.. rows.Select(r => r.Audit)], requireIndependence, a => reach.Manages(a.Id, unitOf[a.Id]),
+            [.. rows.Select(r => r.Audit)], rules.RequireIndependenceDeclaration, rules.RequireProgrammeApproval, a => reach.Manages(a.Id, unitOf[a.Id]),
             exceptions, reports, letters, meetings, cancellationToken);
 
         var items = new List<EngagementBoardItemDto>(rows.Count);

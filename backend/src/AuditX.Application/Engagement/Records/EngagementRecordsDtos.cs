@@ -17,7 +17,15 @@ public sealed record EngagementRecordsDto(
     IndependenceDto? Independence,
     IReadOnlyList<AuditMeetingDto> Meetings,
     IReadOnlyList<DraftReportOptionDto> DraftReports,
-    string AuditVersion);
+    string AuditVersion,
+    ProgrammeApprovalDto? Programme = null);
+
+/// <summary>
+/// Approval of the audit programme before fieldwork (null for a self-assessment and for the auditee). <c>Required</c>:
+/// the institution requires it. <c>CanApprove</c>: the signed-in user may approve it now (a manager of the audit other
+/// than its lead, while it is planned and not yet approved).
+/// </summary>
+public sealed record ProgrammeApprovalDto(bool Required, bool Approved, Guid? ApprovedBy, DateTimeOffset? ApprovedAt, string? Note, bool CanApprove);
 
 public sealed record EngagementLetterDto(
     Guid Id,

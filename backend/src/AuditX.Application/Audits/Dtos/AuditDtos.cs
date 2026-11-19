@@ -38,7 +38,13 @@ public sealed record AuditDto(
     // not linked, or on command results that do not resolve it.
     string? AuditableEntityName = null,
     // When the record was created — reference labels on it are shown as they read at that time.
-    DateTimeOffset? CreatedAt = null);
+    DateTimeOffset? CreatedAt = null,
+    // What the engagement sets out to achieve.
+    string? Objectives = null,
+    // Who approved the programme for fieldwork, when, and their note. Null until approved.
+    Guid? ProgrammeApprovedBy = null,
+    DateTimeOffset? ProgrammeApprovedAt = null,
+    string? ProgrammeApprovalNote = null);
 
 public sealed record AuditListItemDto(
     Guid Id, string Name, string AuditType, string Status, DateOnly StartDate, DateOnly TargetEndDate,

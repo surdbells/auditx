@@ -22,7 +22,8 @@ public sealed record InstitutionSettingsDto(
     int IdleTimeoutMinutes,
     int IdleWarningSeconds,
     PasswordPolicyDto PasswordPolicy,
-    bool RequireIndependenceDeclaration);
+    bool RequireIndependenceDeclaration,
+    bool RequireProgrammeApproval);
 
 /// <summary>The institution's local-password policy (M1 local authentication).</summary>
 public sealed record PasswordPolicyDto(

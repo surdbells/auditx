@@ -47,12 +47,18 @@ internal static class EngagementRecordsBuilder
         }
 
         IndependenceDto? independence = null;
+        ProgrammeApprovalDto? programme = null;
         if (!audit.IsSelfAssessment && !isAuditee)
         {
-            var required = (await settings.GetAsync(cancellationToken)).RequireIndependenceDeclaration;
-            var canDecide = IndependenceOpen.Contains(audit.Status)
-                && await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken);
-            independence = ToIndependence(audit, userId, required, canDecide);
+            var rules = await settings.GetAsync(cancellationToken);
+            var managesThis = await permissions.HasPermissionAsync(userId, PermissionKeys.ManageAudit, audit.Id.ToString(), cancellationToken);
+            var canDecide = IndependenceOpen.Contains(audit.Status) && managesThis;
+            independence = ToIndependence(audit, userId, rules.RequireIndependenceDeclaration, canDecide);
+
+            var canApprove = managesThis && audit.Status == AuditStatus.Planned && !audit.ProgrammeApproved && userId != audit.LeadUserId;
+            programme = new ProgrammeApprovalDto(
+                rules.RequireProgrammeApproval, audit.ProgrammeApproved, audit.ProgrammeApprovedBy, audit.ProgrammeApprovedAt,
+                audit.ProgrammeApprovalNote, canApprove);
         }
 
         return new EngagementRecordsDto(
@@ -70,7 +76,8 @@ internal static class EngagementRecordsBuilder
                     .OrderByDescending(r => r.VersionNumber)
                     .Select(r => new DraftReportOptionDto(r.Id, r.VersionNumber, r.CompletedAt))]
                 : [],
-            RowVersionToken.Encode(audit.Version));
+            RowVersionToken.Encode(audit.Version),
+            programme);
     }
 
     /// <summary>The same rule as <see cref="AuditManageAuthorization.EnsureCanManageAsync"/>, as a yes or no.</summary>
